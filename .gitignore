@@ -1,0 +1,55 @@
+# Fichiers système
+.DS_Store
+Thumbs.db
+*~
+
+# Éditeurs
+.vscode/
+.idea/
+*.swp
+*.swo
+.vim/
+
+# Fichiers sensibles (si utilisés)
+.env
+*.key
+*.pem
+credentials.json
+
+# Fichiers de backup
+*.bak
+*.backup
+*~
+
+# Fichiers temporaires
+tmp/
+temp/
+*.tmp
+
+# Logs et bases de données
+*.log
+*.sql
+*.sqlite
+
+# Archives temporaires
+*.zip
+*.tar
+*.gz
+*.7z
+
+# Fichiers Python (si scripts stats)
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+env/
+*.egg-info/
+
+# Fichiers de build
+dist/
+build/
+
+# Fichiers spécifiques projet (si besoin)
+# private/
+# drafts/
