@@ -60,6 +60,77 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S067-01-TERRAIN
+Date : 10/11/2025
+
+#### Métriques Pré-séance
+- CTL : 60
+- ATL : 80
+- TSB : -20
+- Poids : 85.5kg
+- Sommeil : 0.0h (bug sync Withings)
+
+#### Exécution
+- Durée : 193min (3h13)
+- IF : 0.85
+- TSS : 233
+- Puissance moyenne : 138W
+- Puissance normalisée : 187W (85% FTP)
+- Cadence moyenne : 71rpm
+- FC moyenne : 113bpm
+- FC max : 159bpm
+- Découplage : 3.4%
+- **RPE : 6-7/10** (estimé)
+
+#### Retour Athlète
+
+**Ressenti général :** Sortie terrain outdoor 3h13 avec grosse charge TSS 233 malgré parcours écourté. Premières bosses effectuées avec un autre cycliste (rythme probablement poussé). Erreur navigation importante nécessitant adaptation itinéraire en temps réel. Parcours initial raccourci pour rattraper l'itinéraire prévu avant tombée nuit (contrainte saison - jours courts).
+
+**Parcours/Conditions :** Terrain avec bosses, erreur d'itinéraire compensée par adaptation. Contrainte temporelle forte (jour tombant) ayant probablement maintenu intensité soutenue pour finir dans les temps. Cadence basse 71rpm typique relief outdoor.
+
+**Observations :** TSB -20 pré-séance indiquait fatigue accumulée importante. Présence autre cycliste + bosses + contrainte temps = pattern classique surcharge intensité terrain non contrôlée. IF 0.85 sur 3h13 confirme intensité élevée maintenue malgré conditions défavorables (erreur navigation, stress timing).
+
+#### Exécution Technique
+
+Sortie terrain révélant pattern discipline intensité outdoor classique. IF 0.85 sur 193min (85% FTP moyen) représente intensité quasi-seuil prolongée, bien supérieure à endurance aérobie ciblée pour sorties longues outdoor. Cadence basse 71rpm cohérente avec profil relief/bosses. Découplage 3.4% correct mais masque intensité réelle excessive (IF 0.85 vs cible ~0.70 pour endurance longue). Présence autre cycliste premières bosses + contrainte temps (jour tombant) ont probablement poussé rythme au-delà contrôle planifié. Puissance normalisée 187W (85% FTP) maintenue 3h13 = effort significatif proche seuil prolongé.
+
+#### Charge d'Entraînement
+
+TSS 233 sur 193min représente charge très élevée, d'autant plus critique avec TSB -20 pré-séance. Context fatigue accumulée (ATL 80, TSB -20) rendait cette charge inadaptée - risque surmenage majeur. IF 0.85 confirme intensité excessive pour sortie longue (cible IF 0.65-0.75 pour endurance). Charge équivalente à séance seuil prolongée plutôt qu'endurance aérobie récupératrice. TSB maintenu -20 post-séance indique dette fatigue non résorbée, nécessitant impérativement récupération stricte jours suivants.
+
+#### Validation Objectifs
+
+- ❌ Intensité contrôlée outdoor : IF 0.85 vs cible 0.65-0.75 endurance longue
+- ❌ Discipline terrain respectée : Présence cycliste + bosses = surcharge classique non maîtrisée
+- ❌ Charge adaptée au TSB : 233 TSS avec TSB -20 = surcharge critique sur fatigue accumulée
+- ⚠️ Découplage correct : 3.4% < 7.5% mais masque intensité réelle excessive (IF 0.85)
+- ❌ Itinéraire planifié respecté : Erreur navigation + adaptation forcée + parcours écourté
+- ✅ Gestion contrainte temps : Adaptation réussie pour finir avant nuit malgré erreur
+
+#### Points d'Attention
+
+- **SURCHARGE CRITIQUE** : TSS 233 + IF 0.85 sur TSB -20 = pattern surmenage - fatigue accumulée (ATL 80) aggravée par charge excessive inadaptée
+- **DISCIPLINE TERRAIN ÉCHOUÉE** : Présence autre cycliste + bosses = déclencheurs classiques surcharge intensité - IF 0.85 confirme pattern outdoor non maîtrisé identifié
+- **NAVIGATION DÉFAILLANTE** : Erreur itinéraire + adaptation forcée + contrainte temps = stress supplémentaire + intensité maintenue pour compenser retard
+- **TSB ALARMANT** : -20 pré/post séance = dette fatigue majeure non résorbée - récupération stricte impérative jours suivants
+- Bug sync Withings sommeil 0.0h empêche validation récupération réelle - données critiques manquantes
+
+#### Recommandations Progression
+
+1. **RÉCUPÉRATION STRICTE PRIORITAIRE** : TSB -20 + charge 233 TSS = risque surmenage confirmé - imposer repos strict ou récupération active légère (<30 TSS) jusqu'à TSB > -10 minimum
+2. **VALIDATION STRATÉGIE INDOOR-ONLY** : Pattern discipline terrain échoué une fois de plus (IF 0.85 vs cible, présence cycliste déclencheur) - confirme nécessité indoor exclusif 2-3 mois pour développer capacité technique sans surcharges terrain
+3. **PROTOCOLE NAVIGATION** : Erreur itinéraire inacceptable - systématiser vérification parcours RideWithGPS, waypoints automatiques, itinéraire backup téléchargé Wahoo avant toute sortie outdoor
+4. **INTERDICTION SORTIES OUTDOOR** : Tant que TSB < -5 et discipline intensité non validée indoor - risque surcharge trop élevé en contexte fatigue
+
+#### Métriques Post-séance
+- CTL : 60
+- ATL : 80
+- TSB : -20
+
+---
+
+---
+
 ### S067-07-REC-RecuperationActive
 Date : 16/11/2025
 
