@@ -60,6 +60,77 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S067-03-INT-SweetSpotMaintien
+Date : 12/11/2025
+
+#### Métriques Pré-séance
+- CTL : 59
+- ATL : 70
+- TSB : -11
+- Poids : 85.7kg
+- Sommeil : 0.0h (bug sync Withings)
+
+#### Exécution
+- Durée : 58min
+- IF : 0.77
+- TSS : 58
+- Puissance moyenne : 161W
+- Puissance normalisée : 170W (77% FTP)
+- Cadence moyenne : 88rpm
+- FC moyenne : 112bpm
+- FC max : 130bpm
+- Découplage : 2.3%
+- **RPE : 5/10** (estimé)
+
+#### Retour Athlète
+
+**Ressenti général :** Séance Sweet-Spot adaptée à la baisse post-terrain pour tenir compte fatigue résiduelle (TSB -11). Format 3 blocs exécutés avec précision quasi-parfaite : 197W réalisé sur 198W demandé. Cadence progression 90→92→92 RPM sur les 3 blocs, validant contrôle technique excellent.
+
+**Adaptation séance :** Décision intelligente réduction charge vs format Sweet-Spot standard - intensité maintenue zone efficace (77% FTP) tout en respectant contrainte récupération post-surcharge terrain (233 TSS J-2).
+
+**Observations :** Exécution très disciplinée indoor, contraste marqué avec pattern terrain. Découplage 2.3% excellent confirme qualité technique. Aucune donnée sommeil disponible (bug sync Withings persistant) - qualité récupération pré-séance inconnue.
+
+#### Exécution Technique
+
+Séance Sweet-Spot adaptée parfaitement exécutée à 77% FTP (170W NP) sur 58min. Précision remarquable 3 blocs : 197W réalisé vs 198W cible (écart <1W). Cadence progression contrôlée 90→92→92 RPM démontre gestion technique optimale et absence fatigue musculaire entre intervalles. Découplage cardiovasculaire 2.3% << seuil 7.5% valide qualité aérobie excellente et intensité parfaitement calibrée. FC moyenne 112bpm stable, FC max 130bpm contenue confirme effort sous-maximal contrôlé. Format Brooklyn Bridge (1 col virtuel) maintient engagement sans surcharge.
+
+#### Charge d'Entraînement
+
+TSS 58 sur 58min représente charge modérée adaptée au contexte récupération post-terrain (233 TSS J-2). TSB progression continue -20→-13→-11 indique récupération active efficace malgré maintien charge d'entraînement. Adaptation baisse intensité vs Sweet-Spot standard (typiquement 88-90% FTP) démontre gestion intelligente fatigue résiduelle - 77% FTP maintient stimulus aérobie tout en permettant poursuite récupération. ATL amélioration 72→70 confirme réduction stress physiologique.
+
+#### Validation Objectifs
+
+- ✅ Intensité adaptée : 77% FTP vs standard 88-90% - ajustement intelligent post-surcharge
+- ✅ Découplage excellent : 2.3% << seuil 7.5%
+- ✅ Précision exécution : 197W vs 198W cible (<1W écart) - discipline indoor validée
+- ✅ Cadence contrôlée : Progression 90→92→92 RPM sans dégradation technique
+- ✅ TSS approprié : 58 points charge modérée, récupération continue (TSB -13→-11)
+- ✅ FC stable : 112bpm moyenne, max 130bpm - effort contrôlé sous-maximal
+
+#### Points d'Attention
+
+- **ADAPTATION INTELLIGENTE** : Réduction intensité 77% vs 88-90% standard démontre gestion maturité - maintien stimulus aérobie sans aggraver dette fatigue
+- **DISCIPLINE INDOOR EXEMPLAIRE** : Précision <1W sur cible + cadence contrôlée = contraste total avec pattern terrain - valide stratégie indoor-only
+- **TSB TOUJOURS NÉGATIF** : -11 malgré amélioration continue (-20→-11 sur 3 jours) - récupération incomplète, intensité >85% FTP toujours interdite
+- **BUG SYNC SOMMEIL** : Données Withings 0.0h empêche validation récupération complète - critique pour planification intensité future
+- Poids -0.5kg (86.2→85.7kg) probablement déshydratation/élimination rétention post-terrain
+
+#### Recommandations Progression
+
+1. **VALIDATION FORMAT ADAPTÉ** : Sweet-Spot 77% FTP excellente alternative post-surcharge - reproduire ce format pour situations TSB négatif (-10 à -5) où repos strict non souhaité
+2. **PROGRESSION TSB** : Amélioration -20→-11 encourageante mais récupération incomplète - repos strict J+1 (mercredi 13/11) impératif pour remontée TSB > -5
+3. **DISCIPLINE INDOOR CONFIRMÉE** : Précision technique remarquable valide stratégie indoor-only - maintenir exclusivité indoor 2-3 mois pour consolidation capacité avant réintroduction terrain contrôlée
+4. **FIX SYNC SOMMEIL URGENT** : Données sommeil critiques pour validation checklist VO2 - résoudre problème Withings→Intervals.icu avant prochaine séance haute intensité
+
+#### Métriques Post-séance
+- CTL : 59
+- ATL : 70
+- TSB : -11
+
+---
+
+---
+
 ### S067-02-REC-DecrassageActif
 Date : 11/11/2025
 
