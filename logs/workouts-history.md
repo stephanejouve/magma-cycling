@@ -60,6 +60,52 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S067-07-REC-RecuperationActive
+Date : 16/11/2025
+
+#### Métriques Pré-séance
+- CTL : 58
+- ATL : 61
+- TSB : -3
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 45min
+- IF : 0.58
+- TSS : 25
+- Puissance moyenne : 124W
+- Puissance normalisée : 127W
+- Cadence moyenne : 90rpm
+- FC moyenne : 107bpm
+- Découplage : 0.5%
+
+#### Exécution Technique
+Séance de récupération active parfaitement exécutée à 58% FTP avec un découplage cardiovasculaire de 0.5% confirmant l'intensité contrôlée. La FC moyenne à 107bpm et la cadence stable à 90rpm témoignent d'un effort dans la zone cible. Format léger sur West Drive (6 cols) approprié pour maintenir engagement sans charge significative.
+
+#### Charge d'Entraînement
+TSS de 25 cohérent avec l'objectif de récupération active sans aggraver la dette de fraîcheur. TSB maintenu à -3 post-séance, indiquant que la fatigue résiduelle persiste et nécessite surveillance avant toute intensité.
+
+#### Validation Objectifs
+- ✅ Intensité contrôlée : 58% FTP dans zone récupération (50-65%)
+- ✅ Découplage excellent : 0.5% << seuil 7.5%
+- ✅ TSS approprié : 25 points sans aggravation TSB
+
+#### Points d'Attention
+- Sommeil enregistré à 0.0h : donnée manquante à vérifier sur Withings/Intervals.icu
+- TSB toujours négatif (-3) : récupération non complète, surveiller avant VO2
+
+#### Recommandations Progression
+1. Vérifier qualité/durée sommeil réelle (donnée 0.0h suspecte) avant planification intensité
+2. Aucune séance VO2 Max avant TSB ≥ +5 (checklist critique respectée)
+3. Privilégier endurance Z2 ou Sweet-Spot bas (88%) si TSB reste < +5 dans 48h
+
+#### Métriques Post-séance
+- CTL : 58
+- ATL : 61
+- TSB : -3
+
+---
+
 ### S067-05-MIX-Z2plusExtensionNYC
 Date : 14/11/2025
 
