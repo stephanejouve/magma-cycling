@@ -60,6 +60,77 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S067-02-REC-DecrassageActif
+Date : 11/11/2025
+
+#### Métriques Pré-séance
+- CTL : 59
+- ATL : 72
+- TSB : -13
+- Poids : 86.2kg
+- Sommeil : 7h18 (score 82, VFC 81ms)
+
+#### Exécution
+- Durée : 40min
+- IF : 0.50
+- TSS : 17
+- Puissance moyenne : 110W
+- Puissance normalisée : 111W
+- Cadence moyenne : 94rpm
+- FC moyenne : 99bpm
+- FC max : 109bpm
+- Découplage : 1.0%
+- **RPE : 3/10** (estimé)
+
+#### Retour Athlète
+
+**Ressenti général :** Récupération active 40min lendemain grosse charge terrain (TSS 233, TSB -20→-13). Débat interne repos complet vs récupération active - choix récup active avec vélocité élevée privilégiée (cadence 94rpm). Format léger bien toléré, sensation décrassage validée.
+
+**Hydratation :** Protocole complet appliqué - 1 bidon avant séance, 1 bidon pendant (40min), 1 bidon après. Hydratation optimale pour faciliter récupération.
+
+**Observations :** Sommeil nuit précédente 7h18 (score 82/100) avec VFC 81ms - qualité correcte mais sommeil profond limité (6% seulement) + 7 interruptions décomptées. Dette sommeil partiellement résorbée vs moyenne habituelle 5h33, mais qualité perfectible. TSB amélioré -20→-13 post-terrain, indiquant début récupération.
+
+#### Exécution Technique
+
+Séance récupération active parfaitement exécutée à 50% FTP (IF 0.50) sur 40min. Cadence élevée 94rpm cohérente avec objectif vélocité/décrassage privilégié. FC moyenne 99bpm très contrôlée, découplage excellent 1.0% << seuil 7.5% confirme intensité appropriée zone récupération. Puissance normalisée 111W (50% FTP) stable, variabilité minimale indiquant effort homogène sans pics. Format léger Sgurr Summit (1 col virtuel) maintient engagement sans charge significative.
+
+#### Charge d'Entraînement
+
+TSS 17 sur 40min représente charge minimale appropriée post-surcharge terrain (233 TSS veille). TSB progression -20→-13 (amélioration +7 points) indique début récupération active efficace. ATL maintenue 72, dette fatigue persistante nécessitant vigilance jours suivants. Choix récupération active vs repos complet validé : vélocité élevée facilite élimination toxines, TSS 17 n'aggrave pas fatigue, découplage 1.0% confirme absence stress physiologique.
+
+#### Validation Objectifs
+
+- ✅ Intensité contrôlée : IF 0.50 dans zone récupération (45-60% FTP)
+- ✅ Découplage excellent : 1.0% << seuil 7.5%
+- ✅ TSS minimal : 17 points sans aggravation TSB
+- ✅ Vélocité élevée : Cadence 94rpm favorise décrassage actif
+- ✅ Hydratation optimale : Protocole complet (3 bidons) appliqué
+- ⚠️ Sommeil qualité limitée : 7h18 correct mais 6% sommeil profond + 7 interruptions
+
+#### Points d'Attention
+
+- **ALERTE RIDUCKS** : Overtraining warning détecté - confirme surcharge terrain veille (TSS 233, TSB -20) + dette fatigue accumulée (ATL 72)
+- **TSB TOUJOURS NÉGATIF** : -13 malgré amélioration +7 points - récupération non complète, vigilance maintenue avant intensité
+- **SOMMEIL QUALITÉ LIMITÉE** : 7h18 amélioration vs 5h33 habituel mais sommeil profond 6% insuffisant (cible 15-20%) + 7 interruptions = récupération partielle
+- Bug sync Withings (0.0h affiché) corrigé par données manuelles - surveillance sync critique maintenue
+- Poids +0.7kg (85.5→86.2kg) probablement rétention hydrique post-effort terrain
+
+#### Recommandations Progression
+
+1. **POURSUITE RÉCUPÉRATION** : TSB -13 + overtraining warning = intensité >85% FTP interdite minimum 48-72h - privilégier endurance Z2 stricte ou Sweet-Spot bas (88%) maximum
+2. **OPTIMISATION SOMMEIL** : Score 82 correct mais 6% sommeil profond insuffisant - prioriser durée >7h30 + qualité (réduction interruptions, conditions optimales)
+3. **VALIDATION CHOIX RÉCUP ACTIVE** : Cadence 94rpm + découplage 1.0% confirment stratégie efficace vs repos complet - reproduire format pour futures récupérations post-surcharge
+4. **SURVEILLANCE TSB** : Progression -20→-13 encourageante mais récupération incomplète - aucune séance VO2 avant TSB ≥ +5 (checklist critique)
+
+#### Métriques Post-séance
+- CTL : 59
+- ATL : 72
+- TSB : -13
+
+---
+
+---
+
 ### S067-01-TERRAIN
 Date : 10/11/2025
 
