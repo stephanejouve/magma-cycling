@@ -60,6 +60,53 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S068-01-END-RepriseDouceZ2
+Date : 17/11/2025
+
+#### Métriques Pré-séance
+- CTL : 58
+- ATL : 61
+- TSB : -3
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 85min
+- IF : 0.68
+- TSS : 65
+- Puissance moyenne : 148W
+- Puissance normalisée : 149W
+- Cadence moyenne : 85rpm
+- FC moyenne : 107bpm
+- Découplage : 2.2%
+
+#### Exécution Technique
+Séance Zone 2 parfaitement exécutée à 68% FTP avec découplage cardiovasculaire de 2.2% (excellent). Puissance moyenne et normalisée quasi identiques (148W vs 149W) confirment la stabilité de l'effort. FC moyenne basse (107bpm) et utilisation lipidique majoritaire (59%) valident le respect de la zone d'intensité ciblée pour cette reprise douce.
+
+#### Charge d'Entraînement
+TSS modéré de 65 adapté au contexte de TSB légèrement négatif (-3). Cette charge d'endurance de base permet une progression du CTL sans aggraver la fatigue accumulée, stratégie appropriée pour une première séance de semaine après la transition S067.
+
+#### Validation Objectifs
+- ✅ Intensité Zone 2 maintenue : IF 0.68 conforme à la reprise douce
+- ✅ Qualité d'exécution : découplage 2.2% valide l'efficacité cardiovasculaire
+- ✅ Volume adapté au TSB : 85min et TSS 65 cohérents avec fatigue résiduelle
+
+#### Points d'Attention
+- Données sommeil manquantes : impossible d'évaluer l'impact du facteur limitant identifié
+- TSB -3 : encore légèrement en fatigue, surveillance nécessaire avant intensité
+
+#### Recommandations Progression
+1. Poursuivre reprise progressive avec 1-2 séances endurance/récup jusqu'à TSB ≥0
+2. Planifier retour Sweet-Spot (88-90% FTP) une fois TSB +2 minimum atteint
+
+#### Métriques Post-séance
+- CTL : 58
+- ATL : 61
+- TSB : -3
+
+---
+
+---
+
 ### S067-03-INT-SweetSpotMaintien
 Date : 12/11/2025
 
