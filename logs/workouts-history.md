@@ -60,6 +60,55 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S068-02-INT-SweetSpot88Validation
+Date : 18/11/2025
+
+#### Métriques Pré-séance
+- CTL : 58
+- ATL : 62
+- TSB : -4
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 69min
+- IF : 0.77
+- TSS : 68
+- Puissance moyenne : 157W
+- Puissance normalisée : 169W
+- Cadence moyenne : 85rpm
+- FC moyenne : 104bpm
+- Découplage : 2.7% (intervalles Sweet-Spot)
+
+#### Exécution Technique
+Séance Sweet-Spot réalisée à 192-193W sur les deux intervalles de 10min (87-88% FTP vs 88% visé), soit un écart minime de 1-2W par rapport à la cible de 194W. Découplage cardiovasculaire excellent de 2.7% entre les deux intervalles (FC 112→115 bpm), validant la qualité technique de l'exécution. La cadence moyenne de 85rpm reste légèrement sous l'optimum Sweet-Spot (90-95rpm), mais les métriques sont cohérentes et stables sur les efforts principaux.
+
+#### Charge d'Entraînement
+TSS de 68 pour 69min reflète l'intensité globale modérée incluant échauffement et récupération. Impact limité sur CTL/ATL (pas de changement), TSB maintenu à -4 confirmant que la charge reste contrôlée malgré le contexte de fatigue légère pré-existant.
+
+#### Validation Objectifs
+- ⚠️ Intensité Sweet-Spot 88% : Réalisée à 87-88% (192-193W vs 194W visé, écart 1-2W acceptable)
+- ✅ Découplage <7.5% : 2.7% entre intervalles (validation technique excellente)
+- ⚠️ Contexte défavorable : Sommeil perturbé (note 47), VFC faible (32ms vs normal >50ms), TSB négatif (-4)
+
+#### Points d'Attention
+- **RPE 5/10 cohérent avec exécution** : Ressenti modéré malgré contexte difficile indique bonne gestion effort
+- **Sommeil profond en hausse (48min)** : Signal positif de récupération, mais VFC reste faible (32ms) et note sommeil médiocre (47)
+- **Cadence 85rpm sous optimum** : Privilégier 90-95rpm sur prochains Sweet-Spot pour améliorer efficacité neuromusculaire
+
+#### Recommandations Progression
+1. **Validation Sweet-Spot 88% confirmée** : Qualité technique excellente (découplage 2.7%), intensité quasi-atteinte malgré contexte défavorable
+2. **Surveiller récupération 48h** : VFC faible (32ms) nécessite repos ou Z1-Z2 uniquement (<65% FTP) avant nouvelle intensité
+3. **Progression 89-90% FTP** : Tester sur prochaine séance Sweet-Spot si TSB ≥0 ET VFC >40ms ET sommeil note ≥70
+
+#### Métriques Post-séance
+- CTL : 58
+- ATL : 62
+- TSB : -4
+
+---
+
+---
+
 ### S068-01-END-RepriseDouceZ2
 Date : 17/11/2025
 
