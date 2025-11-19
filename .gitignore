@@ -53,3 +53,6 @@ build/
 # Fichiers spécifiques projet (si besoin)
 # private/
 # drafts/
+scripts/test_*.py
+scripts/logs*.txt
+scripts/*_raw.json
