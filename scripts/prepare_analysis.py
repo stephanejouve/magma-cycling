@@ -67,6 +67,42 @@ class IntervalsAPI:
         response.raise_for_status()
         return response.json()
 
+    def get_events(self, oldest=None, newest=None):
+        """Récupérer les événements du calendrier (incluant workouts planifiés)"""
+        url = f"{self.BASE_URL}/athlete/{self.athlete_id}/events"
+        params = {}
+        if oldest:
+            params['oldest'] = oldest
+        if newest:
+            params['newest'] = newest
+
+        response = self.session.get(url, params=params)
+        response.raise_for_status()
+        return response.json()
+
+    def get_planned_workout(self, activity_id, activity_date):
+        """Trouver le workout planifié associé à une activité
+
+        Args:
+            activity_id: ID de l'activité (ex: 'i107424849')
+            activity_date: Date de l'activité (datetime object)
+
+        Returns:
+            Dict contenant le workout planifié ou None si pas trouvé
+        """
+        # Chercher dans une fenêtre de +/- 2 jours autour de l'activité
+        oldest = (activity_date - timedelta(days=2)).strftime('%Y-%m-%d')
+        newest = (activity_date + timedelta(days=2)).strftime('%Y-%m-%d')
+
+        events = self.get_events(oldest=oldest, newest=newest)
+
+        # Trouver l'événement avec paired_activity_id correspondant
+        for event in events:
+            if event.get('paired_activity_id') == activity_id:
+                return event
+
+        return None
+
 
 class PromptGenerator:
     """Générateur de prompt pour analyse Claude.ai"""
@@ -204,13 +240,102 @@ class PromptGenerator:
             'sleep_quality': wellness.get('sleepQuality', 0),
         }
 
-    def generate_prompt(self, activity_data, wellness_pre, wellness_post, athlete_context, recent_workouts, athlete_feedback=None):
+    def format_planned_workout(self, planned_event):
+        """Formater le workout planifié pour le prompt
+
+        Args:
+            planned_event: L'événement contenant le workout planifié
+
+        Returns:
+            Dict avec les informations formatées ou None
+        """
+        if not planned_event or not planned_event.get('workout_doc'):
+            return None
+
+        workout_doc = planned_event['workout_doc']
+
+        # Extraire les données principales
+        formatted = {
+            'name': planned_event.get('name', 'Workout planifié'),
+            'description': planned_event.get('description', ''),
+            'duration_min': workout_doc.get('duration', 0) // 60,
+            'tss_planned': planned_event.get('icu_training_load', 0),
+            'avg_watts_planned': workout_doc.get('average_watts', 0),
+            'np_planned': workout_doc.get('normalized_power', 0),
+            'intensity_planned': planned_event.get('icu_intensity', 0) / 100.0 if planned_event.get('icu_intensity') else 0,
+            'joules': workout_doc.get('joules', 0),
+        }
+
+        # Formater la structure des intervalles
+        steps = workout_doc.get('steps', [])
+        intervals = []
+
+        for i, step in enumerate(steps):
+            if 'reps' in step:
+                # C'est un bloc d'intervalles répétés
+                reps = step['reps']
+                sub_steps = step.get('steps', [])
+                interval_desc = []
+                for sub in sub_steps:
+                    power_info = self._format_power(sub.get('power', {}))
+                    cadence = sub.get('cadence', {}).get('value', 0)
+                    duration_min = sub.get('duration', 0) / 60
+                    interval_desc.append(f"{duration_min:.0f}min @ {power_info} / {cadence}rpm")
+                intervals.append(f"{reps}x ({' → '.join(interval_desc)})")
+            else:
+                # Step simple
+                power_info = self._format_power(step.get('power', {}))
+                cadence = step.get('cadence', {}).get('value', 0)
+                duration_min = step.get('duration', 0) / 60
+                step_type = ""
+                if step.get('warmup'):
+                    step_type = "[Warmup] "
+                elif step.get('cooldown'):
+                    step_type = "[Cooldown] "
+                intervals.append(f"{step_type}{duration_min:.0f}min @ {power_info} / {cadence}rpm")
+
+        formatted['intervals'] = intervals
+
+        # Répartition des zones (time in zones)
+        zone_times = workout_doc.get('zoneTimes', [])
+        zones_str = []
+        for zone in zone_times:
+            if zone.get('secs', 0) > 0 and not zone.get('gap'):  # Ignorer Sweet Spot (gap=true)
+                zone_name = zone.get('name', zone.get('id', 'Z?'))
+                zone_min = zone['secs'] / 60
+                zones_str.append(f"{zone_name}: {zone_min:.0f}min")
+
+        formatted['zone_distribution'] = ', '.join(zones_str) if zones_str else 'N/A'
+
+        return formatted
+
+    def _format_power(self, power_dict):
+        """Formater une valeur de puissance (gère %, watts absolus, rampes)"""
+        if not power_dict:
+            return "N/A"
+
+        units = power_dict.get('units', '')
+
+        if units == '%ftp':
+            if 'value' in power_dict:
+                return f"{power_dict['value']}%FTP"
+            elif 'start' in power_dict and 'end' in power_dict:
+                return f"{power_dict['start']}-{power_dict['end']}%FTP"
+        elif units == 'w':
+            return f"{power_dict.get('value', 0)}W"
+        elif units == 'power_zone':
+            return f"Z{power_dict.get('value', '?')}"
+
+        return "N/A"
+
+    def generate_prompt(self, activity_data, wellness_pre, wellness_post, athlete_context, recent_workouts, athlete_feedback=None, planned_workout=None):
         """Générer le prompt complet pour Claude.ai"""
 
         # Formater les données
         act = activity_data
         w_pre = self.format_wellness_data(wellness_pre)
         w_post = self.format_wellness_data(wellness_post)
+        planned = self.format_planned_workout(planned_workout) if planned_workout else None
 
         decoupling_str = f"{act['decoupling']:.1f}%" if act['decoupling'] else "N/A"
         sleep_hours = w_pre['sleep_seconds'] / 3600 if w_pre['sleep_seconds'] and w_pre['sleep_seconds'] > 0 else 0
@@ -272,7 +397,46 @@ Certaines métriques (puissance, découplage) peuvent être manquantes ou incomp
 {', '.join(act['tags']) if act['tags'] else ''}
 
 ---
+"""
 
+        # Ajouter section workout planifié si disponible
+        if planned:
+            prompt += f"""
+## 📋 Workout Planifié vs Réalisé
+
+### Objectifs Planifiés
+- **Nom** : {planned['name']}
+- **Durée prévue** : {planned['duration_min']}min
+- **TSS prévu** : {planned['tss_planned']:.0f}
+- **IF prévue** : {planned['intensity_planned']:.2f}
+- **Puissance moy. prévue** : {planned['avg_watts_planned']:.0f}W
+- **NP prévue** : {planned['np_planned']:.0f}W
+
+### Structure Planifiée
+"""
+            for interval in planned['intervals']:
+                prompt += f"- {interval}\n"
+
+            prompt += f"""
+### Répartition Zones Planifiée
+{planned['zone_distribution']}
+
+### Description Workout
+{planned['description'][:500] if planned['description'] else '_Aucune description_'}{'...' if len(planned['description']) > 500 else ''}
+
+### Comparaison Planifié vs Réalisé
+- Durée : {planned['duration_min']}min prévu → {act['duration_min']}min réalisé ({act['duration_min'] - planned['duration_min']:+}min)
+- TSS : {planned['tss_planned']:.0f} prévu → {act['tss']:.0f} réalisé ({act['tss'] - planned['tss_planned']:+.0f})
+- IF : {planned['intensity_planned']:.2f} prévue → {act['intensity']:.2f} réalisée ({act['intensity'] - planned['intensity_planned']:+.2f})
+- Puissance moy. : {planned['avg_watts_planned']:.0f}W prévue → {act['avg_power']:.0f}W réalisée ({act['avg_power'] - planned['avg_watts_planned']:+.0f}W)
+- NP : {planned['np_planned']:.0f}W prévue → {act['np']:.0f}W réalisée ({act['np'] - planned['np_planned']:+.0f}W)
+
+**Consigne d'analyse** : Évaluer l'adhérence au plan et identifier les écarts significatifs (>10% en durée/TSS, >5% en IF).
+
+---
+"""
+
+        prompt += f"""
 ## Séances Récentes (Contexte)
 
 {recent_workouts if recent_workouts else "_Historique non disponible_"}
@@ -476,13 +640,22 @@ def main():
 
         # Date de l'activité
         date = activity['start_date_local'][:10]
+        activity_date = datetime.fromisoformat(activity['start_date_local'].replace('Z', '+00:00'))
 
         # Récupérer wellness
         wellness_data = api.get_wellness(oldest=date, newest=date)
         wellness = wellness_data[0] if wellness_data else None
 
+        # Récupérer le workout planifié si disponible
         print(f"   ✅ Activité : {activity.get('name', 'Séance')}")
         print(f"   📅 Date : {date}")
+
+        print("🔍 Recherche du workout planifié...")
+        planned_workout = api.get_planned_workout(activity['id'], activity_date)
+        if planned_workout:
+            print(f"   ✅ Workout planifié trouvé : {planned_workout.get('name', 'N/A')}")
+        else:
+            print("   ℹ️  Pas de workout planifié associé (séance libre)")
 
         # Vérifier si l'activité vient de Strava
         if activity.get('source') == 'STRAVA':
@@ -520,7 +693,8 @@ def main():
             wellness_post=wellness,  # Simplifié pour l'instant
             athlete_context=athlete_context,
             recent_workouts=recent_workouts,
-            athlete_feedback=athlete_feedback
+            athlete_feedback=athlete_feedback,
+            planned_workout=planned_workout
         )
 
         # Copier dans le presse-papier
