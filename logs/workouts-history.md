@@ -60,6 +60,54 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S068-03-REC-RecupLegere
+Date : 19/11/2025
+
+#### Métriques Pré-séance
+- CTL : 57
+- ATL : 57
+- TSB : +0
+- Sommeil : Données athlète - Score 60, VFC 49ms, FC repos 53bpm
+
+#### Exécution
+- Durée : 42min
+- IF : 0.58
+- TSS : 24
+- Puissance moyenne : 126W
+- Puissance normalisée : 127W
+- Cadence moyenne : 91rpm
+- FC moyenne : 98bpm
+- Découplage : 7.6%
+
+#### Exécution Technique
+Séance récupération correctement exécutée à 57% FTP avec cadence élevée validant le travail technique demandé (moulinette 90-100 rpm). FC moyenne 98 bpm (58% FCmax) démontre contrôle strict de l'intensité. Découplage 7.6% légèrement au-dessus du seuil 7.5% mais acceptable pour format récupération légère. RPE 1/10 cohérent avec métriques objectives.
+
+#### Charge d'Entraînement
+TSS 24 représente charge minimale appropriée pour récupération active. TSB maintenu à 0 indique équilibre neutre entre forme et fatigue. Aucun impact sur CTL/ATL, objectif de la séance respecté.
+
+#### Validation Objectifs
+- ✅ Intensité récupération (57% FTP)
+- ✅ FC contrôlée (<100 bpm moyenne)
+- ✅ RPE minimal cohérent (1/10)
+- ✅ Travail technique intégré (moulinette + unijambiste)
+
+#### Points d'Attention
+- Découplage 7.6% légèrement élevé mais tolérable en contexte récupération
+- VFC 49ms et sommeil score 60 suggèrent processus récupération en cours
+- TSB neutre (0) nécessite surveillance pour séance suivante
+
+#### Recommandations Progression
+1. Séance suivante possible en intensité modérée (Z2-Sweet Spot) si TSB évolue positivement et sommeil score >60
+2. Continuer intégration travail technique (moulinette, unijambiste) validé par exécution qualitative
+3. Maintenir surveillance VFC et qualité sommeil pour optimiser timing intensités
+
+#### Métriques Post-séance
+- CTL : 57
+- ATL : 57
+- TSB : +0
+
+---
+
 ### S068-02-INT-SweetSpot88Validation
 Date : 18/11/2025
 
