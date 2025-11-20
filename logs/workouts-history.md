@@ -60,6 +60,53 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S068-04-INT-SweetSpot90Progression
+Date : 20/11/2025
+
+#### Métriques Pré-séance
+- CTL : 58
+- ATL : 59
+- TSB : -1
+- Sommeil : 5.4h (score 70/100)
+
+#### Exécution
+- Durée : 70min
+- IF : 0.77
+- TSS : 70
+- Puissance moyenne : 150W
+- Puissance normalisée : 170W
+- Cadence moyenne : 88rpm
+- FC moyenne : 110bpm
+- Découplage : 7.3% (global) / 3.1%-4.8%-5.2% (blocs Sweet Spot)
+
+#### Exécution Technique
+Structure Sweet Spot parfaitement exécutée avec 28min cumulés @ 90% FTP (3 blocs : 10m5s + 9m54s + 7m56s). Puissance maintenue à 196-197W sur les 3 intervalles (89% FTP réel vs 90% cible), cohérence remarquable. Cadence 90-91rpm stable, légèrement au-dessus de la cible 88-92rpm mais optimale. Découplage progressif par bloc (3.1% → 4.8% → 5.2%) reste largement sous le seuil 7.5%, validant une excellente qualité aérobie malgré la dette de sommeil.
+
+#### Charge d'Entraînement
+TSS 70 atteint exactement selon objectif, avec IF 0.77 cohérent. TSB maintenu à -1 post-séance, zone productive sans accumulation de fatigue. La gestion de l'intensité (89% réel vs 90% prévu) démontre une auto-régulation intelligente qui a permis de préserver la qualité technique tout en atteignant les objectifs de charge.
+
+#### Validation Objectifs
+- ✅ Structure Sweet Spot : 28min @ 89-90% FTP, 3 blocs complétés intégralement
+- ✅ Découplage par bloc : 3.1% / 4.8% / 5.2%, tous < 7.5% (excellente qualité aérobie)
+- ✅ TSS cible : 70 atteint exactement
+- ✅ Stabilité puissance : 196-197W maintenue sur les 3 intervalles (-1W variation max)
+- ✅ Cadence : 90-91rpm stable, zone optimale pour Sweet Spot
+
+#### Points d'Attention
+- **Découplage bloc 3 (5.2%)** : Légère hausse attendue sur le dernier bloc de 8min, mais reste confortablement sous seuil. Combiné à ton ressenti "moins fatigué qu'en début de semaine", cela confirme une capacité de récupération exceptionnelle malgré 5h22 de sommeil
+- **Équilibre G/D excellent** : 50/50 et 49/51 sur les blocs Sweet Spot, contraste marqué avec ton asymétrie connue en explosif (56/44). Confirme que le travail Sweet Spot sollicite uniformément les deux jambes, format optimal pour corriger les déséquilibres neuromusculaires
+
+#### Recommandations Progression
+1. **Validation progression 90% FTP** : Séance exemplaire validant ta capacité à maintenir 90% FTP sur 28min avec qualité aérobie préservée. Feu vert pour S068-05 avec soit augmentation volume (3×10min Sweet Spot), soit légère montée intensité (92% FTP), selon TSB et sommeil pré-séance
+2. **Maintenir protocole actuel** : Sieste pré-séance + hydratation renforcée + drills cooldown (moulinette/unijambiste) = combinaison gagnante. Ce workflow compense efficacement la dette sommeil court terme. Objectif long terme reste 7h+ pour progression CTL durable, mais ton système actuel fonctionne remarquablement bien
+
+#### Métriques Post-séance
+- CTL : 58
+- ATL : 59
+- TSB : -1
+
+---
+
 ### S068-03-REC-RecupLegere
 Date : 19/11/2025
 
