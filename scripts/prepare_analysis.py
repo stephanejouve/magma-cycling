@@ -115,8 +115,8 @@ class PromptGenerator:
         self.feedback_file = self.feedback_dir / "last_feedback.json"
 
     def load_athlete_context(self):
-        """Charger le contexte athlète depuis project_prompt_v2.md"""
-        prompt_file = self.references_dir / "project_prompt_v2.md"
+        """Charger le contexte athlète depuis project_prompt_v2_1_revised.md"""
+        prompt_file = self.references_dir / "project_prompt_v2_1_revised.md"
         if prompt_file.exists():
             with open(prompt_file, 'r', encoding='utf-8') as f:
                 return f.read()
@@ -144,6 +144,14 @@ class PromptGenerator:
                 count += 1
 
         return '\n'.join(recent) if recent else None
+
+    def load_cycling_concepts(self):
+        """Charger les concepts d'entraînement cyclisme"""
+        concepts_file = self.references_dir / "cycling_training_concepts.md"
+        if concepts_file.exists():
+            with open(concepts_file, 'r', encoding='utf-8') as f:
+                return f.read()
+        return None
 
     def load_athlete_feedback(self):
         """Charger le feedback athlète s'il existe"""
@@ -328,7 +336,7 @@ class PromptGenerator:
 
         return "N/A"
 
-    def generate_prompt(self, activity_data, wellness_pre, wellness_post, athlete_context, recent_workouts, athlete_feedback=None, planned_workout=None):
+    def generate_prompt(self, activity_data, wellness_pre, wellness_post, athlete_context, recent_workouts, athlete_feedback=None, planned_workout=None, cycling_concepts=None):
         """Générer le prompt complet pour Claude.ai"""
 
         # Formater les données
@@ -358,6 +366,12 @@ Certaines métriques (puissance, découplage) peuvent être manquantes ou incomp
 ## Contexte Athlète
 
 {athlete_context if athlete_context else "[Contexte non disponible - utiliser informations par défaut]"}
+
+---
+
+## 📚 Référence Cyclisme
+
+{cycling_concepts if cycling_concepts else "[Concepts cyclisme non disponibles]"}
 
 ---
 
@@ -673,6 +687,7 @@ def main():
         print("📖 Chargement du contexte...")
         athlete_context = generator.load_athlete_context()
         recent_workouts = generator.load_recent_workouts(limit=3)
+        cycling_concepts = generator.load_cycling_concepts()
 
         # Charger feedback athlète si disponible
         athlete_feedback = generator.load_athlete_feedback()
@@ -694,7 +709,8 @@ def main():
             athlete_context=athlete_context,
             recent_workouts=recent_workouts,
             athlete_feedback=athlete_feedback,
-            planned_workout=planned_workout
+            planned_workout=planned_workout,
+            cycling_concepts=cycling_concepts
         )
 
         # Copier dans le presse-papier
