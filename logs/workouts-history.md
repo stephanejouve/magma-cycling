@@ -60,6 +60,53 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S068-05-END-EnduranceTechniqueProgressive
+Date : 21/11/2025
+
+#### Métriques Pré-séance
+- CTL : 58
+- ATL : 59
+- TSB : -1
+- Sommeil : 5.3h
+
+#### Exécution
+- Durée : 76min
+- IF : 0.69
+- TSS : 61
+- Puissance moyenne : 145W
+- Puissance normalisée : 152W
+- Cadence moyenne : 87rpm
+- FC moyenne : 105bpm
+- Découplage : 7.2%
+
+#### Exécution Technique
+Séance endurance Z2 bien exécutée avec découplage cardiovasculaire acceptable (7.2%, seuil <7.5%). IF 0.69 conforme à objectif endurance, puissance normalisée 152W (+4% vs planifié) indique variabilité modérée liée aux ajouts terrain (badge circuit, côte, sprint 5s). Cadence moyenne 87rpm respecte protocole, drills unijambiste partiellement réalisés (intensité cible inadaptée pour tenir 90s). FC moyenne 105bpm (62% FCmax estimée) cohérente avec Z2, pic à 126bpm suggère efforts brefs non planifiés.
+
+#### Charge d'Entraînement
+TSS réalisé 61 (+33% vs 46 prévu) suite à durée prolongée (+14min pour compléter circuit badge). TSB maintenu à -1 post-séance malgré surcharge, ATL stable à 59 indique absorption correcte. Accumulation modérée mais maîtrisée, pas d'impact négatif immédiat sur fraîcheur.
+
+#### Validation Objectifs
+- ✅ **Endurance Z2** : IF 0.69, découplage 7.2%, FC stable 105bpm
+- ⚠️ **Durée planifiée** : +23% (76min vs 62min prévu) compromet contrôle TSS
+- ❌ **Drills techniques** : Unijambiste incomplets (puissance cible trop élevée)
+
+#### Points d'Attention
+- **Discipline planning** : Ajouts non planifiés (+14min badge, côte, sprint) reproduisent pattern surcharge terrain observé historiquement
+- **Drills intensité** : Puissance unijambiste inadaptée (75% FTP trop élevé pour tenir 90s), réduire à 60-65% FTP ou durées 45-60s
+- **Dette sommeil active** : 5h18 vs cible 7h+ (-25%), note Withings 55%, sieste nécessaire pré-séance → FC repos 47bpm (+7 vs baseline 40) acceptable mais FC respiratoire 11-13.5 rpm et périodes FC <37bpm confirment récupération parasympathique efficace malgré déficit chronique
+
+#### Recommandations Progression
+1. **Protocole badges** : Si circuits non terminés, anticiper +10-15min dans durée séance OU positionner sur jours récupération légère pour éviter surcharge TSS non planifiée
+2. **Ajustement drills** : Template S068-07 dimanche → drills unijambiste 60s @ 60% FTP avec focus maintien cadence 80-85rpm prioritaire sur puissance absolue
+3. **Gestion sommeil critique** : 5h18 (-25% vs cible) = facteur limitant validé → INTERDICTION séances VO2/sweet-spot si <6h sommeil, prioriser 7h+ nuits suivantes pour préserver qualité semaine S069 (intensités programmées nécessitent récupération optimale)
+
+#### Métriques Post-séance
+- CTL : 58
+- ATL : 59
+- TSB : -1
+
+---
+
 ### S068-04-INT-SweetSpot90Progression
 Date : 20/11/2025
 
