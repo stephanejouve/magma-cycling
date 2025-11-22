@@ -60,6 +60,49 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### Zwift - Downtown Eruption in Watopia
+Date : 22/11/2025
+#### Métriques Pré-séance
+- CTL : 59
+- ATL : 64
+- TSB : -6
+- Sommeil : 0.0h
+#### Exécution
+- Durée : 73min
+- IF : 0.82
+- TSS : 83
+- Puissance moyenne : 141W
+- Puissance normalisée : 181W
+- Cadence moyenne : 88rpm
+- FC moyenne : 116bpm
+- Découplage : -8.4%
+#### Exécution Technique
+Séance d'endurance modérée avec un IF de 0.82, proche de la zone Sweet Spot basse (84-97% FTP). La puissance normalisée (181W) et la cadence moyenne (88rpm) sont cohérentes avec un effort contrôlé. Le découplage négatif (-8.4%) indique une amélioration de l'efficacité cardiovasculaire, ce qui est atypique et suggère une récupération active ou une gestion optimale de l'effort.
+
+#### Charge d'Entraînement
+TSS de 83 pour une séance de 73min, ce qui correspond à une charge modérée. Le TSB pré-séance de -6 et l'absence de sommeil la veille peuvent expliquer une légère prudence dans l'exécution. La séance n'a pas modifié significativement les métriques de charge (CTL/ATL/TSB inchangés).
+
+#### Validation Objectifs
+- ✅ IF dans la plage Sweet Spot basse (0.82)
+- ✅ Découplage < 7.5% (validé avec -8.4%)
+- ✅ Cadence maintenue (>85rpm)
+
+#### Points d'Attention
+- **Sommeil nul** : Impact potentiel sur la qualité de l'effort et la récupération, à surveiller pour les séances futures.
+- **TSB négatif** : À compenser par une séance de récupération active ou un sommeil de qualité dans les 24-48h.
+
+#### Recommandations Progression
+1. **Prioriser le sommeil** : Objectif minimum 5h pour les prochaines nuits, idéalement 7h+ avant toute séance intense.
+2. **Maintenir la cadence** : Continuer à travailler la fluidité de pédalage à 85-90rpm pour optimiser l'efficacité.
+3. **Planifier une séance de récupération** : Pour compenser le TSB négatif et préparer la semaine suivante.
+
+#### Métriques Post-séance
+- CTL : 59
+- ATL : 64
+- TSB : -6
+
+---
+
 ### S068-05-END-EnduranceTechniqueProgressive
 Date : 21/11/2025
 
