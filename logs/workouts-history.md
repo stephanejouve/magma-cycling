@@ -60,6 +60,53 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### Zwift - New York
+Date : 14/11/2025
+#### Métriques Pré-séance
+- CTL : 58
+- ATL : 64
+- TSB : -6
+- Sommeil : 4.75h (score 58/100, 4 réveils, 39min sommeil profond)
+
+#### Exécution
+- Durée : 17min
+- IF : 0.99
+- TSS : 28
+- Puissance moyenne : 159W
+- Puissance normalisée : 217W
+- Cadence moyenne : 88rpm
+- FC moyenne : 115bpm
+- Découplage : 8.3%
+
+#### Exécution Technique
+Séance très intense (IF 0.99) avec une puissance normalisée (217W) bien supérieure à la puissance moyenne, indiquant une variabilité élevée. Le découplage cardiovasculaire de 8.3% est élevé, ce qui est cohérent avec un sommeil de mauvaise qualité (4.75h, score 58/100, seulement 39min de sommeil profond) et un TSB négatif (-6).
+
+#### Charge d'Entraînement
+TSS de 28 pour 17min reflète une intensité très élevée, mais le volume est trop faible pour impacter significativement CTL/ATL. Le TSB reste inchangé (-6), confirmant une charge aiguë non compensée par la récupération.
+
+#### Validation Objectifs
+- ❌ Découplage > 7.5% (8.3%)
+- ❌ TSB négatif (-6) et sommeil insuffisant (4.75h, qualité médiocre)
+- ✅ Puissance normalisée cohérente avec IF élevé
+
+#### Points d'Attention
+- **Découplage élevé** : Risque accru de surentraînement ou de récupération insuffisante, aggravé par la mauvaise qualité de sommeil.
+- **Sommeil** : Durée et qualité insuffisantes (seulement 39min de sommeil profond), facteur limitant majeur pour la récupération et la performance.
+- **Variabilité élevée** : Puissance normalisée >> moyenne, à surveiller pour éviter la surcharge.
+
+#### Recommandations Progression
+1. **Priorité absolue** : Améliorer la durée et la qualité du sommeil (objectif : 7h+ avec au moins 1h30 de sommeil profond) avant toute séance intense.
+2. **Réévaluer l'intensité** : Limiter les séances à IF > 0.9 tant que le sommeil n'est pas optimisé et que le TSB reste négatif.
+3. **Récupération active** : Privilégier des séances en Z1/Z2 pour favoriser la récupération sans ajouter de stress physiologique.
+4. **Surveillance** : Vérifier la FC repos et le découplage sur les prochaines séances pour évaluer l'impact des ajustements.
+
+#### Métriques Post-séance
+- CTL : 58
+- ATL : 64
+- TSB : -6
+
+---
+
 ### S067-05-END-EnduranceZ2
 Date : 14/11/2025
 
