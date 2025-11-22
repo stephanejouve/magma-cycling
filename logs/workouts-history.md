@@ -60,6 +60,99 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S066-03-INT-VO2Max4x4
+Date : 05/11/2025
+
+#### Métriques Pré-séance
+- CTL : 56
+- ATL : 60
+- TSB : -3
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 49min
+- IF : 0.86
+- TSS : 61
+- Puissance moyenne : 166W
+- Puissance normalisée : 190W
+- Cadence moyenne : 90rpm
+- FC moyenne : 118bpm
+- Découplage : 8.2%
+
+#### Exécution Technique
+La séance visait un travail en VO2Max avec 4×4min à 114% FTP. L'IF de 0.86 et la NP de 190W (95% FTP) confirment une intensité proche de la cible, mais le découplage de 8.2% (supérieur à 7.5%) indique une fatigue cardiovasculaire ou une déshydratation possible, surtout avec un sommeil nul la veille. La cadence moyenne de 90rpm est conforme aux attentes.
+
+#### Charge d'Entraînement
+Le TSS de 61 est légèrement inférieur à la cible (65), mais reste cohérent avec la durée et l'IF réalisés. Le TSB de -3 en pré-séance reflète une fatigue modérée, ce qui peut expliquer le découplage élevé et la légère sous-performance en puissance.
+
+#### Validation Objectifs
+- ❌ Découplage > 7.5% (8.2%)
+- ✅ IF proche de la cible (0.86 vs 0.88)
+- ✅ TSS et durée respectés (-1min, -4 TSS)
+
+#### Points d'Attention
+- Découplage élevé (8.2%) : à surveiller, surtout avec un sommeil nul.
+- Puissance moyenne et NP légèrement inférieures aux cibles, mais dans une marge acceptable.
+
+#### Recommandations Progression
+1. Prioriser la récupération et le sommeil avant les séances VO2Max pour limiter le découplage.
+2. Vérifier l'hydratation et la nutrition pré-séance pour les prochaines tentatives.
+3. Maintenir la structure, mais ajuster l'intensité si le TSB reste négatif.
+
+#### Métriques Post-séance
+- CTL : 56
+- ATL : 60
+- TSB : -3
+
+---
+
+### S068-05-END-EnduranceTechniqueProgressive
+Date : 21/11/2025
+
+#### Métriques Pré-séance
+- CTL : 58
+- ATL : 59
+- TSB : -1
+- Sommeil : 5.3h
+
+#### Exécution
+- Durée : 76min
+- IF : 0.69
+- TSS : 61
+- Puissance moyenne : 145W
+- Puissance normalisée : 152W
+- Cadence moyenne : 87rpm
+- FC moyenne : 105bpm
+- Découplage : 7.2%
+
+#### Exécution Technique
+Séance endurance Z2 bien exécutée avec découplage cardiovasculaire acceptable (7.2%, limite seuil <7.5%). IF 0.69 conforme à objectif endurance, puissance normalisée 152W (+4% vs planifié) indique variabilité modérée liée aux ajouts terrain (badge circuit, côte, sprint 5s). Cadence moyenne 87rpm respecte protocole, drills unijambiste partiellement réalisés (intensité cible inadaptée pour tenir 90s). FC moyenne 105bpm (62% FCmax estimée) cohérente avec Z2, pic à 126bpm suggère efforts brefs non planifiés.
+
+#### Charge d'Entraînement
+TSS réalisé 61 (+33% vs 46 prévu) suite à durée prolongée (+14min pour compléter circuit badge). TSB maintenu à -1 post-séance malgré surcharge, ATL stable à 59 indique absorption correcte. Accumulation modérée mais maîtrisée, pas d'impact négatif immédiat sur fraîcheur.
+
+#### Validation Objectifs
+- ✅ **Endurance Z2** : IF 0.69, découplage 7.2% (limite acceptable), FC stable 105bpm
+- ⚠️ **Durée planifiée** : +23% (76min vs 62min prévu) compromet contrôle TSS
+- ❌ **Drills techniques** : Unijambiste incomplets (puissance cible trop élevée)
+
+#### Points d'Attention
+- **Discipline planning** : Ajouts non planifiés (+14min badge, côte, sprint) reproduisent pattern surcharge terrain observé historiquement
+- **Drills intensité** : Puissance unijambiste inadaptée (75% FTP trop élevé pour tenir 90s), réduire à 60-65% FTP ou durées 45-60s
+- **Dette sommeil critique** : 5h18 (-25% vs cible 7h), note Withings 55%, sieste nécessaire pré-séance → FC repos 47bpm (+7 vs baseline 40bpm) et FC respiratoire 11-13.5 rpm confirment récupération parasympathique efficace, mais périodes FC <37bpm nocturnes valident capacités exceptionnelles
+
+#### Recommandations Progression
+1. **Protocole badges** : Si circuits non terminés, anticiper +10-15min dans durée séance OU positionner sur jours récupération légère pour éviter surcharge TSS non planifiée
+2. **Ajustement drills** : Template S068-07 dimanche → drills unijambiste 60s @ 60% FTP avec focus maintien cadence 80-85rpm prioritaire sur puissance absolue
+3. **Gestion sommeil PRIORITAIRE** : 5h18 (-25% vs cible) = facteur limitant validé → INTERDICTION séances VO2/sweet-spot si <6h sommeil, prioriser 7h+ nuits suivantes pour préserver qualité semaine S069 (intensités programmées nécessitent récupération optimale)
+
+#### Métriques Post-séance
+- CTL : 58
+- ATL : 59
+- TSB : -1
+
+---
+
 ### Zwift - Downtown Eruption in Watopia
 Date : 22/11/2025
 #### Métriques Pré-séance
