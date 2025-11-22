@@ -60,6 +60,60 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S067-05-END-EnduranceZ2
+Date : 14/11/2025
+
+#### Métriques Pré-séance
+- CTL : 58
+- ATL : 64
+- TSB : -6
+- Sommeil : 04h45 (score 58/100, 4 réveils, profond 14%)
+
+#### Exécution
+- Durée : 75min
+- IF : 0.70
+- TSS : 62
+- Puissance moyenne : 152W
+- Puissance normalisée : 154W
+- Cadence moyenne : 89rpm
+- FC moyenne : 105bpm
+- Découplage : 1.2%
+
+#### Exécution Technique
+Séance d'endurance Z2 parfaitement exécutée malgré un sommeil très dégradé (04h45, score 58/100). L'IF de 0.70 et le découplage exceptionnel de 1.2% démontrent une **capacité de compensation physiologique remarquable**, mais **non durable**. La puissance moyenne (152W) et la NP (154W) sont conformes aux cibles, avec une cadence optimale (89rpm). Le sommeil paradoxal (23%) et léger (59%) dominent, mais le sommeil profond (14%) est insuffisant pour une récupération musculaire complète.
+
+#### Charge d'Entraînement
+Le TSS de 62, conforme à la planification, s'inscrit dans un contexte de **fatigue cumulée** (TSB -6, sommeil court et fragmenté). La fréquence cardiaque moyenne (105bpm) et le découplage faible suggèrent une **bonne gestion de l'effort**, mais masquent un risque de surmenage à terme.
+
+#### Validation Objectifs
+- ✅ IF 0.70 (cible atteinte)
+- ✅ Découplage < 7.5% (1.2%, exceptionnel compte tenu du sommeil)
+- ✅ Puissance moyenne/NP conformes
+- ⚠️ **Risque** : Récupération incomplète (manque de sommeil profond)
+
+#### Points d'Attention
+- **Sommeil critique** : 04h45 (vs 7h+ recommandées), 4 réveils, et seulement 14% de sommeil profond → **facteur limitant majeur**.
+- **TSB négatif (-6)** : À surveiller en priorité pour les séances intensives ultérieures.
+- **Score de sommeil médiocre (58/100)** : Impact potentiel sur la progression et la tolérance à la charge.
+
+#### Recommandations Progression
+1. **Urgence sommeil** :
+   - Objectif **7h+** les nuits précédant les séances clés, avec coucher avant 23h pour maximiser le sommeil profond.
+   - Éviter les stimulants (caféine, écrans) après 16h.
+2. **Adaptation entraînement** :
+   - Maintenir les séances Z2 (peu stressantes), mais **reporter les séances VO2Max/Sweet-Spot** jusqu'à amélioration du sommeil (score >75/100, durée >6h30).
+   - Si sommeil <6h, réduire le volume ou l'intensité de 10-15%.
+3. **Surveillance** :
+   - Vérifier la FC repos matinale : une augmentation (>5 BPM vs baseline) signalerait un surentraînement.
+   - Utiliser des **siestes de 20min** en journée pour compenser partiellement la dette.
+
+#### Métriques Post-séance
+- CTL : 58
+- ATL : 64
+- TSB : -6
+
+---
+
 ### S066-03-INT-VO2Max4x4
 Date : 05/11/2025
 
