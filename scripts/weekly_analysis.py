@@ -104,10 +104,10 @@ class WeeklyAnalysis:
         workouts = []
         seen = set()  # Pour éviter les doublons
 
-        # Extraire la section "## Historique" seulement
-        historique_match = re.search(r'## Historique\s*\n(.*)', content, re.DOTALL)
+        # Extraire la section "# Historique" (avec support de # ou ##)
+        historique_match = re.search(r'#+ Historique.*?\n(.*)', content, re.DOTALL)
         if not historique_match:
-            print("   ⚠️  Section '## Historique' non trouvée")
+            print("   ⚠️  Section 'Historique' non trouvée")
             return []
 
         historique_content = historique_match.group(1)
@@ -156,7 +156,7 @@ class WeeklyAnalysis:
         return workouts
 
     def collect_week_metrics(self) -> Dict:
-        """Collecter les métriques d'évolution via API Intervals.icu"""
+        """Collecter métriques évolution via API"""
         if not self.api:
             print("⚠️  API non disponible, skip métriques")
             return {}
@@ -165,253 +165,224 @@ class WeeklyAnalysis:
 
         try:
             # Dates au format ISO
-            oldest = self.start_date.strftime('%Y-%m-%d')
-            newest = self.end_date.strftime('%Y-%m-%d')
+            start_date_str = self.start_date.strftime('%Y-%m-%d')
+            end_date_str = self.end_date.strftime('%Y-%m-%d')
 
-            # Récupérer wellness quotidien
-            wellness_data = self.api.get_wellness(oldest=oldest, newest=newest)
+            # Récupérer wellness début et fin
+            wellness_data = self.api.get_wellness(oldest=start_date_str, newest=end_date_str)
 
             if not wellness_data:
                 print("   ⚠️  Aucune donnée wellness disponible")
-                return {}
+                return self._mock_metrics()
 
             # Trier par date
             wellness_data.sort(key=lambda x: x['id'])
+            wellness_start = wellness_data[0]
+            wellness_end = wellness_data[-1]
 
-            # Extraire métriques début et fin
-            first_day = wellness_data[0]
-            last_day = wellness_data[-1]
+            # Récupérer activités de la semaine
+            activities = self.api.get_activities(oldest=start_date_str, newest=end_date_str)
+
+            # Calculer métriques quotidiennes
+            daily_metrics = []
+            current_date = self.start_date
+
+            while current_date <= self.end_date:
+                date_str = current_date.strftime('%Y-%m-%d')
+
+                # Trouver wellness pour cette date
+                day_wellness = next((w for w in wellness_data if w['id'] == date_str), None)
+
+                if day_wellness:
+                    daily_metrics.append({
+                        'date': date_str,
+                        'ctl': day_wellness.get('ctl', 0),
+                        'atl': day_wellness.get('atl', 0),
+                        'tsb': day_wellness.get('ctl', 0) - day_wellness.get('atl', 0),
+                        'weight': day_wellness.get('weight'),
+                    })
+                else:
+                    daily_metrics.append({
+                        'date': date_str,
+                        'ctl': None,
+                        'atl': None,
+                        'tsb': None,
+                        'weight': None,
+                    })
+
+                current_date += timedelta(days=1)
 
             metrics = {
-                'ctl_start': first_day.get('ctl', 0),
-                'atl_start': first_day.get('atl', 0),
-                'tsb_start': first_day.get('ctl', 0) - first_day.get('atl', 0),
-                'ctl_end': last_day.get('ctl', 0),
-                'atl_end': last_day.get('atl', 0),
-                'tsb_end': last_day.get('ctl', 0) - last_day.get('atl', 0),
-                'weight_start': first_day.get('weight', 0),
-                'weight_end': last_day.get('weight', 0),
-                'daily_evolution': wellness_data
+                'start': {
+                    'ctl': wellness_start.get('ctl', 0),
+                    'atl': wellness_start.get('atl', 0),
+                    'tsb': wellness_start.get('ctl', 0) - wellness_start.get('atl', 0),
+                    'weight': wellness_start.get('weight', 0),
+                },
+                'end': {
+                    'ctl': wellness_end.get('ctl', 0),
+                    'atl': wellness_end.get('atl', 0),
+                    'tsb': wellness_end.get('ctl', 0) - wellness_end.get('atl', 0),
+                    'weight': wellness_end.get('weight', 0),
+                },
+                'daily': daily_metrics,
+                'activities_count': len(activities) if activities else 0
             }
 
-            print(f"   ✅ Métriques collectées (CTL: {metrics['ctl_start']:.0f}→{metrics['ctl_end']:.0f})")
+            print(f"   ✅ Métriques collectées (CTL: {metrics['start']['ctl']:.0f}→{metrics['end']['ctl']:.0f})")
 
             return metrics
 
         except Exception as e:
-            print(f"   ⚠️  Erreur collecte métriques : {e}")
-            return {}
+            print(f"   ⚠️  Erreur collecte métriques API : {e}")
+            print("      Utilisation de données mockées...")
+            return self._mock_metrics()
+
+    def _mock_metrics(self) -> Dict:
+        """Retourner des métriques mockées en cas d'erreur API"""
+        return {
+            'start': {'ctl': 0, 'atl': 0, 'tsb': 0, 'weight': 0},
+            'end': {'ctl': 0, 'atl': 0, 'tsb': 0, 'weight': 0},
+            'daily': [],
+            'activities_count': len(self.workouts)
+        }
 
     def collect_context_files(self) -> Dict[str, str]:
-        """Charger les fichiers contexte du projet"""
+        """Charger fichiers contexte projet"""
         print("📚 Chargement des fichiers contexte...")
 
         context = {}
 
-        # Fichier principal: project_prompt
-        prompt_file = self.references_dir / "project_prompt_v2_1_revised.md"
-        if prompt_file.exists():
-            with open(prompt_file, 'r', encoding='utf-8') as f:
-                context['project_prompt'] = f.read()
-            print("   ✅ project_prompt_v2_1_revised.md")
+        files_to_load = {
+            'project_prompt': 'references/project_prompt_v2_1_revised.md',
+            'cycling_concepts': 'references/cycling_training_concepts.md',
+        }
 
-        # Concepts cyclisme
-        concepts_file = self.references_dir / "cycling_training_concepts.md"
-        if concepts_file.exists():
-            with open(concepts_file, 'r', encoding='utf-8') as f:
-                context['cycling_concepts'] = f.read()
-            print("   ✅ cycling_training_concepts.md")
-
-        # Documentation complète (si disponible)
-        doc_file = self.project_root / "Documentation_Complète_du_Suivi_v1_5.md"
-        if doc_file.exists():
-            with open(doc_file, 'r', encoding='utf-8') as f:
-                context['documentation'] = f.read()
-            print("   ✅ Documentation_Complète_du_Suivi_v1_5.md")
+        for key, path in files_to_load.items():
+            try:
+                filepath = self.project_root / path
+                if filepath.exists():
+                    context[key] = filepath.read_text(encoding='utf-8')
+                    print(f"   ✅ Chargé : {path}")
+                else:
+                    print(f"   ⚠️  Fichier non trouvé : {filepath}")
+                    context[key] = f"[Fichier {path} non trouvé]"
+            except Exception as e:
+                print(f"   ⚠️  Erreur lecture {path} : {e}")
+                context[key] = f"[Erreur lecture {path}]"
 
         return context
 
     def generate_weekly_prompt(self) -> str:
         """Générer le prompt complet pour Claude"""
 
-        # Formater les dates
-        date_start_str = self.start_date.strftime('%d/%m/%Y')
-        date_end_str = self.end_date.strftime('%d/%m/%Y')
-        next_week = self._next_week()
+        next_week = f"S{int(self.week_number[1:]) + 1:03d}"
 
         # Formater les séances
-        workouts_text = "\n\n".join([w['content'] for w in self.workouts])
+        workouts_text = "\n\n".join([
+            f"#### {workout['name']}\n{workout['content']}"
+            for workout in self.workouts
+        ])
 
-        # Formater les métriques
-        if self.metrics:
-            metrics_text = f"""### Métriques Début de Semaine
-- CTL : {self.metrics['ctl_start']:.0f}
-- ATL : {self.metrics['atl_start']:.0f}
-- TSB : {self.metrics['tsb_start']:+.0f}
-- Poids : {self.metrics['weight_start']:.1f}kg
+        # Formater les dates
+        start_date_str = self.start_date.strftime('%d/%m/%Y')
+        end_date_str = self.end_date.strftime('%d/%m/%Y')
 
-### Métriques Fin de Semaine
-- CTL : {self.metrics['ctl_end']:.0f} ({self.metrics['ctl_end'] - self.metrics['ctl_start']:+.0f})
-- ATL : {self.metrics['atl_end']:.0f} ({self.metrics['atl_end'] - self.metrics['atl_start']:+.0f})
-- TSB : {self.metrics['tsb_end']:+.0f} ({self.metrics['tsb_end'] - self.metrics['tsb_start']:+.0f})
-- Poids : {self.metrics['weight_end']:.1f}kg ({self.metrics['weight_end'] - self.metrics['weight_start']:+.1f}kg)
-"""
-        else:
-            metrics_text = "_Métriques non disponibles_"
-
-        prompt = f"""# Analyse Hebdomadaire {self.week_number}
+        prompt = f"""# Analyse Hebdomadaire Cyclisme - {self.week_number}
 
 ## Contexte Athlète
+{self.context_files.get('project_prompt', '[Project prompt non chargé]')}
 
-{self.context_files.get('project_prompt', '[Context non disponible]')}
-
----
-
-## 📚 Référence Cyclisme
-
-{self.context_files.get('cycling_concepts', '[Concepts non disponibles]')}
-
----
+## Période Analysée
+- **Semaine** : {self.week_number}
+- **Dates** : {start_date_str} → {end_date_str}
+- **Séances réalisées** : {len(self.workouts)}
 
 ## Données de la Semaine
 
-- **Période** : {date_start_str} → {date_end_str}
-- **Nombre de séances** : {len(self.workouts)}
-
 ### Métriques Évolution
+```json
+{json.dumps(self.metrics, indent=2, ensure_ascii=False)}
+```
 
-{metrics_text}
-
----
-
-## Analyses des Séances
-
-{workouts_text if workouts_text else '_Aucune séance analysée_'}
-
----
+### Analyses des Séances
+{workouts_text}
 
 ## Mission
 
-Génère les **6 fichiers markdown** du rapport hebdomadaire selon le format standardisé.
+Génère les **6 fichiers markdown obligatoires** du rapport hebdomadaire selon le format standardisé.
 
-### Format Attendu
+### Format de Sortie OBLIGATOIRE
 
-Chaque fichier doit être délimité par des balises claires. Utilise EXACTEMENT ce format :
+Tu DOIS structurer ta réponse avec ces délimiteurs exacts :
 
-```
+```markdown
 ### FILE: workout_history_{self.week_number}.md
-[Contenu du fichier workout_history]
+[Contenu complet du fichier 1]
 
 ### FILE: metrics_evolution_{self.week_number}.md
-[Contenu du fichier metrics_evolution]
+[Contenu complet du fichier 2]
 
 ### FILE: training_learnings_{self.week_number}.md
-[Contenu du fichier training_learnings]
+[Contenu complet du fichier 3]
 
 ### FILE: protocol_adaptations_{self.week_number}.md
-[Contenu du fichier protocol_adaptations]
+[Contenu complet du fichier 4]
 
 ### FILE: transition_{self.week_number}_{next_week}.md
-[Contenu du fichier transition]
+[Contenu complet du fichier 5]
 
 ### FILE: bilan_final_{self.week_number}.md
-[Contenu du fichier bilan_final]
+[Contenu complet du fichier 6]
 ```
 
----
+## Consignes Qualité
 
-## Contenu des Fichiers
+1. **Factuel** : Métriques précises, données vérifiables depuis les analyses
+2. **Concis** : Éviter redondances entre les 6 fichiers
+3. **Actionnable** : Recommandations spécifiques pour {next_week}
+4. **Traçable** : Progression/régression identifiable sur chaque métrique
+5. **Complet** : Aucun aspect technique des séances omis
+
+## Règles Spécifiques par Fichier
 
 ### 1. workout_history_{self.week_number}.md
-
-Chronologie complète des 7 séances :
-- Reprise des analyses complètes depuis workouts-history.md
-- Métriques pré/post par séance
-- Découvertes techniques
-- Notes coach
+- Chronologie stricte (lundi → dimanche)
+- Format par séance : Date | Durée | TSS | IF | RPE
+- Métriques pré/post (CTL/ATL/TSB)
+- Notes techniques factuelles
 
 ### 2. metrics_evolution_{self.week_number}.md
-
-Évolution des métriques :
-- Tableau FTP si test effectué
-- Progression quotidienne TSB/Fatigue/Condition
-- Évolution poids
-- CTL/ATL/TSB début → fin
+- Tableau FTP avec contexte tests
+- Progression quotidienne TSB/Fatigue
+- Évolution poids début → fin
+- Validations techniques (découplage, HRRc si applicable)
 
 ### 3. training_learnings_{self.week_number}.md
-
-Découvertes et apprentissages :
-- Découvertes techniques majeures (3-5 points)
+- Maximum 5 découvertes majeures
 - Patterns physiologiques identifiés
-- Protocoles validés ou invalidés
-- Points de surveillance pour le futur
+- Protocoles validés/invalidés avec preuves
+- Points surveillance {next_week}
 
 ### 4. protocol_adaptations_{self.week_number}.md
-
-Ajustements protocoles :
-- Modifications de seuils/critères
-- Nouveaux protocoles établis
-- Ajustements hydratation/nutrition
-- Exclusions mises à jour
+- Ajustements justifiés par data
+- Seuils/critères mis à jour
+- Modifications hydratation/nutrition si nécessaire
+- Exclusions avec raisons
 
 ### 5. transition_{self.week_number}_{next_week}.md
-
-Transition vers {next_week} :
-- État final semaine actuelle
-- Acquisitions validées vs échecs
-- 2-3 options de progression pour {next_week}
-- Recommandation choisie avec justification
+- État final factuel (TSB/Fatigue/Validations)
+- 2-3 scénarios progression justifiés
+- Recommandation avec arguments data-driven
+- Timeline objectifs cycle en cours
 
 ### 6. bilan_final_{self.week_number}.md
-
-Bilan global :
-- Objectifs visés vs réalisés
-- Métriques finales comparées aux attentes
-- 3-4 découvertes majeures
+- Synthèse ≤ 500 mots
+- 3-4 points critiques maximum
 - Protocoles établis cette semaine
-- Conclusion synthétique (2-3 lignes)
+- Conclusion actionnable
 
----
-
-## Consignes
-
-1. **Factuel** : Basé uniquement sur les données fournies
-2. **Concis** : Éviter les redondances entre fichiers
-3. **Actionnable** : Recommandations concrètes et spécifiques
-4. **Traçable** : Progression/régression facilement identifiable
-5. **Complet** : Aucun aspect technique omis
-
----
-
-## Format de Réponse EXACT
-
-Tu DOIS générer ta réponse avec EXACTEMENT cette structure :
-
-### FILE: workout_history_{self.week_number}.md
-[Le contenu markdown du fichier 1]
-
-### FILE: metrics_evolution_{self.week_number}.md
-[Le contenu markdown du fichier 2]
-
-### FILE: training_learnings_{self.week_number}.md
-[Le contenu markdown du fichier 3]
-
-### FILE: protocol_adaptations_{self.week_number}.md
-[Le contenu markdown du fichier 4]
-
-### FILE: transition_{self.week_number}_{next_week}.md
-[Le contenu markdown du fichier 5]
-
-### FILE: bilan_final_{self.week_number}.md
-[Le contenu markdown du fichier 6]
-
-**IMPORTANT** :
-- Ne pas ajouter de blocs de code ````markdown
-- Ne pas ajouter de texte explicatif avant ou après
-- Générer UNIQUEMENT les 6 sections FILE ci-dessus
-- Chaque section FILE doit contenir du markdown valide
-
-Génère maintenant les 6 fichiers du rapport hebdomadaire.
+Commence maintenant l'analyse !
 """
 
         return prompt
@@ -456,6 +427,50 @@ Génère maintenant les 6 fichiers du rapport hebdomadaire.
             files[current_file] = content
 
         return files
+
+    def validate_generated_files(self, files: Dict[str, str]) -> bool:
+        """Valider les fichiers générés"""
+
+        next_week = f"S{int(self.week_number[1:]) + 1:03d}"
+
+        expected_files = {
+            f'workout_history_{self.week_number}.md': 2000,  # min chars
+            f'metrics_evolution_{self.week_number}.md': 1000,
+            f'training_learnings_{self.week_number}.md': 1500,
+            f'protocol_adaptations_{self.week_number}.md': 500,
+            f'transition_{self.week_number}_{next_week}.md': 800,
+            f'bilan_final_{self.week_number}.md': 1000,
+        }
+
+        errors = []
+        warnings = []
+
+        for expected_file, min_length in expected_files.items():
+            if expected_file not in files:
+                errors.append(f"❌ Fichier manquant : {expected_file}")
+            elif len(files[expected_file]) < min_length:
+                warnings.append(
+                    f"⚠️ Fichier court : {expected_file} "
+                    f"({len(files[expected_file])} chars, min {min_length})"
+                )
+            else:
+                print(f"   ✅ {expected_file} ({len(files[expected_file])} chars)")
+
+        if errors:
+            print("\n❌ Erreurs critiques :")
+            for error in errors:
+                print(f"   {error}")
+            return False
+
+        if warnings:
+            print("\n⚠️  Avertissements :")
+            for warning in warnings:
+                print(f"   {warning}")
+            print()
+            response = input("Continuer quand même ? (O/n) : ")
+            return response.lower() != 'n'
+
+        return True
 
     def git_commit(self):
         """Commit automatique des fichiers générés"""
@@ -594,21 +609,15 @@ Co-Authored-By: Claude <noreply@anthropic.com>
         print("✂️  Parsing de la réponse...")
         files = self.parse_claude_response(claude_response)
 
-        expected_count = 6
-        if len(files) != expected_count:
-            print(f"⚠️  Attention : {len(files)} fichier(s) extrait(s) au lieu de {expected_count}")
-            print()
-            print("Fichiers détectés :")
-            for filename in files.keys():
-                print(f"   - {filename}")
-            print()
+        # Validation des fichiers
+        print()
+        print("📋 Validation des fichiers...")
+        if not self.validate_generated_files(files):
+            print("❌ Validation échouée. Abandon.")
+            return
 
-            continuer = input("Continuer quand même ? (o/n) : ").strip().lower()
-            if continuer != 'o':
-                print("❌ Analyse annulée")
-                return
-
-        print(f"✅ {len(files)} fichier(s) extrait(s)")
+        print()
+        print(f"✅ Validation réussie : {len(files)} fichier(s)")
         print()
 
         # Étape 5 : Sauvegarde
