@@ -20,6 +20,7 @@ import subprocess
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Optional
 import requests
 from workflow_state import WorkflowState
 
@@ -103,6 +104,39 @@ class IntervalsAPI:
                 return event
 
         return None
+
+    def create_event(self, event_data: dict) -> Optional[dict]:
+        """
+        Créer un événement (workout) sur Intervals.icu
+
+        Args:
+            event_data: Dictionnaire contenant :
+                - category: "WORKOUT"
+                - name: Nom du workout
+                - description: Contenu au format Intervals.icu
+                - start_date_local: Date au format YYYY-MM-DD
+
+        Returns:
+            Réponse API si succès, None sinon
+
+        API Documentation:
+            POST /api/v1/athlete/{id}/events
+        """
+        try:
+            url = f"{self.BASE_URL}/athlete/{self.athlete_id}/events"
+
+            response = self.session.post(url, json=event_data)
+            response.raise_for_status()
+
+            return response.json()
+
+        except requests.exceptions.HTTPError as e:
+            print(f"❌ Erreur HTTP : {e}")
+            print(f"   Réponse : {e.response.text if e.response else 'N/A'}")
+            return None
+        except Exception as e:
+            print(f"❌ Erreur création événement : {e}")
+            return None
 
 
 class PromptGenerator:
