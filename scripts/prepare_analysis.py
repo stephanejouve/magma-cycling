@@ -132,10 +132,17 @@ class IntervalsAPI:
 
         except requests.exceptions.HTTPError as e:
             print(f"❌ Erreur HTTP : {e}")
-            print(f"   Réponse : {e.response.text if e.response else 'N/A'}")
+            if e.response is not None:
+                try:
+                    error_detail = e.response.json()
+                    print(f"   Détail : {error_detail}")
+                except:
+                    print(f"   Réponse : {e.response.text}")
+            print(f"   Données envoyées : {event_data}")
             return None
         except Exception as e:
             print(f"❌ Erreur création événement : {e}")
+            print(f"   Données envoyées : {event_data}")
             return None
 
 
