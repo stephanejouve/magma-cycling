@@ -56,3 +56,7 @@ build/
 scripts/test_*.py
 scripts/logs*.txt
 scripts/*_raw.json
+
+# État workflow (local, ne pas commiter)
+.workflow_state.json
+.athlete_feedback/

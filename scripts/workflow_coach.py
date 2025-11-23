@@ -22,7 +22,10 @@ import os
 import sys
 import subprocess
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
+import json
+import requests
+from workflow_state import WorkflowState
 
 
 class WorkflowCoach:
@@ -90,6 +93,89 @@ class WorkflowCoach:
 
         self.wait_user("Appuyer sur ENTRÉE pour démarrer...")
 
+    def step_1b_detect_gaps(self):
+        """Étape 1b : Détecter les séances non analysées"""
+        # Skip si activity_id fourni (bypass détection gaps)
+        if self.activity_id:
+            return
+
+        # Charger état et config Intervals.icu
+        state = WorkflowState(project_root=self.project_root)
+
+        # Charger config API
+        config_path = Path.home() / ".intervals_config.json"
+        if not config_path.exists():
+            # Pas de config, skip la détection
+            return
+
+        try:
+            with open(config_path, 'r') as f:
+                config = json.load(f)
+
+            athlete_id = config.get('athlete_id')
+            api_key = config.get('api_key')
+
+            if not athlete_id or not api_key:
+                return
+
+            # Connexion rapide à l'API pour détecter gaps
+            session = requests.Session()
+            session.auth = ("API_KEY", api_key)
+            session.headers.update({"Content-Type": "application/json"})
+
+            # Récupérer activités récentes
+            last_analyzed_id = state.get_last_analyzed_id()
+
+            if last_analyzed_id:
+                oldest_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+            else:
+                oldest_date = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
+
+            newest_date = datetime.now().strftime('%Y-%m-%d')
+
+            url = f"https://intervals.icu/api/v1/athlete/{athlete_id}/activities"
+            response = session.get(url, params={'oldest': oldest_date, 'newest': newest_date})
+            response.raise_for_status()
+            activities = response.json()
+
+            # Trier et filtrer
+            activities.sort(key=lambda x: x['start_date_local'], reverse=True)
+            unanalyzed = state.get_unanalyzed_activities(activities)
+
+            count = len(unanalyzed)
+
+            if count > 1:
+                # Plusieurs séances non analysées détectées
+                self.clear_screen()
+                self.print_header(
+                    "🔍 Détection Multi-Séances",
+                    "Étape 1b/7 : Gaps détectés"
+                )
+
+                print(f"📊 {count} séances non analysées détectées !")
+                print()
+                print("📝 Détails :")
+                for i, act in enumerate(unanalyzed[:5], 1):  # Afficher max 5
+                    date = act['start_date_local'][:10]
+                    name = act.get('name', 'Séance')[:40]
+                    print(f"   {i}. [{date}] {name}")
+                if count > 5:
+                    print(f"   ... et {count - 5} autres")
+                print()
+                print("💡 À l'étape suivante (Préparation Prompt), tu pourras :")
+                print("   • Analyser la DERNIÈRE séance uniquement")
+                print("   • Choisir UNE séance spécifique")
+                print("   • Analyser TOUTES en mode batch")
+                print()
+                print("Le script prepare_analysis.py te proposera un menu interactif.")
+                print()
+
+                self.wait_user("Appuyer sur ENTRÉE pour continuer...")
+
+        except Exception as e:
+            # En cas d'erreur, skip silencieusement la détection
+            pass
+
     def step_2_collect_feedback(self):
         """Étape 2 : Collecter le feedback athlète"""
         if self.skip_feedback:
@@ -127,14 +213,76 @@ class WorkflowCoach:
             self.wait_user()
             return
 
+        # Choisir le mode
         print()
-        print("Lancement de collect_athlete_feedback.py...")
+        print("Mode feedback :")
+        print("  1 - Quick (30s) : RPE + ressenti général")
+        print("  2 - Full (2-3min) : RPE + ressenti + difficultés + contexte + sensations")
+        mode_choice = input("Choix (1/2) : ").strip()
+
+        print()
+        mode_str = "quick" if mode_choice == '1' else "full"
+        print(f"Lancement de collect_athlete_feedback.py (mode {mode_str})...")
         self.print_separator()
 
-        # Lancer le script de collecte
-        cmd = ["python3", str(self.scripts_dir / "collect_athlete_feedback.py"), "--quick"]
-        result = subprocess.run(cmd)
-
+# Lancer le script de collecte AVEC contexte
+        try:
+            from prepare_analysis import IntervalsAPI
+            import os
+            
+            # Récupérer la dernière activité pour le contexte
+            api = IntervalsAPI(
+                athlete_id=os.getenv('VITE_INTERVALS_ATHLETE_ID'),
+                api_key=os.getenv('VITE_INTERVALS_API_KEY')
+            )
+            
+            # Récupérer la dernière activité (1 jour)
+            from datetime import datetime, timedelta
+            oldest = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+            newest = datetime.now().strftime('%Y-%m-%d')
+            activities = api.get_activities(oldest=oldest, newest=newest) 
+            if activities and len(activities) > 0:
+                activity = activities[0]
+                
+                # Commande avec contexte
+                cmd = [
+                    "python3", 
+                    str(self.scripts_dir / "collect_athlete_feedback.py"),
+                    "--activity-name", activity.get('name', 'Séance'),
+                    "--activity-date", activity.get('start_date_local', ''),
+                    "--activity-duration", str(activity.get('moving_time', 0) // 60),
+                    "--activity-tss", str(int(activity.get('icu_training_load', 0))),
+                ]
+                
+                # Ajouter IF si disponible
+                if activity.get('icu_intensity'):
+                    if_value = activity.get('icu_intensity', 0) / 100.0
+                    cmd.extend(["--activity-if", f"{if_value:.2f}"])
+                
+                # Mode quick
+                if mode_choice == '1':
+                    cmd.append("--quick")
+                
+                result = subprocess.run(cmd)
+            else:
+                # Fallback sans contexte
+                print()
+                print("⚠️  Impossible de récupérer le contexte de la séance")
+                cmd = ["python3", str(self.scripts_dir / "collect_athlete_feedback.py")]
+                if mode_choice == '1':
+                    cmd.append("--quick")
+                result = subprocess.run(cmd)
+        
+        except Exception as e:
+            print()
+            print(f"⚠️  Erreur lors de la récupération du contexte : {e}")
+            # Fallback sans contexte
+            cmd = ["python3", str(self.scripts_dir / "collect_athlete_feedback.py")]
+            if mode_choice == '1':
+                cmd.append("--quick")
+            result = subprocess.run(cmd)
+        
+        # Résultat
         if result.returncode != 0:
             print()
             print("⚠️  Erreur lors de la collecte du feedback.")
@@ -144,7 +292,6 @@ class WorkflowCoach:
             print()
             print("✅ Feedback collecté et sauvegardé !")
             self.wait_user()
-
     def step_3_prepare_analysis(self):
         """Étape 3 : Préparer le prompt d'analyse"""
         self.clear_screen()
@@ -190,14 +337,29 @@ class WorkflowCoach:
         except:
             pass
 
+        # Afficher le nom de la séance si trouvé
+        if self.activity_name:
+            print()
+            print("=" * 70)
+            print(f"🚴 SÉANCE EN COURS D'ANALYSE")
+            print("=" * 70)
+            print(f"\n{self.activity_name}\n")
+            print("=" * 70)
+
         self.wait_user()
 
     def step_4_paste_prompt(self):
         """Étape 4 : Instructions pour coller le prompt dans Claude"""
         self.clear_screen()
+
+        # Afficher le nom de la séance dans le header
+        subtitle = "Étape 4/7 : Envoi du prompt"
+        if self.activity_name:
+            subtitle += f"\n🚴 {self.activity_name}"
+
         self.print_header(
             "🤖 Analyse par Claude.ai",
-            "Étape 4/7 : Envoi du prompt"
+            subtitle
         )
 
         print("Le prompt est prêt dans ton presse-papier.")
@@ -227,9 +389,15 @@ class WorkflowCoach:
     def step_5_validate_analysis(self):
         """Étape 5 : Valider la réponse de Claude"""
         self.clear_screen()
+
+        # Afficher le nom de la séance dans le header
+        subtitle = "Étape 5/7 : Vérification qualité"
+        if self.activity_name:
+            subtitle += f"\n🚴 {self.activity_name}"
+
         self.print_header(
             "✅ Validation de l'Analyse",
-            "Étape 5/7 : Vérification qualité"
+            subtitle
         )
 
         print("Avant d'insérer l'analyse dans les logs, vérifie que :")
@@ -274,9 +442,15 @@ class WorkflowCoach:
     def step_6_insert_analysis(self):
         """Étape 6 : Insérer l'analyse dans les logs"""
         self.clear_screen()
+
+        # Afficher le nom de la séance dans le header
+        subtitle = "Étape 6/7 : Mise à jour workouts-history.md"
+        if self.activity_name:
+            subtitle += f"\n🚴 {self.activity_name}"
+
         self.print_header(
             "💾 Insertion dans les Logs",
-            "Étape 6/7 : Mise à jour workouts-history.md"
+            subtitle
         )
 
         print("Insertion de l'analyse depuis le presse-papier...")
@@ -425,6 +599,7 @@ class WorkflowCoach:
         """Orchestrer le workflow complet"""
         try:
             self.step_1_welcome()
+            self.step_1b_detect_gaps()  # Nouvelle étape : détection gaps
             self.step_2_collect_feedback()
             self.step_3_prepare_analysis()
             self.step_4_paste_prompt()
