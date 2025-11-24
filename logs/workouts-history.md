@@ -60,6 +60,55 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S069-01-END-EnduranceBase
+Date : 24/11/2025
+
+#### Métriques Pré-séance
+- CTL : 57
+- ATL : 55
+- TSB : +2
+- Sommeil : 5.7h (score 68, VFC 81ms)
+
+#### Exécution
+- Durée : 71min
+- IF : 0.64
+- TSS : 49
+- Puissance moyenne : 136W
+- Puissance normalisée : 141W
+- Cadence moyenne : 86rpm
+- FC moyenne : 104bpm
+- Découplage : 0.2%
+
+#### Exécution Technique
+Séance endurance Z2 qualitativement excellente malgré écart puissance -6% vs prévision (136W vs 145W cible). Découplage cardiovasculaire exceptionnel 0.2% (<<5% seuil validation) confirme exécution aérobie optimale et absence dérive fatigue. Problème technique Wahoo Kickr (résistance ERG non appliquée) explique sous-intensité sans compromettre objectif adaptation métabolique base. Cadence 86rpm cohérente cible 88rpm, FC moyenne 104bpm stable indique effort contrôlé zone 2 basse. VFC 81ms exceptionnelle (vs moyenne 40ms S068) combinée FC repos 45bpm valide récupération optimale post-repos dimanche.
+
+#### Charge d'Entraînement
+TSS réalisé 49 légèrement inférieur prévision 51 (-4%) suite sous-intensité technique, maintient TSB positif +2 inchangé pré/post-séance. Charge modérée adaptée contexte reprise S069 post-S068, contribution CTL stable 57 sans stress additionnel, positionnement idéal lundi activation métabolique douce.
+
+#### Validation Objectifs
+- ✅ Découplage cardiovasculaire <7.5% (0.2% exceptionnel)
+- ✅ Durée respectée 71min vs 70min prévu (+1min tolérance)
+- ✅ Zone endurance maintenue (IF 0.64, Z2 basse)
+- ⚠️ Intensité -6% vs cible (problème matériel identifié)
+- ✅ RPE 4/10 cohérent avec IF 0.64 et FC 104bpm
+- ✅ Sommeil 5.7h score 68 VFC 81ms : Qualité récupération validée, FEU VERT Sweet-Spot mardi
+
+#### Points d'Attention
+- **Problème Wahoo Kickr critique** : Résistance ERG non appliquée compromet précision séances futures intensité. Diagnostic urgent requis (calibration capteur, firmware, connexion Bluetooth/ANT+). Vérifier fonctionnement correct sur S069-02 Sweet-Spot mardi où précision intensité 90% FTP non négociable.
+- **VFC 81ms exceptionnelle** : Doublement vs moyenne S068 (40ms), valide récupération optimale post-repos dimanche. FC repos 45bpm (+5bpm vs baseline 40bpm) acceptable contexte reprise. Profondeur sommeil "Mauvaise" + 6 interruptions identifiées nécessitent surveillance continuation semaine, mais qualité cardiaque compense durée limitée 5.7h.
+
+#### Recommandations Progression
+1. **Dépannage matériel prioritaire** : Tester Wahoo Kickr avant S069-02 mardi (Sweet-Spot 90% FTP nécessite précision ±2%). Options : recalibration spindown, test workout court 10min validation ERG, backup TrainingPeaks Virtual si problème persiste. Séance Sweet-Spot impossible sans résolution problème résistance.
+2. **Sweet-Spot mardi VALIDÉ** : Prérequis remplis (VFC 81ms >>40ms seuil, sommeil 5.7h >5h tolérance, score 68 >60). Maintenir cadence 92rpm critère S068-04, surveillance découplage <7.5% validation qualité. Auto-régulation 89% vs 90% FTP si fatigue résiduelle détectée. Format 3×10min consolidation validé.
+3. **Maintien qualité sommeil** : Score 68 acceptable mais durée 5.7h reste -19% vs cible 7h. Cibler 6h+ avant S069-04 jeudi (Force-Endurance) pour optimiser récupération neuromusculaire. Profondeur sommeil "Mauvaise" + 6 interruptions = point surveillance S069, VFC quotidienne monitoring obligatoire validation séances intensité.
+
+#### Métriques Post-séance
+- CTL : 57
+- ATL : 55
+- TSB : +2
+
+---
+
 ### Zwift - New York
 Date : 14/11/2025
 #### Métriques Pré-séance
