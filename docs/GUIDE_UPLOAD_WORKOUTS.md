@@ -306,3 +306,24 @@ En cas de problème :
 2. Tester avec `--dry-run` d'abord
 3. Vérifier credentials API
 4. Consulter les logs du script
+
+### ⚠️ Format Nom Important
+
+Le nom du workout dans Intervals.icu provient **uniquement** du délimiteur :
+- ✅ `=== WORKOUT S069-02-INT-SweetSpotAdaptation-V002 ===` → Nom utilisé
+- ❌ `Sweet Spot Adaptation 2x10 (65min, 65 TSS)` → Description uniquement
+
+**Avantages :**
+- **Traçabilité** : Lien direct avec fichiers .zwo
+- **Cohérence** : Respect convention de nommage SSSS-JJ-TYPE-NomExercice-VVVV
+- **Parsing** : Extraction automatique type/jour/version depuis le nom
+
+**Exemple :**
+```
+=== WORKOUT S069-02-INT-SweetSpotAdaptation-V002 ===
+```
+Devient dans Intervals.icu :
+- Nom : `S069-02-INT-SweetSpotAdaptation-V002`
+- Permet recherche par : S069, INT, SweetSpot, V002
+- Lien fichier : `S069-02-INT-SweetSpotAdaptation-V002.zwo`
+

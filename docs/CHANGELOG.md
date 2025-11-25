@@ -5,6 +5,16 @@ Toutes les modifications notables de ce projet seront documentées dans ce fichi
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
+
+## [1.1.1] - 2025-11-25
+
+### Documentation
+- **GUIDE_UPLOAD_WORKOUTS.md** : Correction annotations format workouts
+  - Nom workout extrait du délimiteur `=== WORKOUT ... ===` (et non première ligne)
+  - Ajout section "Format Nom Important" avec exemples
+  - Clarification avantages : traçabilité, cohérence, parsing automatique
+- Référence : fix `upload_workouts.py` lignes 124+175 (v1.1.0)
+
 ## [1.1.0] - 2025-11-25
 
 ### Added
