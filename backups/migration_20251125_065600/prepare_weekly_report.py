@@ -29,11 +29,11 @@ class WeeklyReportGenerator:
         self.project_root = Path(project_root)
         self.references_dir = self.project_root / "references"
         self.logs_dir = self.project_root / "logs"
-        self.bilans_dir = self.project_root / "logs" / "weekly_reports"
+        self.bilans_dir = self.project_root / "bilans_hebdo"
 
     def load_athlete_context(self):
         """Charger le contexte athlète"""
-        prompt_file = self.references_dir / "project_prompt_v2_1_revised.md"
+        prompt_file = self.references_dir / "project_prompt_v2.md"
         if prompt_file.exists():
             with open(prompt_file, 'r', encoding='utf-8') as f:
                 return f.read()
