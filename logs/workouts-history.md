@@ -60,6 +60,59 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S069-02-INT-SweetSpotAdaptation-V002
+Date : 25/11/2025
+#### Métriques Pré-séance
+- CTL : 57
+- ATL : 55
+- TSB : +2
+- Sommeil : 0.0h
+#### Exécution
+- Durée : 59min
+- IF : 0.73
+- TSS : 54
+- Puissance moyenne : 153W
+- Puissance normalisée : 161W
+- Cadence moyenne : 88rpm
+- FC moyenne : 110bpm
+- Découplage : 2.0%
+#### Exécution Technique
+La séance colle quasiment parfaitement au plan avec des écarts négligeables en durée, IF, TSS, puissance moyenne et NP, ce qui valide une excellente discipline d’exécution et une intensité contenue en endurance/tempo bas plutôt qu’en véritable sweet spot. Le découplage de 2.0% indique une très bonne stabilité cardio-puissance, compatible avec une bonne efficacité aérobie et absence de dérive liée à la fatigue ou à la déshydratation sur cette durée.
+
+#### Charge d'Entraînement
+Un TSS de 54 pour ~1h reste une charge faible à modérée, cohérente avec un TSB légèrement positif et une séance classable en « base training » sans impact négatif majeur sur la fraîcheur globale. L’absence d’évolution CTL/ATL/TSB post-séance montre que cette sortie consolide la charge actuelle sans créer de pic de fatigue, ce qui est pertinent dans un contexte de sommeil très dégradé.
+
+#### Validation Objectifs
+- ✅ Adhérence au plan (durée, IF, TSS, puissance, NP dans les tolérances)
+- ✅ Découplage < 7.5% (qualité aérobie et exécution stable)
+- ✅ RPE 4/10 cohérent avec IF 0.73 (séance de base/endurance contrôlée)
+
+#### Points d'Attention
+- Sommeil quasi nul avant la séance (4h45 de qualité médiocre rapportée) : à surveiller car la progression à moyen terme sera limitée si ce pattern se répète.
+- Intensité globalement inférieure à un vrai travail sweet spot malgré le nom de la séance, ce qui en fait davantage une séance d’endurance qualitative qu’un stimulus FTP marqué.
+
+#### Recommandations Progression
+1. Maintenir ce niveau de charge/intensité tant que le sommeil reste en déficit, et réserver les blocs sweet spot « vrais » (88-90% FTP soutenus) aux jours avec au moins 7h de sommeil et TSB ≥ 0.
+2. Planifier la prochaine séance ciblée « sweet spot » avec un bloc légèrement plus long (par exemple 2×12-15min à 88-90%) uniquement si la dette de sommeil est partiellement résorbée et que la FC au repos reste dans sa plage habituelle.
+
+#### Métriques Post-séance
+- CTL : 57
+- ATL : 55
+- TSB : +2
+
+[1](https://bikecompanion.app/ftp-velo-tableau/)
+[2](https://www.montre-cardio-gps.fr/charge-dentrainement-lanalyse-de-plan-dentrainement-pour-la-performance/)
+[3](https://www.lokki.rent/media/comprendre-ftp-velo)
+[4](https://www.sportsulting.fr/quels-entrainements-en-cyclisme-pour-progresser/)
+[5](https://www.leswatts.fr/post/d%C3%A9buter-et-s-entra%C3%AEner-en-cyclisme-avec-un-capteur-de-puissance-les-bases)
+[6](https://www.wasp-performance.fr/post/plan-d-entra%C3%AEnement-cyclisme-une-approche-sport-scientist-pour-une-performance-durable)
+[7](https://toutpourmasante.fr/ftp-cyclisme/)
+[8](http://www.sportifeo.com/blog/cyclisme/entrainement-en-cyclisme-les-bases/)
+[9](https://www.reddit.com/r/cycling/comments/1heuxvd/i_did_1_hour_at_260_watts_yet_garmin_is_giving_me/)
+[10](https://www.cyclesetforme.fr/entrainement-rappel-et-reflexions-2024/)
+
+---
+
 ### S069-01-END-EnduranceBase
 Date : 24/11/2025
 
