@@ -41,7 +41,7 @@ class WeeklyReportOrganizer:
 
     def __init__(self, project_root="."):
         self.project_root = Path(project_root)
-        self.bilans_dir = self.project_root / "logs" / "weekly_reports"
+        self.bilans_dir = self.project_root / "bilans_hebdo"
 
     def read_clipboard(self):
         """Lire le presse-papier"""
