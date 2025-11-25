@@ -90,13 +90,18 @@ class WorkoutUploader:
             else:
                 workout_date = self.start_date + timedelta(days=day_num - 1)
             
+            # FIX: Extraire le nom descriptif (première ligne du contenu)
             first_line = workout_content.strip().split('\n')[0]
+            
+            # FIX: Utiliser workout_name (depuis délimiteur) comme nom principal
+            # Et first_line comme description courte
+            workout_display_name = workout_name.strip()
             
             workouts.append({
                 'filename': workout_name.strip(),
                 'day': day_num,
                 'date': workout_date.strftime('%Y-%m-%d'),
-                'name': first_line if first_line else workout_name.strip(),
+                'name': workout_display_name,  # ← FIX: Utiliser le nom du délimiteur
                 'description': workout_content.strip()
             })
             
@@ -141,13 +146,17 @@ class WorkoutUploader:
             else:
                 workout_date = self.start_date + timedelta(days=day_num - 1)
             
+            # FIX: Extraire le nom descriptif (première ligne du contenu)
             first_line = workout_content.strip().split('\n')[0]
+            
+            # FIX: Utiliser workout_name (depuis délimiteur) comme nom principal
+            workout_display_name = workout_name.strip()
             
             workouts.append({
                 'filename': workout_name.strip(),
                 'day': day_num,
                 'date': workout_date.strftime('%Y-%m-%d'),
-                'name': first_line if first_line else workout_name.strip(),
+                'name': workout_display_name,  # ← FIX: Utiliser le nom du délimiteur
                 'description': workout_content.strip()
             })
             
@@ -214,7 +223,7 @@ class WorkoutUploader:
         print("=" * 70)
         print(f"✅ Succès   : {stats['success']}")
         print(f"❌ Échecs   : {stats['failed']}")
-        print(f"⏭️  Ignorés  : {stats['skipped']}")
+        print(f"⭐️  Ignorés  : {stats['skipped']}")
         print(f"📝 Total    : {len(workouts)}")
         print("=" * 70)
         
