@@ -39,6 +39,31 @@ class WorkflowCoach:
         self.scripts_dir = self.project_root / "scripts"
         self.activity_name = None
 
+    def load_credentials(self):
+        """Charger credentials Intervals.icu de manière robuste"""
+        import os
+        import json
+        from pathlib import Path
+        
+        config_path = Path.home() / ".intervals_config.json"
+        if config_path.exists():
+            try:
+                with open(config_path, 'r') as f:
+                    config = json.load(f)
+                    athlete_id = config.get('athlete_id')
+                    api_key = config.get('api_key')
+                    if athlete_id and api_key:
+                        return athlete_id, api_key
+            except Exception as e:
+                print(f"⚠️  Erreur config : {e}")
+        
+        athlete_id = os.getenv('VITE_INTERVALS_ATHLETE_ID')
+        api_key = os.getenv('VITE_INTERVALS_API_KEY')
+        if athlete_id and api_key:
+            return athlete_id, api_key
+        
+        return None, None
+
     def clear_screen(self):
         """Nettoyer l'écran"""
         os.system('clear' if os.name == 'posix' else 'cls')
@@ -228,19 +253,22 @@ class WorkflowCoach:
 # Lancer le script de collecte AVEC contexte
         try:
             from prepare_analysis import IntervalsAPI
-            import os
             
-            # Récupérer la dernière activité pour le contexte
-            api = IntervalsAPI(
-                athlete_id=os.getenv('VITE_INTERVALS_ATHLETE_ID'),
-                api_key=os.getenv('VITE_INTERVALS_API_KEY')
-            )
+            # FIX: Charger credentials
+            athlete_id, api_key = self.load_credentials()
             
-            # Récupérer la dernière activité (1 jour)
+            if not athlete_id or not api_key:
+                print()
+                print("ℹ️  Credentials non trouvés")
+                print("   → Feedback sans contexte")
+                raise ValueError("No credentials")
+            
+            api = IntervalsAPI(athlete_id=athlete_id, api_key=api_key)
+            
             from datetime import datetime, timedelta
             oldest = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
             newest = datetime.now().strftime('%Y-%m-%d')
-            activities = api.get_activities(oldest=oldest, newest=newest) 
+            activities = api.get_activities(oldest=oldest, newest=newest)
             if activities and len(activities) > 0:
                 activity = activities[0]
                 
@@ -276,6 +304,7 @@ class WorkflowCoach:
         except Exception as e:
             print()
             print(f"⚠️  Erreur lors de la récupération du contexte : {e}")
+            print("   → Collecte feedback sans contexte activité")
             # Fallback sans contexte
             cmd = ["python3", str(self.scripts_dir / "collect_athlete_feedback.py")]
             if mode_choice == '1':
