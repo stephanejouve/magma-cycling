@@ -60,6 +60,62 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S069-03-CAD-TechniqueTransitions
+Date : 26/11/2025
+
+#### Métriques Pré-séance
+- CTL : 57
+- ATL : 52
+- TSB : +4
+- Sommeil : 5.4h (Note: 58/100)
+
+#### Exécution
+- Durée : 50min
+- IF : 0.63
+- TSS : 34
+- Puissance moyenne : 137W
+- Puissance normalisée : 139W
+- Cadence moyenne : 90rpm
+- FC moyenne : 102bpm (60% FCmax)
+- Découplage : 0.6%
+
+#### Exécution Technique
+Séance de récupération technique parfaitement exécutée avec un découplage cardiovasculaire exceptionnel de 0.6%, largement sous le seuil de 7.5%, validant une efficience aérobie optimale. Cadence moyenne de 90rpm conforme aux transitions cadence planifiées (95-100rpm blocs technique, 85rpm récupération), démontrant bonne adaptation aux variations techniques. FC moyenne 102bpm (60% FCmax) confirme intensité Z1-Z2 légère adaptée au contexte post-Sweet-Spot et dette sommeil persistante.
+
+#### Charge d'Entraînement
+TSS minimal (34) et IF faible (0.63) confirment fonction récupération active de la séance. TSB maintenu à +4 post-séance, permettant reconstitution des réserves sans impact sur CTL (57 stable). Charge adaptée au contexte de 3ème séance consécutive en dette sommeil.
+
+#### Validation Objectifs
+- ✅ Découplage <7.5% (0.6% = exceptionnel)
+- ✅ TSS/IF conformes au planifié (34/34, 0.63 vs 0.64)
+- ✅ Cadence transitions validées (90rpm moyen sur blocs techniques)
+- ✅ Fonction récupération remplie (FC 60% FCmax)
+- ⚠️ Dette sommeil aggravée (5h24 vs 5h48 J-1)
+
+#### Points d'Attention
+- **Sommeil critique aggravé** : Score 58/100 (-5 vs J-1), durée 5h24 (<7h cible), VFC chute à 51ms (-9ms vs J-1 = alerte majeure). Profondeur catastrophique : 12% profond (vs 15-20% normal), 69% léger (vs 50% normal), FC repos 43bpm stable mais qualité récupération compromise. Dette cumulative 3 nuits <6h (4h48 + 5h24 + cycle précédent).
+- **Dégradation VFC** : Passage 60ms→51ms en 24h signale surcharge système nerveux autonome. Seuil critique <55ms approché, indicateur potentiel de sous-récupération malgré TSB positif.
+- **Limitation Sweet-Spot** : Cadence technique validée (90rpm) mais progression vers 92-95rpm conditionnée à récupération sommeil. Maintien 88rpm sur S069-02 cohérent avec fatigue nerveuse.
+- **Séquence J+3** : Troisième séance consécutive en dette sommeil. Pattern validé : qualité technique préservée (découplage 2.0%→0.6%) mais capacité haute intensité compromise (VFC déclinante).
+
+#### Recommandations Progression
+1. **VETO séances intensité** : VFC 51ms <55ms seuil → Interdiction formelle Sweet-Spot/VO2 jusqu'à récupération >60ms. S069-04 doit être récupération active pure (Z1, 45min max, IF <0.60) ou repos complet si VFC <50ms demain matin.
+2. **Protocole sommeil d'urgence** : Objectif impératif 7h+ les 3 prochaines nuits. Stratégies immédiates : coucher 21h30 (vs habituel 23h+), environnement optimisé (18°C, obscurité totale, pas d'écrans 2h avant), évaluation médecin sommeil si échec 4ème nuit consécutive <6h.
+3. **Surveillance HRV quotidienne** : Monitoring VFC obligatoire chaque matin avant décision séance. Seuils décisionnels : VFC <50ms = repos complet, 50-55ms = Z1 uniquement, 55-60ms = Z2 possible, >60ms = retour progressif intensité.
+4. **Ajustement planning S069** : Reporter S069-05/06 (Sweet-Spot progressif) jusqu'à validation VFC >60ms + sommeil 7h+. Alternative : Semaine décharge anticipée (-40% volume) si récupération impossible sous 72h.
+
+#### Métriques Post-séance
+- CTL : 57
+- ATL : 52
+- TSB : +4
+
+---
+
+**Notes Coach** :
+Paradoxe séance : Exécution technique irréprochable (0.6% découplage = meilleure mesure depuis début cycle S069) mais indicateurs systémiques alarmants (VFC -15% en 24h). Confirme capacité technique préservée en Z1-Z2 légère mais système nerveux autonome en surcharge. **Décision critique avant S069-04** : VFC 51ms proche seuil d'alerte 50ms → Repos complet ou Z1 pure obligatoire, aucune intensité >70% FTP autorisée. Dette sommeil 3 nuits consécutives <6h dépasse protocole acceptable âge 54. Progression S069→S070 conditionnée à résolution urgente dette sommeil + VFC >60ms, sinon basculement semaine décharge S070 obligatoire pour prévenir surentraînement.
+
+---
+
 ### S069-02-INT-SweetSpotAdaptation-V002
 Date : 25/11/2025
 #### Métriques Pré-séance
