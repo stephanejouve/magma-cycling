@@ -60,6 +60,62 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S069-04-FOR-ForceEndurance
+Date : 27/11/2025
+
+#### Métriques Pré-séance
+- CTL : 56
+- ATL : 52
+- TSB : +4
+- Sommeil : 6.5h (Note: 75/100)
+
+#### Exécution
+- Durée : 70min
+- IF : 0.67
+- TSS : 53
+- Puissance moyenne : 144W
+- Puissance normalisée : 147W
+- Cadence moyenne : 82rpm
+- FC moyenne : 103bpm (61% FCmax)
+- Découplage : 4.9%
+
+#### Exécution Technique
+Séance force-endurance correctement exécutée avec découplage 4.9% (<7.5%), validant qualité aérobie malgré stress musculaire rapporté (RPE 6/10). Cadence moyenne 82rpm conforme à structure mixte force/endurance (3×6min @70rpm + blocs @88rpm), mais inférieure aux 85-88rpm planifiés sur blocs récupération, indiquant fatigue résiduelle transitions cadence. FC moyenne 103bpm (61% FCmax) cohérente avec intensité Z2 (65-75% FTP), confirmant effort modéré soutenu.
+
+#### Charge d'Entraînement
+TSS 53 et IF 0.67 conformes au planifié, charge modérée adaptée à contexte récupération VFC. TSB maintenu à +4 post-séance, préservant marge manœuvre pour séances suivantes. Cumul 4 séances consécutives (141 TSS sur J-3) dans objectif hebdomadaire 320-380 TSS.
+
+#### Validation Objectifs
+- ✅ Découplage <7.5% (4.9% = bon)
+- ✅ TSS/IF conformes (53/53, 0.67/0.67)
+- ⚠️ Cadence moyenne basse (82 vs 85-88rpm cible blocs récupération)
+- ✅ Stress musculaire attendu (RPE 6/10 cohérent avec force 70rpm)
+- ✅ VFC récupérée >60ms (61ms vs 51ms J-2)
+
+#### Points d'Attention
+- **Récupération sommeil validée** : Score 75/100 (+17 vs J-1), durée 6h27 (+1h03), VFC 61ms (+10ms = signal positif). Profondeur reste problématique (11% profond vs 15-20% normal, 74% léger), mais amélioration nette vs 3 nuits précédentes. FC repos 50bpm (+7 vs sommeil) vs 43bpm moyenne sommeil indique légère activation mais acceptable.
+- **Cadence force imprécise** : Moyenne 82rpm suggère blocs force @70rpm non strictement respectés OU blocs récupération @88rpm sous-exécutés. Prospect Park (6 montées terrain) peut expliquer variations cadence imposées par relief vs consignes indoor structurées.
+- **Fatigue musculaire spécifique** : RPE 6/10 élevé pour Z2 (attendu 3-4/10) cohérent avec travail force 3×6min @70rpm + relief terrain. Pattern normal post-force, non indicateur surcharge systémique (VFC récupérée, découplage bon).
+- **Prospect Park = terrain** : 6 cols identifiés (myCols.app) confirme sortie outdoor, non indoor structuré. Écarts cadence/puissance vs planifié expliqués par contraintes relief. Discipline outdoor à surveiller (capacité terrain >> indoor, risque surcharge).
+
+#### Recommandations Progression
+1. **Validation fenêtre récupération VFC** : 61ms >60ms confirme sortie alerte critique J-2 (51ms). Autorisation retour intensité modérée (≤88% FTP) dès S069-05 si VFC maintenue >55ms demain matin. Progression Sweet-Spot 3×10min possible vendredi sous réserve validation VFC matinale.
+2. **Sommeil consolidation** : Objectif 6h30-7h cette nuit pour confirmer tendance amélioration (6h27 = proche cible). Maintenir protocole score 75+ (vs 58 J-1, 53 J-2). Profondeur sommeil (11% profond) reste point faible à surveiller, mais acceptable si durée totale >6h30.
+3. **Cadence force précision** : Prochaine séance force indoor (non terrain), respecter strictement 70rpm sur blocs force, chronomètre segments si nécessaire. Objectif : valider capacité maintien 70rpm constant vs variations terrain involontaires.
+4. **Terrain vs indoor discipline** : S069-04 outdoor (Prospect Park) acceptable en récupération VFC, mais séances intensité >85% FTP doivent rester indoor jusqu'à validation discipline (historique surcharge terrain). S069-05 Sweet-Spot = indoor obligatoire.
+
+#### Métriques Post-séance
+- CTL : 56
+- ATL : 52
+- TSB : +4
+
+---
+
+**Notes Coach** :
+Séance charnière : VFC récupérée 61ms (+10ms vs J-2) lève alerte critique, autorisant retour progressif intensité. Sommeil amélioré (6h27, score 75) confirme tendance positive mais profondeur (11% profond, 74% léger) nécessite vigilance continue. **Terrain Prospect Park acceptable en contexte récupération**, mais écarts cadence vs planifié (82 vs 85-88rpm) rappellent importance indoor pour séances structurées intensité. RPE 6/10 élevé pour Z2 cohérent avec force 70rpm + relief, non signal surmenage (découplage 4.9% bon). **Autorisation S069-05 Sweet-Spot indoor** sous condition VFC >55ms demain, sinon report Z2 légère. Dette sommeil résorbée partiellement (4h48→5h24→6h27 progression), poursuivre effort 7h+ pour validation complète cycle S069→S070.
+
+---
+
 ### S069-03-CAD-TechniqueTransitions
 Date : 26/11/2025
 
