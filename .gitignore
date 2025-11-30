@@ -60,3 +60,9 @@ scripts/*_raw.json
 # État workflow (local, ne pas commiter)
 .workflow_state.json
 .athlete_feedback/
+
+# Withings integration
+withings_integration/data/
+withings_integration/logs/
+withings_integration/withings_credentials.json
+withings_integration/.env.withings

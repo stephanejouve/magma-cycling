@@ -1,0 +1,7 @@
+# Withings sensitive files
+data/
+logs/
+withings_credentials.json
+.env.withings
+*.secret
+*.log

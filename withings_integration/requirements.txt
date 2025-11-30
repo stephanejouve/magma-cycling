@@ -1,0 +1,3 @@
+withings-api
+requests
+python-dotenv
