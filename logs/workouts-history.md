@@ -60,6 +60,54 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S070-01-END-ValidationRecuperation-V001
+Date : 01/12/2025
+
+#### Métriques Pré-séance
+- CTL : 52
+- ATL : 32
+- TSB : +20
+- Sommeil : 8.0h
+
+#### Exécution
+- Durée : 35min
+- IF : 0.55
+- TSS : 18
+- Puissance moyenne : 120W
+- Puissance normalisée : 121W
+- Cadence moyenne : 86rpm
+- FC moyenne : 97bpm
+- Découplage : -7.9%
+
+#### Exécution Technique
+Séance validation post-arrêt exécutée conformément au plan (35min, TSS 18, IF 0.55 vs 0.56 prévu). Zone Z1 maintenue (55-60% FTP, 120W moyenne), cadence cible 85rpm respectée (86rpm réalisé). Découplage cardiovasculaire négatif (-7.9%) inhabituel mais cohérent avec TSB +20 élevé et sommeil optimal 8h, indique surcondition parasympathique (FC basse relative à puissance).
+
+#### Charge d'Entraînement
+TSS minimal (18) sans impact métriques (CTL/ATL/TSB maintenus 52/32/+20). Charge appropriée contexte validation récupération post-surmenage S069 (VFC nadir 28ms, tendinite poignet).
+
+#### Validation Objectifs
+- ✅ Durée/intensité respectées (35min, IF 0.55)
+- ✅ Zone Z1 maintenue (120W = 55% FTP)
+- ⚠️ Gêne poignet droit persistante (position non trouvée)
+- ✅ RPE contrôlé (3/10, cohérent avec validation)
+- ✅ Sommeil optimal (8h, premier depuis arrêt S069)
+
+#### Points d'Attention
+- Tendinite poignet droit non résolue : position mains cocottes inconfortable, nécessite adaptation ergonomique (hauteur guidon, reach cockpit) avant progression intensité
+- Découplage négatif (-7.9%) reflète surcondition TSB +20 excessive : nécessite augmentation progressive charge S070-02 à S070-06 pour ramener TSB zone productive (-5 à +5)
+
+#### Recommandations Progression
+1. S070-02 : Augmenter durée (60min) et intensité (68% FTP, Z2 basse) si VFC matinale >60ms et poignet tolérable
+2. Évaluation ergonomique urgente : tester positions guidon alternatives (mains sur capots, dessus cintre) pour identifier setup confortable avant sweet-spot S070-05
+3. Monitoring VFC quotidien obligatoire : seuil >57ms validé reprise, <55ms = alerte rouge arrêt
+
+#### Métriques Post-séance
+- CTL : 52
+- ATL : 32
+- TSB : +20
+
+---
+
 ### S069-04-FOR-ForceEndurance
 Date : 27/11/2025
 
