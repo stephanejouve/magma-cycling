@@ -60,6 +60,54 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S070-02-END-EnduranceBase-V001
+Date : 02/12/2025
+
+#### Métriques Pré-séance
+- CTL : 52
+- ATL : 33
+- TSB : +18
+- Sommeil : 5.3h (siestes multiples, score 54)
+
+#### Exécution
+- Durée : 63min
+- IF : 0.64
+- TSS : 43
+- Puissance moyenne : 134W
+- Puissance normalisée : 140W
+- Cadence moyenne : 87rpm
+- FC moyenne : 111bpm
+- Découplage : +2.9%
+
+#### Exécution Technique
+Séance endurance Z2 exécutée avec écart mineur (60min prévu → 63min, 68% FTP visé → 61% réalisé, -7W). Découplage cardiovasculaire excellent (+2.9%, seuil <7.5%), cadence cible respectée (87rpm vs 88rpm). Puissance normalisée 140W cohérente avec intensité base aérobie malgré ressenti faiblesse.
+
+#### Charge d'Entraînement
+TSS conforme objectif (43 vs 42 prévu), impact nul sur TSB (+18 maintenu). Progression charge appropriée post-validation S070-01 (+25 TSS), contexte récupération S069 toujours actif (VFC 41ms reste sous seuil santé 57ms).
+
+#### Validation Objectifs
+- ✅ Découplage validé (+2.9% < 7.5%)
+- ⚠️ Zone légèrement sous-cible (61% vs 68% FTP prévu, -10%)
+- ❌ Dette sommeil critique (5h21 + siestes vs 7h+ requis)
+- ⚠️ VFC basse (41ms vs objectif >57ms, récupération incomplète)
+- ❌ Troubles intestinaux impact performance perçue
+
+#### Points d'Attention
+- Dette sommeil chronique confirmée (5h21 + siestes fragmentées, score Withings 54/100) : facteur limitant principal, explique ressenti faiblesse malgré métriques techniques correctes
+- VFC 41ms insuffisante validation récupération complète post-S069 (objectif >57ms) : progression intensité S070-03+ conditionnée à amélioration VFC + sommeil consolidé 7h+
+- Troubles intestinaux combinés dette sommeil : recommandation report/réduction S070-03 si symptômes persistent, privilégier récupération
+
+#### Recommandations Progression
+1. S070-03 conditionné à 3 critères cumulatifs : VFC matinale >50ms minimum, sommeil consolidé >6h (sans siestes compensatoires), absence troubles digestifs. Si 1 critère non validé → séance récupération active 30min Z1 substitution
+2. Priorité absolue hygiène sommeil : viser consolidation 7h continues sur 48h avant S070-05 sweet-spot (checklist VO2 non applicable actuellement). Évaluer causes fragmentation (stress, environnement, horaires)
+
+#### Métriques Post-séance
+- CTL : 52
+- ATL : 33
+- TSB : +18
+
+---
+
 ### S070-01-END-ValidationRecuperation-V001
 Date : 01/12/2025
 
