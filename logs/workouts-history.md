@@ -60,6 +60,51 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S070-04-END-EnduranceProgressive-V001
+Date : 04/12/2025
+
+#### Métriques Pré-séance
+- CTL : 51
+- ATL : 33
+- TSB : +17
+- Sommeil : 7.5h (score 65)
+
+#### Exécution
+- Durée : 0min (séance non réalisée)
+- IF : N/A
+- TSS : 0
+- Puissance moyenne : N/A
+- Puissance normalisée : N/A
+- Cadence moyenne : N/A
+- FC moyenne : N/A
+- Découplage : N/A
+
+#### Exécution Technique
+Séance annulée pour raison technique matériel : erreur montage vélo sur home trainer, chaîne coincée derrière cassette 11 vitesses (incompatibilité dérailleur Di2 configuré 12 vitesses). Aucune exécution sportive.
+
+#### Charge d'Entraînement
+TSS nul, métriques maintenues (CTL/ATL/TSB 51/33/+17). Cumul semaine S070 inchangé (93 TSS sur 3 jours), impact progression minime si reprise vendredi.
+
+#### Validation Objectifs
+- ❌ Séance non exécutée (problème mécanique)
+- ✅ Sommeil optimal maintenu (7h29, score 65)
+- ⚠️ Interruption progression endurance planifiée
+
+#### Points d'Attention
+- Configuration matériel Di2 : vérifier compatibilité cassette 11v vs paramétrage dérailleur 12v avant prochaine séance, risque récurrence blocage chaîne
+- Impact planning S070 : repos involontaire jeudi maintient TSB élevé (+17→probablement +19 vendredi), conditions optimales sweet-spot S070-05 préservées
+
+#### Recommandations Progression
+1. Avant S070-05 vendredi : validation technique complète home trainer (chaîne dégagée, compatibilité cassette/dérailleur confirmée), test fonctionnel 5min Z1 sécurité
+2. S070-05 maintenu tel que planifié : TSB très favorable (+19 estimé), sommeil consolidé 2 jours consécutifs (7h01+7h29), conditions idéales sweet-spot 87% FTP. Pas de modification structure nécessaire
+
+#### Métriques Post-séance
+- CTL : 51
+- ATL : 33
+- TSB : +17
+
+---
+
 ### S070-03-TEC-TechniqueDouce-V001
 Date : 03/12/2025
 
