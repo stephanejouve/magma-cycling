@@ -60,6 +60,53 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S070-05-INT-SweetSpotIntro-V001
+Date : 05/12/2025
+
+#### Métriques Pré-séance
+- CTL : 50
+- ATL : 32
+- TSB : +18
+- Sommeil : 4.7h (score 54, VFC 52ms)
+
+#### Exécution
+- Durée : 59min
+- IF : 0.73
+- TSS : 52
+- Puissance moyenne : 148W
+- Puissance normalisée : 160W
+- Cadence moyenne : 85rpm
+- FC moyenne : 112bpm
+- Découplage : +1.7%
+
+#### Exécution Technique
+Séance sweet-spot intro exécutée avec découplage cardiovasculaire excellent (+1.7% < 5%), validant qualité aérobie malgré dette sommeil sévère (4h41 vs 7h+ requis). Puissance 148W moyenne conforme zone cible Z2-Z3 (67% FTP), NP 160W (73% FTP) cohérente avec structure 2×10min 87% FTP. Cadence 85rpm stable respectée, FC 112 bpm moyenne (67% FCmax estimé 167) contenue indiquant gestion conservatrice intensité.
+
+#### Charge d'Entraînement
+TSS 52 réalisé vs 51 prévu (+1), charge modérée conservant TSB +18 inchangé. Cumul semaine S070 atteint 145 TSS (4 séances exécutées sur 7 prévues), progression conservative post-arrêt S069 maintenue.
+
+#### Validation Objectifs
+- ✅ Découplage validé (+1.7% < 5%, excellent)
+- ❌ Sommeil critique (4h41 vs 7h+ requis, score 54 vs 65+ cible)
+- ⚠️ Intensité sous-cible sweet-spot (148W = 67% FTP vs 87% FTP visé sur intervalles, écart -23%)
+- ✅ Adaptation ergonomique testée (changement vélo gravel, bikefitting poignet)
+
+#### Points d'Attention
+- Dette sommeil sévère (4h41, pire nuit semaine) combinée RPE 7/10 élevé pour IF 0.73 modéré indique fatigue résiduelle significative malgré TSB +18 favorable. VFC 52ms (vs 57ms seuil santé) confirme récupération incomplète
+- Changement matériel majeur (vélo gravel, nouveau bikefitting) impacte patterns neuromusculaires : feedback "quadriceps beaucoup travaillés" + couple pédalage significatif suggère adaptation posturale en cours, nécessite validation progressive avant intensités >85% FTP
+- Puissance réalisée 148W (-23% vs 191W théorique pour 87% FTP) indique soit exécution conservative volontaire (protection adaptation matériel + dette sommeil), soit difficulté atteindre zone sweet-spot authentique (87-93% FTP). Nécessite clarification structure réelle intervalles
+
+#### Recommandations Progression
+1. S070-06 samedi conditionné impérativement à sommeil >6h30 consolidé vendredi nuit : si <6h, substituer séance endurance 75min par récupération active 45min Z1. TSB +18 favorable mais dette sommeil cumulative (4h41+5h21 semaine) constitue facteur limitant prioritaire sur capacité physiologique
+2. Configuration gravel maintenue définitivement (changement cassette 11V↔12V complexe) : adaptation neuromusculaire progressive obligatoire S071-S072 (3-4 semaines). Programmer 3-4 séances Z2 endurance 60-75min pour validation ergonomique complète (confort poignet, efficience quadriceps, stabilité couple pédalage) avant réintroduction sweet-spot authentique 88-93% FTP. Si inconfort poignet réapparaît ou RPE systématiquement élevé (+2 points vs historique), consulter professionnel bikefitting ajustements micro-positionnement (hauteur selle, recul, cintre)
+
+#### Métriques Post-séance
+- CTL : 50
+- ATL : 32
+- TSB : +18
+
+---
+
 ### S070-04-END-EnduranceProgressive-V001
 Date : 04/12/2025
 
