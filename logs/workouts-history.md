@@ -60,6 +60,53 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S070-06-END-EnduranceVolume-V001
+Date : 06/12/2025
+
+#### Métriques Pré-séance
+- CTL : 50
+- ATL : 35
+- TSB : +15
+- Sommeil : 8.6h (score 82, VFC 50ms)
+
+#### Exécution
+- Durée : 75min
+- IF : 0.67
+- TSS : 56
+- Puissance moyenne : 145W
+- Puissance normalisée : 147W
+- Cadence moyenne : 87rpm
+- FC moyenne : 106bpm
+- Découplage : +1.5%
+
+#### Exécution Technique
+Séance endurance volume exécutée avec précision parfaite : durée/TSS/IF conformes planification (75min, 56 TSS, IF 0.67). Découplage cardiovasculaire excellent (+1.5% < 5%) confirme qualité aérobie optimale et adaptation progressive configuration gravel. Puissance 145W stable (66% FTP) respecte zone Z2 cible (70% FTP = 154W, écart -6% acceptable adaptation matériel). FC 106 bpm moyenne (63% FCmax estimé 167) et cadence 87rpm cohérentes avec endurance base, VI minimal confirme régularité exécution.
+
+#### Charge d'Entraînement
+TSS 56 conforme prévu, charge modérée conservant TSB +15 inchangé. Cumul semaine S070 atteint 201 TSS (5 séances sur 7 planifiées), progression conservative post-arrêt S069 maintenue avec marge sécurité.
+
+#### Validation Objectifs
+- ✅ Exécution parfaite planification (durée/TSS/IF conformes ±1%)
+- ✅ Découplage validé (+1.5% < 5%, excellent)
+- ✅ Sommeil optimal consolidé (8h35, score 82 vs 65+ cible, amélioration +17 points vs S070-05)
+- ✅ Adaptation ergonomique gravel confirmée (75min durée validée, RPE 5/10 contrôlé malgré sollicitation musculaire antérieure/médiane cuisse)
+
+#### Points d'Attention
+- Sommeil optimal (8h35, score 82) combiné VFC 50ms (proche seuil 57ms santé) et FC repos sommeil 45 bpm (vs 40 bpm baseline, +5 bpm) indique récupération quasi-complète mais pas totale. Tendance positive confirmée (8h31→8h35, score 81→82)
+- Adaptation neuromusculaire gravel en cours : feedback "muscles face antérieure et médiane cuisse beaucoup sollicités" sur 75min confirme pattern S070-05 (quadriceps travaillés). RPE 5/10 acceptable pour IF 0.67 mais +2 points vs historique endurance base (RPE 3/10 typique) suggère coût neuromusculaire résiduel adaptation posturale. Durée 75min validée sans dégradation technique (découplage +1.5%, cadence stable 87rpm)
+- Progression cumulative S070 : 5 séances exécutées (S070-01/02/03/05/06), 2 non réalisées (S070-04 matériel, S070-07 repos). TSS hebdomadaire 201 vs 255 cible (-21%), écart acceptable contexte reprise post-arrêt S069 avec changement matériel concurrent
+
+#### Recommandations Progression
+1. S071 semaine prochaine : 3-4 séances endurance Z2 supplémentaires 60-75min (configuration gravel maintenue) pour finaliser adaptation neuromusculaire avant réintroduction sweet-spot. Cible TSS hebdomadaire 240-260 (progression conservative +15% vs S070). Surveillance RPE : si maintien ≤5/10 sur endurance base et sollicitation quadriceps diminue, autoriser sweet-spot S071-05 (2×8min 87% FTP test comparatif). Si RPE >6/10 ou courbatures persistantes, prolonger phase adaptation Z2 semaine supplémentaire
+2. Sommeil priorité absolue maintenue : consolider 8h+ quotidien (trend positif 8h31→8h35 confirmé), viser VFC >55ms stable 3 jours consécutifs avant autorisation intensités >87% FTP. FC repos sommeil 45 bpm (vs baseline 40 bpm) acceptable transition reprise mais surveiller retour <42 bpm indicateur récupération complète
+
+#### Métriques Post-séance
+- CTL : 50
+- ATL : 35
+- TSB : +15
+
+---
+
 ### S070-05-INT-SweetSpotIntro-V001
 Date : 05/12/2025
 
