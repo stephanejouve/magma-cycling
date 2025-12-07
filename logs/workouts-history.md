@@ -60,6 +60,294 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S070-03-REC-RecuperationActive-V001
+Date : 04/12/2025
+
+#### Métriques Pré-séance
+- CTL : 50
+- ATL : 35
+- TSB : +15
+
+#### Exécution
+- Durée : 0min (séance non réalisée)
+- IF : N/A
+- TSS : 0 (prévu 24)
+- Raison annulation : Non spécifié
+
+#### Impact Planning
+Annulation mineure dans contexte TSB très favorable (+15). La séance de récupération active était prévue avec charge faible (24 TSS), son absence n'affecte pas significativement la progression hebdomadaire.
+
+**Conséquences :**
+- TSS nul, métriques maintenues (CTL/ATL/TSB 50/35/+15)
+- TSB élevé suggère que le corps disposait déjà d'une récupération suffisante
+- Charge hebdomadaire légèrement réduite mais sans impact négatif sur fitness
+- Opportunité de repos supplémentaire bienvenue après semaines précédentes
+
+#### Validation Objectifs
+- ❌ Séance non exécutée (annulation)
+- ✅ État de forme excellent (TSB +15) rendait cette récupération active moins critique
+- ℹ️ Impact négligeable sur progression globale
+
+#### Points d'Attention
+- Identifier raison annulation pour documentation future
+- TSB +15 indique forme disponible excellente - pas de préoccupation récupération
+- Surveiller motivation/régularité si annulations deviennent récurrentes
+
+#### Recommandations Coach
+1. **Analyse de l'annulation** : Documenter la raison réelle (planning, motivation, fatigue non détectée par métriques) pour améliorer prédictibilité future
+2. **Planification** : Aucun rattrapage nécessaire - TSB élevé confirme récupération suffisante
+3. **Prochaine séance** : Conditions optimales pour séance d'intensité modérée (endurance ou sweet-spot léger)
+4. **Vigilance** : Si annulation liée à baisse motivation, envisager variété formats (terrain si météo permet, parcours virtuel différent)
+
+#### Métriques Post-séance
+- CTL : 50 (inchangé)
+- ATL : 35 (inchangé)
+- TSB : +15 (inchangé)
+
+---
+
+### S070-04-END-EnduranceProgressive-V001
+Date : 05/12/2025
+
+#### Métriques Pré-séance
+- CTL : 50
+- ATL : 35
+- TSB : +15
+
+#### Exécution
+- Durée : 0min (séance non réalisée)
+- IF : N/A
+- TSS : 0 (prévu 48)
+- Raison annulation : Problème technique matériel : erreur montage vélo sur home trainer, chaîne coincée derrière cassette 11V. Incompatibilité dérailleur Di2 configuré 12V vs cassette 11V montée.
+
+#### Impact Planning
+Annulation significative (48 TSS) pour cause technique documentée. Impact modéré sur charge hebdomadaire mais TSB favorable (+15) limite les conséquences sur la progression.
+
+**Conséquences :**
+- TSS nul, métriques maintenues (CTL/ATL/TSB 50/35/+15)
+- Perte d'opportunité de séance endurance progressive (développement base aérobie)
+- Charge hebdomadaire réduite de ~15% selon planification
+- Problème matériel identifié : incompatibilité configuration Di2 12V / cassette 11V
+
+#### Validation Objectifs
+- ❌ Séance non exécutée (annulation technique)
+- ⚠️ Impact modéré - séance endurance manquée affecte volume hebdomadaire
+- ✅ Problème technique identifié et documenté pour résolution
+
+#### Points d'Attention
+- **CRITIQUE** : Résoudre incompatibilité Di2 12V/cassette 11V avant prochaine séance indoor
+- Vérifier configuration complète transmission après intervention
+- Test fonctionnel obligatoire avant séance structurée
+- Documenter solution pour éviter récurrence
+
+#### Recommandations Coach
+1. **Résolution technique URGENTE** :
+   - Reconfigurer dérailleur Di2 en mode 11V OU remplacer cassette par 12V
+   - Vérification complète transmission : indexation, limites butées, tension chaîne
+   - Test parcours libre 15-20min pour validation complète avant workout structuré
+
+2. **Planification** :
+   - Report séance endurance possible en fin de semaine si résolution rapide
+   - Alternative : séance extérieure si météo favorable et matériel route opérationnel
+   - Si report impossible : prioriser qualité séances restantes vs rattrapage volume
+
+3. **Prévention** :
+   - Checklist pré-séance indoor : configuration transmission, connexion capteurs, calibration
+   - Maintenir matériel alternatif disponible (vélo route opérationnel)
+   - Documenter configuration exacte home trainer pour référence
+
+4. **Progression** :
+   - TSB +15 permet absorption de cette interruption sans impact fitness
+   - Semaine suivante : possibilité légère augmentation charge (+10%) si besoin rattrapage
+   - Priorité : régularité > volume ponctuel
+
+#### Métriques Post-séance
+- CTL : 50 (inchangé)
+- ATL : 35 (inchangé)
+- TSB : +15 (inchangé)
+
+---
+
+### S070-06-END-EnduranceVolume-V001
+Date : 07/12/2025
+
+#### Métriques Pré-séance
+- CTL : 50
+- ATL : 35
+- TSB : +15
+
+#### Exécution
+- Durée : 0min (séance non réalisée)
+- IF : N/A
+- TSS : 0 (prévu 56)
+- Raison annulation : Non spécifié
+
+#### Impact Planning
+Troisième annulation de la semaine S070, la plus importante en charge (56 TSS). Cumul des annulations S070-03/04/06 = 128 TSS non réalisés (55% charge hebdomadaire prévue).
+
+**Conséquences :**
+- TSS nul, métriques maintenues (CTL/ATL/TSB 50/35/+15)
+- Impact cumulé significatif : 3 séances annulées sur 6 planifiées
+- Charge hebdomadaire réalisée probablement <50% planification initiale
+- TSB très élevé (+15) devient préoccupant si prolongé (désentraînement potentiel)
+
+#### Validation Objectifs
+- ❌ Séance non exécutée (annulation)
+- ⚠️ Pattern d'annulations inquiétant (3/6 séances semaine)
+- ⚠️ Volume hebdomadaire insuffisant pour maintien CTL
+
+#### Points d'Attention
+- **ALERTE** : Identifier raison annulation - récurrente avec S070-03 (non spécifié aussi)
+- Pattern suggère problème sous-jacent : motivation, fatigue non détectée, contraintes planning
+- TSB +15 prolongé risque désentraînement si inactivité continue
+- Urgent : diagnostic cause racine des annulations
+
+#### Recommandations Coach
+1. **Diagnostic immédiat** :
+   - Analyser raisons réelles annulations S070-03 et S070-06 (même pattern "non spécifié")
+   - Évaluer facteurs : motivation, contraintes planning, fatigue subjective vs objective
+   - Vérifier cohérence planning avec disponibilité réelle
+   - Considérer facteurs externes : météo (si outdoor planifié), stress professionnel/personnel
+
+2. **Planification corrective** :
+   - Semaine S071 : objectif MINIMALISTE = 3 séances RÉALISÉES > 6 séances planifiées
+   - Formats courts privilégiés (45-60min) pour maximiser adhérence
+   - Placement séances aux créneaux RÉELLEMENT disponibles
+   - Accepter charge réduite temporairement vs pattern annulations récurrent
+
+3. **Stratégie relance** :
+   - Session "victory" lundi S071 : 40min facile (Z2 50-60% FTP) pour relancer dynamique
+   - Objectif psychologique : rompre cycle annulations avec succès garanti
+   - Progression très graduelle : 3 séances S071 → 4 séances S072 → 5 séances S073
+
+4. **Prévention désentraînement** :
+   - CTL 50 fragile avec charge actuelle insuffisante
+   - Minimum 200 TSS/semaine requis pour maintien (vs ~100 TSS S070 réalisé)
+   - Si annulations continuent : accepter CTL 45-48 et reconstruire progressivement
+   - Priorité : régularité modeste > ambition déçue
+
+5. **Considérations âge 54 ans** :
+   - Récupération excellente (TSB +15) mais volume insuffisant = sous-utilisation capacités
+   - Besoin activité régulière pour maintien santé cardiovasculaire
+   - Envisager formats alternatifs si indoor pose problème : marche active, vélo utilitaire
+
+#### Métriques Post-séance
+- CTL : 50 (inchangé mais menacé)
+- ATL : 35 (inchangé)
+- TSB : +15 (trop élevé)
+
+---
+
+### S070-07-REC-ReposObligatoire
+Date : 08/12/2025
+
+#### Métriques Pré-séance
+- CTL : 50
+- ATL : 35
+- TSB : +15
+- Sommeil : 6h12 (score 78, VFC 66ms)
+- FC repos : 44 bpm
+
+#### Exécution
+- Durée : 0min (repos complet planifié)
+- IF : N/A
+- TSS : 0
+- Puissance moyenne : N/A
+- Puissance normalisée : N/A
+- Cadence moyenne : N/A
+- FC moyenne : N/A
+- Découplage : N/A
+
+#### Exécution Technique
+Protocole repos dimanche obligatoire (âge 54 ans, récupération prioritaire) correctement appliqué.
+
+Consolidation adaptation neuromusculaire configuration gravel, récupération cardiovasculaire complète
+
+**Contexte repos :**
+- TSS nul, métriques maintenues (CTL/ATL/TSB stables)
+- Repos dans contexte semaine S070 atypique (3 annulations préalables)
+- Consolidation adaptations physiologiques limitée par charge hebdomadaire faible
+- Récupération déjà excellente (TSB +15) avant repos programmé
+
+#### Charge d'Entraînement
+**Impact TSS=0 sur la charge :**
+- CTL stable à 50 (mais vulnérable après semaine sous-chargée)
+- ATL en décroissance naturelle (35 → ~33 estimé post-repos)
+- TSB amélioration vers +17-18 (déjà très élevé)
+
+Le repos planifié, bien que protocolaire, intervient dans une semaine déjà très légère en charge.
+
+#### Validation Objectifs
+- ✅ Repos complet respecté (0 min activité)
+- ✅ Protocole dimanche obligatoire appliqué correctement
+- ⚠️ Contexte semaine rend ce repos moins nécessaire physiologiquement
+- ✅ Maintien discipline protocole repos = positif pour long terme
+
+#### Métriques Wellness
+- **Sommeil** : 6h12 (score 78) - INSUFFISANT vs cible 7h+ mais cohérent avec moyenne
+- **VFC** : 66ms - Excellent pour âge 54 ans, récupération cardiovasculaire optimale
+- **FC repos** : 44 bpm - Exceptionnelle, confirme capacités aérobies développées
+- **Bilan** : Métriques physiologiques excellentes malgré dette sommeil chronique
+
+#### Points d'Attention
+- Repos appliqué dans semaine déjà sous-chargée (128 TSS non réalisés)
+- TSB excessivement élevé (+15 → +18 post-repos) suggère sous-utilisation capacités
+- Sommeil 6h12 en-dessous cible 7h+ - facteur limitant persistant
+- VFC/FC excellentes confirment potentiel physiologique sous-exploité semaine S070
+
+#### Recommandations Coach
+
+**1. Validation Protocole Repos**
+- ✅ Maintenir repos dimanche obligatoire - discipline protocolaire essentielle long terme
+- ✅ Âge 54 ans justifie cette régularité même dans semaines légères
+- Considération : repos dimanche sert aussi récupération psychologique/motivation
+
+**2. Stratégie Sommeil (PRIORITAIRE)**
+- Dette sommeil chronique (6h12 vs 7h+) = facteur limitant #1 identifié
+- Objectif semaine S071 : 2 nuits minimum à 7h+ (vs volume entraînement)
+- Méthode : planifier séances compatibles avec fenêtre sommeil (pas tard le soir)
+- Corrélation établie : sommeil >7h = capacité VO2/intensité préservée
+
+**3. Semaine S071 - Relance Progressive**
+- **Lundi** : Session "reset" 40min Z2 facile (RPE 3-4) - objectif adhérence
+- **Mercredi** : Endurance 50min Z2 si lundi réussi
+- **Vendredi** : Sweet-spot court 45min si mercredi validé
+- **Dimanche** : Repos obligatoire maintenu
+
+**4. Prévention Désentraînement**
+- CTL 50 menacé par semaine S070 (<150 TSS réalisé estimé)
+- Objectif S071 : minimum 250 TSS pour stabiliser CTL
+- Formats courts privilégiés (45-60min) pour maximiser régularité
+- Accepter CTL 48-49 si nécessaire, reconstruire ensuite
+
+**5. Optimisation Récupération Active**
+- TSB +15-18 = capacité récupération excellente sous-utilisée
+- Activités légères dimanche autorisées : marche 30-45min, yoga doux, mobilité
+- Objectif : maintien activité physique régulière sans charge entraînement
+- Bénéfice : santé cardiovasculaire, mobilité articulaire, bien-être général
+
+**6. Contextualisation Configuration Gravel**
+- Adaptation neuromusculaire gravel en cours mais peu sollicitée semaine S070
+- Maintenir quelques sessions indoor sur configuration gravel S071
+- Ratio suggéré : 2 indoor gravel + 1 outdoor route (si météo)
+- Consolidation pattern pédalage asymétrie avant intensification
+
+**7. Gestion Motivation**
+- Pattern annulations S070 suggère possible baisse motivation
+- Repos dimanche = opportunité reset mental
+- Semaine S071 : privilégier plaisir > performance
+- Considérer variété : parcours virtuels nouveaux, musique, formats ludiques
+
+#### Métriques Post-séance
+- CTL : 50 (stable mais vigilance)
+- ATL : 33 (estimé après repos)
+- TSB : +17 (estimé, très favorable)
+- **Recommandation** : Utiliser TSB élevé pour relance progressive semaine S071
+
+---
+
+---
+
 ### S070-07-REC-ReposObligatoire
 Date : 08/12/2025
 
