@@ -60,6 +60,57 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S070-07-REC-ReposObligatoire
+Date : 08/12/2025
+
+#### Métriques Pré-séance
+- CTL : 50
+- ATL : 35
+- TSB : +15
+- Sommeil : 6h12min (score 78, VFC 66ms)
+
+#### Exécution
+- Durée : 0min (repos complet planifié)
+- IF : N/A
+- TSS : 0
+- Puissance moyenne : N/A
+- Puissance normalisée : N/A
+- Cadence moyenne : N/A
+- FC moyenne : N/A
+- Découplage : N/A
+
+#### Exécution Technique
+Repos complet respecté selon protocole établi (dimanche = repos obligatoire, aucune exception). Séance S070-04 jeudi annulée (problème matériel cassette 11V/12V) ne justifie pas violation du protocole repos dimanche. Priorité donnée à consolidation adaptation neuromusculaire configuration gravel (sollicitations quadriceps intenses S070-05/06) et optimisation récupération cardiovasculaire avant S071.
+
+#### Charge d'Entraînement
+TSS nul maintient métriques stables (CTL 50, ATL 35, TSB +15). Semaine S070 totale : 201 TSS réalisés (vs 255 cible, -21%), écart acceptable contexte reprise post-arrêt S069 avec changement matériel concurrent. Repos dimanche optimise conditions démarrage S071 : TSB estimé lundi +17/+18, récupération cardiovasculaire consolidée (VFC 66ms vs 50-52ms S070-05/06, FC repos sommeil 44 bpm proche baseline 40 bpm).
+
+#### Validation Objectifs
+- ✅ Repos dimanche protocole respecté (aucune exception, âge 54 ans)
+- ✅ Récupération cardiovasculaire confirmée (VFC 66ms > seuil santé 57ms, amélioration +16ms vs S070-05)
+- ✅ FC repos sommeil 44 bpm (vs 45 bpm S070-06, tendance retour baseline 40 bpm)
+- ✅ Sommeil 6h12min acceptable (score 78, amélioration vs 4h41 S070-05)
+- ✅ Adaptation neuromusculaire gravel : 48h récupération optimisent consolidation
+
+#### Points d'Attention
+- VFC 66ms excellent (meilleure valeur semaine S070, vs 50-52ms S070-05/06) confirme bénéfice repos dimanche sur récupération cardiovasculaire complète
+- Sollicitations quadriceps intenses S070-05/06 (feedback "muscles face antérieure/médiane cuisse beaucoup sollicités") nécessitent repos complet 48h pour adaptation neuromusculaire progressive configuration gravel
+- TSS hebdomadaire S070 (201 vs 255 cible, -21%) : Écart compensable progressivement S071-S072 sans urgence, priorité qualité récupération validée
+- Sommeil 6h12min (score 78) acceptable mais inférieur cible consolidée 8h+ : Surveiller maintien durée >7h quotidien S071 pour progression optimale
+
+#### Recommandations Progression
+1. S071-01 mardi : Conditions optimales confirmées (TSB +17/+18 estimé, VFC 66ms excellent, FC repos 44 bpm proche baseline). Autoriser endurance Z2 60min configuration gravel (surveillance RPE ≤5/10, feedback sollicitation quadriceps attendu diminution vs S070-06). Si RPE >6/10 ou courbatures persistantes, substituer récupération active 45min Z1
+2. S071 cible TSS 260-270 (+30% vs S070) : Progression conservative justifiée par récupération cardiovasculaire validée (VFC 66ms) et adaptation gravel en cours. Programmer 3 séances endurance Z2 60-75min + 1 sweet-spot test 2×8min 87% FTP (S071-05, conditionné validation critères : RPE ≤5/10 stable 3 jours + VFC >55ms + sommeil 7h+ consolidé). Maintenir repos dimanche S071-07 obligatoire
+
+#### Métriques Post-séance
+- CTL : 50 (stable)
+- ATL : 35 (stable)
+- TSB : +15 (stable, estimation lundi +17/+18)
+
+**Note Coach** : Repos dimanche validé excellente décision stratégique. VFC 66ms (meilleure semaine) + FC repos 44 bpm (proche baseline 40) + sommeil 6h12min score 78 confirment récupération cardiovasculaire quasi-complète. Adaptation neuromusculaire gravel bénéficie 48h repos complet (consolidation sollicitations quadriceps S070-05/06). Conditions S071-01 optimales : TSB +17/+18, capacité validation endurance Z2 configuration gravel avant sweet-spot. Protocole repos dimanche maintenu strictement S071-S072 : Facteur clé progression durable âge 54 ans.
+
+---
+
 ### S070-06-END-EnduranceVolume-V001
 Date : 06/12/2025
 
