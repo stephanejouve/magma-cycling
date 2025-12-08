@@ -140,8 +140,8 @@ class WeeklyReportOrganizer:
         return found, missing
 
     def save_files(self, files, week_number, dry_run=False):
-        """Sauvegarder les fichiers dans bilans_hebdo/sXXX/"""
-        week_str = f"s{week_number:03d}"
+        """Sauvegarder les fichiers dans bilans_hebdo/SXXX/"""
+        week_str = f"S{week_number:03d}"  # ✅ MAJUSCULE (convention SXXX)
         week_dir = self.bilans_dir / week_str
 
         if dry_run:
