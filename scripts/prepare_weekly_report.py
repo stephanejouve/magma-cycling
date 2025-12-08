@@ -151,7 +151,7 @@ En tant qu'assistant coach, génère les **6 fichiers markdown obligatoires** po
 
 **IMPORTANT** : Générer les fichiers dans l'ordre suivant avec le format EXACT :
 
-### 1. workout_history_s{week_number:03d}.md
+### 1. workout_history_S{week_number:03d}.md
 
 Contenu :
 - Contexte semaine (TSS réalisé vs planifié, indoor/outdoor)
@@ -163,7 +163,7 @@ Contenu :
 - Enseignements majeurs (3-5 points)
 - Recommandations semaine suivante
 
-### 2. metrics_evolution_s{week_number:03d}.md
+### 2. metrics_evolution_S{week_number:03d}.md
 
 Contenu :
 - Tableau FTP complet
@@ -172,7 +172,7 @@ Contenu :
 - Métriques clés finales (CTL/ATL/TSB estimés)
 - Validations techniques semaine
 
-### 3. training_learnings_s{week_number:03d}.md
+### 3. training_learnings_S{week_number:03d}.md
 
 Contenu :
 - Découvertes techniques majeures
@@ -182,7 +182,7 @@ Contenu :
 - Protocoles validés/invalidés
 - Points surveillance futurs
 
-### 4. protocol_adaptations_s{week_number:03d}.md
+### 4. protocol_adaptations_S{week_number:03d}.md
 
 Contenu :
 - Ajustements protocoles suite enseignements
@@ -192,7 +192,7 @@ Contenu :
 - Exclusions/interdictions mises à jour
 - Surveillance renforcée identifiée
 
-### 5. transition_s{week_number:03d}_s{week_number+1:03d}.md
+### 5. transition_S{week_number:03d}_S{week_number+1:03d}.md
 
 Contenu :
 - État final semaine (TSB/Fatigue/Validations)
@@ -202,7 +202,7 @@ Contenu :
 - Timeline objectifs (tests, cycles)
 - Risques identifiés progression
 
-### 6. bilan_final_s{week_number:03d}.md
+### 6. bilan_final_S{week_number:03d}.md
 
 Contenu :
 - Objectifs visés vs réalisés (synthèse factuelle)

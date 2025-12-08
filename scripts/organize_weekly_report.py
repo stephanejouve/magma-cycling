@@ -113,12 +113,12 @@ class WeeklyReportOrganizer:
         next_week_str = f"{week_number+1:03d}"
 
         expected = [
-            f"workout_history_s{week_str}.md",
-            f"metrics_evolution_s{week_str}.md",
-            f"training_learnings_s{week_str}.md",
-            f"protocol_adaptations_s{week_str}.md",
-            f"transition_s{week_str}_s{next_week_str}.md",
-            f"bilan_final_s{week_str}.md"
+            f"workout_history_S{week_str}.md",
+            f"metrics_evolution_S{week_str}.md",
+            f"training_learnings_S{week_str}.md",
+            f"protocol_adaptations_S{week_str}.md",
+            f"transition_S{week_str}_S{next_week_str}.md",
+            f"bilan_final_S{week_str}.md"
         ]
 
         found = []
