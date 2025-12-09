@@ -60,6 +60,53 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S071-01-END-EnduranceBase-V001
+Date : 08/12/2025
+
+#### Métriques Pré-séance
+- CTL : 50
+- ATL : 38
+- TSB : +12
+- Sommeil : 6.8h
+
+#### Exécution
+- Durée : 61min
+- IF : 0.65
+- TSS : 44
+- Puissance moyenne : 142W
+- Puissance normalisée : 144W
+- Cadence moyenne : 86rpm
+- FC moyenne : 108bpm
+- Découplage : 0.9%
+
+#### Exécution Technique
+Séance endurance base parfaitement exécutée dans zone Z2 (IF 0.65 = 65% FTP). Découplage cardiovasculaire excellent (0.9%) confirme qualité aérobie optimale et absence dérive. Cadence stable à 86rpm cohérente avec profil habituel (84-86rpm). VI minimal (1.01) indique régularité exemplaire, métabolisme lipidique sollicité (fat 57.1%). Adhérence au plan quasi-parfaite : écarts négligeables (-2W Pavg, +1min durée).
+
+#### Charge d'Entraînement
+TSS modéré (44) parfaitement calibré pour stratégie tapering annoncée (Low-Load). Aucun impact TSB (+12 maintenu), permettant maintien fraîcheur physiologique. Charge compatible accumulation progressive CTL sans surcharge ATL.
+
+#### Validation Objectifs
+- ✅ Zone cible respectée (IF 0.65 = Z2 endurance base)
+- ✅ Découplage <7.5% largement validé (0.9% = excellent)
+- ✅ Cadence maintenue dans plage optimale (86rpm)
+- ✅ Adhérence plan (<5% écart toutes métriques)
+
+#### Points d'Attention
+- Sommeil sous-optimal (6.8h vs cible 7h+) mais sans impact observable sur exécution (découplage 0.9%, FC stable)
+- FC repos matinale 47bpm (vs habituel 40bpm) suggère légère fatigue résiduelle, compensée par HRV acceptable (42ms)
+- Maximum discharge ultra-faible (1.2%) confirme profil exclusivement aérobie sans sollicitation anaérobie
+
+#### Recommandations Progression
+1. Maintenir ce format endurance base (60-65min Z2) comme référence qualité : découplage <1% = validation forme aérobie excellente. Répéter protocole identique pour consolidation capacité lipidique.
+2. Prioriser sommeil 7h+ avant séances intensité (VO2/Sweet-Spot) : 6.8h acceptable pour Z2 mais insuffisant pour zones hautes selon enseignements établis.
+
+#### Métriques Post-séance
+- CTL : 50
+- ATL : 38
+- TSB : +12
+
+---
+
 ### Zwift - Glasgow Crit Circuit in Scotland
 Date : 08/12/2025
 
