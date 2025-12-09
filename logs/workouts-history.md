@@ -60,6 +60,54 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### Zwift - Glasgow Crit Circuit in Scotland
+Date : 08/12/2025
+
+#### Métriques Pré-séance
+- CTL : 50
+- ATL : 38
+- TSB : +12
+- Sommeil : 6.8h
+
+#### Exécution
+- Durée : 38min
+- IF : 0.85
+- TSS : 46
+- Puissance moyenne : 140W
+- Puissance normalisée : 188W
+- Cadence moyenne : 74rpm
+- FC moyenne : 113bpm
+- Découplage : -7.9%
+
+#### Exécution Technique
+Séance type critérium avec intensité modérée-élevée (IF 0.85), caractérisée par une forte variabilité d'effort (VI 1.34). Le découplage négatif (-7.9%) indique une dérive inverse atypique, probablement liée au format court avec accélérations répétées. La cadence basse (74rpm vs habituel 84-86rpm) combinée au ratio NP/Pavg (1.34) confirme un profil explosif avec nombreux relances.
+
+#### Charge d'Entraînement
+TSS modéré (46) pour une durée courte (38min), cohérent avec l'intensité IF 0.85. Impact limité sur TSB (+12 maintenu) grâce au format court. La charge effective reste compatible avec la stratégie tapering annoncée (Low-Load).
+
+#### Validation Objectifs
+- ❌ Durée planifiée non respectée (38min vs 45min attendues)
+- ✅ Format critérium exécuté (accélérations, variabilité élevée)
+- ⚠️ Cadence inhabituelle (74rpm vs profil standard 84-86rpm)
+
+#### Points d'Attention
+- Abandon prématuré à 38min (distance cible 18.3km non parcourue selon ressenti)
+- Cadence significativement basse pour ce profil, suggérant fatigue neuromusculaire ou gestion sous-optimale des relances
+- Découplage négatif atypique à investiguer (format court + accélérations vs dérive classique endurance)
+- Sommeil légèrement sous-optimal (6.8h vs cible 7h+) peut avoir impacté exécution
+
+#### Recommandations Progression
+1. Valider durée cible avant exécution (45min Glasgow Circuit = parcours complet). Ajuster planification selon contraintes matérielles Zwift.
+2. Travailler cadence en critérium (cible 85-90rpm même en relances) via séances spécifiques accélérations haute cadence pour améliorer efficience neuromusculaire.
+3. Si format critérium maintenu, accepter TSS 40-50 comme suffisant pour stimulus tapering. Privilégier qualité relances vs durée totale.
+
+#### Métriques Post-séance
+- CTL : 50
+- ATL : 38
+- TSB : +12
+
+---
+
 ### S070-03-REC-RecuperationActive-V001
 Date : 04/12/2025
 
