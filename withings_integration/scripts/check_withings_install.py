@@ -7,6 +7,10 @@ import os
 import sys
 import json
 
+# Ajouter le repertoire parent au PYTHONPATH
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+
+
 def check_dependencies():
     """Vérifie que les dépendances Python sont installées"""
     print("\n" + "="*70)

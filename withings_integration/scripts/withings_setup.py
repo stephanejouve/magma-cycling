@@ -11,12 +11,17 @@ from urllib.parse import urlparse, parse_qs
 import webbrowser
 import threading
 
-# Configuration depuis Developer Dashboard
-CLIENT_ID = "c5e8820a701242a8708c54ee9fcc83915f02270f2ae0930b9a5917bbb3d21278"
-CLIENT_SECRET = input("Entrez le Secret Withings (depuis Developer Dashboard): ").strip()
+# Configuration depuis .env.withings
+from dotenv import load_dotenv
+load_dotenv('.env.withings')
 
-# Pour développement local avec ngrok
-CALLBACK_URI = "https://4f3c-2a01-cb14-8513-df00-2031-d098-d697-75c1.ngrok-free.app/auth/withings/callback"
+CLIENT_ID = os.getenv('WITHINGS_CLIENT_ID')
+CLIENT_SECRET = os.getenv('WITHINGS_CLIENT_SECRET')
+CALLBACK_URI = os.getenv('WITHINGS_CALLBACK_URI', 'http://localhost:8080/auth/withings/callback')
+
+if not CLIENT_ID or not CLIENT_SECRET:
+    print("Erreur: Variables d'environnement manquantes dans .env.withings")
+    exit(1)
 
 # Variable globale pour stocker le code
 authorization_code = None

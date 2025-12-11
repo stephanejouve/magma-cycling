@@ -1,0 +1,89 @@
+{
+  "week_id": "S070",
+  "start_date": "2025-12-02",
+  "end_date": "2025-12-08",
+  "athlete_id": "i151223",
+  "tss_target": 255,
+  "planned_sessions": [
+    {
+      "session_id": "S070-01",
+      "date": "2025-12-02",
+      "type": "END",
+      "name": "EnduranceBase",
+      "version": "V001",
+      "duration_min": 60,
+      "tss_planned": 45,
+      "status": "completed"
+    },
+    {
+      "session_id": "S070-02",
+      "date": "2025-12-03",
+      "type": "CAD",
+      "name": "TechniqueCadence",
+      "version": "V001",
+      "duration_min": 55,
+      "tss_planned": 38,
+      "status": "completed"
+    },
+    {
+      "session_id": "S070-03",
+      "date": "2025-12-04",
+      "type": "REC",
+      "name": "RecuperationActive",
+      "version": "V001",
+      "duration_min": 45,
+      "tss_planned": 24,
+      "status": "completed"
+    },
+    {
+      "session_id": "S070-04",
+      "date": "2025-12-05",
+      "type": "END",
+      "name": "EnduranceProgressive",
+      "version": "V001",
+      "duration_min": 65,
+      "tss_planned": 48,
+      "status": "cancelled",
+      "cancellation_reason": "Problème technique matériel : erreur montage vélo sur home trainer, chaîne coincée derrière cassette 11V. Incompatibilité dérailleur Di2 configuré 12V vs cassette 11V montée.",
+      "impact_notes": "TSS nul, métriques maintenues. Repos involontaire maintient TSB élevé."
+    },
+    {
+      "session_id": "S070-05",
+      "date": "2025-12-06",
+      "type": "INT",
+      "name": "SweetSpotIntro",
+      "version": "V001",
+      "duration_min": 57,
+      "tss_planned": 51,
+      "status": "completed"
+    },
+    {
+      "session_id": "S070-06",
+      "date": "2025-12-07",
+      "type": "END",
+      "name": "EnduranceVolume",
+      "version": "V001",
+      "duration_min": 75,
+      "tss_planned": 56,
+      "status": "completed"
+    },
+    {
+      "session_id": "S070-07",
+      "date": "2025-12-08",
+      "type": "REC",
+      "name": "ReposObligatoire",
+      "version": "V001",
+      "duration_min": 0,
+      "tss_planned": 0,
+      "status": "rest_day",
+      "rest_reason": "Protocole repos dimanche obligatoire (âge 54 ans, récupération prioritaire)",
+      "physiological_notes": "Consolidation adaptation neuromusculaire configuration gravel, récupération cardiovasculaire complète"
+    }
+  ],
+  "week_summary": {
+    "tss_planned": 262,
+    "sessions_planned": 7,
+    "rest_days": 1,
+    "notes": "Semaine reprise post-arrêt S069 avec changement matériel gravel concurrent"
+  }
+}

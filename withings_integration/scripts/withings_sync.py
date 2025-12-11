@@ -5,7 +5,12 @@ Synchronisation automatique Withings → Intervals.icu
 
 import json
 import os
+import sys
 from datetime import datetime, timedelta
+
+# Ajouter le repertoire parent au PYTHONPATH
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+
 from withings_integration import (
     WithingsIntegration,
     sync_weight_to_intervals,

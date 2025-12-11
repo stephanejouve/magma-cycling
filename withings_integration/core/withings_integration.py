@@ -1,10 +1,11 @@
+# -*- coding: utf-8 -*-
 """
-Module d'intégration Withings pour le suivi d'entraînement
-Récupération des données de sommeil et de poids
+Module d'integration Withings pour le suivi d'entrainement
+Recuperation des donnees de sommeil et de poids
 """
 
 from withings_api import WithingsAuth, WithingsApi, AuthScope
-from withings_api.common import MeasureType, SleepGetSummaryField
+from withings_api.common import MeasureType, GetSleepSummaryField
 from datetime import datetime, timedelta
 import os
 from typing import Dict, Optional, List
@@ -176,14 +177,14 @@ class WithingsIntegration:
             startdateymd=start_date,
             enddateymd=end_date,
             data_fields=[
-                SleepGetSummaryField.BREATHING_DISTURBANCES_INTENSITY,
-                SleepGetSummaryField.DEEP_SLEEP_DURATION,
-                SleepGetSummaryField.LIGHT_SLEEP_DURATION,
-                SleepGetSummaryField.REM_SLEEP_DURATION,
-                SleepGetSummaryField.SLEEP_SCORE,
-                SleepGetSummaryField.TOTAL_SLEEP_TIME,
-                SleepGetSummaryField.WAKEUP_DURATION,
-                SleepGetSummaryField.WAKEUP_COUNT
+                GetSleepSummaryField.BREATHING_DISTURBANCES_INTENSITY,
+                GetSleepSummaryField.DEEP_SLEEP_DURATION,
+                GetSleepSummaryField.LIGHT_SLEEP_DURATION,
+                GetSleepSummaryField.REM_SLEEP_DURATION,
+                GetSleepSummaryField.SLEEP_SCORE,
+                GetSleepSummaryField.TOTAL_SLEEP_TIME,
+                GetSleepSummaryField.WAKEUP_DURATION,
+                GetSleepSummaryField.WAKEUP_COUNT
             ]
         )
         

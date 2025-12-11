@@ -1,0 +1,29 @@
+{
+  "week_id": "SXXX",
+  "start_date": "YYYY-MM-DD",
+  "end_date": "YYYY-MM-DD",
+  "athlete_id": "i151223",
+  "tss_target": 0,
+  "planned_sessions": [
+    {
+      "session_id": "SXXX-01",
+      "date": "YYYY-MM-DD",
+      "type": "END|INT|REC|CAD|TEC|FOR",
+      "name": "NomSeance",
+      "version": "V001",
+      "duration_min": 0,
+      "tss_planned": 0,
+      "status": "completed|cancelled|rest_day|replaced",
+      "cancellation_reason": "Requis si status=cancelled",
+      "rest_reason": "Optionnel si status=rest_day",
+      "physiological_notes": "Optionnel pour rest_day",
+      "impact_notes": "Optionnel pour cancelled"
+    }
+  ],
+  "week_summary": {
+    "tss_planned": 0,
+    "sessions_planned": 0,
+    "rest_days": 0,
+    "notes": "Notes générales sur la semaine"
+  }
+}
