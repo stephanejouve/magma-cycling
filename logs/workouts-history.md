@@ -60,6 +60,52 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S071-03-TEC-TechniqueCadence-V001
+Date : 10/12/2025
+
+#### Métriques Pré-séance
+- CTL : 50
+- ATL : 40
+- TSB : +10
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 64min
+- IF : 0.58
+- TSS : 37
+- Puissance moyenne : 126W
+- Puissance normalisée : 128W
+- Cadence moyenne : 81rpm
+- FC moyenne : 96bpm
+- Découplage : 3.0%
+
+#### Exécution Technique
+La séance a été exécutée conformément au plan, avec une durée (64min), un TSS (37) et une puissance moyenne (126W) très proches des cibles prévues. Le découplage cardiovasculaire (3.0%) est excellent, confirmant une bonne efficacité aérobie. La cadence moyenne (81rpm) et la FC moyenne (96bpm) sont cohérentes avec une séance technique en endurance fondamentale. Les blocs de travail (3min à 65% FTP / 60rpm et 2min à 60% FTP / 100rpm) ont été répétés 5 fois comme prévu, validant la structure corrigée.
+
+#### Charge d'Entraînement
+Le TSS réalisé (37) correspond exactement à la cible, avec un TSB stable (+10), indiquant une séance bien dosée dans un contexte de récupération. L'IF de 0.58 confirme une intensité modérée, adaptée à un travail technique et non fatigant.
+
+#### Validation Objectifs
+- ✅ Durée respectée (64min prévu vs 64min réalisé)
+- ✅ TSS respecté (37 prévu vs 37 réalisé)
+- ✅ Découplage < 7.5% (3.0%, excellente efficacité cardiovasculaire)
+- ✅ Structure respectée (5 répétitions du bloc principal)
+
+#### Points d'Attention
+- **Sommeil nul** : 0h de sommeil avant la séance, ce qui peut impacter la récupération malgré un TSB positif.
+- **RPE élevé** : Un RPE de 6/10 pour une séance technique en Z1/Z2 suggère une perception d'effort plus élevée que prévu, potentiellement liée à la fatigue accumulée ou au manque de sommeil.
+
+#### Recommandations Progression
+1. **Prioriser le sommeil** : Étant donné l'impact critique du sommeil sur la récupération et la qualité des séances, il est recommandé de mettre en place un protocole pour améliorer la durée et la qualité du sommeil, surtout avant les séances techniques ou intenses.
+2. **Surveillance de la perception d'effort** : Pour les prochaines séances techniques, vérifier si le RPE élevé persiste malgré des métriques objectives conformes. Cela pourrait indiquer un besoin d'ajustement des consignes ou des attentes.
+
+#### Métriques Post-séance
+- CTL : 50
+- ATL : 40
+- TSB : +10
+
+---
+
 ### S071-02-MIX-RecupPostCriterium
 Date : 09/12/2025
 
