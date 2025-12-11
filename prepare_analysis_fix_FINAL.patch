@@ -1,0 +1,153 @@
+diff --git a/scripts/prepare_analysis.py b/scripts/prepare_analysis.py
+index 6b9ecba..6682a6c 100644
+--- a/scripts/prepare_analysis.py
++++ b/scripts/prepare_analysis.py
+@@ -378,6 +378,84 @@ class PromptGenerator:
+ 
+         return "N/A"
+ 
++    def safe_format_metric(self, value, format_spec=".0f", suffix="", default="N/A"):
++        """
++        Formatage sécurisé d'une métrique pouvant être None
++        
++        Args:
++            value: Valeur à formater (peut être None)
++            format_spec: Spécification de format (ex: '.0f', '.2f')
++            suffix: Suffixe à ajouter (ex: 'W', 'bpm')
++            default: Valeur par défaut si None
++        
++        Returns:
++            str: Valeur formatée ou default
++        """
++        if value is None:
++            return default
++        try:
++            return f"{value:{format_spec}}{suffix}"
++        except (ValueError, TypeError):
++            return default
++    
++    def get_power_value(self, activity, metric_type='avg'):
++        """
++        Extraction robuste de la puissance avec fallback multi-champs
++        
++        Args:
++            activity: Dictionnaire activité depuis API
++            metric_type: 'avg' (moyenne) ou 'np' (normalisée)
++        
++        Returns:
++            float ou None: Valeur de puissance trouvée
++        """
++        field_mappings = {
++            'avg': ['avg_power', 'power', 'average_power', 'watts', 'avgWatts'],
++            'np': ['np', 'normalized_power', 'norm_power', 'normalizedPower']
++        }
++        
++        possible_fields = field_mappings.get(metric_type, [])
++        
++        for field in possible_fields:
++            value = activity.get(field)
++            if value is not None and value > 0:
++                return value
++        
++        return None
++    
++    def get_cadence_value(self, activity, metric_type='avg'):
++        """Extraction robuste de la cadence avec fallback"""
++        field_mappings = {
++            'avg': ['avg_cadence', 'cadence', 'avgCadence', 'rpm'],
++            'max': ['max_cadence', 'maxCadence', 'maximum_cadence']
++        }
++        
++        possible_fields = field_mappings.get(metric_type, [])
++        
++        for field in possible_fields:
++            value = activity.get(field)
++            if value is not None and value > 0:
++                return value
++        
++        return None
++    
++    def get_hr_value(self, activity, metric_type='avg'):
++        """Extraction robuste de la fréquence cardiaque avec fallback"""
++        field_mappings = {
++            'avg': ['avg_hr', 'hr', 'avgHr', 'heart_rate', 'average_hr'],
++            'max': ['max_hr', 'maxHr', 'max_heart_rate', 'maximum_hr']
++        }
++        
++        possible_fields = field_mappings.get(metric_type, [])
++        
++        for field in possible_fields:
++            value = activity.get(field)
++            if value is not None and value > 0:
++                return value
++        
++        return None
++
++
+     def generate_prompt(self, activity_data, wellness_pre, wellness_post, athlete_context, recent_workouts, athlete_feedback=None, planned_workout=None, cycling_concepts=None):
+         """Générer le prompt complet pour Claude.ai"""
+ 
+@@ -388,6 +466,18 @@ class PromptGenerator:
+         planned = self.format_planned_workout(planned_workout) if planned_workout else None
+ 
+         decoupling_str = f"{act['decoupling']:.1f}%" if act['decoupling'] else "N/A"
++        
++        # Extraction robuste des métriques avec fallback
++        avg_power = self.get_power_value(act, 'avg')
++        normalized_power = self.get_power_value(act, 'np')
++        avg_cadence = self.get_cadence_value(act, 'avg')
++        avg_hr = self.get_hr_value(act, 'avg')
++        max_hr = self.get_hr_value(act, 'max')
++        
++        # Warning si données puissance manquantes
++        power_warning = ""
++        if avg_power is None and normalized_power is None:
++            power_warning = "\n⚠️  ATTENTION : Aucune donnée de puissance disponible (fichier .fit incomplet ou séance sans capteur)\n   → Analyse basée sur FC, cadence et RPE uniquement\n\n"
+         sleep_hours = w_pre['sleep_seconds'] / 3600 if w_pre['sleep_seconds'] and w_pre['sleep_seconds'] > 0 else 0
+         weight_kg = w_pre['weight'] if w_pre['weight'] and w_pre['weight'] > 0 else 0
+ 
+@@ -419,7 +509,7 @@ Certaines métriques (puissance, découplage) peuvent être manquantes ou incomp
+ 
+ ## Séance à Analyser
+ 
+-{strava_warning}### Informations Générales
++{strava_warning}{power_warning}### Informations Générales
+ - **Nom** : {act['name']}
+ - **Type** : {act['type']}
+ - **Date** : {act['date']}
+@@ -435,12 +525,12 @@ Certaines métriques (puissance, découplage) peuvent être manquantes ou incomp
+ ### Exécution
+ - Durée réalisée : {act['duration_min']}min
+ - IF : {act['intensity']:.2f}
+-- TSS : {act['tss']:.0f}
+-- Puissance moyenne : {act['avg_power']:.0f}W
+-- Puissance normalisée : {act['np']:.0f}W
+-- Cadence moyenne : {act['avg_cadence']:.0f}rpm
+-- FC moyenne : {act['avg_hr']:.0f}bpm
+-- FC max : {act['max_hr']:.0f}bpm
++- TSS : {self.safe_format_metric(act.get('tss'), '.0f', '')}
++- Puissance moyenne : {self.safe_format_metric(avg_power, '.0f', 'W')}
++- Puissance normalisée : {self.safe_format_metric(normalized_power, '.0f', 'W')}
++- Cadence moyenne : {self.safe_format_metric(avg_cadence, '.0f', 'rpm')}
++- FC moyenne : {self.safe_format_metric(avg_hr, '.0f', 'bpm')}
++- FC max : {self.safe_format_metric(max_hr, '.0f', 'bpm')}
+ - Découplage cardiovasculaire : {decoupling_str}
+ 
+ ### Métriques Post-séance
+@@ -548,11 +638,11 @@ Date : {act['date']}
+ #### Exécution
+ - Durée : {act['duration_min']}min
+ - IF : {act['intensity']:.2f}
+-- TSS : {act['tss']:.0f}
+-- Puissance moyenne : {act['avg_power']:.0f}W
+-- Puissance normalisée : {act['np']:.0f}W
+-- Cadence moyenne : {act['avg_cadence']:.0f}rpm
+-- FC moyenne : {act['avg_hr']:.0f}bpm
++- TSS : {self.safe_format_metric(act.get('tss'), '.0f', '')}
++- Puissance moyenne : {self.safe_format_metric(avg_power, '.0f', 'W')}
++- Puissance normalisée : {self.safe_format_metric(normalized_power, '.0f', 'W')}
++- Cadence moyenne : {self.safe_format_metric(avg_cadence, '.0f', 'rpm')}
++- FC moyenne : {self.safe_format_metric(avg_hr, '.0f', 'bpm')}
+ - Découplage : {decoupling_str}
+ 
+ #### Exécution Technique
