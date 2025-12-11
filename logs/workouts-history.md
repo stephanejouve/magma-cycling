@@ -60,6 +60,51 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S071-04-END-EnduranceProgressive-V001
+Date : 11/12/2025
+
+#### Métriques Pré-séance
+- CTL : 50
+- ATL : 41
+- TSB : +8
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 72min
+- IF : 0.65
+- TSS : 51
+- Puissance moyenne : 143W
+- Puissance normalisée : 144W
+- Cadence moyenne : 87rpm
+- FC moyenne : 98bpm
+- Découplage : 1.0%
+
+#### Exécution Technique
+Séance d'endurance progressive bien exécutée, avec une puissance moyenne et normalisée très proches des objectifs. La cadence moyenne de 87rpm est adaptée pour l'endurance. Le découplage cardiovasculaire de 1.0% confirme une bonne cohérence entre puissance et fréquence cardiaque.
+
+#### Charge d'Entraînement
+TSS de 51, légèrement inférieur à l'objectif de 52, mais sans impact significatif. Le TSB de +8 avant la séance indique une fraîcheur optimale pour ce type d'effort.
+
+#### Validation Objectifs
+- ✅ Durée respectée (72min)
+- ✅ IF dans la plage cible (0.65 vs 0.66 prévu)
+- ✅ Découplage < 7.5% (1.0%)
+
+#### Points d'Attention
+- Sommeil non enregistré (0.0h) : À vérifier pour éviter un biais dans l'analyse de la récupération.
+- Puissance légèrement inférieure à l'objectif (143W vs 144W), mais sans impact significatif.
+
+#### Recommandations Progression
+1. Maintenir ce type de séance pour renforcer l'endurance de base.
+2. Surveiller le sommeil pour les prochaines séances, car il influence directement la récupération et la performance.
+
+#### Métriques Post-séance
+- CTL : 50
+- ATL : 41
+- TSB : +8
+
+---
+
 ### S071-03-TEC-TechniqueCadence-V001
 Date : 10/12/2025
 
