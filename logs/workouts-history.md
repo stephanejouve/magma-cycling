@@ -60,6 +60,1755 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S071-02-MIX-RecupPostCriterium
+Date : 09/12/2025
+
+#### Métriques Pré-séance
+- CTL : 50
+- ATL : 39
+- TSB : +11
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 61min
+- IF : 0.65
+- TSS : 43
+- Puissance moyenne : 118W
+- Puissance normalisée : 142W
+- Cadence moyenne : 81rpm
+- FC moyenne : 98bpm
+- Découplage : -15.6%
+
+#### Exécution Technique
+La séance a été réalisée avec une puissance moyenne (118W) et une puissance normalisée (142W) supérieures aux cibles prévues, ce qui explique l'IF plus élevé (0.65 vs 0.50). Le découplage négatif (-15.6%) indique une excellente efficacité cardiovasculaire, mais la séance a dépassé le TSS prévu (43 vs 25) en raison d'une variabilité de puissance non anticipée. La cadence moyenne (81rpm) et la FC moyenne (98bpm) restent cohérentes avec une séance de récupération active.
+
+#### Charge d'Entraînement
+Le TSS réalisé (43) dépasse largement la cible (25), ce qui suggère une intensité plus élevée que prévue, malgré un TSB stable (+11). Cela peut indiquer une récupération moins passive que planifiée, mais sans impact négatif sur la fatigue (ATL inchangé).
+
+#### Validation Objectifs
+- ✅ Découplage < 7.5% (excellente efficacité cardiovasculaire)
+- ❌ TSS dépassé (+18, soit +72% par rapport à la cible)
+- ❌ IF dépassé (0.65 vs 0.50 prévu)
+
+#### Points d'Attention
+- **Variabilité de puissance** : La puissance normalisée (142W) dépasse largement la puissance moyenne (118W), ce qui indique une variabilité élevée non planifiée.
+- **Sommeil nul** : 0h de sommeil avant la séance, ce qui peut influencer la qualité de la récupération malgré un TSB élevé.
+
+#### Recommandations Progression
+1. **Adapter la structure** : Pour une séance de récupération, privilégier une puissance plus stable et éviter les variations non contrôlées.
+2. **Surveillance sommeil** : Prioriser la récupération nocturne pour optimiser la qualité des séances, surtout après des efforts intenses ou des compétitions.
+
+#### Métriques Post-séance
+- CTL : 50
+- ATL : 39
+- TSB : +11
+
+---
+
+### S071-02-MIX-RecupPostCriterium
+Date : 09/12/2025
+
+#### Métriques Pré-séance
+- CTL : 50
+- ATL : 39
+- TSB : +11
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 61min
+- IF : 0.65
+- TSS : 43
+- Puissance moyenne : 118W
+- Puissance normalisée : 142W
+- Cadence moyenne : 81rpm
+- FC moyenne : 98bpm
+- Découplage : -15.6%
+
+#### Exécution Technique
+La séance a été réalisée avec une puissance moyenne (118W) et une puissance normalisée (142W) supérieures aux cibles prévues, ce qui explique l'IF plus élevé (0.65 vs 0.50). Le découplage négatif (-15.6%) indique une excellente efficacité cardiovasculaire, mais la séance a dépassé le TSS prévu (43 vs 25) en raison d'une variabilité de puissance non anticipée. La cadence moyenne (81rpm) et la FC moyenne (98bpm) restent cohérentes avec une séance de récupération active.
+
+#### Charge d'Entraînement
+Le TSS réalisé (43) dépasse largement la cible (25), ce qui suggère une intensité plus élevée que prévue, malgré un TSB stable (+11). Cela peut indiquer une récupération moins passive que planifiée, mais sans impact négatif sur la fatigue (ATL inchangé).
+
+#### Validation Objectifs
+- ✅ Découplage < 7.5% (excellente efficacité cardiovasculaire)
+- ❌ TSS dépassé (+18, soit +72% par rapport à la cible)
+- ❌ IF dépassé (0.65 vs 0.50 prévu)
+
+#### Points d'Attention
+- **Variabilité de puissance** : La puissance normalisée (142W) dépasse largement la puissance moyenne (118W), ce qui indique une variabilité élevée non planifiée.
+- **Sommeil nul** : 0h de sommeil avant la séance, ce qui peut influencer la qualité de la récupération malgré un TSB élevé.
+
+#### Recommandations Progression
+1. **Adapter la structure** : Pour une séance de récupération, privilégier une puissance plus stable et éviter les variations non contrôlées.
+2. **Surveillance sommeil** : Prioriser la récupération nocturne pour optimiser la qualité des séances, surtout après des efforts intenses ou des compétitions.
+
+#### Métriques Post-séance
+- CTL : 50
+- ATL : 39
+- TSB : +11
+
+---
+
+### S071-03a-TechniqueCadence-V000
+Date : 10/12/2025
+
+#### Métriques Pré-séance
+- CTL : 49
+- ATL : 37
+- TSB : +12
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 17min
+- IF : 0.57
+- TSS : 9
+- Puissance moyenne : 121W
+- Puissance normalisée : 125W
+- Cadence moyenne : 83rpm
+- FC moyenne : 93bpm
+- Découplage : -4.5%
+
+#### Exécution Technique
+La séance a été exécutée en dessous de la durée prévue (17min vs 25min), avec une puissance moyenne légèrement inférieure à la cible (121W vs 125W). Le découplage négatif (-4.5%) indique une excellente efficacité cardiovasculaire, mais la séance a été interrompue avant le cooldown en raison d'une erreur dans la structure du workout (bloc principal non répété 5 fois). La cadence moyenne (83rpm) et la FC moyenne (93bpm) sont cohérentes avec une séance d'endurance technique.
+
+#### Charge d'Entraînement
+Le TSS réalisé (9) est inférieur à la cible (13), en raison de la durée réduite. Le TSB élevé (+12) confirme une séance de récupération ou de tapering, sans impact significatif sur la fatigue (ATL inchangé). La charge reste très faible, conforme à l'objectif de décharge.
+
+#### Validation Objectifs
+- ✅ Découplage < 7.5% (excellente efficacité cardiovasculaire)
+- ❌ Durée non respectée (-8min, 32% de moins que prévu)
+- ❌ Structure non respectée (bloc principal non répété)
+
+#### Points d'Attention
+- **Erreur de structure** : Le workout n'a pas été exécuté selon la planification (bloc principal non répété 5 fois).
+- **Sommeil nul** : 0h de sommeil avant la séance, ce qui peut influencer la qualité de l'effort malgré un TSB élevé.
+
+#### Recommandations Progression
+1. **Corriger le template** : Vérifier et corriger la structure du workout dans Intervals.icu pour s'assurer que les blocs sont bien répétés 5 fois.
+2. **Surveillance sommeil** : Prioriser la récupération nocturne, surtout avant les séances techniques ou intenses, pour éviter une accumulation de fatigue latente.
+
+#### Métriques Post-séance
+- CTL : 49
+- ATL : 37
+- TSB : +12
+
+---
+
+
+
+### Semaine S050 (08-14 déc 2025)
+
+
+<!-- activity_id: i111281626 -->
+<!-- ai_provider: mistral_api -->
+<!-- timestamp: 2025-12-10T21:13:19 -->
+
+#### Mercredi 10/12 - S071-03-TEC-TechniqueCadence-V001
+Date : 10/12/2025
+
+#### Métriques Pré-séance
+- CTL : 49
+- ATL : 42
+- TSB : +7
+- Poids : 85.4kg
+
+#### Exécution
+- Durée : 17min
+- IF : 0.57
+- TSS : 9
+- Puissance moyenne : 121W
+- Puissance normalisée : 125W
+- Cadence moyenne : 83rpm
+- FC moyenne : 93bpm
+
+#### Analyse AI
+# Feedback Séance: Zwift - S071-03-TEC-TechniqueCadence-V001 on Prospect Park Loop in New York
+
+## Résumé Exécutif (3 points)
+- ✅ **Point positif #1**: Séance bien ciblée pour travailler la technique de cadence (moyenne de 83 rpm), idéale pour un travail d'endurance active ou de récupération.
+- ⚠️ **Point attention #1**: Données de puissance et fréquence cardiaque manquantes, limitant l'analyse fine de l'intensité réelle et de l'efficacité physiologique.
+- 💡 **Apprentissage clé**: Séance courte et peu intense (IF = 0,568) qui remplit un rôle de récupération active ou de travail technique, mais nécessite un suivi des données pour optimiser son utilité.
+
+---
+
+## Analyse Performance
+
+### Objectifs vs Réalisé
+- **Objectif probable** : Travail technique de cadence (séance "TechniqueCadence" dans le nom) et/ou récupération active.
+- **Réalisé** :
+  - Durée courte (17,1 min), conforme à une séance technique ou de récupération.
+  - Intensité faible (IF = 0,568), en zone d'endurance ou récupération.
+  - TSS faible (9), cohérent avec une séance peu exigeante.
+  - **Écart** : Sans données de puissance ou FC brutes, difficile de valider si la cadence a été travaillée de manière spécifique (ex. intervalles de cadence haute/basse).
+
+### Qualité Exécution
+- **Cadence** : Moyenne de 83 rpm, légèrement supérieure à une cadence "naturelle" (généralement 75-80 rpm pour un cycliste route). Cela suggère un focus sur un pédalage plus fluide ou une technique de pédalage rond.
+- **Puissance/FC manquantes** : Impossible d'évaluer la cohérence entre l'effort perçu et les métriques objectives. L'Efficiency Factor (1,34) est calculé sur des données incomplètes et ne peut être interprété de manière fiable.
+- **Technique** : Si l'objectif était de travailler la cadence, il aurait été idéal d'avoir des variations ciblées (ex. 30s à 90 rpm / 30s à 60 rpm) plutôt qu'une cadence moyenne stable.
+
+### Efficacité Physiologique
+- **Efficiency Factor (1,34)** : Normalement, un EF > 1,1 indique une bonne économie (NP/FC). Cependant, sans données de puissance ou FC fiables, cette valeur est à prendre avec prudence.
+- **FC moyenne (estimée à 93 bpm)** : Si cette valeur est correcte, elle confirme une intensité faible (zone 1-2), adaptée à une séance technique ou de récupération.
+- **Absence de variabilité** : Pas de pics ou variations visibles, ce qui limite l'analyse de la réponse physiologique à des stimuli spécifiques.
+
+---
+
+## État Forme & Récupération
+
+### Wellness Contexte
+- **Pré-séance** :
+  - CTL (49,99) et ATL (42,15) indiquent un bon niveau de forme avec une fatigue modérée.
+  - TSB (7,84) : Fraîcheur positive, idéale pour une séance technique ou de récupération. L'athlète était prêt pour un effort léger.
+- **Post-séance (J+1)** :
+  - ΔCTL quasi nul (+0,05), ΔATL (+1,3) : La séance a généré une fatigue minimale, conforme à son faible TSS.
+  - TSB reste positif (6,58), confirmant que la séance n'a pas impacté négativement la fraîcheur.
+
+### Impact Séance
+- **Fatigue générée** : Très faible (TSS = 9), conforme à une séance de récupération ou technique.
+- **Adéquation avec l'état de forme** : Parfaite. La séance a été réalisée dans une fenêtre de fraîcheur optimale sans risque de surcharge.
+
+---
+
+## Apprentissages & Ajustements
+
+### Points Clés Retenus
+1. **Séance utile pour la technique** : La cadence moyenne élevée suggère un travail de fluidité, mais l'absence de variations limite son efficacité pour améliorer la technique de pédalage.
+2. **Données manquantes** : L'absence de puissance et FC empêche une analyse complète. Ces métriques sont essentielles pour valider l'intensité et l'efficacité de la séance.
+3. **Charge d'entraînement maîtrisée** : Le faible TSS et l'impact minimal sur la fatigue confirment que cette séance peut être répétée sans risque de surentraînement.
+
+### Recommandations
+- **Immédiat** :
+  - Vérifier la configuration du capteur de puissance et de la ceinture cardio pour les prochaines séances. Des données complètes sont cruciales pour un feedback précis.
+  - Si l'objectif était technique, ajouter des intervalles de cadence (ex. 1 min à 90 rpm / 1 min à 60 rpm) pour stimuler l'adaptabilité.
+
+- **Prochaines séances** :
+  - Pour un travail technique de cadence, intégrer des variations structurées (ex. 5x [30s à 90 rpm + 30s à 60 rpm]) avec une puissance constante pour isoler la technique.
+  - Si l'objectif est la récupération, maintenir une intensité très faible (IF < 0,6) et une durée courte (<30 min).
+
+- **Suivi** :
+  - Monitorer la réponse à la cadence (ex. confort à 90 rpm vs 60 rpm) et ajuster en fonction des sensations.
+  - Comparer l'EF sur des séances similaires une fois les données de puissance/FC disponibles.
+
+---
+
+## RPE Suggéré
+**3/10** - Séance très légère, axée sur la technique ou la récupération. L'effort perçu devrait être minimal, avec une sensation de pédalage fluide et sans essoufflement.
+
+---
+
+**Note Coach** :
+Cette séance remplit son rôle de récupération ou de travail technique léger, mais son potentiel est limité par l'absence de données clés. Profites-en pour peaufiner ta configuration matériel et ajouter des variations de cadence pour en tirer davantage de bénéfices. Continue comme ça, et n'hésite pas à ajuster en fonction de tes sensations ! 🚴‍♂️💨
+
+#### Métriques Post-séance
+- CTL : 50
+- ATL : 43
+- TSB : +6
+
+---
+
+### Semaine S049 (01-07 déc 2025)
+
+
+<!-- activity_id: i109796387 -->
+<!-- ai_provider: claude_api -->
+<!-- timestamp: 2025-12-10T10:35:08 -->
+
+#### Mardi 02/12 - S070-02-END-EnduranceBase-V001
+Date : 02/12/2025
+
+#### Métriques Pré-séance
+- CTL : 51
+- ATL : 33
+- TSB : +18
+- Poids : 85.4kg
+
+#### Exécution
+- Durée : 63min
+- IF : 0.64
+- TSS : 43
+- Puissance moyenne : 134W
+- Puissance normalisée : 140W
+- Cadence moyenne : 86rpm
+- FC moyenne : 111bpm
+
+#### Analyse AI
+# Feedback Séance: S070-02-END-EnduranceBase-V001
+
+## Résumé Exécutif (3 points)
+- ✅ **Exécution maîtrisée**: Séance d'endurance de base parfaitement réalisée avec un IF de 0.636, dans la zone cible pour ce type de travail
+- ⚠️ **Cadence élevée**: 87 rpm en moyenne suggère peut-être un braquet trop léger pour optimiser le développement de la force
+- 💡 **Efficacité remarquable**: EF de 1.26 indique une très bonne économie énergétique et une adaptation cardiovasculaire optimale
+
+## Analyse Performance
+
+### Objectifs vs Réalisé
+Séance d'endurance de base parfaitement exécutée avec 43 TSS sur 63 minutes. L'IF de 0.636 place cette séance idéalement dans la zone d'endurance fondamentale (Z2), exactement ce qui était recherché pour développer les capacités aérobies de base. La durée respectée démontre une bonne discipline d'entraînement.
+
+### Qualité Exécution
+L'exécution technique apparaît solide avec des métriques cohérentes. La puissance moyenne (134W) et normalisée (140W) sont très proches, indiquant un effort régulier sans variations importantes - caractéristique d'un bon travail d'endurance. La régularité est un point fort de cette séance.
+
+### Efficacité Physiologique
+L'Efficiency Factor de 1.26 est excellent et révèle une très bonne économie de pédalage. La FC moyenne de 111 bpm pour cette puissance montre une adaptation cardiovasculaire intéressante. Le rapport NP/FC suggère que votre système cardiovasculaire gère efficacement cette charge de travail.
+
+## État Forme & Récupération
+
+### Wellness Contexte
+Avec un TSB pré-séance de +18.2, vous étiez dans un état de fraîcheur optimal pour cette séance d'endurance. Le CTL de 51.5 indique un niveau de forme solide, tandis que l'ATL de 33.3 montre une fatigue contrôlée. Conditions parfaites pour ce type de travail.
+
+### Impact Séance
+L'évolution post-séance montre une gestion fine de la charge : CTL stable (-0.5) et ATL en légère baisse (-0.2). Cette séance contribue positivement au développement de votre forme sans générer de fatigue excessive. Le TSB reste positif, maintenant votre capacité de récupération.
+
+## Apprentissages & Ajustements
+
+### Points Clés Retenus
+1. **Maîtrise zones d'intensité**: Votre capacité à maintenir l'IF cible démontre une excellente compréhension de vos zones
+2. **Efficacité cardiovasculaire**: L'EF élevé confirme vos progrès en économie énergétique
+3. **Régularité d'effort**: La faible variation entre puissance moyenne et NP indique une excellente discipline
+
+### Recommandations
+- **Immédiat**: RAS, récupération normale avec 24h de repos léger
+- **Prochaines séances**: Considérer un braquet légèrement plus lourd pour travailler à 80-85 rpm et développer davantage la force
+- **Suivi**: Continuer à monitorer l'EF qui progresse bien, et maintenir cette régularité d'exécution
+
+## RPE Suggéré
+**4-5/10** - Effort d'endurance confortable, vous devriez pouvoir tenir une conversation tout en maintenant cette intensité
+
+---
+
+**Note Coach**: Excellente séance qui montre votre progression en endurance de base ! Votre capacité à maintenir un effort régulier avec cette efficacité cardiovasculaire est très prometteuse. Cette séance pose de solides fondations pour les intensités plus élevées à venir. Continuez sur cette lancée ! 👍
+
+#### Métriques Post-séance
+- CTL : 51
+- ATL : 33
+- TSB : +17
+
+---
+
+Date : 02/12/2025
+
+#### Métriques Pré-séance
+- CTL : 51
+- ATL : 33
+- TSB : +18
+- Poids : 85.4kg
+
+#### Exécution
+- Durée : 63min
+- IF : 0.64
+- TSS : 43
+- Puissance moyenne : 134W
+- Puissance normalisée : 140W
+- Cadence moyenne : 86rpm
+- FC moyenne : 111bpm
+
+#### Analyse AI
+# Feedback Séance: Zwift - S070-02-END-EnduranceBase-V001 on Tropic Rush in Makuri Islands
+
+## Résumé Exécutif (3 points)
+- ✅ **Point positif #1**: Séance d'endurance bien exécutée avec une intensité modérée (IF = 0.636), idéale pour le développement aérobie.
+- ⚠️ **Point attention #1**: Absence de données de puissance brutes (moyenne/NP non enregistrées), limitant l'analyse fine de la performance.
+- 💡 **Apprentissage clé**: Bonne économie d'effort (Efficiency Factor = 1.26), mais vérification du capteur de puissance nécessaire pour fiabiliser les données futures.
+
+---
+
+## Analyse Performance
+
+### Objectifs vs Réalisé
+- **TSS réalisé (43)**: Charge d'entraînement légère, cohérente avec une séance d'endurance de base (~1h). Le plan initial n'était pas quantifié, mais ce TSS suggère une séance efficace pour la récupération active ou le développement aérobie.
+- **IF (0.636)**: Intensité parfaite pour une séance d'endurance (zone 2), favorisant l'adaptation mitochondriale sans fatigue excessive.
+- **Durée (63.1 min)**: Légèrement supérieure à 1h, ce qui est optimal pour ce type de séance. Aucun signe de surcharge.
+
+### Qualité Exécution
+- **Données manquantes**: L'absence de puissance moyenne/NP enregistrée est problématique. Cela peut indiquer un problème de capteur (batterie, connexion) ou une erreur de synchronisation. **À vérifier absolument** pour les prochaines séances.
+- **Cadence (86.7 rpm)**: Cadence élevée, typique des séances sur home-trainer. À surveiller si elle est volontaire (pour travailler la vélocité) ou subie (manque de force).
+- **FC moyenne (111 bpm)**: Cohérente avec une intensité d'endurance (zone 2), mais sans puissance, difficile de corréler effort perçu et output réel.
+
+### Efficacité Physiologique
+- **Efficiency Factor (1.26)**: Bon ratio NP/FC, indiquant une bonne économie d'effort. Cela suggère que l'athlète a maintenu une intensité stable sans gaspillage d'énergie.
+- **RPE suggéré**: 4-5/10 (effort perçu léger à modéré), aligné avec l'IF et la FC.
+
+---
+
+## État Forme & Récupération
+
+### Wellness Contexte
+- **TSB pré-séance (18.2)**: Fraîcheur modérée, idéale pour une séance d'endurance. L'athlète était suffisamment reposé pour absorber la charge sans risque de surentraînement.
+- **CTL/ATL pré-séance (51.5/33.3)**: Forme stable avec une fatigue maîtrisée. Le ratio CTL/ATL (~1.55) est sain pour un athlète en phase de développement.
+
+### Impact Séance
+- **ΔCTL (-0.5) / ΔATL (-0.2)**: Légère baisse de la forme et de la fatigue, normale après une séance d'endurance. Le TSB post-séance (17.9) reste positif, confirmant une récupération rapide.
+- **Fatigue générée**: Minime, comme attendu pour ce type de séance. Pas de signe de surcharge.
+
+---
+
+## Apprentissages & Ajustements
+
+### Points Clés Retenus
+1. **Fiabilité des données**: L'absence de puissance enregistrée est un problème récurrent à résoudre. Sans ces données, l'analyse de performance est limitée.
+2. **Endurance solide**: La capacité à maintenir une intensité stable (IF = 0.636) et une bonne économie (EF = 1.26) est un atout pour les longues sorties.
+3. **Gestion de la cadence**: La cadence élevée (87 rpm) peut être un choix délibéré, mais si elle est subie, un travail de force (séances en danseuse ou gros braquet) pourrait être bénéfique.
+
+### Recommandations
+- **Immédiat**:
+  - Vérifier le capteur de puissance (batterie, calibration, connexion Zwift).
+  - Noter manuellement la puissance moyenne/NP en cas de nouvelle défaillance technique.
+- **Prochaines séances**:
+  - **Endurance**: Maintenir ce type de séance 1-2x/semaine pour consolider la base aérobie.
+  - **Technique**: Intégrer des exercices de cadence variable (ex: 5 min à 90 rpm / 5 min à 70 rpm) pour améliorer l'efficacité.
+  - **Force**: Ajouter 1 séance/semaine de force-endurance (ex: 4x8 min à 60-70 rpm, IF ~0.75).
+- **Suivi**:
+  - Monitorer la FC de repos et la variabilité cardiaque (HRV) pour détecter précocement la fatigue.
+  - Comparer les séances similaires (même IF) pour évaluer la progression de la puissance à iso-intensité.
+
+---
+
+## RPE Suggéré
+**5/10** - Effort perçu modéré, aligné avec une séance d'endurance confortable. La FC et l'EF confirment que l'athlète a travaillé dans la bonne zone sans surcharge.
+
+---
+
+**Note Coach**:
+*"Cette séance montre une bonne maîtrise de l'endurance, mais l'absence de données de puissance est un frein à l'optimisation de ton entraînement. Une fois ce problème résolu, nous pourrons affiner les zones d'intensité et cibler des gains plus spécifiques. En attendant, continue à privilégier la régularité et la qualité d'exécution – c'est la clé pour progresser durablement. Prochaine étape : vérifier ce capteur et intégrer un peu de travail de force pour équilibrer ta cadence naturelle !"*
+
+#### Métriques Post-séance
+- CTL : 51
+- ATL : 33
+- TSB : +17
+
+---
+
+### S071-02-MIX-RecupPostCriterium
+Date : 09/12/2025
+
+#### Métriques Pré-séance
+- CTL : 49
+- ATL : 38
+- TSB : +10
+- Poids : 84.1kg
+
+#### Exécution
+- Durée : 61min
+- IF : 0.65
+- TSS : 43
+- Puissance moyenne : 118W
+- Puissance normalisée : 142W
+- Cadence moyenne : 81rpm
+- FC moyenne : 98bpm
+
+#### Analyse AI
+# Feedback Séance: S071-02-MIX-RecupPostCriterium
+
+## Résumé Exécutif (3 points)
+- ✅ **Récupération active réussie**: TSS de 43 et IF de 0.645 parfaitement calibrés pour une séance post-critérium
+- ⚠️ **Disparité dans les données**: Incohérence entre les métriques activité (puissance null) et métriques calculées (142W NP)
+- 💡 **Amélioration de la fraîcheur**: TSB passé de +10.7 à +13.3, indiquant une récupération effective
+
+## Analyse Performance
+
+### Objectifs vs Réalisé
+La séance a parfaitement rempli son rôle de récupération active post-critérium. Avec un TSS de 43 pour 61.8 minutes, l'intensité était idéalement dosée. L'IF de 0.645 place cette séance en zone d'endurance légère, exactement ce qui était recherché après un effort intense en compétition.
+
+### Qualité Exécution
+- **Cadence**: 81 rpm, légèrement sous l'optimal mais acceptable pour une récupération
+- **Puissance moyenne calculée**: 118W avec NP à 142W, ratio cohérent pour du travail en endurance
+- **Durée**: 61.8 minutes, format idéal pour favoriser la circulation sanguine sans créer de fatigue supplémentaire
+
+### Efficacité Physiologique
+L'Efficiency Factor de 1.45 avec une FC moyenne de 98 bpm indique une excellente économie cardiaque. Cette valeur témoigne d'un travail en zone aérobie pure, favorisant la récupération tout en maintenant l'activation des systèmes énergétiques.
+
+## État Forme & Récupération
+
+### Wellness Contexte
+Le TSB pré-séance de +10.7 indiquait déjà un état de fraîcheur relative, idéal pour intégrer une récupération active sans risquer la surcharge. La CTL de 49.7 montre un niveau de forme solide.
+
+### Impact Séance
+L'évolution post-séance est excellente :
+- **ΔCTL**: -0.9 (légère diminution normale)
+- **ΔATL**: -3.5 (réduction significative de la fatigue)
+- **TSB final**: +13.3 (amélioration nette de la fraîcheur)
+
+Cette séance a effectivement contribué à la récupération plutôt qu'à l'accumulation de fatigue.
+
+## Apprentissages & Ajustements
+
+### Points Clés Retenus
+1. **Dosage optimal**: L'intensité choisie (IF 0.645) est parfaite pour les récupérations post-compétition
+2. **Timing efficace**: 60+ minutes permettent un effet récupération mesurable sur les métriques de forme
+3. **Réponse physiologique positive**: La baisse de l'ATL confirme l'effet récupérateur recherché
+
+### Recommandations
+- **Immédiat**: Profiter de cette amélioration de fraîcheur pour planifier une séance de qualité dans 24-48h
+- **Prochaines séances**: Reproduire ce format (TSS 40-50, IF 0.6-0.7) pour futures récupérations post-compétition
+- **Suivi**: Vérifier la cohérence des données entre plateformes pour un suivi plus précis
+
+## RPE Suggéré
+**4/10** - Effort facile et contrôlé, sensation de "jambes qui tournent", légère activation sans essoufflement
+
+---
+
+**Note Coach**: Excellente séance de récupération ! Tu as su doser parfaitement l'effort pour transformer la fatigue post-critérium en fraîcheur. Cette approche intelligente de la récupération active va te permettre de repartir plus fort sur tes prochaines séances de qualité. Continue sur cette voie, c'est exactement ce type de discipline qui fait la différence sur le long terme.
+
+#### Métriques Post-séance
+- CTL : 48
+- ATL : 35
+- TSB : +13
+
+---
+
+
+### S071-01-END-EnduranceBase-V001
+Date : 08/12/2025
+
+#### Métriques Pré-séance
+- CTL : 49
+- ATL : 38
+- TSB : +11
+- Sommeil : 6.8h
+- Poids : 84.6kg
+
+#### Exécution
+- Durée : 61min
+- IF : 0.66
+- TSS : 44
+- Puissance moyenne : 142W
+- Puissance normalisée : 144W
+- Cadence moyenne : 86rpm
+- FC moyenne : 108bpm
+
+#### Analyse AI
+# Feedback Séance: Zwift - S071-01-END-EnduranceBase-V001 on Mech Isle Loop
+
+## Résumé Exécutif (3 points)
+- ✅ **Point positif #1**: Séance d'endurance de base bien exécutée malgré l'absence de données de puissance brutes (problème capteur ?). La cadence moyenne (86 rpm) est optimale pour ce type d'effort.
+- ⚠️ **Point attention #1**: Incohérence entre le plan prévu (S070-07-REC-ReposObligatoire) et la séance réalisée (EnduranceBase). Problème de planification ou d'exécution ?
+- 💡 **Apprentissage clé**: L'Efficiency Factor (1.33) suggère une bonne économie d'effort, mais l'absence de données de puissance limite l'analyse fine.
+
+---
+
+## Analyse Performance
+
+### Objectifs vs Réalisé
+- **Écart majeur**: La séance réalisée était une endurance de base (IF ~0.65) alors qu'un repos obligatoire était planifié. Cela représente une charge supplémentaire non prévue (TSS 44).
+- **Durée**: 61.4 min vs probablement 0-30 min pour un repos obligatoire → surcharge potentielle.
+- **Intensité**: L'IF de 0.65 est cohérent avec une endurance de base, mais incompatible avec un jour de repos.
+
+### Qualité Exécution
+- **Données manquantes**: Absence de puissance moyenne/NP (valeurs "None") suggère un problème de capteur ou de synchronisation. À vérifier impérativement.
+- **Cadence**: 86 rpm est dans la fourchette idéale (80-90 rpm) pour l'endurance, indiquant une bonne technique.
+- **FC moyenne**: 108 bpm (estimation via Efficiency Factor) semble basse pour une endurance, mais cohérente avec un effort modéré.
+
+### Efficacité Physiologique
+- **Efficiency Factor (1.33)**: Bon ratio NP/FC, indiquant une bonne adaptation cardiovasculaire à l'effort.
+- **RPE estimé**: ~3-4/10 (basé sur IF 0.65), ce qui est cohérent avec une séance d'endurance légère.
+- **Problème**: L'absence de données de puissance empêche d'évaluer la variabilité de l'effort ou les pics d'intensité.
+
+---
+
+## État Forme & Récupération
+
+### Wellness Contexte
+- **Pré-séance**:
+  - TSB = +11.5 → Fraîcheur modérée, adaptée à une séance d'endurance mais **trop élevée pour un repos obligatoire**.
+  - CTL/ATL: 49.8/38.3 → Forme stable, fatigue gérable.
+- **Risque**: Réaliser une séance d'endurance au lieu d'un repos a pu impacter la récupération prévue.
+
+### Impact Séance
+- **Post-séance (J+1)**:
+  - ΔCTL: -0.2 (légère baisse de forme)
+  - ΔATL: +0.6 (augmentation de la fatigue)
+  - TSB: -0.8 → Perte de fraîcheur, logique après une séance non prévue.
+- **Conséquence**: La séance a généré une fatigue supplémentaire qui pourrait retarder la récupération si répétée.
+
+---
+
+## Apprentissages & Ajustements
+
+### Points Clés Retenus
+1. **Problème de planification**: Décalage entre le plan (repos) et la réalisation (endurance). À clarifier avec l'athlète (erreur de sélection ?).
+2. **Fiabilité des données**: Absence de puissance → vérifier le capteur (piles, calibration, connexion Zwift).
+3. **Adaptation physiologique**: Bonne économie d'effort (EF 1.33), mais la séance n'était pas optimale pour la récupération.
+
+### Recommandations
+- **Immédiat**:
+  - Vérifier le capteur de puissance (redémarrer Zwift, contrôler la connexion ANT+/Bluetooth).
+  - Clarifier avec l'athlète pourquoi la séance de repos n'a pas été respectée (confusion ? motivation ?).
+- **Prochaines séances**:
+  - Si l'objectif était le repos: remplacer par une vraie récupération (marche, étirements, 20 min très léger).
+  - Si l'objectif était l'endurance: ajuster le plan pour inclure cette séance et recalculer la charge hebdomadaire.
+- **Suivi**:
+  - Monitorer le TSB dans les 48h post-séance pour évaluer l'impact sur la fraîcheur.
+  - Vérifier la cohérence des données de puissance pour les prochaines sorties.
+
+## RPE Suggéré
+**4/10** - Séance perçue comme légère à modérée (IF 0.65), mais l'absence de données de puissance limite la précision. L'effort était probablement bien maîtrisé, mais la fatigue résiduelle pourrait être plus élevée qu'attendu pour un jour de repos.
+
+---
+
+**Note Coach**:
+*"Cette séance soulève deux problèmes majeurs: un décalage entre le plan et l'exécution, et des données manquantes. Pour progresser, il faut d'abord résoudre ces points techniques (capteur) et organisationnels (respect du plan). Une fois ces bases assurées, nous pourrons affiner l'analyse et optimiser ta charge d'entraînement. Bonne réactivité pour ajuster les prochaines séances !"*
+
+#### Métriques Post-séance
+- CTL : 49
+- ATL : 38
+- TSB : +10
+
+---
+
+
+### S070-07-REC-ReposObligatoire
+Date : 08/12/2025
+
+#### Métriques Pré-séance
+- CTL : 49
+- ATL : 38
+- TSB : +11
+- Sommeil : 6.8h
+- Poids : 84.6kg
+
+#### Exécution
+- Durée : 61min
+- IF : 0.66
+- TSS : 44
+- Puissance moyenne : 142W
+- Puissance normalisée : 144W
+- Cadence moyenne : 86rpm
+- FC moyenne : 108bpm
+
+#### Analyse AI
+# Feedback Séance: Zwift - S071-01-END-EnduranceBase-V001 on Mech Isle Loop
+
+## Résumé Exécutif (3 points)
+- ✅ **Point positif #1**: Séance d'endurance bien exécutée malgré l'absence de données de puissance complètes (problème technique probable). La cadence moyenne (86 rpm) est optimale pour un travail d'endurance.
+- ⚠️ **Point attention #1**: Données de puissance manquantes (valeurs "None"), ce qui limite l'analyse fine de l'intensité. Le TSS calculé (44) semble sous-estimé pour 1h d'effort.
+- 💡 **Apprentissage clé**: L'Efficiency Factor (1.33) suggère une bonne économie d'effort, mais la fréquence cardiaque moyenne (108 bpm) indique que l'intensité était légèrement supérieure à une zone d'endurance pure.
+
+---
+
+## Analyse Performance
+
+### Objectifs vs Réalisé
+- **Planifié**: Séance de récupération obligatoire (S070-07-REC), mais réalisée une séance d'endurance de base (S071-01-END).
+- **Réalisé**:
+  - Durée: 61.4 min (proche de l'objectif)
+  - IF: 0.655 (zone endurance active, légèrement au-dessus de la récupération pure)
+  - TSS: 44 (faible pour 1h, probablement dû aux données manquantes)
+- **Écart**: La séance effectuée était plus intense que prévue (endurance vs récupération). L'IF suggère un effort modéré plutôt qu'une récupération.
+
+### Qualité Exécution
+- **Cadence**: 86 rpm est idéal pour un travail d'endurance, favorisant la vélocité sans surcharge musculaire.
+- **Données manquantes**: L'absence de puissance moyenne et NP limite l'analyse. Vérifier la connexion des capteurs pour les prochaines séances.
+- **Cohérence métriques**: La FC moyenne (108 bpm) et l'IF (0.655) indiquent un effort en zone 2 (endurance), mais pas en récupération (zone 1).
+
+### Efficacité Physiologique
+- **Efficiency Factor**: 1.33 (bon, mais à confirmer avec des données de puissance complètes). Un EF >1.1 suggère une bonne économie d'effort.
+- **FC vs Puissance**: La FC semble légèrement élevée pour un IF de 0.655, ce qui pourrait indiquer:
+  - Un état de fatigue résiduelle (TSB pré-séance à +11.5, limite pour une récupération).
+  - Une séance plus intense que prévu (endurance vs récupération).
+  - Un manque de fraîcheur (ΔATL +0.6 post-séance).
+
+---
+
+## État Forme & Récupération
+
+### Wellness Contexte
+- **Pré-séance**:
+  - CTL: 49.8 (forme stable)
+  - ATL: 38.3 (fatigue modérée)
+  - TSB: +11.5 (frais, mais en limite basse pour une récupération optimale).
+- **Post-séance (J+1)**:
+  - ΔCTL: -0.2 (légère baisse de forme)
+  - ΔATL: +0.6 (fatigue accrue)
+  - TSB: +10.7 (fraîcheur réduite).
+
+### Impact Séance
+- **Fatigue générée**: La séance a légèrement augmenté la fatigue (ΔATL +0.6) sans améliorer la forme (ΔCTL -0.2). Cela suggère:
+  - Un effort trop intense pour une séance "récupération".
+  - Un besoin de prioriser des séances à faible TSS les jours suivants.
+- **Récupération**: Le TSB reste positif (+10.7), mais la tendance à la baisse indique qu'une journée de repos complet ou une séance très légère serait bénéfique.
+
+---
+
+## Apprentissages & Ajustements
+
+### Points Clés Retenus
+1. **Respect du plan**: La séance réalisée ne correspondait pas au plan de récupération prévu. À l'avenir, suivre strictement le plan pour éviter une fatigue inutile.
+2. **Données manquantes**: Les capteurs de puissance doivent être vérifiés pour éviter les lacunes dans l'analyse.
+3. **Intensité**: Une séance d'endurance à IF 0.655 n'est pas une récupération. Pour une vraie récupération, viser IF <0.60 et FC <100 bpm.
+
+### Recommandations
+- **Immédiat**:
+  - Vérifier la connexion des capteurs (puissance/FC) avant chaque séance.
+  - Privilégier une journée de repos ou une séance de mobilité active demain pour stabiliser le TSB.
+- **Prochaines séances**:
+  - Si l'objectif est la récupération, réduire l'intensité (IF <0.60) et la durée (<60 min).
+  - Pour l'endurance, maintenir IF 0.60-0.70, mais ajuster le TSS en fonction de la fatigue (ATL).
+- **Suivi**:
+  - Monitorer le TSB: viser +15 à +25 pour les séances intenses, et >+5 pour la récupération.
+  - Comparer l'EF avec d'autres séances pour évaluer l'économie d'effort.
+
+---
+
+## RPE Suggéré
+**6/10** - Effort modéré, mais légèrement trop intense pour une récupération. La cadence était bonne, mais la FC et l'IF indiquent un travail en endurance plutôt qu'en récupération.
+
+---
+
+**Note Coach**:
+"Bonne initiative de rouler, mais il est crucial de suivre le plan prévu pour équilibrer charge et récupération. Les données manquantes limitent l'analyse, alors vérifie tes capteurs pour les prochaines séances. Pour une vraie récupération, ralentis le rythme et écoute ton corps – la fraîcheur (TSB) est précieuse pour les séances clés à venir !"
+
+#### Métriques Post-séance
+- CTL : 49
+- ATL : 38
+- TSB : +10
+
+---
+
+
+### S070-07-REC-ReposObligatoire
+Date : 08/12/2025
+
+#### Métriques Pré-séance
+- CTL : 49
+- ATL : 38
+- TSB : +11
+- Sommeil : 6.8h
+- Poids : 84.6kg
+
+#### Exécution
+- Durée : 61min
+- IF : 0.66
+- TSS : 44
+- Puissance moyenne : 142W
+- Puissance normalisée : 144W
+- Cadence moyenne : 86rpm
+- FC moyenne : 108bpm
+
+#### Analyse AI
+# 📋 Prompt Copié dans Clipboard ✅
+
+**Taille**: 4,918 caractères
+
+## 🎯 Workflow Manuel
+
+### Étape 1: Ouvrir Votre Service IA Préféré
+Services compatibles:
+- Claude.ai (https://claude.ai)
+- ChatGPT (https://chat.openai.com)
+- Mistral Chat (https://chat.mistral.ai)
+- Perplexity (https://perplexity.ai)
+- Ou tout autre service IA
+
+### Étape 2: Coller le Prompt
+1. Ouvrir nouvelle conversation
+2. Coller le prompt (Cmd+V / Ctrl+V)
+3. Envoyer pour analyse
+
+### Étape 3: Copier la Réponse
+1. Sélectionner l'analyse complète
+2. Copier (Cmd+C / Ctrl+C)
+3. Retour ici pour sauvegarde
+
+## 💡 Tips
+- Tous les services IA majeurs fonctionnent bien
+- Gratuit avec la plupart des services (no API key)
+- Possibilité follow-up questions pour clarifications
+- Format markdown supporté par la plupart
+
+## 📊 Contenu Prompt
+Le prompt inclut:
+- ✅ Contexte athlète
+- ✅ Données activité complètes
+- ✅ Plan workout vs réalisé
+- ✅ Métriques performance (TSS, IF, NP, HR)
+- ✅ Wellness pré/post séance
+- ✅ Questions guidance coach
+
+---
+
+**Ready!** Le prompt est dans votre clipboard. Paste-le dans votre service IA maintenant 🚀
+
+#### Métriques Post-séance
+- CTL : 49
+- ATL : 38
+- TSB : +10
+
+---
+
+
+### S070-07-REC-ReposObligatoire
+Date : 08/12/2025
+
+#### Métriques Pré-séance
+- CTL : 49
+- ATL : 38
+- TSB : +11
+- Sommeil : 6.8h
+- Poids : 84.6kg
+
+#### Exécution
+- Durée : 38min
+- IF : 0.85
+- TSS : 46
+- Puissance moyenne : 140W
+- Puissance normalisée : 188W
+- Cadence moyenne : 74rpm
+- FC moyenne : 113bpm
+
+#### Analyse AI
+# 📋 Prompt Copié dans Clipboard ✅
+
+**Taille**: 4,763 caractères
+
+## 🎯 Workflow Manuel
+
+### Étape 1: Ouvrir Votre Service IA Préféré
+Services compatibles:
+- Claude.ai (https://claude.ai)
+- ChatGPT (https://chat.openai.com)
+- Mistral Chat (https://chat.mistral.ai)
+- Perplexity (https://perplexity.ai)
+- Ou tout autre service IA
+
+### Étape 2: Coller le Prompt
+1. Ouvrir nouvelle conversation
+2. Coller le prompt (Cmd+V / Ctrl+V)
+3. Envoyer pour analyse
+
+### Étape 3: Copier la Réponse
+1. Sélectionner l'analyse complète
+2. Copier (Cmd+C / Ctrl+C)
+3. Retour ici pour sauvegarde
+
+## 💡 Tips
+- Tous les services IA majeurs fonctionnent bien
+- Gratuit avec la plupart des services (no API key)
+- Possibilité follow-up questions pour clarifications
+- Format markdown supporté par la plupart
+
+## 📊 Contenu Prompt
+Le prompt inclut:
+- ✅ Contexte athlète
+- ✅ Données activité complètes
+- ✅ Plan workout vs réalisé
+- ✅ Métriques performance (TSS, IF, NP, HR)
+- ✅ Wellness pré/post séance
+- ✅ Questions guidance coach
+
+---
+
+**Ready!** Le prompt est dans votre clipboard. Paste-le dans votre service IA maintenant 🚀
+
+#### Métriques Post-séance
+- CTL : 49
+- ATL : 38
+- TSB : +10
+
+---
+
+
+### S070-07-REC-ReposObligatoire
+Date : 08/12/2025
+
+#### Métriques Pré-séance
+- CTL : 49
+- ATL : 38
+- TSB : +11
+- Sommeil : 6.8h
+- Poids : 84.6kg
+
+#### Exécution
+- Durée : 38min
+- IF : 0.85
+- TSS : 46
+- Puissance normalisée : 188W
+- Cadence moyenne : 74rpm
+- FC moyenne : 113bpm
+
+#### Analyse AI
+# Feedback Séance: Zwift - Glasgow Crit Circuit in Scotland
+
+## Résumé Exécutif (3 points)
+- ✅ **Point positif #1**: Séance réalisée avec une intensité bien ciblée (IF = 0.855) dans la zone de seuil, idéale pour travailler la FTP.
+- ⚠️ **Point attention #1**: Absence de données de puissance brutes (moyenne/NP non enregistrées), limitant l'analyse fine de la performance.
+- 💡 **Apprentissage clé**: Bonne gestion de l'effort malgré un TSB pré-séance légèrement bas (11.5), suggérant une récupération suffisante pour ce type d'effort modéré.
+
+---
+
+## Analyse Performance
+
+### Objectifs vs Réalisé
+- **TSS réalisé (46)** : Charge d'entraînement modérée, cohérente avec une séance de seuil ou un critérium virtuel. Le TSS planifié n'était pas spécifié, mais cette valeur est typique pour 40 minutes à IF ~0.85.
+- **IF (0.855)** : Intensité bien ciblée pour un travail au seuil (zone orange), alignée avec les objectifs de FTP. Idéal pour des efforts soutenus sans surcharge excessive.
+- **Durée (38.1 min)** : Légèrement inférieure à une séance classique de seuil (45-60 min), mais suffisante pour un critérium virtuel où les variations d'intensité sont naturelles.
+
+**Écart notable** : L'absence de données de puissance (moyenne/NP) empêche de vérifier la répartition des zones d'effort. La cadence moyenne (74 rpm) est dans la fourchette optimale pour un effort de seuil, mais sans puissance, difficile d'évaluer l'efficacité du pédalage.
+
+---
+
+### Qualité Exécution
+- **Cadence** : 74 rpm est une cadence efficace pour un effort de seuil, évitant une surcharge musculaire tout en maintenant une puissance optimale (si les données étaient disponibles).
+- **Efficiency Factor (1.66)** : Ce ratio NP/FC suggère une bonne économie d'effort, avec une fréquence cardiaque modérée (113 bpm) pour une intensité de seuil. À confirmer avec les données de puissance manquantes.
+- **RPE estimé** : Basé sur l'IF et le TSS, un RPE de **6-7/10** semble approprié (effort soutenu mais contrôlé).
+
+**Limite** : Sans courbe de puissance ou distribution des zones, impossible de vérifier si l'effort était homogène ou avec des pics d'intensité (typiques d'un critérium).
+
+---
+
+### Efficacité Physiologique
+- **FC moyenne (113 bpm)** : Cohérente avec un effort en zone de seuil pour un athlète entraîné. L'Efficiency Factor (1.66) indique une réponse cardiaque adaptée à l'intensité.
+- **Récupération post-séance** : L'ATL a légèrement augmenté (+0.6), ce qui est normal après une séance de seuil, tandis que le CTL a légèrement baissé (-0.2), reflétant une fatigue modérée mais gérable.
+- **TSB post-séance (10.7)** : La fraîcheur reste positive, suggérant que l'athlète était prêt pour cette séance et que la récupération sera rapide.
+
+---
+
+## État Forme & Récupération
+
+### Wellness Contexte
+- **TSB pré-séance (11.5)** : Valeur légèrement basse mais acceptable pour une séance de seuil. Un TSB >15 aurait été idéal pour des efforts maximaux (VO2max), mais ce n'était pas l'objectif ici.
+- **CTL/ATL pré-séance (49.8/38.3)** : Équilibre forme/fatigue favorable, avec une forme (CTL) suffisamment élevée pour supporter l'effort sans risque de surentraînement.
+
+### Impact Séance
+- **Fatigue générée** : L'augmentation modérée de l'ATL (+0.6) et la baisse légère du CTL (-0.2) montrent que la séance a été bien assimilée. Pas de signe de surcharge.
+- **Récupération attendue** : Avec un TSS de 46, une récupération complète est probable sous 24-36h, surtout si l'hydratation et la nutrition post-séance sont optimales.
+
+---
+
+## Apprentissages & Ajustements
+
+### Points Clés Retenus
+1. **Gestion de l'intensité** : L'IF de 0.855 confirme une bonne capacité à maintenir un effort de seuil sans dérive cardiaque excessive (FC stable à 113 bpm).
+2. **Économie d'effort** : L'Efficiency Factor (1.66) suggère une amélioration de l'efficacité cardiovasculaire, à confirmer avec des données de puissance complètes.
+3. **Adaptation à la fatigue** : La séance a été réalisée malgré un TSB légèrement bas, prouvant une bonne résilience et une capacité à performer même avec une fraîcheur modérée.
+
+### Recommandations
+- **Immédiat** :
+  - Vérifier la calibration du capteur de puissance pour les prochaines séances afin d'éviter les données manquantes.
+  - Prioriser une récupération active (étirements, hydratation) et un repas riche en glucides/protéines dans les 30-60 min post-séance.
+- **Prochaines séances** :
+  - **Pour travailler la FTP** : Intégrer des séances de seuil plus longues (45-60 min) avec des intervalles à IF 0.90-0.95 pour stimuler davantage l'adaptation.
+  - **Pour le critérium** : Ajouter des efforts explosifs (sprints de 10-20s) en fin de séance pour simuler les accélérations en course.
+  - **Monitoring** : Suivre l'évolution de l'Efficiency Factor sur des séances similaires pour valider l'amélioration de l'économie d'effort.
+- **Suivi** :
+  - Surveiller le TSB pour éviter qu'il ne descende en dessous de 5 (risque de fatigue accumulée).
+  - Comparer les données de FC et de puissance (quand disponibles) pour affiner l'analyse de l'efficacité.
+
+---
+
+## RPE Suggéré
+**7/10** - Effort soutenu et contrôlé, typique d'une séance de seuil ou d'un critérium virtuel. La perception de l'effort est légèrement supérieure à l'IF (0.855) en raison des variations d'intensité naturelles d'un circuit comme Glasgow.
+
+---
+
+**Note Coach** :
+*"Cette séance montre une bonne maîtrise de l'intensité de seuil, essentielle pour progresser en FTP. L'absence de données de puissance est dommage, mais l'Efficiency Factor et la FC suggèrent une exécution de qualité. Pour les prochaines fois, assure-toi que ton capteur est bien calibré et n'hésite pas à pousser légèrement l'intensité (IF 0.90) sur des intervalles courts pour stimuler davantage tes adaptations. Continue comme ça !"* 🚴‍♂️💨
+
+#### Métriques Post-séance
+- CTL : 49
+- ATL : 38
+- TSB : +10
+
+---
+
+
+### S070-07-REC-ReposObligatoire
+Date : 08/12/2025
+
+#### Métriques Pré-séance
+- CTL : 49
+- ATL : 38
+- TSB : +11
+- Sommeil : 6.8h
+- Poids : 84.6kg
+
+#### Exécution
+- Durée : 38min
+- IF : 0.85
+- TSS : 46
+- Puissance normalisée : 188W
+- Cadence moyenne : 74rpm
+- FC moyenne : 113bpm
+
+#### Analyse AI
+# 📋 Prompt Copié dans Clipboard ✅
+
+**Taille**: 4,741 caractères
+
+## 🎯 Workflow Manuel
+
+### Étape 1: Ouvrir Votre Service IA Préféré
+Services compatibles:
+- Claude.ai (https://claude.ai)
+- ChatGPT (https://chat.openai.com)
+- Mistral Chat (https://chat.mistral.ai)
+- Perplexity (https://perplexity.ai)
+- Ou tout autre service IA
+
+### Étape 2: Coller le Prompt
+1. Ouvrir nouvelle conversation
+2. Coller le prompt (Cmd+V / Ctrl+V)
+3. Envoyer pour analyse
+
+### Étape 3: Copier la Réponse
+1. Sélectionner l'analyse complète
+2. Copier (Cmd+C / Ctrl+C)
+3. Retour ici pour sauvegarde
+
+## 💡 Tips
+- Tous les services IA majeurs fonctionnent bien
+- Gratuit avec la plupart des services (no API key)
+- Possibilité follow-up questions pour clarifications
+- Format markdown supporté par la plupart
+
+## 📊 Contenu Prompt
+Le prompt inclut:
+- ✅ Contexte athlète
+- ✅ Données activité complètes
+- ✅ Plan workout vs réalisé
+- ✅ Métriques performance (TSS, IF, NP, HR)
+- ✅ Wellness pré/post séance
+- ✅ Questions guidance coach
+
+---
+
+**Ready!** Le prompt est dans votre clipboard. Paste-le dans votre service IA maintenant 🚀
+
+#### Métriques Post-séance
+- CTL : 49
+- ATL : 38
+- TSB : +10
+
+---
+
+
+### S070-07-REC-ReposObligatoire
+Date : 08/12/2025
+
+#### Métriques Pré-séance
+- CTL : 49
+- ATL : 38
+- TSB : +11
+- Sommeil : 6.8h
+- Poids : 84.6kg
+
+#### Exécution
+- Durée : 38min
+- IF : 0.85
+- TSS : 46
+- Puissance normalisée : 188W
+- Cadence moyenne : 74rpm
+- FC moyenne : 113bpm
+
+#### Analyse AI
+# 📋 Prompt Copié dans Clipboard ✅
+
+**Taille**: 4,741 caractères
+
+## 🎯 Workflow Manuel
+
+### Étape 1: Ouvrir Votre Service IA Préféré
+Services compatibles:
+- Claude.ai (https://claude.ai)
+- ChatGPT (https://chat.openai.com)
+- Mistral Chat (https://chat.mistral.ai)
+- Perplexity (https://perplexity.ai)
+- Ou tout autre service IA
+
+### Étape 2: Coller le Prompt
+1. Ouvrir nouvelle conversation
+2. Coller le prompt (Cmd+V / Ctrl+V)
+3. Envoyer pour analyse
+
+### Étape 3: Copier la Réponse
+1. Sélectionner l'analyse complète
+2. Copier (Cmd+C / Ctrl+C)
+3. Retour ici pour sauvegarde
+
+## 💡 Tips
+- Tous les services IA majeurs fonctionnent bien
+- Gratuit avec la plupart des services (no API key)
+- Possibilité follow-up questions pour clarifications
+- Format markdown supporté par la plupart
+
+## 📊 Contenu Prompt
+Le prompt inclut:
+- ✅ Contexte athlète
+- ✅ Données activité complètes
+- ✅ Plan workout vs réalisé
+- ✅ Métriques performance (TSS, IF, NP, HR)
+- ✅ Wellness pré/post séance
+- ✅ Questions guidance coach
+
+---
+
+**Ready!** Le prompt est dans votre clipboard. Paste-le dans votre service IA maintenant 🚀
+
+#### Métriques Post-séance
+- CTL : 49
+- ATL : 38
+- TSB : +10
+
+---
+
+
+### S070-07-REC-ReposObligatoire
+Date : 08/12/2025
+
+#### Métriques Pré-séance
+- CTL : 49
+- ATL : 38
+- TSB : +11
+- Sommeil : 6.8h
+- Poids : 84.6kg
+
+#### Exécution
+- Durée : 38min
+- IF : 0.85
+- TSS : 46
+- Puissance normalisée : 188W
+- Cadence moyenne : 74rpm
+- FC moyenne : 113bpm
+
+#### Analyse AI
+# Feedback Séance: Zwift - Glasgow Crit Circuit in Scotland
+
+## Résumé Exécutif (3 points)
+- ✅ **Point positif #1**: Séance bien positionnée dans le cycle d'entraînement avec un TSB pré-séance légèrement positif (11.5), indiquant une bonne fraîcheur pour un effort modéré.
+- ⚠️ **Point attention #1**: Absence de données de puissance (moyenne et NP non enregistrées), limitant l'analyse fine de l'intensité et de la charge d'entraînement.
+- 💡 **Apprentissage clé**: L'Efficiency Factor (1.66) suggère une bonne économie d'effort, mais l'absence de données de puissance empêche une évaluation complète de la performance.
+
+---
+
+## Analyse Performance
+
+### Objectifs vs Réalisé
+- **Planifié**: Séance de récupération obligatoire (S070-07-REC-ReposObligatoire), mais les données montrent une intensité modérée (IF = 0.855, TSS = 46) plutôt qu'une récupération pure (IF < 0.7).
+- **Réalisé**: Durée de 38.1 min, avec une cadence moyenne de 74 rpm, ce qui est cohérent avec un effort modéré. Cependant, l'absence de puissance empêche de confirmer si l'intensité était bien contrôlée.
+- **Écart**: La séance semble avoir dérivé vers un effort de seuil (IF ~0.85) plutôt qu'une récupération active, ce qui peut impacter la fraîcheur pour les séances suivantes.
+
+### Qualité Exécution
+- **Technique**: La cadence moyenne (74 rpm) est légèrement basse pour un effort de seuil, ce qui pourrait indiquer une fatigue musculaire ou un manque de fluidité. À surveiller pour éviter des tensions inutiles.
+- **Cohérence métriques**: L'absence de données de puissance et de fréquence cardiaque limite fortement l'analyse. La FC moyenne (113 bpm) semble modérée, mais sans contexte FTP/FCmax, difficile d'interpréter son adéquation avec l'effort.
+- **RPE estimé**: Basé sur l'IF (0.85) et le TSS (46), un RPE de **6-7/10** serait attendu (effort soutenu mais gérable).
+
+### Efficacité Physiologique
+- **Efficiency Factor (1.66)**: Ce ratio NP/FC suggère une bonne économie d'effort, mais son interprétation est limitée sans données de puissance fiables. Un EF > 1.5 est généralement bon, mais ici, il pourrait être surestimé par l'absence de NP réel.
+- **FC vs Puissance**: Sans puissance, impossible de vérifier si la FC était adaptée à l'intensité. Une FC moyenne de 113 bpm pour un IF théorique de 0.85 semble élevée si l'athlète a un FTP bas, ou normale s'il est bien entraîné.
+
+---
+
+## État Forme & Récupération
+
+### Wellness Contexte
+- **Pré-séance**:
+  - CTL (49.8) et ATL (38.3) indiquent un bon niveau de forme avec une fatigue modérée.
+  - TSB (11.5) suggère une fraîcheur optimale pour une séance modérée, mais pas pour une récupération pure. Cela explique peut-être pourquoi l'effort a dérivé vers du seuil.
+- **Post-séance**:
+  - ΔCTL (-0.2) et ΔATL (+0.6) montrent une légère augmentation de la fatigue, cohérente avec un TSS de 46. Le TSB reste positif (10.7), ce qui est rassurant pour la récupération.
+
+### Impact Séance
+- **Fatigue générée**: Le TSS de 46 est modéré, mais l'absence de récupération active (comme prévu) peut retarder la dissipation de la fatigue. À surveiller pour les 48h suivantes.
+- **Risque de surcharge**: Si cette séance était censée être une récupération, l'IF de 0.85 est trop élevé. Cela pourrait compromettre la fraîcheur pour les séances à haute intensité prévues ultérieurement.
+
+---
+
+## Apprentissages & Ajustements
+
+### Points Clés Retenus
+1. **Problème technique**: L'absence de données de puissance (moyenne et NP) est critique. Vérifier le couplage du capteur de puissance (étalonnage, batterie, connexion Zwift) et le recalibrer avant chaque séance.
+2. **Respect du plan**: La séance a dérivé vers un effort de seuil au lieu d'une récupération. Cela peut être dû à un manque de discipline (enthousiasme en groupe virtuel ?) ou à une mauvaise interprétation du plan.
+3. **Cadence**: Une cadence basse (74 rpm) pour un effort modéré peut indiquer une fatigue musculaire ou un manque de souplesse. Travailler des drills de cadence (ex: 90+ rpm) en récupération pour améliorer l'efficacité.
+
+### Recommandations
+- **Immédiat**:
+  - Vérifier et recalibrer le capteur de puissance avant la prochaine séance.
+  - Si la séance était bien une récupération, réduire l'intensité (IF < 0.7) en restant en zone 1-2, même si le groupe virtuel pousse à aller plus vite.
+  - Surveiller la récupération (sommeil, hydratation, nutrition) pour compenser l'effort non prévu.
+
+- **Prochaines séances**:
+  - **Récupération active**: Si le plan prévoit du repos, privilégier une sortie très légère (IF < 0.6) ou une activité croisée (marche, yoga) pour favoriser la récupération.
+  - **Séances de seuil**: Si l'objectif était bien un effort modéré, ajuster le plan pour inclure des intervalles contrôlés (ex: 3x10 min à 90% FTP) avec récupération complète.
+  - **Cadence**: Intégrer 1x/semaine des drills de cadence (ex: 5x1 min à 100+ rpm avec récupération) pour améliorer la fluidité.
+
+- **Suivi**:
+  - Monitorer le TSB pour éviter une accumulation de fatigue. Si le TSB descend en dessous de 0, prévoir une journée de repos.
+  - Noter le RPE subjectif pour chaque séance afin de croiser avec les données objectives (lorsqu'elles sont disponibles).
+
+---
+
+## RPE Suggéré
+**6.5/10** - Effort modéré perçu comme "soutenu mais gérable", cohérent avec un IF de 0.85. Cependant, l'absence de données de puissance rend cette estimation moins fiable. À ajuster en fonction du ressenti réel de l'athlète.
+
+---
+
+**Note Coach**:
+Cette séance met en lumière deux problèmes majeurs : **l'absence de données de puissance** et **le non-respect du plan de récupération**. Ces deux points sont critiques pour un entraînement structuré. Je te recommande de :
+1. **Résoudre le problème technique** en priorité (capteur de puissance) pour avoir des données fiables.
+2. **Revoir la discipline d'exécution** : si le plan prévoit une récupération, il faut s'y tenir, même en groupe virtuel. Utilise des rappels visuels (ex: post-it sur l'écran) ou des alarmes pour respecter les zones d'intensité.
+3. **Profiter de cette séance pour ajuster ton plan** : si tu as du mal à rester en zone de récupération, envisage des séances plus courtes ou des activités croisées pour ces jours-là.
+
+Bon courage pour la suite, et n'hésite pas à ajuster le plan si tu sens que la fatigue s'accumule ! 🚴‍♂️💪
+
+#### Métriques Post-séance
+- CTL : 49
+- ATL : 38
+- TSB : +10
+
+---
+
+
+### S070-07-REC-ReposObligatoire
+Date : 08/12/2025
+
+#### Métriques Pré-séance
+- CTL : 49
+- ATL : 38
+- TSB : +11
+- Sommeil : 6.8h
+- Poids : 84.6kg
+
+#### Exécution
+- Durée : 38min
+- IF : 0.85
+- TSS : 46
+- Puissance normalisée : 188W
+- Cadence moyenne : 74rpm
+- FC moyenne : 113bpm
+
+#### Analyse AI
+# 📋 Prompt Copié dans Clipboard ✅
+
+**Taille**: 4,741 caractères
+
+## 🎯 Workflow Manuel
+
+### Étape 1: Ouvrir AI Service
+Choix recommandés:
+- **Claude.ai** (https://claude.ai) - Gratuit, excellent pour analyse cyclisme
+- ChatGPT (https://chat.openai.com)
+- Mistral Chat (https://chat.mistral.ai)
+- Perplexity (https://perplexity.ai)
+
+### Étape 2: Coller le Prompt
+1. Ouvrir nouvelle conversation
+2. Coller le prompt (Cmd+V / Ctrl+V)
+3. Envoyer pour analyse
+
+### Étape 3: Copier la Réponse
+1. Sélectionner l'analyse complète
+2. Copier (Cmd+C / Ctrl+C)
+3. Retour ici pour sauvegarde
+
+## 💡 Tips
+- Claude.ai offre meilleure analyse qualitative pour cyclisme
+- Mode "artifacts" pour formatting markdown
+- Conversation gratuite, no API key needed
+- Possibilité follow-up questions pour clarifications
+
+## 📊 Contenu Prompt
+Le prompt inclut:
+- ✅ Contexte athlète
+- ✅ Données activité complètes
+- ✅ Plan workout vs réalisé
+- ✅ Métriques performance (TSS, IF, NP, HR)
+- ✅ Wellness pré/post séance
+- ✅ Questions guidance coach
+
+---
+
+**Ready!** Le prompt est dans votre clipboard. Paste-le dans Claude.ai maintenant 🚀
+
+#### Métriques Post-séance
+- CTL : 49
+- ATL : 38
+- TSB : +10
+
+---
+
+
+### S070-07-REC-ReposObligatoire
+Date : 08/12/2025
+
+#### Métriques Pré-séance
+- CTL : 49
+- ATL : 38
+- TSB : +11
+- Sommeil : 6.8h
+- Poids : 84.6kg
+
+#### Exécution
+- Durée : 38min
+- IF : 0.85
+- TSS : 46
+- Puissance normalisée : 188W
+- Cadence moyenne : 74rpm
+- FC moyenne : 113bpm
+
+#### Analyse AI
+# 📋 Prompt Copié dans Clipboard ✅
+
+**Taille**: 4,741 caractères
+
+## 🎯 Workflow Manuel
+
+### Étape 1: Ouvrir AI Service
+Choix recommandés:
+- **Claude.ai** (https://claude.ai) - Gratuit, excellent pour analyse cyclisme
+- ChatGPT (https://chat.openai.com)
+- Mistral Chat (https://chat.mistral.ai)
+- Perplexity (https://perplexity.ai)
+
+### Étape 2: Coller le Prompt
+1. Ouvrir nouvelle conversation
+2. Coller le prompt (Cmd+V / Ctrl+V)
+3. Envoyer pour analyse
+
+### Étape 3: Copier la Réponse
+1. Sélectionner l'analyse complète
+2. Copier (Cmd+C / Ctrl+C)
+3. Retour ici pour sauvegarde
+
+## 💡 Tips
+- Claude.ai offre meilleure analyse qualitative pour cyclisme
+- Mode "artifacts" pour formatting markdown
+- Conversation gratuite, no API key needed
+- Possibilité follow-up questions pour clarifications
+
+## 📊 Contenu Prompt
+Le prompt inclut:
+- ✅ Contexte athlète
+- ✅ Données activité complètes
+- ✅ Plan workout vs réalisé
+- ✅ Métriques performance (TSS, IF, NP, HR)
+- ✅ Wellness pré/post séance
+- ✅ Questions guidance coach
+
+---
+
+**Ready!** Le prompt est dans votre clipboard. Paste-le dans Claude.ai maintenant 🚀
+
+#### Métriques Post-séance
+- CTL : 49
+- ATL : 38
+- TSB : +10
+
+---
+
+
+### S070-07-REC-ReposObligatoire
+Date : 08/12/2025
+
+#### Métriques Pré-séance
+- CTL : 49
+- ATL : 38
+- TSB : +11
+- Sommeil : 6.8h
+- Poids : 84.6kg
+
+#### Exécution
+- Durée : 61min
+- IF : 0.66
+- TSS : 44
+- Puissance normalisée : 144W
+- Cadence moyenne : 86rpm
+- FC moyenne : 108bpm
+
+#### Analyse AI
+# 📋 Prompt Copié dans Clipboard ✅
+
+**Taille**: 4,896 caractères
+
+## 🎯 Workflow Manuel
+
+### Étape 1: Ouvrir AI Service
+Choix recommandés:
+- **Claude.ai** (https://claude.ai) - Gratuit, excellent pour analyse cyclisme
+- ChatGPT (https://chat.openai.com)
+- Mistral Chat (https://chat.mistral.ai)
+- Perplexity (https://perplexity.ai)
+
+### Étape 2: Coller le Prompt
+1. Ouvrir nouvelle conversation
+2. Coller le prompt (Cmd+V / Ctrl+V)
+3. Envoyer pour analyse
+
+### Étape 3: Copier la Réponse
+1. Sélectionner l'analyse complète
+2. Copier (Cmd+C / Ctrl+C)
+3. Retour ici pour sauvegarde
+
+## 💡 Tips
+- Claude.ai offre meilleure analyse qualitative pour cyclisme
+- Mode "artifacts" pour formatting markdown
+- Conversation gratuite, no API key needed
+- Possibilité follow-up questions pour clarifications
+
+## 📊 Contenu Prompt
+Le prompt inclut:
+- ✅ Contexte athlète
+- ✅ Données activité complètes
+- ✅ Plan workout vs réalisé
+- ✅ Métriques performance (TSS, IF, NP, HR)
+- ✅ Wellness pré/post séance
+- ✅ Questions guidance coach
+
+---
+
+**Ready!** Le prompt est dans votre clipboard. Paste-le dans Claude.ai maintenant 🚀
+
+#### Métriques Post-séance
+- CTL : 49
+- ATL : 38
+- TSB : +10
+
+---
+
+
+### S070-07-REC-ReposObligatoire
+Date : 08/12/2025
+
+#### Métriques Pré-séance
+- CTL : 49
+- ATL : 38
+- TSB : +11
+- Sommeil : 6.8h
+- Poids : 84.6kg
+
+#### Exécution
+- Durée : 61min
+- IF : 0.66
+- TSS : 44
+- Puissance normalisée : 144W
+- Cadence moyenne : 86rpm
+- FC moyenne : 108bpm
+
+#### Analyse AI
+# 📋 Prompt Copié dans Clipboard ✅
+
+**Taille**: 4,896 caractères
+
+## 🎯 Workflow Manuel
+
+### Étape 1: Ouvrir AI Service
+Choix recommandés:
+- **Claude.ai** (https://claude.ai) - Gratuit, excellent pour analyse cyclisme
+- ChatGPT (https://chat.openai.com)
+- Mistral Chat (https://chat.mistral.ai)
+- Perplexity (https://perplexity.ai)
+
+### Étape 2: Coller le Prompt
+1. Ouvrir nouvelle conversation
+2. Coller le prompt (Cmd+V / Ctrl+V)
+3. Envoyer pour analyse
+
+### Étape 3: Copier la Réponse
+1. Sélectionner l'analyse complète
+2. Copier (Cmd+C / Ctrl+C)
+3. Retour ici pour sauvegarde
+
+## 💡 Tips
+- Claude.ai offre meilleure analyse qualitative pour cyclisme
+- Mode "artifacts" pour formatting markdown
+- Conversation gratuite, no API key needed
+- Possibilité follow-up questions pour clarifications
+
+## 📊 Contenu Prompt
+Le prompt inclut:
+- ✅ Contexte athlète
+- ✅ Données activité complètes
+- ✅ Plan workout vs réalisé
+- ✅ Métriques performance (TSS, IF, NP, HR)
+- ✅ Wellness pré/post séance
+- ✅ Questions guidance coach
+
+---
+
+**Ready!** Le prompt est dans votre clipboard. Paste-le dans Claude.ai maintenant 🚀
+
+#### Métriques Post-séance
+- CTL : 49
+- ATL : 38
+- TSB : +10
+
+---
+
+
+### S070-07-REC-ReposObligatoire
+Date : 08/12/2025
+
+#### Métriques Pré-séance
+- CTL : 49
+- ATL : 38
+- TSB : +11
+- Sommeil : 6.8h
+- Poids : 84.6kg
+
+#### Exécution
+- Durée : 61min
+- IF : 0.66
+- TSS : 44
+- Puissance normalisée : 144W
+- Cadence moyenne : 86rpm
+- FC moyenne : 108bpm
+
+#### Analyse AI
+# 📋 Prompt Copié dans Clipboard ✅
+
+**Taille**: 4,896 caractères
+
+## 🎯 Workflow Manuel
+
+### Étape 1: Ouvrir AI Service
+Choix recommandés:
+- **Claude.ai** (https://claude.ai) - Gratuit, excellent pour analyse cyclisme
+- ChatGPT (https://chat.openai.com)
+- Mistral Chat (https://chat.mistral.ai)
+- Perplexity (https://perplexity.ai)
+
+### Étape 2: Coller le Prompt
+1. Ouvrir nouvelle conversation
+2. Coller le prompt (Cmd+V / Ctrl+V)
+3. Envoyer pour analyse
+
+### Étape 3: Copier la Réponse
+1. Sélectionner l'analyse complète
+2. Copier (Cmd+C / Ctrl+C)
+3. Retour ici pour sauvegarde
+
+## 💡 Tips
+- Claude.ai offre meilleure analyse qualitative pour cyclisme
+- Mode "artifacts" pour formatting markdown
+- Conversation gratuite, no API key needed
+- Possibilité follow-up questions pour clarifications
+
+## 📊 Contenu Prompt
+Le prompt inclut:
+- ✅ Contexte athlète
+- ✅ Données activité complètes
+- ✅ Plan workout vs réalisé
+- ✅ Métriques performance (TSS, IF, NP, HR)
+- ✅ Wellness pré/post séance
+- ✅ Questions guidance coach
+
+---
+
+**Ready!** Le prompt est dans votre clipboard. Paste-le dans Claude.ai maintenant 🚀
+
+#### Métriques Post-séance
+- CTL : 49
+- ATL : 38
+- TSB : +10
+
+---
+
+
+### S070-07-REC-ReposObligatoire
+Date : 08/12/2025
+
+#### Métriques Pré-séance
+- CTL : 49
+- ATL : 38
+- TSB : +11
+- Sommeil : 6.8h
+- Poids : 84.6kg
+
+#### Exécution
+- Durée : 61min
+- IF : 0.66
+- TSS : 44
+- Puissance normalisée : 144W
+- Cadence moyenne : 86rpm
+- FC moyenne : 108bpm
+
+#### Analyse AI
+# 📋 Prompt Copié dans Clipboard ✅
+
+**Taille**: 4,896 caractères
+
+## 🎯 Workflow Manuel
+
+### Étape 1: Ouvrir AI Service
+Choix recommandés:
+- **Claude.ai** (https://claude.ai) - Gratuit, excellent pour analyse cyclisme
+- ChatGPT (https://chat.openai.com)
+- Mistral Chat (https://chat.mistral.ai)
+- Perplexity (https://perplexity.ai)
+
+### Étape 2: Coller le Prompt
+1. Ouvrir nouvelle conversation
+2. Coller le prompt (Cmd+V / Ctrl+V)
+3. Envoyer pour analyse
+
+### Étape 3: Copier la Réponse
+1. Sélectionner l'analyse complète
+2. Copier (Cmd+C / Ctrl+C)
+3. Retour ici pour sauvegarde
+
+## 💡 Tips
+- Claude.ai offre meilleure analyse qualitative pour cyclisme
+- Mode "artifacts" pour formatting markdown
+- Conversation gratuite, no API key needed
+- Possibilité follow-up questions pour clarifications
+
+## 📊 Contenu Prompt
+Le prompt inclut:
+- ✅ Contexte athlète
+- ✅ Données activité complètes
+- ✅ Plan workout vs réalisé
+- ✅ Métriques performance (TSS, IF, NP, HR)
+- ✅ Wellness pré/post séance
+- ✅ Questions guidance coach
+
+---
+
+**Ready!** Le prompt est dans votre clipboard. Paste-le dans Claude.ai maintenant 🚀
+
+#### Métriques Post-séance
+- CTL : 49
+- ATL : 38
+- TSB : +10
+
+---
+
+
+### S070-07-REC-ReposObligatoire
+Date : 08/12/2025
+
+#### Métriques Pré-séance
+- CTL : 49
+- ATL : 38
+- TSB : +11
+- Sommeil : 6.8h
+- Poids : 84.6kg
+
+#### Exécution
+- Durée : 61min
+- IF : 0.66
+- TSS : 44
+- Puissance normalisée : 144W
+- Cadence moyenne : 86rpm
+- FC moyenne : 108bpm
+
+#### Analyse AI
+# 📋 Prompt Copié dans Clipboard ✅
+
+**Taille**: 4,896 caractères
+
+## 🎯 Workflow Manuel
+
+### Étape 1: Ouvrir AI Service
+Choix recommandés:
+- **Claude.ai** (https://claude.ai) - Gratuit, excellent pour analyse cyclisme
+- ChatGPT (https://chat.openai.com)
+- Mistral Chat (https://chat.mistral.ai)
+- Perplexity (https://perplexity.ai)
+
+### Étape 2: Coller le Prompt
+1. Ouvrir nouvelle conversation
+2. Coller le prompt (Cmd+V / Ctrl+V)
+3. Envoyer pour analyse
+
+### Étape 3: Copier la Réponse
+1. Sélectionner l'analyse complète
+2. Copier (Cmd+C / Ctrl+C)
+3. Retour ici pour sauvegarde
+
+## 💡 Tips
+- Claude.ai offre meilleure analyse qualitative pour cyclisme
+- Mode "artifacts" pour formatting markdown
+- Conversation gratuite, no API key needed
+- Possibilité follow-up questions pour clarifications
+
+## 📊 Contenu Prompt
+Le prompt inclut:
+- ✅ Contexte athlète
+- ✅ Données activité complètes
+- ✅ Plan workout vs réalisé
+- ✅ Métriques performance (TSS, IF, NP, HR)
+- ✅ Wellness pré/post séance
+- ✅ Questions guidance coach
+
+---
+
+**Ready!** Le prompt est dans votre clipboard. Paste-le dans Claude.ai maintenant 🚀
+
+#### Métriques Post-séance
+- CTL : 49
+- ATL : 38
+- TSB : +10
+
+---
+
+
+### S070-07-REC-ReposObligatoire
+Date : 08/12/2025
+
+#### Métriques Pré-séance
+- CTL : 49
+- ATL : 38
+- TSB : +11
+- Sommeil : 6.8h
+- Poids : 84.6kg
+
+#### Exécution
+- Durée : 61min
+- IF : 0.66
+- TSS : 44
+- Puissance normalisée : 144W
+- Cadence moyenne : 86rpm
+- FC moyenne : 108bpm
+
+#### Analyse AI
+# 📋 Prompt Copié dans Clipboard ✅
+
+**Taille**: 4,896 caractères
+
+## 🎯 Workflow Manuel
+
+### Étape 1: Ouvrir AI Service
+Choix recommandés:
+- **Claude.ai** (https://claude.ai) - Gratuit, excellent pour analyse cyclisme
+- ChatGPT (https://chat.openai.com)
+- Mistral Chat (https://chat.mistral.ai)
+- Perplexity (https://perplexity.ai)
+
+### Étape 2: Coller le Prompt
+1. Ouvrir nouvelle conversation
+2. Coller le prompt (Cmd+V / Ctrl+V)
+3. Envoyer pour analyse
+
+### Étape 3: Copier la Réponse
+1. Sélectionner l'analyse complète
+2. Copier (Cmd+C / Ctrl+C)
+3. Retour ici pour sauvegarde
+
+## 💡 Tips
+- Claude.ai offre meilleure analyse qualitative pour cyclisme
+- Mode "artifacts" pour formatting markdown
+- Conversation gratuite, no API key needed
+- Possibilité follow-up questions pour clarifications
+
+## 📊 Contenu Prompt
+Le prompt inclut:
+- ✅ Contexte athlète
+- ✅ Données activité complètes
+- ✅ Plan workout vs réalisé
+- ✅ Métriques performance (TSS, IF, NP, HR)
+- ✅ Wellness pré/post séance
+- ✅ Questions guidance coach
+
+---
+
+**Ready!** Le prompt est dans votre clipboard. Paste-le dans Claude.ai maintenant 🚀
+
+#### Métriques Post-séance
+- CTL : 49
+- ATL : 38
+- TSB : +10
+
+---
+
+
 ### S071-01-END-EnduranceBase-V001
 Date : 08/12/2025
 
