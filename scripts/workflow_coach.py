@@ -33,6 +33,7 @@ from rest_and_cancellations import (
     generate_cancelled_session_entry,
     reconcile_planned_vs_actual
 )
+from planned_sessions_checker import PlannedSessionsChecker
 
 
 class WorkflowCoach:
@@ -52,13 +53,15 @@ class WorkflowCoach:
         self.planning_mode = False
         # Gaps détectés par step_1b
         self.unanalyzed_activities = None
+        # Séances planifiées sautées
+        self.skipped_sessions = None
 
     def load_credentials(self):
         """Charger credentials Intervals.icu de manière robuste"""
         import os
         import json
         from pathlib import Path
-        
+
         config_path = Path.home() / ".intervals_config.json"
         if config_path.exists():
             try:
@@ -70,12 +73,12 @@ class WorkflowCoach:
                         return athlete_id, api_key
             except Exception as e:
                 print(f"⚠️  Erreur config : {e}")
-        
+
         athlete_id = os.getenv('VITE_INTERVALS_ATHLETE_ID')
         api_key = os.getenv('VITE_INTERVALS_API_KEY')
         if athlete_id and api_key:
             return athlete_id, api_key
-        
+
         return None, None
 
     def clear_screen(self):
@@ -199,6 +202,30 @@ class WorkflowCoach:
             print(f"⚠️  Erreur API : {e}")
             self.unanalyzed_activities = None
 
+        # === PARTIE 1B : Détecter séances planifiées sautées ===
+        skipped_sessions = []
+
+        try:
+            # Utiliser le nouveau checker pour détecter séances sautées
+            checker = PlannedSessionsChecker(
+                athlete_id=athlete_id,
+                api_key=api_key
+            )
+
+            # Chercher dans même période que activités
+            skipped_sessions = checker.detect_skipped_sessions(
+                start_date=oldest_date,
+                end_date=newest_date,
+                exclude_future=True  # Ignorer workouts futurs
+            )
+
+            self.skipped_sessions = skipped_sessions if skipped_sessions else None
+
+        except Exception as e:
+            print(f"⚠️  Détection séances sautées impossible : {e}")
+            print("   Continuer avec détection activités exécutées uniquement")
+            self.skipped_sessions = None
+
         # === PARTIE 2 : Charger planning si disponible ===
         rest_days = []
         cancelled_sessions = []
@@ -241,11 +268,13 @@ class WorkflowCoach:
         count_executed = len(self.unanalyzed_activities) if self.unanalyzed_activities else 0
         count_rest = len(rest_days)
         count_cancelled = len(cancelled_sessions)
-        total_gaps = count_executed + count_rest + count_cancelled
+        count_skipped = len(self.skipped_sessions) if self.skipped_sessions else 0
+        total_gaps = count_executed + count_rest + count_cancelled + count_skipped
 
         if total_gaps == 0:
             print("\n✅ Aucun gap détecté !")
             print("   Toutes les séances récentes sont documentées.")
+            print("   Aucune séance planifiée sautée.")
             print()
             self.wait_user()
             return "exit"
@@ -282,6 +311,18 @@ class WorkflowCoach:
             if count_cancelled > 3:
                 print(f"   ... et {count_cancelled - 3} autres")
 
+        # Détails séances sautées (planifiées mais non exécutées)
+        if count_skipped > 0:
+            print(f"\n⏭️  Séances planifiées sautées : {count_skipped}")
+            for skipped in self.skipped_sessions[:3]:
+                date = skipped['planned_date']
+                name = skipped['planned_name'][:40]
+                tss = skipped['planned_tss']
+                days = skipped['days_ago']
+                print(f"   • [{date}] {name} ({tss} TSS, il y a {days}j)")
+            if count_skipped > 3:
+                print(f"   ... et {count_skipped - 3} autres")
+
         # === PARTIE 4 : Menu de choix ===
         print("\n" + "=" * 70)
         print("💡 QUE VEUX-TU FAIRE ?")
@@ -293,12 +334,19 @@ class WorkflowCoach:
             print("  [1] Traiter UNE séance exécutée (workflow classique)")
             options.append("1")
 
-        if count_rest > 0 or count_cancelled > 0:
-            print("  [2] Traiter repos/annulations en batch (génération markdowns)")
+        if count_rest > 0 or count_cancelled > 0 or count_skipped > 0:
+            special_label = []
+            if count_rest > 0:
+                special_label.append("repos")
+            if count_cancelled > 0:
+                special_label.append("annulations")
+            if count_skipped > 0:
+                special_label.append("sautées")
+            print(f"  [2] Traiter {'/'.join(special_label)} en batch")
             options.append("2")
 
-        if count_executed > 0 and (count_rest > 0 or count_cancelled > 0):
-            print("  [3] Traiter TOUT en batch (exécutées + repos + annulations)")
+        if count_executed > 0 and (count_rest > 0 or count_cancelled > 0 or count_skipped > 0):
+            print("  [3] Traiter TOUT en batch (exécutées + repos + annulations + sautées)")
             options.append("3")
 
         print("  [0] Quitter")
@@ -382,13 +430,13 @@ class WorkflowCoach:
 
             # FIX: Charger credentials
             athlete_id, api_key = self.load_credentials()
-            
+
             if not athlete_id or not api_key:
                 print()
                 print("ℹ️  Credentials non trouvés")
                 print("   → Feedback sans contexte")
                 raise ValueError("No credentials")
-            
+
             api = IntervalsAPI(athlete_id=athlete_id, api_key=api_key)
 
             # Utiliser les gaps détectés par step_1b au lieu de requêter last 24h
@@ -400,26 +448,26 @@ class WorkflowCoach:
                 print(f"✓ Contexte : {activity.get('name', 'Séance')} du {activity.get('start_date_local', '')[:10]}")
 
             if activity:
-                
+
                 # Commande avec contexte
                 cmd = [
-                    "python3", 
+                    "python3",
                     str(self.scripts_dir / "collect_athlete_feedback.py"),
                     "--activity-name", activity.get('name', 'Séance'),
                     "--activity-date", activity.get('start_date_local', ''),
                     "--activity-duration", str(activity.get('moving_time', 0) // 60),
                     "--activity-tss", str(int(activity.get('icu_training_load', 0))),
                 ]
-                
+
                 # Ajouter IF si disponible
                 if activity.get('icu_intensity'):
                     if_value = activity.get('icu_intensity', 0) / 100.0
                     cmd.extend(["--activity-if", f"{if_value:.2f}"])
-                
+
                 # Mode quick
                 if mode_choice == '1':
                     cmd.append("--quick")
-                
+
                 result = subprocess.run(cmd)
             else:
                 # Fallback sans contexte
@@ -429,7 +477,7 @@ class WorkflowCoach:
                 if mode_choice == '1':
                     cmd.append("--quick")
                 result = subprocess.run(cmd)
-        
+
         except Exception as e:
             print()
             print(f"⚠️  Erreur lors de la récupération du contexte : {e}")
@@ -439,7 +487,7 @@ class WorkflowCoach:
             if mode_choice == '1':
                 cmd.append("--quick")
             result = subprocess.run(cmd)
-        
+
         # Résultat
         if result.returncode != 0:
             print()

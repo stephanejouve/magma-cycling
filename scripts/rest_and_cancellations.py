@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 # CONSTANTES
 # ============================================================================
 
-VALID_STATUSES = ['completed', 'cancelled', 'rest_day', 'replaced']
+VALID_STATUSES = ['completed', 'cancelled', 'rest_day', 'replaced', 'skipped']
 VALID_TYPES = ['END', 'INT', 'REC', 'CAD', 'TEC', 'FOR']
 
 
@@ -290,6 +290,94 @@ Le repos planifié permet une récupération complète sans impact négatif sur 
     return markdown
 
 
+def generate_skipped_session_entry(
+    session_data: dict,
+    metrics_pre: dict,
+    reason: Optional[str] = None
+) -> str:
+    """
+    Génère bloc markdown pour séance planifiée mais sautée
+
+    Args:
+        session_data: Config session (id, date, nom, TSS prévu, etc.)
+        metrics_pre: CTL/ATL/TSB pré-séance
+        reason: Raison du saut (optionnel)
+
+    Returns:
+        Bloc markdown formaté selon template séance sautée
+    """
+    # Extraire données session
+    session_id = session_data.get('session_id', 'N/A')
+    session_name = session_data.get('name', session_data.get('planned_name', 'Séance'))
+    date_str = session_data.get('date', session_data.get('planned_date', ''))
+
+    # Formatter date
+    try:
+        date_obj = datetime.strptime(date_str, '%Y-%m-%d')
+        formatted_date = date_obj.strftime('%d/%m/%Y')
+        day_of_week = date_obj.strftime('%A')
+    except:
+        formatted_date = date_str
+        day_of_week = 'N/A'
+
+    # TSS et durée prévus
+    planned_tss = session_data.get('tss_planned', session_data.get('planned_tss', 0))
+    planned_duration = session_data.get('duration_planned',
+                                       session_data.get('planned_duration', 0))
+    planned_duration_min = planned_duration // 60 if planned_duration > 0 else 0
+
+    # Raison du saut
+    skip_reason = reason or session_data.get('skip_reason',
+                                             'Raison non documentée')
+
+    # Métriques pré-séance
+    ctl_pre = metrics_pre.get('ctl', 'N/A')
+    atl_pre = metrics_pre.get('atl', 'N/A')
+    tsb_pre = metrics_pre.get('tsb', 'N/A')
+
+    # Contexte additionnel
+    days_ago = session_data.get('days_ago', 0)
+
+    # Construire markdown
+    markdown = f"""### {session_id} - {session_name} [SAUTÉE]
+Date : {formatted_date} ({day_of_week})
+
+#### Métriques Pré-séance
+- CTL : {ctl_pre}
+- ATL : {atl_pre}
+- TSB : {tsb_pre}
+
+#### Séance Planifiée
+- Charge prévue : {planned_tss} TSS
+- Durée prévue : {planned_duration_min} min
+- Type : {session_data.get('type', 'N/A')}
+
+#### Statut
+- ⏭️ **SÉANCE SAUTÉE**
+- Non exécutée (il y a {days_ago} jour{'s' if days_ago > 1 else ''})
+- Raison : {skip_reason}
+
+#### Impact sur Métriques
+- TSS non réalisé : -{planned_tss}
+- CTL : Aucun changement (séance non effectuée)
+- ATL : Diminution naturelle du à l'absence de charge
+- TSB : Amélioration probable (récupération passive)
+
+#### Recommandations Coach
+- Évaluer raison du saut
+- Ajuster planning semaine si nécessaire
+- Vérifier cohérence avec objectifs CTL visé
+- Considérer report si séance critique
+- Documenter pattern si saut récurrent
+
+#### Notes
+Séance planifiée non exécutée. Impact sur progression hebdomadaire à évaluer.
+
+---
+"""
+    return markdown
+
+
 # ============================================================================
 # GÉNÉRATION MARKDOWN SÉANCE ANNULÉE
 # ============================================================================
@@ -411,6 +499,7 @@ def reconcile_planned_vs_actual(
         'matched': [],
         'rest_days': [],
         'cancelled': [],
+        'skipped': [],
         'unplanned': []
     }
 
@@ -434,6 +523,9 @@ def reconcile_planned_vs_actual(
 
         elif status == 'cancelled':
             result['cancelled'].append(session)
+
+        elif status == 'skipped':
+            result['skipped'].append(session)
 
         elif status in ['completed', 'replaced']:
             # Chercher activité correspondante
@@ -464,12 +556,17 @@ def reconcile_planned_vs_actual(
                     activities_by_date[session_date].remove(matched_activity)
             else:
                 # Planifiée comme completed mais pas d'activité
+                # Traiter comme skipped plutôt que cancelled
                 logger.warning(
                     f"Session {session['session_id']} marquée completed "
-                    f"mais aucune activité trouvée le {session_date}"
+                    f"mais aucune activité trouvée le {session_date} "
+                    f"→ Reclassée comme SKIPPED"
                 )
-                # Traiter comme cancelled
-                result['cancelled'].append(session)
+                # Marquer comme sautée avec contexte
+                session_skipped = session.copy()
+                session_skipped['status'] = 'skipped'
+                session_skipped['skip_reason'] = 'Planifiée completed mais activité introuvable'
+                result['skipped'].append(session_skipped)
 
     # Activités restantes = non planifiées
     for date, activities in activities_by_date.items():
@@ -485,6 +582,7 @@ def reconcile_planned_vs_actual(
     logger.info(f"Sessions exécutées : {len(result['matched'])}")
     logger.info(f"Repos planifiés : {len(result['rest_days'])}")
     logger.info(f"Séances annulées : {len(result['cancelled'])}")
+    logger.info(f"Séances sautées : {len(result['skipped'])}")
     logger.info(f"Activités non planifiées : {len(result['unplanned'])}")
     logger.info("=" * 70)
 
@@ -606,6 +704,17 @@ def process_week_with_rest_handling(
             markdown_entries.append(entry)
             logger.info(f"✗ Annulée : {session['session_id']}")
 
+        elif status == 'skipped':
+            # Nouvelle gestion séances sautées
+            entry = generate_skipped_session_entry(
+                session_data=session,
+                metrics_pre=metrics_pre,
+                reason=session.get('skip_reason',
+                                  'Séance planifiée non exécutée')
+            )
+            markdown_entries.append(entry)
+            logger.info(f"⏭️  Sautée : {session['session_id']}")
+
         elif status == 'completed':
             # Chercher dans les matched
             matched = next(
@@ -651,6 +760,7 @@ def process_week_with_rest_handling(
     logger.info(f"Sessions exécutées : {len(reconciliation['matched'])}")
     logger.info(f"Repos planifiés : {len(reconciliation['rest_days'])}")
     logger.info(f"Séances annulées : {len(reconciliation['cancelled'])}")
+    logger.info(f"Séances sautées : {len(reconciliation['skipped'])}")
     logger.info(f"\nTSS Semaine : {tss_completed} réalisé / {tss_planned} planifié ({tss_completion:.0f}%)")
     logger.info(f"{'=' * 70}\n")
 
