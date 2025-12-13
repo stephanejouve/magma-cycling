@@ -60,6 +60,55 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S071-06B-TEC-TechniqueCadence-V001
+Date : 13/12/2025
+
+#### Métriques Pré-séance
+- CTL : 49
+- ATL : 41
+- TSB : +8
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 41min
+- IF : 0.56
+- TSS : 22
+- Puissance moyenne : 121W
+- Puissance normalisée : 123W
+- Cadence moyenne : 87rpm
+- FC moyenne : 104bpm
+- Découplage : -3.2%
+
+#### Exécution Technique
+Découplage cardiovasculaire négatif -3.2% indique efficacité cardiaque améliorée en cours de séance (phénomène rare, généralement lié à échauffement progressif ou amélioration conductivité). Intensité Z1 maintenue à 56% FTP (IF 0.56) parfaitement alignée avec objectif technique cadence. Puissance légèrement sous cible (-5W moyenne, -3W NP) compensée par cadence élevée 87 rpm conforme variations 80-95 rpm programmées. FC stable 104 bpm (62% FCmax estimée) cohérente avec effort très léger.
+
+#### Charge d'Entraînement
+TSS 22 réalisé conforme 21 planifié (adhérence 105%). Deuxième séance journée totalisant 77 TSS (S071-06A: 55 + S071-06B: 22), charge cumulée bien tolérée avec TSB maintenu +8 post-double. Contexte repas arrosé + supplémentation isotonique complémentaire démontre adaptation protocole hydratation en conditions sub-optimales.
+
+#### Validation Objectifs
+- ✅ Zone technique respectée (IF 0.56, cible Z1)
+- ✅ Découplage excellent (<7.5%, négatif exceptionnel)
+- ✅ Variations cadence exécutées (87 rpm moyen, gamme 80-95 rpm)
+- ✅ Durée adhérente (41min vs 39min planifié)
+
+#### Points d'Attention
+- Découplage -3.2% atypique : vérifier données FC/puissance sur Intervals.icu web (possible artefact calibration)
+- Puissance -5W sous cible acceptable pour séance technique (focus cadence prioritaire)
+- Sommeil 0.0h renseigné : intégration données Withings à valider
+- Double séance post-repas festif : protocole validé mais non-reproductible systématiquement
+
+#### Recommandations Progression
+1. Format technique cadence validé : intégration possible 1×/semaine en récupération active (TSS 20-25)
+2. TSB +8 stable post-77 TSS journalier : capacité double endurance confirmée, possible progression vers sessions 60+50 min si conditions optimales
+3. Découplage négatif à documenter : si reproductible, indicateur potentiel amélioration efficacité cardiovasculaire Z1
+
+#### Métriques Post-séance
+- CTL : 49
+- ATL : 41
+- TSB : +8
+
+---
+
 ### S071-06A-END-EnduranceProgressive-V001
 Date : 13/12/2025
 
