@@ -60,6 +60,56 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S071-06A-END-EnduranceProgressive-V001
+Date : 13/12/2025
+
+#### Métriques Pré-séance
+- CTL : 49
+- ATL : 41
+- TSB : +8
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 77min
+- IF : 0.65
+- TSS : 55
+- Puissance moyenne : 142W
+- Puissance normalisée : 144W
+- Cadence moyenne : 85rpm
+- FC moyenne : 105bpm
+- Découplage : 1.5%
+
+#### Exécution Technique
+Excellente qualité d'exécution avec découplage cardiovasculaire remarquable à 1.5% (largement sous seuil 7.5%). Intensité parfaitement maintenue à 65% FTP (IF 0.65) conforme à l'objectif endurance progressive planifié. Cadence stable à 85 rpm démontre pattern technique maîtrisé pour ce type de séance. FC moyenne 105 bpm (62% FCmax estimée) cohérente avec effort Z2.
+
+#### Charge d'Entraînement
+TSS 55 réalisé pour 54 planifié (+1, adhérence 98%). Deuxième séance de la journée complétée malgré contexte période festive et hydratation sub-optimale (alcool, alimentation enrichie). TSB +8 pré-séance autorisait double endurance, maintenu à +8 post-séance confirmant charge bien tolérée.
+
+#### Validation Objectifs
+- ✅ Zone endurance respectée (IF 0.65, cible 0.66)
+- ✅ Découplage excellent (<7.5%)
+- ✅ Durée adhérente (77min vs 75min planifié)
+- ✅ Pattern technique stable (cadence, FC)
+
+#### Points d'Attention
+- Sommeil 0.0h renseigné : vérifier données Withings ou saisie manuelle
+- Hydratation compromise (alcool + alimentation festive) : supplémentation isotonique compensatoire validée
+- Double séance réussie malgré contexte non optimal démontre capacité récupération exceptionnelle
+
+#### Recommandations Progression
+1. Capitaliser sur TSB +8 maintenu : possibilité Sweet-Spot semaine prochaine si sommeil >7h validé
+2. Normaliser hydratation pré-période festive pour séances futures (protocole 500-600ml/h standard)
+3. Volume endurance Z2 validé 75-80min : progression possible vers 90min ou double séance systématique si conditions optimales
+
+#### Métriques Post-séance
+- CTL : 49
+- ATL : 41
+- TSB : +8
+
+---
+
+---
+
 ### S071-04-END-EnduranceProgressive-V001
 Date : 11/12/2025
 
