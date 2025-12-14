@@ -60,6 +60,53 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### Evening Cyclisme virtuel
+Date : 14/12/2025
+
+#### Métriques Pré-séance
+- CTL : 49
+- ATL : 39
+- TSB : +10
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 13min
+- IF : 1.02
+- TSS : 24
+- Puissance moyenne : 190W
+- Puissance normalisée : 224W
+- Cadence moyenne : 81rpm
+- FC moyenne : 120bpm
+- Découplage : 15.9%
+
+#### Exécution Technique
+Séance très courte (13min) avec découplage cardiovasculaire élevé (15.9% >> 7.5%), indiquant une exécution non optimale ou un arrêt prématuré. L'IF de 1.02 suggère une intensité proche du seuil, mais la durée insuffisante empêche toute validation technique. La cadence basse (81rpm vs 85-90rpm cible) et la variabilité importante (VI implicite NP/Pavg = 1.18) révèlent une séance non structurée ou interrompue.
+
+#### Charge d'Entraînement
+TSS très faible (24) sans impact sur les métriques de forme (CTL/ATL/TSB stables). Cette micro-charge ne constitue pas une séance d'entraînement effective et ne contribue pas à la progression du CTL actuel (49).
+
+#### Validation Objectifs
+- ❌ Durée insuffisante (<20min minimum)
+- ❌ Découplage >15% (critère validation <7.5%)
+- ❌ Aucun pattern d'entraînement identifiable
+
+#### Points d'Attention
+- Séance probablement interrompue ou test matériel (durée 13min non planifiée)
+- Découplage extrême nécessite investigation : arrêt prématuré, problème technique, ou démarrage intense sans échauffement
+- Sommeil 0.0h enregistré (erreur saisie ou réelle dette critique)
+- _Données sources à vérifier sur Intervals.icu web pour confirmer upload complet_
+
+#### Recommandations Progression
+1. Si séance volontairement courte : Logger la raison (test matériel, activation pré-sortie, interruption). Si arrêt technique/physiologique : Identifier cause avant prochaine séance.
+2. Avec TSB +10 favorable, planifier séance complète 45-60min demain : Endurance Z2 (65-75% FTP) ou Sweet-Spot si validation sommeil >6h.
+
+#### Métriques Post-séance
+- CTL : 49
+- ATL : 39
+- TSB : +10
+
+---
+
 ### S071-06B-TEC-TechniqueCadence-V001
 Date : 13/12/2025
 
