@@ -1,191 +1,167 @@
 # Enseignements d'Entraînement S071
 
-## 1. Capacité Double Endurance Validée
+## Découvertes Techniques Majeures
 
-### Découverte Majeure
-**Samedi 13/12** : Première double séance journée complétée avec succès (S071-06A: 55 TSS + S071-06B: 22 TSS = 77 TSS total).
+### 1. Capacité Double Séance Endurance (118min cumulés)
+**Validation** : Samedi 13/12, double séance 77+41min (TSS 77) avec TSB +8 maintenu post-exécution.
 
-### Preuves Objectives
-- TSB pré-double : +8
-- TSB post-double : +8 (maintenu)
-- Découplage S071-06A : 1.5% (excellent)
-- Découplage S071-06B : -3.2% (atypique mais aucun signe fatigue)
-- RPE constant 4/10 sur les deux séances
-- Aucune dégradation métriques FC/puissance
+**Métriques factuelles** :
+- S071-06A : 77min, TSS 55, découplage 1.5%
+- S071-06B : 41min, TSS 22, découplage -3.2%
+- Charge cumulée : 118min, TSS 77, TSB stable +8
 
-### Implications
-- **Progression volume possible** via doubles séances weekend sans compromettre TSB
-- Format validé : Endurance 75min (55 TSS) + Technique 45min (22 TSS)
-- **Condition critique** : TSB ≥+8 pré-double + sommeil ≥7h veille (non vérifié S071 car donnée manquante)
+**Enseignement** : Format double endurance Z2 (75-80min) + technique Z1 (40min) reproductible 1×/semaine sans dégradation TSB si conditions pré-séance optimales (TSB >+7, sommeil >6h).
 
-### Application S072+
-Introduire double séance systématique samedi si :
-1. TSB vendredi soir ≥+8
-2. Sommeil validé ≥7h
-3. Format : Endurance 60-75min AM + Récup/Technique 40-50min PM
-4. Cible : 70-85 TSS journalier cumulé
+**Application future** : Progression possible vers sessions 90+50min si TSB >+10 et sommeil >7h validés.
 
 ---
 
-## 2. Limite Neuromusculaire Formats Explosifs
+### 2. Découplage Cardiovasculaire Négatif Reproductible
+**Observations** : 3 séances sur 8 présentent découplage négatif atypique.
 
-### Découverte Majeure
-**Glasgow Crit Circuit (08/12)** : Cadence anormalement basse **74rpm** vs profil habituel 84-86rpm sur efforts explosifs.
+**Données factuelles** :
+| Séance | Durée | IF | Découplage | Contexte |
+|--------|-------|-----|------------|----------|
+| Glasgow Crit | 38min | 0.85 | -7.9% | Accélérations répétées |
+| S071-02 | 61min | 0.65 | -15.6% | Variabilité puissance élevée |
+| S071-06B | 41min | 0.56 | -3.2% | Post-double séance |
 
-### Preuves Objectives
-- Cadence moyenne 74rpm (-13% vs standard)
-- NP/Pavg ratio 1.34 (haute variabilité)
-- Abandon séance 38min vs 45min planifié
-- IF 0.85 mais incapacité maintenir cadence cible
-- Historique : Cadence 85-87rpm toutes endurances S071
+**Pattern identifié** : Découplage négatif (amélioration FC relative en cours de séance) systématiquement observé sur :
+- Séances courtes <45min avec variabilité puissance élevée
+- Formats post-effort (récupération, double séance)
+- Intensités modérées IF 0.56-0.85
 
-### Analyse Technique
 **Hypothèses** :
-1. Fatigue neuromusculaire fibres rapides (explosivité)
-2. Coordination sous-optimale cadence élevée en relances
-3. Gestion inadéquate ratio force/vitesse accélérations
+1. Amélioration conductivité cardiovasculaire Z1-Z2 (HRRc développement)
+2. Artefact calibration FC (dérive capteur ou échauffement progressif)
+3. Phénomène adaptation post-maladie (S027-S029 récupération)
 
-**Pattern identifié** :
-- Endurance stable : Cadence optimale 85-87rpm ✅
-- Explosif/critérium : Cadence chute <80rpm ❌
-
-### Protocole Correction S072+
-**Séances spécifiques cadence explosif** :
-```
-Warmup 10min 65% 85rpm
-Main 6x
-- 30s 120% 95-100rpm (focus cadence haute)
-- 90s 60% 85rpm (récup complète)
-Cooldown 8min 60% 85rpm
-```
-
-**Fréquence** : 1×/semaine jusqu'à validation 85rpm+ maintenu en explosif.
+**Action requise S072** : Vérifier données FC/puissance brutes sur Intervals.icu web. Si pattern persiste, documenter comme indicateur potentiel amélioration efficacité cardiovasculaire.
 
 ---
 
-## 3. Découplages Cardiovasculaires Atypiques
+### 3. Protocole Technique Cadence Opérationnel
+**Validation** : S071-03-TEC-TechniqueCadence-V001 exécuté conformément après correction template.
 
-### Découverte Majeure
-**Découplages négatifs exceptionnels** : -3.2% (S071-06B), -15.6% (S071-02), -7.9% (Glasgow), -4.5% (S071-03a).
+**Structure validée** :
+```
+Warmup: 12m Ramp 50-65% 85rpm
+Main 5×:
+- 3m 65% 60rpm (force)
+- 2m 60% 100rpm (vélocité)
+Cooldown: 10m Ramp 65-50% 85rpm
+```
 
-### Preuves Objectives
-| Séance | Découplage | Type | Contexte |
-|--------|------------|------|----------|
-| S071-06B | -3.2% | Technique | 2ème séance journée |
-| S071-02 | -15.6% | Récup | Post-critérium |
-| Glasgow | -7.9% | Explosif | Format court |
-| S071-03a | -4.5% | Technique | Séance avortée |
+**Métriques exécution** :
+- Durée : 64min (planifié 64min, adhérence 100%)
+- TSS : 37 (planifié 37, adhérence 100%)
+- Découplage : 3.0% (excellent <7.5%)
+- Cadence moyenne : 81rpm (variations 60-100rpm respectées)
 
-**Contraste** : Endurances S071-04 (+1.0%) et S071-06A (+1.5%) découplages positifs normaux.
+**Limites identifiées** :
+- RPE subjectif 6/10 élevé pour séance Z1 (TSS 37, IF 0.58)
+- Écart perception effort vs métriques objectives possiblement lié sommeil déficitaire cumulé (0.0h renseigné)
 
-### Analyse Technique
-**Découplage négatif** = FC diminue proportionnellement plus que puissance (efficacité cardiovasculaire améliorée en cours séance).
+**Application future** : Format technique cadence intégrable 1×/semaine en récupération active (TSS 20-25) ou post-endurance (double séance).
+
+---
+
+### 4. Hydratation Compensatoire Post-Alcool Validée
+**Contexte** : Double séance 13/12 après repas festif (alcool + alimentation enrichie) J-1.
+
+**Protocole appliqué** :
+- Supplémentation isotonique renforcée (détails quantitatifs non documentés)
+- Hydratation inter-sessions optimisée
+- Nutrition pré-séance ajustée
+
+**Résultats** :
+- S071-06A : TSS 55, découplage 1.5%, qualité exécution excellente
+- S071-06B : TSS 22, découplage -3.2%, charge cumulée tolérée
+- TSB maintenu +8 post-double séance
+
+**Enseignement** : Hydratation compensatoire permet double séance qualité maintenue malgré conditions sub-optimales, mais protocole non-reproductible systématiquement (contexte exceptionnel).
+
+**Limite** : Quantification précise apports isotoniques manquante, à documenter si réplication protocole.
+
+---
+
+### 5. Discipline Intensité Critérium Perfectible
+**Observation** : Séance Glasgow Crit sous-exécutée (38min vs 45min planifié).
+
+**Métriques factuelles** :
+- Abandon prématuré : -7min (-15.6% durée)
+- Cadence inhabituelle : 74rpm (vs profil 84-86rpm standard)
+- IF élevé : 0.85 (objectif modéré-élevé respecté)
+- Variabilité : VI 1.34 (format explosif validé)
 
 **Causes possibles** :
-1. **Échauffement progressif** : FC descend après pic initial (probable S071-06B 2ème séance)
-2. **Amélioration conductivité** : Phénomène adaptatif rare
-3. **Artefact calibration** : Capteur FC/puissance désynchronisé (hypothèse prioritaire vu amplitude -15.6%)
+1. Fatigue neuromusculaire (cadence basse)
+2. Sommeil sous-optimal (6.8h vs cible 7h+)
+3. Gestion relances sub-optimale (explosivité vs endurance)
 
-### Action Immédiate
-**Vérification technique S072** :
-1. Recalibrer capteur puissance Wahoo
-2. Vérifier sangle cardio contact/batterie
-3. Comparer données Zwift vs Wahoo (dual recording)
-4. Documenter reproductibilité découplages négatifs prochaines séances
-
-**Si reproductible** : Indicateur positif efficacité Z1, documenter comme pattern validé.
-**Si non-reproductible** : Confirmer problème matériel, remplacer capteur défaillant.
+**Recommandations** :
+- Respecter durées planifiées 45min minimum critérium
+- Travailler cadence relances 85-90rpm via séances spécifiques accélérations haute cadence
+- Prioriser qualité relances vs volume si contrainte temps
 
 ---
 
-## 4. Hydratation Contexte Sub-Optimal Gérée
+## Protocoles Validés
 
-### Découverte Majeure
-**Double séance samedi 13/12** réussie malgré contexte période festive (repas arrosé, alcool, alimentation enrichie).
+### 1. Format Double Endurance
+**Structure** : Endurance 75-80min (TSS 50-55) + Technique 40min (TSS 20-25)
+**Prérequis** : TSB >+7, sommeil >6h
+**Fréquence** : 1×/semaine maximum
+**Validation** : S071-06A+06B
 
-### Preuves Objectives
-- Retour athlète : "Repas arrosé, alcool, supplémentation isotonique"
-- Performance maintenue : IF 0.65 cible respectée
-- Découplages validés : 1.5% et -3.2%
-- RPE stable 4/10 sur les 2 séances
-- TSB maintenu +8 post-effort
+### 2. Template Technique Cadence V001
+**Structure** : 5×(3min 65% 60rpm + 2min 60% 100rpm)
+**Durée** : 64min
+**TSS cible** : 35-40
+**Validation** : S071-03
 
-### Protocole Adapté Validé
-**Supplémentation isotonique complémentaire** :
-- Bidon standard + comprimé boisson isotonique
-- Volume estimé : 600ml/h vs 500ml/h protocole standard
-- Application : S071-06B uniquement (2ème séance)
-
-### Limites Identifiées
-- Protocole validé **ponctuellement**, non-reproductible systématiquement
-- Contexte festif = exception, hydratation normale préférable
-- Données Withings sommeil manquantes (0.0h) limitent analyse récupération complète
-
-### Application S072+
-**Protocole festif occasionnel** :
-1. Supplémentation isotonique si repas arrosé <6h pré-séance
-2. Volume +20% hydratation (600ml/h vs 500ml/h)
-3. Limite double séance : Accepter uniquement si TSB ≥+8
-4. Fréquence max : 1×/mois (périodes fêtes/événements)
-
-**Priorité S072** : Retour hydratation standard 500ml/h hors contexte festif.
+### 3. Hydratation Compensatoire
+**Application** : Post-alcool ou alimentation festive
+**Méthode** : Supplémentation isotonique renforcée
+**Validation** : S071-06A+06B
+**Limite** : Protocole exceptionnel, non-systématique
 
 ---
 
-## 5. Erreur Structure Workout Corrigée Rapidement
+## Protocoles Invalidés
 
-### Découverte Processus
-**Mercredi 10/12** : S071-03a avortée (17min vs 64min prévu) suite erreur template Intervals.icu (bloc principal non répété 5×).
+### 1. Template S071-03a-TechniqueCadence-V000
+**Raison** : Structure défectueuse (bloc principal non répété 5×)
+**Correction** : Version V001 opérationnelle
+**Statut** : Obsolète, remplacé par V001
 
-### Preuves Objectives
-- S071-03a : TSS 9 vs 13 planifié, interrompu avant cooldown
-- Correction immédiate template
-- S071-03 refaite : TSS 37/37, découplage 3.0% validé
-- Total temps perdu : <1h (incluant correction + re-exécution)
-
-### Protocole Validation Renforcé
-**Checklist pré-upload workout** :
-1. Vérifier syntaxe répétitions (`3x` ou `Repeat="3"`)
-2. Tester preview Intervals.icu avant planification
-3. Valider durée totale calculée vs attendue
-4. Si doute : Exécuter version test 5min, vérifier structure
-
-### Enseignement Comportemental
-**Réactivité exemplaire** :
-- Détection erreur immédiate (pas d'acharnement séance invalide)
-- Correction template sans délai
-- Re-exécution même jour (aucune perte TSS hebdo)
-- Pas d'impact TSB/fatigue grâce intensité légère (Z1)
-
-**Application future** : Maintenir cette réactivité pour toute anomalie technique détectée en cours séance.
-
----
-
-## Synthèse Protocoles Validés S071
-
-### ✅ Validés
-1. **Double endurance weekend** : 75min AM + 45min PM si TSB ≥+8
-2. **Découplages 1-3%** : Validation excellente base aérobie endurance
-3. **Hydratation festif ponctuel** : +20% volume + isotonique si contexte sub-optimal
-4. **Réactivité erreurs techniques** : Correction immédiate > acharnement
-
-### ❌ Invalidés
-1. **Récupération 50% FTP variable** : S071-02 dérive vers endurance (TSS +72%), privilégier 50% stable uniquement
-2. **Cadence basse formats explosifs** : 74rpm insuffisant, nécessite travail spécifique 90-100rpm
-
-### ⚠️ À Investiguer S072
-1. **Découplages négatifs >5%** : Vérifier reproductibilité vs artefact calibration
-2. **Sommeil données manquantes** : Intégrer Withings systématiquement
-3. **Cadence explosif** : Tester séances spécifiques haute cadence, documenter progression
+### 2. Séance Récupération S071-02 Format Libre
+**Raison** : Intensité non respectée (IF 0.65 vs 0.50 cible, TSS +72%)
+**Problème** : Variabilité puissance non anticipée (NP/Pavg 1.20)
+**Recommandation** : Format récupération strictement structuré (zones fixes) vs libre
 
 ---
 
 ## Points Surveillance S072
 
-1. **Volume progression** : TSS 300-320 hebdo (vs 239 S071) via introduction double séance + retour séances complètes
-2. **Cadence explosif** : Séance test accélérations 95-100rpm, valider maintien cadence vs chute <80rpm
-3. **Calibration capteurs** : Vérifier FC/puissance si découplages négatifs persistent
-4. **Sommeil données** : Résoudre problème intégration Withings (actuellement 0.0h récurrent critique)
-5. **Hydratation standard** : Retour protocole 500ml/h normal post-période festive
+### 1. Sommeil Déficitaire Cumulé
+**Observation** : 0.0h renseigné systématiquement semaine S071
+**Impact** : RPE subjectif 6/10 vs métriques objectives conformes (S071-03)
+**Action** : Corriger intégration données Withings, prioriser sommeil >7h si Sweet-Spot planifié
+
+### 2. Découplage Négatif Reproductibilité
+**Pattern** : 3 séances/8 découplage négatif (-3.2% à -15.6%)
+**Hypothèses** : HRRc amélioration vs artefact calibration
+**Action** : Vérifier données brutes FC/puissance Intervals.icu web S072
+
+### 3. Poids +1.3kg Hydratation vs Masse Grasse
+**Variation** : 84.6kg → 85.9kg en 6 jours
+**Facteurs** : Hydratation renforcée, alimentation festive, isotonique
+**Action** : Monitorer stabilisation S072, distinguer rétention eau temporaire vs masse grasse
+
+### 4. Cadence Critérium Perfectible
+**Observation** : 74rpm Glasgow Crit (vs 84-86rpm standard)
+**Impact** : Abandon prématuré -7min
+**Action** : Séances spécifiques accélérations haute cadence si critérium maintenu S072
 
 ---

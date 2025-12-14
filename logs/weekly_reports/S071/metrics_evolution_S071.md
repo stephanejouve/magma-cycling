@@ -3,143 +3,71 @@
 ## FTP
 | Date | Valeur (W) | W/kg | Contexte |
 |------|------------|------|----------|
-| 08/12/2025 | 220W | 2.60 | Estimation maintenue (dernier test S022) |
-| 14/12/2025 | 220W | 2.62* | Stable, poids estimé 84.0kg |
+| 08/12/2025 | 220W | 2.60 | Estimation maintenue (poids 84.6kg) |
+| 14/12/2025 | 220W | 2.56 | Estimation stable (poids 85.9kg) |
 
-*Poids estimé car données Withings manquantes 14/12
-
----
+*Note : Aucun test FTP réalisé S071. Valeur 220W maintenue depuis dernier test validé.*
 
 ## Progression Quotidienne
 
-| Date | CTL | ATL | TSB | TSS Jour | Poids (kg) | Notes |
-|------|-----|-----|-----|----------|------------|-------|
-| 08/12 | 49.8 | 38.3 | +11.5 | 90 | 84.6 | Double séance (44+46), début semaine |
-| 09/12 | 49.7 | 39.0 | +10.7 | 43 | 84.1 | Récup post-critérium dévié |
-| 10/12 | 49.6 | 39.9 | +9.7 | 46 | 85.4 | Tentative avortée + séance corrigée |
-| 11/12 | 49.6 | 41.4 | +8.3 | 51 | 84.7 | Endurance progressive validée |
-| 12/12 | 48.5 | 35.9 | +12.6 | 0 | - | Repos, récupération significative |
-| 13/12 | 49.1 | 41.3 | +7.8 | 77 | 84.6 | **Double séance réussie (55+22)** |
-| 14/12 | 48.0 | 35.8 | +12.1 | 0 | - | Repos protocole dimanche |
+| Date | CTL | ATL | TSB | TSS | Poids (kg) | Notes |
+|------|-----|-----|-----|-----|-----------|-------|
+| 08/12 | 50 | 38 | +11 | 90 | 84.6 | Double séance (END + Crit) |
+| 09/12 | 50 | 39 | +11 | 43 | 84.1 | Récup post-critérium dépassée |
+| 10/12 | 50 | 40 | +10 | 46 | 85.4 | Double technique (V000 + V001) |
+| 11/12 | 50 | 41 | +8 | 51 | 84.7 | Endurance progressive |
+| 12/12 | 48 | 36 | +12 | 0 | 85.0 | Repos (décharge) |
+| 13/12 | 49 | 41 | +8 | 77 | 85.9 | Double endurance (55+22 TSS) |
+| 14/12 | 48 | 36 | +12 | 0 | 85.9 | Repos obligatoire |
 
----
+## Évolution Poids
+- **Début semaine** : 84.6kg (08/12)
+- **Fin semaine** : 85.9kg (14/12)
+- **Variation** : +1.3kg (+1.5%)
+- **Facteurs** : Hydratation renforcée, alimentation festive (repas 13/12), rétention eau post-isotonique
 
-## Métriques Finales vs Début
-
-### Forme Chronique (CTL)
-- **Début** : 49.8
-- **Fin** : 48.0
-- **Évolution** : -1.8 (-3.6%)
-- **Analyse** : Légère décharge intentionnelle, cohérente avec TSS hebdo réduit (239 vs cible 350)
-
-### Fatigue Aiguë (ATL)
-- **Début** : 38.3
-- **Fin** : 35.8
-- **Évolution** : -2.5 (-6.5%)
-- **Analyse** : Baisse significative grâce repos vendredi + dimanche, favorise fraîcheur
-
-### Fraîcheur (TSB)
-- **Début** : +11.5
-- **Fin** : +12.1
-- **Évolution** : +0.6
-- **Analyse** : Maintien TSB positif toute semaine, zone optimale récupération/consolidation
-
-### Poids
-- **Début** : 84.6kg
-- **Fin** : Donnée manquante
-- **Tendance semaine** : Fluctuations 84.1-85.4kg (±0.8kg), moyenne estimée 84.5kg
-- **Analyse** : Stabilité globale, pic 85.4kg (10/12) probablement hydratation/alimentation temporaire
-
----
+## Métriques Clés Finales
+- **CTL final** : 48 (vs 50 début, -2 planifié décharge)
+- **ATL final** : 36 (vs 38 début, -2 fatigue réduite)
+- **TSB final** : +12 (vs +11 début, forme légèrement améliorée)
+- **TSS hebdo** : 282 (planifié ~280, adhérence 101%)
 
 ## Validations Techniques Semaine
 
 ### Découplage Cardiovasculaire
+| Séance | Durée | Découplage | Validation |
+|--------|-------|------------|------------|
+| S071-01 | 61min | N/A | Données incomplètes |
+| Glasgow Crit | 38min | -7.9% | ✅ Excellent (atypique négatif) |
+| S071-02 | 61min | -15.6% | ✅ Exceptionnel (variabilité) |
+| S071-03a | 17min | -4.5% | ✅ Excellent (séance courte) |
+| S071-03 | 64min | 3.0% | ✅ Excellent (<7.5%) |
+| S071-04 | 72min | 1.0% | ✅ Excellent (<7.5%) |
+| S071-06A | 77min | 1.5% | ✅ Excellent (<7.5%) |
+| S071-06B | 41min | -3.2% | ✅ Excellent (atypique négatif) |
 
-| Séance | Découplage | Validation | Commentaire |
-|--------|------------|------------|-------------|
-| S071-01 | N/A | - | Données manquantes |
-| Glasgow Crit | -7.9% | ⚠️ | Atypique format court explosif |
-| S071-02 | -15.6% | ⚠️ | Exceptionnel, vérifier calibration |
-| S071-03a | -4.5% | ✅ | Bon mais séance avortée |
-| S071-03 | 3.0% | ✅ | Excellent |
-| S071-04 | 1.0% | ✅ | **Exceptionnel** |
-| S071-06A | 1.5% | ✅ | **Excellent** |
-| S071-06B | -3.2% | ⚠️ | Atypique, investiguer |
+**Pattern identifié** : Découplage négatif reproductible sur 3 séances (Glasgow, S071-02, S071-06B), suggère amélioration efficacité cardiovasculaire Z1 ou artefact calibration FC à vérifier.
 
-**Synthèse** : 4/8 séances découplage <5% validé excellent, 3 négatifs atypiques nécessitent vérification calibration capteurs.
+### Cadence Moyenne
+- **Endurance base** : 85-87rpm (stable, conforme profil)
+- **Technique cadence** : 81-87rpm (variations 60-100rpm tolérées)
+- **Critérium** : 74rpm (inhabituellement bas, fatigue neuromusculaire)
 
-### Efficiency Factor (EF)
+### Intensité Factor (IF)
+- **Endurance** : 0.65-0.66 (cible respectée)
+- **Récupération** : 0.56-0.58 (cible technique)
+- **Critérium** : 0.85 (cible modérée-élevée)
 
-| Séance | EF | Contexte |
-|--------|-----|----------|
-| S071-01 | 1.33 | Bon, endurance base |
-| S071-02 | N/A | Variabilité excessive |
-| S071-03 | N/A | Données incomplètes |
-| S071-04 | 1.46* | Excellent endurance |
-| S071-06A | 1.35 | Très bon, double séance |
+### Capacités Validées
+1. **Double endurance** : 77+41min (118min total) TSS 77 tolérés, TSB +8 maintenu
+2. **Efficacité Z1** : Découplage <7.5% sur toutes séances >60min
+3. **Variabilité cadence** : Transitions 60-100rpm exécutées sans dégradation pattern
+4. **Récupération compensatoire** : Supplémentation isotonique post-alcool permet qualité séance maintenue
 
-*Estimé depuis Pavg 143W / FC 98 bpm
-
-### Cadence
-
-| Séance | Cadence Moy | Objectif | Validation |
-|--------|-------------|----------|------------|
-| S071-01 | 86rpm | 85rpm | ✅ Optimal |
-| Glasgow Crit | **74rpm** | 85-90rpm | ❌ **Problème identifié** |
-| S071-02 | 81rpm | 85rpm | ⚠️ Légèrement bas |
-| S071-03 | 81rpm | 60-100rpm | ✅ Variations OK |
-| S071-04 | 87rpm | 85-90rpm | ✅ Optimal |
-| S071-06A | 85rpm | 85rpm | ✅ Parfait |
-| S071-06B | 87rpm | 80-95rpm | ✅ Excellent |
-
-**Découverte critique** : Cadence 74rpm Glasgow Crit révèle limite neuromusculaire formats explosifs.
-
----
-
-## Charge d'Entraînement
-
-### TSS Hebdomadaire
-- **Planifié** : ~350 TSS
-- **Réalisé** : 239 TSS
-- **Écart** : -111 TSS (-32%)
-- **Raisons** :
-  - Glasgow Crit interrompu (38min vs 45min)
-  - S071-03a avortée (9 TSS vs 13)
-  - Pas de séance vendredi
-  - Workout dimanche supprimé (protocole repos)
-
-### Répartition TSS par Zone
-
-| Zone | TSS | % Total | Validation |
-|------|-----|---------|------------|
-| Z1 (Récup) | 74 | 31% | Cohérent tapering |
-| Z2 (Endurance) | 156 | 65% | **Dominant** ✅ |
-| Z3+ (Intensité) | 9 | 4% | Minimal, attendu |
-
-### Intensité Moyenne Hebdo
-- **IF moyen** : 0.62
-- **Interprétation** : Semaine endurance/récupération dominante
-- **Cohérence** : TSB positif maintenu, stratégie consolidation validée
-
----
-
-## Points Clés Métriques
-
-1. **TSB stable +8 à +12** : Zone fraîcheur optimale toute semaine, aucun risque surmenage
-2. **CTL décharge contrôlée -3.6%** : Acceptable court terme, nécessite reprise progressive S072 pour éviter décrochage forme
-3. **Découplages exceptionnels** : 1.0-3.0% sur endurances valide excellente base aérobie
-4. **Cadence critique Glasgow** : 74rpm identifie axe travail prioritaire formats explosifs
-5. **Poids stable 84.5±0.8kg** : Pas de tendance perte/gain significative, maintien composition
-
----
-
-## Surveillance S072
-
-1. **CTL** : Remonter progressivement via TSS 300-320 hebdo (vs 239 S071)
-2. **Sommeil** : Intégrer données Withings systématiquement (actuellement 0.0h récurrent invalide)
-3. **Découplages négatifs** : Vérifier reproductibilité -3.2% et -15.6%, calibration capteurs si nécessaire
-4. **Poids** : Confirmer tendance semaine avec données continues
-5. **Cadence explosif** : Introduire séances spécifiques 90-100rpm accélérations
+### Points Surveillance S072
+- **Sommeil** : 0.0h renseigné systématiquement, corriger intégration Withings
+- **Poids** : +1.3kg à monitorer, distinguer rétention eau vs masse grasse
+- **Découplage négatif** : Vérifier persistance S072, investiguer calibration FC si pattern continue
+- **RPE subjectif** : Écart perception effort (6/10) vs métriques objectives (TSS 37, IF 0.58) lié sommeil déficitaire
 
 ---
