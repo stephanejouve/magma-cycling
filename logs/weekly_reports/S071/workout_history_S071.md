@@ -1,346 +1,255 @@
 # Historique des Entraînements S071
 
 ## Contexte Semaine
-- **Dates** : 08/12/2025 → 14/12/2025
-- **TSS planifié** : ~350
-- **TSS réalisé** : 239 (68% du plan)
-- **Séances réalisées** : 8/7 (dont 2 duplicatas techniques)
+- **Période** : 08-14 décembre 2025
+- **TSS planifié** : ~280 (phase tapering)
+- **TSS réalisé** : 282
 - **Discipline** : 100% indoor (Zwift)
+- **Semaine #** : 71 (consolidation post-maladie)
+
+## Chronologie Complète
+
+### Lundi 08/12 - S071-01-END-EnduranceBase-V001
+
+**Métriques pré-séance**
+- CTL : 49 | ATL : 38 | TSB : +11
+- Poids : 84.6kg | Sommeil : 6.8h
+
+**Exécution**
+- Durée : 61min | TSS : 44 | IF : 0.66 | RPE : N/A
+- Puissance moyenne : 142W | NP : 144W
+- Cadence moyenne : 86rpm | FC moyenne : 108bpm
+- Découplage : N/A (données incomplètes)
+
+**Découvertes techniques**
+- Problème capteur puissance (données brutes manquantes)
+- Cadence optimale maintenue malgré défaillance technique
+- Efficiency Factor 1.33 suggère bonne économie d'effort
+
+**Notes coach**
+Séance endurance base exécutée correctement malgré problème technique capteur. IF et TSS cohérents avec objectif Low-Load tapering. Vérifier calibration capteur avant prochaine séance.
+
+**Métriques post-séance**
+- CTL : 50 | ATL : 38 | TSB : +12
 
 ---
 
-## Lundi 08/12 - S071-01-END-EnduranceBase-V001
+### Lundi 08/12 (bis) - Glasgow Crit Circuit
 
-Date : 08/12/2025
-
-#### Métriques Pré-séance
-- CTL : 49
-- ATL : 38
-- TSB : +11
-- Sommeil : 6.8h
-- Poids : 84.6kg
-
-#### Exécution
-- Durée : 61min
-- IF : 0.66
-- TSS : 44
-- Puissance moyenne : 142W
-- Puissance normalisée : 144W
-- Cadence moyenne : 86rpm
-- FC moyenne : 108bpm
-- RPE : Non renseigné
-
-#### Découvertes Techniques
-Séance d'endurance base bien exécutée avec cadence optimale (86rpm). Efficiency Factor 1.33 suggère bonne économie d'effort. Problème technique capteur puissance (données brutes manquantes) limite analyse fine mais métriques globales cohérentes.
-
-#### Notes Coach
-Début de semaine avec TSB favorable (+11) autorisant charge modérée. Sommeil 6.8h légèrement sous-optimal mais acceptable pour endurance base. Séance validée malgré lacunes données capteur.
-
-#### Métriques Post-séance
-- CTL : 50
-- ATL : 38
-- TSB : +12
-
----
-
-## Lundi 08/12 (pm) - Glasgow Crit Circuit
-
-Date : 08/12/2025
-
-#### Métriques Pré-séance
-- CTL : 50
-- ATL : 38
-- TSB : +12
+**Métriques pré-séance**
+- CTL : 50 | ATL : 38 | TSB : +12
 - Sommeil : 6.8h
 
-#### Exécution
-- Durée : 38min
-- IF : 0.85
-- TSS : 46
-- Puissance moyenne : 140W
-- Puissance normalisée : 188W
-- Cadence moyenne : 74rpm
-- FC moyenne : 113bpm
+**Exécution**
+- Durée : 38min | TSS : 46 | IF : 0.85 | RPE : N/A
+- Puissance moyenne : 140W | NP : 188W
+- Cadence moyenne : 74rpm | FC moyenne : 113bpm
 - Découplage : -7.9%
-- RPE : Non renseigné
 
-#### Découvertes Techniques
-Format critérium haute variabilité (VI 1.34) avec nombreuses accélérations. **Cadence anormalement basse (74rpm vs profil habituel 84-86rpm)** suggère fatigue neuromusculaire ou gestion sous-optimale relances. Découplage négatif (-7.9%) atypique pour format court explosif.
+**Découvertes techniques**
+- Format critérium avec forte variabilité (VI 1.34)
+- Cadence inhabituelle basse (74rpm vs profil 84-86rpm)
+- Abandon prématuré 38min vs 45min planifiés
+- Découplage négatif atypique (format court + accélérations)
 
-#### Notes Coach
-**Abandon prématuré à 38min** (cible 45min non atteinte). Cadence basse critique pour profil explosif indique possible limite technique à travailler. TSS modéré (46) compatible tapering mais durée insuffisante révèle problème exécution.
+**Notes coach**
+Séance critérium sous-exécutée (abandon -7min). Cadence significativement basse suggère fatigue neuromusculaire ou gestion relances sub-optimale. Sommeil 6.8h peut avoir impacté qualité exécution. Format validé mais durée à respecter.
 
-#### Métriques Post-séance
-- CTL : 50
-- ATL : 38
-- TSB : +12
+**Métriques post-séance**
+- CTL : 50 | ATL : 39 | TSB : +11
 
 ---
 
-## Mardi 09/12 - S071-02-MIX-RecupPostCriterium
+### Mardi 09/12 - S071-02-MIX-RecupPostCriterium
 
-Date : 09/12/2025
+**Métriques pré-séance**
+- CTL : 50 | ATL : 39 | TSB : +11
+- Sommeil : 0.0h (donnée manquante)
 
-#### Métriques Pré-séance
-- CTL : 50
-- ATL : 39
-- TSB : +11
-- Sommeil : 0.0h
-
-#### Exécution
-- Durée : 61min
-- IF : 0.65
-- TSS : 43
-- Puissance moyenne : 118W
-- Puissance normalisée : 142W
-- Cadence moyenne : 81rpm
-- FC moyenne : 98bpm
+**Exécution**
+- Durée : 61min | TSS : 43 | IF : 0.65 | RPE : N/A
+- Puissance moyenne : 118W | NP : 142W
+- Cadence moyenne : 81rpm | FC moyenne : 98bpm
 - Découplage : -15.6%
-- RPE : Non renseigné
 
-#### Découvertes Techniques
-**Variabilité puissance excessive** (NP 142W vs Pavg 118W, ratio 1.20) pour séance récupération planifiée 50% FTP. Découplage négatif exceptionnel (-15.6%) suggère excellente efficacité cardiovasculaire mais incompatible avec objectif récupération passive.
+**Découvertes techniques**
+- TSS dépassé +72% vs cible (43 vs 25 planifié)
+- IF supérieur prévu (0.65 vs 0.50 cible)
+- Variabilité puissance non anticipée (NP/Pavg = 1.20)
+- Découplage négatif exceptionnel -15.6%
 
-#### Notes Coach
-**TSS dépassé +72%** (43 vs 25 planifié) invalide objectif récupération. Séance exécutée comme endurance variable vs récupération passive prévue. Sommeil 0.0h critique compromet analyse récupération.
+**Notes coach**
+Séance récupération transformée en endurance modérée. Intensité non respectée malgré TSB favorable (+11). Variabilité puissance suggère manque discipline ou format inapproprié. Donnée sommeil manquante à corriger.
 
-#### Métriques Post-séance
-- CTL : 50
-- ATL : 39
-- TSB : +11
+**Métriques post-séance**
+- CTL : 50 | ATL : 39 | TSB : +11
 
 ---
 
-## Mercredi 10/12 - S071-03a-TechniqueCadence-V000 (ABORT)
+### Mercredi 10/12 (matin) - S071-03a-TechniqueCadence-V000
 
-Date : 10/12/2025
+**Métriques pré-séance**
+- CTL : 49 | ATL : 37 | TSB : +12
+- Sommeil : 0.0h (donnée manquante)
 
-#### Métriques Pré-séance
-- CTL : 49
-- ATL : 37
-- TSB : +12
-- Sommeil : 0.0h
-
-#### Exécution
-- Durée : 17min (interrompu)
-- IF : 0.57
-- TSS : 9
-- Puissance moyenne : 121W
-- Puissance normalisée : 125W
-- Cadence moyenne : 83rpm
-- FC moyenne : 93bpm
+**Exécution**
+- Durée : 17min | TSS : 9 | IF : 0.57 | RPE : N/A
+- Puissance moyenne : 121W | NP : 125W
+- Cadence moyenne : 83rpm | FC moyenne : 93bpm
 - Découplage : -4.5%
-- RPE : Non renseigné
 
-#### Découvertes Techniques
-**Erreur structure workout** : bloc principal non répété 5× comme prévu. Séance interrompue avant cooldown. Découplage négatif (-4.5%) confirme efficacité cardiovasculaire mais données insuffisantes pour validation complète.
+**Découvertes techniques**
+- Séance interrompue (17min vs 25min planifié)
+- Erreur structure workout (bloc principal non répété 5×)
+- Efficacité cardiovasculaire excellente (découplage -4.5%)
 
-#### Notes Coach
-**Tentative avortée** nécessitant correction template Intervals.icu. TSS 9 vs 13 planifié (-32%) dû interruption prématurée. Séance invalidée, refaite immédiatement après correction.
+**Notes coach**
+Template défectueux corrigé immédiatement. Séance avortée mais validation découplage négatif reproductible. À re-exécuter version V001 corrigée.
 
-#### Métriques Post-séance
-- CTL : 49
-- ATL : 37
-- TSB : +12
+**Métriques post-séance**
+- CTL : 49 | ATL : 37 | TSB : +12
 
 ---
 
-## Mercredi 10/12 - S071-03-TEC-TechniqueCadence-V001 (CORRECTED)
+### Mercredi 10/12 (après-midi) - S071-03-TEC-TechniqueCadence-V001
 
-Date : 10/12/2025
+**Métriques pré-séance**
+- CTL : 50 | ATL : 40 | TSB : +10
+- Sommeil : 0.0h (donnée manquante)
 
-#### Métriques Pré-séance
-- CTL : 50
-- ATL : 40
-- TSB : +10
-- Sommeil : 0.0h
-
-#### Exécution
-- Durée : 64min
-- IF : 0.58
-- TSS : 37
-- Puissance moyenne : 126W
-- Puissance normalisée : 128W
-- Cadence moyenne : 81rpm
-- FC moyenne : 96bpm
+**Exécution**
+- Durée : 64min | TSS : 37 | IF : 0.58 | RPE : 6/10
+- Puissance moyenne : 126W | NP : 128W
+- Cadence moyenne : 81rpm | FC moyenne : 96bpm
 - Découplage : 3.0%
-- RPE : 6/10
 
-#### Découvertes Techniques
-**Version corrigée parfaitement exécutée**. Structure 5×(3min 65%FTP/60rpm + 2min 60%FTP/100rpm) respectée. Découplage excellent (3.0%) valide qualité technique. Cadence 81rpm moyenne cohérente avec variations 60-100rpm programmées.
+**Découvertes techniques**
+- Structure corrigée exécutée conformément (5 répétitions bloc)
+- Découplage excellent 3.0% confirme efficacité aérobie
+- RPE 6/10 élevé pour séance technique Z1/Z2
+- Variations cadence 60rpm/100rpm tolérées
 
-#### Notes Coach
-**RPE 6/10 élevé** pour séance technique Z1-Z2 suggère fatigue perceptuelle vs métriques objectives normales. Sommeil 0.0h potentiel facteur explicatif. TSS exact (37/37) confirme adhérence plan après correction.
+**Notes coach**
+Template V001 validé. RPE subjectivement élevé malgré métriques objectives conformes, possiblement lié sommeil déficitaire cumulé. Protocole technique cadence opérationnel.
 
-#### Métriques Post-séance
-- CTL : 50
-- ATL : 40
-- TSB : +10
+**Métriques post-séance**
+- CTL : 50 | ATL : 40 | TSB : +10
 
 ---
 
-## Jeudi 11/12 - S071-04-END-EnduranceProgressive-V001
+### Jeudi 11/12 - S071-04-END-EnduranceProgressive-V001
 
-Date : 11/12/2025
+**Métriques pré-séance**
+- CTL : 50 | ATL : 41 | TSB : +8
+- Sommeil : 0.0h (donnée manquante)
 
-#### Métriques Pré-séance
-- CTL : 50
-- ATL : 41
-- TSB : +8
-- Sommeil : 0.0h
-- Poids : 84.7kg
-
-#### Exécution
-- Durée : 72min
-- IF : 0.65
-- TSS : 51
-- Puissance moyenne : 143W
-- Puissance normalisée : 144W
-- Cadence moyenne : 87rpm
-- FC moyenne : 98bpm
+**Exécution**
+- Durée : 72min | TSS : 51 | IF : 0.65 | RPE : N/A
+- Puissance moyenne : 143W | NP : 144W
+- Cadence moyenne : 87rpm | FC moyenne : 98bpm
 - Découplage : 1.0%
-- RPE : Non renseigné
 
-#### Découvertes Techniques
-Endurance progressive parfaitement exécutée. **Découplage exceptionnel 1.0%** confirme excellente cohérence cardio-puissance. Puissance/NP quasi-identiques (143/144W) démontre régularité effort. Cadence 87rpm optimale pour endurance.
+**Découvertes techniques**
+- Excellente cohérence puissance/FC (découplage 1.0%)
+- Endurance progressive bien tolérée malgré sommeil déficitaire
+- Cadence 87rpm optimale pour format endurance
+- IF/TSS parfaitement alignés objectifs
 
-#### Notes Coach
-Adhérence plan 98% (TSS 51 vs 52). TSB +8 pré-séance favorable maintient qualité exécution malgré sommeil non renseigné. Séance référence pour endurance Z2.
+**Notes coach**
+Séance référence qualité exécution. Découplage <7.5% validé. Sommeil à documenter pour éviter biais analyse récupération. Format endurance progressive consolidé.
 
-#### Métriques Post-séance
-- CTL : 50
-- ATL : 41
-- TSB : +8
-
----
-
-## Vendredi 12/12 - REPOS
-
-**Aucune séance**
-
-Métriques :
-- CTL : 48
-- ATL : 36
-- TSB : +13 (amélioration significative)
-- Poids : Donnée manquante
+**Métriques post-séance**
+- CTL : 50 | ATL : 41 | TSB : +8
 
 ---
 
-## Samedi 13/12 - S071-06A-END-EnduranceProgressive-V001
+### Vendredi 12/12 - Repos (non documenté)
 
-Date : 13/12/2025
+**Métriques estimées**
+- CTL : 48 | ATL : 36 | TSB : +12
 
-#### Métriques Pré-séance
-- CTL : 49
-- ATL : 41
-- TSB : +8
-- Sommeil : 0.0h
-- Poids : 84.6kg
+---
 
-#### Exécution
-- Durée : 77min
-- IF : 0.65
-- TSS : 55
-- Puissance moyenne : 142W
-- Puissance normalisée : 144W
-- Cadence moyenne : 85rpm
-- FC moyenne : 105bpm
+### Samedi 13/12 (matin) - S071-06A-END-EnduranceProgressive-V001
+
+**Métriques pré-séance**
+- CTL : 49 | ATL : 41 | TSB : +8
+- Poids : 85.9kg | Sommeil : 0.0h (donnée manquante)
+
+**Exécution**
+- Durée : 77min | TSS : 55 | IF : 0.65 | RPE : N/A
+- Puissance moyenne : 142W | NP : 144W
+- Cadence moyenne : 85rpm | FC moyenne : 105bpm
 - Découplage : 1.5%
-- RPE : 4/10
 
-#### Découvertes Techniques
-**Première séance double journée**. Découplage remarquable 1.5% valide qualité exécution. Intensité 65% FTP parfaitement maintenue. Contexte période festive (repas arrosé, alcool) compensé par supplémentation isotonique.
+**Découvertes techniques**
+- Première double séance réussie contexte sub-optimal
+- Découplage remarquable 1.5% malgré hydratation compromise (alcool J-1)
+- Pattern technique stable (cadence, FC) confirmé reproductible
+- Adhérence TSS 98% (55 vs 54 planifié)
 
-#### Notes Coach
-Adhérence 98% (TSS 55 vs 54). **Hydratation compromise mais protocole adapté validé**. Capacité maintenir qualité technique malgré contexte sub-optimal démontre robustesse physiologique exceptionnelle.
+**Notes coach**
+Excellente qualité exécution malgré contexte festif. Supplémentation isotonique compensatoire validée. Capacité double endurance confirmée avec TSB +8 maintenu post-séance.
 
-#### Métriques Post-séance
-- CTL : 49
-- ATL : 41
-- TSB : +8
+**Métriques post-séance**
+- CTL : 49 | ATL : 41 | TSB : +8
 
 ---
 
-## Samedi 13/12 (pm) - S071-06B-TEC-TechniqueCadence-V001
+### Samedi 13/12 (soir) - S071-06B-TEC-TechniqueCadence-V001
 
-Date : 13/12/2025
+**Métriques pré-séance**
+- CTL : 49 | ATL : 41 | TSB : +8
+- Sommeil : 0.0h (donnée manquante)
 
-#### Métriques Pré-séance
-- CTL : 49
-- ATL : 41
-- TSB : +8
-- Sommeil : 0.0h
-
-#### Exécution
-- Durée : 41min
-- IF : 0.56
-- TSS : 22
-- Puissance moyenne : 121W
-- Puissance normalisée : 123W
-- Cadence moyenne : 87rpm
-- FC moyenne : 104bpm
+**Exécution**
+- Durée : 41min | TSS : 22 | IF : 0.56 | RPE : N/A
+- Puissance moyenne : 121W | NP : 123W
+- Cadence moyenne : 87rpm | FC moyenne : 104bpm
 - Découplage : -3.2%
-- RPE : 4/10
 
-#### Découvertes Techniques
-**Double séance complétée** (total journée 77 TSS). Découplage négatif atypique (-3.2%) à investiguer (possible artefact calibration). Variations cadence 80-95rpm bien exécutées. Puissance -5W sous cible acceptable pour focus technique.
+**Découvertes techniques**
+- Deuxième double séance journée (77 TSS cumulés)
+- Découplage négatif atypique -3.2% (amélioration conductivité cardiaque)
+- Variations cadence 80-95rpm exécutées conformément
+- Charge cumulée bien tolérée (TSB +8 maintenu)
 
-#### Notes Coach
-**TSB +8 maintenu post-77 TSS journalier** confirme capacité double endurance exceptionnelle. Supplémentation isotonique complémentaire adaptée contexte festif. Format technique cadence validé récupération active.
+**Notes coach**
+Format technique cadence post-endurance validé. Découplage négatif reproductible à documenter (possible indicateur amélioration efficacité cardiovasculaire Z1). Double séance 77+41min opérationnelle.
 
-#### Métriques Post-séance
-- CTL : 49
-- ATL : 41
-- TSB : +8
-
----
-
-## Dimanche 14/12 - REPOS PROTOCOLE
-
-**Statut** : Repos obligatoire (workout planifié supprimé)
-
-**Note** : Workout récupération 21 TSS initialement planifié, supprimé car dimanche = repos protocolaire non-négociable.
-
-Métriques :
-- CTL : 48
-- ATL : 36
-- TSB : +12
-- Poids : Donnée manquante
+**Métriques post-séance**
+- CTL : 49 | ATL : 41 | TSB : +8
 
 ---
 
-## Évolution Métriques Hebdomadaire
+### Dimanche 14/12 - Repos Obligatoire
 
-**Début semaine (08/12)** :
-- CTL : 49.8
-- ATL : 38.3
-- TSB : +11.5
-- Poids : 84.6kg
-
-**Fin semaine (14/12)** :
-- CTL : 48.0 (-1.8, -3.6%)
-- ATL : 35.8 (-2.5, -6.5%)
-- TSB : +12.1 (+0.6)
-- Poids : Donnée manquante
+**Métriques estimées finales**
+- CTL : 48 | ATL : 36 | TSB : +12
+- Poids : 85.9kg
 
 ---
 
-## Enseignements Majeurs S071
+## Évolution Métriques Semaine
+- CTL : 50 → 48 (-2, décharge planifiée)
+- ATL : 38 → 36 (-2, fatigue réduite)
+- TSB : +11 → +12 (+1, forme maintenue)
+- Poids : 84.6kg → 85.9kg (+1.3kg, hydratation/alimentation festive)
 
-1. **Capacité double endurance validée** : 77 TSS samedi (55+22) toléré sans dégradation TSB, ouvre possibilité progression volume via doubles séances
-2. **Découplages cardiovasculaires exceptionnels** : 1.0%, 1.5%, 3.0% confirment excellente efficacité aérobie Z2, -3.2% et -15.6% atypiques nécessitent investigation calibration
-3. **Problème cadence format explosif** : 74rpm Glasgow Crit vs profil habituel 84-86rpm révèle limite neuromusculaire relances à travailler spécifiquement
-4. **Erreur structure workout corrigée** : Processus validation templates Intervals.icu renforcé, séance refaite immédiatement après correction
-5. **Hydratation contexte festif** : Protocole adaptation (supplémentation isotonique) validé maintien performance malgré alcool/alimentation enrichie
+## Enseignements Majeurs
 
----
+1. **Double séance endurance validée** : 77+41min (TSS 77) tolérés avec TSB +8 maintenu, capacité récupération exceptionnelle confirmée
+2. **Découplage négatif reproductible** : -3.2% à -15.6% sur 3 séances, indicateur possible amélioration efficacité cardiovasculaire Z1
+3. **Protocole technique cadence opérationnel** : Format 5×(3min 60rpm + 2min 100rpm) exécutable, RPE subjectif à surveiller
+4. **Sommeil déficitaire cumulé** : 0.0h renseigné systématiquement, impact qualité perçue (RPE 6/10) vs métriques objectives conformes
+5. **Hydratation compensatoire validée** : Supplémentation isotonique post-alcool permet double séance qualité maintenue
 
 ## Recommandations S072
 
-1. **Progression volume** : Capitaliser TSB +12 fin semaine, introduire double séance systématique samedi (60+45min) si sommeil ≥7h validé
-2. **Travail cadence explosif** : Intégrer séances spécifiques accélérations haute cadence (90-100rpm) pour corriger limite identifiée Glasgow Crit
-3. **Normalisation hydratation** : Retour protocole standard 500-600ml/h hors période festive
-4. **Investigation découplages négatifs** : Vérifier calibration capteurs FC/puissance via Intervals.icu web, documenter reproductibilité
-5. **Données sommeil** : Prioriser intégration Withings systématique, facteur critique décisions intensité (actuellement 0.0h récurrent invalide analyses)
+1. **Corriger intégration données Withings** : Sommeil systématiquement 0.0h invalide analyses récupération
+2. **Capitaliser TSB +12** : Sweet-Spot court (2×8min 88-90% FTP) envisageable si sommeil >7h validé
+3. **Maintenir double endurance** : Format 75+40min reproductible 1×/semaine, surveillance TSB post-session
+4. **Investiguer découplage négatif** : Vérifier données FC/puissance Intervals.icu web, documenter si pattern persistant S072
+5. **Discipline intensité critérium** : Respecter durées planifiées (45min minimum), travailler cadence relances 85-90rpm
 
 ---

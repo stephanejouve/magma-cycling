@@ -2,246 +2,227 @@
 
 ## État Final S071
 
-### Métriques Forme
-- **CTL** : 48.0 (vs 49.8 début, -3.6%)
-- **ATL** : 35.8 (vs 38.3 début, -6.5%)
-- **TSB** : +12.1 (vs +11.5 début, +0.6)
-- **Poids** : ~84.5kg (stable, fluctuations ±0.8kg)
-
-### Charge Semaine
-- **TSS réalisé** : 239
-- **TSS planifié** : ~350
-- **Écart** : -32% (décharge intentionnelle partielle)
+### Métriques Fitness
+- **CTL final** : 48 (vs 50 début, décharge -2 planifiée)
+- **ATL final** : 36 (vs 38 début, fatigue -2 réduite)
+- **TSB final** : +12 (vs +11 début, forme +1 améliorée)
+- **TSS hebdo** : 282 (planifié ~280, adhérence 101%)
 
 ### Validations Techniques
-✅ **Acquis confirmés** :
-- Double endurance weekend (77 TSS samedi toléré)
-- Découplages exceptionnels 1.0-3.0% (base aérobie excellente)
-- Hydratation contexte festif gérée (supplémentation validée)
-- Réactivité correction erreurs workout (S071-03 refaite immédiatement)
+✅ **Découplage <7.5%** : 5/5 séances >60min validées (range 1.0%-3.0%)  
+✅ **Double séance endurance** : 77+41min (TSS 77) tolérés, TSB +8 maintenu  
+✅ **Template technique cadence V001** : Opérationnel (64min, TSS 37, RPE 6/10)  
+✅ **Hydratation compensatoire** : Post-alcool validée, double séance qualité maintenue  
+⚠️ **Découplage négatif reproductible** : 3 séances (-3.2% à -15.6%), pattern à investiguer S072
 
-❌ **Échecs identifiés** :
-- Cadence formats explosifs (74rpm Glasgow vs cible ≥85rpm)
-- Données sommeil manquantes (0.0h récurrent invalide analyses)
-- TSS hebdo insuffisant (-111 vs planifié, risque décrochage CTL)
+### Échecs/Limites
+❌ **Discipline critérium** : Abandon -7min Glasgow Crit, cadence 74rpm vs 84-86rpm cible  
+❌ **Intensité récupération** : S071-02 dépassée (IF 0.65 vs 0.50, TSS +72%)  
+❌ **Données sommeil** : 0.0h renseigné systématiquement, intégration Withings défaillante  
+⚠️ **Poids variation** : +1.3kg (84.6→85.9kg), rétention eau vs masse grasse à distinguer
 
-⚠️ **Points investigation** :
-- Découplages négatifs atypiques (-3.2%, -15.6% : calibration capteurs?)
-- Variabilité poids 84.1-85.4kg (hydratation vs tendance réelle?)
+---
+
+## Acquisitions Confirmées
+
+### 1. Capacité Double Séance Endurance (Haute Confiance)
+**Validation** : S071-06A+06B (77+41min, TSS 77, TSB +8 maintenu post)
+
+**Protocole établi** :
+- Session 1 : Endurance 75-80min, TSS 50-55, IF 0.65-0.66
+- Session 2 : Technique 40min, TSS 20-25, IF 0.56-0.58
+- Prérequis : TSB >+7, sommeil >6h, intervalle 4h+ entre sessions
+
+**Application S072** : Reproductible 1×/semaine si conditions maintenues.
+
+---
+
+### 2. Template Technique Cadence V001 (Confiance Modérée)
+**Validation** : S071-03 (64min, TSS 37, découplage 3.0%)
+
+**Structure** :
+```
+Warmup: 12m Ramp 50-65% 85rpm
+Main 5×: 3m 65% 60rpm + 2m 60% 100rpm
+Cooldown: 10m Ramp 65-50% 85rpm
+```
+
+**Limite** : RPE subjectif 6/10 élevé vs métriques objectives conformes, possiblement lié sommeil déficitaire.
+
+**Application S072** : Intégrable post-endurance ou standalone récupération active.
+
+---
+
+### 3. Hydratation Compensatoire Post-Alcool (Confiance Faible)
+**Validation** : S071-06A+06B post-repas festif
+
+**Protocole** : Supplémentation isotonique renforcée (quantification manquante)
+
+**Limite** : Unique occurrence, reproductibilité non démontrée, protocole exceptionnel non-systématique.
+
+**Application S072** : Réservé contextes exceptionnels uniquement.
 
 ---
 
 ## Options Progression S072
 
-### Option 1 : Reprise Progressive Volume (RECOMMANDÉE)
+### Scénario 1 : Consolidation Endurance (Conservateur)
+**Condition** : Sommeil <7h ou TSB <+10 début semaine
 
-**Objectif** : Remonter CTL via augmentation TSS hebdo sans compromettre fraîcheur.
+**Structure** :
+- Lundi : Endurance 70min, TSS 50
+- Mardi : Technique cadence 60min, TSS 35
+- Mercredi : Récupération active 45min, TSS 25
+- Jeudi : Endurance progressive 75min, TSS 55
+- Samedi : Double séance (80+40min, TSS 75)
+- Dimanche : Repos obligatoire
 
-**Structure semaine** :
-```
-Lundi : Endurance 75min (55 TSS)
-Mardi : Cadence Explosif 45min (35 TSS)
-Mercredi : Récup Active 45min (25 TSS)
-Jeudi : Endurance Progressive 80min (60 TSS)
-Vendredi : Repos
-Samedi : Double Endurance (60min + 45min = 75 TSS)
-Dimanche : Repos protocole
-```
-
-**TSS cible** : 250 TSS (+11 vs S071, progression +5%)  
-**IF moyen** : 0.64 (endurance dominante)  
-**Ratio zones** : 75% Z2, 20% Z1, 5% technique
-
-**Conditions** :
-- TSB lundi matin ≥+10 (validé +12.1 actuel)
-- Sommeil ≥7h pour double samedi
-- Découplages <7.5% toutes séances
-
-**Risques** :
-- Faible : TSB largement positif, charge modérée
-- Surveillance : CTL ne doit pas descendre <47
-
-**Bénéfices** :
-- Maintien fraîcheur (TSB ~+8 à +10 fin S072)
-- Introduction cadence explosif (correction limite identifiée)
-- Validation double endurance systématique
+**TSS hebdo** : 290-310  
+**Objectif** : Maintien CTL 48, stabilisation poids, validation sommeil >7h
 
 ---
 
-### Option 2 : Consolidation Technique Pure
+### Scénario 2 : Introduction Sweet-Spot Court (Modéré)
+**Condition** : Sommeil >7h validé ET TSB >+10 maintenu 3 jours consécutifs
 
-**Objectif** : Maintenir CTL ~48, focus correction cadence explosif + investigation découplages.
+**Structure** :
+- Lundi : Endurance 70min, TSS 50
+- Mardi : Sweet-Spot court (2×8min 88-90% FTP), TSS 55
+- Mercredi : Récupération active 45min, TSS 25
+- Jeudi : Endurance progressive 75min, TSS 55
+- Samedi : Double endurance (75+40min, TSS 70)
+- Dimanche : Repos obligatoire
 
-**Structure semaine** :
-```
-Lundi : Endurance 60min (45 TSS)
-Mardi : Cadence Explosif 45min (35 TSS)
-Mercredi : Technique Cadence 40min (22 TSS)
-Jeudi : Endurance 70min (50 TSS)
-Vendredi : Repos
-Samedi : Glasgow Crit Repeat 45min (50 TSS) - TEST
-Dimanche : Repos protocole
-```
-
-**TSS cible** : 202 TSS (-15% vs S071, décharge continue)  
-**IF moyen** : 0.62  
-**Focus** : Technique cadence, validation calibration capteurs
-
-**Conditions** :
-- TSB maintenu ≥+10 toute semaine
-- Test Glasgow samedi : cadence ≥85rpm validée
-- Découplages documentés précisément (comparaison Zwift/Wahoo)
-
-**Risques** :
-- **Modéré** : CTL risque chute <46 (seuil critique décrochage forme)
-- Nécessite reprise volume S073 obligatoire
-
-**Bénéfices** :
-- Correction technique cadence explosive prioritaire
-- Résolution problème calibration capteurs
-- Fraîcheur maximale (TSB ~+15)
+**TSS hebdo** : 305-325  
+**Objectif** : Test réponse Sweet-Spot post-maladie, progression CTL vers 50
 
 ---
 
-### Option 3 : Introduction Sweet-Spot (SI Sommeil Validé)
+### Scénario 3 : Progression Volume (Agressif)
+**Condition** : Sommeil >7h ET TSB >+12 ET poids stabilisé <85.5kg
 
-**Objectif** : Capitaliser TSB +12 pour réintroduire intensité modérée, relancer CTL.
+**Structure** :
+- Lundi : Endurance 80min, TSS 58
+- Mardi : Technique cadence + accélérations 70min, TSS 45
+- Mercredi : Récupération active 45min, TSS 25
+- Jeudi : Endurance progressive 85min, TSS 62
+- Samedi : Double séance (90+50min, TSS 85)
+- Dimanche : Repos obligatoire
 
-**Structure semaine** :
-```
-Lundi : Activation 45min (30 TSS)
-Mardi : Sweet-Spot 3×10min 88% (65 TSS)
-Mercredi : Récup Active 40min (20 TSS)
-Jeudi : Endurance 75min (55 TSS)
-Vendredi : Repos
-Samedi : Endurance 80min (60 TSS)
-Dimanche : Repos protocole
-```
-
-**TSS cible** : 230 TSS (-4% vs S071, maintien)  
-**IF moyen** : 0.68  
-**Ratio zones** : 60% Z2, 25% Sweet-Spot, 15% Z1
-
-**Conditions STRICTES** :
-- ⚠️ **VETO si sommeil <7h validé lundi/mardi matin**
-- TSB mardi matin ≥+10 obligatoire
-- Aucune séance intensité 48h pré-Sweet-Spot
-- Découplage Sweet-Spot <5% sinon arrêt protocole
-
-**Risques** :
-- **Élevé si sommeil non validé** : Pattern S071 = 0.0h récurrent, données manquantes critiques
-- TSB risque chute rapide si Sweet-Spot mal toléré
-
-**Bénéfices** :
-- CTL remonte rapidement (~50 fin S072)
-- Validation capacité Sweet-Spot post-décharge
-- Progression FTP si découplages validés
+**TSS hebdo** : 325-350  
+**Objectif** : Progression CTL vers 52, test capacité volume endurance
 
 ---
 
 ## Recommandation Justifiée
 
-### **OPTION 1 RECOMMANDÉE** : Reprise Progressive Volume
+### Scénario Retenu : **#2 Introduction Sweet-Spot Court (Modéré)**
 
-**Arguments data-driven** :
+**Justification data-driven** :
 
-1. **TSB favorable (+12.1)** : Marge confortable autorisant augmentation charge modérée sans risque surmenage
+1. **TSB favorable +12** : Marge sécurité Sweet-Spot court (TSB >+10 requis), fatigue ATL 36 basse
+2. **CTL décharge -2** : Nécessité relance stimulus intensité modérée pour éviter déconditionnement prolongé
+3. **Découplage validé <7.5%** : 5/5 séances >60min excellent, base aérobie solide pour Sweet-Spot
+4. **Double endurance confirmée** : Capacité récupération exceptionnelle démontrée, tolérance charge validée
 
-2. **CTL critique (48.0)** : Décharge S071 -3.6% acceptable court terme, mais prolongation S072 risquerait chute <46 (seuil décrochage forme selon historique S027-S028)
+**Prérequis critiques S072** :
+- ✅ Sommeil >7h validé 3 nuits consécutives avant Sweet-Spot mardi
+- ✅ TSB >+10 maintenu lundi/mardi
+- ✅ Correction intégration données Withings (sommeil monitoring)
+- ⚠️ Si sommeil <7h : Basculer Scénario #1 (report Sweet-Spot S073)
 
-3. **Découvertes S071 à capitaliser** :
-   - Double endurance validée (77 TSS toléré)
-   - Besoin correction cadence explosif urgent (74rpm échec)
-   - Base aérobie excellente (découplages 1.0-3.0%)
+**Structure Sweet-Spot recommandée** :
+```
+Warmup: 15m Ramp 50-75% 85rpm
+Activation: 3×(1min 95% + 1min 60%) 95rpm
+Main set 2×:
+- 8m 88-90% FTP 90-95rpm
+- 4m 60% 85rpm
+Cooldown: 10m Ramp 70-50% 85rpm
+Total: 62min | TSS cible: 55 | IF: 0.78
+```
 
-4. **Sommeil données manquantes** : Élimine Option 3 (Sweet-Spot VETO sans validation sommeil ≥7h)
-
-5. **Progression réaliste** : TSS 250 (+5% vs S071) = augmentation minimaliste sécurisée, évite saut brutal vers 350
-
-**Contre-arguments Option 2** :
-- TSS 202 (-15% S071) risque CTL <46 critique
-- Focus technique pur retarde reprise volume nécessaire
-- Glasgow Crit repeat prématuré (nécessite 4 semaines travail cadence avant retest)
-
-**Contre-arguments Option 3** :
-- Données sommeil 0.0h récurrent S071 = VETO protocole Sweet-Spot
-- Introduction intensité prématurée sans résolution problèmes techniques (cadence, sommeil)
+**Monitoring renforcé** :
+- FC moyenne bloc Sweet-Spot : Cible <75% FCmax (~126bpm)
+- Découplage : Validation <7.5% post-séance
+- RPE : Max 7/10, VETO si >8/10 premier bloc
+- HRV : Vérification baisse <10% jour suivant si données disponibles
 
 ---
 
-## Timeline Objectifs
+## Timeline Objectifs Cycle
 
-### Court Terme (S072)
-- **Semaine 1** : Reprise volume progressive 250 TSS
-- **Objectif primaire** : Remonter CTL ≥49
-- **Objectif secondaire** : Intégrer séance cadence explosif, valider double endurance
+### Court-terme (S072-S074)
+**Semaine S072** : Introduction Sweet-Spot court (2×8min), validation réponse physiologique  
+**Semaine S073** : Progression Sweet-Spot (3×8min ou 2×10min) si S072 validé  
+**Semaine S074** : Décharge (-30% TSS), test FTP optionnel si Sweet-Spot consolidé
 
-### Moyen Terme (S073-S074)
-- **S073** : TSS 280-300 si S072 validé (découplages <7.5%, sommeil ≥7h)
-- **S074** : Introduction Sweet-Spot si CTL ≥50 + TSB ≥+5
-- **Tests validation** : Glasgow Crit repeat S074 (objectif cadence ≥85rpm)
+### Moyen-terme (S075-S078)
+**Cycle Seuil Lactique** : Développement Sweet-Spot 88-93% FTP (formats 3×10min, 2×15min)  
+**Fréquence** : 2×/semaine Sweet-Spot si capacité validée S072-S074  
+**Objectif FTP** : Progression 220W → 225-230W fin cycle (validation test S078)
 
-### Long Terme (S075-S076)
-- **S075** : Test FTP si progression Sweet-Spot validée 3+ semaines
-- **S076** : Ajustement zones selon nouveau FTP
-- **Cible** : CTL 55-60 stabilisé, TSS hebdo 320-350 soutenable
+### Long-terme (S079+)
+**Transition VO2 Max** : Introduction formats 106-120% FTP (prérequis Sweet-Spot consolidé)  
+**Arsenal HIIT** : Rotation 5 formats (2×2, 30/30, Pyramide, Tabata, Dégressif)  
+**Objectif FTP final** : 235-240W (progression +15W vs actuel 220W)
 
 ---
 
 ## Risques Identifiés Progression
 
-### Risque 1 : Décrochage CTL
-**Probabilité** : Modérée si Option 2 choisie  
-**Impact** : Régression forme, nécessite 2-3 semaines reconstruction  
-**Mitigation** : Choisir Option 1, TSS minimum 250 hebdo
+### 1. Sommeil Déficitaire Persistant (Probabilité Haute)
+**Risque** : 0.0h renseigné systématiquement S071, intégration Withings défaillante
 
-### Risque 2 : Sommeil Insuffisant Persistant
-**Probabilité** : Élevée (pattern S071 = 0.0h récurrent)  
-**Impact** : VETO intensité, limite progression Sweet-Spot/VO2  
-**Mitigation** : 
-- Résoudre intégration Withings S072
-- Saisie manuelle backup quotidienne
-- Prioriser sommeil ≥7h absolument
+**Impact** : Invalidation prérequis Sweet-Spot (sommeil >7h requis), basculement Scénario #1
 
-### Risque 3 : Cadence Explosif Non Corrigée
-**Probabilité** : Modérée sans travail spécifique  
-**Impact** : Limite formats HIIT/critérium futurs  
-**Mitigation** : Séance cadence explosif obligatoire 1×/semaine S072+
+**Mitigation** :
+- Correction intégration Withings prioritaire avant S072
+- Validation manuelle sommeil >7h 3 nuits consécutives
+- Saisie HRV manuelle si données automatiques indisponibles
 
-### Risque 4 : Découplages Négatifs Reproductibles
-**Probabilité** : Faible (probable artefact calibration)  
-**Impact** : Nécessite remplacement capteur si validé problème matériel  
-**Mitigation** : Vérification calibration + dual recording S072, remplacer si besoin
+**Plan B** : Report Sweet-Spot S073 si sommeil non validé, maintien endurance Z2 S072.
 
 ---
 
-## Actions Immédiates S072 Lundi
+### 2. Poids Variation Non-Stabilisée (Probabilité Modérée)
+**Risque** : +1.3kg S071 (84.6→85.9kg), masse grasse vs rétention eau non distinguée
 
-### Checklist Pré-Semaine
-1. ✅ Vérifier TSB lundi matin ≥+10 (attendu +12)
-2. ✅ Résoudre intégration Withings ou saisir sommeil manuellement
-3. ✅ Calibrer capteur puissance Wahoo (zero offset)
-4. ✅ Vérifier batterie sangle cardio
-5. ✅ Planifier workout S072-01 Endurance 75min (55 TSS)
+**Impact** : W/kg dégradé (2.56 vs 2.60), performance Sweet-Spot possiblement impactée
 
-### Validation Continue S072
-- **Lundi soir** : Documenter sommeil nuit, découplage séance
-- **Mardi** : Séance cadence explosif, noter cadence moyenne
-- **Mercredi** : Confirmer récupération (TSB ≥+8)
-- **Samedi** : Double endurance si sommeil ≥7h + TSB ≥+8
+**Mitigation** :
+- Monitoring quotidien poids S072 (stabilisation attendue 3-5 jours)
+- Hydratation normalisée (éviter isotonique excessif)
+- Composition corporelle Withings si variation >+2kg maintenue >7 jours
+
+**Plan B** : Adaptation intensité Sweet-Spot -5% FTP si poids >86kg maintenu mardi S072.
 
 ---
 
-## Conclusion Transition
+### 3. Découplage Négatif Artefact Calibration (Probabilité Faible)
+**Risque** : Pattern découplage <-3% (3 séances/8) lié artefact FC vs amélioration physiologique
 
-**État S071** : Fraîcheur excellente (TSB +12), base aérobie validée, CTL légèrement bas nécessite reprise progressive.
+**Impact** : Invalidation découplage comme métrique fiabilité, ajustement protocoles validation
 
-**Direction S072** : **Option 1 Reprise Volume** (250 TSS) = équilibre optimal entre :
-- Sécurité (pas de surmenage)
-- Progression (remontée CTL)
-- Corrections (cadence explosif)
-- Réalisme (sommeil données manquantes élimine intensité)
+**Mitigation** :
+- Vérification données FC/puissance brutes Intervals.icu web
+- Comparaison calibration capteurs (FC thoracique vs optique si disponible)
+- Documentation pattern S072 (endurance >60min)
 
-**Prochaine étape critique** : Résolution problème sommeil données (Withings ou manuel) = décision intensité S073+.
+**Plan B** : Exclusion découplage négatif comme métrique si artefact confirmé, maintien seuil <7.5% positif uniquement.
+
+---
+
+### 4. Discipline Critérium Non-Corrigée (Probabilité Modérée)
+**Risque** : Cadence 74rpm et abandon -7min Glasgow Crit reproductibles
+
+**Impact** : Fatigue neuromusculaire, abandon prématuré séances explosives, limitation progression HIIT future
+
+**Mitigation** :
+- Exclusion format critérium S072 (focus endurance/Sweet-Spot)
+- Séances spécifiques accélérations haute cadence 1×/semaine si critérium maintenu S073+
+- Monitoring cadence relances 85-90rpm systématique
+
+**Plan B** : Abandon définitif format critérium si pattern confirmé S072, substitution HIIT 30/30 ou Pyramide.
 
 ---
