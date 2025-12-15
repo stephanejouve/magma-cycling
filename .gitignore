@@ -66,3 +66,5 @@ withings_integration/data/
 withings_integration/logs/
 withings_integration/withings_credentials.json
 withings_integration/.env.withings
+cyclisme_training_logs.backup.*/
+patches/
