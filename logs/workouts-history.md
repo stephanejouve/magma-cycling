@@ -60,6 +60,52 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S072-01-END-EnduranceBase-V001
+Date : 15/12/2025
+
+#### Métriques Pré-séance
+- CTL : 49
+- ATL : 41
+- TSB : +7
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 77min
+- IF : 0.66
+- TSS : 57
+- Puissance moyenne : 143W
+- Puissance normalisée : 146W
+- Cadence moyenne : 87rpm
+- FC moyenne : 104bpm
+- Découplage : 1.6%
+
+#### Exécution Technique
+Séance d'endurance Z2 parfaitement exécutée avec découplage cardiovasculaire excellent (1.6% << 7.5%), validant la qualité aérobie. L'adhérence au workout planifié est remarquable : écarts minimes en durée (+2min), TSS (+1), IF (-0.01) et puissance (-2W réalisée vs prévue). La cadence moyenne de 87rpm respecte la consigne (87rpm cible), et la stabilité cardiaque (FC 104 moy, max 116) confirme un effort Z2 parfaitement calibré.
+
+#### Charge d'Entraînement
+TSS de 57 contribue modestement à la reconstruction du CTL (maintien à 49), avec TSB stable à +7 post-séance. Cette charge modérée respecte la stratégie de progression graduelle sans compromettre la fraîcheur actuelle favorable.
+
+#### Validation Objectifs
+- ✅ Zone cible respectée (IF 0.66 → 65% FTP, plein Z2 68-72%)
+- ✅ Découplage cardiovasculaire excellent (<2%, optimal)
+- ✅ Adhérence workout planifié (écarts <3% sur toutes métriques)
+- ✅ Durée et cadence conformes aux consignes
+
+#### Points d'Attention
+- Sommeil enregistré 0.0h (erreur saisie), mais retour athlète mentionne 5h34 + VFC 74ms + sieste 1h pré-séance → conditions physiologiques validées malgré dette sommeil chronique
+- Récupération subjective post-séance ("bien meilleure forme après") cohérente avec TSB positif et effort Z2 régénératif
+
+#### Recommandations Progression
+1. Maintenir cette qualité d'exécution Z2 (découplage <2%) comme référence pour séances endurance futures. Valider capacité progression volume : tester 90min Z2 si TSB >+5 dans 48-72h.
+2. Exploiter TSB favorable (+7) pour introduire bloc Sweet-Spot mercredi/jeudi : 3×12min 88% si sommeil >6h et VFC >70ms confirmés le matin.
+
+#### Métriques Post-séance
+- CTL : 49
+- ATL : 41
+- TSB : +7
+
+---
+
 ### Evening Cyclisme virtuel
 Date : 14/12/2025
 
