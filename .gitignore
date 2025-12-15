@@ -68,3 +68,9 @@ withings_integration/withings_credentials.json
 withings_integration/.env.withings
 cyclisme_training_logs.backup.*/
 patches/
+
+# Fichiers temporaires cyclisme_training_logs/
+cyclisme_training_logs/activity_raw.json
+cyclisme_training_logs/logs.txt
+cyclisme_training_logs/*.backup.*
+cyclisme_training_logs.backup.*/
