@@ -60,6 +60,53 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S072-02-CAD-CadenceExplosif-V001
+Date : 16/12/2025
+
+#### Métriques Pré-séance
+- CTL : 48
+- ATL : 40
+- TSB : +9
+- Sommeil : 5.5h
+
+#### Exécution
+- Durée : 33min
+- IF : 0.68
+- TSS : 26
+- Puissance moyenne : 134W
+- Puissance normalisée : 149W
+- Cadence moyenne : 87rpm
+- FC moyenne : 107bpm
+- Découplage : 4.1%
+
+#### Exécution Technique
+Séance cadence explosive validée avec découplage excellent (4.1%). IF 0.68 légèrement sous objectif (0.70 prévu) mais cohérent avec stratégie prudente post dette sommeil 5.5h. Cadence moyenne 87rpm vs 85rpm cible confirme bonne exécution technique malgré tentative antérieure avortée.
+
+#### Charge d'Entraînement
+TSS 26 identique à prévision maintient TSB stable à +9, zone favorable pour séances techniques sans accumulation fatigue. Impact minimal sur ATL (40→40), préservation marge progression.
+
+#### Validation Objectifs
+- ✅ Découplage <7.5% (4.1% excellent)
+- ⚠️ IF légèrement bas (-0.02) mais acceptable contexte sommeil
+- ✅ Structure explosive complétée (6 répétitions)
+
+#### Points d'Attention
+- Dette sommeil persistante 5.5h (vs cible 7h+) limite intensité
+- Tentative antérieure avortée même jour suggère fatigue neuromusculaire résiduelle
+- FC moyenne 107bpm (64% FCmax) cohérente effort modéré mais confirme limitation intensité
+
+#### Recommandations Progression
+1. Priorité sommeil >6.5h avant prochaine séance explosive pour exploitation pleine capacité
+2. Valider avec séance activation courte (20-25min) demain si TSB maintenu >+5
+3. Augmenter IF cible 0.75-0.80 prochaine cadence explosive si sommeil >7h
+
+#### Métriques Post-séance
+- CTL : 48
+- ATL : 40
+- TSB : +9
+
+---
+
 ### S072-01-END-EnduranceBase-V001
 Date : 15/12/2025
 
