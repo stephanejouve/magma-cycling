@@ -60,6 +60,54 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### Zwift - Intervals.icu: S072-02-CAD-CadenceExplosif-V001 (Tentative avortée)
+Date : 16/12/2025
+
+#### Métriques Pré-séance
+- CTL : 48
+- ATL : 40
+- TSB : +9
+- Sommeil : 5.5h
+
+#### Exécution
+- Durée : 5min
+- IF : 0.52
+- TSS : 3
+- Puissance moyenne : 117W
+- Puissance normalisée : 114W
+- Cadence moyenne : 82rpm
+- FC moyenne : 95bpm
+- Découplage : -2.6%
+
+#### Exécution Technique
+Séance abandonnée après 5min d'échauffement uniquement. IF 0.52 et puissance 117W confirment arrêt avant phase explosive prévue. Cadence 82rpm en-dessous cible échauffement (85rpm), FC 95bpm (57% FCmax) indique aucune sollicitation intense tentée.
+
+#### Charge d'Entraînement
+TSS 3 négligeable n'impacte pas métriques (CTL/ATL/TSB stables à 48/40/+9). Abandon précoce évite accumulation fatigue inappropriée contexte dette sommeil 5.5h.
+
+#### Validation Objectifs
+- ❌ Séance non complétée (abandon 5min/33min prévu)
+- ❌ Phase explosive non tentée (0 répétition/6 prévues)
+- ⚠️ Découplage -2.6% non interprétable (durée insuffisante)
+
+#### Points d'Attention
+- Abandon identique séance prévue 16/12 matin suggère facteurs récurrents (motivation, conditions matérielles, ou fatigue neuromsuculaire résiduelle)
+- Dette sommeil 5.5h confirmée comme facteur limitant capacité explosivité
+- Aucun indicateur physiologique alarmant (FC stable, pas d'élévation anormale)
+- Pattern abandon pré-intensité à surveiller : récurrence signalerait fatigue centrale vs périphérique
+
+#### Recommandations Progression
+1. Investiguer cause abandon (matériel Zwift, motivation, sensation physique précoce) avant nouvelle tentative explosive
+2. Si nouvelle tentative S072-02 aujourd'hui : validée car TSB +9 et TSS 3 sans impact
+3. Sinon, reporter S072-02 à demain avec objectif sommeil >6.5h pour optimiser chances succès neuromusculaire
+
+#### Métriques Post-séance
+- CTL : 48
+- ATL : 40
+- TSB : +9
+
+---
+
 ### S072-02-CAD-CadenceExplosif-V001
 Date : 16/12/2025
 
