@@ -60,6 +60,54 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S072-03-REC-RecuperationActive-V001
+Date : 17/12/2025
+
+#### Métriques Pré-séance
+- CTL : 47
+- ATL : 36
+- TSB : +11
+- Sommeil : 6.0h
+
+#### Exécution
+- Durée : 37min
+- IF : 0.47
+- TSS : 14
+- Puissance moyenne : 93W
+- Puissance normalisée : 103W
+- Cadence moyenne : 84rpm
+- FC moyenne : 84bpm
+- Découplage : -0.5%
+
+#### Exécution Technique
+Séance récupération écourtée (-9min vs prévu) avec intensité volontairement réduite (IF 0.47 vs 0.58 cible). Puissance 93W moyenne (42% FTP) confirme approche ultra-conservatrice Z1 plutôt que Z2 planifiée. Cadence 84rpm stable, FC 84bpm (50% FCmax) valide récupération profonde.
+
+#### Charge d'Entraînement
+TSS 14 minimal (-12 vs prévu) maintient TSB élevé à +11 sans impact ATL (36→36). Stratégie appropriée post-tentatives explosives avortées 16/12, préservation fraîcheur pour progression semaine.
+
+#### Validation Objectifs
+- ⚠️ Durée écourtée 37min vs 46min prévu (-20%)
+- ✅ Objectif récupération atteint (IF 0.47, FC 84bpm)
+- ✅ Découplage excellent -0.5% (stabilité cardiovasculaire)
+
+#### Points d'Attention
+- Écart planifié significatif suggère ajustement spontané (fatigue résiduelle ou contexte externe)
+- Sommeil 6.0h amélioration vs 5.5h 16/12 mais toujours sous cible 7h+
+- Pattern récupération ultra-conservatrice cohérent avec prudence post-échecs explosifs
+- CTL baisse 48→47 acceptable contexte récupération ciblée
+
+#### Recommandations Progression
+1. Valider capacité intensité modérée demain (S072-04-END) avec objectif IF 0.65-0.70 si sommeil >6.5h
+2. Si sommeil <6h ou sensation fatigue persistante, substituer S072-04-END par `endurance_light_35tss` (50min Z2 allégé)
+3. Prioriser sommeil >7h avant S072-05-INT-SweetSpot (19/12) pour optimiser exécution
+
+#### Métriques Post-séance
+- CTL : 47
+- ATL : 36
+- TSB : +11
+
+---
+
 ### Zwift - Intervals.icu: S072-02-CAD-CadenceExplosif-V001 (Tentative avortée)
 Date : 16/12/2025
 
