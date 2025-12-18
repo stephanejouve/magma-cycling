@@ -60,6 +60,54 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S072-04-END-EnduranceProgressive-V001
+Date : 18/12/2025
+
+#### Métriques Pré-séance
+- CTL : 48
+- ATL : 40
+- TSB : +8
+- Sommeil : 7.0h
+
+#### Exécution
+- Durée : 82min
+- IF : 0.67
+- TSS : 61
+- Puissance moyenne : 144W
+- Puissance normalisée : 147W
+- Cadence moyenne : 85rpm
+- FC moyenne : 103bpm
+- Découplage : 1.1%
+
+#### Exécution Technique
+Séance endurance parfaitement exécutée avec adhérence quasi-totale au plan (82min vs 80min prévu, IF 0.67 exact). Puissance 144W (65% FTP) stable en Z2, cadence 85rpm cible respectée. Découplage exceptionnel 1.1% valide efficacité cardiovasculaire et récupération optimale post-période conservatrice.
+
+#### Charge d'Entraînement
+TSS 61 conforme prévision (vs 60 attendu) maintient TSB stable à +8, progression contrôlée vers Sweet-Spot 19/12. Impact positif sommeil 7h01 (score 82, VFC 59ms) sur qualité exécution, contraste marqué avec séances précédentes dette sommeil.
+
+#### Validation Objectifs
+- ✅ Adhérence plan excellente (durée +2min, TSS +1)
+- ✅ Découplage 1.1% exceptionnel (<5% référence)
+- ✅ Zone endurance Z2 validée (IF 0.67, FC 103bpm stable)
+
+#### Points d'Attention
+- Sommeil 7h01 = première nuit conforme cible 7h+ depuis début S072, corrélation directe avec qualité exécution
+- FC repos 43bpm et VFC 59ms confirment récupération complète, capacités physiologiques restaurées
+- Poids 84.6kg stable, pas de dérive significative
+- TSB +8 optimal pour séance intensité Sweet-Spot 19/12
+
+#### Recommandations Progression
+1. Reproduire protocole sommeil 7h+ pour S072-05-INT Sweet-Spot (19/12), criticité validation capacité 65 TSS haute intensité
+2. Maintenir S072-06-END (20/12) comme prévu (40 TSS récupération pré-repos dimanche)
+3. Capitaliser dynamique positive : sommeil = levier principal performance validé empiriquement sur cette séance
+
+#### Métriques Post-séance
+- CTL : 48
+- ATL : 40
+- TSB : +8
+
+---
+
 ### S072-03-REC-RecuperationActive-V001
 Date : 17/12/2025
 
