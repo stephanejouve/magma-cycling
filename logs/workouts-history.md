@@ -60,6 +60,54 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S072-06-TEC-ValidationCapacite-V001
+Date : 20/12/2025
+
+#### Métriques Pré-séance
+- CTL : 46
+- ATL : 35
+- TSB : +12
+- Sommeil : 6.5h
+
+#### Exécution
+- Durée : 53min
+- IF : 0.65
+- TSS : 37
+- Puissance moyenne : 135W
+- Puissance normalisée : 142W
+- Cadence moyenne : 86rpm
+- FC moyenne : 101bpm
+- Découplage : 1.0%
+
+#### Exécution Technique
+Séance validation capacité excellemment exécutée avec adhérence totale au plan (IF 0.65 exact, NP 142W cible). Structure hybride test Z2-haut + validation neuromusculaire complétée intégralement. Découplage exceptionnel 1.0% confirme efficacité cardiovasculaire post-récupération VFC 69ms. Cadence 86rpm stable, FC 101bpm (60% FCmax) valide intensité contrôlée.
+
+#### Charge d'Entraînement
+TSS 37 conforme prévision (vs 35 attendu, +2 écart négligeable) maintient TSB optimal à +12, consolidation fraîcheur pré-repos dimanche. Impact sommeil 6.5h positif mais légèrement sous cible 7h+, qualité exécution préservée grâce VFC exceptionnelle 69ms.
+
+#### Validation Objectifs
+- ✅ Test Z2-haut validé (3×5min 70-75% FTP complétés)
+- ✅ Validation neuromusculaire réussie (4×20s 95% FTP 100rpm)
+- ✅ Découplage 1.0% exceptionnel (référence <5%, réalisé <2%)
+
+#### Points d'Attention
+- VFC 69ms samedi = record S072, compensation remarquable vs chute 33ms vendredi (récupération +109%)
+- Sommeil 6.5h amélioration vs moyennes S072 mais vigilance maintien 7h+ pour S073
+- Poids 85.7kg légère hausse (+1.1kg vs 18/12), surveillance évolution S073
+- Validation neuromusculaire 4×20s compense partiellement abandon S072-02 cadence explosive
+
+#### Recommandations Progression
+1. Repos obligatoire dimanche 21/12 respecté, consolidation récupération post-fluctuations VFC semaine
+2. S073 : Intégrer Sweet-Spot 65 TSS mardi/mercredi avec prérequis sommeil >7h strict (leçon S072-04/S072-05)
+3. Surveillance VFC quotidienne renforcée S073, seuil alerte maintenu <40ms (référence chute vendredi 33ms)
+
+#### Métriques Post-séance
+- CTL : 46
+- ATL : 35
+- TSB : +12
+
+---
+
 ### S072-04-END-EnduranceProgressive-V001
 Date : 18/12/2025
 
