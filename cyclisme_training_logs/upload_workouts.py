@@ -168,12 +168,19 @@ class WorkoutUploader:
     def upload_workout(self, workout: Dict) -> bool:
         """Uploader un workout sur Intervals.icu"""
         try:
+            # Déterminer l'heure de début selon le jour de la semaine
+            workout_date = datetime.strptime(workout['date'], '%Y-%m-%d')
+            day_of_week = workout_date.weekday()  # 0=Lundi, 5=Samedi, 6=Dimanche
+
+            # Samedi (5) → 09:00, autres jours → 17:00
+            start_time = "09:00:00" if day_of_week == 5 else "17:00:00"
+
             event_data = {
                 "category": "WORKOUT",
                 "type": "VirtualRide",
                 "name": workout['name'],
                 "description": workout['description'],
-                "start_date_local": f"{workout['date']}T08:00:00"
+                "start_date_local": f"{workout['date']}T{start_time}"
             }
             
             response = self.api.create_event(event_data)
