@@ -219,6 +219,117 @@ class WeeklyPlanner:
 
 ---
 
+## 🚨 RÉPÉTITIONS - RÈGLE CRITIQUE (À LIRE EN PREMIER)
+
+**⚠️ ERREUR FRÉQUENTE À ÉVITER ABSOLUMENT** : Le placement du multiplicateur de répétition.
+
+### ✅ FORMAT CORRECT (UNIQUE FORMAT ACCEPTÉ)
+
+Le multiplicateur (2x, 3x, 4x, 5x...) doit TOUJOURS être placé **sur la ligne du titre de section**, jamais ailleurs.
+
+**Structure obligatoire** :
+```
+[Nom section] [multiplicateur]x
+- [intervalle 1]
+- [intervalle 2]
+- [intervalle N]
+```
+
+### 📋 Exemples Corrects Multiples
+
+**Exemple 1 - Sweet Spot 3x10min** :
+```
+Main set 3x
+- 10m 90% 92rpm
+- 4m 62% 85rpm
+```
+Résultat : 3 répétitions du bloc complet (10m effort + 4m récup) = 42min total
+
+**Exemple 2 - VO2 max 5x3min** :
+```
+Main set 5x
+- 3m 110% 95rpm
+- 3m 55% 85rpm
+```
+Résultat : 5 répétitions du bloc = 30min total
+
+**Exemple 3 - Seuil 4x8min** :
+```
+Main set 4x
+- 8m 98% 90rpm
+- 4m 60% 85rpm
+```
+Résultat : 4 répétitions du bloc = 48min total
+
+**Exemple 4 - Pyramide 2x (structure complexe)** :
+```
+Main set 2x
+- 3m 95% 92rpm
+- 2m 65% 85rpm
+- 5m 98% 90rpm
+- 3m 65% 85rpm
+- 3m 95% 92rpm
+- 2m 65% 85rpm
+```
+Résultat : 2 répétitions de toute la pyramide = 36min total
+
+### ❌ FORMATS INCORRECTS (NE JAMAIS FAIRE)
+
+**ERREUR #1 - Multiplicateur dans la ligne d'intervalle** :
+```
+Main set
+- 3x 10m 90%      ← ❌ FAUX - Intervals.icu ne comprendra pas
+- 4m 62%
+```
+**Ce qui se passera** : Intervals.icu créera 1 seul intervalle bizarre ou erreur de parsing.
+
+**ERREUR #2 - Section non standard avec multiplicateur** :
+```
+Test capacité 3x   ← ❌ FAUX - "Test capacité" n'est pas une section Intervals.icu
+- 5m 70%
+```
+**Correction** : Utiliser `Main set 3x` ou `Intervals 3x`
+
+**ERREUR #3 - Multiplicateur seul sur une ligne** :
+```
+Main set
+3x                 ← ❌ FAUX - Le 3x doit être sur la même ligne que "Main set"
+- 10m 90%
+- 4m 62%
+```
+
+**ERREUR #4 - Format "répéter X fois"** :
+```
+Main set (répéter 3 fois)  ← ❌ FAUX - Intervals.icu ne comprend que "3x"
+- 10m 90%
+```
+
+### 📊 Tableau Comparatif
+
+| ❌ INCORRECT | ✅ CORRECT |
+|-------------|-----------|
+| `Main set`<br>`- 3x 10m 90%` | `Main set 3x`<br>`- 10m 90%` |
+| `Test 4x`<br>`- 5m 95%` | `Main set 4x`<br>`- 5m 95%` |
+| `Main set`<br>`3x`<br>`- 8m 88%` | `Main set 3x`<br>`- 8m 88%` |
+| `Intervals (x3)`<br>`- 5m 110%` | `Intervals 3x`<br>`- 5m 110%` |
+
+### 🎯 Sections Valides pour Répétitions
+
+Seules ces sections sont reconnues par Intervals.icu :
+- `Main set 3x` ✅
+- `Intervals 4x` ✅
+- `Work 5x` ✅
+- `Efforts 2x` ✅
+
+Sections NON valides :
+- `Test capacité 3x` ❌
+- `Bloc principal 4x` ❌
+- `Série 5x` ❌
+
+**Utiliser toujours "Main set" en cas de doute.**
+
+---
+
 ## Guide Intervals.icu Workout Builder
 
 **Documentation officielle** : Le fichier `David_-_Intervals_icu_-_Workout_builder_-_Guide_-_.pdf` dans le projet contient la syntaxe complète.
@@ -229,28 +340,7 @@ class WeeklyPlanner:
 - Cadence : `85rpm` ou `80-90rpm` (plage)
 - Ramp : `ramp 50-65%` (progression)
 
-**RÈGLE CRITIQUE - Blocs répétés** :
-Le marqueur de répétition (ex: `3x`) doit être sur la ligne du titre de section, PAS dans les lignes d'intervalles.
-
-**✅ FORMAT CORRECT** :
-```
-Main set 3x
-- 10m 90% 92rpm
-- 4m 62% 85rpm
-```
-Ceci créera 3 répétitions du bloc (10m @ 90% + 4m @ 62%).
-
-**❌ FORMATS INCORRECTS** :
-```
-Main set
-- 3x 10m 90%      ← ERREUR: 3x ne doit PAS être dans la ligne d'intervalle
-- 4m 62%
-
-Test capacité 3x  ← ERREUR: "Test capacité" n'est pas une section valide
-- 5m 70%           Utiliser "Main set 3x" à la place
-```
-
-**Exemple complet valide** :
+**Exemple complet valide avec répétitions** :
 ```
 Warmup
 - 12m ramp 50-65% 85rpm
@@ -423,7 +513,9 @@ Cooldown
 - Durée : `10m`, `30s`, `1h`
 - Intensité : `90%` (% FTP) ou `100-140w` (watts absolus)
 - Cadence : `85rpm` ou `80-90rpm` (plage)
-- Répétitions : Préfixer bloc avec `3x` si répétitions
+- **Répétitions** : Mettre le multiplicateur sur la ligne du titre de section
+  - ✅ Correct : `Main set 3x`
+  - ❌ Incorrect : `- 3x 10m 90%`
 
 ---
 
@@ -486,9 +578,22 @@ Génère les 7 entraînements pour {self.week_number} ({date_start_str} → {dat
 - ✅ Délimiteurs `=== WORKOUT ... ===` et `=== FIN WORKOUT ===`
 - ✅ Syntaxe : `10m 90% 92rpm` (espace entre valeurs)
 - ✅ Ramp : `ramp 50-65%` (pas `Ramp`)
-- ✅ Répétitions : `Main set 3x` avant le bloc
 - ❌ AUCUN `**bold**`, `###`, ou autre markdown
 - ❌ AUCUNE explication après les workouts
+
+**🚨 RÉPÉTITIONS - RAPPEL FINAL** :
+- ✅ CORRECT : `Main set 3x` sur la ligne du titre
+- ✅ CORRECT : `Main set 5x` sur la ligne du titre
+- ❌ FAUX : `- 3x 10m 90%` dans l'intervalle
+- ❌ FAUX : `Main set` puis `3x` sur ligne suivante
+- ❌ FAUX : `Test capacité 3x` (section invalide)
+
+**Exemple répétitions valide** :
+```
+Main set 4x
+- 8m 95% 90rpm
+- 4m 62% 85rpm
+```
 
 Le but est que je puisse **copier-coller directement** chaque bloc dans Intervals.icu Workout Builder sans modification.
 """
