@@ -38,8 +38,8 @@ logger = logging.getLogger(__name__)
 # CONSTANTES
 # ============================================================================
 
-VALID_STATUSES = ['completed', 'cancelled', 'rest_day', 'replaced', 'skipped']
-VALID_TYPES = ['END', 'INT', 'REC', 'CAD', 'TEC', 'FOR']
+VALID_STATUSES = ['completed', 'cancelled', 'rest_day', 'replaced', 'skipped', 'modified']
+VALID_TYPES = ['END', 'INT', 'FTP', 'SPR', 'CLM', 'REC', 'FOR', 'CAD', 'TEC', 'MIX', 'PDC', 'TST']
 
 
 # ============================================================================
@@ -562,11 +562,10 @@ def reconcile_planned_vs_actual(
                     f"mais aucune activité trouvée le {session_date} "
                     f"→ Reclassée comme SKIPPED"
                 )
-                # Marquer comme sautée avec contexte
-                session_skipped = session.copy()
-                session_skipped['status'] = 'skipped'
-                session_skipped['skip_reason'] = 'Planifiée completed mais activité introuvable'
-                result['skipped'].append(session_skipped)
+                # Marquer comme sautée avec contexte (modification directe pour persistence)
+                session['status'] = 'skipped'
+                session['skip_reason'] = 'Planifiée completed mais activité introuvable'
+                result['skipped'].append(session)
 
     # Activités restantes = non planifiées
     for date, activities in activities_by_date.items():

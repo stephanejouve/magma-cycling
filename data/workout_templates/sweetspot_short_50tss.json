@@ -1,0 +1,11 @@
+{
+  "id": "sweetspot_short_50tss",
+  "name": "Sweet-Spot Court 50 TSS",
+  "type": "INT",
+  "tss": 50,
+  "duration_minutes": 50,
+  "description": "Sweet-Spot court 2x10min 88% FTP",
+  "workout_code_pattern": "{week_id}-{day_num:02d}-INT-SweetSpotCourt-V001",
+  "intervals_icu_format": "Warmup\n- 15m ramp 50-75% 85-90rpm\n\nMain set\n- 10m 88% 90rpm\n- 3m 65% 85rpm\n- 10m 88% 90rpm\n\nCooldown\n- 12m ramp 75-50% 85rpm",
+  "use_cases": ["lighten_from_sweetspot", "lighten_from_vo2", "reduced_intensity"]
+}

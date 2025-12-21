@@ -39,11 +39,12 @@ from cyclisme_training_logs.planned_sessions_checker import PlannedSessionsCheck
 class WorkflowCoach:
     """Orchestrateur du workflow d'analyse de séance"""
 
-    def __init__(self, skip_feedback=False, skip_git=False, activity_id=None, week_id=None):
+    def __init__(self, skip_feedback=False, skip_git=False, activity_id=None, week_id=None, servo_mode=False):
         self.skip_feedback = skip_feedback
         self.skip_git = skip_git
         self.activity_id = activity_id
         self.week_id = week_id
+        self.servo_mode = servo_mode
         self.project_root = Path.cwd()
         self.scripts_dir = self.project_root / "cyclisme_training_logs"
         self.activity_name = None
@@ -55,6 +56,12 @@ class WorkflowCoach:
         self.unanalyzed_activities = None
         # Séances planifiées sautées
         self.skipped_sessions = None
+        # Servo control attributes
+        self.workout_templates = {}
+
+        # Load workout templates if servo mode enabled
+        if self.servo_mode:
+            self.workout_templates = self.load_workout_templates()
 
     def load_credentials(self):
         """Charger credentials Intervals.icu de manière robuste"""
@@ -80,6 +87,636 @@ class WorkflowCoach:
             return athlete_id, api_key
 
         return None, None
+
+    def load_workout_templates(self):
+        """Charge catalogue templates au démarrage
+
+        Returns:
+            dict: Templates indexés par ID (ex: {"recovery_active_30tss": {...}})
+        """
+        templates = {}
+        templates_dir = self.project_root / "data" / "workout_templates"
+
+        if not templates_dir.exists():
+            print("⚠️  Dossier workout_templates absent")
+            print(f"   Chemin: {templates_dir}")
+            return templates
+
+        try:
+            for template_file in templates_dir.glob("*.json"):
+                with open(template_file, 'r', encoding='utf-8') as f:
+                    template = json.load(f)
+                    templates[template['id']] = template
+
+            if templates:
+                print(f"✅ {len(templates)} templates chargés")
+            else:
+                print("⚠️  Aucun template trouvé dans workout_templates/")
+
+        except Exception as e:
+            print(f"⚠️  Erreur chargement templates : {e}")
+
+        return templates
+
+    def load_remaining_sessions(self, week_id: str) -> list:
+        """Charge séances planifiées futures de la semaine
+
+        Args:
+            week_id: ID semaine (ex: "S072")
+
+        Returns:
+            list: Séances futures (date >= aujourd'hui)
+        """
+        planning_file = self.project_root / "data" / "week_planning" / f"week_planning_{week_id}.json"
+
+        if not planning_file.exists():
+            print(f"⚠️  Planning {week_id} non trouvé: {planning_file}")
+            return []
+
+        try:
+            with open(planning_file, 'r', encoding='utf-8') as f:
+                planning = json.load(f)
+
+            today = datetime.now().date()
+
+            remaining = []
+            for session in planning.get('planned_sessions', []):
+                session_date = datetime.strptime(session['date'], '%Y-%m-%d').date()
+                if session_date >= today:
+                    remaining.append(session)
+
+            return remaining
+
+        except Exception as e:
+            print(f"⚠️  Erreur lecture planning : {e}")
+            return []
+
+    def format_remaining_sessions_compact(self, remaining_sessions: list) -> str:
+        """Format compact planning pour prompt AI (cible ~150 tokens)
+
+        Args:
+            remaining_sessions: Liste de sessions futures
+
+        Returns:
+            str: Planning formaté pour inclusion dans prompt
+        """
+        if not remaining_sessions:
+            return ""
+
+        lines = [f"\n## PLANNING RESTANT ({len(remaining_sessions)} séances)\n"]
+
+        for session in remaining_sessions:
+            date = session['date']
+            session_id = session['session_id']
+            name = session['name']
+            workout_type = session['type']
+            tss = session.get('tss_planned', 0)
+
+            # Construct workout code
+            workout_code = f"{session_id}-{workout_type}-{name}-{session.get('version', 'V001')}"
+
+            if session.get('status') == 'rest_day':
+                lines.append(f"{date}: REPOS")
+            else:
+                lines.append(f"{date}: {workout_code} ({tss} TSS)")
+
+        return "\n".join(lines)
+
+    def parse_ai_modifications(self, ai_response: str) -> list:
+        """Parse modifications planning depuis réponse AI
+
+        Args:
+            ai_response: Texte réponse AI complet
+
+        Returns:
+            list: Modifications à appliquer (vide si aucune)
+        """
+        import re
+
+        # Chercher bloc JSON modifications
+        json_match = re.search(
+            r'```json\s*\n(\{.*?"modifications".*?\})\s*\n```',
+            ai_response,
+            re.DOTALL
+        )
+
+        if not json_match:
+            return []  # Pas de modification = comportement normal
+
+        try:
+            data = json.loads(json_match.group(1))
+            return data.get('modifications', [])
+        except json.JSONDecodeError as e:
+            print(f"⚠️  JSON modifications invalide : {e}")
+            return []
+
+    def _extract_day_number(self, date_str: str, week_id: str) -> int:
+        """Extrait numéro jour (1-7) depuis date
+
+        Args:
+            date_str: "2025-12-18"
+            week_id: "S072"
+
+        Returns:
+            int: Numéro jour 1-7
+        """
+        planning_file = self.project_root / "data" / "week_planning" / f"week_planning_{week_id}.json"
+
+        try:
+            with open(planning_file, 'r', encoding='utf-8') as f:
+                planning = json.load(f)
+
+            start_date = datetime.strptime(planning['start_date'], '%Y-%m-%d').date()
+            target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+
+            delta = (target_date - start_date).days
+            return delta + 1  # Jour 1-7
+
+        except Exception as e:
+            print(f"⚠️  Erreur extraction day_number : {e}")
+            return 1  # Fallback
+
+    def _get_workout_id_intervals(self, date: str):
+        """Récupère ID workout Intervals.icu pour une date
+
+        Args:
+            date: Date YYYY-MM-DD
+
+        Returns:
+            str: ID workout ou None
+        """
+        try:
+            # Import IntervalsAPI from prepare_analysis
+            from cyclisme_training_logs.prepare_analysis import IntervalsAPI
+
+            # Load credentials
+            athlete_id, api_key = self.load_credentials()
+            if not athlete_id or not api_key:
+                print("⚠️  Credentials non disponibles")
+                return None
+
+            # Create API client
+            api = IntervalsAPI(athlete_id=athlete_id, api_key=api_key)
+
+            # Get events for the date
+            events = api.get_events(oldest=date, newest=date)
+
+            # Filter for WORKOUT category
+            for event in events:
+                if event.get('category') == 'WORKOUT':
+                    return event.get('id')
+
+            return None
+
+        except Exception as e:
+            print(f"⚠️  Erreur get_workout_id : {e}")
+            return None
+
+    def _delete_workout_intervals(self, workout_id: str) -> bool:
+        """Supprime workout Intervals.icu
+
+        Args:
+            workout_id: ID workout à supprimer
+
+        Returns:
+            bool: True si succès
+        """
+        try:
+            # Import IntervalsAPI
+            from cyclisme_training_logs.prepare_analysis import IntervalsAPI
+
+            # Load credentials
+            athlete_id, api_key = self.load_credentials()
+            if not athlete_id or not api_key:
+                return False
+
+            # Create API client
+            api = IntervalsAPI(athlete_id=athlete_id, api_key=api_key)
+
+            # DELETE request
+            url = f"{api.BASE_URL}/athlete/{athlete_id}/events/{workout_id}"
+            response = api.session.delete(url)
+            response.raise_for_status()
+
+            return True
+
+        except Exception as e:
+            print(f"⚠️  Erreur suppression workout : {e}")
+            return False
+
+    def _upload_workout_intervals(self, date: str, code: str, structure: str) -> bool:
+        """Upload nouveau workout Intervals.icu
+
+        Args:
+            date: Date YYYY-MM-DD
+            code: Workout code (ex: S072-03-REC-V001)
+            structure: Format texte Intervals.icu
+
+        Returns:
+            bool: True si succès
+        """
+        try:
+            # Import IntervalsAPI
+            from cyclisme_training_logs.prepare_analysis import IntervalsAPI
+
+            # Load credentials
+            athlete_id, api_key = self.load_credentials()
+            if not athlete_id or not api_key:
+                return False
+
+            # Create API client
+            api = IntervalsAPI(athlete_id=athlete_id, api_key=api_key)
+
+            # Prepare event data
+            event = {
+                "category": "WORKOUT",
+                "start_date_local": f"{date}T06:00:00",
+                "name": code,
+                "description": structure  # Format Intervals.icu (corrigé P0 #6)
+            }
+
+            # Create event using existing method
+            result = api.create_event(event)
+
+            return result is not None
+
+        except Exception as e:
+            print(f"⚠️  Erreur upload workout : {e}")
+            return False
+
+    def _update_planning_json(self, week_id: str, date: str, new_workout: dict, old_workout: str, reason: str) -> bool:
+        """Met à jour week_planning_SXXX.json avec historique
+
+        Args:
+            week_id: ID semaine
+            date: Date modification
+            new_workout: Dict nouveau workout (code, type, tss, description)
+            old_workout: Code workout remplacé
+            reason: Raison modification
+
+        Returns:
+            bool: True si succès
+        """
+        planning_file = self.project_root / "data" / "week_planning" / f"week_planning_{week_id}.json"
+
+        try:
+            # Load planning
+            with open(planning_file, 'r', encoding='utf-8') as f:
+                planning = json.load(f)
+
+            # Find session to modify
+            for i, session in enumerate(planning['planned_sessions']):
+                if session['date'] == date:
+                    # Save to history
+                    timestamp = datetime.now().isoformat()
+
+                    history_entry = {
+                        "timestamp": timestamp,
+                        "action": "modified_by_ai_coach",
+                        "previous_workout": old_workout,
+                        "previous_tss": session['tss_planned'],
+                        "new_workout": new_workout['code'],
+                        "new_tss": new_workout['tss'],
+                        "reason": reason
+                    }
+
+                    # Update session
+                    planning['planned_sessions'][i].update({
+                        "session_id": new_workout.get('session_id', session['session_id']),
+                        "name": new_workout.get('name', session['name']),
+                        "type": new_workout['type'],
+                        "tss_planned": new_workout['tss'],
+                        "description": new_workout['description'],
+                        "status": "modified"
+                    })
+
+                    if 'history' not in planning['planned_sessions'][i]:
+                        planning['planned_sessions'][i]['history'] = []
+                    planning['planned_sessions'][i]['history'].append(history_entry)
+
+                    break
+
+            # Update metadata
+            planning['last_updated'] = datetime.now().isoformat()
+            planning['version'] = planning.get('version', 1) + 1
+
+            # Save
+            with open(planning_file, 'w', encoding='utf-8') as f:
+                json.dump(planning, f, indent=2, ensure_ascii=False)
+
+            return True
+
+        except Exception as e:
+            print(f"⚠️  Erreur mise à jour planning : {e}")
+            return False
+
+    def _apply_lighten(self, mod: dict, week_id: str):
+        """Applique allégement séance via template
+
+        Args:
+            mod: Modification dict avec template_id
+            week_id: ID semaine
+        """
+        template_id = mod['template_id']
+
+        if template_id not in self.workout_templates:
+            print(f"❌ Template inconnu: {template_id}")
+            return
+
+        template = self.workout_templates[template_id]
+
+        print(f"\n🔄 Allégement via '{template['name']}'")
+        print(f"   Date : {mod['target_date']}")
+        print(f"   {template['tss']} TSS, {template['duration_minutes']}min")
+        print(f"   Raison : {mod['reason']}")
+
+        # Confirmation utilisateur (CRITIQUE)
+        confirm = input("   Appliquer ? (o/n) : ").strip().lower()
+        if confirm != 'o':
+            print("   ❌ Ignoré")
+            return
+
+        # 1. Générer workout code depuis template
+        day_num = self._extract_day_number(mod['target_date'], week_id)
+        workout_code = template['workout_code_pattern'].format(
+            week_id=week_id,
+            day_num=day_num
+        )
+
+        # 2. Supprimer ancien workout Intervals.icu
+        old_workout_id = self._get_workout_id_intervals(mod['target_date'])
+        if old_workout_id:
+            if self._delete_workout_intervals(old_workout_id):
+                print("   🗑️  Ancien workout supprimé")
+            else:
+                print("   ⚠️  Échec suppression ancien workout")
+
+        # 3. Upload nouveau workout
+        if self._upload_workout_intervals(
+            date=mod['target_date'],
+            code=workout_code,
+            structure=template['intervals_icu_format']
+        ):
+            print("   ⬆️  Nouveau workout uploadé")
+        else:
+            print("   ⚠️  Échec upload nouveau workout")
+            return
+
+        # 4. Mettre à jour planning JSON
+        if self._update_planning_json(
+            week_id=week_id,
+            date=mod['target_date'],
+            new_workout={
+                'code': workout_code,
+                'type': template['type'],
+                'tss': template['tss'],
+                'description': template['description']
+            },
+            old_workout=mod['current_workout'],
+            reason=mod['reason']
+        ):
+            print("   📝 Planning JSON mis à jour")
+            print("   ✅ Modification appliquée")
+        else:
+            print("   ⚠️  Échec mise à jour planning JSON")
+
+    def apply_planning_modifications(self, modifications: list, week_id: str):
+        """Applique modifications planning
+
+        Args:
+            modifications: Liste modifications AI
+            week_id: ID semaine
+        """
+        if not modifications:
+            print("\n✅ Planning maintenu tel quel")
+            return
+
+        print(f"\n📋 {len(modifications)} modification(s) détectée(s)")
+
+        for mod in modifications:
+            action = mod.get('action', 'unknown')
+
+            if action == 'lighten':
+                self._apply_lighten(mod, week_id)
+            elif action == 'cancel':
+                # TODO: Implémenter cancel si nécessaire
+                print(f"⚠️  Action 'cancel' non implémentée: {mod}")
+            elif action == 'reschedule':
+                # TODO: Implémenter reschedule si nécessaire
+                print(f"⚠️  Action 'reschedule' non implémentée: {mod}")
+            else:
+                print(f"⚠️  Action inconnue: {action}")
+
+    def reconcile_week(self, week_id: str):
+        """Mode réconciliation batch pour séances sautées/annulées
+
+        Workflow:
+        1. Charge planning JSON local
+        2. Récupère activités réalisées depuis API
+        3. Appelle reconcile_planned_vs_actual()
+        4. Affiche séances à réconcilier
+        5. Prompt utilisateur pour chaque séance
+        6. Met à jour JSON avec historique
+        7. Sauvegarde planning
+
+        Args:
+            week_id: ID semaine (ex: S070)
+        """
+        self.clear_screen()
+        self.print_header(
+            "🤖 WORKFLOW COACH AI - Réconciliation Batch",
+            f"Semaine {week_id}"
+        )
+
+        # 0. Initialiser API
+        from cyclisme_training_logs.prepare_analysis import IntervalsAPI
+
+        athlete_id, api_key = self.load_credentials()
+        if not athlete_id or not api_key:
+            print("❌ Credentials Intervals.icu non trouvées")
+            print("   Vérifier ~/.intervals_config.json ou variables d'environnement")
+            return
+
+        api = IntervalsAPI(athlete_id=athlete_id, api_key=api_key)
+
+        # 1. Charger planning JSON local
+        planning_dir = self.project_root / "data" / "week_planning"
+        try:
+            planning = load_week_planning(week_id, planning_dir)
+            print(f"✅ Planning chargé: {week_id}")
+            print(f"   Période: {planning['start_date']} → {planning['end_date']}")
+            print(f"   Sessions: {len(planning['planned_sessions'])}")
+        except FileNotFoundError:
+            print(f"❌ Fichier planning non trouvé: week_planning_{week_id}.json")
+            print(f"   Vérifier: {planning_dir}")
+            return
+        except Exception as e:
+            print(f"❌ Erreur chargement planning: {e}")
+            return
+
+        # 2. Récupérer activités réalisées depuis API
+        print(f"\n🔍 Récupération activités depuis Intervals.icu...")
+        try:
+            activities = api.get_activities(
+                oldest=planning['start_date'],
+                newest=planning['end_date']
+            )
+            print(f"✅ {len(activities)} activité(s) trouvée(s)")
+        except Exception as e:
+            print(f"❌ Erreur récupération activités: {e}")
+            return
+
+        # 3. Réconcilier planifié vs réalisé
+        print(f"\n⚙️  Réconciliation en cours...")
+        try:
+            reconciliation = reconcile_planned_vs_actual(planning, activities)
+        except Exception as e:
+            print(f"❌ Erreur réconciliation: {e}")
+            import traceback
+            traceback.print_exc()
+            return
+
+        # 4. Afficher résumé réconciliation
+        print(f"\n{'=' * 70}")
+        print(f"📊 RÉSUMÉ RÉCONCILIATION - {week_id}")
+        print(f"{'=' * 70}")
+        print(f"✅ Complétées       : {len(reconciliation['matched'])}")
+        print(f"⏭️  Sautées         : {len(reconciliation['skipped'])}")
+        print(f"❌ Annulées        : {len(reconciliation['cancelled'])}")
+        print(f"💤 Repos planifiés : {len(reconciliation['rest_days'])}")
+        print(f"{'=' * 70}\n")
+
+        # Compteurs pour rapport final
+        updated_count = 0
+        skipped_count = 0
+
+        # 5. Traiter séances sautées
+        if reconciliation['skipped']:
+            print(f"\n⏭️  SÉANCES SAUTÉES À TRAITER ({len(reconciliation['skipped'])})")
+            print("=" * 70)
+
+            for session in reconciliation['skipped']:
+                print(f"\n📌 Séance: {session['session_id']}")
+                print(f"   Date: {session['date']}")
+                print(f"   Nom: {session.get('name', 'N/A')}")
+                print(f"   Type: {session['type']}")
+                print(f"   TSS planifié: {session.get('tss_planned', 0)}")
+
+                # Vérifier si déjà marquée comme sautée
+                if session.get('status') == 'skipped':
+                    print(f"   ℹ️  Déjà marquée comme sautée")
+                    skipped_count += 1
+                    continue
+
+                # Prompt utilisateur
+                print(f"\n💡 Actions possibles:")
+                print(f"   [1] Marquer comme sautée (oubli)")
+                print(f"   [2] Marquer comme annulée (raison manuelle)")
+                print(f"   [3] Ignorer (garder status actuel)")
+
+                choice = input(f"\n   Choix (1-3): ").strip()
+
+                if choice == '1':
+                    reason = input(f"   Raison (optionnel): ").strip()
+                    if not reason:
+                        reason = "Séance sautée - réconciliation batch"
+
+                    # Mettre à jour la session
+                    session['status'] = 'skipped'
+                    if 'history' not in session:
+                        session['history'] = []
+                    session['history'].append({
+                        'timestamp': datetime.now().strftime('%Y-%m-%dT%H:%M:%S'),
+                        'action': 'reconciled_skipped',
+                        'reason': reason
+                    })
+
+                    # Supprimer le workout de Intervals.icu si présent (évite boucle infinie)
+                    workout_id = self._get_workout_id_intervals(session['date'])
+                    if workout_id:
+                        print(f"   🗑️  Suppression workout Intervals.icu (ID: {workout_id})...")
+                        if self._delete_workout_intervals(workout_id):
+                            print(f"   ✅ Workout supprimé de l'API")
+                        else:
+                            print(f"   ⚠️  Échec suppression workout API")
+
+                    updated_count += 1
+                    print(f"   ✅ Marquée comme sautée")
+
+                elif choice == '2':
+                    reason = input(f"   Raison annulation: ").strip()
+                    if not reason:
+                        reason = "Séance annulée - réconciliation batch"
+
+                    # Mettre à jour la session
+                    session['status'] = 'cancelled'
+                    session['cancellation_reason'] = reason
+                    if 'history' not in session:
+                        session['history'] = []
+                    session['history'].append({
+                        'timestamp': datetime.now().strftime('%Y-%m-%dT%H:%M:%S'),
+                        'action': 'reconciled_cancelled',
+                        'reason': reason
+                    })
+                    updated_count += 1
+                    print(f"   ✅ Marquée comme annulée")
+
+                else:
+                    print(f"   ⏭️  Ignorée")
+
+        # 6. Traiter séances annulées (déjà marquées comme cancelled)
+        if reconciliation['cancelled']:
+            print(f"\n\n❌ SÉANCES ANNULÉES ({len(reconciliation['cancelled'])})")
+            print("=" * 70)
+
+            for session in reconciliation['cancelled']:
+                print(f"\n📌 Séance: {session['session_id']}")
+                print(f"   Date: {session['date']}")
+                print(f"   Nom: {session.get('name', 'N/A')}")
+                print(f"   Raison: {session.get('cancellation_reason', 'Non spécifiée')}")
+                print(f"   ℹ️  Déjà marquée comme annulée")
+
+        # 7. Afficher repos planifiés (informatif)
+        if reconciliation['rest_days']:
+            print(f"\n\n💤 REPOS PLANIFIÉS ({len(reconciliation['rest_days'])})")
+            print("=" * 70)
+
+            for session in reconciliation['rest_days']:
+                print(f"   • {session['date']}: {session.get('name', 'Repos')}")
+
+        # 8. Sauvegarder planning mis à jour
+        if updated_count > 0:
+            print(f"\n\n💾 Sauvegarde planning mis à jour...")
+
+            # Incrémenter version
+            planning['version'] = planning.get('version', 1) + 1
+            planning['last_updated'] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+
+            # Sauvegarder
+            planning_file = planning_dir / f"week_planning_{week_id}.json"
+            try:
+                with open(planning_file, 'w', encoding='utf-8') as f:
+                    json.dump(planning, f, indent=2, ensure_ascii=False)
+                print(f"✅ Planning sauvegardé: {planning_file.name}")
+                print(f"   Version: {planning['version']}")
+            except Exception as e:
+                print(f"❌ Erreur sauvegarde: {e}")
+                return
+
+        # 9. Rapport final
+        print(f"\n{'=' * 70}")
+        print(f"✅ RÉCONCILIATION {week_id} TERMINÉE")
+        print(f"{'=' * 70}")
+        print(f"📝 Sessions mises à jour : {updated_count}")
+        print(f"⏭️  Déjà marquées sautées : {skipped_count}")
+        print(f"❌ Déjà annulées         : {len(reconciliation['cancelled'])}")
+        print(f"💤 Repos planifiés       : {len(reconciliation['rest_days'])}")
+        print(f"{'=' * 70}\n")
+
+        if updated_count > 0:
+            print(f"💡 Prochaine étape: Committer les modifications")
+            print(f"   git add {planning_file}")
+            print(f"   git commit -m 'fix: Réconciliation {week_id}'")
 
     def clear_screen(self):
         """Nettoyer l'écran"""
@@ -241,7 +878,7 @@ class WorkflowCoach:
 
                     if validate_week_planning(self.planning):
                         # Réconciliation
-                        from prepare_analysis import IntervalsAPI
+                        from cyclisme_training_logs.prepare_analysis import IntervalsAPI
                         api = IntervalsAPI(athlete_id=athlete_id, api_key=api_key)
 
                         planning_activities = api.get_activities(
@@ -417,7 +1054,7 @@ class WorkflowCoach:
 
 # Lancer le script de collecte AVEC contexte
         try:
-            from prepare_analysis import IntervalsAPI
+            from cyclisme_training_logs.prepare_analysis import IntervalsAPI
 
             # Vérifier si des gaps ont été détectés en step_1b
             if not self.unanalyzed_activities or len(self.unanalyzed_activities) == 0:
@@ -1214,6 +1851,177 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
         print("✅ Analyse insérée dans logs/workouts-history.md !")
         self.wait_user()
 
+    def step_6b_servo_control(self):
+        """Étape 6b : Asservissement planning (si --servo-mode activé)
+
+        Cette étape:
+        1. Charge le planning restant de la semaine
+        2. Parse la réponse AI pour détecter modifications recommandées
+        3. Applique les modifications après confirmation utilisateur
+        """
+        self.clear_screen()
+
+        subtitle = "Étape 6b/7 : Asservissement Planning (Servo Mode)"
+        if self.activity_name:
+            subtitle += f"\n🚴 {self.activity_name}"
+
+        self.print_header(
+            "🔄 Asservissement Planning",
+            subtitle
+        )
+
+        print("Le mode asservissement est activé.")
+        print("Vérification si le coach AI recommande des ajustements au planning...")
+        print()
+
+        # Detect week_id from activity or ask user
+        if not self.week_id:
+            week_id_input = input("Identifiant semaine (ex: S072) : ").strip().upper()
+            if not week_id_input.startswith('S'):
+                week_id_input = 'S' + week_id_input
+            week_id = week_id_input
+        else:
+            week_id = self.week_id
+
+        print(f"📅 Semaine : {week_id}")
+        print()
+
+        # Load remaining sessions
+        remaining_sessions = self.load_remaining_sessions(week_id)
+
+        if not remaining_sessions:
+            print("⚠️  Aucune séance future trouvée dans le planning")
+            print("   Asservissement désactivé pour cette séance")
+            self.wait_user()
+            return
+
+        print(f"📋 {len(remaining_sessions)} séances restantes dans le planning:")
+        for session in remaining_sessions:
+            date = session['date']
+            session_id = session['session_id']
+            name = session['name']
+            workout_type = session['type']
+            tss = session.get('tss_planned', 0)
+            # Construct workout code
+            code = f"{session_id}-{workout_type}-{name}-{session.get('version', 'V001')}"
+            if session.get('status') == 'rest_day':
+                print(f"   • {date}: REPOS")
+            else:
+                print(f"   • {date}: {code} ({tss} TSS)")
+        print()
+
+        # Ask user if they want to request AI recommendations
+        print("Le coach AI peut analyser le planning restant et proposer des ajustements.")
+        print()
+        request_mods = input("Demander recommandations au coach AI ? (o/n) : ").strip().lower()
+
+        if request_mods != 'o':
+            print("✅ Planning maintenu sans modification")
+            self.wait_user()
+            return
+
+        # Generate supplementary prompt for AI
+        planning_context = self.format_remaining_sessions_compact(remaining_sessions)
+
+        supplementary_prompt = f"""# ASSERVISSEMENT PLANNING - Demande Coach AI
+
+Contexte : Tu viens d'analyser la séance du jour.
+{planning_context}
+
+## Catalogue Workouts Remplacement
+
+Si modification planning nécessaire, utilise ces templates prédéfinis :
+
+**RÉCUPÉRATION** (remplacement END/INT léger) :
+- `recovery_active_30tss` : 45min Z1-Z2 (30 TSS)
+- `recovery_active_25tss` : 40min Z1-Z2 (25 TSS)
+- `recovery_short_20tss` : 30min Z1 (20 TSS)
+
+**ENDURANCE ALLÉGÉE** (remplacement END normal) :
+- `endurance_light_35tss` : 50min Z2 (35 TSS)
+- `endurance_short_40tss` : 55min Z2 (40 TSS)
+
+**INTENSITÉ RÉDUITE** (remplacement Sweet-Spot/VO2) :
+- `sweetspot_short_50tss` : 2x10min 88% (50 TSS)
+
+## Instructions
+
+Basé sur l'analyse de la séance du jour et les métriques (HRV, RPE, découplage, FC), **recommandes-tu des ajustements au planning restant ?**
+
+Critères de décision:
+- HRV < -10% → Envisager allégement
+- RPE > 8/10 en zone endurance → Signal alarme
+- Découplage > 7.5% → Fatigue cardiaque
+- Sommeil < 7h → Vulnérabilité accrue
+
+**Format JSON si modification recommandée** :
+```json
+{{"modifications": [{{
+  "action": "lighten",
+  "target_date": "YYYY-MM-DD",
+  "current_workout": "CODE",
+  "template_id": "recovery_active_30tss",
+  "reason": "HRV -15%, prioriser récupération"
+}}]}}
+```
+
+**Si aucune modification nécessaire** : Ne rien ajouter (pas de JSON).
+
+Réponds maintenant."""
+
+        # Copy supplementary prompt to clipboard
+        try:
+            process = subprocess.Popen(
+                ['pbcopy'],
+                stdin=subprocess.PIPE
+            )
+            process.communicate(input=supplementary_prompt.encode('utf-8'))
+
+            print()
+            print("✅ Prompt asservissement copié dans le presse-papier")
+            print()
+            print("📋 INSTRUCTIONS :")
+            print("1. Retourne dans Claude.ai (même conversation)")
+            print("2. Colle le prompt supplémentaire (Cmd+V)")
+            print("3. Envoie le message")
+            print("4. Copie la réponse complète")
+            print()
+
+            self.wait_user("Appuyer sur ENTRÉE une fois la réponse copiée...")
+
+        except Exception as e:
+            print(f"⚠️  Erreur copie prompt : {e}")
+            self.wait_user()
+            return
+
+        # Get AI response from clipboard
+        try:
+            clipboard = subprocess.run(
+                ['pbpaste'],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            ai_response = clipboard.stdout
+        except Exception as e:
+            print(f"⚠️  Impossible de lire le presse-papier : {e}")
+            self.wait_user()
+            return
+
+        # Parse modifications from AI response
+        modifications = self.parse_ai_modifications(ai_response)
+
+        if not modifications:
+            print()
+            print("✅ Aucune modification recommandée par le coach AI")
+            print("   Le planning est maintenu tel quel")
+        else:
+            # Apply modifications (with user confirmation for each)
+            self.apply_planning_modifications(modifications, week_id)
+
+        print()
+        self.wait_user()
+
     def step_7_git_commit(self):
         """Étape 7 : Commit git optionnel"""
         if self.skip_git:
@@ -1399,6 +2207,11 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
                     self.step_4_paste_prompt()
                     self.step_5_validate_analysis()
                     self.step_6_insert_analysis()
+
+                    # Servo control integration
+                    if self.servo_mode:
+                        self.step_6b_servo_control()
+
                     self.step_7_git_commit()
                     self.show_summary()
 
@@ -1507,7 +2320,25 @@ Exemples:
         help="ID semaine pour mode réconciliation planning (ex: S070)"
     )
 
+    parser.add_argument(
+        '--servo-mode',
+        action='store_true',
+        help="Activer le mode asservissement (modifications planning AI)"
+    )
+
+    parser.add_argument(
+        '--reconcile',
+        action='store_true',
+        help="Mode réconciliation batch pour séances sautées/annulées (requiert --week-id)"
+    )
+
     args = parser.parse_args()
+
+    # Validation --reconcile requiert --week-id
+    if args.reconcile and not args.week_id:
+        print("❌ Erreur: --reconcile requiert --week-id")
+        print("   Exemple: poetry run workflow-coach --reconcile --week-id S070")
+        sys.exit(1)
 
     # Vérifier qu'on est dans le bon répertoire
     if not Path('logs/workouts-history.md').exists():
@@ -1523,10 +2354,15 @@ Exemples:
         skip_feedback=args.skip_feedback,
         skip_git=args.skip_git,
         activity_id=args.activity_id,
-        week_id=args.week_id
+        week_id=args.week_id,
+        servo_mode=args.servo_mode
     )
 
-    coach.run()
+    # Mode réconciliation batch
+    if args.reconcile:
+        coach.reconcile_week(args.week_id)
+    else:
+        coach.run()
 
 
 if __name__ == '__main__':

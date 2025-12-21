@@ -1,0 +1,11 @@
+{
+  "id": "recovery_active_30tss",
+  "name": "Récupération Active 30 TSS",
+  "type": "REC",
+  "tss": 30,
+  "duration_minutes": 45,
+  "description": "Récupération active 45min Z1-Z2",
+  "workout_code_pattern": "{week_id}-{day_num:02d}-REC-RecuperationActive-V001",
+  "intervals_icu_format": "Warmup\n- 10m ramp 50-60% 85rpm\n\nMain set\n- 25m 60% 85rpm cadence libre\n\nCooldown\n- 10m ramp 60-50% 85rpm",
+  "use_cases": ["lighten_from_endurance", "lighten_from_sweetspot", "emergency_recovery"]
+}

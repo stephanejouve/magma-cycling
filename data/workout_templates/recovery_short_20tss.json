@@ -1,0 +1,11 @@
+{
+  "id": "recovery_short_20tss",
+  "name": "Récupération Courte 20 TSS",
+  "type": "REC",
+  "tss": 20,
+  "duration_minutes": 30,
+  "description": "Récupération courte 30min Z1",
+  "workout_code_pattern": "{week_id}-{day_num:02d}-REC-RecuperationCourte-V001",
+  "intervals_icu_format": "Warmup\n- 5m ramp 50-55% 85rpm\n\nMain set\n- 20m 55% 85rpm cadence stable\n\nCooldown\n- 5m ramp 55-50% 85rpm",
+  "use_cases": ["high_fatigue", "time_constrained", "emergency_recovery"]
+}

@@ -228,9 +228,29 @@ class WeeklyPlanner:
 - Intensité : `90%` (% FTP), `100-140w` (watts absolus)
 - Cadence : `85rpm` ou `80-90rpm` (plage)
 - Ramp : `ramp 50-65%` (progression)
-- Répétitions : Préfixer avec `3x` avant le bloc
 
-**Exemple syntaxe valide** :
+**RÈGLE CRITIQUE - Blocs répétés** :
+Le marqueur de répétition (ex: `3x`) doit être sur la ligne du titre de section, PAS dans les lignes d'intervalles.
+
+**✅ FORMAT CORRECT** :
+```
+Main set 3x
+- 10m 90% 92rpm
+- 4m 62% 85rpm
+```
+Ceci créera 3 répétitions du bloc (10m @ 90% + 4m @ 62%).
+
+**❌ FORMATS INCORRECTS** :
+```
+Main set
+- 3x 10m 90%      ← ERREUR: 3x ne doit PAS être dans la ligne d'intervalle
+- 4m 62%
+
+Test capacité 3x  ← ERREUR: "Test capacité" n'est pas une section valide
+- 5m 70%           Utiliser "Main set 3x" à la place
+```
+
+**Exemple complet valide** :
 ```
 Warmup
 - 12m ramp 50-65% 85rpm
@@ -282,7 +302,7 @@ Cooldown
 - **Format** : `SSSS-JJ-TYPE-NomExercice-V001`
 - **SSSS** : {self.week_number}
 - **JJ** : 01 à 07 (lundi à dimanche)
-- **TYPE** : END, INT, FTP, REC, FOR, CAD, TEC, MIX, TST
+- **TYPE** : END, INT, FTP, SPR, CLM, REC, FOR, CAD, TEC, MIX, PDC, TST
 - **NomExercice** : CamelCase sans accents (ex: EnduranceBase, SweetSpotProgressif)
 
 ### Types d'Entraînements (CODE)
@@ -290,11 +310,14 @@ Cooldown
 - **END** : Endurance (Z2, base aérobie)
 - **INT** : Intervalles (Sweet-Spot, Seuil, VO2)
 - **FTP** : Test FTP ou séance FTP spécifique
+- **SPR** : Sprint (efforts maximaux courts)
+- **CLM** : Contre-la-montre (efforts soutenus haute intensité)
 - **REC** : Récupération active
 - **FOR** : Force (cadence basse, couple élevé)
 - **CAD** : Technique cadence (variations RPM)
 - **TEC** : Technique générale
 - **MIX** : Mixte (plusieurs types dans la séance)
+- **PDC** : Pédaling/Cadence (technique pédalage)
 - **TST** : Test (VO2 max, sprint, etc.)
 
 ### Contraintes Obligatoires
@@ -533,9 +556,10 @@ def main():
         description="Générer prompt de planification hebdomadaire pour Claude.ai"
     )
     parser.add_argument(
-        'week',
+        '--week-id',
         type=str,
-        help='Numéro de semaine (ex: S069)'
+        required=True,
+        help='Numéro de semaine (format SXXX, ex: S072)'
     )
     parser.add_argument(
         '--start-date',
@@ -552,9 +576,9 @@ def main():
     args = parser.parse_args()
     
     # Validation format semaine
-    if not args.week.startswith('S') or len(args.week) != 4:
-        print(f"❌ Format semaine invalide : {args.week}")
-        print("   Utiliser le format SXXX (ex: S069)")
+    if not args.week_id.startswith('S') or len(args.week_id) != 4:
+        print(f"❌ Format semaine invalide : {args.week_id}")
+        print("   Utiliser le format SXXX (ex: S072)")
         sys.exit(1)
     
     # Parsing date
@@ -584,7 +608,7 @@ def main():
         sys.exit(1)
     
     # Exécuter planification
-    planner = WeeklyPlanner(args.week, start_date, project_root)
+    planner = WeeklyPlanner(args.week_id, start_date, project_root)
     planner.run()
 
 
