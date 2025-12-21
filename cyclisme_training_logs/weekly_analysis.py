@@ -11,8 +11,8 @@ Ce script génère automatiquement les 6 fichiers markdown du rapport hebdomadai
 6. bilan_final_sXXX.md - Bilan global de la semaine
 
 Usage:
-    python3 cyclisme_training_logs/weekly_analysis.py S068
-    python3 cyclisme_training_logs/weekly_analysis.py S068 --start-date 2024-11-18
+    python3 cyclisme_training_logs/weekly_analysis.py --week-id S068
+    python3 cyclisme_training_logs/weekly_analysis.py --week-id S068 --start-date 2024-11-18
 """
 
 import argparse
@@ -666,16 +666,18 @@ def main():
         epilog="""
 Exemples:
   # Analyse de la semaine S068
-  python3 cyclisme_training_logs/weekly_analysis.py S068
+  python3 cyclisme_training_logs/weekly_analysis.py --week-id S068
 
   # Analyse avec date de début spécifique
-  python3 cyclisme_training_logs/weekly_analysis.py S068 --start-date 2024-11-18
+  python3 cyclisme_training_logs/weekly_analysis.py --week-id S068 --start-date 2024-11-18
 """
     )
 
     parser.add_argument(
-        'week',
-        help="Numéro de semaine (format SXXX, ex: S068)"
+        '--week-id',
+        type=str,
+        required=True,
+        help='Numéro de semaine (format SXXX, ex: S072)'
     )
 
     parser.add_argument(
@@ -686,7 +688,7 @@ Exemples:
     args = parser.parse_args()
 
     # Validation format semaine
-    if not re.match(r'^S\d{3}$', args.week):
+    if not re.match(r'^S\d{3}$', args.week_id):
         print("❌ Format semaine invalide")
         print("   Format attendu : SXXX (ex: S068)")
         sys.exit(1)
@@ -706,12 +708,12 @@ Exemples:
         print(f"   Répertoire courant : {Path.cwd()}")
         print()
         print("   cd ~/cyclisme-training-logs")
-        print("   python3 cyclisme_training_logs/weekly_analysis.py S068")
+        print("   python3 cyclisme_training_logs/weekly_analysis.py --week-id S068")
         sys.exit(1)
 
     # Lancer le workflow
     try:
-        analysis = WeeklyAnalysis(args.week, args.start_date)
+        analysis = WeeklyAnalysis(args.week_id, args.start_date)
         analysis.run()
 
     except KeyboardInterrupt:

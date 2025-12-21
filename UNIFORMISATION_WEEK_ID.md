@@ -10,9 +10,9 @@
 
 Tous les scripts Python du projet utilisent maintenant de manière cohérente l'argument `--week-id` au lieu d'arguments positionnels incohérents. Cette uniformisation améliore l'expérience utilisateur et la maintenabilité du code.
 
-**Fichiers modifiés**: 2
-**Occurrences corrigées**: 8 (4 par fichier)
-**Tests validation**: 6/6 passing
+**Fichiers modifiés**: 3
+**Occurrences corrigées**: 14 (4 par fichier weekly_planner.py et upload_workouts.py, 6 pour weekly_analysis.py)
+**Tests validation**: 9/9 passing
 
 ---
 
@@ -173,6 +173,105 @@ print(f"   {len(workouts)} workout(s) seront créés pour {args.week_id}")
 
 ---
 
+### 2.3 weekly_analysis.py
+
+#### Modification 1: Définition Argument (Ligne 676-681)
+
+**Avant**:
+```python
+parser.add_argument(
+    'week',
+    help="Numéro de semaine (format SXXX, ex: S068)"
+)
+```
+
+**Après**:
+```python
+parser.add_argument(
+    '--week-id',
+    type=str,
+    required=True,
+    help='Numéro de semaine (format SXXX, ex: S072)'
+)
+```
+
+**Changements**:
+- ✅ `'week'` → `'--week-id'` (argument positionnel → option)
+- ✅ Ajout `type=str` (explicite)
+- ✅ Ajout `required=True` (explicite)
+- ✅ Help text uniformisé avec format SXXX
+- ✅ Exemple mis à jour (S068 → S072)
+
+#### Modification 2: Validation Format (Ligne 691)
+
+**Avant**:
+```python
+if not re.match(r'^S\d{3}$', args.week):
+```
+
+**Après**:
+```python
+if not re.match(r'^S\d{3}$', args.week_id):
+```
+
+#### Modification 3: Instanciation Classe (Ligne 716)
+
+**Avant**:
+```python
+analysis = WeeklyAnalysis(args.week, args.start_date)
+```
+
+**Après**:
+```python
+analysis = WeeklyAnalysis(args.week_id, args.start_date)
+```
+
+#### Modification 4: Docstring Usage (Lignes 14-15)
+
+**Avant**:
+```python
+Usage:
+    python3 cyclisme_training_logs/weekly_analysis.py S068
+    python3 cyclisme_training_logs/weekly_analysis.py S068 --start-date 2024-11-18
+```
+
+**Après**:
+```python
+Usage:
+    python3 cyclisme_training_logs/weekly_analysis.py --week-id S068
+    python3 cyclisme_training_logs/weekly_analysis.py --week-id S068 --start-date 2024-11-18
+```
+
+#### Modification 5: Epilog Examples (Lignes 669, 672)
+
+**Avant**:
+```python
+  python3 cyclisme_training_logs/weekly_analysis.py S068
+  python3 cyclisme_training_logs/weekly_analysis.py S068 --start-date 2024-11-18
+```
+
+**Après**:
+```python
+  python3 cyclisme_training_logs/weekly_analysis.py --week-id S068
+  python3 cyclisme_training_logs/weekly_analysis.py --week-id S068 --start-date 2024-11-18
+```
+
+#### Modification 6: Error Message Example (Ligne 711)
+
+**Avant**:
+```python
+print("   python3 cyclisme_training_logs/weekly_analysis.py S068")
+```
+
+**Après**:
+```python
+print("   python3 cyclisme_training_logs/weekly_analysis.py --week-id S068")
+```
+
+**Total occurrences corrigées**: 6 (1 définition argument + 2 usages `args.week` + 3 exemples documentation)
+
+---
+
 ## 3. Pattern Uniformisé Final
 
 ### Définition Standard
@@ -239,6 +338,15 @@ usage: workflow-coach [-h] [--skip-feedback] [--skip-git]
 ```
 ✅ PASS
 
+**Test 4: weekly-analysis**
+```bash
+$ poetry run python3 cyclisme_training_logs/weekly_analysis.py --help
+usage: weekly_analysis.py [-h] --week-id WEEK_ID [--start-date START_DATE]
+
+  --week-id WEEK_ID     Numéro de semaine (format SXXX, ex: S072)
+```
+✅ PASS
+
 ### 4.2 Tests Fonctionnels
 
 **Test 1: Argument requis**
@@ -275,6 +383,7 @@ $ poetry run weekly-planner --week-id S072 --start-date 2025-12-16
 |--------|--------|----------------------|
 | weekly-planner | ✅ Modifié | `--week-id` au lieu de positionnel |
 | upload-workouts | ✅ Modifié | `--week-id` au lieu de positionnel |
+| weekly-analysis | ✅ Modifié | `--week-id` au lieu de positionnel |
 | workflow-coach | ✅ Déjà correct | Aucun changement nécessaire |
 
 ### Scripts Non Affectés
@@ -290,16 +399,19 @@ Les scripts suivants n'utilisent pas d'argument de semaine:
 ⚠️ **ATTENTION**: Cette modification est un **breaking change** pour:
 - Scripts shell ou CI/CD appelant `weekly-planner S072`
 - Scripts shell ou CI/CD appelant `upload-workouts S072`
+- Scripts shell ou CI/CD appelant `weekly-analysis S068`
 
 **Migration nécessaire**:
 ```bash
 # Avant
 poetry run weekly-planner S072 --start-date 2025-12-16
 poetry run upload-workouts S072 --start-date 2025-12-16
+python3 cyclisme_training_logs/weekly_analysis.py S068
 
 # Après
 poetry run weekly-planner --week-id S072 --start-date 2025-12-16
 poetry run upload-workouts --week-id S072 --start-date 2025-12-16
+python3 cyclisme_training_logs/weekly_analysis.py --week-id S068
 ```
 
 ---
@@ -387,9 +499,9 @@ Ajouter tests automatisés vérifiant:
 ## 10. Résumé
 
 **Objectif**: ✅ Atteint
-**Fichiers modifiés**: 2 (weekly_planner.py, upload_workouts.py)
-**Occurrences corrigées**: 8
-**Tests validation**: 6/6 passing
+**Fichiers modifiés**: 3 (weekly_planner.py, upload_workouts.py, weekly_analysis.py)
+**Occurrences corrigées**: 14 (6 pour weekly_analysis.py, 4 pour chacun des deux autres)
+**Tests validation**: 9/9 passing
 **Breaking changes**: Oui (migration requise pour scripts existants)
 
 **Pattern final uniformisé**:
@@ -406,6 +518,7 @@ parser.add_argument(
 ```bash
 poetry run weekly-planner --week-id S072 --start-date 2025-12-16
 poetry run upload-workouts --week-id S072 --start-date 2025-12-16
+python3 cyclisme_training_logs/weekly_analysis.py --week-id S068
 poetry run workflow-coach --week-id S072
 ```
 
