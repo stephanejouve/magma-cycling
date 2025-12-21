@@ -1,0 +1,11 @@
+{
+  "id": "endurance_light_35tss",
+  "name": "Endurance Légère 35 TSS",
+  "type": "END",
+  "tss": 35,
+  "duration_minutes": 50,
+  "description": "Endurance légère 50min Z2",
+  "workout_code_pattern": "{week_id}-{day_num:02d}-END-EnduranceLegere-V001",
+  "intervals_icu_format": "Warmup\n- 10m ramp 50-65% 85rpm\n\nMain set\n- 30m 65-70% 86rpm cadence stable\n\nCooldown\n- 10m ramp 65-50% 85rpm",
+  "use_cases": ["lighten_from_endurance", "maintain_volume"]
+}

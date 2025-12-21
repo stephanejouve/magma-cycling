@@ -1,0 +1,11 @@
+{
+  "id": "endurance_short_40tss",
+  "name": "Endurance Courte 40 TSS",
+  "type": "END",
+  "tss": 40,
+  "duration_minutes": 55,
+  "description": "Endurance courte 55min Z2",
+  "workout_code_pattern": "{week_id}-{day_num:02d}-END-EnduranceCourte-V001",
+  "intervals_icu_format": "Warmup\n- 10m ramp 50-65% 85rpm\n\nMain set\n- 35m 65-70% 86rpm cadence stable\n\nCooldown\n- 10m ramp 65-50% 85rpm",
+  "use_cases": ["lighten_from_endurance", "moderate_volume"]
+}

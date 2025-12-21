@@ -313,46 +313,153 @@ Séance planifiée non exécutée. Raison à documenter.
 
 
 def main():
-    """Test du module"""
+    """
+    Mode interactif : détection des séances sautées + réconciliation avec planning JSON local
+    """
     import json
     from pathlib import Path
-    
+    from cyclisme_training_logs.rest_and_cancellations import (
+        load_week_planning,
+        reconcile_planned_vs_actual
+    )
+
     # Charger credentials
     config_path = Path.home() / ".intervals_config.json"
     if not config_path.exists():
         print("❌ Config API non trouvée")
         return
-    
+
     with open(config_path, 'r') as f:
         config = json.load(f)
-    
+
     athlete_id = config.get('athlete_id')
     api_key = config.get('api_key')
-    
+
     if not athlete_id or not api_key:
         print("❌ Credentials invalides")
         return
-    
-    # Test détection
+
+    # Initialiser checker
     checker = PlannedSessionsChecker(athlete_id, api_key)
-    
-    # Dernières 7 jours
+
+    # Période de détection (dernières 3 semaines)
     end_date = datetime.now().strftime('%Y-%m-%d')
-    start_date = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
-    
-    print(f"\n🔍 Test détection séances sautées")
-    print(f"Période : {start_date} → {end_date}\n")
-    
+    start_date = (datetime.now() - timedelta(days=21)).strftime('%Y-%m-%d')
+
+    print(f"\n{'=' * 70}")
+    print("🔍 DÉTECTION SÉANCES SAUTÉES + RÉCONCILIATION PLANNING")
+    print(f"{'=' * 70}")
+    print(f"Période : {start_date} → {end_date}")
+    print()
+
+    # Détecter séances sautées depuis API
     skipped = checker.detect_skipped_sessions(start_date, end_date)
-    
-    if skipped:
-        print(f"\n⚠️  {len(skipped)} séance(s) sautée(s) détectée(s) :\n")
-        for session in skipped:
-            print(f"  • {session['planned_date']} : {session['planned_name']}")
-            print(f"    TSS prévu : {session['planned_tss']}")
-            print()
+
+    if not skipped:
+        print("✅ Aucune séance sautée détectée sur Intervals.icu")
+        print()
+        return
+
+    print(f"\n⚠️  {len(skipped)} séance(s) sautée(s) détectée(s) sur Intervals.icu :\n")
+    for session in skipped:
+        print(f"  • [{session['planned_date']}] {session['planned_name']}")
+        print(f"    TSS prévu : {session['planned_tss']} (il y a {session['days_ago']}j)")
+        print()
+
+    # Identifier les semaines concernées
+    weeks_to_check = set()
+    for session in skipped:
+        # Extraire le week_id depuis le nom de la séance planifiée
+        # Format attendu: "SXXX-YY-TYPE-Name-VERSION"
+        planned_name = session.get('planned_name', '')
+
+        # Méthode 1: Extraction directe du code SXXX depuis le début du nom
+        if '-' in planned_name:
+            parts = planned_name.split('-')
+            if len(parts) >= 1 and parts[0].startswith('S'):
+                week_id = parts[0]  # Ex: "S070", "S071", "S072"
+                weeks_to_check.add(week_id)
+            else:
+                logger.warning(f"Format nom séance invalide : {planned_name}")
+        else:
+            logger.warning(f"Impossible d'extraire week_id de : {planned_name}")
+
+    # Tenter réconciliation avec fichiers planning JSON locaux
+    print(f"\n{'=' * 70}")
+    print("📋 RÉCONCILIATION AVEC PLANNING JSON LOCAL")
+    print(f"{'=' * 70}")
+    print(f"Semaines à vérifier : {', '.join(sorted(weeks_to_check))}")
+    print()
+
+    planning_dir = Path.cwd() / "data" / "week_planning"
+    reconciliations = {}
+
+    for week_id in sorted(weeks_to_check):
+        planning_file = planning_dir / f"week_planning_{week_id}.json"
+
+        if not planning_file.exists():
+            print(f"⚠️  {week_id} : Planning JSON non trouvé ({planning_file})")
+            continue
+
+        try:
+            # Charger planning local
+            planning = load_week_planning(week_id, planning_dir)
+
+            # Récupérer activités pour cette semaine
+            activities = checker.api.get_activities(
+                oldest=planning['start_date'],
+                newest=planning['end_date']
+            )
+
+            # Réconcilier
+            reconciliation = reconcile_planned_vs_actual(planning, activities)
+            reconciliations[week_id] = reconciliation
+
+            # Afficher résumé
+            print(f"\n✅ {week_id} : Réconciliation effectuée")
+            print(f"   Sessions planifiées   : {len(planning['planned_sessions'])}")
+            print(f"   Sessions exécutées    : {len(reconciliation['matched'])}")
+            print(f"   Repos planifiés       : {len(reconciliation['rest_days'])}")
+            print(f"   Séances annulées      : {len(reconciliation['cancelled'])}")
+            print(f"   Séances sautées       : {len(reconciliation['skipped'])}")
+
+        except FileNotFoundError:
+            print(f"⚠️  {week_id} : Fichier planning non trouvé")
+        except Exception as e:
+            print(f"❌ {week_id} : Erreur réconciliation - {e}")
+
+    # Proposer actions
+    if reconciliations:
+        print(f"\n{'=' * 70}")
+        print("🎯 ACTIONS DISPONIBLES")
+        print(f"{'=' * 70}")
+
+        total_skipped = sum(len(r['skipped']) for r in reconciliations.values())
+        total_cancelled = sum(len(r['cancelled']) for r in reconciliations.values())
+        total_rest = sum(len(r['rest_days']) for r in reconciliations.values())
+
+        if total_skipped > 0:
+            print(f"\n📝 {total_skipped} séance(s) sautée(s) détectée(s) dans le planning JSON")
+            print("   → Utiliser workflow-coach avec --week-id pour traiter en mode batch")
+
+        if total_cancelled > 0:
+            print(f"\n🚫 {total_cancelled} séance(s) annulée(s) à documenter")
+            print("   → Utiliser workflow-coach avec --week-id pour générer entrées markdown")
+
+        if total_rest > 0:
+            print(f"\n😴 {total_rest} jour(s) de repos planifié(s)")
+            print("   → Utiliser workflow-coach avec --week-id pour générer entrées markdown")
+
+        print(f"\n💡 Commandes suggérées :")
+        for week_id in sorted(reconciliations.keys()):
+            print(f"   poetry run workflow-coach --week-id {week_id}")
+
     else:
-        print("✅ Aucune séance sautée détectée")
+        print(f"\n⚠️  Aucune réconciliation disponible")
+        print("   Les fichiers de planning JSON locaux sont absents ou invalides")
+        print(f"   Vérifier le dossier : {planning_dir}")
+
+    print()
 
 
 if __name__ == '__main__':

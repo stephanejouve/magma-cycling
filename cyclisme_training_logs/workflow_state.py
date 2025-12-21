@@ -95,6 +95,39 @@ class WorkflowState:
         """Récupérer l'ID de la dernière activité analysée"""
         return self.state.get("last_analyzed_activity_id")
 
+    @staticmethod
+    def is_valid_activity(activity: Dict) -> bool:
+        """
+        Filtre activités valides pour analyse
+
+        Ignore les activités "fantômes" :
+        - Durée < 2 minutes
+        - TSS = 0
+        - Pas de données de puissance
+
+        Args:
+            activity: Activité Intervals.icu
+
+        Returns:
+            True si activité valide pour analyse
+        """
+        # Ignorer activités trop courtes (< 2 minutes)
+        moving_time = activity.get('moving_time', 0)
+        if moving_time < 120:  # 120 secondes = 2 minutes
+            return False
+
+        # Ignorer activités sans charge d'entraînement (TSS = 0)
+        training_load = activity.get('icu_training_load', 0)
+        if training_load == 0:
+            return False
+
+        # Ignorer activités sans données de puissance
+        average_watts = activity.get('average_watts')
+        if average_watts is None:
+            return False
+
+        return True
+
     def get_unanalyzed_activities(self, all_activities: List[Dict]) -> List[Dict]:
         """
         Détecter les activités non analysées
@@ -103,16 +136,31 @@ class WorkflowState:
             all_activities: Liste de toutes les activités récentes (triées par date décroissante)
 
         Returns:
-            Liste des activités non analysées
+            Liste des activités non analysées (filtrées pour exclure activités invalides)
         """
         unanalyzed = []
+        filtered_count = 0
 
         for activity in all_activities:
             activity_id = activity.get('id')
 
+            # Filtrer activités invalides (fantômes)
+            if not self.is_valid_activity(activity):
+                filtered_count += 1
+                # Debug info pour activités filtrées
+                name = activity.get('name', 'N/A')
+                duration_min = activity.get('moving_time', 0) // 60
+                tss = activity.get('icu_training_load', 0)
+                # Note: Info silencieuse - pas d'affichage pour ne pas polluer l'output
+                continue
+
             # Vérifier dans l'historique si cette activité a déjà été analysée
             if not self.is_activity_analyzed(activity_id):
                 unanalyzed.append(activity)
+
+        # Info si des activités ont été filtrées (optionnel)
+        if filtered_count > 0:
+            pass  # Peut être activé plus tard si nécessaire pour debug
 
         return unanalyzed
 

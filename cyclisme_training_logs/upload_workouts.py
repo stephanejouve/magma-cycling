@@ -233,7 +233,7 @@ class WorkoutUploader:
 def main():
     """Point d'entrée du script"""
     parser = argparse.ArgumentParser(description="Uploader des workouts sur Intervals.icu")
-    parser.add_argument('week', type=str, help='Numéro de semaine (ex: S069)')
+    parser.add_argument('--week-id', type=str, required=True, help='Numéro de semaine (format SXXX, ex: S072)')
     parser.add_argument('--start-date', type=str, required=True, 
                        help='Date de début - LUNDI pour semaine complète, date exacte pour single workout')
     parser.add_argument('--file', type=str, help='Fichier contenant les workouts')
@@ -241,17 +241,17 @@ def main():
     
     args = parser.parse_args()
     
-    if not args.week.startswith('S') or len(args.week) != 4:
-        print(f"❌ Format semaine invalide : {args.week}")
+    if not args.week_id.startswith('S') or len(args.week_id) != 4:
+        print(f"❌ Format semaine invalide : {args.week_id}")
         sys.exit(1)
-    
+
     try:
         start_date = datetime.strptime(args.start_date, '%Y-%m-%d')
     except ValueError:
         print(f"❌ Format date invalide : {args.start_date}")
         sys.exit(1)
-    
-    uploader = WorkoutUploader(args.week, start_date)
+
+    uploader = WorkoutUploader(args.week_id, start_date)
     
     if args.file:
         workouts = uploader.parse_workouts_file(Path(args.file))
@@ -264,7 +264,7 @@ def main():
     
     if not args.dry_run:
         print(f"\n⚠️  ATTENTION : Upload RÉEL sur Intervals.icu")
-        print(f"   {len(workouts)} workout(s) seront créés pour {args.week}")
+        print(f"   {len(workouts)} workout(s) seront créés pour {args.week_id}")
         response = input("\nContinuer ? (o/n) : ")
         if response.lower() != 'o':
             print("❌ Upload annulé")
