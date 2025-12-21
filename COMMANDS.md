@@ -1,16 +1,22 @@
 # Quick Reference - Cyclisme Training Logs
 
-## Workflow Principal
-train                    # Workflow complet
-train --week-id S071     # Analyse semaine
-train-fast               # Mode rapide
+## 🔄 Workflow Quotidien (Post-Séance)
+train                           # Standard: feedback + analyse + commit
+trains --week-id S073           # Avec asservissement planning (Mer/Ven)
+train-fast                      # Rapide: analyse uniquement (debug)
+trainr --week-id S073           # Réconciliation: rattrapage batch
 
-## Scripts Individuels
-wa S071 --start-date 2025-12-15      # Weekly Analysis
-wp S073 --week-id S073 --start-date 2025-12-22  # Weekly Planner
-wu S072 --start-date 2025-12-15      # Upload Workouts
-stats
-sync
+## 📅 Workflow Hebdomadaire (Lundi Matin)
+wa --week-id S072 --start-date 2025-12-16       # 1. Analyser semaine passée
+wp --week-id S073 --start-date 2025-12-23       # 2. Planifier semaine courante
+wu --week-id S073 --start-date 2025-12-23       # 3. Uploader workouts
+
+## 🛠️ Scripts Individuels (Usage Avancé)
+prep                            # Préparer analyse
+feedback                        # Collecter feedback uniquement
+stats                           # Statistiques
+sync                            # Sync Intervals.icu
+check                           # Vérifier planning
 
 ## Navigation
 cdtrain  # cd projet
