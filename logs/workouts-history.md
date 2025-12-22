@@ -60,6 +60,54 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S073-01-END-EnduranceBase-V001
+Date : 22/12/2025
+
+#### Métriques Pré-séance
+- CTL : 46
+- ATL : 34
+- TSB : +12
+- Sommeil : 6.8h
+
+#### Exécution
+- Durée : 76min
+- IF : 0.66
+- TSS : 56
+- Puissance moyenne : 143W
+- Puissance normalisée : 146W
+- Cadence moyenne : 86rpm
+- FC moyenne : 105bpm
+- Découplage : 1.7%
+
+#### Exécution Technique
+Séance endurance base exécutée avec adhérence quasi-parfaite au plan (76min vs 75min prévu, TSS 56 exact). Intensité IF 0.66 légèrement sous cible 0.67 (-1.5%) mais cohérente avec puissance moyenne 143W (65% FTP). Découplage exceptionnel 1.7% confirme efficacité cardiovasculaire maintenue post-repos dimanche. Cadence 86rpm stable, FC 105bpm (63% FCmax) valide sollicitation Z2 contrôlée.
+
+#### Charge d'Entraînement
+TSS 56 conforme prévision maintient TSB optimal +12 post-repos, base idéale pour progression semaine S073. Impact sommeil 6.8h proche cible 7h+ (-12min) préserve qualité exécution, validation pattern sommeil >6.5h = performance stable. ATL stable 34, CTL maintenue 46, position fraîcheur confirmée.
+
+#### Validation Objectifs
+- ✅ Endurance Z2 validée (IF 0.66, découplage 1.7% exceptionnel)
+- ✅ Durée respectée (76min vs 75min prévu, +1.3% négligeable)
+- ✅ Cadence cible maintenue (86rpm vs 88rpm prévu, écart acceptable)
+
+#### Points d'Attention
+- Sommeil 6.8h amélioration continue S072→S073 (5.5h→6.5h→6.8h), vigilance maintien >7h pour intensité Sweet-Spot S073-02/03
+- Poids 85.6kg légère baisse vs 20/12 (85.7kg), tendance favorable à surveiller
+- Découplage 1.7% = 2e meilleure performance S072-S073 (après 1.0% du 20/12), validation récupération complète
+- TSB +12 maintenu = fenêtre optimale Sweet-Spot 65 TSS mardi/mercredi selon protocole
+
+#### Recommandations Progression
+1. S073-02 Sweet-Spot 65 TSS mardi validé SI sommeil >7h confirmé lundi soir + VFC >50ms matin mardi (protocole strict S072 appliqué)
+2. Maintenir rythme endurance Z2 68-72% FTP, pattern découplage <2% établi comme référence qualité d'exécution S073
+3. Surveillance quotidienne VFC renforcée post-fluctuations S072 (33ms→69ms), seuil alerte <40ms maintenu
+
+#### Métriques Post-séance
+- CTL : 46
+- ATL : 34
+- TSB : +12
+
+---
+
 ### S072-06-TEC-ValidationCapacite-V001
 Date : 20/12/2025
 
