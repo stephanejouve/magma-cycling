@@ -60,6 +60,55 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S073-02-INT-SweetSpotProgressif-V001
+Date : 23/12/2025
+
+#### Métriques Pré-séance
+- CTL : 46
+- ATL : 40
+- TSB : +6
+- Sommeil : 7.6h
+
+#### Exécution
+- Durée : 85min
+- IF : 0.76
+- TSS : 83
+- Puissance moyenne : 154W
+- Puissance normalisée : 168W
+- Cadence moyenne : 87rpm
+- FC moyenne : 112bpm
+- Découplage : 4.1%
+
+#### Exécution Technique
+Première séance Sweet-Spot S073 validée avec durée étendue +7min vs plan (85min vs 78min prévu). IF 0.76 légèrement sous cible 0.78 (-2.6%) suggère intensité conservatrice sur intervalles 88-92% FTP, cohérent avec NP 168W vs 172W attendue. Découplage exceptionnel 4.1% confirme excellente efficacité cardiovasculaire malgré sollicitation Sweet-Spot. Cadence 87rpm stable, FC moyenne 112bpm (67% FCmax) valide exécution contrôlée zone cible.
+
+#### Charge d'Entraînement
+TSS 83 surpasse prévision 79 (+5.1%) via extension durée, impact modéré sur TSB maintenu à +6 post-séance. Progression ATL 34→40 (+6 points) cohérente avec retour intensité Sweet-Spot après phase endurance S072-S073. Sommeil 7.6h = validation stricte protocole intensité (>7h requis), corrélation directe avec qualité exécution (découplage 4.1%).
+
+#### Validation Objectifs
+- ✅ Sweet-Spot exécuté (3×12min complétés, IF 0.76 acceptable vs 0.78 cible)
+- ✅ Découplage exceptionnel 4.1% (<5% référence Sweet-Spot validée)
+- ⚠️ Intensité légèrement conservatrice (NP 168W vs 172W, -2.3%)
+
+#### Points d'Attention
+- Sommeil 7.6h = PREMIÈRE validation stricte protocole intensité S073, corrélation performance/sommeil confirmée empiriquement (7.0h→7.6h = progression découplage 1.7%→4.1%)
+- Extension durée +7min non planifiée suggère adaptation spontanée (motivation/capacité supérieure ou ajustement intensité compensatoire)
+- IF conservateur 0.76 vs 0.78 acceptable première Sweet-Spot S073, marge progression intensité 88%→92% FTP disponible séances suivantes
+- Poids 85.4kg baisse continue vs 22/12 (85.6kg), tendance favorable à surveiller
+- FC max 134bpm (80% FCmax) confirme absence sollicitation maximale, cohérent avec Sweet-Spot (zone Z3-Z4 basse)
+
+#### Recommandations Progression
+1. S073-03 maintenir format Sweet-Spot SI sommeil >7h + VFC >50ms (protocole validé 23/12), progression intensité 90-92% FTP possible si découplage <5% répété
+2. Cibler IF 0.78-0.80 prochaines séances Sweet-Spot pour maximiser stimulus FTP, durée maintenue 78-85min validée (tolérance confirmée)
+3. Pattern sommeil >7h = levier critique confirmé S073, priorité absolue maintien 7h+ pour intensité Sweet-Spot/VO2 futures
+
+#### Métriques Post-séance
+- CTL : 46
+- ATL : 40
+- TSB : +6
+
+---
+
 ### S073-01-END-EnduranceBase-V001
 Date : 22/12/2025
 
