@@ -60,6 +60,55 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S073-03-TEC-CadenceVariable-V001
+Date : 24/12/2025
+
+#### Métriques Pré-séance
+- CTL : 46
+- ATL : 40
+- TSB : +6
+- Sommeil : 5.7h
+
+#### Exécution
+- Durée : 63min
+- IF : 0.62
+- TSS : 40
+- Puissance moyenne : 134W
+- Puissance normalisée : 136W
+- Cadence moyenne : 80rpm
+- FC moyenne : 99bpm
+- Découplage : 2.2%
+
+#### Exécution Technique
+Séance technique cadence variable exécutée avec adhérence plan (63min vs 60min prévu, +5% acceptable). IF 0.62 exact conforme cible, puissance 134W légèrement sous prévision 138W (-2.9%) cohérente avec format technique faible intensité. Découplage exceptionnel 2.2% valide qualité cardiovasculaire malgré sollicitations cadences 60-105rpm. Cadence moyenne 80rpm reflète variations planifiées (60-105rpm), FC 99bpm (59% FCmax) confirme charge modérée Z2.
+
+#### Charge d'Entraînement
+TSS 40 conforme prévision 39 (+2.5%) maintient TSB stable +6 post-séance, séance récupération active post-Sweet-Spot 23/12 (83 TSS). Sommeil critique 5.7h (-1.9h vs cible 7h+, -25%) = RETOUR dette sommeil après validation 22-23/12 (6.8h-7.6h), impact immédiat choix séance technique légère appropriée.
+
+#### Validation Objectifs
+- ✅ Format technique cadence validé (variations 60-105rpm exécutées, durée respectée)
+- ✅ Découplage exceptionnel 2.2% (<5% référence)
+- ⚠️ Sommeil 5.7h critique (-25% vs cible 7h+, facteur limitant réactivé)
+
+#### Points d'Attention
+- **ALERTE SOMMEIL** : Chute brutale 7.6h→5.7h (-1.9h, -25%), retour pattern dette sommeil S072, rupture protocole intensité validé 22-23/12
+- Poids 85.1kg stabilisation vs 23/12 (85.4kg), tendance favorable maintenue
+- Cadence moyenne 80rpm vs cible variations 60-105rpm suggère exécution partielle variations ou moyennage global (vérifier distribution réelle cadence par segment)
+- TSB +6 maintenu = fenêtre progression conservée MAIS sommeil 5.7h interdit intensité >85% FTP (protocole Sweet-Spot/VO2)
+- Auto-régulation pertinente : choix séance technique 40 TSS cohérent avec sommeil dégradé, évite surcharge post-Sweet-Spot 83 TSS veille
+
+#### Recommandations Progression
+1. **PRIORITÉ ABSOLUE** : Rétablir sommeil >7h avant toute séance intensité (Sweet-Spot/VO2), pattern 5.7h invalide protocole S073 établi, risque régression acquis 22-23/12
+2. S073-04+ adapter planning : SI sommeil <6.5h persistant = substitution formats légers endurance 50-60 TSS max, reporter Sweet-Spot jusqu'à validation sommeil >7h consécutif 2 nuits
+3. Surveillance renforcée facteurs externes dégradation sommeil (stress, horaires, environnement), documenter causes chute 7.6h→5.7h pour prévention récurrence S074
+
+#### Métriques Post-séance
+- CTL : 46
+- ATL : 40
+- TSB : +6
+
+---
+
 ### S073-02-INT-SweetSpotProgressif-V001
 Date : 23/12/2025
 
