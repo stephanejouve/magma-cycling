@@ -75,11 +75,17 @@ def extract_ftp_evolution(file_path):
     return data
 
 def main():
-    # Répertoire racine du projet
-    root = Path(__file__).parent.parent
-    
-    workouts_file = root / 'logs' / 'workouts-history.md'
-    metrics_file = root / 'logs' / 'metrics-evolution.md'
+    # Use data repo config if available
+    from cyclisme_training_logs.config import get_data_config
+    try:
+        config = get_data_config()
+        workouts_file = config.workouts_history_path
+        metrics_file = config.data_repo_path / 'metrics-evolution.md'
+    except FileNotFoundError:
+        # Fallback to legacy paths
+        root = Path(__file__).parent.parent
+        workouts_file = root / 'logs' / 'workouts-history.md'
+        metrics_file = root / 'logs' / 'metrics-evolution.md'
     
     print("📊 Statistiques d'Entraînement")
     print("=" * 50)

@@ -83,11 +83,33 @@ class IntervalsAPI:
 
 class WorkoutLogger:
     """Gestionnaire de mise à jour des logs"""
-    
-    def __init__(self, logs_dir):
-        self.logs_dir = Path(logs_dir)
-        self.workouts_file = self.logs_dir / "workouts-history.md"
-        self.metrics_file = self.logs_dir / "metrics-evolution.md"
+
+    def __init__(self, logs_dir=None):
+        """
+        Initialize WorkoutLogger.
+
+        Args:
+            logs_dir: Legacy parameter, use data repo config instead
+        """
+        from cyclisme_training_logs.config import get_data_config
+
+        # Use data repo config if available
+        if logs_dir is None:
+            try:
+                config = get_data_config()
+                self.logs_dir = config.data_repo_path
+                self.workouts_file = config.workouts_history_path
+                self.metrics_file = config.data_repo_path / "metrics-evolution.md"
+            except FileNotFoundError:
+                # Fallback to default logs directory (legacy)
+                self.logs_dir = Path.cwd() / 'logs'
+                self.workouts_file = self.logs_dir / "workouts-history.md"
+                self.metrics_file = self.logs_dir / "metrics-evolution.md"
+        else:
+            # Legacy: explicit logs_dir provided
+            self.logs_dir = Path(logs_dir)
+            self.workouts_file = self.logs_dir / "workouts-history.md"
+            self.metrics_file = self.logs_dir / "metrics-evolution.md"
     
     def format_workout_entry(self, activity, wellness_pre, wellness_post):
         """Formater une entrée de séance pour workouts-history.md"""
