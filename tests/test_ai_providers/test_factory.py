@@ -44,7 +44,7 @@ class TestAIProviderFactory:
     def test_create_claude_analyzer_with_key(self):
         """Test that factory creates ClaudeAPIAnalyzer with valid key."""
         config = {
-            'claude_api_key': 'test-key-123',
+            'claude_api_key': 'sk-ant-test-key-123',
             'claude_model': 'claude-sonnet-4-20250514'
         }
 
@@ -65,7 +65,7 @@ class TestAIProviderFactory:
 
     def test_create_claude_analyzer_default_model(self):
         """Test that Claude analyzer uses default model when not specified."""
-        config = {'claude_api_key': 'test-key'}
+        config = {'claude_api_key': 'sk-ant-test-key'}
 
         analyzer = AIProviderFactory.create('claude_api', config)
 
@@ -178,7 +178,7 @@ class TestAIProviderFactory:
 
     def test_validate_provider_config_claude_with_key(self):
         """Test that Claude config is valid with API key."""
-        config = {'claude_api_key': 'test-key'}
+        config = {'claude_api_key': 'sk-ant-test-key'}
 
         is_valid, message = AIProviderFactory.validate_provider_config('claude_api', config)
 
