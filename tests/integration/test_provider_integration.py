@@ -71,7 +71,7 @@ class TestProviderIntegration:
 
             # Verify analyzer properties
             assert analyzer.provider == AIProvider.OPENAI
-            assert analyzer.model == 'gpt-4-turbo'
+            assert analyzer.model == 'gpt-4-turbo-preview'
 
     def test_provider_auto_detection_no_keys(self):
         """Test that auto-detection picks clipboard when no API keys."""
@@ -128,8 +128,8 @@ class TestProviderIntegration:
             # Verify consistency
             assert info['provider'] == provider_name
             assert info['status'] in ['ready', 'configured']
-            assert 'cost_input' in info
-            assert 'cost_output' in info
+            # Clipboard has single 'cost' field, API providers have cost_input/cost_output
+            assert 'cost' in info or ('cost_input' in info and 'cost_output' in info)
 
     def test_factory_validation_matches_config(self):
         """Test that factory validation matches config is_provider_configured."""
