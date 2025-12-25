@@ -55,7 +55,7 @@ PROVIDER_DISPLAY_NAMES = {
 class WorkflowCoach:
     """Orchestrateur du workflow d'analyse de séance"""
 
-    def __init__(self, skip_feedback=False, skip_git=False, activity_id=None, week_id=None, servo_mode=False, provider=None):
+    def __init__(self, skip_feedback=False, skip_git=False, activity_id=None, week_id=None, servo_mode=False, provider=None, auto_mode=False):
         from cyclisme_training_logs.config import get_data_config
 
         self.skip_feedback = skip_feedback
@@ -64,6 +64,7 @@ class WorkflowCoach:
         self.week_id = week_id
         self.servo_mode = servo_mode
         self.provider_name = provider
+        self.auto_mode = auto_mode
         self.project_root = Path.cwd()
         self.scripts_dir = self.project_root / "cyclisme_training_logs"
         self.activity_name = None
@@ -788,6 +789,9 @@ class WorkflowCoach:
 
     def wait_user(self, message="Appuyer sur ENTRÉE pour continuer..."):
         """Attendre l'utilisateur"""
+        if self.auto_mode:
+            print(f"\n[AUTO MODE] Skipping: {message}")
+            return
         input(f"\n{message}")
 
     def step_1_welcome(self):
@@ -1147,7 +1151,12 @@ class WorkflowCoach:
         }
 
         while True:
-            choice = input("Ton choix : ").strip()
+            if self.auto_mode:
+                # En mode auto, choisir automatiquement option 1 (traiter une séance)
+                choice = "1"
+                print(f"\n[AUTO MODE] Choix automatique : {choice}")
+            else:
+                choice = input("Ton choix : ").strip()
 
             if choice == "0":
                 return "exit", gaps_data
@@ -1156,6 +1165,10 @@ class WorkflowCoach:
                 action = option_mapping[choice]
                 return action, gaps_data
             else:
+                if self.auto_mode:
+                    # En mode auto, éviter boucle infinie
+                    print("❌ Aucune option valide disponible")
+                    return "exit", gaps_data
                 print("❌ Choix invalide, réessaye.")
 
     def step_2_collect_feedback(self):
@@ -2279,7 +2292,13 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
         print()
 
         while True:
-            valid = input("✓ L'analyse est-elle valide et prête ? (o/n) : ").strip().lower()
+            if self.auto_mode:
+                # En mode auto, valider automatiquement
+                valid = "o"
+                print("\n[AUTO MODE] Validation automatique : oui")
+            else:
+                valid = input("✓ L'analyse est-elle valide et prête ? (o/n) : ").strip().lower()
+
             if valid in ['o', 'n']:
                 break
             print("⚠️  Répondre 'o' ou 'n'")
@@ -2951,6 +2970,12 @@ Exemples:
         help="Mode réconciliation batch pour séances sautées/annulées (requiert --week-id)"
     )
 
+    parser.add_argument(
+        '--auto',
+        action='store_true',
+        help="Mode automatique non-interactif (skip tous les wait/input)"
+    )
+
     args = parser.parse_args()
 
     # Handle --list-providers
@@ -2998,7 +3023,8 @@ Exemples:
         activity_id=args.activity_id,
         week_id=args.week_id,
         servo_mode=args.servo_mode,
-        provider=args.provider
+        provider=args.provider,
+        auto_mode=args.auto
     )
 
     # Mode réconciliation batch
