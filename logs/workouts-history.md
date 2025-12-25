@@ -5880,3 +5880,22 @@ Le repos planifié permet une récupération complète sans impact négatif sur 
 ---
 
 
+
+
+### S072-05-TEC-TechniqueCadence-V001
+Date : 19/12/2025
+
+#### Statut
+**⏭️  SÉANCE SAUTÉE**
+
+#### Workout Planifié
+- Nom : S072-05-TEC-TechniqueCadence-V001
+- TSS prévu : 0
+
+#### Raison
+emploi du temps
+
+#### Notes
+Session planifiée non réalisée. Aucune donnée d'exécution disponible.
+
+
