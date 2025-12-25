@@ -60,6 +60,51 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S073-04-FOR-ForceEndurance-V001
+Date : 25/12/2025
+
+#### Métriques Pré-séance
+- CTL : 46
+- ATL : 40
+- TSB : +6
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 55min
+- IF : 0.65
+- TSS : 40
+- Puissance moyenne : 138W
+- Puissance normalisée : 144W
+- Cadence moyenne : 76rpm
+- FC moyenne : 96bpm
+- Découplage : 2.3%
+
+#### Exécution Technique
+Excellente adhérence au plan avec cadence moyenne 76rpm parfaitement cohérente avec les phases force (60rpm cible). Découplage cardiovasculaire exceptionnel à 2.3% validant une exécution aérobiquement stable. Léger déficit puissance (-4W vs planifié) compensé par durée +1min, maintenant TSS cible.
+
+#### Charge d'Entraînement
+TSS 40 réalisé conforme aux 39 prévus, charge d'entraînement modérée. TSB positif (+6) approprié pour travail force, permettant sollicitation neuromusculaire sans fatigue résiduelle.
+
+#### Validation Objectifs
+- ✅ Cadence force respectée (76rpm moyen cohérent avec 60rpm phases force)
+- ✅ Intensité zone 2 maintenue (IF 0.65)
+- ✅ Qualité aérobie validée (découplage 2.3% < 7.5%)
+
+#### Points d'Attention
+- Sommeil 0.0h documenté : vérifier si donnée manquante ou récupération compromise
+- Légère sous-performance puissance (-2.8%) à surveiller si récurrence
+
+#### Recommandations Progression
+1. Maintenir format force-endurance avec alternance cadence 60-90rpm validée
+2. Programmer prochaine séance force avec intensité +2-3% si récupération complète
+
+#### Métriques Post-séance
+- CTL : 46
+- ATL : 40
+- TSB : +6
+
+---
+
 ### S069-04-FOR-ForceEndurance
 Date : 27/11/2025
 
