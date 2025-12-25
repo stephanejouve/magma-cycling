@@ -3,11 +3,11 @@
 workflow_coach.py - Orchestrateur du workflow d'analyse de séance
 
 Ce script guide l'utilisateur à travers tout le processus d'analyse :
-1. Détection du type de session Claude (nouveau/existant/projet)
+1. Détection du type de session (nouveau/existant/projet)
 2. Guidage pour l'initialisation du contexte si nécessaire
 3. Collecte optionnelle du feedback athlète
 4. Préparation du prompt d'analyse
-5. Instructions pour Claude.ai
+5. Analyse par IA (automatique ou manuelle selon provider)
 6. Validation de la réponse
 7. Insertion de l'analyse
 8. Commit git optionnel
@@ -15,6 +15,7 @@ Ce script guide l'utilisateur à travers tout le processus d'analyse :
 Usage:
     python3 cyclisme_training_logs/workflow_coach.py [--skip-feedback] [--skip-git]
     python3 cyclisme_training_logs/workflow_coach.py --activity-id i123456
+    python3 cyclisme_training_logs/workflow_coach.py --provider mistral_api
 """
 
 import argparse
@@ -40,6 +41,15 @@ from cyclisme_training_logs.config import get_ai_config
 import logging
 
 logger = logging.getLogger(__name__)
+
+# Provider display names for UI messages
+PROVIDER_DISPLAY_NAMES = {
+    'clipboard': 'Claude.ai (manuel)',
+    'mistral_api': 'Mistral AI',
+    'claude_api': 'Claude API',
+    'openai': 'OpenAI',
+    'ollama': 'Ollama'
+}
 
 
 class WorkflowCoach:
@@ -793,7 +803,7 @@ class WorkflowCoach:
         print("1. ✅ Bienvenue et présentation")
         print("2. 💭 Collecte feedback athlète (optionnel)")
         print("3. 📝 Préparation prompt d'analyse")
-        print("4. 🤖 Envoi à Claude.ai")
+        print("4. 🤖 Analyse par IA")
         print("5. ✅ Validation de l'analyse")
         print("6. 💾 Insertion dans les logs")
         print("7. 💾 Commit git (optionnel)")
@@ -1289,7 +1299,7 @@ class WorkflowCoach:
         )
 
         print("Récupération de la séance depuis Intervals.icu...")
-        print("Génération du prompt optimisé pour Claude...")
+        print("Génération du prompt optimisé pour l'IA...")
         print()
         print("⏱️  Temps estimé : 10 secondes")
         self.print_separator()
@@ -1344,11 +1354,11 @@ class WorkflowCoach:
 
         # Execute analysis based on provider type
         if self.current_provider == 'clipboard':
-            # Clipboard workflow: user pastes in Claude.ai manually
+            # Clipboard workflow: user pastes in IA manually
             print("✅ Prompt copié dans le presse-papier")
             print()
             print("📋 Instructions :")
-            print("   1. Ouvrez Claude.ai dans votre navigateur")
+            print("   1. Ouvrez votre IA (Claude.ai, ChatGPT, etc.)")
             print("   2. Collez le prompt (Cmd+V)")
             print("   3. Attendez la réponse complète")
             print("   4. Copiez TOUTE la réponse (Cmd+A puis Cmd+C)")
@@ -1752,7 +1762,7 @@ class WorkflowCoach:
         print("\n" + "=" * 70)
         print("💡 Que veux-tu faire avec ces markdowns ?")
         print("=" * 70)
-        print("  [1] Enrichir avec Claude.ai (analyse coach)")
+        print("  [1] Enrichir avec IA (analyse coach)")
         print("  [2] Insérer tel quel dans workouts-history.md")
         print("  [3] Export fichier seulement")
         print("  [4] Copier dans presse-papier")
@@ -1765,13 +1775,13 @@ class WorkflowCoach:
             return "exit_workflow"
 
         elif action == "1":
-            # Enrichissement Claude.ai
+            # Enrichissement IA
             print("\n🤖 Génération prompt d'enrichissement Coach IA...")
             if self._generate_coach_prompt(markdowns_generated):
                 print("\n✅ Prompt copié dans le presse-papier")
                 print("\n→ Continuation workflow pour enrichissement...")
                 print("   Étapes suivantes :")
-                print("   • Coller dans Claude.ai")
+                print("   • Coller dans votre IA")
                 print("   • Récupérer analyse enrichie")
                 print("   • Valider et insérer")
                 # Sauvegarder markdowns pour référence
@@ -1819,7 +1829,7 @@ class WorkflowCoach:
         result = self._show_special_sessions()
 
         if result == "continue_workflow":
-            # Enrichissement Claude.ai → continuer vers step 4
+            # Enrichissement IA → continuer vers step 4
             return "continue"
         else:
             # Export/Copie/Insertion → terminé
@@ -1887,7 +1897,7 @@ class WorkflowCoach:
         print("\n" + "=" * 70)
         print("💡 Que veux-tu faire avec ces markdowns ?")
         print("=" * 70)
-        print("  [1] Enrichir avec Claude.ai (analyse coach)")
+        print("  [1] Enrichir avec IA (analyse coach)")
         print("  [2] Insérer tel quel dans workouts-history.md")
         print("  [3] Export fichier seulement")
         print("  [4] Copier dans presse-papier")
@@ -1900,7 +1910,7 @@ class WorkflowCoach:
             return "exit"
 
         elif action == "1":
-            # Enrichissement Claude.ai
+            # Enrichissement IA
             print("\n🤖 Génération prompt d'enrichissement Coach IA...")
             if self._generate_coach_prompt(markdowns_generated):
                 print("\n✅ Prompt copié dans le presse-papier")
@@ -2137,12 +2147,15 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
         self.clear_screen()
 
         # Afficher le nom de la séance dans le header
+        # Get provider display name
+        provider_name = PROVIDER_DISPLAY_NAMES.get(self.current_provider, 'IA')
+
         subtitle = "Étape 4/7 : Envoi du prompt"
         if self.activity_name:
             subtitle += f"\n🚴 {self.activity_name}"
 
         self.print_header(
-            "🤖 Analyse par Claude.ai",
+            f"🤖 Analyse par {provider_name}",
             subtitle
         )
 
@@ -2150,18 +2163,18 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
         print()
         print("📋 INSTRUCTIONS :")
         print()
-        print("1. Ouvrir Claude.ai (nouveau chat ou conversation existante)")
-        print("   → https://claude.ai")
+        print("1. Ouvrir votre IA (Claude.ai, ChatGPT, etc.)")
+        print("   → https://claude.ai ou votre plateforme préférée")
         print()
         print("2. Coller le prompt (Cmd+V ou Ctrl+V)")
         print()
         print("3. Envoyer le message")
         print()
-        print("4. Attendre la réponse de Claude (~30-60 secondes)")
+        print("4. Attendre la réponse de l'IA (~30-60 secondes)")
         print()
         print("5. Copier UNIQUEMENT le bloc markdown de l'analyse")
         print("   → Du premier ### jusqu'à la dernière ligne")
-        print("   → Ne pas inclure le texte explicatif de Claude")
+        print("   → Ne pas inclure le texte explicatif")
         print()
         print("⏱️  Temps estimé : 1-2 minutes")
         print()
@@ -2400,7 +2413,7 @@ Réponds maintenant."""
             print("✅ Prompt asservissement copié dans le presse-papier")
             print()
             print("📋 INSTRUCTIONS :")
-            print("1. Retourne dans Claude.ai (même conversation)")
+            print("1. Retourne dans ton IA (même conversation)")
             print("2. Colle le prompt supplémentaire (Cmd+V)")
             print("3. Envoie le message")
             print("4. Copie la réponse complète")
@@ -2683,7 +2696,12 @@ Réponds maintenant."""
                     # Workflow classique : traiter UNE séance exécutée
                     self.step_2_collect_feedback()
                     self.step_3_prepare_analysis()
-                    self.step_4_paste_prompt()
+
+                    # Step 4 only for clipboard provider (manual paste)
+                    # API providers already completed analysis in step 3
+                    if self.current_provider == 'clipboard':
+                        self.step_4_paste_prompt()
+
                     self.step_5_validate_analysis()
                     self.step_6_insert_analysis()
 
@@ -2706,8 +2724,10 @@ Réponds maintenant."""
                     result = self._handle_rest_cancellations()
 
                     if result == "continue":
-                        # Enrichissement Claude.ai choisi → continuer workflow
-                        self.step_4_paste_prompt()
+                        # Enrichissement IA choisi → continuer workflow
+                        # Step 4 only for clipboard provider
+                        if self.current_provider == 'clipboard':
+                            self.step_4_paste_prompt()
                         self.step_5_validate_analysis()
                         self.step_6_insert_analysis()
                         self.step_7_git_commit()
@@ -2731,8 +2751,10 @@ Réponds maintenant."""
                     result = self._handle_skipped_sessions(gaps_data['skipped'])
 
                     if result == "continue":
-                        # Enrichissement Claude.ai choisi → continuer workflow
-                        self.step_4_paste_prompt()
+                        # Enrichissement IA choisi → continuer workflow
+                        # Step 4 only for clipboard provider
+                        if self.current_provider == 'clipboard':
+                            self.step_4_paste_prompt()
                         self.step_5_validate_analysis()
                         self.step_6_insert_analysis()
                         self.step_7_git_commit()
