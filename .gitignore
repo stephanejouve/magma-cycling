@@ -50,6 +50,17 @@ env/
 dist/
 build/
 
+# Test artifacts
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# Temporary logs
+logs/*.txt
+logs/erreurs_*.log
+logs/sortie_*.log
+
 # Fichiers spécifiques projet (si besoin)
 # private/
 # drafts/
