@@ -194,14 +194,17 @@ class AnalysisParser:
 class WorkoutHistoryManager:
     """Gestionnaire de workouts-history.md"""
 
-    def __init__(self, logs_dir=None):
+    def __init__(self, logs_dir=None, yes_confirm=False):
         """
         Initialize WorkoutHistoryManager.
 
         Args:
             logs_dir: Legacy parameter, use data repo config instead
+            yes_confirm: Auto-confirm all prompts (for non-interactive mode)
         """
         from cyclisme_training_logs.config import get_data_config
+
+        self.yes_confirm = yes_confirm
 
         # Use data repo config if available
         if logs_dir is None:
@@ -263,10 +266,14 @@ class WorkoutHistoryManager:
         if self.check_duplicate(content, analysis_text):
             date = AnalysisParser.extract_date_from_analysis(analysis_text)
             print(f"⚠️  Une entrée similaire existe déjà pour la date {date}")
-            response = input("   Continuer quand même ? (y/N) : ")
-            if response.lower() != 'y':
-                print("❌ Insertion annulée")
-                return False
+            if self.yes_confirm:
+                print("   ✅ Overwrite confirmé (--yes)")
+                response = 'y'
+            else:
+                response = input("   Continuer quand même ? (y/N) : ")
+                if response.lower() != 'y':
+                    print("❌ Insertion annulée")
+                    return False
 
         # Trouver le point d'insertion (première occurrence de "## Historique")
         insert_marker = "## Historique"
@@ -427,7 +434,7 @@ def main():
 
     # Insérer
     print("✍️  Insertion dans workouts-history.md...")
-    manager = WorkoutHistoryManager(args.logs_dir)
+    manager = WorkoutHistoryManager(args.logs_dir, yes_confirm=args.yes)
 
     if manager.insert_analysis(analysis):
         print("   ✅ Analyse insérée avec succès !")

@@ -2353,7 +2353,7 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
                 sys.exit(1)
 
         # Lancer le script d'insertion
-        cmd = ["python3", str(self.scripts_dir / "insert_analysis.py")]
+        cmd = ["poetry", "run", "insert-analysis"]
         if self.auto_mode:
             cmd.append("--yes")
         result = subprocess.run(cmd)
@@ -2816,7 +2816,7 @@ Réponds maintenant."""
                     print("\n" + "═" * 70)
                     print("🔄 Retour détection gaps pour sessions restantes...")
                     print("═" * 70)
-                    input("\nAppuyer sur ENTRÉE pour continuer...")
+                    self.wait_user("\nAppuyer sur ENTRÉE pour continuer...")
                     # Continue la boucle → retour step_1b pour gaps restants
 
                 elif choice == "batch_rest_cancelled":
@@ -2843,7 +2843,7 @@ Réponds maintenant."""
                     print("\n" + "═" * 70)
                     print("🔄 Retour détection gaps pour sessions restantes...")
                     print("═" * 70)
-                    input("\nAppuyer sur ENTRÉE pour continuer...")
+                    self.wait_user("\nAppuyer sur ENTRÉE pour continuer...")
                     # Continue la boucle → retour step_1b pour gaps restants
 
                 elif choice == "batch_skipped":
@@ -2870,7 +2870,7 @@ Réponds maintenant."""
                     print("\n" + "═" * 70)
                     print("🔄 Retour détection gaps pour sessions restantes...")
                     print("═" * 70)
-                    input("\nAppuyer sur ENTRÉE pour continuer...")
+                    self.wait_user("\nAppuyer sur ENTRÉE pour continuer...")
                     # Continue la boucle → retour step_1b pour gaps restants
 
                 elif choice == "batch_all":
