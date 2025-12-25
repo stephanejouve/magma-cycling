@@ -60,6 +60,484 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S047-02-REC-RecuperationAdaptive
+Date : 24/06/2025
+
+#### Métriques Pré-séance
+- CTL : 67
+- ATL : 81
+- TSB : -14
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 44min
+- IF : 0.59
+- TSS : 26
+- Puissance moyenne : 128W
+- Puissance normalisée : 130W
+- Cadence moyenne : 86rpm
+- FC moyenne : 99bpm
+- Découplage : 0.3%
+
+#### Exécution Technique
+Séance de récupération active bien exécutée avec une puissance moyenne (128W) et normalisée (130W) cohérentes avec la zone Z1-Z2 cible (60-65% FTP). Le découplage cardiovasculaire exceptionnellement bas (0.3%) confirme une exécution technique optimale, sans signe de fatigue résiduelle malgré un TSB pré-séance négatif (-14). La cadence stable (86rpm) et la FC moyenne modérée (99bpm) reflètent une récupération active efficace.
+
+#### Charge d'Entraînement
+Le TSS réalisé (26) est légèrement inférieur au planifié (27), confirmant une séance légère bien adaptée au contexte de récupération post-terrain. Le TSB reste stable (-14), indiquant que cette séance n'a pas aggravé la fatigue accumulée, tout en favorisant l'assimilation des efforts précédents.
+
+#### Validation Objectifs
+- ✅ **Zone cible respectée** : 60-65% FTP maintenu (IF 0.59)
+- ✅ **Découplage validé** : 0.3% (<7.5% seuil critique)
+- ✅ **Durée et TSS cohérents** : 44min/26 TSS vs 45min/27 TSS planifiés
+
+#### Points d'Attention
+- **Sommeil nul** : Absence totale de sommeil la veille (0.0h), facteur limitant majeur pour la récupération malgré une exécution technique parfaite.
+- **TSB négatif persistant** : -14 pré/post-séance, nécessitant une vigilance accrue sur les prochaines séances pour éviter un surmenage.
+
+#### Recommandations Progression
+1. **Prioriser la récupération globale** : Cibler un sommeil ≥7h dès que possible pour compenser la dette actuelle, surtout avant les séances VO2 ou seuil.
+2. **Maintenir ce format de récupération active** : Valider son efficacité (découplage <1%) comme protocole standard post-terrain, en l'associant systématiquement à une hydratation optimisée (ex : électrolytes si séance longue précédente).
+3. **Surveiller le TSB** : Si le TSB reste ≤-15 après 48h, envisager une journée de repos complet ou une séance Z1 très légère (<30min) pour stabiliser la fatigue.
+
+#### Métriques Post-séance
+- CTL : 67
+- ATL : 81
+- TSB : -14
+
+---
+
+### Au grès de l'ombre par la comté
+Date : 23/06/2025
+
+#### Métriques Pré-séance
+- CTL : 68
+- ATL : 89
+- TSB : -21
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 125min
+- IF : 0.84
+- TSS : 148
+- Puissance moyenne : 143W
+- Puissance normalisée : 185W
+- Cadence moyenne : 72rpm
+- FC moyenne : 113bpm
+- Découplage : 23.6%
+
+#### Exécution Technique
+Séance positionnée en **Sweet-Spot/Seuil bas** (IF 0.84, NP 185W ≈ 84% FTP). Cependant, le **découplage cardiovasculaire de 23.6% est alarmant** (seuil critique <7.5%), indiquant une dérive majeure de la FC par rapport à la puissance. La cadence basse (72rpm) suggère un effort en force, mais non structuré (pas de bloc FOR identifié). Incohérence entre l'IF élevé et la FC moyenne modérée (113bpm), possiblement liée à la fatigue préexistante.
+
+#### Charge d'Entraînement
+TSS de 148 (modéré) mais **TSB pré-séance à -21** (fatigue élevée) et sommeil nul. Cette séance a aggravé la fatigue aiguë (ATL stable à 89) sans progression significative de la forme (CTL inchangé). Risque de surcharge si répétée sans récupération.
+
+#### Validation Objectifs
+- ❌ **Découplage <7.5%** (23.6% observé)
+- ❌ **Cadence adaptée** (72rpm trop basse pour Sweet-Spot)
+- ❌ **TSB compatible** (TSB -21 contre-indique intensité)
+
+#### Points d'Attention
+- **Découplage extrême** : Possible déshydratation, fatigue cumulative, ou erreur capteur (vérifier sur Intervals.icu).
+- **Sommeil nul** : Facteur aggravant la dérive cardiovasculaire.
+- **Cadence anormalement basse** : Risque de surcharge musculaire sans bénéfice technique.
+
+#### Recommandations Progression
+1. **Vérification technique** : Confirmer les données de puissance/FC sur Intervals.icu (découplage suspect).
+2. **Priorité récupération** : 48h de repos actif (Z1) + sommeil ciblé (≥7h) pour rétablir TSB.
+3. **Revoir format** : Si Sweet-Spot visé, cadence ≥85rpm et découplage <7.5% obligatoires. Sinon, basculer en endurance pure (Z2) avec monitoring FC.
+
+#### Métriques Post-séance
+- CTL : 68
+- ATL : 89
+- TSB : -21
+
+---
+
+### S047-07-REC-RecuperationOptionnelle
+Date : 22/06/2025
+
+#### Métriques Pré-séance
+- CTL : 66
+- ATL : 80
+- TSB : -14
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 66min
+- IF : 0.58
+- TSS : 37
+- Puissance moyenne : 127W
+- Puissance normalisée : 127W
+- Cadence moyenne : 85rpm
+- FC moyenne : 99bpm
+- Découplage : 2.5%
+
+#### Exécution Technique
+Séance de récupération active bien exécutée en zone Z1-Z2 (60% FTP), avec une cadence stable (85rpm) et un découplage cardiovasculaire excellent (2.5% < 7.5%). La puissance moyenne et normalisée sont quasi identiques, confirmant un effort très régulier et sans variations, conforme à l'objectif de récupération.
+
+#### Charge d'Entraînement
+TSS de 37 (proche des 38 prévus) et IF de 0.58 indiquent une séance légère, cohérente avec un jour de récupération. Le TSB reste à -14, confirmant une fatigue persistante malgré cette séance de faible intensité, probablement liée au déficit de sommeil (0.0h mesuré).
+
+#### Validation Objectifs
+- ✅ **Récupération active** : IF < 0.70 et découplage < 7.5%
+- ✅ **Adhérence au plan** : Durée, TSS et zones respectées (±1%)
+- ❌ **Sommeil** : Absence de données de sommeil (0.0h), facteur critique pour la récupération
+
+#### Points d'Attention
+- **Sommeil non mesuré** : Risque de sous-estimation de la fatigue réelle (TSB à -14 déjà élevé).
+- **FC moyenne élevée pour Z1-Z2** : 99bpm (proche de 68-83% FCmax) suggère une récupération incomplète ou un stress résiduel.
+- **Optionnelle non exploitée** : La séance a été réalisée en totalité malgré le contexte de fatigue (TSB -14), alors qu'un arrêt précoce était autorisé.
+
+#### Recommandations Progression
+1. **Prioriser le sommeil** : Viser 7h+ pour permettre une récupération efficace et éviter l'accumulation de fatigue (TSB négatif prolongé).
+2. **Réévaluer l'utilité des séances optionnelles** : En cas de TSB < -10 ou sommeil < 6h, privilégier un repos complet plutôt qu'une récupération active.
+3. **Surveiller la FC de repos** : Vérifier si la FC moyenne élevée en Z1-Z2 persiste, signe potentiel de surmenage ou de récupération insuffisante.
+
+#### Métriques Post-séance
+- CTL : 66
+- ATL : 80
+- TSB : -14
+
+---
+
+### 100tout pile@CzechMate
+Date : 21/06/2025
+
+#### Métriques Pré-séance
+- CTL : 67
+- ATL : 87
+- TSB : -20
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 244min
+- IF : 0.87
+- TSS : 308
+- Puissance moyenne : 146W
+- Puissance normalisée : 191W
+- Cadence moyenne : 69rpm
+- FC moyenne : 114bpm
+- Découplage : 10.7%
+
+#### Exécution Technique
+Séance positionnée en **endurance modérée à sweet-spot** (IF 0.87, NP 191W ~87% FTP). **Découplage élevé (10.7%)** indique une dérive cardiovasculaire significative, probablement liée à la fatigue préexistante (TSB -20) et au manque de sommeil. Cadence basse (69rpm) suggère un effort soutenu en force, cohérent avec l'intégration de relief (Puy de Mûr).
+
+#### Charge d'Entraînement
+**TSS élevé (308)** pour une sortie de 4h, confirmant une charge importante malgré un TSB déjà négatif (-20). L'ATL reste stable (87), mais la combinaison durée + intensité relative (IF 0.87) risque d'accentuer la fatigue résiduelle.
+
+#### Validation Objectifs
+- ❌ **Découplage <7.5%** (10.7% mesuré)
+- ✅ **Volume cible atteint** (100km)
+- ❌ **Récupération optimale** (TSB -20, sommeil 0h)
+
+#### Points d'Attention
+- **Fatigue préexistante** : TSB -20 avant la séance, incompatible avec un effort de cette intensité.
+- **Sommeil nul** : Absence totale de sommeil la veille, facteur aggravant pour la récupération.
+- **Découplage critique** : Indique une exécution technique dégradée, possiblement liée à la fatigue ou aux conditions terrain (relief).
+- **Cadence basse** : 69rpm en endurance suggère un effort en force non optimal pour le développement aérobie.
+
+#### Recommandations Progression
+1. **Prioriser la récupération** : Semaine de décharge immédiate (-40% TSS) pour ramener le TSB vers -10/+5.
+2. **Optimiser le sommeil** : Cibler ≥7h/nuit pour les prochaines séances, surtout avant les efforts >3h.
+3. **Réévaluer la stratégie terrain** : Limiter les sorties >3h en TSB négatif, privilégier l'indoor pour contrôler l'intensité.
+4. **Travailler la cadence** : Intégrer des blocs à 85-95rpm en endurance pour améliorer l'efficacité de pédalage.
+
+#### Métriques Post-séance
+- CTL : 67
+- ATL : 87
+- TSB : -20
+
+---
+
+### S045-07-REC-32km@rec@LimagneExtended@CzechMate
+Date : 15/06/2025
+
+#### Métriques Pré-séance
+- CTL : 65
+- ATL : 82
+- TSB : -17
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 77min
+- IF : 0.69
+- TSS : 61
+- Puissance moyenne : 122W
+- Puissance normalisée : 151W
+- Cadence moyenne : 74rpm
+- FC moyenne : 103bpm
+- Découplage : -5.6%
+
+#### Exécution Technique
+Séance de récupération active validée avec un découplage cardiovasculaire excellent (-5.6%, <7.5% seuil). L'IF (0.69) et la puissance normalisée (151W) correspondent à une intensité Z2 (65-75% FTP), idéale pour une récupération. La cadence basse (74rpm) suggère un effort très léger, cohérent avec l'objectif de récupération.
+
+#### Charge d'Entraînement
+TSS de 61 conforme à une séance de récupération, sans impact significatif sur la fatigue (ATL stable à 82). Le TSB reste négatif (-17), mais cette séance ne devrait pas aggraver la fatigue accumulée.
+
+#### Validation Objectifs
+- ✅ **Intensité Z1-Z2** : IF 0.69 et puissance dans la plage cible
+- ✅ **Découplage <7.5%** : Exécution technique optimale
+- ✅ **Durée adaptée** : 77min suffisant pour une récupération active
+
+#### Points d'Attention
+- **Sommeil nul** : Absence totale de sommeil avant la séance, facteur limitant majeur pour la récupération.
+- **Cadence basse** : 74rpm pourrait indiquer un effort trop passif (risque de stagnation circulatoire).
+- **TSB négatif** : Malgré la récupération, la fatigue chronique (TSB -17) persiste.
+
+#### Recommandations Progression
+1. **Prioriser le sommeil** : Cibler 7h+ pour les prochaines séances, surtout avant les efforts intenses (VO2/Seuil).
+2. **Ajuster la cadence** : Viser 80-85rpm en Z1-Z2 pour optimiser la circulation sanguine et la récupération active.
+3. **Surveiller le TSB** : Si le TSB reste < -15, envisager une semaine de décharge (-30% volume) pour éviter le surentraînement.
+
+#### Métriques Post-séance
+- CTL : 65
+- ATL : 82
+- TSB : -17
+
+---
+
+### S045-06-72km@explore@Courpiere@CzechMate
+Date : 14/06/2025
+
+#### Métriques Pré-séance
+- CTL : 65
+- ATL : 85
+- TSB : -20
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 194min
+- IF : 0.87
+- TSS : 247
+- Puissance moyenne : 139W
+- Puissance normalisée : 192W
+- Cadence moyenne : 59rpm
+- FC moyenne : 111bpm
+- Découplage : 0.5%
+
+#### Exécution Technique
+Séance d'endurance longue avec une intensité élevée (IF 0.87) pour un ride exploratoire, suggérant des variations de terrain (écart marqué entre puissance moyenne et normalisée). Le découplage exceptionnel (0.5%) valide une exécution technique de haute qualité malgré un TSB pré-séance très négatif (-20). La cadence basse (59rpm) pourrait indiquer un choix délibéré pour gérer l'effort en montée ou une fatigue musculaire.
+
+#### Charge d'Entraînement
+TSS élevé (247) pour une séance d'exploration, cohérent avec un IF proche du seuil. Le TSB reste à -20 post-séance, confirmant une fatigue accumulée significative. Cette charge pourrait compromettre la récupération pour les séances intensives prévues ultérieurement.
+
+#### Validation Objectifs
+- ✅ **Découplage <7.5%** : 0.5% (validation technique optimale)
+- ❌ **TSB pré-séance** : -20 (risque élevé de sous-performance)
+- ❌ **Cadence** : 59rpm (en dessous des standards d'endurance 85-95rpm)
+
+#### Points d'Attention
+- **Sommeil nul** : Absence totale de sommeil avant la séance, incompatible avec une récupération optimale.
+- **Fatigue résiduelle** : TSB -20 pré-séance, proche du seuil de surentraînement (-30).
+- **Cadence atypique** : 59rpm suggère soit un choix tactique (montées), soit une fatigue musculaire non résolue.
+
+#### Recommandations Progression
+1. **Prioriser la récupération** : Intégrer 48h de repos actif (Z1) ou une semaine de décharge (-40% volume) pour rétablir un TSB positif.
+2. **Analyser la cadence** : Vérifier si la cadence basse est liée au terrain (montées) ou à une fatigue musculaire (test de force en Z2 post-récupération).
+3. **Optimiser le sommeil** : Cibler ≥7h/nuit pour les prochaines séances intensives, surtout avec un TSB négatif.
+
+#### Métriques Post-séance
+- CTL : 65
+- ATL : 85
+- TSB : -20
+
+---
+
+### S045-02b-REC-2x12km@rec@5villages@CzechMate
+Date : 10/06/2025
+
+#### Métriques Pré-séance
+- CTL : 64
+- ATL : 86
+- TSB : -22
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 63min
+- IF : 0.91
+- TSS : 87
+- Puissance moyenne : 154W
+- Puissance normalisée : 200W
+- Cadence moyenne : 71rpm
+- FC moyenne : 121bpm
+- Découplage : -15.9%
+
+#### Exécution Technique
+Séance marquée comme "récupération" mais exécutée à IF 0.91 (zone Seuil/Z4), bien au-dessus de la cible Z1-Z2 (IF 0.55-0.75). Découplage cardiovasculaire de -15.9% révèle une dérive majeure, incompatible avec un effort de récupération. La cadence basse (71rpm) suggère un effort en force plutôt qu'en endurance, aggravant la fatigue.
+
+#### Charge d'Entraînement
+TSS de 87 pour une séance de récupération est excessif (cible <50). TSB pré-séance déjà critique (-22) et inchangé post-séance, confirmant une accumulation de fatigue non résolue. ATL maintenue à 86, indiquant une surcharge persistante.
+
+#### Validation Objectifs
+- ❌ Intensité adaptée à la récupération (IF 0.91 > 0.75)
+- ❌ Découplage <7.5% (-15.9% observé)
+- ❌ TSS cohérent avec récupération (87 > 50 cible)
+
+#### Points d'Attention
+- Absence totale de sommeil la veille (0.0h), facteur aggravant la fatigue.
+- Ceinture cardio manquante au départ, limitant l'analyse fine du découplage.
+- Tags "Overtraining warning" et "Hillclimb Ride" contradictoires avec l'objectif "REC".
+
+#### Recommandations Progression
+1. **Annuler la séance suivante** ou la remplacer par 60min en Z1 (IF <0.60) avec monitoring strict du découplage.
+2. **Prioriser le sommeil** : Viser 7h minimum avant toute séance d'intensité, avec suivi Withings.
+3. **Revoir le protocole de récupération** : IF ≤0.65, cadence ≥85rpm, durée ≤60min, TSS <50.
+4. **Tester la discipline indoor** pour cette séance afin d'éviter les variations de terrain non contrôlées.
+
+#### Métriques Post-séance
+- CTL : 64
+- ATL : 86
+- TSB : -22
+
+---
+
+### S045-01-MIX-51km@UnPetitTourDesBosses@CzechMate
+Date : 09/06/2025
+
+#### Métriques Pré-séance
+- CTL : 63
+- ATL : 83
+- TSB : -20
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 141min
+- IF : 0.93
+- TSS : 202
+- Puissance moyenne : 160W
+- Puissance normalisée : 204W
+- Cadence moyenne : 64rpm
+- FC moyenne : 118bpm
+- Découplage : 8.3%
+
+#### Exécution Technique
+Séance à haute intensité (IF 0.93 > seuil FTP) avec découplage cardiovasculaire élevé (8.3% > 7.5%), indiquant une fatigue significative ou une exécution technique suboptimale. La cadence basse (64rpm) suggère un effort en force ou en montée, mais n'est pas cohérente avec une séance de type "mixte" attendue pour ce format.
+
+#### Charge d'Entraînement
+TSS élevé (202) pour une durée modérée, confirmant une intensité importante. TSB pré-séance déjà négatif (-20) et absence de sommeil (0.0h) aggravent le risque de surcharge. ATL stable (83) mais CTL inchangé (63) indique un manque d'adaptation chronique.
+
+#### Validation Objectifs
+- ❌ Découplage < 7.5% (8.3% mesuré)
+- ❌ Cadence adaptée au format (64rpm trop bas pour un "mixte")
+- ❌ TSB pré-séance compatible avec VO2/Seuil (TSB -20 < -5 requis)
+
+#### Points d'Attention
+- **Sommeil nul** : Facteur limitant majeur pour la récupération et l'adaptation.
+- **Découplage élevé** : Possible déshydratation, fatigue résiduelle ou conditions météo défavorables.
+- **Cadence atypique** : Vérifier si parcours vallonné ou problème technique (braquet, position).
+- **Données manquantes** : Description et structure de la séance non disponibles (limite l'analyse fine).
+
+#### Recommandations Progression
+1. **Prioriser la récupération** : 48h de repos actif (Z1) ou séance de récupération (IF < 0.60) pour normaliser le TSB.
+2. **Investiguer la cadence basse** : Analyser le parcours (montées >5% ?) ou vérifier le matériel (transmission, braquet).
+3. **Valider la structure de la séance** : Comparer avec le fichier .zwo ou Intervals.icu pour confirmer les zones cibles (Sweet-Spot/Seuil/VO2).
+4. **Surveiller le sommeil** : Cibler ≥7h/nuit avant toute séance à TSB < -10 ou intensité >85% FTP.
+
+#### Métriques Post-séance
+- CTL : 63
+- ATL : 83
+- TSB : -20
+
+---
+
+### Petite boucle
+Date : 07/06/2025
+
+#### Métriques Pré-séance
+- CTL : 61
+- ATL : 71
+- TSB : -10
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 114min
+- IF : 0.93
+- TSS : 163
+- Puissance moyenne : 151W
+- Puissance normalisée : 204W
+- Cadence moyenne : 65rpm
+- FC moyenne : 116bpm
+- Découplage : 21.1%
+
+#### Exécution Technique
+Séance réalisée en **hillclimb** avec un IF élevé (0.93) pour une sortie de 1h54, indiquant une intensité proche du seuil (Z4). Le découplage cardiovasculaire de **21.1%** est **très élevé** (>7.5% seuil critique), révélant une **dérive majeure** entre puissance et FC. La cadence basse (65rpm) suggère un effort en force, mais la FC moyenne (116bpm) et le découplage montrent une **fatigue précoce** ou une **mauvaise exécution technique**.
+
+#### Charge d'Entraînement
+TSS de **163** pour une séance de 1h54, cohérent avec un effort intense (IF 0.93). Le TSB pré-séance à **-10** (fatigue modérée) et l'absence de sommeil expliquent partiellement la dérive cardiovasculaire. Post-séance, le TSB reste à **-10**, confirmant un **impact limité sur la forme** malgré la charge.
+
+#### Validation Objectifs
+- ❌ **Découplage <7.5%** (21.1% observé)
+- ❌ **Cadence adaptée** (65rpm trop basse pour un effort prolongé en Z4)
+- ❌ **TSB pré-séance** (idéalement >-5 pour ce type d'effort)
+
+#### Points d'Attention
+- **Découplage extrême** : Possible surcharge, déshydratation, ou fatigue résiduelle.
+- **Sommeil nul** : Facteur aggravant pour la récupération et la performance.
+- **Cadence basse** : Risque de surcharge musculaire (asymétrie 56/44 possible).
+- **Données Strava** : Vérifier la cohérence des métriques sur Intervals.icu (puissance/FC).
+
+#### Recommandations Progression
+1. **Prioriser la récupération** : 48h de repos actif (Z1) ou séance légère (IF <0.65) pour stabiliser le TSB.
+2. **Analyser la cause du découplage** :
+   - Vérifier l'hydratation/nutrition pendant la séance (waypoints manquants ?).
+   - Contrôler la FC repos matinale les jours suivants (signe de surentraînement).
+3. **Adapter la cadence** : Cibler **85-95rpm** pour les efforts en Z4 afin de réduire la charge musculaire.
+4. **Revoir la stratégie "hillclimb"** : Fractionner l'effort (ex : 3×8min @90% FTP avec récupération) pour limiter la dérive.
+
+#### Métriques Post-séance
+- CTL : 61
+- ATL : 71
+- TSB : -10
+
+---
+
+### Vélo
+Date : 06/06/2025
+
+#### Métriques Pré-séance
+- CTL : 58
+- ATL : 57
+- TSB : +2
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 42min
+- IF : 0.97
+- TSS : 66
+- Puissance moyenne : 159W
+- Puissance normalisée : 213W
+- Cadence moyenne : 64rpm
+- FC moyenne : 122bpm
+- Découplage : 17.7%
+
+#### Exécution Technique
+Séance réalisée à **97% de la FTP (IF=0.97)**, ce qui la place en zone **Seuil (Z4)**. Cependant, le **découplage cardiovasculaire de 17.7%** (très élevé) indique une **dérive majeure** entre puissance et fréquence cardiaque, suggérant une **fatigue extrême** ou une **exécution technique dégradée**. La cadence basse (64rpm) et l'absence de données de sommeil (0.0h) renforcent cette hypothèse.
+
+#### Charge d'Entraînement
+Le **TSS de 66** est modéré pour une séance courte, mais l'**IF élevé (0.97)** et le **TSB pré-séance à +2** (proche de la zone de fatigue) montrent que cette intensité était **inadaptée** au contexte. L'ATL reste stable (57), mais le risque de surcharge est réel sans récupération immédiate.
+
+#### Validation Objectifs
+- ❌ **Découplage <7.5%** (17.7% observé)
+- ❌ **Puissance cible maintenue** (dérive FC excessive)
+- ❌ **Cadence adaptée** (64rpm trop basse pour Z4)
+
+#### Points d'Attention
+- **Découplage critique** : Vérifier la cause (fatigue, déshydratation, sommeil).
+- **Sommeil manquant** : Impact direct sur la récupération et la qualité de l'effort.
+- **Cadence anormalement basse** : Risque de surcharge musculaire et inefficacité technique.
+
+#### Recommandations Progression
+1. **Prioriser la récupération** : Séance de récupération active (Z1, 30-45min) ou repos complet dans les 24h.
+2. **Analyser les causes du découplage** : Vérifier l'hydratation, la nutrition pré-séance, et le sommeil des jours précédents.
+3. **Réévaluer la stratégie d'intensité** : Éviter les séances en Z4 avec un TSB ≤ +5 et un sommeil <7h.
+
+#### Métriques Post-séance
+- CTL : 58
+- ATL : 57
+- TSB : +2
+
+---
+
 ### Sortie Vélo le matin
 Date : 31/05/2025
 
