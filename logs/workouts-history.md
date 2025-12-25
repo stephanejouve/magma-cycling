@@ -60,6 +60,286 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### indieVelo - Workout: 05 - Récupération Active avec Accélérations (60 min)
+Date : 16/08/2024
+
+#### Métriques Pré-séance
+- CTL : 54
+- ATL : 61
+- TSB : -8
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 71min
+- IF : 0.58
+- TSS : 41
+- Puissance moyenne : 106W
+- Puissance normalisée : 119W
+- Cadence moyenne : 87rpm
+- FC moyenne : 98bpm
+- Découplage : 0.4%
+
+#### Exécution Technique
+Séance de récupération active bien exécutée avec un découplage cardiovasculaire exceptionnel (0.4%), confirmant une exécution technique optimale en zone d'endurance basse (Z1-Z2). La puissance normalisée (119W) légèrement supérieure à la moyenne (106W) suggère des accélérations contrôlées, cohérentes avec le format prévu. La FC moyenne (98bpm) reste dans la plage attendue pour une récupération active.
+
+#### Charge d'Entraînement
+TSS faible (41) conforme à une séance de récupération, maintenant un TSB stable à -8. Cette charge minimale permet une récupération active sans impacter significativement la fatigue (ATL inchangée à 61).
+
+#### Validation Objectifs
+- ✅ **Découplage <7.5%** : 0.4% (validation technique optimale)
+- ✅ **Intensité Z1-Z2** : IF 0.58 (récupération active confirmée)
+- ✅ **Durée adaptée** : 71min (prolongation modérée sans surcharge)
+
+#### Points d'Attention
+- **Données sommeil manquantes** : Absence de données sommeil (0.0h) limite l'analyse complète de la récupération.
+- **Poids non renseigné** : Impossible d'évaluer l'évolution W/kg ou l'impact nutritionnel.
+- **TSB pré-séance négatif (-8)** : À surveiller pour les séances intensives à venir (VO2 max ou seuil).
+
+#### Recommandations Progression
+1. **Vérifier la synchronisation des données sommeil** : Corriger la source Withings/Intervals.icu pour un suivi complet de la récupération.
+2. **Maintenir ce format de récupération** : Idéal pour les jours suivant des séances à haute intensité (ex. : séance "Endurance Tempo Progressif" du 15/08).
+3. **Planifier une séance d'activation neuromusculaire** : Avant la prochaine séance intensive pour optimiser la transition vers des efforts plus exigeants.
+
+#### Métriques Post-séance
+- CTL : 54
+- ATL : 61
+- TSB : -8
+
+---
+
+### indieVelo - Workout: 04 - Endurance Tempo Progressif (80 min)
+Date : 15/08/2024
+
+#### Métriques Pré-séance
+- CTL : 54
+- ATL : 64
+- TSB : -10
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 97min
+- IF : 0.67
+- TSS : 72
+- Puissance moyenne : 119W
+- Puissance normalisée : 136W
+- Cadence moyenne : 86rpm
+- FC moyenne : 105bpm
+- Découplage : 2.6%
+
+#### Exécution Technique
+Séance d'endurance tempo progressive bien exécutée avec un découplage cardiovasculaire excellent (2.6% < 7.5%), validant une exécution technique de qualité. L'IF de 0.67 et la puissance normalisée (136W) situent l'effort en zone Z2 haute/Z3 basse, cohérent avec un travail d'endurance active. La cadence moyenne (86rpm) est optimale pour ce type d'effort.
+
+#### Charge d'Entraînement
+TSS modéré (72) pour une durée de 97min, reflétant une intensité maîtrisée. Le TSB pré-séance (-10) indiquait une fatigue résiduelle modérée, mais la qualité d'exécution (découplage) montre une bonne tolérance à la charge. ATL stable (64) suggère une adaptation progressive.
+
+#### Validation Objectifs
+- ✅ Découplage < 7.5% (2.6%)
+- ✅ IF cohérent avec endurance tempo (0.67)
+- ✅ Cadence adaptée (86rpm)
+
+#### Points d'Attention
+- **Sommeil non renseigné** : Donnée critique manquante pour évaluer la récupération (facteur limitant identifié pour l'athlète).
+- **Poids non enregistré** : Suivi longitudinal impossible (objectif perte de poids en cours).
+- **TSB négatif (-10)** : Risque de surcharge si enchaînement avec des séances intenses sans récupération.
+
+#### Recommandations Progression
+1. **Prioriser le suivi du sommeil** : Vérifier la qualité/quantité (cible 7h+) via Withings pour valider la récupération avant les séances VO2.
+2. **Intégrer un bloc Sweet Spot** : Après validation de la récupération (TSB > -5), ajouter 2×15min à 88-90% FTP pour stimuler la progression FTP.
+3. **Surveiller le découplage** : Maintenir <5% pour les séances d'endurance longue (>2h) afin de valider l'économie d'effort.
+
+#### Métriques Post-séance
+- CTL : 54
+- ATL : 64
+- TSB : -10
+
+---
+
+### indieVelo - Workout: 05 - Récupération Active avec Accélérations (60 min)
+Date : 16/08/2024
+
+#### Métriques Pré-séance
+- CTL : 54
+- ATL : 61
+- TSB : -8
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 71min
+- IF : 0.58
+- TSS : 41
+- Puissance moyenne : 106W
+- Puissance normalisée : 119W
+- Cadence moyenne : 87rpm
+- FC moyenne : 98bpm
+- Découplage : 0.4%
+
+#### Exécution Technique
+Séance de récupération active bien exécutée avec un découplage cardiovasculaire exceptionnel (0.4%), validant une exécution technique optimale en Z1-Z2. L'IF (0.58) et la puissance normalisée (119W) confirment une intensité conforme à une récupération active, malgré une durée légèrement supérieure au planifié (71min vs 60min).
+
+#### Charge d'Entraînement
+TSS faible (41) cohérent avec une séance de récupération, maintenant un TSB stable (-8) malgré une ATL élevée (61). Cette séance permet de stabiliser la fatigue sans ajouter de stress significatif, idéal en contexte de charge récente élevée.
+
+#### Validation Objectifs
+- ✅ **Intensité récupération** : IF < 0.75 et puissance moyenne < 65% FTP
+- ✅ **Découplage** : < 7.5% (0.4%)
+- ✅ **Durée adaptée** : 71min en Z1-Z2, conforme à l'objectif de récupération active
+
+#### Points d'Attention
+- **Sommeil non renseigné** : Donnée critique manquante pour évaluer la récupération réelle.
+- **Accélérations non quantifiées** : Impact des accélérations sur la puissance normalisée (119W) à analyser pour vérifier l'absence de surcharge.
+
+#### Recommandations Progression
+1. **Vérifier les accélérations** : Analyser leur structure (durée/intensité) pour confirmer qu'elles restent en Z2-Z3 léger.
+2. **Prioriser le sommeil** : Cibler >7h/nuit pour optimiser la récupération, surtout avec un TSB négatif (-8).
+
+#### Métriques Post-séance
+- CTL : 54
+- ATL : 61
+- TSB : -8
+
+---
+
+### indieVelo - Workout: 04 - Endurance Tempo Progressif (80 min)
+Date : 15/08/2024
+
+#### Métriques Pré-séance
+- CTL : 54
+- ATL : 64
+- TSB : -10
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 97min
+- IF : 0.67
+- TSS : 72
+- Puissance moyenne : 119W
+- Puissance normalisée : 136W
+- Cadence moyenne : 86rpm
+- FC moyenne : 105bpm
+- Découplage : 2.6%
+
+#### Exécution Technique
+Séance d'endurance tempo progressive validée techniquement avec un découplage cardiovasculaire excellent (2.6% < 7.5%). L'IF (0.67) et la puissance normalisée (136W) correspondent à une intensité Z2/Z3, cohérente avec un format "tempo progressif". La cadence moyenne (86rpm) est dans la plage optimale pour ce type d'effort.
+
+#### Charge d'Entraînement
+TSS modéré (72) pour une séance de 97min, reflétant une intensité contrôlée malgré un TSB pré-séance négatif (-10). L'ATL reste stable (64), confirmant une charge d'entraînement maîtrisée sans surcharge aiguë.
+
+#### Validation Objectifs
+- ✅ **Découplage <7.5%** : 2.6% (exécution optimale)
+- ✅ **Intensité Z2/Z3** : IF 0.67 et NP 136W conformes
+- ❌ **Sommeil** : Donnée manquante (0.0h) - impact potentiel sur récupération
+
+#### Points d'Attention
+- **Données sommeil absentes** : Impossible d'évaluer pleinement la récupération pré-séance.
+- **Poids non renseigné** : Limite l'analyse du W/kg et des adaptations métaboliques.
+- **TSB négatif (-10)** : Risque de fatigue résiduelle, à surveiller pour les séances suivantes.
+
+#### Recommandations Progression
+1. **Vérifier les données sommeil** : Prioriser un suivi systématique (Withings) pour corréler avec la performance.
+2. **Maintenir ce format** : Séance validée pour le développement de l'endurance aérobie, à intégrer régulièrement dans le microcycle.
+3. **Adapter la nutrition** : Pour les séances >90min, appliquer le protocole terrain (rice cake T+15min) même en indoor si simulation outdoor prévue.
+
+#### Métriques Post-séance
+- CTL : 54
+- ATL : 64
+- TSB : -10
+
+---
+
+### indieVelo - Workout: 05 - Récupération Active avec Accélérations (60 min)
+Date : 16/08/2024
+
+#### Métriques Pré-séance
+- CTL : 54
+- ATL : 61
+- TSB : -8
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 71min
+- IF : 0.58
+- TSS : 41
+- Puissance moyenne : 106W
+- Puissance normalisée : 119W
+- Cadence moyenne : 87rpm
+- FC moyenne : 98bpm
+- Découplage : 0.4%
+
+#### Exécution Technique
+Séance de récupération active bien exécutée avec un découplage exceptionnel (0.4%), validant une exécution technique optimale en Z1-Z2. L'IF (0.58) et la FC moyenne (98bpm) confirment une intensité conforme à une récupération active, malgré l'absence de données sur les accélérations spécifiques. La cadence (87rpm) est dans la plage cible pour ce type de séance.
+
+#### Charge d'Entraînement
+TSS faible (41) cohérent avec une séance de récupération, maintenant un TSB stable (-8). Cette séance n'a pas impacté significativement la fatigue (ATL inchangée), ce qui est idéal pour un jour de récupération post-endurance tempo.
+
+#### Validation Objectifs
+- ✅ **Intensité Z1-Z2** : IF 0.58 et FC moyenne <70% FCmax (estimée ~150bpm)
+- ✅ **Découplage <7.5%** : 0.4% (excellente exécution)
+- ✅ **Durée adaptée** : 71min pour une récupération active
+
+#### Points d'Attention
+- **Données sommeil manquantes** : 0.0h rapporté, limite l'analyse de la récupération réelle
+- **Absence de détails sur accélérations** : Structure des efforts non documentée (timing/intensité)
+- **Poids non enregistré** : Impossible de calculer W/kg pour contextualiser la puissance
+
+#### Recommandations Progression
+1. **Vérifier la structure des accélérations** : Documenter les intervalles (durée/intensité) pour évaluer leur impact sur la récupération active
+2. **Intégrer un suivi sommeil** : Prioriser un enregistrement systématique (cible >7h) pour corréler avec la récupération
+3. **Maintenir ce format** : Séance validée comme outil de récupération efficace, à placer après des séances à TSS >80
+
+#### Métriques Post-séance
+- CTL : 54
+- ATL : 61
+- TSB : -8
+
+---
+
+### indieVelo - Workout: 04 - Endurance Tempo Progressif (80 min)
+Date : 15/08/2024
+
+#### Métriques Pré-séance
+- CTL : 54
+- ATL : 64
+- TSB : -10
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 97min
+- IF : 0.67
+- TSS : 72
+- Puissance moyenne : 119W
+- Puissance normalisée : 136W
+- Cadence moyenne : 86rpm
+- FC moyenne : 105bpm
+- Découplage : 2.6%
+
+#### Exécution Technique
+Séance d'endurance tempo progressive validée avec un découplage cardiovasculaire excellent (2.6% < 7.5%), confirmant une exécution technique de qualité. L'IF de 0.67 et la puissance normalisée (136W vs moyenne 119W) suggèrent une variabilité modérée typique des séances progressives, avec une bonne maîtrise des intensités cibles.
+
+#### Charge d'Entraînement
+TSS de 72 conforme à une séance d'endurance modérée, cohérent avec un TSB pré-séance de -10 (fatigue modérée). L'impact sur l'ATL reste limité, permettant une récupération rapide pour les séances suivantes.
+
+#### Validation Objectifs
+- ✅ **Découplage <7.5%** : 2.6% (excellente exécution)
+- ✅ **IF dans zone endurance (0.65-0.75)** : 0.67 (validé)
+- ❌ **Sommeil insuffisant** : 0.0h (donnée manquante ou non enregistrée)
+
+#### Points d'Attention
+- **Données sommeil absentes** : Impossible d'évaluer la récupération globale. Vérifier la synchronisation des données Withings.
+- **Poids non enregistré** : Suivi de la composition corporelle compromis.
+- **TSB à -10** : Risque de fatigue accumulée si non géré dans les prochaines séances.
+
+#### Recommandations Progression
+1. **Prioriser la récupération** : Viser un TSB > -5 avant la prochaine séance intensive (VO2 ou seuil).
+2. **Vérifier la capture des données** : Corriger l'enregistrement du sommeil et du poids via Withings/Intervals.icu.
+3. **Intégrer une activation neuromusculaire** : Avant les prochaines séances à IF > 0.80 pour optimiser la qualité des efforts.
+
+#### Métriques Post-séance
+- CTL : 54
+- ATL : 64
+- TSB : -10
+
+---
+
 ### S073-04-FOR-ForceEndurance-V001
 Date : 25/12/2025
 
