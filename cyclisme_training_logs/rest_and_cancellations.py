@@ -52,7 +52,7 @@ def load_week_planning(week_id: str, planning_dir: Optional[Path] = None) -> dic
 
     Args:
         week_id: Identifiant semaine (ex: "S070")
-        planning_dir: Répertoire contenant les plannings (par défaut: data/week_planning)
+        planning_dir: Répertoire contenant les plannings (legacy, use data repo config)
 
     Returns:
         Dict contenant sessions planifiées avec statuts
@@ -62,7 +62,14 @@ def load_week_planning(week_id: str, planning_dir: Optional[Path] = None) -> dic
         ValueError: Si format JSON invalide
     """
     if planning_dir is None:
-        planning_dir = Path.cwd() / "data" / "week_planning"
+        # Use data repo config if available
+        from cyclisme_training_logs.config import get_data_config
+        try:
+            config = get_data_config()
+            planning_dir = config.week_planning_dir
+        except FileNotFoundError:
+            # Fallback to legacy path
+            planning_dir = Path.cwd() / "data" / "week_planning"
 
     planning_file = planning_dir / f"week_planning_{week_id}.json"
 

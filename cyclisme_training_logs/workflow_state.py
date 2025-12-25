@@ -32,6 +32,8 @@ from pathlib import Path
 from datetime import datetime
 from typing import List, Optional, Dict
 
+from cyclisme_training_logs.config import get_data_config
+
 
 class WorkflowState:
     """Gestion de l'état du workflow d'analyse"""
@@ -43,10 +45,22 @@ class WorkflowState:
         Initialiser le gestionnaire d'état
 
         Args:
-            project_root: Racine du projet (défaut: répertoire courant)
+            project_root: Racine du projet (legacy, use data repo config instead)
         """
-        self.project_root = project_root or Path.cwd()
-        self.state_file = self.project_root / self.STATE_FILE
+        # Use data repo config if available, fallback to project_root
+        if project_root is None:
+            try:
+                config = get_data_config()
+                self.state_file = config.workflow_state_path
+            except FileNotFoundError:
+                # Fallback to current directory (legacy behavior)
+                self.project_root = Path.cwd()
+                self.state_file = self.project_root / self.STATE_FILE
+        else:
+            # Legacy: explicit project_root provided (mainly for tests)
+            self.project_root = project_root
+            self.state_file = self.project_root / self.STATE_FILE
+
         self.state = self._load_state()
 
     def _load_state(self) -> Dict:

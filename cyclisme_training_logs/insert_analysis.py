@@ -194,9 +194,29 @@ class AnalysisParser:
 class WorkoutHistoryManager:
     """Gestionnaire de workouts-history.md"""
 
-    def __init__(self, logs_dir):
-        self.logs_dir = Path(logs_dir)
-        self.history_file = self.logs_dir / "workouts-history.md"
+    def __init__(self, logs_dir=None):
+        """
+        Initialize WorkoutHistoryManager.
+
+        Args:
+            logs_dir: Legacy parameter, use data repo config instead
+        """
+        from cyclisme_training_logs.config import get_data_config
+
+        # Use data repo config if available
+        if logs_dir is None:
+            try:
+                config = get_data_config()
+                self.history_file = config.workouts_history_path
+                self.logs_dir = config.data_repo_path
+            except FileNotFoundError:
+                # Fallback to default logs directory (legacy)
+                self.logs_dir = Path.cwd() / 'logs'
+                self.history_file = self.logs_dir / "workouts-history.md"
+        else:
+            # Legacy: explicit logs_dir provided
+            self.logs_dir = Path(logs_dir)
+            self.history_file = self.logs_dir / "workouts-history.md"
 
     def read_history(self):
         """Lire le fichier d'historique"""
