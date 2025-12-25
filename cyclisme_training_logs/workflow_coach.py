@@ -873,9 +873,17 @@ class WorkflowCoach:
             skipped_filtered = []
 
             for skip in self.skipped_sessions:
-                # Extraire session_id depuis planned_name (format: "S072-05 - Name")
+                # Extraire session_id depuis planned_name
+                # Format possible: "S072-05 - Name" ou "S072-05-TEC-TechniqueCadence-V001"
                 planned_name = skip.get('planned_name', '')
-                session_id = planned_name.split(' - ')[0] if ' - ' in planned_name else planned_name
+
+                # Extraire SXXX-XX (2 premiers segments)
+                if ' - ' in planned_name:
+                    session_id = planned_name.split(' - ')[0]
+                else:
+                    parts = planned_name.split('-')
+                    session_id = f"{parts[0]}-{parts[1]}" if len(parts) >= 2 else planned_name
+
                 date = skip.get('planned_date', '')
 
                 # Vérifier si déjà documentée
@@ -1736,9 +1744,16 @@ class WorkflowCoach:
         markdowns_generated = []
 
         for skipped in skipped_sessions:
-            session_id = skipped.get('planned_name', '').split(' - ')[0]
+            # Extraire session_id (SXXX-XX)
+            planned_name = skipped.get('planned_name', '')
+            if ' - ' in planned_name:
+                session_id = planned_name.split(' - ')[0]
+            else:
+                parts = planned_name.split('-')
+                session_id = f"{parts[0]}-{parts[1]}" if len(parts) >= 2 else planned_name
+
             date = skipped.get('planned_date', '')
-            name = skipped.get('planned_name', 'Séance')
+            name = planned_name
 
             print(f"\n   → {session_id} [{date}]")
 
@@ -1825,10 +1840,17 @@ class WorkflowCoach:
         Returns:
             str: Markdown formaté
         """
-        session_id = skipped.get('planned_name', '').split(' - ')[0]
+        # Extraire session_id (SXXX-XX)
+        planned_name = skipped.get('planned_name', '')
+        if ' - ' in planned_name:
+            session_id = planned_name.split(' - ')[0]
+        else:
+            parts = planned_name.split('-')
+            session_id = f"{parts[0]}-{parts[1]}" if len(parts) >= 2 else planned_name
+
         date_obj = datetime.strptime(skipped.get('planned_date', ''), '%Y-%m-%d')
         date_formatted = date_obj.strftime('%d/%m/%Y')
-        name = skipped.get('planned_name', 'Séance')
+        name = planned_name
 
         markdown = f"""### {session_id}
 Date : {date_formatted}
