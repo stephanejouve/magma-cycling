@@ -337,6 +337,11 @@ def main():
         default='logs',
         help="Répertoire des logs (défaut: logs/)"
     )
+    parser.add_argument(
+        '--yes',
+        action='store_true',
+        help="Confirmer automatiquement l'insertion (mode non-interactif)"
+    )
 
     args = parser.parse_args()
 
@@ -409,10 +414,14 @@ def main():
         sys.exit(0)
 
     # Confirmer
-    response = input("Insérer cette analyse ? (Y/n) : ")
-    if response.lower() == 'n':
-        print("❌ Insertion annulée")
-        sys.exit(0)
+    if args.yes:
+        print("✓ Insertion automatique activée (--yes)")
+        response = 'y'
+    else:
+        response = input("Insérer cette analyse ? (Y/n) : ")
+        if response.lower() == 'n':
+            print("❌ Insertion annulée")
+            sys.exit(0)
 
     print()
 

@@ -2354,6 +2354,8 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
 
         # Lancer le script d'insertion
         cmd = ["python3", str(self.scripts_dir / "insert_analysis.py")]
+        if self.auto_mode:
+            cmd.append("--yes")
         result = subprocess.run(cmd)
 
         if result.returncode != 0:
