@@ -26,10 +26,26 @@ class WeeklyReportGenerator:
     """Générateur de prompt pour bilan hebdomadaire"""
 
     def __init__(self, project_root="."):
+        """
+        Initialize WeeklyReportGenerator.
+
+        Args:
+            project_root: Legacy parameter, use data repo config instead
+        """
+        from cyclisme_training_logs.config import get_data_config
+
         self.project_root = Path(project_root)
         self.references_dir = self.project_root / "references"
-        self.logs_dir = self.project_root / "logs"
-        self.bilans_dir = self.project_root / "logs" / "weekly_reports"
+
+        # Use data repo config if available
+        try:
+            config = get_data_config()
+            self.logs_dir = config.data_repo_path
+            self.bilans_dir = config.bilans_dir
+        except FileNotFoundError:
+            # Fallback to legacy paths
+            self.logs_dir = self.project_root / "logs"
+            self.bilans_dir = self.project_root / "logs" / "weekly_reports"
 
     def load_athlete_context(self):
         """Charger le contexte athlète"""

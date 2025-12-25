@@ -51,11 +51,20 @@ class WeeklyAnalysis:
 
         # Chemins
         self.project_root = Path(__file__).parent.parent
-        self.output_dir = self.project_root / "logs" / "weekly_reports" / week_number
-        self.output_dir.mkdir(parents=True, exist_ok=True)
-
-        self.logs_dir = self.project_root / "logs"
         self.references_dir = self.project_root / "references"
+
+        # Use data repo config if available
+        from cyclisme_training_logs.config import get_data_config
+        try:
+            config = get_data_config()
+            self.logs_dir = config.data_repo_path
+            self.output_dir = config.bilans_dir / week_number
+        except FileNotFoundError:
+            # Fallback to legacy paths
+            self.logs_dir = self.project_root / "logs"
+            self.output_dir = self.project_root / "logs" / "weekly_reports" / week_number
+
+        self.output_dir.mkdir(parents=True, exist_ok=True)
 
         # API Intervals.icu
         config_path = Path.home() / ".intervals_config.json"
