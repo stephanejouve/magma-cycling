@@ -44,13 +44,82 @@ python scripts/insert_analysis.py
 
 ## 🔧 Configuration
 
-Créer `.env` :
+### Setup Initial
+
+**1. Installer le code** :
 ```bash
-VITE_INTERVALS_ATHLETE_ID=your_id
-VITE_INTERVALS_API_KEY=your_key
+git clone https://github.com/stephanejouve/cyclisme-training-logs.git
+cd cyclisme-training-logs
+poetry install
 ```
+
+**2. Configurer Intervals.icu** :
+```bash
+cat > ~/.intervals_config.json <<'EOF'
+{
+  "athlete_id": "iXXXXXX",
+  "api_key": "VOTRE_API_KEY"
+}
+EOF
+chmod 600 ~/.intervals_config.json
+```
+
+**3. Configurer repo données** (requis) :
+
+Ce projet sépare le **code** (public) des **données d'entraînement** (privées).
+
+```bash
+# Créer votre repo données privé
+mkdir ~/training-logs
+cd ~/training-logs
+git init
+
+# Structure minimale
+mkdir -p bilans data/week_planning data/workout_templates
+touch workouts-history.md metrics-evolution.md
+
+# Lier avec GitHub (repo privé)
+git remote add origin https://github.com/VOTRE_USERNAME/training-logs.git
+git add .
+git commit -m "Initial structure"
+git push -u origin main
+```
+
+**4. Définir variable d'environnement** :
+```bash
+# Pour zsh (macOS/Linux par défaut)
+echo 'export TRAINING_DATA_REPO=~/training-logs' >> ~/.zshrc
+source ~/.zshrc
+
+# Ou pour bash
+echo 'export TRAINING_DATA_REPO=~/training-logs' >> ~/.bashrc
+source ~/.bashrc
+```
+
+**5. Valider l'installation** :
+```bash
+cd ~/cyclisme-training-logs
+poetry run workflow-coach
+
+# Devrait afficher :
+# [INFO] Data repo: /Users/vous/training-logs
+# ✅ Configuration validée
+```
+
+### Migration (Utilisateurs Existants)
+
+Si vous avez déjà des données dans `~/cyclisme-training-logs/logs/`, consultez le guide de migration complet :
+
+**📖 [Guide de Migration](docs/MIGRATION_DATA_REPO.md)**
+
+Le guide couvre :
+- Backup et restauration des données existantes
+- Configuration du nouveau repo données
+- Validation et troubleshooting
+- Rollback si nécessaire
 
 ## 📚 Documentation
 
+- **Migration données/code** : [`docs/MIGRATION_DATA_REPO.md`](docs/MIGRATION_DATA_REPO.md) 🆕
 - Project Prompt actuel : [`docs/project-prompt-v2.3.md`](docs/project-prompt-v2.3.md)
 - Changelog : [`docs/CHANGELOG.md`](docs/CHANGELOG.md)
