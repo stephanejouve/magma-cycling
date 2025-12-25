@@ -110,14 +110,14 @@ class OllamaAnalyzer(AIAnalyzer):
             True
 
         Notes:
-            - Timeout: 120s (local models plus lents)
+            - Timeout: 600s (10min for slow local models)
             - No rate limits
             - No API costs
         """
         logger.info(f"Sending prompt to Ollama ({len(prompt)} chars, model: {self.model})")
 
         try:
-            # Call Ollama API
+            # Call Ollama API (10min timeout for slow local models)
             response = requests.post(
                 self.api_url,
                 json={
@@ -125,7 +125,7 @@ class OllamaAnalyzer(AIAnalyzer):
                     "prompt": prompt,
                     "stream": False
                 },
-                timeout=120
+                timeout=600
             )
 
             response.raise_for_status()
