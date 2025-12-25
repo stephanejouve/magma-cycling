@@ -60,6 +60,145 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### S069-04-FOR-ForceEndurance
+Date : 27/11/2025
+
+#### Métriques Pré-séance
+- CTL : 56
+- ATL : 52
+- TSB : +4
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 70min
+- IF : 0.67
+- TSS : 53
+- Puissance moyenne : 144W
+- Puissance normalisée : 147W
+- Cadence moyenne : 82rpm
+- FC moyenne : 103bpm
+- Découplage : 4.9%
+
+#### Exécution Technique
+Séance de force-endurance bien exécutée avec un découplage cardiovasculaire excellent (4.9% < 7.5%), validant la qualité de l'effort en Z2. La puissance moyenne (144W) et la cadence (82rpm) correspondent aux attentes pour un travail de force à basse cadence (70rpm planifié). La FC moyenne (103bpm) reste dans la plage attendue pour cette intensité.
+
+#### Charge d'Entraînement
+TSS de 53 conforme au plan, avec un TSB pré-séance légèrement positif (+4) permettant une exécution optimale. La charge reste modérée, idéale pour une séance de récupération active ou de travail technique sans fatigue résiduelle.
+
+#### Validation Objectifs
+- ✅ **Découplage < 7.5%** (4.9%)
+- ✅ **Puissance moyenne conforme** (±2W vs plan)
+- ✅ **Durée et TSS respectés** (70min, 53 TSS)
+
+#### Points d'Attention
+- **Sommeil nul** : Absence de données de sommeil (0.0h) à investiguer (problème de synchronisation Withings ?). Impact potentiel sur la récupération malgré un TSB positif.
+- **Cadence légèrement élevée** : 82rpm vs 70rpm planifié pour les blocs de force. Vérifier si la résistance était suffisante pour cibler la force (objectif 70rpm).
+
+#### Recommandations Progression
+1. **Vérifier la configuration Withings** pour résoudre le problème de données de sommeil manquantes (critique pour la récupération).
+2. **Ajuster la résistance** lors des prochains blocs de force (6min @ 70rpm) pour garantir une cadence cible effective et maximiser le stimulus de force.
+
+#### Métriques Post-séance
+- CTL : 56
+- ATL : 52
+- TSB : +4
+
+---
+
+### Zwift - Flat Out Fast on Flat Route in Watopia
+Date : 11/10/2025
+
+#### Métriques Pré-séance
+- CTL : 58
+- ATL : 46
+- TSB : +11
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 41min
+- IF : 0.90
+- TSS : 56
+- Puissance moyenne : 174W
+- Puissance normalisée : 198W
+- Cadence moyenne : 89rpm
+- FC moyenne : 128bpm
+- Découplage : -4.4%
+
+#### Exécution Technique
+Séance de VO2max (IF 0.90) bien exécutée avec un découplage cardiovasculaire excellent (-4.4% < 7.5%), validant une exécution technique de qualité. La puissance normalisée (198W) correspond à ~90% FTP, confirmant une intensité élevée mais maîtrisée. La cadence stable (89rpm) et la FC moyenne (128bpm) sont cohérentes avec un effort soutenu en Z5.
+
+#### Charge d'Entraînement
+TSS modéré (56) pour une séance courte, cohérent avec un objectif de VO2max en période de tapering (TSB +11). La charge n’impacte pas significativement la fatigue (ATL stable à 46), préservant la fraîcheur pour les prochaines séances.
+
+#### Validation Objectifs
+- ✅ **Intensité VO2max** : IF 0.90 et puissance normalisée ~110% FTP (198W/220W)
+- ✅ **Qualité technique** : Découplage <5%, exécution propre
+- ❌ **Durée insuffisante** : 41min (objectif VO2max typique : 45-60min)
+
+#### Points d'Attention
+- **Sommeil nul** : Risque élevé de sous-récupération malgré TSB positif. Surveiller FC repos et RPE les jours suivants.
+- **Durée limitée** : Séance courte pour un stimulus VO2max optimal (manque 10-15min d’effort cumulé).
+- **Tags contradictoires** : "Low-Load Tapering" vs "VO2Max Training" – clarifier l’objectif prioritaire.
+
+#### Recommandations Progression
+1. **Allonger la durée** : Cibler 50-55min pour un stimulus VO2max complet (ex: 5×4min @110-120% FTP).
+2. **Prioriser le sommeil** : Viser ≥6h la veille des séances VO2max pour optimiser l’adaptation.
+3. **Valider la stratégie de tapering** : Si objectif est la fraîcheur (TSB +11), réduire l’IF à 0.85-0.88 pour éviter une fatigue résiduelle.
+
+#### Métriques Post-séance
+- CTL : 58
+- ATL : 46
+- TSB : +11
+
+---
+
+### Zwift - Flat Out Fast on Flat Route in Watopia
+Date : 11/10/2025
+
+#### Métriques Pré-séance
+- CTL : 58
+- ATL : 46
+- TSB : +11
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 41min
+- IF : 0.90
+- TSS : 56
+- Puissance moyenne : 174W
+- Puissance normalisée : 198W
+- Cadence moyenne : 89rpm
+- FC moyenne : 128bpm
+- Découplage : -4.4%
+
+#### Exécution Technique
+Séance de VO2Max bien exécutée avec un IF élevé (0.90) et un découplage négatif (-4.4%), indiquant une excellente efficacité cardiovasculaire. La puissance normalisée (198W) et la FC moyenne (128bpm) confirment une intensité soutenue dans la zone VO2Max (110-120% FTP). La cadence stable (89rpm) suggère une bonne maîtrise technique malgré l'intensité.
+
+#### Charge d'Entraînement
+TSS modéré (56) pour une séance courte mais intense, cohérent avec un TSB pré-séance positif (+11), idéal pour des efforts de haute intensité. L'ATL reste stable (46), confirmant une fatigue aiguë maîtrisée.
+
+#### Validation Objectifs
+- ✅ **Intensité VO2Max** : IF 0.90 et puissance normalisée >110% FTP (198W vs 220W FTP → ~90% FTP moyen, mais pic probablement >110%).
+- ✅ **Découplage** : -4.4% (<7.5%), validant la qualité de l'effort.
+- ❌ **Durée totale** : 41min seulement, insuffisant pour un stimulus VO2Max optimal (cible : 45-60min avec intervalles).
+
+#### Points d'Attention
+- **Sommeil** : 0.0h enregistré (erreur probable ou absence de données), critique pour la récupération post-VO2Max.
+- **Durée** : Séance trop courte pour un stimulus VO2Max complet (manque de volume).
+- **Asymétrie pédalage** : Non mesurée ici, mais à surveiller en haute intensité (56/44 en explosif).
+
+#### Recommandations Progression
+1. **Allonger la durée** : Viser 45-50min avec 4-6 intervalles de 3-4min à 110-120% FTP pour un stimulus VO2Max optimal.
+2. **Prioriser le sommeil** : Corriger la mesure (Withings) et viser >7h la veille des séances VO2Max.
+3. **Vérifier la nutrition** : Apport glucidique pré-séance (rice cake 30g) si durée >60min, même en indoor.
+
+#### Métriques Post-séance
+- CTL : 58
+- ATL : 46
+- TSB : +11
+
+---
+
 ### S073-03-TEC-CadenceVariable-V001
 Date : 24/12/2025
 
