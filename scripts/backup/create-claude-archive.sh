@@ -19,21 +19,36 @@ cp poetry.lock "${ARCHIVE_DIR}/"
 cp .gitignore "${ARCHIVE_DIR}/"
 cp README.md "${ARCHIVE_DIR}/"
 cp COMMANDS.md "${ARCHIVE_DIR}/"
-cp ALIASES.md "${ARCHIVE_DIR}/"
+
+echo "=== Copie documentation complète ==="
+cp -r docs "${ARCHIVE_DIR}/"
 
 echo "=== Copie modules Python ==="
 mkdir -p "${ARCHIVE_DIR}/cyclisme_training_logs"
 cp cyclisme_training_logs/*.py "${ARCHIVE_DIR}/cyclisme_training_logs/"
 
+echo "=== Copie tests ==="
+cp -r tests "${ARCHIVE_DIR}/"
+
+echo "=== Copie data (planning & templates) ==="
+cp -r data "${ARCHIVE_DIR}/" 2>/dev/null || echo "⚠️  data/ absent"
+
+echo "=== Copie references ==="
+cp -r references "${ARCHIVE_DIR}/" 2>/dev/null || echo "⚠️  references/ absent"
+
 echo "=== Copie logs ==="
 mkdir -p "${ARCHIVE_DIR}/logs"
 cp logs/workouts-history.md "${ARCHIVE_DIR}/logs/" 2>/dev/null || echo "⚠️  workouts-history.md absent"
 
-mkdir -p "${ARCHIVE_DIR}/logs/weekly_reports/S070"
-cp logs/weekly_reports/S070/*.md "${ARCHIVE_DIR}/logs/weekly_reports/S070/" 2>/dev/null || echo "⚠️  S070 absent"
-
-mkdir -p "${ARCHIVE_DIR}/logs/weekly_reports/S071"
-cp logs/weekly_reports/S071/*.md "${ARCHIVE_DIR}/logs/weekly_reports/S071/" 2>/dev/null || echo "⚠️  S071 absent"
+# Copier les 3 dernières semaines de rapports (dynamique)
+echo "=== Copie rapports hebdomadaires récents ==="
+LATEST_WEEKS=$(ls -1d logs/weekly_reports/S* 2>/dev/null | tail -3)
+for week_dir in $LATEST_WEEKS; do
+    week_name=$(basename "$week_dir")
+    echo "  Copie $week_name..."
+    mkdir -p "${ARCHIVE_DIR}/logs/weekly_reports/${week_name}"
+    cp "$week_dir"/*.md "${ARCHIVE_DIR}/logs/weekly_reports/${week_name}/" 2>/dev/null || echo "  ⚠️  Aucun .md dans $week_name"
+done
 
 echo "=== Création exemples structures ==="
 mkdir -p "${ARCHIVE_DIR}/examples/planning"
@@ -301,29 +316,95 @@ echo "=== Création README_ARCHIVE.md ==="
 cat > "${ARCHIVE_DIR}/README_ARCHIVE.md" << 'EOFREADME'
 # Archive Contexte Complet - Claude Code
 
-## Contenu
+**Date**: $(date +"%Y-%m-%d %H:%M:%S")
 
-- **IMPLEMENTATION_BRIEF.md** : Vision + objectifs
-- **CURRENT_STATE.md** : État actuel
-- **examples/** : Structures JSON référence
-- **cyclisme_training_logs/** : Code source complet
-- **logs/** : Historiques S070, S071
+## Contenu Archive
+
+### Documentation
+- **docs/workflows/** : DAILY_WORKFLOW.md, GRAFCET, UML
+- **docs/audits/** : Rapports audit & P0 fixes
+- **docs/architecture/** : Architecture projet & design
+- **docs/guides/** : Setup, installation, guides
+
+### Code Source
+- **cyclisme_training_logs/** : Tous les modules Python
+- **tests/** : Tests unitaires complets
+- **data/** : Planning semaines & templates workouts
+- **references/** : Références & documentation externe
+
+### Logs & Historique
+- **logs/workouts-history.md** : Historique complet séances
+- **logs/weekly_reports/** : 3 dernières semaines
+
+### Configuration
+- **pyproject.toml** : Configuration Poetry
+- **poetry.lock** : Dépendances lockées
+- **COMMANDS.md** : Quick reference alias
+
+### Exemples
+- **examples/planning/** : Structures JSON planning
+- **examples/templates/** : Templates workouts
+
+## Structure Projet
+
+```
+cyclisme-training-logs/
+├── README.md
+├── COMMANDS.md
+├── pyproject.toml
+│
+├── 📁 docs/                     # Documentation complète
+│   ├── workflows/              # Workflows quotidien/hebdo
+│   ├── audits/                 # Rapports audit
+│   ├── architecture/           # Design & architecture
+│   └── guides/                 # Guides utilisateur
+│
+├── 📁 cyclisme_training_logs/  # Code source
+│   ├── workflow_coach.py       # Orchestrateur principal
+│   ├── weekly_planner.py       # Planification hebdo
+│   ├── upload_workouts.py      # Upload Intervals.icu
+│   └── ...                     # 15 modules total
+│
+├── 📁 tests/                    # Tests unitaires
+├── 📁 data/                     # Planning & templates
+├── 📁 logs/                     # Historiques
+└── 📁 references/               # Références externes
+```
 
 ## Utilisation
 
-1. Lire IMPLEMENTATION_BRIEF.md
-2. Explorer code workflow_coach.py
-3. Consulter examples/ pour structures
-4. Implémenter modifications (~350 lignes)
+1. **Lire la documentation**:
+   - `docs/workflows/DAILY_WORKFLOW.md` - Workflow quotidien
+   - `docs/architecture/` - Architecture projet
+   - `COMMANDS.md` - Quick reference
 
-## Structure Cible
+2. **Explorer le code**:
+   - `cyclisme_training_logs/workflow_coach.py` - Point d'entrée
+   - `tests/` - Tests pour comprendre le comportement
+
+3. **Consulter les exemples**:
+   - `examples/` - Structures JSON référence
+   - `data/` - Données réelles
+
+## Scripts Poetry Disponibles
+
+```bash
+workflow-coach          # Orchestrateur principal
+weekly-planner          # Planification hebdo
+weekly-analysis         # Analyse hebdo
+upload-workouts         # Upload Intervals.icu
+prepare-analysis        # Préparation analyse
 ```
-~/cyclisme-training-logs/
-├── data/                    # 🆕 À CRÉER
-│   ├── week_planning/
-│   └── workout_templates/
-└── cyclisme_training_logs/
-    └── workflow_coach.py    # À MODIFIER
+
+## Commandes Rapides
+
+```bash
+# Via alias (si .zshrc configuré)
+train                   # Workflow quotidien
+trains --week-id S073   # Avec asservissement
+wp --week-id S073       # Planifier semaine
+wa --week-id S072       # Analyser semaine
+wu --week-id S073       # Uploader workouts
 ```
 EOFREADME
 
