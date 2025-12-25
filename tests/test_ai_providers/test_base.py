@@ -80,34 +80,42 @@ class TestAIAnalyzerABC:
 
         assert "analyze_session" in str(excinfo.value)
 
-    def test_subclass_must_implement_get_provider_info(self):
-        """Test that subclass must implement get_provider_info method."""
+    def test_subclass_can_use_default_get_provider_info(self):
+        """Test that subclass can use default get_provider_info implementation."""
 
-        # Create incomplete subclass (missing get_provider_info)
-        class IncompleteAnalyzer(AIAnalyzer):
+        # Create subclass using default get_provider_info
+        class SimpleAnalyzer(AIAnalyzer):
+            def __init__(self):
+                super().__init__()
+                self.provider = AIProvider.CLIPBOARD
+
             def analyze_session(self, prompt, dataset=None):
                 return "test"
 
-        with pytest.raises(TypeError) as excinfo:
-            IncompleteAnalyzer()
+        analyzer = SimpleAnalyzer()
+        info = analyzer.get_provider_info()
 
-        assert "get_provider_info" in str(excinfo.value)
+        # Should use default implementation
+        assert isinstance(info, dict)
+        assert info['provider'] == 'clipboard'
 
-    def test_subclass_must_implement_validate_config(self):
-        """Test that subclass must implement validate_config method."""
+    def test_subclass_can_use_default_validate_config(self):
+        """Test that subclass can use default validate_config implementation."""
 
-        # Create incomplete subclass (missing validate_config)
-        class IncompleteAnalyzer(AIAnalyzer):
+        # Create subclass using default validate_config
+        class SimpleAnalyzer(AIAnalyzer):
+            def __init__(self):
+                super().__init__()
+                self.provider = AIProvider.CLIPBOARD
+
             def analyze_session(self, prompt, dataset=None):
                 return "test"
 
-            def get_provider_info(self):
-                return {}
+        analyzer = SimpleAnalyzer()
+        is_valid = analyzer.validate_config()
 
-        with pytest.raises(TypeError) as excinfo:
-            IncompleteAnalyzer()
-
-        assert "validate_config" in str(excinfo.value)
+        # Should use default implementation (returns True)
+        assert is_valid is True
 
     def test_complete_subclass_can_be_instantiated(self):
         """Test that complete subclass can be instantiated."""
