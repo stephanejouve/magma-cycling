@@ -35,12 +35,17 @@ from cyclisme_training_logs.rest_and_cancellations import (
     reconcile_planned_vs_actual
 )
 from cyclisme_training_logs.planned_sessions_checker import PlannedSessionsChecker
+from cyclisme_training_logs.ai_providers import AIProviderFactory
+from cyclisme_training_logs.config import get_ai_config
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class WorkflowCoach:
     """Orchestrateur du workflow d'analyse de séance"""
 
-    def __init__(self, skip_feedback=False, skip_git=False, activity_id=None, week_id=None, servo_mode=False):
+    def __init__(self, skip_feedback=False, skip_git=False, activity_id=None, week_id=None, servo_mode=False, provider=None):
         from cyclisme_training_logs.config import get_data_config
 
         self.skip_feedback = skip_feedback
@@ -48,6 +53,7 @@ class WorkflowCoach:
         self.activity_id = activity_id
         self.week_id = week_id
         self.servo_mode = servo_mode
+        self.provider_name = provider
         self.project_root = Path.cwd()
         self.scripts_dir = self.project_root / "cyclisme_training_logs"
         self.activity_name = None
@@ -75,6 +81,29 @@ class WorkflowCoach:
         # Load workout templates if servo mode enabled
         if self.servo_mode:
             self.workout_templates = self.load_workout_templates()
+
+        # AI Provider Setup
+        self.ai_config = get_ai_config()
+
+        # Determine provider to use
+        if provider is None:
+            # Auto-detect: use first available provider in fallback chain
+            available = self.ai_config.get_available_providers()
+            provider = available[0] if available else 'clipboard'
+            logger.info(f"Auto-selected AI provider: {provider}")
+        else:
+            logger.info(f"Using specified AI provider: {provider}")
+
+        # Validate and initialize provider
+        if not self.ai_config.is_provider_configured(provider):
+            logger.warning(f"Provider {provider} not configured, falling back to clipboard")
+            provider = 'clipboard'
+
+        provider_config = self.ai_config.get_provider_config(provider)
+        self.ai_analyzer = AIProviderFactory.create(provider, provider_config)
+        self.current_provider = provider
+
+        logger.info(f"AI Analyzer initialized: {self.ai_analyzer.__class__.__name__}")
 
     def load_credentials(self):
         """Charger credentials Intervals.icu de manière robuste"""
@@ -1279,24 +1308,28 @@ class WorkflowCoach:
             sys.exit(1)
 
         print()
-        print("✅ Prompt copié dans le presse-papier !")
+        print("✅ Prompt généré !")
 
-        # Extraire le nom de l'activité depuis le clipboard
+        # Read prompt from clipboard (prepare_analysis.py copied it there)
         try:
             clipboard = subprocess.run(
                 ['pbpaste'],
                 capture_output=True,
                 text=True
             )
-            # Chercher la ligne "- **Nom** : ..."
-            for line in clipboard.stdout.split('\n'):
+            prompt = clipboard.stdout
+
+            # Extract activity name from prompt
+            for line in prompt.split('\n'):
                 if line.strip().startswith('- **Nom** :'):
                     self.activity_name = line.split(':', 1)[1].strip()
                     break
-        except:
-            pass
+        except Exception as e:
+            logger.error(f"Failed to read prompt from clipboard: {e}")
+            print(f"❌ Erreur lecture prompt: {e}")
+            sys.exit(1)
 
-        # Afficher le nom de la séance si trouvé
+        # Display activity name if found
         if self.activity_name:
             print()
             print("=" * 70)
@@ -1305,7 +1338,63 @@ class WorkflowCoach:
             print(f"\n{self.activity_name}\n")
             print("=" * 70)
 
-        self.wait_user()
+        print()
+        print(f"🤖 Provider IA : {self.current_provider}")
+        print()
+
+        # Execute analysis based on provider type
+        if self.current_provider == 'clipboard':
+            # Clipboard workflow: user pastes in Claude.ai manually
+            print("✅ Prompt copié dans le presse-papier")
+            print()
+            print("📋 Instructions :")
+            print("   1. Ouvrez Claude.ai dans votre navigateur")
+            print("   2. Collez le prompt (Cmd+V)")
+            print("   3. Attendez la réponse complète")
+            print("   4. Copiez TOUTE la réponse (Cmd+A puis Cmd+C)")
+            print("   5. Revenez ici et appuyez sur ENTRÉE")
+            print()
+            self.wait_user()
+        else:
+            # API workflow: automatic execution
+            print("⏳ Envoi du prompt à l'IA...")
+            print("   Cela peut prendre 30-60 secondes...")
+            print()
+
+            try:
+                self.analysis_result = self.ai_analyzer.analyze_session(prompt, dataset=None)
+                print("✅ Analyse terminée !")
+                print(f"   Longueur réponse : {len(self.analysis_result)} caractères")
+                print()
+                self.wait_user()
+            except Exception as e:
+                logger.error(f"AI analysis failed: {e}")
+                print(f"❌ Erreur lors de l'analyse IA : {e}")
+                print()
+
+                # Fallback to next provider if enabled
+                if self.ai_config.enable_fallback:
+                    fallback_chain = self.ai_config.get_fallback_chain()
+                    try:
+                        current_idx = fallback_chain.index(self.current_provider)
+                        if current_idx + 1 < len(fallback_chain):
+                            next_provider = fallback_chain[current_idx + 1]
+                            print(f"🔄 Tentative avec provider de secours : {next_provider}")
+                            print()
+
+                            # Reinitialize with fallback provider
+                            self.current_provider = next_provider
+                            provider_config = self.ai_config.get_provider_config(next_provider)
+                            self.ai_analyzer = AIProviderFactory.create(next_provider, provider_config)
+
+                            # Retry
+                            self.step_3_prepare_analysis()
+                            return
+                    except (ValueError, IndexError):
+                        pass
+
+                print("💡 Conseil : Utilisez --provider clipboard pour le mode manuel")
+                sys.exit(1)
 
     # ========================================================================
     # NOUVELLES MÉTHODES POUR GESTION PLANNING HEBDOMADAIRE
@@ -2153,6 +2242,20 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
         print("⏱️  Temps estimé : 5 secondes")
         self.print_separator()
 
+        # For API providers, write analysis to clipboard first
+        if self.current_provider != 'clipboard' and hasattr(self, 'analysis_result'):
+            try:
+                subprocess.run(
+                    ['pbcopy'],
+                    input=self.analysis_result.encode('utf-8'),
+                    check=True
+                )
+                logger.info(f"Analysis written to clipboard for insert_analysis.py ({len(self.analysis_result)} chars)")
+            except Exception as e:
+                logger.error(f"Failed to write analysis to clipboard: {e}")
+                print(f"❌ Erreur écriture clipboard : {e}")
+                sys.exit(1)
+
         # Lancer le script d'insertion
         cmd = ["python3", str(self.scripts_dir / "insert_analysis.py")]
         result = subprocess.run(cmd)
@@ -2728,12 +2831,49 @@ Exemples:
     )
 
     parser.add_argument(
+        '--provider',
+        type=str,
+        choices=['clipboard', 'claude_api', 'mistral_api', 'openai', 'ollama'],
+        default=None,
+        help="AI provider à utiliser (défaut: auto-détection)"
+    )
+
+    parser.add_argument(
+        '--list-providers',
+        action='store_true',
+        help="Lister les providers AI disponibles et quitter"
+    )
+
+    parser.add_argument(
         '--reconcile',
         action='store_true',
         help="Mode réconciliation batch pour séances sautées/annulées (requiert --week-id)"
     )
 
     args = parser.parse_args()
+
+    # Handle --list-providers
+    if args.list_providers:
+        config = get_ai_config()
+
+        print("\n📋 AI PROVIDERS DISPONIBLES\n")
+        all_providers = {
+            'clipboard': 'Manual copy/paste (gratuit, sans API)',
+            'claude_api': 'Claude Sonnet 4 ($3/1M entrée, $15/1M sortie)',
+            'mistral_api': 'Mistral Large ($2/1M entrée, $6/1M sortie)',
+            'openai': 'GPT-4 Turbo ($10/1M entrée, $30/1M sortie)',
+            'ollama': 'LLMs locaux (gratuit, requiert Ollama installé)'
+        }
+
+        available = config.get_available_providers()
+        for provider, description in all_providers.items():
+            status = "✅" if provider in available else "❌"
+            print(f"{status} {provider:15} - {description}")
+
+        print(f"\n🔧 Provider par défaut : {config.default_provider}")
+        print(f"🔄 Fallback activé : {config.enable_fallback}")
+        print()
+        sys.exit(0)
 
     # Validation --reconcile requiert --week-id
     if args.reconcile and not args.week_id:
@@ -2756,7 +2896,8 @@ Exemples:
         skip_git=args.skip_git,
         activity_id=args.activity_id,
         week_id=args.week_id,
-        servo_mode=args.servo_mode
+        servo_mode=args.servo_mode,
+        provider=args.provider
     )
 
     # Mode réconciliation batch
