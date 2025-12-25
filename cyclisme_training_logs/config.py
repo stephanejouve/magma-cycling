@@ -7,6 +7,10 @@ Allows separation of code (cyclisme-training-logs) from athlete data (training-l
 import os
 from pathlib import Path
 from typing import Optional
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 class DataRepoConfig:
@@ -168,28 +172,51 @@ class AIProvidersConfig:
 
     def __init__(self):
         """Initialize AI providers configuration from environment variables."""
+        # General settings
         self.default_provider = os.getenv('DEFAULT_AI_PROVIDER', 'clipboard')
         self.enable_fallback = os.getenv('ENABLE_AI_FALLBACK', 'true').lower() == 'true'
         self.fallback_priority = ['claude_api', 'mistral_api', 'openai', 'ollama', 'clipboard']
 
-        # Provider-specific configs
+        # Mistral AI - Direct attributes for easy access
+        self.mistral_api_key = os.getenv('MISTRAL_API_KEY')
+        self.mistral_model = os.getenv('MISTRAL_MODEL', 'mistral-large-latest')
+        self.mistral_temperature = float(os.getenv('MISTRAL_TEMPERATURE', '0.7'))
+        self.mistral_max_tokens = int(os.getenv('MISTRAL_MAX_TOKENS', '4000'))
+        self.mistral_timeout = int(os.getenv('MISTRAL_TIMEOUT', '60'))
+
+        # Claude API (Anthropic) - Direct attributes
+        self.claude_api_key = os.getenv('CLAUDE_API_KEY')
+        self.claude_model = os.getenv('CLAUDE_MODEL', 'claude-sonnet-4-20250514')
+
+        # OpenAI - Direct attributes
+        self.openai_api_key = os.getenv('OPENAI_API_KEY')
+        self.openai_model = os.getenv('OPENAI_MODEL', 'gpt-4-turbo-preview')
+
+        # Ollama (local LLMs) - Direct attributes
+        self.ollama_base_url = os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')
+        self.ollama_model = os.getenv('OLLAMA_MODEL', 'mistral:7b')
+
+        # Provider-specific configs (for backward compatibility with factory)
         self._configs = {
             'clipboard': {},
             'claude_api': {
-                'claude_api_key': os.getenv('CLAUDE_API_KEY'),
-                'claude_model': os.getenv('CLAUDE_MODEL', 'claude-sonnet-4-20250514')
+                'claude_api_key': self.claude_api_key,
+                'claude_model': self.claude_model
             },
             'mistral_api': {
-                'mistral_api_key': os.getenv('MISTRAL_API_KEY'),
-                'mistral_model': os.getenv('MISTRAL_MODEL', 'mistral-large-latest')
+                'mistral_api_key': self.mistral_api_key,
+                'mistral_model': self.mistral_model,
+                'mistral_temperature': self.mistral_temperature,
+                'mistral_max_tokens': self.mistral_max_tokens,
+                'mistral_timeout': self.mistral_timeout
             },
             'openai': {
-                'openai_api_key': os.getenv('OPENAI_API_KEY'),
-                'openai_model': os.getenv('OPENAI_MODEL', 'gpt-4-turbo-preview')
+                'openai_api_key': self.openai_api_key,
+                'openai_model': self.openai_model
             },
             'ollama': {
-                'ollama_base_url': os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434'),
-                'ollama_model': os.getenv('OLLAMA_MODEL', 'mistral:7b')
+                'ollama_base_url': self.ollama_base_url,
+                'ollama_model': self.ollama_model
             }
         }
 
@@ -214,9 +241,15 @@ class AIProvidersConfig:
         if provider == 'ollama':
             return True  # Assume localhost available
 
-        config = self._configs.get(provider, {})
-        api_key_field = f'{provider}_api_key'
-        return bool(config.get(api_key_field))
+        # Check API key from direct attributes
+        if provider == 'claude_api':
+            return bool(self.claude_api_key)
+        elif provider == 'mistral_api':
+            return bool(self.mistral_api_key)
+        elif provider == 'openai':
+            return bool(self.openai_api_key)
+
+        return False
 
     def get_available_providers(self) -> list[str]:
         """Return list of configured providers in priority order.
