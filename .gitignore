@@ -61,6 +61,33 @@ scripts/*_raw.json
 .workflow_state.json
 .athlete_feedback/
 
+# ============================================================================
+# DATA FILES - Managed in external training-logs repository
+# ============================================================================
+# These files contain athlete-specific training data and should NOT be
+# committed to the code repository. They belong in the external data repo:
+# https://github.com/stephanejouve/training-logs
+
+# Training logs and history
+logs/workouts-history.md
+logs/metrics-evolution.md
+
+# Weekly analysis reports
+logs/bilans/
+logs/weekly_reports/
+
+# Week planning and workout templates
+logs/data/
+data/week_planning/
+data/workout_templates/
+
+# Preserve .gitkeep files to maintain directory structure
+!logs/.gitkeep
+!logs/bilans/.gitkeep
+!logs/data/.gitkeep
+!data/week_planning/.gitkeep
+!data/workout_templates/.gitkeep
+
 # Withings integration
 withings_integration/data/
 withings_integration/logs/
