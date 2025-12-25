@@ -41,6 +41,8 @@ class WorkflowCoach:
     """Orchestrateur du workflow d'analyse de séance"""
 
     def __init__(self, skip_feedback=False, skip_git=False, activity_id=None, week_id=None, servo_mode=False):
+        from cyclisme_training_logs.config import get_data_config
+
         self.skip_feedback = skip_feedback
         self.skip_git = skip_git
         self.activity_id = activity_id
@@ -49,6 +51,16 @@ class WorkflowCoach:
         self.project_root = Path.cwd()
         self.scripts_dir = self.project_root / "cyclisme_training_logs"
         self.activity_name = None
+
+        # Use data repo config if available
+        try:
+            self.config = get_data_config()
+            self.data_repo_path = self.config.data_repo_path
+        except FileNotFoundError:
+            # Fallback: use project_root/logs (legacy)
+            self.config = None
+            self.data_repo_path = self.project_root / "logs"
+
         # Nouveaux attributs pour gestion planning
         self.planning = None
         self.reconciliation = None
@@ -1531,7 +1543,11 @@ class WorkflowCoach:
         Returns:
             True si succès, False sinon
         """
-        history_file = self.project_root / "logs" / "workouts-history.md"
+        # Use config path if available, otherwise legacy path
+        if self.config:
+            history_file = self.config.workouts_history_path
+        else:
+            history_file = self.project_root / "logs" / "workouts-history.md"
 
         if not history_file.exists():
             print(f"\n❌ Fichier introuvable : {history_file}")

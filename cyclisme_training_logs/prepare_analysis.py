@@ -149,10 +149,35 @@ class IntervalsAPI:
 class PromptGenerator:
     """Générateur de prompt pour analyse Claude.ai"""
 
-    def __init__(self, project_root):
-        self.project_root = Path(project_root)
-        self.references_dir = self.project_root / "references"
-        self.logs_dir = self.project_root / "logs"
+    def __init__(self, project_root=None):
+        """
+        Initialize PromptGenerator.
+
+        Args:
+            project_root: Legacy parameter, use data repo config instead
+        """
+        from cyclisme_training_logs.config import get_data_config
+
+        # Use data repo config if available
+        if project_root is None:
+            try:
+                config = get_data_config()
+                self.data_repo_path = config.data_repo_path
+                self.logs_dir = config.data_repo_path  # For backward compat
+                # References dir stays in code repo
+                self.project_root = Path.cwd()
+                self.references_dir = self.project_root / "references"
+            except FileNotFoundError:
+                # Fallback to current directory (legacy)
+                self.project_root = Path.cwd()
+                self.references_dir = self.project_root / "references"
+                self.logs_dir = self.project_root / "logs"
+        else:
+            # Legacy: explicit project_root provided
+            self.project_root = Path(project_root)
+            self.references_dir = self.project_root / "references"
+            self.logs_dir = self.project_root / "logs"
+
         self.feedback_dir = Path(".athlete_feedback")
         self.feedback_file = self.feedback_dir / "last_feedback.json"
 
