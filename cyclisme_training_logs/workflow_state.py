@@ -147,8 +147,9 @@ class WorkflowState:
             return False
 
         # Ignorer activités sans données de puissance
-        average_watts = activity.get('average_watts')
-        if average_watts is None:
+        # Vérifier icu_average_watts (Intervals.icu) OU average_watts (legacy)
+        average_watts = activity.get('icu_average_watts') or activity.get('average_watts')
+        if average_watts is None or average_watts == 0:
             return False
 
         return True
