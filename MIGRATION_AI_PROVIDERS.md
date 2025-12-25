@@ -146,9 +146,14 @@ Voir `.env.example` pour le template complet.
 ### ⚠️ Connu - À investiguer
 
 **Ollama timeout**:
-- Timeout après 120s avec llama2:latest (modèle trop lent ou config)
+- Timeout après 600s (10min) avec llama2:latest - modèle trop lent pour ce système
+- Testé avec timeout 120s → échec, puis 600s → échec
 - Non bloquant: clipboard fonctionne, architecture prête
-- À tester avec modèles plus petits (llama3.1:8b, mistral:7b)
+- Recommandations:
+  - Tester avec modèles plus petits (llama3.1:8b, mistral:7b)
+  - Vérifier ressources système (CPU/RAM)
+  - Vérifier logs Ollama server
+  - Tester avec prompt plus simple pour validation baseline
 
 ---
 
