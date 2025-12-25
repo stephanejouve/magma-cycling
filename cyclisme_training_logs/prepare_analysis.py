@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-prepare_analysis.py - Prépare le prompt d'analyse pour Claude.ai
+prepare_analysis.py - Prépare le prompt d'analyse pour IA
 
 Ce script :
 1. Récupère la dernière séance depuis Intervals.icu
 2. Charge le contexte athlète et les logs récents
-3. Génère un prompt optimisé pour analyse par Claude.ai
+3. Génère un prompt optimisé pour analyse par IA
 4. Copie le prompt dans le presse-papier macOS
-5. Affiche les instructions pour l'utilisateur
+5. Affiche les instructions adaptées au provider AI configuré
 
 Usage:
     python3 cyclisme_training_logs/prepare_analysis.py [--activity-id XXXXXX]
@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Optional
 import requests
 from cyclisme_training_logs.workflow_state import WorkflowState
+from cyclisme_training_logs.config import get_ai_config
 
 
 class IntervalsAPI:
@@ -147,7 +148,7 @@ class IntervalsAPI:
 
 
 class PromptGenerator:
-    """Générateur de prompt pour analyse Claude.ai"""
+    """Générateur de prompt pour analyse IA"""
 
     def __init__(self, project_root=None):
         """
@@ -482,7 +483,7 @@ class PromptGenerator:
 
 
     def generate_prompt(self, activity_data, wellness_pre, wellness_post, athlete_context, recent_workouts, athlete_feedback=None, planned_workout=None, cycling_concepts=None):
-        """Générer le prompt complet pour Claude.ai"""
+        """Générer le prompt complet pour analyse IA"""
 
         # Formater les données
         act = activity_data
@@ -757,7 +758,7 @@ def analyze_batch(api, unanalyzed_activities, generator, state, project_root):
     print()
     print("📝 Processus :")
     print("  1. Génération du prompt pour chaque séance")
-    print("  2. Vous collez dans Claude.ai et copiez la réponse")
+    print("  2. Vous collez dans votre IA et copiez la réponse")
     print("  3. Proposition d'insertion automatique")
     print("  4. Passage à la séance suivante")
     print()
@@ -882,15 +883,15 @@ def analyze_batch(api, unanalyzed_activities, generator, state, project_root):
             print("-" * 60)
             print("📝 ACTIONS UTILISATEUR :")
             print("-" * 60)
-            print("1. Ouvrir Claude.ai (ou conversation existante)")
+            print("1. Ouvrir votre IA (Claude.ai, ChatGPT, etc.)")
             print("2. Coller le prompt (Cmd+V)")
-            print("3. Attendre l'analyse de Claude")
+            print("3. Attendre l'analyse de votre IA")
             print("4. Copier UNIQUEMENT le bloc markdown généré")
             print("5. Revenir ici et appuyer sur Entrée")
             print("-" * 60)
             print()
 
-            input("✋ Appuyez sur Entrée quand vous avez copié la réponse de Claude...")
+            input("✋ Appuyez sur Entrée quand vous avez copié la réponse de votre IA...")
 
             # Proposer insertion automatique
             print()
@@ -1029,7 +1030,7 @@ def display_activity_menu(unanalyzed_activities):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Préparer le prompt d'analyse pour Claude.ai"
+        description="Préparer le prompt d'analyse pour IA"
     )
 
     parser.add_argument(
@@ -1242,23 +1243,43 @@ def main():
 
         print()
         print("=" * 60)
-        print("✅ PROMPT PRÊT POUR CLAUDE.AI")
-        print("=" * 60)
-        print()
-        print("📝 ÉTAPES SUIVANTES :")
-        print()
-        print("1. Ouvrir Claude.ai dans votre navigateur")
-        print("   → https://claude.ai")
-        print()
-        print("2. Coller le prompt (Cmd+V)")
-        print()
-        print("3. Attendre l'analyse de Claude")
-        print()
-        print("4. Copier la réponse de Claude (UNIQUEMENT le bloc markdown)")
-        print()
-        print("5. Exécuter le script d'insertion :")
-        print("   python3 cyclisme_training_logs/insert_analysis.py")
-        print()
+
+        # Get active provider to show appropriate instructions
+        ai_config = get_ai_config()
+        provider = ai_config.default_provider
+
+        # API providers list (automated workflow)
+        API_PROVIDERS = ['claude_api', 'mistral_api', 'openai', 'ollama']
+
+        if provider in API_PROVIDERS:
+            # API providers - automated workflow
+            print("✅ PROMPT GÉNÉRÉ ET ENVOYÉ À L'IA")
+            print("=" * 60)
+            print()
+            print("⏳ Analyse en cours via API...")
+            print("   Le résultat sera automatiquement disponible.")
+            print()
+        else:
+            # Clipboard - manual workflow (generic)
+            print("✅ PROMPT PRÊT POUR ANALYSE")
+            print("=" * 60)
+            print()
+            print("📝 ÉTAPES SUIVANTES :")
+            print()
+            print("1. Ouvrir votre IA préférée dans votre navigateur")
+            print("   Exemples : Claude.ai, ChatGPT, etc.")
+            print("   → https://claude.ai (si vous utilisez Claude)")
+            print()
+            print("2. Coller le prompt (Cmd+V)")
+            print()
+            print("3. Attendre l'analyse de votre IA")
+            print()
+            print("4. Copier la réponse (UNIQUEMENT le bloc markdown)")
+            print()
+            print("5. Exécuter le script d'insertion :")
+            print("   python3 cyclisme_training_logs/insert_analysis.py")
+            print()
+
         print("=" * 60)
 
     except requests.exceptions.HTTPError as e:
