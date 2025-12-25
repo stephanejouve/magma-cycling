@@ -1228,9 +1228,8 @@ def main():
         if generator.copy_to_clipboard(prompt):
             print("   ✅ Prompt copié !")
 
-            # Marquer l'activité comme analysée
-            state.mark_analyzed(activity['id'], activity_date.strftime('%Y-%m-%d'))
-            print(f"   ✅ Activité {activity['id']} marquée comme analysée")
+            # NOTE: Activity will be marked as analyzed AFTER successful insertion
+            # by insert_analysis.py or workflow_coach.py, not here!
 
             # Effacer le feedback après utilisation
             if athlete_feedback and generator.feedback_file.exists():
