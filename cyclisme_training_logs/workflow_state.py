@@ -6,14 +6,25 @@ Ce module permet de tracker :
 - La dernière activité analysée
 - Les activités non analysées (gap detection)
 - Le nombre total d'analyses effectuées
+- Les sessions spéciales documentées (repos/annulations/sautées) [Phase 4]
+- Les feedbacks athlète persistés [Phase 4]
 
 Usage:
     from workflow_state import WorkflowState
 
     state = WorkflowState()
-    state.mark_analyzed('i107779437')
 
+    # Tracking activités
+    state.mark_analyzed('i107779437')
     unanalyzed = state.get_unanalyzed_activities(all_activities)
+
+    # Tracking sessions spéciales (Phase 4)
+    state.mark_special_session_documented('S072-07', 'rest', '2025-12-21')
+    is_doc = state.is_special_session_documented('S072-07', '2025-12-21')
+
+    # Tracking feedbacks (Phase 4)
+    state.save_session_feedback('i123456', {'rpe': 7, 'comments': 'Good'})
+    feedback = state.get_session_feedback('i123456')
 """
 
 import json
@@ -178,6 +189,93 @@ class WorkflowState:
         # Vérifier dans l'historique
         history = self.state.get("history", [])
         return any(h["activity_id"] == activity_id for h in history)
+
+    # === TRACKING SESSIONS SPÉCIALES (PHASE 4) ===
+
+    def mark_special_session_documented(self, session_id: str, session_type: str, date: str):
+        """Marquer une session spéciale comme documentée
+
+        Args:
+            session_id: ID session (ex: S072-07)
+            session_type: Type ("rest", "cancelled", "skipped")
+            date: Date session (YYYY-MM-DD)
+        """
+        if 'documented_specials' not in self.state:
+            self.state['documented_specials'] = {}
+
+        key = f"{session_id}_{date}"
+        self.state['documented_specials'][key] = {
+            'session_id': session_id,
+            'type': session_type,
+            'date': date,
+            'documented_at': datetime.now().isoformat()
+        }
+        self._save_state()
+
+    def is_special_session_documented(self, session_id: str, date: str) -> bool:
+        """Vérifier si session spéciale déjà documentée
+
+        Args:
+            session_id: ID session (ex: S072-07)
+            date: Date session (YYYY-MM-DD)
+
+        Returns:
+            True si déjà documentée, False sinon
+        """
+        if not session_id or not date:
+            return False
+
+        key = f"{session_id}_{date}"
+        return key in self.state.get('documented_specials', {})
+
+    def get_documented_specials(self) -> Dict:
+        """Récupérer toutes les sessions spéciales documentées
+
+        Returns:
+            Dict avec clés session_id_date et valeurs metadata
+        """
+        return self.state.get('documented_specials', {})
+
+    # === PERSISTENCE FEEDBACK ATHLÈTE (PHASE 4) ===
+
+    def save_session_feedback(self, activity_id: str, feedback: Dict):
+        """Sauvegarder feedback athlète pour une session
+
+        Args:
+            activity_id: ID activité Intervals.icu
+            feedback: Dict avec keys 'rpe', 'comments', 'sleep_quality', etc.
+        """
+        if 'feedbacks' not in self.state:
+            self.state['feedbacks'] = {}
+
+        self.state['feedbacks'][activity_id] = {
+            'feedback': feedback,
+            'timestamp': datetime.now().isoformat()
+        }
+        self._save_state()
+
+    def get_session_feedback(self, activity_id: str) -> Optional[Dict]:
+        """Récupérer feedback existant pour une session
+
+        Args:
+            activity_id: ID activité Intervals.icu
+
+        Returns:
+            Dict avec 'feedback' et 'timestamp' ou None si absent
+        """
+        feedbacks = self.state.get('feedbacks', {})
+        return feedbacks.get(activity_id)
+
+    def has_session_feedback(self, activity_id: str) -> bool:
+        """Vérifier si feedback existe pour cette session
+
+        Args:
+            activity_id: ID activité Intervals.icu
+
+        Returns:
+            True si feedback existe, False sinon
+        """
+        return activity_id in self.state.get('feedbacks', {})
 
     def reset(self):
         """Réinitialiser l'état (debug/test)"""

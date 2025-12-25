@@ -23,6 +23,7 @@ import sys
 import subprocess
 from pathlib import Path
 from datetime import datetime, timedelta
+from typing import Optional
 import json
 import requests
 from cyclisme_training_logs.workflow_state import WorkflowState
@@ -776,11 +777,14 @@ class WorkflowCoach:
         """Étape 1b : Détection unifiée de tous les gaps (exécutées + repos + annulations)
 
         Returns:
-            str: Choix utilisateur ("single_executed", "batch_specials", "batch_all", "exit")
+            tuple: (choice: str, gaps_data: dict)
+                - choice: Choix utilisateur ("single_executed", "batch_specials", "batch_all", "exit")
+                - gaps_data: Dict avec listes unanalyzed, skipped, rest_days, cancelled
         """
         # Skip si activity_id fourni (bypass détection gaps)
         if self.activity_id:
-            return "single_executed"
+            gaps_data = {'unanalyzed': [], 'skipped': [], 'rest_days': [], 'cancelled': []}
+            return "single_executed", gaps_data
 
         self.clear_screen()
         self.print_header(
@@ -863,6 +867,28 @@ class WorkflowCoach:
             print("   Continuer avec détection activités exécutées uniquement")
             self.skipped_sessions = None
 
+        # PHASE 4: Filtrer séances sautées déjà documentées
+        if self.skipped_sessions:
+            skipped_original_count = len(self.skipped_sessions)
+            skipped_filtered = []
+
+            for skip in self.skipped_sessions:
+                # Extraire session_id depuis planned_name (format: "S072-05 - Name")
+                planned_name = skip.get('planned_name', '')
+                session_id = planned_name.split(' - ')[0] if ' - ' in planned_name else planned_name
+                date = skip.get('planned_date', '')
+
+                # Vérifier si déjà documentée
+                if not state.is_special_session_documented(session_id, date):
+                    skipped_filtered.append(skip)
+
+            # Log filtrage si sessions retirées
+            filtered_count = skipped_original_count - len(skipped_filtered)
+            if filtered_count > 0:
+                print(f"[INFO] {filtered_count} séance(s) sautée(s) déjà documentée(s) - ignorée(s)")
+
+            self.skipped_sessions = skipped_filtered if skipped_filtered else None
+
         # === PARTIE 2 : Charger planning si disponible ===
         rest_days = []
         cancelled_sessions = []
@@ -894,6 +920,46 @@ class WorkflowCoach:
                         rest_days = self.reconciliation.get('rest_days', [])
                         cancelled_sessions = self.reconciliation.get('cancelled', [])
 
+                        # PHASE 4: Filtrer repos planifiés déjà documentés
+                        if rest_days:
+                            rest_original_count = len(rest_days)
+                            rest_filtered = []
+
+                            for rest in rest_days:
+                                session_id = rest.get('session_id', '')
+                                date = rest.get('date', '')
+
+                                # Vérifier si déjà documenté
+                                if not state.is_special_session_documented(session_id, date):
+                                    rest_filtered.append(rest)
+
+                            # Log filtrage
+                            filtered_count = rest_original_count - len(rest_filtered)
+                            if filtered_count > 0:
+                                print(f"[INFO] {filtered_count} repos planifié(s) déjà documenté(s) - ignoré(s)")
+
+                            rest_days = rest_filtered
+
+                        # PHASE 4: Filtrer annulations déjà documentées
+                        if cancelled_sessions:
+                            cancelled_original_count = len(cancelled_sessions)
+                            cancelled_filtered = []
+
+                            for cancel in cancelled_sessions:
+                                session_id = cancel.get('session_id', '')
+                                date = cancel.get('date', '')
+
+                                # Vérifier si déjà documentée
+                                if not state.is_special_session_documented(session_id, date):
+                                    cancelled_filtered.append(cancel)
+
+                            # Log filtrage
+                            filtered_count = cancelled_original_count - len(cancelled_filtered)
+                            if filtered_count > 0:
+                                print(f"[INFO] {filtered_count} annulation(s) déjà documentée(s) - ignorée(s)")
+
+                            cancelled_sessions = cancelled_filtered
+
                 except Exception as e:
                     print(f"⚠️  Erreur chargement planning : {e}")
 
@@ -914,7 +980,14 @@ class WorkflowCoach:
             print("   Aucune séance planifiée sautée.")
             print()
             self.wait_user()
-            return "exit"
+            # PHASE 4: Retourner tuple avec gaps_data vide
+            gaps_data = {
+                'unanalyzed': [],
+                'skipped': [],
+                'rest_days': [],
+                'cancelled': []
+            }
+            return "exit", gaps_data
 
         # Détails séances exécutées
         if count_executed > 0:
@@ -989,17 +1062,25 @@ class WorkflowCoach:
         print("  [0] Quitter")
         print()
 
+        # PHASE 4: Préparer gaps_data pour signature (sortie intelligente boucle)
+        gaps_data = {
+            'unanalyzed': self.unanalyzed_activities or [],
+            'skipped': self.skipped_sessions or [],
+            'rest_days': rest_days,
+            'cancelled': cancelled_sessions
+        }
+
         while True:
             choice = input("Ton choix : ").strip()
 
             if choice == "0":
-                return "exit"
+                return "exit", gaps_data
             elif choice == "1" and "1" in options:
-                return "single_executed"
+                return "single_executed", gaps_data
             elif choice == "2" and "2" in options:
-                return "batch_specials"
+                return "batch_specials", gaps_data
             elif choice == "3" and "3" in options:
-                return "batch_all"
+                return "batch_all", gaps_data
             else:
                 print("❌ Choix invalide, réessaye.")
 
@@ -1393,6 +1474,31 @@ class WorkflowCoach:
             print(f"\n❌ Erreur export : {e}")
             return False
 
+    def _detect_session_type_from_markdown(self, markdown: str) -> Optional[str]:
+        """Détecter type de session depuis markdown
+
+        Args:
+            markdown: Texte markdown de la session
+
+        Returns:
+            str: Type session ("rest", "cancelled", "skipped") ou None si non détecté
+        """
+        markdown_lower = markdown.lower()
+
+        # Patterns pour repos
+        if any(pattern in markdown_lower for pattern in ['-rec-', 'repos', 'recovery', 'rest day']):
+            return "rest"
+
+        # Patterns pour annulations
+        if any(pattern in markdown_lower for pattern in ['annul', 'cancelled', 'cancel']):
+            return "cancelled"
+
+        # Patterns pour sautées
+        if any(pattern in markdown_lower for pattern in ['saut', 'skipped', 'skip']):
+            return "skipped"
+
+        return None
+
     def _insert_to_history(self, markdowns: list) -> bool:
         """Insère markdowns dans workouts-history.md
 
@@ -1425,6 +1531,27 @@ class WorkflowCoach:
             print(f"   {len(markdowns)} sessions ajoutées")
             print("\n⚠️  Note : Les entrées ont été ajoutées à la fin du fichier")
             print("   Tu peux les réorganiser manuellement si besoin")
+
+            # PHASE 4: Marquer sessions spéciales comme documentées
+            state = WorkflowState(project_root=self.project_root)
+            import re
+
+            for date, markdown in markdowns:
+                # Extraire session_id depuis markdown (format: "### S072-07-REC-...")
+                match = re.search(r'###\s+(S\d+-\d+)', markdown)
+                if match:
+                    session_id = match.group(1)
+
+                    # Détecter type de session depuis markdown
+                    session_type = self._detect_session_type_from_markdown(markdown)
+
+                    if session_type:
+                        try:
+                            state.mark_special_session_documented(session_id, session_type, date)
+                            print(f"   ✓ {session_type.capitalize()} {session_id} marquée documentée")
+                        except Exception as e:
+                            print(f"   ⚠️  Erreur marking {session_id}: {e}")
+
             return True
 
         except Exception as e:
@@ -2181,16 +2308,76 @@ Réponds maintenant."""
 
         print("─" * 70)
 
+    def _compute_gaps_signature(self, gaps_data: dict) -> str:
+        """Calculer signature unique des gaps actuels pour détecter changements
+
+        Args:
+            gaps_data: Dict avec listes unanalyzed, skipped, rest_days, cancelled
+
+        Returns:
+            str: Hash MD5 des IDs de toutes sessions détectées
+        """
+        import hashlib
+
+        ids = []
+
+        # Activités non analysées
+        for act in gaps_data.get('unanalyzed', []):
+            ids.append(f"act_{act.get('id', '')}")
+
+        # Séances sautées
+        for skip in gaps_data.get('skipped', []):
+            planned_name = skip.get('planned_name', '')
+            session_id = planned_name.split(' - ')[0] if ' - ' in planned_name else planned_name
+            date = skip.get('planned_date', '')
+            ids.append(f"skip_{session_id}_{date}")
+
+        # Repos planifiés
+        for rest in gaps_data.get('rest_days', []):
+            ids.append(f"rest_{rest.get('session_id', '')}_{rest.get('date', '')}")
+
+        # Annulations
+        for cancel in gaps_data.get('cancelled', []):
+            ids.append(f"cancel_{cancel.get('session_id', '')}_{cancel.get('date', '')}")
+
+        # Trier et hasher
+        ids_sorted = sorted(ids)
+        signature = hashlib.md5('|'.join(ids_sorted).encode()).hexdigest()
+        return signature
+
     def run(self):
         """Orchestrer le workflow complet avec détection unifiée des gaps (mode boucle)"""
         try:
             # Étape 1 : Accueil (une seule fois)
             self.step_1_welcome()
 
+            # PHASE 4: Tracking signature gaps pour sortie intelligente
+            seen_gaps_signature = None
+            iteration_count = 0
+
             # === BOUCLE PRINCIPALE : Traiter gaps jusqu'à épuisement ===
             while True:
+                iteration_count += 1
+
                 # Étape 1b : Détection unifiée gaps (exécutées + repos + annulations)
-                choice = self.step_1b_detect_all_gaps()
+                choice, gaps_data = self.step_1b_detect_all_gaps()
+
+                # PHASE 4: Calculer signature gaps actuels
+                current_signature = self._compute_gaps_signature(gaps_data)
+
+                # PHASE 4: Vérifier si nouveaux gaps détectés
+                if seen_gaps_signature is not None:
+                    if current_signature == seen_gaps_signature:
+                        print("\n" + "=" * 70)
+                        print("✅ TOUS LES GAPS TRAITÉS !")
+                        print("=" * 70)
+                        print("   Aucun nouveau gap détecté après traitement.")
+                        print(f"   Itérations effectuées : {iteration_count - 1}")
+                        print()
+                        break  # SORTIE : Pas de nouveaux gaps
+
+                # Mettre à jour signature
+                seen_gaps_signature = current_signature
 
                 # === FLUX SELON CHOIX ===
 
