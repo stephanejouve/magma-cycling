@@ -71,7 +71,7 @@ class OllamaAnalyzer(AIAnalyzer):
     def __init__(
         self,
         host: str = "http://localhost:11434",
-        model: str = "llama3.1:70b"
+        model: str = "mistral:7b"
     ):
         """Initialize Ollama analyzer.
 

@@ -114,7 +114,7 @@ class AIProviderFactory:
             >>> # Ollama (local, free)
             >>> analyzer = AIAnalyzerFactory.create('ollama', {
             ...     'ollama_host': 'http://localhost:11434',
-            ...     'ollama_model': 'llama3.1:70b'
+            ...     'ollama_model': 'mistral:7b'
             ... })
 
         Notes:
@@ -204,7 +204,7 @@ class AIProviderFactory:
         # === OLLAMA (Local) ===
         elif provider_enum == AIProvider.OLLAMA:
             host = config.get('ollama_host', 'http://localhost:11434')
-            model = config.get('ollama_model', 'llama3.1:70b')
+            model = config.get('ollama_model', 'mistral:7b')
 
             logger.info(f"Creating OllamaAnalyzer (model: {model}, host: {host})")
             return OllamaAnalyzer(
