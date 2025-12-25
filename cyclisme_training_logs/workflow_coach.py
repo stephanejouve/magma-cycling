@@ -1040,24 +1040,41 @@ class WorkflowCoach:
         print()
 
         options = []
+        option_mapping = {}  # P2: Mapper numéros aux actions
+
+        # Option [1] : Activités exécutées
         if count_executed > 0:
             print("  [1] Traiter UNE séance exécutée (workflow classique)")
             options.append("1")
+            option_mapping["1"] = "single_executed"
 
-        if count_rest > 0 or count_cancelled > 0 or count_skipped > 0:
-            special_label = []
+        # P2 FIX: Séparer repos/annulations et sautées
+        next_option_num = 2
+
+        # Option [2] : Repos/Annulations (si présents)
+        if count_rest > 0 or count_cancelled > 0:
+            rest_cancel_label = []
             if count_rest > 0:
-                special_label.append("repos")
+                rest_cancel_label.append("repos")
             if count_cancelled > 0:
-                special_label.append("annulations")
-            if count_skipped > 0:
-                special_label.append("sautées")
-            print(f"  [2] Traiter {'/'.join(special_label)} en batch")
-            options.append("2")
+                rest_cancel_label.append("annulations")
+            print(f"  [{next_option_num}] Traiter {'/'.join(rest_cancel_label)} en batch")
+            options.append(str(next_option_num))
+            option_mapping[str(next_option_num)] = "batch_rest_cancelled"
+            next_option_num += 1
 
-        if count_executed > 0 and (count_rest > 0 or count_cancelled > 0 or count_skipped > 0):
-            print("  [3] Traiter TOUT en batch (exécutées + repos + annulations + sautées)")
-            options.append("3")
+        # Option suivante : Sautées (si présentes)
+        if count_skipped > 0:
+            print(f"  [{next_option_num}] Traiter séances sautées en batch")
+            options.append(str(next_option_num))
+            option_mapping[str(next_option_num)] = "batch_skipped"
+            next_option_num += 1
+
+        # Option TOUT en batch (si mixte)
+        if count_executed > 0 and ((count_rest > 0 or count_cancelled > 0) or count_skipped > 0):
+            print(f"  [{next_option_num}] Traiter TOUT en batch (exécutées + spéciales)")
+            options.append(str(next_option_num))
+            option_mapping[str(next_option_num)] = "batch_all"
 
         print("  [0] Quitter")
         print()
@@ -1075,12 +1092,10 @@ class WorkflowCoach:
 
             if choice == "0":
                 return "exit", gaps_data
-            elif choice == "1" and "1" in options:
-                return "single_executed", gaps_data
-            elif choice == "2" and "2" in options:
-                return "batch_specials", gaps_data
-            elif choice == "3" and "3" in options:
-                return "batch_all", gaps_data
+            elif choice in option_mapping:
+                # P2 FIX: Utiliser mapping dynamique
+                action = option_mapping[choice]
+                return action, gaps_data
             else:
                 print("❌ Choix invalide, réessaye.")
 
@@ -1696,6 +1711,142 @@ class WorkflowCoach:
         else:
             # Export/Copie/Insertion → terminé
             return "exit"
+
+    def _handle_skipped_sessions(self, skipped_sessions: list) -> str:
+        """Handler dédié pour traiter séances sautées en batch (P2 FIX)
+
+        Args:
+            skipped_sessions: Liste sessions sautées détectées
+
+        Returns:
+            str: Action ("exit" après traitement ou "continue" si enrichissement)
+        """
+        if not skipped_sessions:
+            print("\n⚠️  Aucune séance sautée à traiter")
+            self.wait_user()
+            return "exit"
+
+        print("\n" + "=" * 70)
+        print("📝 GÉNÉRATION SÉANCES SAUTÉES")
+        print("=" * 70)
+
+        print(f"\n⏭️  {len(skipped_sessions)} séance(s) sautée(s) à documenter...")
+
+        # Générer markdowns pour chaque sautée
+        markdowns_generated = []
+
+        for skipped in skipped_sessions:
+            session_id = skipped.get('planned_name', '').split(' - ')[0]
+            date = skipped.get('planned_date', '')
+            name = skipped.get('planned_name', 'Séance')
+
+            print(f"\n   → {session_id} [{date}]")
+
+            # Demander raison saut
+            print(f"   Raison (fatigue/météo/emploi du temps/autre) : ", end='')
+            reason = input().strip()
+            if not reason:
+                reason = "Non spécifié"
+
+            # Générer markdown simple pour sautée
+            markdown = self._generate_skipped_markdown(skipped, reason)
+            markdowns_generated.append((date, markdown))
+            print(f"      ✓ Généré ({len(markdown)} chars)")
+
+        if not markdowns_generated:
+            print("\n⚠️  Aucun markdown généré")
+            self.wait_user()
+            return "exit"
+
+        print(f"\n✅ {len(markdowns_generated)} markdowns générés")
+
+        # Preview
+        self._preview_markdowns(markdowns_generated)
+
+        # Menu actions
+        print("\n" + "=" * 70)
+        print("💡 Que veux-tu faire avec ces markdowns ?")
+        print("=" * 70)
+        print("  [1] Enrichir avec Claude.ai (analyse coach)")
+        print("  [2] Insérer tel quel dans workouts-history.md")
+        print("  [3] Export fichier seulement")
+        print("  [4] Copier dans presse-papier")
+        print("  [0] Retour menu principal")
+
+        action = input("\nTon choix (0/1/2/3/4) : ").strip()
+
+        if action == "0":
+            print("\n→ Retour menu principal")
+            return "exit"
+
+        elif action == "1":
+            # Enrichissement Claude.ai
+            print("\n🤖 Génération prompt d'enrichissement Coach IA...")
+            if self._generate_coach_prompt(markdowns_generated):
+                print("\n✅ Prompt copié dans le presse-papier")
+                print("\n→ Continuation workflow pour enrichissement...")
+                self._markdowns_generated = markdowns_generated
+                return "continue"
+            else:
+                print("\n❌ Erreur génération prompt")
+                return "exit"
+
+        elif action == "2":
+            # Insertion directe
+            confirm = input("\n⚠️  Confirmer insertion directe (sans enrichissement) ? (o/n) : ").strip().lower()
+            if confirm == 'o':
+                self._insert_to_history(markdowns_generated)
+                print("\n✅ Séances sautées documentées")
+            else:
+                print("\n→ Insertion annulée")
+            return "exit"
+
+        elif action == "3":
+            # Export fichier
+            self._export_markdowns(markdowns_generated, "skipped_sessions")
+            return "exit"
+
+        elif action == "4":
+            # Copier clipboard
+            self._copy_to_clipboard(markdowns_generated)
+            return "exit"
+
+        else:
+            print("\n⚠️  Choix invalide")
+            return "exit"
+
+    def _generate_skipped_markdown(self, skipped: dict, reason: str) -> str:
+        """Générer markdown pour séance sautée (P2 FIX)
+
+        Args:
+            skipped: Dict session sautée (planned_name, planned_date, etc.)
+            reason: Raison saut fournie par user
+
+        Returns:
+            str: Markdown formaté
+        """
+        session_id = skipped.get('planned_name', '').split(' - ')[0]
+        date_obj = datetime.strptime(skipped.get('planned_date', ''), '%Y-%m-%d')
+        date_formatted = date_obj.strftime('%d/%m/%Y')
+        name = skipped.get('planned_name', 'Séance')
+
+        markdown = f"""### {session_id}
+Date : {date_formatted}
+
+#### Statut
+**⏭️  SÉANCE SAUTÉE**
+
+#### Workout Planifié
+- Nom : {name}
+- TSS prévu : {skipped.get('planned_tss', 0)}
+
+#### Raison
+{reason}
+
+#### Notes
+Session planifiée non réalisée. Aucune donnée d'exécution disponible.
+"""
+        return markdown
 
     def _handle_batch_all(self):
         """Handler pour traiter TOUT en batch (exécutées + repos + annulations)
@@ -2409,8 +2560,8 @@ Réponds maintenant."""
                     input("\nAppuyer sur ENTRÉE pour continuer...")
                     # Continue la boucle → retour step_1b pour gaps restants
 
-                elif choice == "batch_specials":
-                    # Traiter repos/annulations en batch
+                elif choice == "batch_rest_cancelled":
+                    # P2 FIX: Traiter repos/annulations uniquement
                     result = self._handle_rest_cancellations()
 
                     if result == "continue":
@@ -2424,8 +2575,33 @@ Réponds maintenant."""
                         # Actions terminées (export/copie/insertion directe)
                         # Proposer commit git optionnel
                         if not self.skip_git:
-                            self._optional_git_commit("Sessions spéciales documentées")
-                        print("\n✅ Sessions spéciales documentées")
+                            self._optional_git_commit("Sessions repos/annulations documentées")
+                        print("\n✅ Sessions repos/annulations documentées")
+
+                    # Message retour boucle
+                    print("\n" + "═" * 70)
+                    print("🔄 Retour détection gaps pour sessions restantes...")
+                    print("═" * 70)
+                    input("\nAppuyer sur ENTRÉE pour continuer...")
+                    # Continue la boucle → retour step_1b pour gaps restants
+
+                elif choice == "batch_skipped":
+                    # P2 FIX: Traiter séances sautées uniquement
+                    result = self._handle_skipped_sessions(gaps_data['skipped'])
+
+                    if result == "continue":
+                        # Enrichissement Claude.ai choisi → continuer workflow
+                        self.step_4_paste_prompt()
+                        self.step_5_validate_analysis()
+                        self.step_6_insert_analysis()
+                        self.step_7_git_commit()
+                        self.show_summary()
+                    else:
+                        # Actions terminées (export/copie/insertion directe)
+                        # Proposer commit git optionnel
+                        if not self.skip_git:
+                            self._optional_git_commit("Sessions sautées documentées")
+                        print("\n✅ Sessions sautées documentées")
 
                     # Message retour boucle
                     print("\n" + "═" * 70)
