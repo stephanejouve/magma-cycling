@@ -149,7 +149,7 @@ class MistralAPIAnalyzer(AIAnalyzer):
 
         try:
             # Call Mistral API with parameters
-            response = self.client.chat.complete(
+            response = self.client.chat(
                 model=self.model,
                 messages=[
                     {"role": "user", "content": prompt}
