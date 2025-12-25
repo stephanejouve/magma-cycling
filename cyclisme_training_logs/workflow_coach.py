@@ -1290,6 +1290,39 @@ class WorkflowCoach:
             print()
             print("✅ Feedback collecté et sauvegardé !")
             self.wait_user()
+
+    def _ask_fallback_consent(self, failed_provider: str, next_provider: str, error_msg: str) -> str:
+        """Ask user consent before falling back to another provider.
+
+        Args:
+            failed_provider: The provider that failed
+            next_provider: The next provider in fallback chain
+            error_msg: Error message from the failed provider
+
+        Returns:
+            User choice: 'F' (Fallback), 'C' (Clipboard), 'Q' (Quit)
+        """
+        print()
+        print("=" * 70)
+        print(f"⚠️  ÉCHEC DU PROVIDER : {failed_provider}")
+        print("=" * 70)
+        print()
+        print(f"Erreur : {error_msg}")
+        print()
+        print("🔀 OPTIONS DISPONIBLES :")
+        print()
+        print(f"  [F] Fallback  - Essayer {next_provider} (provider suivant)")
+        print(f"  [C] Clipboard - Basculer vers le mode manuel (presse-papier)")
+        print(f"  [Q] Quit      - Quitter le workflow")
+        print()
+
+        while True:
+            choice = input("Votre choix [F/C/Q] : ").strip().upper()
+            if choice in ['F', 'C', 'Q']:
+                return choice
+            print("⚠️  Choix invalide. Veuillez entrer F, C ou Q.")
+            print()
+
     def step_3_prepare_analysis(self):
         """Étape 3 : Préparer le prompt d'analyse"""
         self.clear_screen()
@@ -1379,32 +1412,63 @@ class WorkflowCoach:
                 self.wait_user()
             except Exception as e:
                 logger.error(f"AI analysis failed: {e}")
-                print(f"❌ Erreur lors de l'analyse IA : {e}")
-                print()
 
-                # Fallback to next provider if enabled
-                if self.ai_config.enable_fallback:
-                    fallback_chain = self.ai_config.get_fallback_chain()
-                    try:
-                        current_idx = fallback_chain.index(self.current_provider)
-                        if current_idx + 1 < len(fallback_chain):
-                            next_provider = fallback_chain[current_idx + 1]
-                            print(f"🔄 Tentative avec provider de secours : {next_provider}")
-                            print()
+                # Check if fallback is possible
+                fallback_chain = self.ai_config.get_fallback_chain()
+                next_provider = None
 
-                            # Reinitialize with fallback provider
-                            self.current_provider = next_provider
-                            provider_config = self.ai_config.get_provider_config(next_provider)
-                            self.ai_analyzer = AIProviderFactory.create(next_provider, provider_config)
+                try:
+                    current_idx = fallback_chain.index(self.current_provider)
+                    if current_idx + 1 < len(fallback_chain):
+                        next_provider = fallback_chain[current_idx + 1]
+                except (ValueError, IndexError):
+                    pass
 
-                            # Retry
-                            self.step_3_prepare_analysis()
-                            return
-                    except (ValueError, IndexError):
-                        pass
+                # If fallback available, ask user consent
+                if next_provider and self.ai_config.enable_fallback:
+                    choice = self._ask_fallback_consent(
+                        failed_provider=self.current_provider,
+                        next_provider=next_provider,
+                        error_msg=str(e)
+                    )
 
-                print("💡 Conseil : Utilisez --provider clipboard pour le mode manuel")
-                sys.exit(1)
+                    if choice == 'F':
+                        # Fallback to next provider
+                        print()
+                        print(f"🔄 Basculement vers provider de secours : {next_provider}")
+                        print()
+
+                        self.current_provider = next_provider
+                        provider_config = self.ai_config.get_provider_config(next_provider)
+                        self.ai_analyzer = AIProviderFactory.create(next_provider, provider_config)
+
+                        # Retry
+                        self.step_3_prepare_analysis()
+                        return
+
+                    elif choice == 'C':
+                        # Switch to clipboard
+                        print()
+                        print("📋 Basculement vers mode manuel (clipboard)")
+                        print()
+
+                        self.current_provider = 'clipboard'
+                        self.ai_analyzer = AIProviderFactory.create('clipboard', {})
+
+                        # Retry
+                        self.step_3_prepare_analysis()
+                        return
+
+                    else:  # choice == 'Q'
+                        print()
+                        print("👋 Workflow interrompu par l'utilisateur")
+                        sys.exit(0)
+                else:
+                    # No fallback available
+                    print(f"❌ Erreur lors de l'analyse IA : {e}")
+                    print()
+                    print("💡 Conseil : Utilisez --provider clipboard pour le mode manuel")
+                    sys.exit(1)
 
     # ========================================================================
     # NOUVELLES MÉTHODES POUR GESTION PLANNING HEBDOMADAIRE
@@ -2281,6 +2345,21 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
 
         print()
         print("✅ Analyse insérée dans logs/workouts-history.md !")
+
+        # Mark activity as analyzed ONLY after successful insertion
+        if self.activity_id:
+            from cyclisme_training_logs.workflow_state import WorkflowState
+            state = WorkflowState(self.project_root)
+            # Extract date from activity_data if available
+            if hasattr(self, 'activity_data') and self.activity_data:
+                activity_date = self.activity_data.get('start_date_local', '')[:10]  # YYYY-MM-DD
+            else:
+                from datetime import datetime
+                activity_date = datetime.now().strftime('%Y-%m-%d')
+
+            state.mark_analyzed(self.activity_id, activity_date)
+            print(f"✅ Activité {self.activity_id} marquée comme analysée")
+
         self.wait_user()
 
     def step_6b_servo_control(self):
