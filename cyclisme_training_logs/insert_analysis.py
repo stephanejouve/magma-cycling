@@ -2,21 +2,18 @@
 """
 Insertion de l'analyse IA dans workouts-history.md
 
-GARTNER_TIME: M
-STATUS: Migration (v1 → v2)
+GARTNER_TIME: I
+STATUS: Production
 LAST_REVIEW: 2025-12-26
 PRIORITY: P1
-MIGRATION_TARGET: core/timeline_injector.py
-DEPRECATION_PLAN: Refactor with TimelineInjector after Prompt 2 Phase 1
 DOCSTRING: v2
 
-Insère l'analyse générée par IA dans le fichier workouts-history.md.
-ACTUELLEMENT : Append-only à la fin du fichier (v1).
-FUTUR : Injection chronologique via TimelineInjector pour maintenir
-l'ordre temporel (Prompt 2 Phase 1).
+Insère l'analyse générée par IA dans le fichier workouts-history.md en
+respectant l'ordre chronologique via TimelineInjector. Remplace le système
+append-only par une injection intelligente basée sur les dates de workout.
 
 Examples:
-    Current usage (v1)::
+    CLI usage::
 
         # Insertion depuis presse-papier (workflow manuel)
         poetry run insert-analysis
@@ -30,35 +27,40 @@ Examples:
         # Mode auto (pour backfill)
         poetry run insert-analysis --yes
 
-    Future usage (v2) - After migration::
+    Programmatic usage with TimelineInjector::
 
         from cyclisme_training_logs.core.timeline_injector import TimelineInjector
+        from pathlib import Path
 
         # Initialisation injector
         injector = TimelineInjector(
-            workouts_history_path="~/training-logs/logs/workouts-history.md"
+            history_file=Path("~/training-logs/logs/workouts-history.md")
         )
 
         # Injection chronologique
-        injector.insert_chronologically(
-            workout_data={
-                'date': '2024-08-15',
-                'analysis': analysis_text,
-                'activity_id': 'i113782165'
-            }
+        result = injector.inject_chronologically(
+            workout_entry=analysis_text,
+            workout_date=date(2024, 8, 15)
         )
+
+        if result.success:
+            print(f"Injected at line {result.line_number}")
+        else:
+            print(f"Error: {result.error}")
 
 Author: Claude Code
 Created: 2024-11-15
-Updated: 2025-12-26 (Added Gartner TIME tags - Migration status)
+Updated: 2025-12-26 (Migrated to TimelineInjector - chronological injection)
 """
 
 import argparse
 import re
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, date
 from pathlib import Path
+
+from cyclisme_training_logs.core.timeline_injector import TimelineInjector
 
 
 class ClipboardReader:
@@ -293,17 +295,17 @@ class WorkoutHistoryManager:
         return False
 
     def insert_analysis(self, analysis_text):
-        """Insérer l'analyse dans workouts-history.md"""
+        """Insérer l'analyse dans workouts-history.md via TimelineInjector"""
 
         # Lire le fichier existant
         content = self.read_history()
         if content is None:
             return False
 
-        # Vérifier les doublons
+        # Vérifier les doublons (garde le prompt utilisateur)
         if self.check_duplicate(content, analysis_text):
-            date = AnalysisParser.extract_date_from_analysis(analysis_text)
-            print(f"⚠️  Une entrée similaire existe déjà pour la date {date}")
+            date_str = AnalysisParser.extract_date_from_analysis(analysis_text)
+            print(f"⚠️  Une entrée similaire existe déjà pour la date {date_str}")
             if self.yes_confirm:
                 print("   ✅ Overwrite confirmé (--yes)")
                 response = 'y'
@@ -313,35 +315,39 @@ class WorkoutHistoryManager:
                     print("❌ Insertion annulée")
                     return False
 
-        # Trouver le point d'insertion (première occurrence de "## Historique")
-        insert_marker = "## Historique"
-        insert_pos = content.find(insert_marker)
-
-        if insert_pos == -1:
-            # Si pas trouvé, insérer à la fin
-            print("⚠️  Marqueur '## Historique' non trouvé, insertion à la fin")
-            new_content = content + f"\n\n{insert_marker}\n\n{analysis_text}\n\n---\n"
+        # Extraire et convertir date pour TimelineInjector
+        date_str = AnalysisParser.extract_date_from_analysis(analysis_text)
+        if date_str:
+            # Convertir format DD/MM/YYYY vers YYYY-MM-DD
+            day, month, year = date_str.split('/')
+            workout_date = date(int(year), int(month), int(day))
         else:
-            # Insérer juste après le marqueur
-            # Trouver la fin de la ligne du marqueur
-            line_end = content.find('\n', insert_pos)
-            if line_end == -1:
-                line_end = len(content)
+            # Fallback: utiliser date actuelle
+            print("⚠️  Date non détectée, utilisation de la date du jour")
+            workout_date = date.today()
 
-            insertion_point = line_end + 1
-
-            # Construire le nouveau contenu
-            new_content = (
-                content[:insertion_point] +
-                f"\n{analysis_text}\n\n---\n" +
-                content[insertion_point:]
+        # Utiliser TimelineInjector pour insertion chronologique
+        try:
+            injector = TimelineInjector(
+                history_file=self.history_file,
+                check_duplicates=False  # Déjà fait ci-dessus
             )
 
-        # Écrire le nouveau fichier
-        with open(self.history_file, 'w', encoding='utf-8') as f:
-            f.write(new_content)
+            result = injector.inject_chronologically(
+                workout_entry=analysis_text,
+                workout_date=workout_date
+            )
 
-        return True
+            if result.success:
+                print(f"   ✅ Injection chronologique réussie (ligne {result.line_number})")
+                return True
+            else:
+                print(f"   ❌ Erreur TimelineInjector: {result.error}")
+                return False
+
+        except Exception as e:
+            print(f"   ❌ Erreur lors de l'injection: {e}")
+            return False
 
     def show_diff(self):
         """Afficher le git diff"""

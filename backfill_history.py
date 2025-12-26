@@ -2,21 +2,18 @@
 """
 Backfill automatisé de l'historique d'entraînement
 
-GARTNER_TIME: M
-STATUS: Migration (v1 → v2)
+GARTNER_TIME: I
+STATUS: Production
 LAST_REVIEW: 2025-12-26
 PRIORITY: P2
-MIGRATION_TARGET: core/timeline_injector.py
-DEPRECATION_PLAN: Refactor with TimelineInjector after Prompt 2 Phase 1
 DOCSTRING: v2
 
 Analyse en masse des activités historiques depuis Intervals.icu avec génération
-automatisée d'analyses IA. ACTUELLEMENT : Utilise append-only insertion (v1).
-FUTUR : Intégrera TimelineInjector pour injection chronologique correcte.
-Dépend de Prompt 2 Phase 1 pour migration complète.
+automatisée d'analyses IA. Utilise TimelineInjector via insert-analysis pour
+injection chronologique dans workouts-history.md.
 
 Examples:
-    Current usage (v1)::
+    CLI usage::
 
         # Backfill par défaut (2024-01-01 → aujourd'hui)
         poetry run backfill-history --yes
@@ -44,25 +41,15 @@ Examples:
             yes_confirm=True
         )
 
-        # Exécution backfill
-        activities = backfiller.fetch_activities(
+        # Exécution backfill (utilise TimelineInjector via insert-analysis)
+        backfiller.run(
             start_date="2024-08-01",
             end_date="2024-08-31"
         )
-        backfiller.process_batch(activities)
-
-    Future usage (v2) - After migration::
-
-        from cyclisme_training_logs.core.timeline_injector import TimelineInjector
-
-        # Backfill avec injection chronologique
-        injector = TimelineInjector()
-        for activity in activities:
-            injector.insert_chronologically(activity)
 
 Author: Claude Code
 Created: 2025-12-26
-Updated: 2025-12-26 (Added Gartner TIME tags - Migration status)
+Updated: 2025-12-26 (Integrated TimelineInjector via insert-analysis)
 """
 
 import argparse
