@@ -1,19 +1,57 @@
 #!/usr/bin/env python3
 """
-manage_workflow_state.py - Outil de gestion du workflow state
+Outil de gestion de l'état du workflow
 
-Usage:
-    # Afficher l'état actuel
-    poetry run manage-state --show
+GARTNER_TIME: I
+STATUS: Production
+LAST_REVIEW: 2025-12-26
+PRIORITY: P1
+DOCSTRING: v2
 
-    # Supprimer une activité
-    poetry run manage-state --remove i113782165
+Utilitaire CLI pour inspecter et manipuler le fichier .workflow_state.json
+qui track les activités analysées. Permet d'afficher l'état, lister l'historique,
+supprimer des entrées spécifiques ou réinitialiser complètement le state.
 
-    # Reset complet
-    poetry run manage-state --reset
+Examples:
+    Command-line usage::
 
-    # Lister les dernières activités
-    poetry run manage-state --list
+        # Afficher l'état actuel du workflow
+        poetry run manage-state --show
+
+        # Lister les 20 dernières activités analysées
+        poetry run manage-state --list
+        poetry run manage-state --list 50
+
+        # Supprimer une activité spécifique du state
+        poetry run manage-state --remove i113782165
+
+        # Reset complet du workflow state
+        poetry run manage-state --reset
+
+    Programmatic usage::
+
+        from cyclisme_training_logs.workflow_state import WorkflowState
+
+        # Initialisation
+        state = WorkflowState()
+
+        # Récupération statistiques
+        stats = state.get_stats()
+        print(f"Total: {stats['total_analyses']}")
+
+        # Vérification activité
+        if state.is_analyzed("i113782165"):
+            print("Déjà analysé")
+
+        # Ajout nouvelle activité
+        state.mark_analyzed(
+            activity_id="i113782165",
+            activity_date="2024-08-15"
+        )
+
+Author: Claude Code
+Created: 2024-12-20
+Updated: 2025-12-26 (Added Gartner TIME tags)
 """
 
 import argparse

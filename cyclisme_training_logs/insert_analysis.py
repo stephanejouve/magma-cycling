@@ -1,18 +1,56 @@
 #!/usr/bin/env python3
 """
-insert_analysis.py - Insère l'analyse de Claude.ai dans workouts-history.md
+Insertion de l'analyse IA dans workouts-history.md
 
-Ce script :
-1. Lit le presse-papier macOS (réponse de Claude.ai)
-2. Parse et extrait le bloc markdown d'analyse
-3. Insère l'entrée dans logs/workouts-history.md
-4. Vérifie avec git diff
-5. Propose de commit
+GARTNER_TIME: M
+STATUS: Migration (v1 → v2)
+LAST_REVIEW: 2025-12-26
+PRIORITY: P1
+MIGRATION_TARGET: core/timeline_injector.py
+DEPRECATION_PLAN: Refactor with TimelineInjector after Prompt 2 Phase 1
+DOCSTRING: v2
 
-Usage:
-    python3 cyclisme_training_logs/insert_analysis.py
-    python3 cyclisme_training_logs/insert_analysis.py --dry-run  # Test sans modification
-    python3 cyclisme_training_logs/insert_analysis.py --file analysis.md  # Depuis fichier
+Insère l'analyse générée par IA dans le fichier workouts-history.md.
+ACTUELLEMENT : Append-only à la fin du fichier (v1).
+FUTUR : Injection chronologique via TimelineInjector pour maintenir
+l'ordre temporel (Prompt 2 Phase 1).
+
+Examples:
+    Current usage (v1)::
+
+        # Insertion depuis presse-papier (workflow manuel)
+        poetry run insert-analysis
+
+        # Test sans modification
+        poetry run insert-analysis --dry-run
+
+        # Insertion depuis fichier
+        poetry run insert-analysis --file analysis.md
+
+        # Mode auto (pour backfill)
+        poetry run insert-analysis --yes
+
+    Future usage (v2) - After migration::
+
+        from cyclisme_training_logs.core.timeline_injector import TimelineInjector
+
+        # Initialisation injector
+        injector = TimelineInjector(
+            workouts_history_path="~/training-logs/logs/workouts-history.md"
+        )
+
+        # Injection chronologique
+        injector.insert_chronologically(
+            workout_data={
+                'date': '2024-08-15',
+                'analysis': analysis_text,
+                'activity_id': 'i113782165'
+            }
+        )
+
+Author: Claude Code
+Created: 2024-11-15
+Updated: 2025-12-26 (Added Gartner TIME tags - Migration status)
 """
 
 import argparse

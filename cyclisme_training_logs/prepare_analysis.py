@@ -1,17 +1,55 @@
 #!/usr/bin/env python3
 """
-prepare_analysis.py - Prépare le prompt d'analyse pour IA
+Génération du prompt d'analyse pour IA Coach
 
-Ce script :
-1. Récupère la dernière séance depuis Intervals.icu
-2. Charge le contexte athlète et les logs récents
-3. Génère un prompt optimisé pour analyse par IA
-4. Copie le prompt dans le presse-papier macOS
-5. Affiche les instructions adaptées au provider AI configuré
+GARTNER_TIME: I
+STATUS: Production
+LAST_REVIEW: 2025-12-26
+PRIORITY: P0
+DOCSTRING: v2
 
-Usage:
-    python3 cyclisme_training_logs/prepare_analysis.py [--activity-id XXXXXX]
-    python3 cyclisme_training_logs/prepare_analysis.py --config ~/.intervals_config.json
+Prépare le prompt d'analyse de séance cyclisme pour traitement par IA.
+Récupère les données depuis Intervals.icu, agrège le contexte athlète,
+les zones de puissance, les logs récents, et génère un prompt structuré
+optimisé pour analyse qualitative par LLM.
+
+Examples:
+    Command-line usage::
+
+        # Analyse de la dernière activité
+        poetry run prepare-analysis
+
+        # Analyse d'une activité spécifique
+        poetry run prepare-analysis --activity-id i113782165
+
+        # Avec fichier config personnalisé
+        poetry run prepare-analysis --config ~/.intervals_custom.json
+
+    Programmatic usage::
+
+        from cyclisme_training_logs.prepare_analysis import PromptGenerator
+        from cyclisme_training_logs.prepare_analysis import IntervalsAPI
+
+        # Initialisation API
+        api = IntervalsAPI(
+            athlete_id="i151223",
+            api_key="your_api_key"
+        )
+
+        # Récupération activité
+        activity = api.get_activity("i113782165")
+
+        # Génération prompt
+        generator = PromptGenerator(
+            activity_data=activity,
+            power_zones=power_zones,
+            context_path="~/training-logs/context.md"
+        )
+        prompt = generator.generate_full_prompt()
+
+Author: Claude Code
+Created: 2024-11-15
+Updated: 2025-12-26 (Added Gartner TIME tags)
 """
 
 import argparse
