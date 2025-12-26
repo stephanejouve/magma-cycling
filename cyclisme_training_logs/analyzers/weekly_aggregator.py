@@ -1,0 +1,649 @@
+"""
+Weekly workout data aggregator for comprehensive analysis.
+
+GARTNER_TIME: I
+STATUS: Production
+LAST_REVIEW: 2025-12-26
+PRIORITY: P1
+DOCSTRING: v2
+
+Agrégateur hebdomadaire implémentant DataAggregator pour collecter
+et traiter données complètes d'une semaine d'entraînement. Collecte
+7 workouts, métriques évolution (CTL/ATL/TSB), feedback athlète,
+et génère structure pour 6 reports.
+
+Examples:
+    Basic weekly aggregation::
+
+        from cyclisme_training_logs.analyzers.weekly_aggregator import WeeklyAggregator
+        from datetime import date
+
+        # Agréger semaine S073
+        aggregator = WeeklyAggregator(
+            week="S073",
+            start_date=date(2025, 1, 6)
+        )
+
+        result = aggregator.aggregate()
+
+        if result.success:
+            # Données disponibles
+            workouts = result.data['processed']['workouts']
+            metrics = result.data['processed']['metrics_evolution']
+            learnings = result.data['processed']['learnings']
+
+    Advanced with custom config::
+
+        from pathlib import Path
+
+        # Configuration personnalisée
+        aggregator = WeeklyAggregator(
+            week="S073",
+            start_date=date(2025, 1, 6),
+            data_dir=Path("~/training-logs"),
+            config={
+                'include_feedback': True,
+                'compute_trends': True,
+                'validate_compliance': True
+            }
+        )
+
+        result = aggregator.aggregate()
+
+        # Accès détaillé
+        weekly_data = result.data['processed']
+        print(f"Total TSS: {weekly_data['summary']['total_tss']}")
+        print(f"Compliance: {weekly_data['compliance']['rate']:.1f}%")
+
+    Integration with analyzer::
+
+        from cyclisme_training_logs.analyzers.weekly_analyzer import WeeklyAnalyzer
+
+        # Pipeline complet
+        aggregator = WeeklyAggregator(week="S073", start_date=date(2025, 1, 6))
+        aggregation = aggregator.aggregate()
+
+        # Passer au analyzer
+        analyzer = WeeklyAnalyzer(aggregation.data['processed'])
+        reports = analyzer.generate_all_reports()
+
+Author: Claude Code
+Created: 2025-12-26 (Phase 2 - Weekly Analysis System)
+"""
+
+from datetime import date, datetime, timedelta
+from pathlib import Path
+from typing import Dict, Any, List, Optional
+import json
+import logging
+
+from cyclisme_training_logs.core.data_aggregator import DataAggregator
+from cyclisme_training_logs.sync_intervals import IntervalsAPI
+
+logger = logging.getLogger(__name__)
+
+
+class WeeklyAggregator(DataAggregator):
+    """
+    Agrégateur hebdomadaire pour analyse complète semaine.
+
+    Collecte et agrège :
+    - 7 workouts de la semaine (activités Intervals.icu)
+    - Métriques évolution quotidienne (CTL/ATL/TSB)
+    - Feedback athlète pour chaque séance
+    - Données wellness (sommeil, poids, HRV)
+    - Compliance planifié vs exécuté
+
+    Structure données pour 6 reports :
+    1. workout_history - Chronologie détaillée
+    2. metrics_evolution - Évolution métriques
+    3. training_learnings - Enseignements techniques
+    4. protocol_adaptations - Ajustements protocoles
+    5. transition - Recommandations semaine suivante
+    6. bilan_final - Synthèse globale
+    """
+
+    def __init__(
+        self,
+        week: str,
+        start_date: date,
+        data_dir: Optional[Path] = None,
+        config: Optional[Dict[str, Any]] = None
+    ):
+        """
+        Initialiser agrégateur weekly.
+
+        Args:
+            week: Numéro semaine (ex: S073)
+            start_date: Date début semaine (lundi)
+            data_dir: Répertoire données (défaut: ~/training-logs)
+            config: Configuration optionnelle
+        """
+        super().__init__(data_dir=data_dir, config=config)
+        self.week = week
+        self.start_date = start_date
+        self.end_date = start_date + timedelta(days=6)
+
+        try:
+            self.api = IntervalsAPI()
+        except Exception as e:
+            logger.warning(f"Failed to initialize Intervals API: {e}")
+            self.api = None
+
+    def collect_raw_data(self) -> Dict[str, Any]:
+        """
+        Collecter données brutes hebdomadaires.
+
+        Returns:
+            Dict avec :
+            - activities: Liste 7 activités
+            - metrics_daily: Évolution quotidienne CTL/ATL/TSB
+            - feedback: Feedback athlète par séance
+            - wellness: Données wellness quotidiennes
+            - planned: Workouts planifiés
+        """
+        raw_data = {}
+
+        # 1. Activités hebdomadaires
+        try:
+            logger.info(f"Fetching activities for week {self.week}")
+            activities = self._fetch_weekly_activities()
+            raw_data['activities'] = activities
+            logger.info(f"Collected {len(activities)} activities")
+        except Exception as e:
+            logger.error(f"Failed to fetch activities: {e}")
+            self.errors.append(f"Activities fetch error: {e}")
+            raw_data['activities'] = []
+
+        # 2. Métriques quotidiennes
+        try:
+            logger.info("Fetching daily metrics evolution")
+            metrics_daily = self._fetch_daily_metrics()
+            raw_data['metrics_daily'] = metrics_daily
+        except Exception as e:
+            logger.warning(f"Failed to fetch metrics: {e}")
+            self.warnings.append(f"Metrics incomplete: {e}")
+            raw_data['metrics_daily'] = []
+
+        # 3. Feedback athlète
+        try:
+            feedback = self._load_weekly_feedback()
+            raw_data['feedback'] = feedback
+            logger.info(f"Loaded feedback for {len(feedback)} sessions")
+        except Exception as e:
+            logger.warning(f"No feedback found: {e}")
+            self.warnings.append("No athlete feedback available")
+            raw_data['feedback'] = {}
+
+        # 4. Wellness data
+        try:
+            wellness = self._fetch_wellness_data()
+            raw_data['wellness'] = wellness
+        except Exception as e:
+            logger.warning(f"No wellness data: {e}")
+            raw_data['wellness'] = {}
+
+        # 5. Planned workouts (compliance)
+        if self.config.get('validate_compliance', True):
+            try:
+                planned = self._fetch_planned_workouts()
+                raw_data['planned'] = planned
+            except Exception as e:
+                logger.warning(f"No planned workouts: {e}")
+                raw_data['planned'] = []
+
+        return raw_data
+
+    def process_data(self, raw_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Traiter données brutes hebdomadaires.
+
+        Args:
+            raw_data: Données collectées
+
+        Returns:
+            Données structurées pour 6 reports
+        """
+        processed = {}
+
+        # 1. Summary général
+        processed['summary'] = self._compute_weekly_summary(raw_data['activities'])
+
+        # 2. Workouts détaillés (pour workout_history)
+        processed['workouts'] = self._process_workouts_detailed(
+            raw_data['activities'],
+            raw_data.get('feedback', {})
+        )
+
+        # 3. Metrics evolution (pour metrics_evolution)
+        processed['metrics_evolution'] = self._process_metrics_evolution(
+            raw_data.get('metrics_daily', [])
+        )
+
+        # 4. Training learnings (pour training_learnings)
+        processed['learnings'] = self._extract_training_learnings(
+            raw_data['activities'],
+            raw_data.get('feedback', {})
+        )
+
+        # 5. Protocol adaptations (pour protocol_adaptations)
+        processed['protocol_adaptations'] = self._identify_protocol_changes(
+            processed['learnings'],
+            processed['metrics_evolution']
+        )
+
+        # 6. Compliance (pour transition)
+        if 'planned' in raw_data:
+            processed['compliance'] = self._compute_compliance(
+                raw_data['activities'],
+                raw_data['planned']
+            )
+
+        # 7. Transition data (pour transition + bilan)
+        processed['transition'] = self._prepare_transition_data(
+            processed['summary'],
+            processed['metrics_evolution'],
+            processed['learnings']
+        )
+
+        # 8. Wellness insights
+        if raw_data.get('wellness'):
+            processed['wellness_insights'] = self._analyze_wellness(
+                raw_data['wellness']
+            )
+
+        return processed
+
+    def format_output(self, processed_data: Dict[str, Any]) -> str:
+        """
+        Formater sortie markdown (summary).
+
+        Args:
+            processed_data: Données traitées
+
+        Returns:
+            Markdown summary
+        """
+        summary = processed_data.get('summary', {})
+
+        output = [f"# Semaine {self.week} - Summary\n"]
+
+        # Période
+        output.append(f"**Période :** {self.start_date} → {self.end_date}\n")
+
+        # Metrics
+        output.append("## Métriques Globales\n")
+        output.append(f"- **Séances :** {summary.get('total_sessions', 0)}")
+        output.append(f"- **TSS total :** {summary.get('total_tss', 0)}")
+        output.append(f"- **Durée totale :** {summary.get('total_duration', 0) // 60} min")
+        output.append(f"- **TSS moyen :** {summary.get('avg_tss', 0):.1f}")
+
+        # CTL/ATL/TSB
+        if 'final_metrics' in summary:
+            metrics = summary['final_metrics']
+            output.append("\n## Forme")
+            output.append(f"- **CTL :** {metrics.get('ctl', 0):.1f}")
+            output.append(f"- **ATL :** {metrics.get('atl', 0):.1f}")
+            output.append(f"- **TSB :** {metrics.get('tsb', 0):.1f}")
+
+        return "\n".join(output)
+
+    # ==================== MÉTHODES PRIVÉES ====================
+
+    def _fetch_weekly_activities(self) -> List[Dict[str, Any]]:
+        """Fetch activités semaine depuis Intervals.icu."""
+        if not self.api:
+            logger.warning("No API available, returning empty activities")
+            return []
+
+        start_str = self.start_date.isoformat()
+        end_str = self.end_date.isoformat()
+
+        activities = self.api.get_activities(
+            oldest=start_str,
+            newest=end_str
+        )
+
+        # Trier par date
+        activities.sort(key=lambda x: x.get('start_date_local', ''))
+
+        return activities
+
+    def _fetch_daily_metrics(self) -> List[Dict[str, Any]]:
+        """Fetch métriques quotidiennes (CTL/ATL/TSB)."""
+        if not self.api:
+            return []
+
+        metrics = []
+        current_date = self.start_date
+
+        while current_date <= self.end_date:
+            try:
+                wellness = self.api.get_wellness(current_date.isoformat())
+                if wellness:
+                    metrics.append({
+                        'date': current_date.isoformat(),
+                        'ctl': wellness.get('ctl', 0),
+                        'atl': wellness.get('atl', 0),
+                        'tsb': wellness.get('tsb', 0),
+                        'ramp_rate': wellness.get('ramp_rate', 0)
+                    })
+            except Exception as e:
+                logger.warning(f"No metrics for {current_date}: {e}")
+
+            current_date += timedelta(days=1)
+
+        return metrics
+
+    def _load_weekly_feedback(self) -> Dict[str, Any]:
+        """Charger feedback athlète pour la semaine."""
+        feedback_dir = self.data_dir / 'feedback'
+        if not feedback_dir.exists():
+            return {}
+
+        feedback = {}
+        for feedback_file in feedback_dir.glob('*.json'):
+            try:
+                with open(feedback_file, 'r') as f:
+                    data = json.load(f)
+                    activity_id = feedback_file.stem
+                    feedback[activity_id] = data
+            except Exception as e:
+                logger.warning(f"Failed to load {feedback_file}: {e}")
+
+        return feedback
+
+    def _fetch_wellness_data(self) -> Dict[str, Any]:
+        """Fetch données wellness (sommeil, poids, HRV)."""
+        if not self.api:
+            return {}
+
+        wellness = {}
+        current_date = self.start_date
+
+        while current_date <= self.end_date:
+            try:
+                data = self.api.get_wellness(current_date.isoformat())
+                if data:
+                    wellness[current_date.isoformat()] = {
+                        'sleep_quality': data.get('sleepQuality', 0),
+                        'sleep_hours': data.get('sleepSecs', 0) / 3600 if data.get('sleepSecs') else 0,
+                        'weight': data.get('weight', 0),
+                        'hrv': data.get('hrvSDNN', 0),
+                        'resting_hr': data.get('restingHR', 0)
+                    }
+            except Exception as e:
+                logger.warning(f"No wellness for {current_date}: {e}")
+
+            current_date += timedelta(days=1)
+
+        return wellness
+
+    def _fetch_planned_workouts(self) -> List[Dict[str, Any]]:
+        """Fetch workouts planifiés pour compliance check."""
+        if not self.api:
+            return []
+
+        start_str = self.start_date.isoformat()
+        end_str = self.end_date.isoformat()
+
+        try:
+            planned = self.api.get_events(
+                oldest=start_str,
+                newest=end_str,
+                category='WORKOUT'
+            )
+            return planned
+        except Exception as e:
+            logger.warning(f"Failed to fetch planned workouts: {e}")
+            return []
+
+    def _compute_weekly_summary(self, activities: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Calculer summary hebdomadaire."""
+        summary = {
+            'total_sessions': len(activities),
+            'total_tss': sum(a.get('training_load', 0) for a in activities),
+            'total_duration': sum(a.get('moving_time', 0) for a in activities),
+            'avg_tss': 0,
+            'avg_if': 0,
+            'total_distance': sum(a.get('distance', 0) for a in activities)
+        }
+
+        if activities:
+            summary['avg_tss'] = summary['total_tss'] / len(activities)
+
+            # IF moyen (si disponible)
+            ifs = [a.get('if', 0) for a in activities if a.get('if', 0) > 0]
+            if ifs:
+                summary['avg_if'] = sum(ifs) / len(ifs)
+
+        # Métriques finales (dernière journée)
+        if activities:
+            last_activity = activities[-1]
+            summary['final_metrics'] = {
+                'ctl': last_activity.get('ctl', 0),
+                'atl': last_activity.get('atl', 0),
+                'tsb': last_activity.get('tsb', 0)
+            }
+
+        return summary
+
+    def _process_workouts_detailed(
+        self,
+        activities: List[Dict[str, Any]],
+        feedback: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
+        """Traiter workouts avec détails pour workout_history."""
+        workouts = []
+
+        for i, activity in enumerate(activities, 1):
+            activity_id = str(activity.get('id', ''))
+
+            workout = {
+                'session_number': i,
+                'date': activity.get('start_date_local', ''),
+                'activity_id': activity_id,
+                'name': activity.get('name', 'Unknown'),
+                'type': activity.get('type', 'Ride'),
+                'duration': activity.get('moving_time', 0),
+                'tss': activity.get('training_load', 0),
+                'if': activity.get('if', 0),
+                'normalized_power': activity.get('normalized_power', 0),
+                'average_power': activity.get('average_power', 0),
+                'average_hr': activity.get('average_hr', 0),
+                'max_hr': activity.get('max_hr', 0)
+            }
+
+            # Ajouter feedback si disponible
+            if activity_id in feedback:
+                workout['feedback'] = feedback[activity_id]
+
+            workouts.append(workout)
+
+        return workouts
+
+    def _process_metrics_evolution(
+        self,
+        metrics_daily: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
+        """Traiter évolution métriques."""
+        if not metrics_daily:
+            return {}
+
+        evolution = {
+            'daily': metrics_daily,
+            'trends': {}
+        }
+
+        # Calculer tendances
+        if len(metrics_daily) >= 2:
+            first = metrics_daily[0]
+            last = metrics_daily[-1]
+
+            evolution['trends'] = {
+                'ctl_change': last['ctl'] - first['ctl'],
+                'atl_change': last['atl'] - first['atl'],
+                'tsb_change': last['tsb'] - first['tsb']
+            }
+
+        return evolution
+
+    def _extract_training_learnings(
+        self,
+        activities: List[Dict[str, Any]],
+        feedback: Dict[str, Any]
+    ) -> List[str]:
+        """Extraire enseignements training (pour AI analysis)."""
+        learnings = []
+
+        # Patterns répétés
+        high_tss_days = [
+            a for a in activities
+            if a.get('training_load', 0) > 80
+        ]
+
+        if high_tss_days:
+            learnings.append(
+                f"{len(high_tss_days)} séances haute charge (TSS >80)"
+            )
+
+        # IF élevés
+        high_if_days = [
+            a for a in activities
+            if a.get('if', 0) > 1.0
+        ]
+
+        if high_if_days:
+            learnings.append(
+                f"{len(high_if_days)} séances intensité élevée (IF >1.0)"
+            )
+
+        # Feedback patterns
+        low_rpe = [
+            fid for fid, f in feedback.items()
+            if f.get('rpe', 10) <= 3
+        ]
+
+        if low_rpe:
+            learnings.append(
+                f"{len(low_rpe)} séances RPE faible (≤3)"
+            )
+
+        return learnings
+
+    def _identify_protocol_changes(
+        self,
+        learnings: List[str],
+        metrics_evolution: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
+        """Identifier changements protocoles nécessaires."""
+        adaptations = []
+
+        # Check TSB trends
+        trends = metrics_evolution.get('trends', {})
+        tsb_change = trends.get('tsb_change', 0)
+
+        if tsb_change < -10:
+            adaptations.append({
+                'type': 'recovery',
+                'reason': f'TSB dropped {tsb_change:.1f} points',
+                'recommendation': 'Add recovery day next week'
+            })
+
+        return adaptations
+
+    def _compute_compliance(
+        self,
+        activities: List[Dict[str, Any]],
+        planned: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
+        """Calculer compliance planifié vs exécuté."""
+        compliance = {
+            'planned_count': len(planned),
+            'executed_count': len(activities),
+            'rate': 0,
+            'missed': [],
+            'extra': []
+        }
+
+        if planned:
+            compliance['rate'] = (len(activities) / len(planned)) * 100
+
+        # Identifier séances manquées (simplification)
+        if len(activities) < len(planned):
+            compliance['missed'] = planned[len(activities):]
+
+        return compliance
+
+    def _prepare_transition_data(
+        self,
+        summary: Dict[str, Any],
+        metrics_evolution: Dict[str, Any],
+        learnings: List[str]
+    ) -> Dict[str, Any]:
+        """Préparer données transition semaine suivante."""
+        transition = {
+            'current_state': {
+                'total_tss': summary.get('total_tss', 0),
+                'avg_tss': summary.get('avg_tss', 0),
+                'final_tsb': summary.get('final_metrics', {}).get('tsb', 0)
+            },
+            'recommendations': [],
+            'focus_areas': learnings[:3] if learnings else []
+        }
+
+        # Recommandations basées sur TSB
+        tsb = transition['current_state']['final_tsb']
+
+        if tsb < -15:
+            transition['recommendations'].append(
+                'Recovery week recommended (TSB very low)'
+            )
+        elif tsb > 10:
+            transition['recommendations'].append(
+                'Ready for intensity increase (TSB positive)'
+            )
+
+        return transition
+
+    def _analyze_wellness(self, wellness: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyser données wellness."""
+        insights = {
+            'sleep_quality_avg': 0,
+            'sleep_hours_avg': 0,
+            'weight_trend': 0,
+            'hrv_avg': 0
+        }
+
+        if not wellness:
+            return insights
+
+        # Moyennes
+        sleep_qualities = [
+            w['sleep_quality'] for w in wellness.values()
+            if w.get('sleep_quality', 0) > 0
+        ]
+
+        if sleep_qualities:
+            insights['sleep_quality_avg'] = sum(sleep_qualities) / len(sleep_qualities)
+
+        sleep_hours = [
+            w['sleep_hours'] for w in wellness.values()
+            if w.get('sleep_hours', 0) > 0
+        ]
+
+        if sleep_hours:
+            insights['sleep_hours_avg'] = sum(sleep_hours) / len(sleep_hours)
+
+        # Tendance poids
+        weights = [
+            (date, w['weight'])
+            for date, w in wellness.items()
+            if w.get('weight', 0) > 0
+        ]
+
+        if len(weights) >= 2:
+            weights.sort()
+            insights['weight_trend'] = weights[-1][1] - weights[0][1]
+
+        return insights

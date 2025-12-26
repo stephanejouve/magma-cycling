@@ -32,7 +32,8 @@ ipdb = "^0.13.13"
 
 [tool.poetry.scripts]
 # === Scripts Principaux (Usage Quotidien) ===
-weekly-analysis = "cyclisme_training_logs.weekly_analysis:main"
+weekly-analysis = "cyclisme_training_logs.workflows.workflow_weekly:main"
+weekly-analysis-legacy = "cyclisme_training_logs.weekly_analysis:main"  # DEPRECATED - Gartner E
 upload-workouts = "cyclisme_training_logs.upload_workouts:main"
 prepare-analysis = "cyclisme_training_logs.prepare_analysis:main"
 

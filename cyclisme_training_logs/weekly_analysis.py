@@ -1,6 +1,35 @@
 #!/usr/bin/env python3
 """
-weekly_analysis.py - Génération analyse hebdomadaire cyclisme
+weekly_analysis.py - Génération analyse hebdomadaire cyclisme (DEPRECATED)
+
+GARTNER_TIME: E (Eliminate)
+STATUS: Deprecated
+LAST_REVIEW: 2025-12-26
+PRIORITY: P4
+DEPRECATION_DATE: 2025-12-26
+REPLACEMENT: cyclisme_training_logs.workflows.workflow_weekly
+
+⚠️  DEPRECATED - Ce script est obsolète et sera supprimé dans une version future.
+
+Migration vers le nouveau système (Phase 2 - Weekly Analysis System):
+    Ancien (deprecated):
+        python3 cyclisme_training_logs/weekly_analysis.py --week-id S073
+
+    Nouveau (recommandé):
+        poetry run weekly-analysis --week S073 --start-date 2025-01-06
+
+Avantages du nouveau système:
+- Architecture modulaire (WeeklyAggregator → WeeklyAnalyzer → WeeklyWorkflow)
+- Extension de DataAggregator base class (Phase 1 infrastructure)
+- Tests complets (30+ tests)
+- API programmatique en plus du CLI
+- Meilleure gestion d'erreurs et validation
+- Génération automatisée sans clipboard manuel
+
+Documentation:
+    cyclisme_training_logs/workflows/workflow_weekly.py
+    cyclisme_training_logs/analyzers/weekly_aggregator.py
+    cyclisme_training_logs/analyzers/weekly_analyzer.py
 
 Ce script génère automatiquement les 6 fichiers markdown du rapport hebdomadaire :
 1. workout_history_sXXX.md - Chronologie complète des séances
@@ -10,7 +39,7 @@ Ce script génère automatiquement les 6 fichiers markdown du rapport hebdomadai
 5. transition_sXXX_sXXX.md - Transition vers semaine suivante
 6. bilan_final_sXXX.md - Bilan global de la semaine
 
-Usage:
+Usage (DEPRECATED):
     python3 cyclisme_training_logs/weekly_analysis.py --week-id S068
     python3 cyclisme_training_logs/weekly_analysis.py --week-id S068 --start-date 2024-11-18
 """
@@ -524,6 +553,34 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
     def run(self):
         """Workflow complet interactif"""
+
+        # DEPRECATION WARNING
+        print("\n" + "=" * 70)
+        print("⚠️  DEPRECATION WARNING")
+        print("=" * 70)
+        print()
+        print("Ce script 'weekly_analysis.py' est OBSOLÈTE (Gartner E).")
+        print("Il sera supprimé dans une version future.")
+        print()
+        print("Utilisez le nouveau système Weekly Analysis (Phase 2):")
+        print()
+        print(f"  poetry run weekly-analysis --week {self.week_number} --start-date {self.start_date.strftime('%Y-%m-%d')}")
+        print()
+        print("Avantages du nouveau système:")
+        print("  - Architecture modulaire et testée")
+        print("  - Intégration Phase 1 infrastructure")
+        print("  - Génération automatisée sans clipboard manuel")
+        print()
+        print("Documentation: cyclisme_training_logs/workflows/workflow_weekly.py")
+        print("=" * 70)
+        print()
+
+        response = input("Continuer avec le script obsolète ? (o/n) : ").strip().lower()
+        if response != 'o':
+            print("\n✅ Utilisez le nouveau système avec: poetry run weekly-analysis --help")
+            return
+
+        print()
 
         print("=" * 70)
         print(f"  🎯 ANALYSE HEBDOMADAIRE {self.week_number}")
