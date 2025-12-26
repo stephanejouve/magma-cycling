@@ -60,6 +60,467 @@ Fichier : SXXX-JJ-TYPE-NomSeance-VXXX.zwo
 
 ## Historique
 
+### Zwift - Red Zone Repeats on The Fan Flats in Richmond
+Date : 13/10/2025
+
+#### Métriques Pré-séance
+- CTL : 57
+- ATL : 43
+- TSB : +13
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 40min
+- IF : 0.78
+- TSS : 41
+- Puissance moyenne : 136W
+- Puissance normalisée : 171W
+- Cadence moyenne : 87rpm
+- FC moyenne : 114bpm
+- Découplage : 4.0%
+
+#### Exécution Technique
+Séance exécutée en endurance modérée avec des pointes en "Red Zone" (Z4-Z5). Le découplage cardiovasculaire de 4.0% valide une bonne exécution technique, confirmant une bonne adaptation aérobie. La puissance normalisée (171W) supérieure à la moyenne (136W) indique des variations d'intensité, typiques des intervalles courts ou des accélérations.
+
+#### Charge d'Entraînement
+Le TSS de 41 est faible pour une séance de 40min, reflétant une intensité modérée (IF 0.78). Le TSB reste positif (+13), confirmant une bonne fraîcheur pré-séance, mais le sommeil nul est un facteur limitant pour la récupération et l'adaptation.
+
+#### Validation Objectifs
+- ✅ **Découplage <7.5%** : 4.0% (validation technique)
+- ❌ **Intensité cible** : IF 0.78 (endurance modérée, pas de "Red Zone" marquée)
+- ✅ **Cadence maintenue** : 87rpm (stable, conforme aux attentes)
+
+#### Points d'Attention
+- **Sommeil nul** : Impact négatif sur la récupération et l'adaptation, surtout pour une séance avec variations d'intensité.
+- **Intensité réelle** : La séance semble avoir été exécutée en endurance modérée (Z2-Z3) plutôt qu'en "Red Zone" (Z4-Z5), malgré le nom. Vérifier le fichier .zwo pour confirmer la structure prévue.
+- **Données Strava** : Les tags ("Free Training", "moderate intensity") suggèrent une exécution libre, non structurée.
+
+#### Recommandations Progression
+1. **Vérifier la structure de la séance** : Confirmer si les intervalles "Red Zone" ont été exécutés comme prévu (ex : 30s-1min à >110% FTP). Si non, ajuster la prochaine séance pour cibler spécifiquement Z4-Z5.
+2. **Prioriser le sommeil** : Même pour des séances modérées, un sommeil de 0h est incompatible avec une progression durable. Cibler ≥6h pour les prochaines séances, surtout avant des efforts intenses.
+3. **Adapter la nutrition** : Pour les séances avec variations d'intensité, prévoir une prise de glucides 15min avant (ex : rice cake) si la durée dépasse 60min.
+
+#### Métriques Post-séance
+- CTL : 57
+- ATL : 43
+- TSB : +13
+
+---
+
+### S062-07-REC-FinSemaineActive
+Date : 12/10/2025
+
+#### Métriques Pré-séance
+- CTL : 57
+- ATL : 44
+- TSB : +13
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 47min
+- IF : 0.57
+- TSS : 26
+- Puissance moyenne : 125W
+- Puissance normalisée : 125W
+- Cadence moyenne : 88rpm
+- FC moyenne : 100bpm
+- Découplage : 0.0%
+
+#### Exécution Technique
+Séance de récupération active parfaitement exécutée en zone Z1-Z2 (60% FTP). Découplage nul (0.0%) confirmant une exécution technique optimale, sans dérive cardiovasculaire. Cadence stable (88rpm) et FC maîtrisée (100bpm) pour un effort de récupération.
+
+#### Charge d'Entraînement
+TSS faible (26) cohérent avec une séance de récupération, maintenant un TSB positif (+13). Charge d'entraînement adaptée pour favoriser la récupération après une semaine potentiellement intense (ATL à 44).
+
+#### Validation Objectifs
+- ✅ **Zone cible** : 100% du temps en Z1-Z2 (60% FTP)
+- ✅ **Découplage** : 0.0% (<7.5% seuil)
+- ✅ **Durée/IF** : Respect des objectifs (-1min/-0.01 IF vs planifié)
+
+#### Points d'Attention
+- **Sommeil absent** : Donnée manquante critique (0.0h), à vérifier manuellement sur Withings. Risque de sous-estimation de la récupération réelle.
+- **FC moyenne basse** : 100bpm pour 60% FTP suggère une récupération avancée ou une fatigue résiduelle (à croiser avec sommeil et RPE).
+
+#### Recommandations Progression
+1. **Vérifier sommeil** : Confirmer la donnée manquante (0.0h) via Withings. Si réelle, prioriser un coucher précoce pour les prochaines nuits (objectif 7h+).
+2. **Maintenir format** : Ce type de séance de récupération (45-50min Z1-Z2) est validé. À reproduire systématiquement en fin de semaine ou après séances intenses.
+
+#### Métriques Post-séance
+- CTL : 57
+- ATL : 44
+- TSB : +13
+
+---
+
+### Zwift - Climb Control on Flat Route in Watopia
+Date : 11/10/2025
+
+#### Métriques Pré-séance
+- CTL : 58
+- ATL : 46
+- TSB : +11
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 42min
+- IF : 0.87
+- TSS : 54
+- Puissance moyenne : 154W
+- Puissance normalisée : 192W
+- Cadence moyenne : 86rpm
+- FC moyenne : 119bpm
+- Découplage : -10.6%
+
+#### Exécution Technique
+Séance à **intensité modérée-élevée** (IF 0.87) avec une puissance normalisée proche du **Sweet Spot (87% FTP)**. Cependant, le **découplage cardiovasculaire de -10.6%** (dérive >7.5%) indique une **exécution dégradée** : probable fatigue précoce ou mauvaise gestion de l'effort. La cadence (86rpm) est cohérente avec un effort soutenu, mais la FC moyenne (119bpm) suggère un effort sous-maximal pour cette intensité.
+
+#### Charge d'Entraînement
+**TSS modéré (54)** pour une durée courte, reflétant une intensité élevée mais peu de volume. Le **TSB stable (+11)** confirme une fraîcheur préservée, mais le découplage élevé questionne la qualité de la récupération malgré ce TSB positif.
+
+#### Validation Objectifs
+- ❌ **Découplage <7.5%** (valeur : -10.6%)
+- ✅ **IF dans la plage Sweet Spot** (0.87)
+- ❌ **Stabilité FC/puissance** (dérive significative)
+
+#### Points d'Attention
+- **Découplage critique** : Possible fatigue résiduelle ou mauvaise hydratation/nutrition malgré TSB positif.
+- **Sommeil nul** : Absence de données de sommeil (erreur de mesure ?) à investiguer.
+- **Contexte récent** : Vérifier les séances des 48h précédentes (ex. "Flat Out Fast" du 11/10) pour surcharge cumulative.
+
+#### Recommandations Progression
+1. **Analyser la cause du découplage** : Vérifier hydratation, nutrition, et charge récente sur Intervals.icu. Prioriser une séance d'endurance (Z2) avec monitoring strict du découplage.
+2. **Adapter l'intensité** : Si fatigue confirmée, réduire l'IF à 0.75-0.80 pour les prochaines séances Sweet Spot jusqu'à normalisation du découplage.
+
+#### Métriques Post-séance
+- CTL : 58
+- ATL : 46
+- TSB : +11
+
+---
+
+### Zwift - Flat Out Fast on Flat Route in Watopia
+Date : 11/10/2025
+
+#### Métriques Pré-séance
+- CTL : 58
+- ATL : 46
+- TSB : +11
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 41min
+- IF : 0.90
+- TSS : 56
+- Puissance moyenne : 174W
+- Puissance normalisée : 198W
+- Cadence moyenne : 89rpm
+- FC moyenne : 128bpm
+- Découplage : -4.4%
+
+#### Exécution Technique
+Séance de haute intensité (IF 0.90) avec un découplage cardiovasculaire excellent (-4.4%), validant une exécution technique de qualité. La puissance normalisée (198W) confirme un effort soutenu dans la zone VO2max (90% FTP = 198W vs 220W FTP). Cadence stable (89rpm) adaptée à l'intensité.
+
+#### Charge d'Entraînement
+TSS modéré (56) cohérent avec une séance VO2max courte, sans impact significatif sur la fatigue (ATL stable à 46). TSB positif (+11) confirme une fraîcheur optimale pour ce type d'effort, mais le sommeil nul est un facteur limitant majeur.
+
+#### Validation Objectifs
+- ✅ **Intensité VO2max atteinte** : Puissance normalisée = 90% FTP (198W/220W)
+- ✅ **Qualité technique validée** : Découplage <5% (excellent)
+- ❌ **Durée insuffisante** : 41min vs 60min+ recommandé pour VO2max
+
+#### Points d'Attention
+- **Sommeil nul** : Risque accru de fatigue résiduelle malgré TSB positif
+- **Durée limitée** : Effet physiologique sous-optimal pour VO2max
+- **Absence de structure intervalle** : Effort continu vs blocs fractionnés (ex: 4×4min)
+
+#### Recommandations Progression
+1. **Prioriser le sommeil** : Cibler 7h+ pour optimiser l'adaptation VO2max (facteur limitant identifié)
+2. **Allonger la durée** : Viser 60min avec structure intervalle (ex: 5×4min @110% FTP, 4min récup)
+3. **Surveiller la récupération** : Vérifier FC repos matinale et découplage sur les prochaines séances
+
+#### Métriques Post-séance
+- CTL : 58
+- ATL : 46
+- TSB : +11
+
+---
+
+### Boucle des 4 villages
+Date : 09/10/2025
+
+#### Métriques Pré-séance
+- CTL : 58
+- ATL : 42
+- TSB : +16
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 28min
+- IF : 0.76
+- TSS : 28
+- Puissance moyenne : 162W
+- Puissance normalisée : 168W
+- Cadence moyenne : 88rpm
+- FC moyenne : 109bpm
+- Découplage : -0.4%
+
+#### Exécution Technique
+Séance d'activation neuromusculaire avec un **dépassement significatif** des objectifs planifiés (+32W en puissance moyenne, +0.15 en IF). Le découplage cardiovasculaire exceptionnel (-0.4%) valide une exécution technique de haute qualité, malgré l'intensité supérieure. La cadence moyenne (88rpm) est cohérente avec le protocole, mais l'intensité réelle (Z3-Z4) dépasse largement le planifié (Z2-Z4).
+
+#### Charge d'Entraînement
+TSS réalisé (28) **quasi double** du TSS prévu (16), malgré une durée similaire. Le TSB pré-séance (+16) indiquait une fraîcheur optimale, mais cette surcharge non planifiée pourrait impacter la récupération pour les séances suivantes. ATL stable (42), mais à surveiller pour éviter une accumulation de fatigue.
+
+#### Validation Objectifs
+- ❌ **Intensité cible** : Dépassement majeur (95% FTP prévu → ~110% FTP réalisé)
+- ✅ **Qualité technique** : Découplage <7.5% (validation parfaite)
+- ❌ **Durée/structure** : Non-respect des intervalles planifiés (30s/90s)
+
+#### Points d'Attention
+- **Sommeil nul** : Risque majeur pour la récupération malgré TSB positif.
+- **Dépassement non contrôlé** : Possible surcompensation post-séance de récupération (S062-03).
+- **Virtualisation** : Effort perçu possiblement sous-estimé en indoor (source TrainingPeaks).
+
+#### Recommandations Progression
+1. **Vérifier la source des données** : Confirmer l'exactitude des puissances sur Intervals.icu (possible erreur de capteur ou virtualisation).
+2. **Adapter la séance suivante** : Réduire l'intensité de 10-15% pour compenser la surcharge non planifiée.
+3. **Prioriser le sommeil** : Cibler ≥6h pour les prochaines nuits, surtout avant les séances VO2max.
+
+#### Métriques Post-séance
+- CTL : 58
+- ATL : 42
+- TSB : +16
+
+---
+
+### S062-03-REC-RecuperationActive
+Date : 08/10/2025
+
+#### Métriques Pré-séance
+- CTL : 59
+- ATL : 44
+- TSB : +14
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 48min
+- IF : 0.58
+- TSS : 27
+- Puissance moyenne : 127W
+- Puissance normalisée : 127W
+- Cadence moyenne : 87rpm
+- FC moyenne : 99bpm
+- Découplage : -0.7%
+
+#### Exécution Technique
+Séance de récupération active parfaitement exécutée avec une adhérence stricte au plan (IF 0.58 vs 0.58 prévu). Le découplage cardiovasculaire négatif (-0.7%) indique une excellente efficacité métabolique, validant la qualité de la récupération. La cadence (87rpm) et la FC moyenne (99bpm) sont cohérentes avec une intensité Z1/Z2 légère.
+
+#### Charge d'Entraînement
+TSS faible (27) conforme à une séance de récupération, maintenant un TSB positif (+14) idéal pour la fraîcheur. Cette séance n’impacte pas significativement la fatigue (ATL stable à 44), préservant la capacité à enchaîner avec des efforts intenses.
+
+#### Validation Objectifs
+- ✅ **Intensité cible** : IF 0.58 dans la zone de récupération (Z1/Z2)
+- ✅ **Découplage** : -0.7% (<7.5%, validation technique)
+- ✅ **Durée/TSS** : Respect strict du plan (48min, TSS 27)
+
+#### Points d'Attention
+- **Sommeil nul** : Absence de données de sommeil (0.0h) limite l’évaluation de la récupération réelle. Risque de sous-estimer la fatigue résiduelle.
+- **FC moyenne basse** : 99bpm en Z1/Z2 suggère une récupération avancée, mais à confirmer avec le sommeil.
+
+#### Recommandations Progression
+1. **Vérifier le sommeil** : Prioriser un suivi précis (Withings) pour corréler la récupération avec les données physiologiques.
+2. **Maintenir ce format** : Récupération active validée comme protocole efficace pour les jours post-effort (ex. après S062-02-INT-TestSweetSpot88).
+
+#### Métriques Post-séance
+- CTL : 59
+- ATL : 44
+- TSB : +14
+
+---
+
+### S062-02-INT-TestSweetSpot88
+Date : 07/10/2025
+
+#### Métriques Pré-séance
+- CTL : 59
+- ATL : 47
+- TSB : +12
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 59min
+- IF : 0.76
+- TSS : 57
+- Puissance moyenne : 158W
+- Puissance normalisée : 167W
+- Cadence moyenne : 88rpm
+- FC moyenne : 111bpm
+- Découplage : 2.6%
+
+#### Exécution Technique
+Séance **Sweet Spot (88% FTP)** parfaitement exécutée avec une adhérence stricte au plan (+0W/-1W vs prévu). Découplage cardiovasculaire exceptionnel (2.6% < 7.5%) confirmant une exécution technique optimale et une excellente forme aérobie. Cadence maintenue à 88rpm (cible 90rpm) avec une régularité remarquable sur les blocs de 12min.
+
+#### Charge d'Entraînement
+TSS réalisé (57) conforme au plan, avec un TSB pré-séance idéal (+12) pour ce type d'effort. ATL stable (47) malgré l'absence de sommeil déclarée, suggérant une récupération efficace des séances précédentes. Charge bien tolérée sans signe de fatigue résiduelle.
+
+#### Validation Objectifs
+- ✅ **Adhérence au plan** : Durée/TSS/IF identiques au planifié (±0)
+- ✅ **Qualité technique** : Découplage 2.6% (seuil <7.5% validé)
+- ✅ **Intensité cible** : 88% FTP maintenu sur 24min cumulés
+
+#### Points d'Attention
+- **Sommeil non déclaré** : Risque de sous-estimation de la fatigue réelle (à croiser avec données Withings)
+- **Cadence légèrement inférieure** : 88rpm vs 90rpm cible (écart mineur, à surveiller sur prochaines séances)
+- **Absence de données FC max** : Limite l'analyse de l'effort perçu en Z3
+
+#### Recommandations Progression
+1. **Valider le protocole 88% FTP** : Confirmer comme intensité Sweet Spot optimale pour les prochaines séances (ex: S063-0X-INT-SweetSpot88V2 avec 3×15min)
+2. **Intégrer un test de cadence** : Séance dédiée (S063-0X-CAD-Cadence90rpm) pour évaluer l'impact sur l'efficacité de pédalage à 88-90rpm
+3. **Surveiller le sommeil** : Prioriser la récupération post-séance (objectif 7h+) pour maintenir la qualité des efforts à haute intensité
+
+#### Métriques Post-séance
+- CTL : 59
+- ATL : 47
+- TSB : +12
+
+---
+
+### S062-01-REC-RecuperationLegere
+Date : 06/10/2025
+
+#### Métriques Pré-séance
+- CTL : 60
+- ATL : 46
+- TSB : +14
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 34min
+- IF : 0.62
+- TSS : 23
+- Puissance moyenne : 129W
+- Puissance normalisée : 137W
+- Cadence moyenne : 86rpm
+- FC moyenne : 102bpm
+- Découplage : -0.9%
+
+#### Exécution Technique
+Séance de récupération active bien exécutée avec une puissance moyenne légèrement inférieure au planifié (129W vs 138W prévu), mais restant dans la zone Z1-Z2 cible (65% FTP). Le découplage cardiovasculaire négatif (-0.9%) indique une excellente efficacité métabolique, validant la qualité de la récupération. La cadence (86rpm) et la FC moyenne (102bpm) sont cohérentes avec un effort de récupération.
+
+#### Charge d'Entraînement
+TSS réalisé (23) légèrement inférieur au planifié (24), confirmant une séance de récupération légère sans impact significatif sur la fatigue (ATL stable à 46). Le TSB élevé (+14) pré-séance a permis une exécution optimale malgré l'absence de sommeil reportée.
+
+#### Validation Objectifs
+- ✅ **Intensité** : IF 0.62 dans la plage de récupération (Z1-Z2)
+- ✅ **Découplage** : -0.9% (excellent, <7.5%)
+- ❌ **Durée** : 34min vs 36min prévu (-5%, acceptable)
+
+#### Points d'Attention
+- **Sommeil** : Absence de données de sommeil (0.0h reporté) – risque de sous-estimation de la récupération réelle.
+- **Puissance** : Écart de -9W vs planifié, à surveiller si récurrent (fatigue résiduelle ?).
+
+#### Recommandations Progression
+1. **Vérifier la qualité du sommeil** : Prioriser un suivi précis (Withings) pour corréler récupération et performance.
+2. **Maintenir ce format** : Séance validée comme protocole de récupération efficace, à reproduire en cas de TSB élevé (>+10).
+
+#### Métriques Post-séance
+- CTL : 60
+- ATL : 46
+- TSB : +14
+
+---
+
+### S061-07-REC-FinSemaineActive
+Date : 05/10/2025
+
+#### Métriques Pré-séance
+- CTL : 60
+- ATL : 47
+- TSB : +13
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 48min
+- IF : 0.60
+- TSS : 29
+- Puissance moyenne : 131W
+- Puissance normalisée : 132W
+- Cadence moyenne : 86rpm
+- FC moyenne : 107bpm
+- Découplage : 2.8%
+
+#### Exécution Technique
+Séance de récupération active parfaitement exécutée avec une adhérence stricte au plan (IF 0.60 vs 0.60 prévu, TSS 29/29). Le découplage cardiovasculaire exceptionnellement bas (2.8%) confirme une exécution technique optimale en zone Z1/Z2, malgré l'absence de données de sommeil. La cadence stable (86rpm) et la FC maîtrisée (107bpm) reflètent une récupération active efficace.
+
+#### Charge d'Entraînement
+TSS très faible (29) conforme à une séance de récupération, maintenant un TSB positif (+13) idéal pour la fraîcheur. Cette séance n'impacte pas significativement la charge d'entraînement (CTL/ATL stables), préservant la capacité à enchaîner avec des efforts plus intenses ultérieurement.
+
+#### Validation Objectifs
+- ✅ **Intensité** : IF 0.60 conforme à la zone de récupération (Z1/Z2)
+- ✅ **Qualité technique** : Découplage <7.5% (2.8%)
+- ✅ **Adhérence** : Durée, TSS et puissance alignés sur le plan (±1W)
+
+#### Points d'Attention
+- **Sommeil absent** : Donnée manquante critique pour évaluer la récupération réelle (risque de sous-estimation de la fatigue résiduelle).
+- **FC basse** : 107bpm en Z2 suggère une récupération avancée ou une possible sous-sollicitation (à corréler avec les séances précédentes).
+
+#### Recommandations Progression
+1. **Vérifier les données de sommeil** : Prioriser la synchronisation des données Withings pour contextualiser la récupération (objectif : 7h+).
+2. **Maintenir ce format** : Récupération active validée comme protocole efficace pour les fins de semaine (TSB positif conservé).
+
+#### Métriques Post-séance
+- CTL : 60
+- ATL : 47
+- TSB : +13
+
+---
+
+### S061-06-END-VolumeConsolidation
+Date : 04/10/2025
+
+#### Métriques Pré-séance
+- CTL : 61
+- ATL : 50
+- TSB : +11
+- Sommeil : 0.0h
+
+#### Exécution
+- Durée : 114min
+- IF : 0.66
+- TSS : 84
+- Puissance moyenne : 145W
+- Puissance normalisée : 146W
+- Cadence moyenne : 87rpm
+- FC moyenne : 108bpm
+- Découplage : -0.7%
+
+#### Exécution Technique
+Séance d'endurance de base parfaitement exécutée avec une adhérence quasi-parfaite au plan (+99% du temps en Z2). Le découplage cardiovasculaire exceptionnel (-0.7%) valide une exécution technique optimale, confirmant une excellente capacité aérobie à cette intensité. La cadence stable (87rpm) et la FC maîtrisée (108bpm) reflètent une bonne économie de pédalage.
+
+#### Charge d'Entraînement
+TSS de 84 conforme au plan (86 prévu), avec un IF de 0.66 dans la cible Z2. Le TSB pré-séance à +11 (fraîcheur optimale) a permis une exécution sans signe de fatigue, malgré l'absence totale de sommeil déclarée (donnée à vérifier).
+
+#### Validation Objectifs
+- ✅ **Volume consolidé** : 114min en Z2 (67-70% FTP) validé
+- ✅ **Qualité technique** : Découplage <7.5% (-0.7%)
+- ✅ **Adhérence au plan** : Écart <2% sur toutes métriques
+
+#### Points d'Attention
+- **Donnée sommeil manquante** : 0.0h déclaré - à confirmer (risque de sous-estimation de la fatigue)
+- **FC max basse** (121bpm) : À surveiller pour les séances VO2 futures (seuil habituel ~150bpm)
+- **Poids stable** (84.5kg) : Pas de variation significative vs séances précédentes
+
+#### Recommandations Progression
+1. **Vérifier la donnée sommeil** : Un TSB à +11 avec 0h de sommeil est incohérent - croiser avec Withings
+2. **Maintenir ce format** pour les séances d'endurance longues (validation du protocole Z2)
+3. **Planifier une séance de test** : Après 2-3 séances similaires, intégrer un bloc Sweet-Spot (88-90% FTP) pour évaluer la progression
+
+#### Métriques Post-séance
+- CTL : 61
+- ATL : 50
+- TSB : +11
+
+---
+
 ### S061-05-TEC-ActivationPreWeekend
 Date : 03/10/2025
 
