@@ -78,12 +78,14 @@ class HistoryBackfiller:
         provider: str = "mistral_api",
         batch_size: int = 10,
         dry_run: bool = False,
-        yes_confirm: bool = False
+        yes_confirm: bool = False,
+        force_reanalyze: bool = False
     ):
         self.provider = provider
         self.batch_size = batch_size
         self.dry_run = dry_run
         self.yes_confirm = yes_confirm
+        self.force_reanalyze = force_reanalyze
 
         # Get Intervals.icu credentials from environment
         athlete_id = os.getenv('VITE_INTERVALS_ATHLETE_ID')
@@ -153,7 +155,12 @@ class HistoryBackfiller:
         Returns:
             List of activities needing analysis
         """
-        analyzed = self.get_analyzed_activities()
+        # If force_reanalyze, ignore workflow state (empty set = analyze all)
+        if self.force_reanalyze:
+            print("⚡ Force re-analyze: ignoring workflow state")
+            analyzed = set()
+        else:
+            analyzed = self.get_analyzed_activities()
 
         to_analyze = []
         for activity in activities:
@@ -554,6 +561,12 @@ Examples:
         help='Auto-confirm analysis (no interactive prompt)'
     )
 
+    parser.add_argument(
+        '--force-reanalyze',
+        action='store_true',
+        help='Force re-analyze activities even if already in workflow state (useful after fixing bugs)'
+    )
+
     args = parser.parse_args()
 
     # Validate dates
@@ -570,7 +583,8 @@ Examples:
         provider=args.provider,
         batch_size=args.batch_size,
         dry_run=args.dry_run,
-        yes_confirm=args.yes
+        yes_confirm=args.yes,
+        force_reanalyze=args.force_reanalyze
     )
 
     try:
