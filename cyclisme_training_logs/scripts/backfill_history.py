@@ -213,7 +213,7 @@ class HistoryBackfiller:
             print(f"🚀 Lancement analyse automatique...")
             result = subprocess.run(
                 cmd,
-                cwd=str(project_root),
+                cwd=str(self.data_config.data_repo_path),  # ✅ Use data repo, not code repo
                 capture_output=True,
                 text=True,
                 timeout=300  # 5 min timeout per activity
