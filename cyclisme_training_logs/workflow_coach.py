@@ -75,6 +75,7 @@ from cyclisme_training_logs.rest_and_cancellations import (
 from cyclisme_training_logs.planned_sessions_checker import PlannedSessionsChecker
 from cyclisme_training_logs.ai_providers import AIProviderFactory
 from cyclisme_training_logs.config import get_ai_config
+from cyclisme_training_logs.core.timeline_injector import TimelineInjector
 import logging
 
 logger = logging.getLogger(__name__)
@@ -1768,22 +1769,39 @@ class WorkflowCoach:
             return False
 
         try:
-            # Lire fichier existant
-            with open(history_file, 'r', encoding='utf-8') as f:
-                content = f.read()
+            # Phase 4: Insertion chronologique intelligente avec TimelineInjector
+            injector = TimelineInjector(
+                history_file=history_file,
+                check_duplicates=True
+            )
 
-            # Pour simplifier Phase 3, on append à la fin
-            # TODO Phase 4 : Insertion chronologique intelligente
-            with open(history_file, 'a', encoding='utf-8') as f:
-                f.write("\n\n")
-                for date, markdown in markdowns:
-                    f.write(markdown)
-                    f.write("\n\n")
+            injection_results = []
+            for date, markdown in markdowns:
+                # Extraire date du markdown (format: YYYY-MM-DD)
+                from datetime import datetime
+                workout_date = datetime.strptime(date, '%Y-%m-%d').date()
 
-            print(f"\n✅ Insertion réussie dans {history_file}")
-            print(f"   {len(markdowns)} sessions ajoutées")
-            print("\n⚠️  Note : Les entrées ont été ajoutées à la fin du fichier")
-            print("   Tu peux les réorganiser manuellement si besoin")
+                result = injector.inject_chronologically(
+                    workout_entry=markdown.strip(),
+                    workout_date=workout_date
+                )
+                injection_results.append((date, result))
+
+                if result.success:
+                    print(f"   ✓ {date} inséré ligne {result.line_number}")
+                elif result.duplicate_found:
+                    print(f"   ⚠️  {date} déjà présent (duplicate ignoré)")
+                else:
+                    print(f"   ❌ {date} erreur: {result.error}")
+
+            # Compter succès
+            success_count = sum(1 for _, r in injection_results if r.success)
+            duplicate_count = sum(1 for _, r in injection_results if r.duplicate_found)
+
+            print(f"\n✅ Insertion chronologique réussie dans {history_file}")
+            print(f"   {success_count} sessions insérées")
+            if duplicate_count > 0:
+                print(f"   {duplicate_count} duplicates ignorés")
 
             # PHASE 4: Marquer sessions spéciales comme documentées
             state = WorkflowState(project_root=self.project_root)
