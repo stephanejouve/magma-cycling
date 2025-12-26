@@ -1,7 +1,52 @@
 """
-Configuration module for data repository paths.
+Configuration centrale pour séparation code/données
 
-Allows separation of code (cyclisme-training-logs) from athlete data (training-logs).
+GARTNER_TIME: I
+STATUS: Production
+LAST_REVIEW: 2025-12-26
+PRIORITY: P0
+DOCSTRING: v2
+
+Module de configuration gérant la séparation entre code (cyclisme-training-logs)
+et données athlète (training-logs externe). Configure les chemins vers le dépôt
+de données externe via variable d'environnement TRAINING_DATA_REPO, avec fallback
+vers ~/training-logs par défaut.
+
+Examples:
+    Command-line usage::
+
+        # Configuration via variable d'environnement
+        export TRAINING_DATA_REPO=~/training-logs
+        poetry run workflow-coach
+
+    Programmatic usage::
+
+        from cyclisme_training_logs.config import get_data_config
+
+        # Récupération configuration (singleton)
+        config = get_data_config()
+
+        # Accès aux chemins configurés
+        data_path = config.data_repo_path
+        workouts_path = config.workouts_history_path
+        context_path = config.context_path
+
+        print(f"Data repo: {data_path}")
+        print(f"Workouts: {workouts_path}")
+
+    Advanced usage::
+
+        from cyclisme_training_logs.config import DataRepoConfig, reset_data_config
+
+        # Configuration personnalisée pour tests
+        custom_config = DataRepoConfig(data_repo_path="/tmp/test-data")
+
+        # Reset singleton (utile pour tests)
+        reset_data_config()
+
+Author: Claude Code
+Created: 2024-12-23
+Updated: 2025-12-26 (Added Gartner TIME tags)
 """
 
 import os

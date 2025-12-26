@@ -1,21 +1,58 @@
 #!/usr/bin/env python3
 """
-workflow_coach.py - Orchestrateur du workflow d'analyse de séance
+Orchestrateur du workflow d'analyse de séance
 
-Ce script guide l'utilisateur à travers tout le processus d'analyse :
-1. Détection du type de session (nouveau/existant/projet)
-2. Guidage pour l'initialisation du contexte si nécessaire
-3. Collecte optionnelle du feedback athlète
-4. Préparation du prompt d'analyse
-5. Analyse par IA (automatique ou manuelle selon provider)
-6. Validation de la réponse
-7. Insertion de l'analyse
-8. Commit git optionnel
+GARTNER_TIME: I
+STATUS: Production
+LAST_REVIEW: 2025-12-26
+PRIORITY: P0
+DOCSTRING: v2
 
-Usage:
-    python3 cyclisme_training_logs/workflow_coach.py [--skip-feedback] [--skip-git]
-    python3 cyclisme_training_logs/workflow_coach.py --activity-id i123456
-    python3 cyclisme_training_logs/workflow_coach.py --provider mistral_api
+Guide l'utilisateur à travers le processus complet d'analyse de séance cyclisme :
+détection du type de session, collecte du feedback athlète, préparation du prompt IA,
+exécution de l'analyse (multi-provider support), validation, insertion dans l'historique,
+et commit git automatique.
+
+Examples:
+    Command-line usage::
+
+        # Analyse interactive avec détection automatique
+        poetry run workflow-coach
+
+        # Analyse d'une activité spécifique
+        poetry run workflow-coach --activity-id i113782165
+
+        # Utiliser un provider IA spécifique
+        poetry run workflow-coach --activity-id i113782165 --provider mistral_api
+
+        # Mode automatique sans feedback ni git
+        poetry run workflow-coach --activity-id i113782165 --skip-feedback --skip-git
+
+    Programmatic usage::
+
+        from cyclisme_training_logs.workflow_coach import WorkflowCoach
+
+        # Initialisation et exécution workflow
+        coach = WorkflowCoach(
+            skip_feedback=False,
+            skip_git=False,
+            activity_id="i113782165",
+            provider="mistral_api"
+        )
+        coach.run()
+
+        # Workflow automatique pour batch processing
+        coach = WorkflowCoach(
+            skip_feedback=True,
+            skip_git=True,
+            activity_id="i113782165",
+            provider="claude_api"
+        )
+        coach.run()
+
+Author: Claude Code
+Created: 2024-11-15
+Updated: 2025-12-26 (Added Gartner TIME tags)
 """
 
 import argparse

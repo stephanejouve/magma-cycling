@@ -1,19 +1,68 @@
 #!/usr/bin/env python3
 """
-Backfill complete training history from Intervals.icu.
+Backfill automatisé de l'historique d'entraînement
 
-Usage:
-    poetry run backfill-history [options]
+GARTNER_TIME: M
+STATUS: Migration (v1 → v2)
+LAST_REVIEW: 2025-12-26
+PRIORITY: P2
+MIGRATION_TARGET: core/timeline_injector.py
+DEPRECATION_PLAN: Refactor with TimelineInjector after Prompt 2 Phase 1
+DOCSTRING: v2
 
-Options:
-    --start-date YYYY-MM-DD    Start date (default: 2024-01-01)
-    --end-date YYYY-MM-DD      End date (default: today)
-    --provider PROVIDER        AI provider (default: mistral_api)
-    --batch-size N             Activities per git commit (default: 10)
-    --dry-run                  Show what would be analyzed
-    --skip-planned             Skip activities with planned workouts
-    --limit N                  Max activities to analyze (testing)
-    --help                     Show help message
+Analyse en masse des activités historiques depuis Intervals.icu avec génération
+automatisée d'analyses IA. ACTUELLEMENT : Utilise append-only insertion (v1).
+FUTUR : Intégrera TimelineInjector pour injection chronologique correcte.
+Dépend de Prompt 2 Phase 1 pour migration complète.
+
+Examples:
+    Current usage (v1)::
+
+        # Backfill par défaut (2024-01-01 → aujourd'hui)
+        poetry run backfill-history --yes
+
+        # Backfill période spécifique
+        poetry run backfill-history --start-date 2024-08-01 --end-date 2024-08-31 --yes
+
+        # Test dry-run avec limite
+        poetry run backfill-history --dry-run --limit 5
+
+        # Provider spécifique et batch size
+        poetry run backfill-history --provider claude_api --batch-size 5 --yes
+
+        # Skip activités avec workouts planifiés
+        poetry run backfill-history --skip-planned --yes
+
+    Programmatic usage::
+
+        from backfill_history import HistoryBackfiller
+
+        # Initialisation backfiller
+        backfiller = HistoryBackfiller(
+            provider="mistral_api",
+            batch_size=10,
+            yes_confirm=True
+        )
+
+        # Exécution backfill
+        activities = backfiller.fetch_activities(
+            start_date="2024-08-01",
+            end_date="2024-08-31"
+        )
+        backfiller.process_batch(activities)
+
+    Future usage (v2) - After migration::
+
+        from cyclisme_training_logs.core.timeline_injector import TimelineInjector
+
+        # Backfill avec injection chronologique
+        injector = TimelineInjector()
+        for activity in activities:
+            injector.insert_chronologically(activity)
+
+Author: Claude Code
+Created: 2025-12-26
+Updated: 2025-12-26 (Added Gartner TIME tags - Migration status)
 """
 
 import argparse
