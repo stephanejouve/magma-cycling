@@ -125,20 +125,48 @@ class HistoryBackfiller:
         """
         Fetch all activities from Intervals.icu in date range.
 
+        IMPORTANT: Enrichit chaque activité avec détails complets (TSS, IF, NP)
+        car get_activities() ne retourne que les champs basiques.
+
         Returns list sorted chronologically (oldest first).
         """
         print(f"\n📥 Récupération activités {start_date} → {end_date}...")
 
-        activities = self.api.get_activities(
+        # Fetch liste activités (données basiques)
+        activities_basic = self.api.get_activities(
             oldest=start_date,
             newest=end_date
         )
 
-        # Sort by date (oldest first for chronological backfill)
-        activities.sort(key=lambda a: a.get('start_date_local', ''))
+        print(f"✅ {len(activities_basic)} activités trouvées")
+        print(f"📊 Enrichissement avec détails (TSS, IF, NP)...")
 
-        print(f"✅ {len(activities)} activités trouvées")
-        return activities
+        # Enrichir chaque activité avec détails complets
+        activities_detailed = []
+        for i, activity in enumerate(activities_basic, 1):
+            activity_id = activity.get('id')
+            if not activity_id:
+                activities_detailed.append(activity)
+                continue
+
+            try:
+                # Fetch détails complets (inclut TSS, IF, NP)
+                detailed = self.api.get_activity(activity_id)
+                activities_detailed.append(detailed)
+
+                # Progress indicator every 50 activities
+                if i % 50 == 0:
+                    print(f"   ... {i}/{len(activities_basic)} enrichies")
+
+            except Exception as e:
+                print(f"⚠️  Erreur activité {activity_id}: {e}")
+                activities_detailed.append(activity)  # Fallback to basic data
+
+        # Sort by date (oldest first for chronological backfill)
+        activities_detailed.sort(key=lambda a: a.get('start_date_local', ''))
+
+        print(f"✅ {len(activities_detailed)} activités enrichies")
+        return activities_detailed
 
     def filter_unanalyzed(
         self,
