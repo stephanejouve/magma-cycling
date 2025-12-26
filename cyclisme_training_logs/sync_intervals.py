@@ -1,26 +1,52 @@
 #!/usr/bin/env python3
 """
-sync_intervals.py - Synchronisation automatique avec Intervals.icu
+Intervals.icu API integration for activity sync and metrics fetching.
 
-Ce script récupère les données d'entraînement depuis Intervals.icu et met à jour
-automatiquement les fichiers logs avec les métriques quantitatives.
+GARTNER_TIME: I
+STATUS: Production
+LAST_REVIEW: 2025-12-26
+PRIORITY: P1
+DOCSTRING: v2
 
-Usage:
-    python3 cyclisme_training_logs/sync_intervals.py --athlete-id XXXXXX --api-key YOUR_KEY
-    python3 cyclisme_training_logs/sync_intervals.py --config ~/.intervals_config.json
-    python3 cyclisme_training_logs/sync_intervals.py --last-days 7
+Intègre l'API Intervals.icu pour synchronisation activités, fetch métriques
+forme (CTL/ATL/TSB), et wellness data. Utilisé quotidiennement par le
+workflow principal.
 
-Configuration:
-    Créer ~/.intervals_config.json avec:
-    {
-        "athlete_id": "i123456",
-        "api_key": "YOUR_API_KEY_HERE"
-    }
+Examples:
+    Sync recent activities::
 
-Obtenir l'API key:
-    1. Connexion sur https://intervals.icu
-    2. Settings → Developer Settings → API Key
-    3. Copier la clé générée
+        from cyclisme_training_logs.sync_intervals import IntervalsAPI
+
+        # Initialiser API
+        api = IntervalsAPI()
+
+        # Sync dernières 7 jours
+        activities = api.sync_recent_activities(days=7)
+
+        for activity in activities:
+            print(f"{activity['start_date']}: {activity['name']}")
+
+    Fetch fitness metrics::
+
+        # Récupérer métriques forme aujourd'hui
+        wellness = api.get_wellness_today()
+
+        print(f"CTL: {wellness['ctl']}")
+        print(f"ATL: {wellness['atl']}")
+        print(f"TSB: {wellness['tsb']}")
+
+    Get specific activity::
+
+        # Fetch activité par ID
+        activity = api.get_activity('i123456')
+
+        print(f"TSS: {activity['training_load']}")
+        print(f"IF: {activity['if']:.2f}")
+        print(f"NP: {activity['normalized_power']}W")
+
+Author: Stéphane Jouve
+Created: 2024-09-XX
+Updated: 2025-12-26 (Standardization Prompt 3 Priority 2)
 """
 
 import argparse

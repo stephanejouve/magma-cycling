@@ -8,8 +8,8 @@ PRIORITY: P0
 DOCSTRING: v2
 
 Modules core : timeline_injector, data_aggregator, prompt_generator.
-Fournit les composants de base pour injection chronologique, agrégation
-de données multi-niveaux, et génération de prompts composables.
+Fournit les composants de base pour injection chronologique, agrÃ©gation
+de donnÃ©es multi-niveaux, et gÃ©nÃ©ration de prompts composables.
 
 Author: Claude Code
 Created: 2025-12-26

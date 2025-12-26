@@ -1,21 +1,49 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Mistral AI API integration.
+Mistral AI provider implementation for workout analysis.
 
-Provider Mistral AI avec meilleur rapport qualité/prix pour
-analyse séance cyclisme (3x moins cher que Claude).
+GARTNER_TIME: I
+STATUS: Production
+LAST_REVIEW: 2025-12-26
+PRIORITY: P2
+DOCSTRING: v2
+
+Implémentation provider Mistral AI pour analyses workouts. Utilise modèle
+mistral-large avec support streaming et retry automatique. Fallback
+principal après Claude.
 
 Examples:
-    Use Mistral API::
+    Basic analysis::
 
-        from src.ai.mistral_api import MistralAPIAnalyzer
+        from cyclisme_training_logs.ai_providers.mistral_api import MistralProvider
 
-        analyzer = MistralAPIAnalyzer(
-            api_key="...",
-            model="mistral-large-latest"
+        provider = MistralProvider()
+
+        analysis = provider.analyze(
+            prompt="Analyser séance S073-01",
+            workout_data={"tss": 45, "if": 1.2}
         )
-        analysis = analyzer.analyze_session(prompt)
+
+        print(analysis)
+
+    Streaming response::
+
+        # Analyse avec streaming
+        for chunk in provider.analyze_stream(prompt, workout_data):
+            print(chunk, end='', flush=True)
+
+    Error handling::
+
+        from cyclisme_training_logs.ai_providers.mistral_api import MistralProvider
+
+        provider = MistralProvider(max_retries=3)
+
+        try:
+            analysis = provider.analyze(prompt, data)
+        except Exception as e:
+            print(f"Mistral failed: {e}")
+            # Fallback to another provider
 
 Author: Claude Code
 Created: 2025-12-09

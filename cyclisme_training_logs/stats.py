@@ -1,7 +1,54 @@
 #!/usr/bin/env python3
 """
-stats.py - Génération de statistiques depuis les logs
-Usage: python3 cyclisme_training_logs/stats.py [--semaines N]
+Legacy statistics computation (use analyzers/weekly_analyzer.py for new code).
+
+GARTNER_TIME: T
+STATUS: Production (Legacy)
+LAST_REVIEW: 2025-12-26
+PRIORITY: P3
+REPLACEMENT: analyzers/weekly_analyzer.py (Planned Phase 2)
+DEPRECATION_PLAN: Replace after Prompt 2 Phase 2 (weekly analysis system)
+DOCSTRING: v2
+
+⚠️  LEGACY - Calculs statistiques basiques workouts. Utilisé temporairement
+en attendant weekly_analyzer.py (Prompt 2 Phase 2). Pour nouveau code,
+utiliser analyzers/weekly_analyzer.py.
+
+Examples:
+    Basic stats (legacy)::
+
+        from cyclisme_training_logs.stats import compute_weekly_stats
+
+        # ⚠️  Legacy - à remplacer
+        stats = compute_weekly_stats(
+            week="S073",
+            activities=[...]
+        )
+
+        print(f"Total TSS: {stats['total_tss']}")
+
+    Migration to new system::
+
+        # ✅ NOUVEAU (Phase 2) - À utiliser pour nouveau code
+        from cyclisme_training_logs.analyzers.weekly_analyzer import WeeklyAnalyzer
+
+        analyzer = WeeklyAnalyzer(week="S073")
+        analysis = analyzer.analyze()
+
+        # 6 reports générés automatiquement
+        print(analysis['reports'])
+
+    CLI (legacy)::
+
+        # ⚠️  Legacy command
+        poetry run stats --week S073
+
+        # ✅ NOUVEAU (Phase 2)
+        poetry run weekly-analysis --week S073
+
+Author: Stéphane Jouve
+Created: 2024-08-XX
+Updated: 2025-12-26 (Standardization Prompt 3 Priority 2 - Marked as Legacy)
 """
 
 import re

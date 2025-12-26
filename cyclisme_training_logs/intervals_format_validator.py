@@ -1,13 +1,62 @@
 #!/usr/bin/env python3
 """
-intervals_format_validator.py - Validation format Intervals.icu
+Validate Intervals.icu workout format syntax and structure.
 
-Ce module valide et corrige le format des workouts pour Intervals.icu.
+GARTNER_TIME: I
+STATUS: Production
+LAST_REVIEW: 2025-12-26
+PRIORITY: P2
+DOCSTRING: v2
 
-Règles critiques :
-1. Blocs répétés : "Main set 3x" (pas "Main set\n- 3x 10m")
-2. Pas de markdown (**, ###, etc.)
-3. Format ligne : "- [durée] [intensité] [cadence]"
+Valide syntaxe et structure workouts format Intervals.icu avant upload.
+Vérifie cohérence durées, pourcentages FTP, format répétitions, et
+génère warnings si problèmes détectés.
+
+Examples:
+    Validate workout syntax::
+
+        from cyclisme_training_logs.intervals_format_validator import validate_workout
+
+        workout_text = '''
+        Warmup
+        - 10m 50-75% 85rpm
+
+        Main set 4x
+        - 8m 90% 90rpm
+        - 3m 65% 85rpm
+        '''
+
+        result = validate_workout(workout_text)
+
+        if result.valid:
+            print("✅ Valid Intervals.icu format")
+        else:
+            print(f"❌ Errors: {result.errors}")
+
+    Check file before upload::
+
+        from pathlib import Path
+
+        # Valider fichier .txt avant conversion
+        workout_file = Path("S073-01-workout.txt")
+
+        result = validate_workout(workout_file.read_text())
+
+        # Afficher warnings
+        for warning in result.warnings:
+            print(f"⚠️  {warning}")
+
+    CLI validation::
+
+        # Validate all workouts in directory
+        poetry run validate-workouts --dir workouts/S073/
+
+        # Validate single file
+        poetry run validate-workouts --file S073-01-workout.txt
+
+Author: Stéphane Jouve
+Created: 2024-11-XX
+Updated: 2025-12-26 (Standardization Prompt 3 Priority 2)
 """
 
 import re

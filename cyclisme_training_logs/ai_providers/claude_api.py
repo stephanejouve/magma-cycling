@@ -1,21 +1,50 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Claude API integration for AI analysis.
+Claude AI provider implementation (Anthropic API).
 
-Anthropic Claude API provider pour analyse séance automatisée.
-Supporte Claude Sonnet 4 (meilleur modèle Anthropic 2025).
+GARTNER_TIME: I
+STATUS: Production
+LAST_REVIEW: 2025-12-26
+PRIORITY: P2
+DOCSTRING: v2
+
+Implémentation provider Claude AI (Anthropic) pour analyses workouts.
+Utilise claude-sonnet-4-20250514 comme provider principal avec support
+thinking blocks et artifacts.
 
 Examples:
-    Use Claude API::
+    Standard analysis::
 
-        from src.ai.claude_api import ClaudeAPIAnalyzer
+        from cyclisme_training_logs.ai_providers.claude_api import ClaudeProvider
 
-        analyzer = ClaudeAPIAnalyzer(
-            api_key="sk-ant-...",
-            model="claude-sonnet-4-20250514"
+        provider = ClaudeProvider()
+
+        analysis = provider.analyze(
+            prompt="Analyser découplage cardiovasculaire",
+            workout_data={"hr_avg": 120, "power_avg": 180}
         )
-        analysis = analyzer.analyze_session(prompt)
+
+    With thinking enabled::
+
+        # Activer extended thinking
+        provider = ClaudeProvider(enable_thinking=True)
+
+        result = provider.analyze(prompt, data)
+
+        # Accéder thinking blocks
+        if result.thinking:
+            print("Reasoning:", result.thinking)
+
+    Batch analysis::
+
+        # Analyser plusieurs workouts
+        workouts = [workout1, workout2, workout3]
+
+        analyses = provider.batch_analyze(
+            prompts=[...],
+            workouts_data=workouts
+        )
 
 Author: Claude Code
 Created: 2025-12-09
