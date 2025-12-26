@@ -79,6 +79,7 @@ import logging
 
 from cyclisme_training_logs.core.data_aggregator import DataAggregator
 from cyclisme_training_logs.sync_intervals import IntervalsAPI
+from cyclisme_training_logs.config import get_intervals_config
 
 logger = logging.getLogger(__name__)
 
@@ -124,8 +125,18 @@ class WeeklyAggregator(DataAggregator):
         self.start_date = start_date
         self.end_date = start_date + timedelta(days=6)
 
+        # Initialize Intervals.icu API with configuration
         try:
-            self.api = IntervalsAPI()
+            intervals_config = get_intervals_config()
+            if intervals_config.is_configured():
+                self.api = IntervalsAPI(
+                    athlete_id=intervals_config.athlete_id,
+                    api_key=intervals_config.api_key
+                )
+                logger.info(f"Intervals.icu API initialized for athlete {intervals_config.athlete_id}")
+            else:
+                logger.warning("Intervals.icu API not configured (missing VITE_INTERVALS_ATHLETE_ID or VITE_INTERVALS_API_KEY)")
+                self.api = None
         except Exception as e:
             logger.warning(f"Failed to initialize Intervals API: {e}")
             self.api = None
