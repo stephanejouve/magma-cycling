@@ -115,3 +115,6 @@ cyclisme_training_logs.backup.*/
 
 # Archive documents de tâches Claude Code
 docs/archive/prompts/
+docs/archive/migrations/
+docs/archive/old-prompts/
+docs/archive/work-docs/
