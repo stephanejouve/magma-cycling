@@ -60,6 +60,7 @@ from pathlib import Path
 import subprocess
 import time
 from typing import List, Dict, Set
+from requests.exceptions import HTTPError
 
 # Add project to path
 project_root = Path(__file__).parent
@@ -128,6 +129,8 @@ class HistoryBackfiller:
         IMPORTANT: Enrichit chaque activité avec détails complets (TSS, IF, NP)
         car get_activities() ne retourne que les champs basiques.
 
+        Gère rate limiting avec retry + backoff exponentiel.
+
         Returns list sorted chronologically (oldest first).
         """
         print(f"\n📥 Récupération activités {start_date} → {end_date}...")
@@ -141,31 +144,71 @@ class HistoryBackfiller:
         print(f"✅ {len(activities_basic)} activités trouvées")
         print(f"📊 Enrichissement avec détails (TSS, IF, NP)...")
 
-        # Enrichir chaque activité avec détails complets
+        # Enrichir chaque activité avec retry logic
         activities_detailed = []
+        failed_permanent = []
+
         for i, activity in enumerate(activities_basic, 1):
             activity_id = activity.get('id')
             if not activity_id:
                 activities_detailed.append(activity)
                 continue
 
-            try:
-                # Fetch détails complets (inclut TSS, IF, NP)
-                detailed = self.api.get_activity(activity_id)
-                activities_detailed.append(detailed)
+            # Retry avec backoff exponentiel
+            max_retries = 3
+            base_delay = 2  # secondes
+            enriched = False
 
-                # Progress indicator every 50 activities
-                if i % 50 == 0:
-                    print(f"   ... {i}/{len(activities_basic)} enrichies")
+            for attempt in range(max_retries):
+                try:
+                    # Fetch détails complets (inclut TSS, IF, NP)
+                    detailed = self.api.get_activity(activity_id)
+                    activities_detailed.append(detailed)
+                    enriched = True
 
-            except Exception as e:
-                print(f"⚠️  Erreur activité {activity_id}: {e}")
-                activities_detailed.append(activity)  # Fallback to basic data
+                    # Progress indicator every 50 activities
+                    if i % 50 == 0:
+                        print(f"   ... {i}/{len(activities_basic)} enrichies")
+
+                    break  # Succès, sortir boucle retry
+
+                except HTTPError as e:
+                    if e.response.status_code == 429:  # Rate limit
+                        if attempt < max_retries - 1:
+                            # Backoff exponentiel: 2s, 4s, 8s
+                            wait_time = base_delay * (2 ** attempt)
+                            print(f"   ⏸️  Rate limit {activity_id}, retry dans {wait_time}s (tentative {attempt + 2}/{max_retries})")
+                            time.sleep(wait_time)
+                        else:
+                            # Échec après 3 tentatives
+                            print(f"   ❌ Skip {activity_id}: rate limit persistant après {max_retries} tentatives")
+                            failed_permanent.append(activity_id)
+                    else:
+                        # Autre erreur HTTP (400, 404, 500, etc.)
+                        print(f"   ⚠️  HTTP {e.response.status_code} pour {activity_id}")
+                        failed_permanent.append(activity_id)
+                        break  # Pas de retry pour erreurs non-429
+
+                except Exception as e:
+                    # Erreur réseau, timeout, etc.
+                    print(f"   ⚠️  Exception {activity_id}: {type(e).__name__}")
+                    failed_permanent.append(activity_id)
+                    break  # Pas de retry pour exceptions inattendues
+
+            # Si échec définitif après retries, utiliser données basiques
+            if not enriched:
+                activities_detailed.append(activity)
 
         # Sort by date (oldest first for chronological backfill)
         activities_detailed.sort(key=lambda a: a.get('start_date_local', ''))
 
         print(f"✅ {len(activities_detailed)} activités enrichies")
+
+        if failed_permanent:
+            print(f"⚠️  {len(failed_permanent)} activités non enrichies (erreur définitive)")
+            print(f"   → Ces activités seront probablement rejetées par is_valid_activity()")
+            print(f"   → Conseil: Relancer backfill avec période plus courte")
+
         return activities_detailed
 
     def filter_unanalyzed(
