@@ -101,6 +101,17 @@ class WeeklyAggregator(DataAggregator):
     complètes de training_load (TSS), intensity factor (IF), et normalized_power (NP).
     L'endpoint get_activities() ne retourne que les données basiques.
 
+    Field Mapping (Intervals.icu API → format interne):
+    - icu_training_load → tss (Training Stress Score)
+    - icu_intensity (%) → if (Intensity Factor, normalisé 0.0-1.0)
+    - icu_weighted_avg_watts → normalized_power (Normalized Power)
+    - icu_average_watts → average_power (Average Power)
+    - average_hr → average_hr (Average Heart Rate)
+    - max_hr → max_hr (Max Heart Rate)
+
+    Note: icu_intensity est en pourcentage (ex: 66.36%) et nécessite
+    normalisation (/100) pour obtenir IF standard (ex: 0.66).
+
     Structure données pour 6 reports :
     1. workout_history - Chronologie détaillée
     2. metrics_evolution - Évolution métriques
@@ -448,10 +459,16 @@ class WeeklyAggregator(DataAggregator):
             return []
 
     def _compute_weekly_summary(self, activities: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Calculer summary hebdomadaire."""
+        """
+        Calculer summary hebdomadaire.
+
+        Note: Utilise champs Intervals.icu avec préfixe 'icu_':
+        - icu_training_load (TSS)
+        - icu_intensity (IF en %, nécessite normalisation)
+        """
         summary = {
             'total_sessions': len(activities),
-            'total_tss': sum(a.get('training_load', 0) for a in activities),
+            'total_tss': sum(a.get('icu_training_load', 0) for a in activities),
             'total_duration': sum(a.get('moving_time', 0) for a in activities),
             'avg_tss': 0,
             'avg_if': 0,
@@ -461,8 +478,8 @@ class WeeklyAggregator(DataAggregator):
         if activities:
             summary['avg_tss'] = summary['total_tss'] / len(activities)
 
-            # IF moyen (si disponible)
-            ifs = [a.get('if', 0) for a in activities if a.get('if', 0) > 0]
+            # IF moyen (normaliser depuis pourcentage)
+            ifs = [a.get('icu_intensity', 0) / 100 for a in activities if a.get('icu_intensity', 0) > 0]
             if ifs:
                 summary['avg_if'] = sum(ifs) / len(ifs)
 
@@ -482,11 +499,23 @@ class WeeklyAggregator(DataAggregator):
         activities: List[Dict[str, Any]],
         feedback: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
-        """Traiter workouts avec détails pour workout_history."""
+        """
+        Traiter workouts avec détails pour workout_history.
+
+        Map champs Intervals.icu (icu_ prefix) vers format interne:
+        - icu_training_load → tss
+        - icu_intensity (%) → if (normalisé 0.0-1.0)
+        - icu_weighted_avg_watts → normalized_power
+        - icu_average_watts → average_power
+        """
         workouts = []
 
         for i, activity in enumerate(activities, 1):
             activity_id = str(activity.get('id', ''))
+
+            # Normaliser IF depuis pourcentage (66.36% → 0.66)
+            icu_intensity = activity.get('icu_intensity', 0)
+            if_normalized = icu_intensity / 100 if icu_intensity > 10 else icu_intensity
 
             workout = {
                 'session_number': i,
@@ -495,10 +524,10 @@ class WeeklyAggregator(DataAggregator):
                 'name': activity.get('name', 'Unknown'),
                 'type': activity.get('type', 'Ride'),
                 'duration': activity.get('moving_time', 0),
-                'tss': activity.get('training_load', 0),
-                'if': activity.get('if', 0),
-                'normalized_power': activity.get('normalized_power', 0),
-                'average_power': activity.get('average_power', 0),
+                'tss': activity.get('icu_training_load', 0),
+                'if': if_normalized,
+                'normalized_power': activity.get('icu_weighted_avg_watts', 0),
+                'average_power': activity.get('icu_average_watts', 0),
                 'average_hr': activity.get('average_hr', 0),
                 'max_hr': activity.get('max_hr', 0)
             }
