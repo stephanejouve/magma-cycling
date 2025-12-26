@@ -38,12 +38,13 @@ def test_weekly_aggregator_initialization(sample_week_data):
 
 
 def test_compute_weekly_summary():
-    """Test calcul summary hebdomadaire."""
+    """Test calcul summary hebdomadaire avec champs ICU."""
     aggregator = WeeklyAggregator(week="S073", start_date=date(2025, 1, 6))
 
+    # Utiliser champs Intervals.icu (icu_training_load, icu_intensity en %)
     activities = [
-        {'training_load': 45, 'moving_time': 3600, 'if': 1.2, 'distance': 50},
-        {'training_load': 50, 'moving_time': 4200, 'if': 1.1, 'distance': 55},
+        {'icu_training_load': 45, 'moving_time': 3600, 'icu_intensity': 120, 'distance': 50},
+        {'icu_training_load': 50, 'moving_time': 4200, 'icu_intensity': 110, 'distance': 55},
     ]
 
     summary = aggregator._compute_weekly_summary(activities)
@@ -55,20 +56,21 @@ def test_compute_weekly_summary():
 
 
 def test_process_workouts_detailed():
-    """Test traitement workouts détaillés."""
+    """Test traitement workouts détaillés avec champs ICU."""
     aggregator = WeeklyAggregator(week="S073", start_date=date(2025, 1, 6))
 
+    # Utiliser champs Intervals.icu (icu_ prefix)
     activities = [
         {
             'id': 'i123',
             'name': 'Sweet Spot',
-            'training_load': 45,
-            'if': 1.2,
+            'icu_training_load': 45,
+            'icu_intensity': 120,  # 120% → 1.20 IF
             'start_date_local': '2025-01-06',
             'type': 'Ride',
             'moving_time': 3600,
-            'normalized_power': 180,
-            'average_power': 175,
+            'icu_weighted_avg_watts': 180,
+            'icu_average_watts': 175,
             'average_hr': 140,
             'max_hr': 165
         }
@@ -82,6 +84,9 @@ def test_process_workouts_detailed():
 
     assert len(workouts) == 1
     assert workouts[0]['tss'] == 45
+    assert workouts[0]['if'] == 1.20  # Normalized from 120%
+    assert workouts[0]['normalized_power'] == 180
+    assert workouts[0]['average_power'] == 175
     assert workouts[0]['feedback']['rpe'] == 6
     assert workouts[0]['session_number'] == 1
 
