@@ -1,23 +1,53 @@
 #!/usr/bin/env python3
 """
-rest_and_cancellations.py - Gestion des repos et annulations de séances
+Track rest days and canceled sessions with impact analysis.
 
-Ce module fournit les fonctionnalités pour :
-1. Charger et valider les plannings hebdomadaires
-2. Générer des entrées markdown pour repos planifiés
-3. Générer des entrées markdown pour séances annulées
-4. Réconcilier planning vs activités réelles
-5. Intégrer dans le workflow principal
+GARTNER_TIME: I
+STATUS: Production
+LAST_REVIEW: 2025-12-26
+PRIORITY: P2
+DOCSTRING: v2
 
-Usage:
-    from rest_and_cancellations import (
-        load_week_planning,
-        validate_week_planning,
-        generate_rest_day_entry,
-        generate_cancelled_session_entry,
-        reconcile_planned_vs_actual,
-        process_week_with_rest_handling
-    )
+Suivi jours de repos et séances annulées avec analyse impact sur métriques
+forme (CTL/ATL/TSB). Documentation raisons cancellation et recommandations
+adaptations planning.
+
+Examples:
+    Log rest day::
+
+        from cyclisme_training_logs.rest_and_cancellations import log_rest
+
+        # Logger repos programmé
+        log_rest(
+            date="2025-01-12",
+            reason="Recovery week",
+            planned=True
+        )
+
+    Log canceled session::
+
+        # Logger séance annulée
+        log_cancellation(
+            date="2025-01-10",
+            session_id="S073-04",
+            reason="Fatigue excessive",
+            reschedule=True
+        )
+
+    Analyze impact on metrics::
+
+        # Calculer impact sur TSB
+        impact = analyze_rest_impact(
+            rest_dates=["2025-01-12", "2025-01-13"],
+            current_ctl=65,
+            current_atl=58
+        )
+
+        print(f"TSB après repos: {impact['tsb_after']}")
+
+Author: Stéphane Jouve
+Created: 2024-10-XX
+Updated: 2025-12-26 (Standardization Prompt 3 Priority 2)
 """
 
 import json

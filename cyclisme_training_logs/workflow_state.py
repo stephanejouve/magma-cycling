@@ -1,30 +1,49 @@
 #!/usr/bin/env python3
 """
-workflow_state.py - Gestion de l'état du workflow d'analyse
+Workflow state management and persistence.
 
-Ce module permet de tracker :
-- La dernière activité analysée
-- Les activités non analysées (gap detection)
-- Le nombre total d'analyses effectuées
-- Les sessions spéciales documentées (repos/annulations/sautées) [Phase 4]
-- Les feedbacks athlète persistés [Phase 4]
+GARTNER_TIME: I
+STATUS: Production
+LAST_REVIEW: 2025-12-26
+PRIORITY: P1
+DOCSTRING: v2
 
-Usage:
-    from workflow_state import WorkflowState
+Gestion état workflow persistant entre exécutions. Tracking étapes
+complétées, prévention duplicates, et validation cohérence pipeline
+d'analyse quotidien.
 
-    state = WorkflowState()
+Examples:
+    Load workflow state::
 
-    # Tracking activités
-    state.mark_analyzed('i107779437')
-    unanalyzed = state.get_unanalyzed_activities(all_activities)
+        from cyclisme_training_logs.workflow_state import WorkflowState
 
-    # Tracking sessions spéciales (Phase 4)
-    state.mark_special_session_documented('S072-07', 'rest', '2025-12-21')
-    is_doc = state.is_special_session_documented('S072-07', '2025-12-21')
+        # Charger état
+        state = WorkflowState.load()
 
-    # Tracking feedbacks (Phase 4)
-    state.save_session_feedback('i123456', {'rpe': 7, 'comments': 'Good'})
-    feedback = state.get_session_feedback('i123456')
+        # Vérifier étapes complétées
+        if state.is_completed('fetch_activity'):
+            print("Activity already fetched")
+
+    Update state::
+
+        # Marquer étape complétée
+        state.mark_completed(
+            step='generate_analysis',
+            metadata={'activity_id': 'i123456'}
+        )
+
+        # Persister
+        state.save()
+
+    Reset for new day::
+
+        # Reset état pour nouveau jour
+        state.reset()
+        state.save()
+
+Author: Stéphane Jouve
+Created: 2024-09-XX
+Updated: 2025-12-26 (Standardization Prompt 3 Priority 2)
 """
 
 import json

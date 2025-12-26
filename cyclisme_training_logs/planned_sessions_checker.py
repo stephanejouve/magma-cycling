@@ -1,18 +1,56 @@
 #!/usr/bin/env python3
 """
-planned_sessions_checker.py - Détection des séances planifiées non exécutées
+Validate planned workouts vs executed activities compliance.
 
-Ce module permet de :
-1. Récupérer les workouts planifiés depuis Intervals.icu
-2. Comparer avec les activités réellement effectuées
-3. Détecter les séances sautées (planifiées mais non exécutées)
-4. Intégrer cette détection dans le workflow principal
+GARTNER_TIME: I
+STATUS: Production
+LAST_REVIEW: 2025-12-26
+PRIORITY: P2
+DOCSTRING: v2
 
-Usage:
-    from planned_sessions_checker import PlannedSessionsChecker
-    
-    checker = PlannedSessionsChecker(athlete_id, api_key)
-    skipped = checker.detect_skipped_sessions(start_date, end_date)
+Vérifie conformité entre workouts planifiés (Intervals.icu) et activités
+réalisées. Détecte écarts, sessions manquées, et génère rapports de
+compliance hebdomadaire.
+
+Examples:
+    Check weekly compliance::
+
+        from cyclisme_training_logs.planned_sessions_checker import check_week
+
+        # Vérifier semaine S073
+        compliance = check_week(
+            week="S073",
+            start_date="2025-01-06"
+        )
+
+        print(f"Completed: {compliance['completed']}/7")
+        print(f"Missed: {compliance['missed']}")
+        print(f"Compliance: {compliance['rate']:.1f}%")
+
+    Detailed session comparison::
+
+        from cyclisme_training_logs.planned_sessions_checker import compare_sessions
+
+        # Comparer séance planifiée vs exécutée
+        comparison = compare_sessions(
+            planned_id="workout_123",
+            activity_id="i654321"
+        )
+
+        if comparison['tss_delta'] > 10:
+            print("Warning: TSS mismatch")
+
+    CLI usage::
+
+        # Check current week
+        poetry run check-planned --week current
+
+        # Generate weekly report
+        poetry run check-planned --week S073 --report
+
+Author: Stéphane Jouve
+Created: 2024-11-XX
+Updated: 2025-12-26 (Standardization Prompt 3 Priority 2)
 """
 
 import logging

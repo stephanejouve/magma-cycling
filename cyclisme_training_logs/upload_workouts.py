@@ -1,7 +1,59 @@
 #!/usr/bin/env python3
 """
-Script d'Upload des Workouts vers Intervals.icu
-Parse les workouts générés par Claude et les upload via API
+Upload Zwift workout files (.zwo) to Intervals.icu calendar.
+
+GARTNER_TIME: I
+STATUS: Production
+LAST_REVIEW: 2025-12-26
+PRIORITY: P1
+DOCSTRING: v2
+
+Upload fichiers workouts Zwift (.zwo) vers calendrier Intervals.icu.
+Convertit format Zwift en format Intervals.icu et planifie séances
+automatiquement.
+
+Examples:
+    Upload single workout::
+
+        from cyclisme_training_logs.upload_workouts import upload_workout
+        from pathlib import Path
+
+        # Upload fichier .zwo
+        workout_file = Path("S073-01-INT-SweetSpot-V001.zwo")
+
+        result = upload_workout(
+            workout_file,
+            target_date="2025-01-06"
+        )
+
+        if result.success:
+            print(f"Uploaded: {result.workout_id}")
+
+    Batch upload week::
+
+        from cyclisme_training_logs.upload_workouts import upload_week
+
+        # Upload semaine complète
+        week_dir = Path("workouts/S073-Semaine73")
+
+        results = upload_week(
+            week_dir,
+            start_date="2025-01-06"
+        )
+
+        print(f"Uploaded {len(results)} workouts")
+
+    CLI usage::
+
+        # Command-line upload
+        poetry run upload-workouts --file S073-01-INT-SweetSpot-V001.zwo --date 2025-01-06
+
+        # Upload entire week
+        poetry run upload-workouts --week S073 --start-date 2025-01-06
+
+Author: Stéphane Jouve
+Created: 2024-10-XX
+Updated: 2025-12-26 (Standardization Prompt 3 Priority 2)
 """
 
 import argparse

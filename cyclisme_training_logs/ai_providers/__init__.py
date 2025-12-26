@@ -1,26 +1,52 @@
-"""AI Providers for multi-IA analysis support.
+"""
+AI providers factory for multi-provider analysis support.
 
-This module provides a factory pattern for creating AI analyzer instances
-from multiple providers (Clipboard, Claude API, Mistral AI, OpenAI, Ollama).
+GARTNER_TIME: I
+STATUS: Production
+LAST_REVIEW: 2025-12-26
+PRIORITY: P2
+DOCSTRING: v2
+
+Factory pattern pour support multi-providers IA (Claude, Mistral, OpenAI,
+Gemini, Ollama). Fournit interface unifiée pour analyses workouts avec
+fallback automatique entre providers.
 
 Examples:
-    Create analyzer from factory::
+    Get AI provider::
 
-        from cyclisme_training_logs.ai_providers import AIProviderFactory
-        from cyclisme_training_logs.config import get_ai_config
+        from cyclisme_training_logs.ai_providers import get_provider
 
-        # Get configuration
-        config = get_ai_config()
+        # Provider par défaut (Claude)
+        provider = get_provider()
 
-        # Create clipboard analyzer (default, no API required)
-        analyzer = AIProviderFactory.create('clipboard', {})
+        # Provider spécifique
+        mistral = get_provider('mistral')
+        openai = get_provider('openai')
 
-        # Create Claude API analyzer (requires API key)
-        claude_config = config.get_provider_config('claude_api')
-        analyzer = AIProviderFactory.create('claude_api', claude_config)
+    Analyze with fallback::
+
+        # Essayer Claude, fallback Mistral
+        providers = ['claude', 'mistral']
+
+        for provider_name in providers:
+            try:
+                provider = get_provider(provider_name)
+                analysis = provider.analyze(workout_data)
+                break
+            except Exception as e:
+                print(f"{provider_name} failed: {e}")
+                continue
+
+    List available providers::
+
+        from cyclisme_training_logs.ai_providers import list_providers
+
+        providers = list_providers()
+        print(f"Available: {', '.join(providers)}")
 
 Author: Claude Code
-Created: 2025-12-25
+Created: 2024-11-XX
+Updated: 2025-12-26 (Standardization Prompt 3 Priority 2)
 """
 
 from .base import AIProvider, AIAnalyzer
