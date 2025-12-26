@@ -1756,11 +1756,12 @@ class WorkflowCoach:
         Returns:
             True si succès, False sinon
         """
-        # Use config path if available, otherwise legacy path
+        # Always use data repo config (never fallback to code repo)
         if self.config:
             history_file = self.config.workouts_history_path
         else:
-            history_file = self.project_root / "logs" / "workouts-history.md"
+            from cyclisme_training_logs.config import get_data_config
+            history_file = get_data_config().workouts_history_path
 
         if not history_file.exists():
             print(f"\n❌ Fichier introuvable : {history_file}")
@@ -2148,7 +2149,12 @@ Session planifiée non réalisée. Aucune donnée d'exécution disponible.
                 project_prompt = f.read()
 
             # 2. Charger historique récent (5 dernières séances)
-            history_file = self.project_root / "logs" / "workouts-history.md"
+            # Always use data repo config
+            if self.config:
+                history_file = self.config.workouts_history_path
+            else:
+                from cyclisme_training_logs.config import get_data_config
+                history_file = get_data_config().workouts_history_path
             recent_history = ""
 
             if history_file.exists():
@@ -2601,8 +2607,8 @@ Réponds maintenant."""
             )
             print("Le commit git a été skippé (--skip-git).")
             print()
-            print("Pour commiter manuellement plus tard :")
-            print("  git add logs/workouts-history.md")
+            print("Pour commiter manuellement plus tard (dans ~/training-logs/) :")
+            print("  git add workouts-history.md")
             print('  git commit -m "Analyse: Séance du [DATE]"')
             self.wait_user()
             return
@@ -2627,8 +2633,8 @@ Réponds maintenant."""
             print()
             print("⏭️  Commit skippé.")
             print()
-            print("Pour commiter manuellement plus tard :")
-            print("  git add logs/workouts-history.md")
+            print("Pour commiter manuellement plus tard (dans ~/training-logs/) :")
+            print("  git add workouts-history.md")
             print('  git commit -m "Analyse: Séance du [DATE]"')
             self.wait_user()
             return
