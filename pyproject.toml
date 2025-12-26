@@ -42,12 +42,13 @@ collect-feedback = "cyclisme_training_logs.collect_athlete_feedback:main"
 workflow-coach = "cyclisme_training_logs.workflow_coach:main"
 insert-analysis = "cyclisme_training_logs.insert_analysis:main"
 manage-state = "cyclisme_training_logs.manage_workflow_state:main"
-backfill-history = "backfill_history:main"
+backfill-history = "cyclisme_training_logs.scripts.backfill_history:main"
 
 # === Utilitaires ===
 sync-intervals = "cyclisme_training_logs.sync_intervals:main"
 planned-checker = "cyclisme_training_logs.planned_sessions_checker:main"
 stats = "cyclisme_training_logs.stats:main"
+validate-templates = "cyclisme_training_logs.scripts.validate_templates:main"
 
 # === Rapports & Organisation ===
 organize-report = "cyclisme_training_logs.organize_weekly_report:main"
