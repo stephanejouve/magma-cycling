@@ -1,5 +1,5 @@
 """
-Weekly workout data aggregator for comprehensive analysis.
+Weekly workout data aggregator with full TSS/IF enrichment.
 
 GARTNER_TIME: I
 STATUS: Production
@@ -8,9 +8,10 @@ PRIORITY: P1
 DOCSTRING: v2
 
 Agrégateur hebdomadaire implémentant DataAggregator pour collecter
-et traiter données complètes d'une semaine d'entraînement. Collecte
-7 workouts, métriques évolution (CTL/ATL/TSB), feedback athlète,
-et génère structure pour 6 reports.
+et traiter données complètes d'une semaine d'entraînement. Enrichit
+automatiquement chaque activité avec détails complets (TSS, IF, NP)
+via appels API individuels. Collecte 7 workouts, métriques évolution
+(CTL/ATL/TSB), feedback athlète, et génère structure pour 6 reports.
 
 Examples:
     Basic weekly aggregation::
@@ -89,11 +90,16 @@ class WeeklyAggregator(DataAggregator):
     Agrégateur hebdomadaire pour analyse complète semaine.
 
     Collecte et agrège :
-    - 7 workouts de la semaine (activités Intervals.icu)
+    - 7 workouts de la semaine (activités Intervals.icu enrichies avec TSS/IF/NP)
     - Métriques évolution quotidienne (CTL/ATL/TSB)
     - Feedback athlète pour chaque séance
     - Données wellness (sommeil, poids, HRV)
     - Compliance planifié vs exécuté
+
+    Enrichissement TSS/IF :
+    Appelle get_activity() pour chaque activité afin d'obtenir les valeurs
+    complètes de training_load (TSS), intensity factor (IF), et normalized_power (NP).
+    L'endpoint get_activities() ne retourne que les données basiques.
 
     Structure données pour 6 reports :
     1. workout_history - Chronologie détaillée
@@ -302,7 +308,16 @@ class WeeklyAggregator(DataAggregator):
     # ==================== MÉTHODES PRIVÉES ====================
 
     def _fetch_weekly_activities(self) -> List[Dict[str, Any]]:
-        """Fetch activités semaine depuis Intervals.icu."""
+        """
+        Fetch activités semaine depuis Intervals.icu avec détails complets.
+
+        Enrichit chaque activité avec données détaillées (TSS, IF, NP) via
+        appel get_activity() individuel, car get_activities() ne retourne
+        que les champs basiques.
+
+        Returns:
+            Liste activités enrichies avec training_load, if, normalized_power
+        """
         if not self.api:
             logger.warning("No API available, returning empty activities")
             return []
@@ -310,15 +325,38 @@ class WeeklyAggregator(DataAggregator):
         start_str = self.start_date.isoformat()
         end_str = self.end_date.isoformat()
 
-        activities = self.api.get_activities(
+        # Fetch liste activités (données basiques)
+        activities_basic = self.api.get_activities(
             oldest=start_str,
             newest=end_str
         )
 
-        # Trier par date
-        activities.sort(key=lambda x: x.get('start_date_local', ''))
+        logger.info(f"Found {len(activities_basic)} activities, fetching detailed data...")
 
-        return activities
+        # Enrichir chaque activité avec détails complets
+        activities_detailed = []
+        for activity in activities_basic:
+            activity_id = activity.get('id')
+            if not activity_id:
+                logger.warning(f"Activity without ID: {activity.get('name', 'Unknown')}")
+                activities_detailed.append(activity)
+                continue
+
+            try:
+                # Fetch détails complets (inclut TSS, IF, NP)
+                detailed = self.api.get_activity(activity_id)
+                activities_detailed.append(detailed)
+                logger.debug(f"Enriched activity {activity_id}: TSS={detailed.get('training_load', 0)}, IF={detailed.get('if', 0)}")
+            except Exception as e:
+                logger.warning(f"Failed to fetch details for activity {activity_id}: {e}")
+                # Fallback to basic data
+                activities_detailed.append(activity)
+
+        # Trier par date
+        activities_detailed.sort(key=lambda x: x.get('start_date_local', ''))
+
+        logger.info(f"Successfully enriched {len(activities_detailed)} activities with TSS/IF data")
+        return activities_detailed
 
     def _fetch_daily_metrics(self) -> List[Dict[str, Any]]:
         """Fetch métriques quotidiennes (CTL/ATL/TSB)."""
