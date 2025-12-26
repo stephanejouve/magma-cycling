@@ -31,6 +31,7 @@ sys.path.insert(0, str(project_root))
 
 from cyclisme_training_logs.sync_intervals import IntervalsAPI
 from cyclisme_training_logs.workflow_state import WorkflowState
+from cyclisme_training_logs.config import get_data_config
 
 
 class HistoryBackfiller:
@@ -61,6 +62,9 @@ class HistoryBackfiller:
 
         self.api = IntervalsAPI(athlete_id, api_key)
         self.state = WorkflowState()
+
+        # Get data repo configuration
+        self.data_config = get_data_config()
 
         # Statistics tracking
         self.total_activities = 0
@@ -222,9 +226,13 @@ class HistoryBackfiller:
             date_max = max(dates) if dates else 'unknown'
             date_range = f"{date_min} → {date_max}" if date_min != date_max else date_min
 
-            # Git add
-            cmd = ['git', 'add', 'logs/workouts-history.md']
-            subprocess.run(cmd, cwd=str(project_root), check=True)
+            # Get data repo path and workouts-history path
+            data_repo_path = self.data_config.data_repo_path
+            workouts_history_file = self.data_config.workouts_history_path
+
+            # Git add (use absolute path of file)
+            cmd = ['git', 'add', str(workouts_history_file)]
+            subprocess.run(cmd, cwd=str(data_repo_path), check=True)
 
             # Git commit
             commit_msg = (
@@ -232,9 +240,10 @@ class HistoryBackfiller:
                 f"({len(activities)} séances, {date_range})"
             )
             cmd = ['git', 'commit', '-m', commit_msg]
-            subprocess.run(cmd, cwd=str(project_root), check=True)
+            subprocess.run(cmd, cwd=str(data_repo_path), check=True)
 
             print(f"✅ Batch {batch_num} committé: {commit_msg}")
+            print(f"   Repo: {data_repo_path}")
 
         except subprocess.CalledProcessError as e:
             print(f"⚠️  Échec commit batch {batch_num}: {e}")
