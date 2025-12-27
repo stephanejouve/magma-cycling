@@ -23,7 +23,7 @@ python scripts/insert_analysis.py
 
 ## 📁 Structure
 ```
-/docs/              → Documentation système (Project Prompt v2.3)
+/project-docs/              → Documentation système (Project Prompt v2.3)
 /references/        → Docs externes (Zwift, Intervals.icu)
 /scripts/           → Automation Python
 /logs/              → Logs entraînement (workouts, metrics, learnings)
@@ -110,7 +110,7 @@ poetry run workflow-coach
 
 Si vous avez déjà des données dans `~/cyclisme-training-logs/logs/`, consultez le guide de migration complet :
 
-**📖 [Guide de Migration](docs/MIGRATION_DATA_REPO.md)**
+**📖 [Guide de Migration](project-docs/MIGRATION_DATA_REPO.md)**
 
 Le guide couvre :
 - Backup et restauration des données existantes
@@ -120,6 +120,6 @@ Le guide couvre :
 
 ## 📚 Documentation
 
-- **Migration données/code** : [`docs/MIGRATION_DATA_REPO.md`](docs/MIGRATION_DATA_REPO.md) 🆕
-- Project Prompt actuel : [`docs/project-prompt-v2.3.md`](docs/project-prompt-v2.3.md)
-- Changelog : [`docs/CHANGELOG.md`](docs/CHANGELOG.md)
+- **Migration données/code** : [`project-docs/MIGRATION_DATA_REPO.md`](project-docs/MIGRATION_DATA_REPO.md) 🆕
+- Project Prompt actuel : [`project-docs/project-prompt-v2.3.md`](project-docs/project-prompt-v2.3.md)
+- Changelog : [`project-docs/CHANGELOG.md`](project-docs/CHANGELOG.md)
