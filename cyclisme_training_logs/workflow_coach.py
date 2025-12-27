@@ -3070,14 +3070,8 @@ Exemples:
         print("   Exemple: poetry run workflow-coach --reconcile --week-id S070")
         sys.exit(1)
 
-    # Vérifier qu'on est dans le bon répertoire
-    if not Path('logs/workouts-history.md').exists():
-        print("❌ Erreur: Ce script doit être lancé depuis la racine du projet.")
-        print("   Répertoire courant:", Path.cwd())
-        print()
-        print("   cd ~/cyclisme-training-logs")
-        print("   python3 cyclisme_training_logs/workflow_coach.py")
-        sys.exit(1)
+    # Note: CWD check removed - config.py handles paths automatically
+    # Works from both code repo and data repo
 
     # Lancer le workflow
     coach = WorkflowCoach(
