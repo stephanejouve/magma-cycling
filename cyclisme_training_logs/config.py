@@ -91,7 +91,7 @@ class DataRepoConfig:
 
         # Duplicate detection settings (paranoid mode for backfill testing)
         self.paranoid_duplicate_check = True   # Check après chaque insertion
-        self.auto_fix_duplicates = False       # Auto-suppression ou erreur (fail-fast)
+        self.auto_fix_duplicates = True        # ⚠️ TEMPORAIRE: Auto-suppression activée
         self.duplicate_check_window = 50        # Lignes à scanner (optimisation)
 
     @property

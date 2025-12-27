@@ -58,6 +58,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
 from cyclisme_training_logs.prepare_analysis import IntervalsAPI
+from cyclisme_training_logs.config import get_data_config
 
 # Configuration du logging
 logging.basicConfig(
@@ -430,7 +431,8 @@ def main():
     print(f"Semaines à vérifier : {', '.join(sorted(weeks_to_check))}")
     print()
 
-    planning_dir = Path.cwd() / "data" / "week_planning"
+    config = get_data_config()
+    planning_dir = config.week_planning_dir
     reconciliations = {}
 
     for week_id in sorted(weeks_to_check):
