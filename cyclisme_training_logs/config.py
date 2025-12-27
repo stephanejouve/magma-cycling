@@ -92,6 +92,11 @@ class DataRepoConfig:
                 f"  git clone https://github.com/stephanejouve/training-logs.git ~/training-logs"
             )
 
+        # Duplicate detection settings (paranoid mode for backfill testing)
+        self.paranoid_duplicate_check = True   # Check après chaque insertion
+        self.auto_fix_duplicates = False       # Auto-suppression ou erreur (fail-fast)
+        self.duplicate_check_window = 50        # Lignes à scanner (optimisation)
+
     @property
     def workouts_history_path(self) -> Path:
         """Path to workouts-history.md in data repo."""

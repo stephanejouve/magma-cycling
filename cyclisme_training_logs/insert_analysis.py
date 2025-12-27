@@ -62,6 +62,14 @@ from datetime import datetime, date
 from pathlib import Path
 
 from cyclisme_training_logs.core.timeline_injector import TimelineInjector
+from cyclisme_training_logs.config import get_data_config
+from cyclisme_training_logs.core.duplicate_detector import (
+    check_and_handle_duplicates,
+    DuplicateDetectedError
+)
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ClipboardReader:
@@ -341,6 +349,35 @@ class WorkoutHistoryManager:
 
             if result.success:
                 print(f"   ✅ Injection chronologique réussie (ligne {result.line_number})")
+
+                # === NOUVEAU: Vérification doublons (mode paranoid) ===
+                try:
+                    config = get_data_config()
+
+                    if config.paranoid_duplicate_check:
+                        logger.info("🔍 Vérification doublons (mode paranoid)...")
+
+                        check_and_handle_duplicates(
+                            history_file=self.history_file,
+                            auto_fix=config.auto_fix_duplicates,
+                            check_window=config.duplicate_check_window
+                        )
+
+                        logger.info("✅ Aucun doublon détecté")
+
+                except DuplicateDetectedError as e:
+                    # Doublons détectés en mode non-auto-fix
+                    print(f"\n⚠️  ATTENTION: {e}")
+                    print("Lancer: python3 scripts/maintenance/clean_duplicates_multi.py\n")
+                    return False
+
+                except Exception as e:
+                    # Autre erreur durant check - ne pas bloquer l'insertion
+                    logger.warning(f"⚠️  Erreur vérification doublons: {e}")
+                    # Continuer quand même (insertion OK)
+
+                # === FIN NOUVEAU ===
+
                 return True
             else:
                 print(f"   ❌ Erreur TimelineInjector: {result.error}")
