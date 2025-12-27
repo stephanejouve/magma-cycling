@@ -30,11 +30,12 @@ Examples:
     Programmatic usage with TimelineInjector::
 
         from cyclisme_training_logs.core.timeline_injector import TimelineInjector
-        from pathlib import Path
+        from cyclisme_training_logs.config import get_data_config
 
-        # Initialisation injector
+        # Initialisation injector avec config.py (recommandé)
+        config = get_data_config()
         injector = TimelineInjector(
-            history_file=Path("~/training-logs/logs/workouts-history.md")
+            history_file=config.workouts_history_path
         )
 
         # Injection chronologique
