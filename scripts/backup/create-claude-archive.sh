@@ -23,9 +23,11 @@ cp COMMANDS.md "${ARCHIVE_DIR}/"
 echo "=== Copie documentation complète ==="
 cp -r docs "${ARCHIVE_DIR}/"
 
-echo "=== Copie modules Python ==="
+echo "=== Copie modules Python COMPLETS (avec sous-répertoires) ==="
 mkdir -p "${ARCHIVE_DIR}/cyclisme_training_logs"
-cp cyclisme_training_logs/*.py "${ARCHIVE_DIR}/cyclisme_training_logs/"
+# Copier TOUT cyclisme_training_logs/ en excluant __pycache__ et .pyc
+rsync -av --exclude='__pycache__' --exclude='*.pyc' --exclude='*.pyo' \
+  cyclisme_training_logs/ "${ARCHIVE_DIR}/cyclisme_training_logs/"
 
 echo "=== Copie tests ==="
 cp -r tests "${ARCHIVE_DIR}/"
@@ -323,11 +325,18 @@ cat > "${ARCHIVE_DIR}/README_ARCHIVE.md" << 'EOFREADME'
 ### Documentation
 - **docs/workflows/** : DAILY_WORKFLOW.md, GRAFCET, UML
 - **docs/audits/** : Rapports audit & P0 fixes
-- **docs/architecture/** : Architecture projet & design
+- **docs/architecture/** : Architecture projet & design (SOLUTION_FINALE_DOUBLE_REPO_EDITABLE.md)
 - **docs/guides/** : Setup, installation, guides
+- **docs/archive/prompts/** : Tous les prompts de debug historiques
 
-### Code Source
-- **cyclisme_training_logs/** : Tous les modules Python
+### Code Source COMPLET
+- **cyclisme_training_logs/** : TOUS les modules Python (avec sous-répertoires)
+  - ✅ **scripts/backfill_history.py** - Backfill production avec enrichment + retry
+  - ✅ **core/timeline_injector.py** - Insertion chronologique
+  - ✅ **analyzers/** - Analyseurs daily/weekly
+  - ✅ **ai_providers/** - Multi-IA providers (Claude, Mistral, OpenAI, Ollama, Clipboard)
+  - ✅ **workflows/** - Workflows orchestration
+  - ✅ Tous les modules racine (workflow_coach.py, config.py, etc.)
 - **tests/** : Tests unitaires complets
 - **data/** : Planning semaines & templates workouts
 - **references/** : Références & documentation externe
@@ -371,20 +380,53 @@ cyclisme-training-logs/
 └── 📁 references/               # Références externes
 ```
 
+## Fichiers Clés Backfill
+
+✅ **cyclisme_training_logs/scripts/backfill_history.py**
+   - Enrichment activities avec retry logic
+   - Rate limiting avec backoff exponentiel (2s, 4s, 8s)
+   - Subprocess avec module imports (-m)
+   - Output capture (stdout + stderr)
+
+✅ **cyclisme_training_logs/workflow_coach.py**
+   - TimelineInjector integration pour insertion chronologique
+   - Module imports (-m) pour tous subprocess
+   - Config.py centralisé (zero paths hardcodés)
+
+✅ **cyclisme_training_logs/insert_analysis.py**
+   - WorkoutHistoryManager avec config.py
+   - Insertion chronologique via TimelineInjector
+
+## Architecture Double Repo
+
+✅ Code repo: `~/cyclisme-training-logs/` (package source)
+✅ Data repo: `~/training-logs/` (runner avec editable install)
+✅ Poetry editable package linking
+✅ Tous subprocess via module imports
+✅ Tous paths via config.py
+
 ## Utilisation
 
 1. **Lire la documentation**:
    - `docs/workflows/DAILY_WORKFLOW.md` - Workflow quotidien
-   - `docs/architecture/` - Architecture projet
+   - `docs/architecture/SOLUTION_FINALE_DOUBLE_REPO_EDITABLE.md` - Architecture
    - `COMMANDS.md` - Quick reference
 
 2. **Explorer le code**:
-   - `cyclisme_training_logs/workflow_coach.py` - Point d'entrée
+   - `cyclisme_training_logs/workflow_coach.py` - Orchestrateur principal
+   - `cyclisme_training_logs/scripts/backfill_history.py` - Backfill production
+   - `cyclisme_training_logs/core/timeline_injector.py` - Insertion chronologique
    - `tests/` - Tests pour comprendre le comportement
 
 3. **Consulter les exemples**:
    - `examples/` - Structures JSON référence
    - `data/` - Données réelles
+
+4. **Vérifier backfill présent**:
+   ```bash
+   ls -la cyclisme_training_logs/scripts/backfill_history.py
+   tree -L 2 cyclisme_training_logs/
+   ```
 
 ## Scripts Poetry Disponibles
 
