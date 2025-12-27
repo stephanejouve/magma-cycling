@@ -119,3 +119,6 @@ docs/archive/migrations/
 docs/archive/old-prompts/
 docs/archive/work-docs/
 backups/
+
+# Sphinx build artifacts
+docs/_build/
