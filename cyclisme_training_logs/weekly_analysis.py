@@ -2,14 +2,17 @@
 """
 weekly_analysis.py - Génération analyse hebdomadaire cyclisme (DEPRECATED)
 
-GARTNER_TIME: E (Eliminate)
-STATUS: Deprecated
-LAST_REVIEW: 2025-12-26
-PRIORITY: P4
-DEPRECATION_DATE: 2025-12-26
-REPLACEMENT: cyclisme_training_logs.workflows.workflow_weekly
-
 ⚠️  DEPRECATED - Ce script est obsolète et sera supprimé dans une version future.
+
+Metadata:
+    Created: 2025-12-26
+    Author: Cyclisme Training Logs Team
+    Category: E (Eliminate)
+    Status: Deprecated
+    Priority: P4
+    Version: 1.0
+    Deprecation Date: 2025-12-26
+    Replacement: cyclisme_training_logs.workflows.workflow_weekly
 
 Migration vers le nouveau système (Phase 2 - Weekly Analysis System):
     Ancien (deprecated):

@@ -1,16 +1,18 @@
 """
 Daily workout data aggregation for AI analysis.
 
-GARTNER_TIME: I
-STATUS: Development
-LAST_REVIEW: 2025-12-26
-PRIORITY: P0
-MIGRATION_SOURCE: cyclisme-training-automation-v2/src/analyzers/session_analyzer.py
-DOCSTRING: v2
-
 Agrégateur concret pour analyses quotidiennes (séance). Collecte et agrège
 toutes les données nécessaires pour l'analyse IA d'une séance : activité
 Intervals.icu, feedback athlète, état workflow, métriques fitness.
+
+Metadata:
+    Created: 2025-12-26
+    Author: Cyclisme Training Logs Team
+    Category: I (Infrastructure)
+    Status: Development
+    Priority: P0
+    Version: v2
+    Migration Source: cyclisme-training-automation-v2/src/analyzers/session_analyzer.py
 
 Examples:
     Basic daily aggregation::
