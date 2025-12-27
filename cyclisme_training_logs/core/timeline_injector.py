@@ -16,11 +16,12 @@ Examples:
     Basic chronological injection::
 
         from cyclisme_training_logs.core.timeline_injector import TimelineInjector
-        from pathlib import Path
+        from cyclisme_training_logs.config import get_data_config
 
-        # Initialiser
+        # Initialiser avec config.py (recommandé)
+        config = get_data_config()
         injector = TimelineInjector(
-            history_file=Path("~/training-logs/workouts-history.md")
+            history_file=config.workouts_history_path
         )
 
         # Injecter workout
@@ -34,8 +35,9 @@ Examples:
     Advanced usage with validation::
 
         # Avec vérification duplicates
+        config = get_data_config()
         injector = TimelineInjector(
-            history_file=Path("~/training-logs/workouts-history.md"),
+            history_file=config.workouts_history_path,
             check_duplicates=True
         )
 
