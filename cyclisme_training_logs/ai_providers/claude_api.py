@@ -2,13 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Claude AI provider implementation (Anthropic API).
-
-GARTNER_TIME: I
-STATUS: Production
-LAST_REVIEW: 2025-12-26
-PRIORITY: P2
-DOCSTRING: v2
-
 Implémentation provider Claude AI (Anthropic) pour analyses workouts.
 Utilise claude-sonnet-4-20250514 comme provider principal avec support
 thinking blocks et artifacts.
@@ -48,6 +41,14 @@ Examples:
 
 Author: Claude Code
 Created: 2025-12-09
+
+Metadata:
+    Created: 2025-12-26
+    Author: Cyclisme Training Logs Team
+    Category: I
+    Status: Production
+    Priority: P2
+    Version: v2
 """
 
 import logging

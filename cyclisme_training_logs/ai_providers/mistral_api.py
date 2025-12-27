@@ -2,13 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Mistral AI provider implementation for workout analysis.
-
-GARTNER_TIME: I
-STATUS: Production
-LAST_REVIEW: 2025-12-26
-PRIORITY: P2
-DOCSTRING: v2
-
 Implémentation provider Mistral AI pour analyses workouts. Utilise modèle
 mistral-large avec support streaming et retry automatique. Fallback
 principal après Claude.
@@ -47,6 +40,14 @@ Examples:
 
 Author: Claude Code
 Created: 2025-12-09
+
+Metadata:
+    Created: 2025-12-26
+    Author: Cyclisme Training Logs Team
+    Category: I
+    Status: Production
+    Priority: P2
+    Version: v2
 """
 
 import logging

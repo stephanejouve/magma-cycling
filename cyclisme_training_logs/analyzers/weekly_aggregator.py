@@ -1,12 +1,5 @@
 """
 Weekly workout data aggregator with full TSS/IF enrichment.
-
-GARTNER_TIME: I
-STATUS: Production
-LAST_REVIEW: 2025-12-26
-PRIORITY: P1
-DOCSTRING: v2
-
 Agrégateur hebdomadaire implémentant DataAggregator pour collecter
 et traiter données complètes d'une semaine d'entraînement. Enrichit
 automatiquement chaque activité avec détails complets (TSS, IF, NP)
@@ -70,6 +63,14 @@ Examples:
 
 Author: Claude Code
 Created: 2025-12-26 (Phase 2 - Weekly Analysis System)
+
+Metadata:
+    Created: 2025-12-26
+    Author: Cyclisme Training Logs Team
+    Category: I
+    Status: Production
+    Priority: P1
+    Version: v2
 """
 
 from datetime import date, datetime, timedelta

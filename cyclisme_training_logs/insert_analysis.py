@@ -1,13 +1,6 @@
 #!/usr/bin/env python3
 """
 Insertion de l'analyse IA dans workouts-history.md
-
-GARTNER_TIME: I
-STATUS: Production
-LAST_REVIEW: 2025-12-26
-PRIORITY: P1
-DOCSTRING: v2
-
 Insère l'analyse générée par IA dans le fichier workouts-history.md en
 respectant l'ordre chronologique via TimelineInjector. Remplace le système
 append-only par une injection intelligente basée sur les dates de workout.
@@ -52,6 +45,14 @@ Examples:
 Author: Claude Code
 Created: 2024-11-15
 Updated: 2025-12-26 (Migrated to TimelineInjector - chronological injection)
+
+Metadata:
+    Created: 2025-12-26
+    Author: Cyclisme Training Logs Team
+    Category: I
+    Status: Production
+    Priority: P1
+    Version: v2
 """
 
 import argparse

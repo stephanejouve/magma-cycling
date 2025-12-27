@@ -1,13 +1,6 @@
 #!/usr/bin/env python3
 """
 Track rest days and canceled sessions with impact analysis.
-
-GARTNER_TIME: I
-STATUS: Production
-LAST_REVIEW: 2025-12-26
-PRIORITY: P2
-DOCSTRING: v2
-
 Suivi jours de repos et séances annulées avec analyse impact sur métriques
 forme (CTL/ATL/TSB). Documentation raisons cancellation et recommandations
 adaptations planning.
@@ -48,6 +41,14 @@ Examples:
 Author: Stéphane Jouve
 Created: 2024-10-XX
 Updated: 2025-12-26 (Standardization Prompt 3 Priority 2)
+
+Metadata:
+    Created: 2025-12-26
+    Author: Cyclisme Training Logs Team
+    Category: I
+    Status: Production
+    Priority: P2
+    Version: v2
 """
 
 import json

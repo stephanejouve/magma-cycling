@@ -1,12 +1,5 @@
 """
 Détection et suppression des doublons dans workouts-history.md
-
-GARTNER_TIME: I
-STATUS: Production
-LAST_REVIEW: 2025-12-27
-PRIORITY: P1
-DOCSTRING: v2
-
 Utilisé en mode paranoid pour valider les insertions TimelineInjector.
 Détecte les doublons après insertion et peut les supprimer automatiquement
 ou lever une erreur (fail-fast).
@@ -53,6 +46,14 @@ Examples:
 Author: Claude Code
 Created: 2025-12-27
 Updated: 2025-12-27 (Initial implementation)
+
+Metadata:
+    Created: 2025-12-27
+    Author: Cyclisme Training Logs Team
+    Category: I
+    Status: Production
+    Priority: P1
+    Version: v2
 """
 
 from pathlib import Path

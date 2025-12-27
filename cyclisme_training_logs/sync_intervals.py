@@ -1,13 +1,6 @@
 #!/usr/bin/env python3
 """
 Intervals.icu API integration for activity sync and metrics fetching.
-
-GARTNER_TIME: I
-STATUS: Production
-LAST_REVIEW: 2025-12-26
-PRIORITY: P1
-DOCSTRING: v2
-
 Intègre l'API Intervals.icu pour synchronisation activités, fetch métriques
 forme (CTL/ATL/TSB), et wellness data. Utilisé quotidiennement par le
 workflow principal.
@@ -47,6 +40,14 @@ Examples:
 Author: Stéphane Jouve
 Created: 2024-09-XX
 Updated: 2025-12-26 (Standardization Prompt 3 Priority 2)
+
+Metadata:
+    Created: 2025-12-26
+    Author: Cyclisme Training Logs Team
+    Category: I
+    Status: Production
+    Priority: P1
+    Version: v2
 """
 
 import argparse

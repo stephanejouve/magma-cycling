@@ -1,13 +1,6 @@
 #!/usr/bin/env python3
 """
 Backfill automatisé de l'historique d'entraînement
-
-GARTNER_TIME: I
-STATUS: Production
-LAST_REVIEW: 2025-12-26
-PRIORITY: P2
-DOCSTRING: v2
-
 Analyse en masse des activités historiques depuis Intervals.icu avec génération
 automatisée d'analyses IA. Utilise TimelineInjector via insert-analysis pour
 injection chronologique dans workouts-history.md.
@@ -50,6 +43,14 @@ Examples:
 Author: Claude Code
 Created: 2025-12-26
 Updated: 2025-12-26 (Integrated TimelineInjector via insert-analysis)
+
+Metadata:
+    Created: 2025-12-26
+    Author: Cyclisme Training Logs Team
+    Category: I
+    Status: Production
+    Priority: P2
+    Version: v2
 """
 
 import argparse

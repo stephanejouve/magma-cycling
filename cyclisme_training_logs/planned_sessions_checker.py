@@ -1,13 +1,6 @@
 #!/usr/bin/env python3
 """
 Validate planned workouts vs executed activities compliance.
-
-GARTNER_TIME: I
-STATUS: Production
-LAST_REVIEW: 2025-12-26
-PRIORITY: P2
-DOCSTRING: v2
-
 Vérifie conformité entre workouts planifiés (Intervals.icu) et activités
 réalisées. Détecte écarts, sessions manquées, et génère rapports de
 compliance hebdomadaire.
@@ -51,6 +44,14 @@ Examples:
 Author: Stéphane Jouve
 Created: 2024-11-XX
 Updated: 2025-12-26 (Standardization Prompt 3 Priority 2)
+
+Metadata:
+    Created: 2025-12-26
+    Author: Cyclisme Training Logs Team
+    Category: I
+    Status: Production
+    Priority: P2
+    Version: v2
 """
 
 import logging

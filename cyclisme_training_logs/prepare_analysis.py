@@ -1,13 +1,6 @@
 #!/usr/bin/env python3
 """
 Génération du prompt d'analyse pour IA Coach
-
-GARTNER_TIME: I
-STATUS: Production
-LAST_REVIEW: 2025-12-26
-PRIORITY: P0
-DOCSTRING: v2
-
 Prépare le prompt d'analyse de séance cyclisme pour traitement par IA.
 Récupère les données depuis Intervals.icu, agrège le contexte athlète,
 les zones de puissance, les logs récents, et génère un prompt structuré
@@ -50,6 +43,14 @@ Examples:
 Author: Claude Code
 Created: 2024-11-15
 Updated: 2025-12-26 (Added Gartner TIME tags)
+
+Metadata:
+    Created: 2025-12-26
+    Author: Cyclisme Training Logs Team
+    Category: I
+    Status: Production
+    Priority: P0
+    Version: v2
 """
 
 import argparse

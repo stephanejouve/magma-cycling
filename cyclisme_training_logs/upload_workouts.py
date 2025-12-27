@@ -1,13 +1,6 @@
 #!/usr/bin/env python3
 """
 Upload Zwift workout files (.zwo) to Intervals.icu calendar.
-
-GARTNER_TIME: I
-STATUS: Production
-LAST_REVIEW: 2025-12-26
-PRIORITY: P1
-DOCSTRING: v2
-
 Upload fichiers workouts Zwift (.zwo) vers calendrier Intervals.icu.
 Convertit format Zwift en format Intervals.icu et planifie séances
 automatiquement.
@@ -54,6 +47,14 @@ Examples:
 Author: Stéphane Jouve
 Created: 2024-10-XX
 Updated: 2025-12-26 (Standardization Prompt 3 Priority 2)
+
+Metadata:
+    Created: 2025-12-26
+    Author: Cyclisme Training Logs Team
+    Category: I
+    Status: Production
+    Priority: P1
+    Version: v2
 """
 
 import argparse
