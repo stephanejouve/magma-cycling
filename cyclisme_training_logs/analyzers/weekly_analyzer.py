@@ -1,12 +1,5 @@
 """
 Weekly analyzer orchestrating 6 automated markdown reports.
-
-GARTNER_TIME: I
-STATUS: Production
-LAST_REVIEW: 2025-12-26
-PRIORITY: P1
-DOCSTRING: v2
-
 Orchestrateur principal pour génération automatisée des 6 reports
 hebdomadaires standards : workout_history, metrics_evolution,
 training_learnings, protocol_adaptations, transition, bilan_final.
@@ -55,6 +48,14 @@ Examples:
 
 Author: Claude Code
 Created: 2025-12-26 (Phase 2 - Weekly Analysis System)
+
+Metadata:
+    Created: 2025-12-26
+    Author: Cyclisme Training Logs Team
+    Category: I
+    Status: Production
+    Priority: P1
+    Version: v2
 """
 
 from pathlib import Path

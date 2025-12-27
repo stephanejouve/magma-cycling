@@ -1,13 +1,6 @@
 #!/usr/bin/env python3
 """
 Workflow state management and persistence.
-
-GARTNER_TIME: I
-STATUS: Production
-LAST_REVIEW: 2025-12-26
-PRIORITY: P1
-DOCSTRING: v2
-
 Gestion état workflow persistant entre exécutions. Tracking étapes
 complétées, prévention duplicates, et validation cohérence pipeline
 d'analyse quotidien.
@@ -44,6 +37,14 @@ Examples:
 Author: Stéphane Jouve
 Created: 2024-09-XX
 Updated: 2025-12-26 (Standardization Prompt 3 Priority 2)
+
+Metadata:
+    Created: 2025-12-26
+    Author: Cyclisme Training Logs Team
+    Category: I
+    Status: Production
+    Priority: P1
+    Version: v2
 """
 
 import json

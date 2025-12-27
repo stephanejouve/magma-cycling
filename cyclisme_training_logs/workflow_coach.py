@@ -1,13 +1,6 @@
 #!/usr/bin/env python3
 """
 Orchestrateur du workflow d'analyse de séance
-
-GARTNER_TIME: I
-STATUS: Production
-LAST_REVIEW: 2025-12-26
-PRIORITY: P0
-DOCSTRING: v2
-
 Guide l'utilisateur à travers le processus complet d'analyse de séance cyclisme :
 détection du type de session, collecte du feedback athlète, préparation du prompt IA,
 exécution de l'analyse (multi-provider support), validation, insertion dans l'historique,
@@ -53,6 +46,14 @@ Examples:
 Author: Claude Code
 Created: 2024-11-15
 Updated: 2025-12-26 (Added Gartner TIME tags)
+
+Metadata:
+    Created: 2025-12-26
+    Author: Cyclisme Training Logs Team
+    Category: I
+    Status: Production
+    Priority: P0
+    Version: v2
 """
 
 import argparse

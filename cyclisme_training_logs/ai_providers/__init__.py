@@ -1,12 +1,5 @@
 """
 AI providers factory for multi-provider analysis support.
-
-GARTNER_TIME: I
-STATUS: Production
-LAST_REVIEW: 2025-12-26
-PRIORITY: P2
-DOCSTRING: v2
-
 Factory pattern pour support multi-providers IA (Claude, Mistral, OpenAI,
 Gemini, Ollama). Fournit interface unifiée pour analyses workouts avec
 fallback automatique entre providers.
@@ -47,6 +40,14 @@ Examples:
 Author: Claude Code
 Created: 2024-11-XX
 Updated: 2025-12-26 (Standardization Prompt 3 Priority 2)
+
+Metadata:
+    Created: 2025-12-26
+    Author: Cyclisme Training Logs Team
+    Category: I
+    Status: Production
+    Priority: P2
+    Version: v2
 """
 
 from .base import AIProvider, AIAnalyzer

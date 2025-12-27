@@ -1,13 +1,6 @@
 #!/usr/bin/env python3
 """
 Outil de gestion de l'état du workflow
-
-GARTNER_TIME: I
-STATUS: Production
-LAST_REVIEW: 2025-12-26
-PRIORITY: P1
-DOCSTRING: v2
-
 Utilitaire CLI pour inspecter et manipuler le fichier .workflow_state.json
 qui track les activités analysées. Permet d'afficher l'état, lister l'historique,
 supprimer des entrées spécifiques ou réinitialiser complètement le state.
@@ -52,6 +45,14 @@ Examples:
 Author: Claude Code
 Created: 2024-12-20
 Updated: 2025-12-26 (Added Gartner TIME tags)
+
+Metadata:
+    Created: 2025-12-26
+    Author: Cyclisme Training Logs Team
+    Category: I
+    Status: Production
+    Priority: P1
+    Version: v2
 """
 
 import argparse

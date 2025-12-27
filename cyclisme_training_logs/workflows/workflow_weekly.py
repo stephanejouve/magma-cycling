@@ -1,12 +1,5 @@
 """
 Weekly analysis workflow CLI and orchestration.
-
-GARTNER_TIME: I
-STATUS: Production
-LAST_REVIEW: 2025-12-26
-PRIORITY: P1
-DOCSTRING: v2
-
 Workflow complet analyse hebdomadaire automatisée. Orchestre :
 WeeklyAggregator → WeeklyAnalyzer → 6 reports markdown.
 Remplace weekly_analysis.py legacy.
@@ -47,6 +40,14 @@ Examples:
 
 Author: Claude Code
 Created: 2025-12-26 (Phase 2 - Weekly Analysis System)
+
+Metadata:
+    Created: 2025-12-26
+    Author: Cyclisme Training Logs Team
+    Category: I
+    Status: Production
+    Priority: P1
+    Version: v2
 """
 
 import argparse

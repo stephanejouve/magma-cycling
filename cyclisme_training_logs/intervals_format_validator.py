@@ -1,13 +1,6 @@
 #!/usr/bin/env python3
 """
 Validate Intervals.icu workout format syntax and structure.
-
-GARTNER_TIME: I
-STATUS: Production
-LAST_REVIEW: 2025-12-26
-PRIORITY: P2
-DOCSTRING: v2
-
 Valide syntaxe et structure workouts format Intervals.icu avant upload.
 Vérifie cohérence durées, pourcentages FTP, format répétitions, et
 génère warnings si problèmes détectés.
@@ -24,7 +17,6 @@ Examples:
         Main set 4x
         - 8m 90% 90rpm
         - 3m 65% 85rpm
-        '''
 
         result = validate_workout(workout_text)
 
@@ -57,6 +49,14 @@ Examples:
 Author: Stéphane Jouve
 Created: 2024-11-XX
 Updated: 2025-12-26 (Standardization Prompt 3 Priority 2)
+
+Metadata:
+    Created: 2025-12-26
+    Author: Cyclisme Training Logs Team
+    Category: I
+    Status: Production
+    Priority: P2
+    Version: v2
 """
 
 import re

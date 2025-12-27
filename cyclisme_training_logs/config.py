@@ -1,12 +1,5 @@
 """
 Configuration centrale pour séparation code/données
-
-GARTNER_TIME: I
-STATUS: Production
-LAST_REVIEW: 2025-12-26
-PRIORITY: P0
-DOCSTRING: v2
-
 Module de configuration gérant la séparation entre code (cyclisme-training-logs)
 et données athlète (training-logs externe). Configure les chemins vers le dépôt
 de données externe via variable d'environnement TRAINING_DATA_REPO, avec fallback
@@ -47,6 +40,14 @@ Examples:
 Author: Claude Code
 Created: 2024-12-23
 Updated: 2025-12-26 (Added Gartner TIME tags)
+
+Metadata:
+    Created: 2025-12-26
+    Author: Cyclisme Training Logs Team
+    Category: I
+    Status: Production
+    Priority: P0
+    Version: v2
 """
 
 import os
