@@ -29,6 +29,8 @@ ruff = "^0.1.8"
 mypy = "^1.7.1"
 ipython = "^8.18.1"
 ipdb = "^0.13.13"
+sphinx = "^9.0.4"
+sphinx-rtd-theme = "^3.0.2"
 
 [tool.poetry.scripts]
 # === Scripts Principaux (Usage Quotidien) ===
