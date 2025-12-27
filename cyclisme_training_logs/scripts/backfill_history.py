@@ -310,8 +310,19 @@ class HistoryBackfiller:
             else:
                 print(f"❌ Échec analyse: {activity_id}")
                 print(f"   Return code: {result.returncode}")
+
+                # Afficher stdout ET stderr (beaucoup d'erreurs Python vont sur stdout!)
+                if result.stdout:
+                    print(f"   Output:\n{result.stdout[:1000]}")
                 if result.stderr:
-                    print(f"   Error: {result.stderr[:200]}")
+                    print(f"   Error:\n{result.stderr[:1000]}")
+
+                # Si les deux vides, debug info
+                if not result.stdout and not result.stderr:
+                    print(f"   ⚠️  Aucune sortie capturée!")
+                    print(f"   Command: {' '.join(cmd)}")
+                    print(f"   CWD: {self.data_config.data_repo_path}")
+
                 self.analyzed_failed += 1
                 return False
 
