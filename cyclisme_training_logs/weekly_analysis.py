@@ -768,14 +768,8 @@ Exemples:
             print("   Format attendu : YYYY-MM-DD (ex: 2024-11-18)")
             sys.exit(1)
 
-    # Vérifier qu'on est dans le bon répertoire
-    if not Path('logs/workouts-history.md').exists():
-        print("❌ Erreur : Ce script doit être lancé depuis la racine du projet")
-        print(f"   Répertoire courant : {Path.cwd()}")
-        print()
-        print("   cd ~/cyclisme-training-logs")
-        print("   python3 cyclisme_training_logs/weekly_analysis.py --week-id S068")
-        sys.exit(1)
+    # Note: CWD check supprimé - config.py gère les paths automatiquement
+    # Fonctionne depuis n'importe quel répertoire (code repo ou data repo)
 
     # Lancer le workflow
     try:

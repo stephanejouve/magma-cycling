@@ -346,8 +346,8 @@ def main():
     )
     parser.add_argument(
         '--logs-dir',
-        default='logs',
-        help="Répertoire des logs (défaut: logs/)"
+        default=None,
+        help="Répertoire des logs (défaut: utilise config.py)"
     )
     
     args = parser.parse_args()
