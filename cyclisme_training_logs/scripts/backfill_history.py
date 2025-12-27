@@ -259,6 +259,9 @@ class HistoryBackfiller:
         """
         Analyze single activity using workflow-coach --auto.
 
+        Uses direct Python execution instead of 'poetry run' to avoid
+        pyproject.toml lookup in wrong directory (data repo vs code repo).
+
         Returns:
             True if analysis succeeded, False otherwise
         """
@@ -277,9 +280,12 @@ class HistoryBackfiller:
             return True
 
         try:
-            # Build command
+            # Build command - Python direct instead of Poetry
+            # Au lieu de: poetry run workflow-coach --activity-id ...
+            # Utiliser: python -m cyclisme_training_logs.workflow_coach --activity-id ...
             cmd = [
-                'poetry', 'run', 'workflow-coach',
+                sys.executable,  # Python actuel (même que backfill)
+                '-m', 'cyclisme_training_logs.workflow_coach',
                 '--activity-id', activity_id,
                 '--provider', self.provider,
                 '--auto',              # Fully automated
@@ -291,7 +297,7 @@ class HistoryBackfiller:
             print(f"🚀 Lancement analyse automatique...")
             result = subprocess.run(
                 cmd,
-                cwd=str(self.data_config.data_repo_path),  # ✅ Use data repo, not code repo
+                cwd=str(self.data_config.data_repo_path),  # ✅ CWD data repo OK now
                 capture_output=True,
                 text=True,
                 timeout=300  # 5 min timeout per activity
