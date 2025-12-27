@@ -1,16 +1,18 @@
 """
 Abstract data aggregation framework for multi-level analysis.
 
-GARTNER_TIME: I
-STATUS: Development
-LAST_REVIEW: 2025-12-26
-PRIORITY: P0
-MIGRATION_SOURCE: cyclisme-training-automation-v2/src/core/data_aggregator.py
-DOCSTRING: v2
-
 Framework d'agrégation abstrait supportant analyses multi-niveaux :
 daily (séance), weekly (semaine), cycle (4 semaines). Fournit base
 réutilisable pour tous types d'analyses.
+
+Metadata:
+    Created: 2025-12-26
+    Author: Cyclisme Training Logs Team
+    Category: I (Infrastructure)
+    Status: Development
+    Priority: P0
+    Version: v2
+    Migration Source: cyclisme-training-automation-v2/src/core/data_aggregator.py
 
 Examples:
     Creating a custom aggregator::

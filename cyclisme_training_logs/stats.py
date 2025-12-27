@@ -2,17 +2,19 @@
 """
 Legacy statistics computation (use analyzers/weekly_analyzer.py for new code).
 
-GARTNER_TIME: T
-STATUS: Production (Legacy)
-LAST_REVIEW: 2025-12-26
-PRIORITY: P3
-REPLACEMENT: analyzers/weekly_analyzer.py (Planned Phase 2)
-DEPRECATION_PLAN: Replace after Prompt 2 Phase 2 (weekly analysis system)
-DOCSTRING: v2
-
 ⚠️  LEGACY - Calculs statistiques basiques workouts. Utilisé temporairement
 en attendant weekly_analyzer.py (Prompt 2 Phase 2). Pour nouveau code,
 utiliser analyzers/weekly_analyzer.py.
+
+Metadata:
+    Created: 2025-12-26
+    Author: Cyclisme Training Logs Team
+    Category: T (Tools)
+    Status: Production (Legacy)
+    Priority: P3
+    Version: v2
+    Replacement: analyzers/weekly_analyzer.py (Planned Phase 2)
+    Deprecation: Replace after Prompt 2 Phase 2 (weekly analysis system)
 
 Examples:
     Basic stats (legacy)::

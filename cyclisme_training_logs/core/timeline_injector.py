@@ -1,16 +1,18 @@
 """
 Chronological timeline injection for workout history entries.
 
-GARTNER_TIME: I
-STATUS: Development
-LAST_REVIEW: 2025-12-26
-PRIORITY: P0
-MIGRATION_SOURCE: cyclisme-training-automation-v2/src/core/markdown_parser.py
-DOCSTRING: v2
-
 Injecte les analyses de séance dans workouts-history.md en respectant
 l'ordre chronologique. Remplace le système append-only actuel par une
 insertion intelligente basée sur les dates de workout.
+
+Metadata:
+    Created: 2025-12-26
+    Author: Cyclisme Training Logs Team
+    Category: I (Infrastructure)
+    Status: Development
+    Priority: P0
+    Version: v2
+    Migration Source: cyclisme-training-automation-v2/src/core/markdown_parser.py
 
 Examples:
     Basic chronological injection::

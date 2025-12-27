@@ -37,14 +37,10 @@ Examples:
         # Reset singleton (utile pour tests)
         reset_data_config()
 
-Author: Claude Code
-Created: 2024-12-23
-Updated: 2025-12-26 (Added Gartner TIME tags)
-
 Metadata:
     Created: 2025-12-26
     Author: Cyclisme Training Logs Team
-    Category: I
+    Category: I (Infrastructure)
     Status: Production
     Priority: P0
     Version: v2

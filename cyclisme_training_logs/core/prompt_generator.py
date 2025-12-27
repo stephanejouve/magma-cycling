@@ -1,16 +1,18 @@
 """
 Composable prompt generation system for AI analysis.
 
-GARTNER_TIME: I
-STATUS: Development
-LAST_REVIEW: 2025-12-26
-PRIORITY: P1
-MIGRATION_SOURCE: cyclisme-training-automation-v2/src/core/prompt_generator.py
-DOCSTRING: v2
-
 Système de génération de prompts composables pour analyses IA.
 Supporte building blocks réutilisables (intro, context, data, instructions,
 output_format) avec templates personnalisables.
+
+Metadata:
+    Created: 2025-12-26
+    Author: Cyclisme Training Logs Team
+    Category: I (Infrastructure)
+    Status: Development
+    Priority: P1
+    Version: v2
+    Migration Source: cyclisme-training-automation-v2/src/core/prompt_generator.py
 
 Examples:
     Basic prompt generation::
