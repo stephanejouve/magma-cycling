@@ -1292,10 +1292,10 @@ class WorkflowCoach:
 
             if activity:
 
-                # Commande avec contexte
+                # Commande avec contexte - Module import au lieu de path absolu
                 cmd = [
-                    "python3",
-                    str(self.scripts_dir / "collect_athlete_feedback.py"),
+                    sys.executable,
+                    "-m", "cyclisme_training_logs.collect_athlete_feedback",
                     "--activity-name", activity.get('name', 'Séance'),
                     "--activity-date", activity.get('start_date_local', ''),
                     "--activity-duration", str(activity.get('moving_time', 0) // 60),
@@ -1316,7 +1316,7 @@ class WorkflowCoach:
                 # Fallback sans contexte
                 print()
                 print("⚠️  Impossible de récupérer le contexte de la séance")
-                cmd = ["python3", str(self.scripts_dir / "collect_athlete_feedback.py")]
+                cmd = [sys.executable, "-m", "cyclisme_training_logs.collect_athlete_feedback"]
                 if mode_choice == '1':
                     cmd.append("--quick")
                 result = subprocess.run(cmd)
@@ -1326,7 +1326,7 @@ class WorkflowCoach:
             print(f"⚠️  Erreur lors de la récupération du contexte : {e}")
             print("   → Collecte feedback sans contexte activité")
             # Fallback sans contexte
-            cmd = ["python3", str(self.scripts_dir / "collect_athlete_feedback.py")]
+            cmd = [sys.executable, "-m", "cyclisme_training_logs.collect_athlete_feedback"]
             if mode_choice == '1':
                 cmd.append("--quick")
             result = subprocess.run(cmd)
@@ -1388,8 +1388,8 @@ class WorkflowCoach:
         print("⏱️  Temps estimé : 10 secondes")
         self.print_separator()
 
-        # Construire la commande
-        cmd = ["python3", str(self.scripts_dir / "prepare_analysis.py")]
+        # Construire la commande - Module import au lieu de path absolu
+        cmd = [sys.executable, "-m", "cyclisme_training_logs.prepare_analysis"]
         if self.activity_id:
             cmd.extend(["--activity-id", self.activity_id])
 
@@ -2413,8 +2413,8 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
                 print(f"❌ Erreur écriture clipboard : {e}")
                 sys.exit(1)
 
-        # Lancer le script d'insertion
-        cmd = ["poetry", "run", "insert-analysis"]
+        # Lancer le script d'insertion - Module import au lieu de Poetry entrypoint
+        cmd = [sys.executable, "-m", "cyclisme_training_logs.insert_analysis"]
         if self.auto_mode:
             cmd.append("--yes")
         result = subprocess.run(cmd)
