@@ -75,7 +75,7 @@ from cyclisme_training_logs.rest_and_cancellations import (
 )
 from cyclisme_training_logs.planned_sessions_checker import PlannedSessionsChecker
 from cyclisme_training_logs.ai_providers import AIProviderFactory
-from cyclisme_training_logs.config import get_ai_config
+from cyclisme_training_logs.config import get_ai_config, get_data_config
 from cyclisme_training_logs.core.timeline_injector import TimelineInjector
 import logging
 
@@ -219,7 +219,8 @@ class WorkflowCoach:
         Returns:
             list: Séances futures (date >= aujourd'hui)
         """
-        planning_file = self.project_root / "data" / "week_planning" / f"week_planning_{week_id}.json"
+        config = get_data_config()
+        planning_file = config.week_planning_dir / f"week_planning_{week_id}.json"
 
         if not planning_file.exists():
             print(f"⚠️  Planning {week_id} non trouvé: {planning_file}")
@@ -312,7 +313,8 @@ class WorkflowCoach:
         Returns:
             int: Numéro jour 1-7
         """
-        planning_file = self.project_root / "data" / "week_planning" / f"week_planning_{week_id}.json"
+        config = get_data_config()
+        planning_file = config.week_planning_dir / f"week_planning_{week_id}.json"
 
         try:
             with open(planning_file, 'r', encoding='utf-8') as f:
@@ -449,7 +451,8 @@ class WorkflowCoach:
         Returns:
             bool: True si succès
         """
-        planning_file = self.project_root / "data" / "week_planning" / f"week_planning_{week_id}.json"
+        config = get_data_config()
+        planning_file = config.week_planning_dir / f"week_planning_{week_id}.json"
 
         try:
             # Load planning
@@ -632,7 +635,8 @@ class WorkflowCoach:
         api = IntervalsAPI(athlete_id=athlete_id, api_key=api_key)
 
         # 1. Charger planning JSON local
-        planning_dir = self.project_root / "data" / "week_planning"
+        config = get_data_config()
+        planning_dir = config.week_planning_dir
         try:
             planning = load_week_planning(week_id, planning_dir)
             print(f"✅ Planning chargé: {week_id}")
@@ -996,7 +1000,8 @@ class WorkflowCoach:
         cancelled_sessions = []
 
         if self.week_id:
-            planning_dir = self.project_root / "data" / "week_planning"
+            config = get_data_config()
+            planning_dir = config.week_planning_dir
             planning_file = planning_dir / f"week_planning_{self.week_id}.json"
 
             if planning_file.exists():
@@ -1556,7 +1561,8 @@ class WorkflowCoach:
         else:
             week_id = self.week_id
 
-        planning_dir = self.project_root / "data" / "week_planning"
+        config = get_data_config()
+        planning_dir = config.week_planning_dir
         planning_file = planning_dir / f"week_planning_{week_id}.json"
 
         return planning_file.exists()
@@ -1703,7 +1709,8 @@ class WorkflowCoach:
         Returns:
             True si succès, False sinon
         """
-        output_dir = self.project_root / "data" / "week_planning"
+        config = get_data_config()
+        output_dir = config.week_planning_dir
         output_file = output_dir / f"special_sessions_{week_id}.md"
 
         try:
