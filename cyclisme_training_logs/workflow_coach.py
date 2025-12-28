@@ -276,7 +276,12 @@ class WorkflowCoach:
         return "\n".join(lines)
 
     def parse_ai_modifications(self, ai_response: str) -> list:
-        """Parse modifications planning depuis réponse AI
+        """Parse modifications planning depuis réponse AI (fix Issue #3)
+
+        Gère plusieurs formats:
+        - JSON plain: {"modifications": [...]}
+        - Markdown: ```json...```
+        - Multi-lignes avec whitespace variable
 
         Args:
             ai_response: Texte réponse AI complet
@@ -286,22 +291,70 @@ class WorkflowCoach:
         """
         import re
 
-        # Chercher bloc JSON modifications
+        logger.debug(f"Parsing AI response: {ai_response[:200]}...")
+
+        if not ai_response or not ai_response.strip():
+            logger.warning("Empty AI response")
+            return []
+
+        # Clean response text
+        text = ai_response.strip()
+
+        # Strategy 1: Try to extract from markdown code block
         json_match = re.search(
-            r'```json\s*\n(\{.*?"modifications".*?\})\s*\n```',
-            ai_response,
-            re.DOTALL
+            r'```json\s*\n?(\{.*?\})\s*\n?```',
+            text,
+            re.DOTALL | re.MULTILINE
         )
 
-        if not json_match:
-            return []  # Pas de modification = comportement normal
+        if json_match:
+            logger.debug("Found JSON in markdown code block")
+            json_str = json_match.group(1)
+        else:
+            # Strategy 2: Try to find JSON object directly (without markdown)
+            json_match = re.search(
+                r'\{[^{}]*"modifications"[^{}]*\[[^\]]*\][^{}]*\}',
+                text,
+                re.DOTALL | re.MULTILINE
+            )
 
+            if json_match:
+                logger.debug("Found JSON without markdown")
+                json_str = json_match.group(0)
+            else:
+                # Strategy 3: Look for any JSON-like structure with "modifications" key
+                json_match = re.search(
+                    r'\{.*?"modifications".*?\}',
+                    text,
+                    re.DOTALL | re.MULTILINE
+                )
+
+                if json_match:
+                    logger.debug("Found JSON-like structure with modifications key")
+                    json_str = json_match.group(0)
+                else:
+                    logger.info("No JSON modifications found in response (normal if no changes needed)")
+                    return []
+
+        # Parse JSON
         try:
-            data = json.loads(json_match.group(1))
-            return data.get('modifications', [])
+            data = json.loads(json_str)
+            logger.debug(f"JSON parsed successfully: {list(data.keys())}")
         except json.JSONDecodeError as e:
+            logger.error(f"JSON parse error: {e}")
+            logger.error(f"Failed JSON: {json_str[:200]}")
             print(f"⚠️  JSON modifications invalide : {e}")
             return []
+
+        # Extract modifications list
+        modifications = data.get('modifications', [])
+
+        if not isinstance(modifications, list):
+            logger.error(f"'modifications' is not a list: {type(modifications)}")
+            return []
+
+        logger.info(f"✅ Parsed {len(modifications)} modification(s)")
+        return modifications
 
     def _extract_day_number(self, date_str: str, week_id: str) -> int:
         """Extrait numéro jour (1-7) depuis date
@@ -1228,12 +1281,21 @@ class WorkflowCoach:
             self.wait_user()
             return
 
+        # Check gaps BEFORE prompting user (fix Issue #4)
+        if not self.unanalyzed_activities or len(self.unanalyzed_activities) == 0:
+            # No gaps detected - skip silently without prompting
+            return
+
         self.clear_screen()
         self.print_header(
             "💭 Collecte Feedback Athlète",
             "Étape 2/7 : Ressenti subjectif (optionnel)"
         )
 
+        # Show gap count to user
+        gap_count = len(self.unanalyzed_activities)
+        print(f"📊 {gap_count} séance(s) non analysée(s) détectée(s)")
+        print()
         print("Veux-tu enrichir l'analyse avec ton ressenti sur la séance ?")
         print()
         print("✅ Avantages :")
@@ -1267,15 +1329,6 @@ class WorkflowCoach:
 # Lancer le script de collecte AVEC contexte
         try:
             from cyclisme_training_logs.prepare_analysis import IntervalsAPI
-
-            # Vérifier si des gaps ont été détectés en step_1b
-            if not self.unanalyzed_activities or len(self.unanalyzed_activities) == 0:
-                print()
-                print("ℹ️  Aucun gap détecté → Skip feedback")
-                print("   Toutes les séances récentes sont déjà analysées")
-                print()
-                self.wait_user()
-                return
 
             # FIX: Charger credentials
             athlete_id, api_key = self.load_credentials()
@@ -2570,42 +2623,71 @@ Critères de décision:
 
 Réponds maintenant."""
 
-        # Copy supplementary prompt to clipboard
-        try:
-            process = subprocess.Popen(
-                ['pbcopy'],
-                stdin=subprocess.PIPE
-            )
-            process.communicate(input=supplementary_prompt.encode('utf-8'))
+        # Get AI response - Use provider directly if available (fix Issue #2)
+        ai_response = None
 
+        if self.current_provider != 'clipboard':
+            # Use AI provider directly
             print()
-            print("✅ Prompt asservissement copié dans le presse-papier")
-            print()
-            print("📋 INSTRUCTIONS :")
-            print("1. Retourne dans ton IA (même conversation)")
-            print("2. Colle le prompt supplémentaire (Cmd+V)")
-            print("3. Envoie le message")
-            print("4. Copie la réponse complète")
+            print(f"🤖 Appel AI provider: {self.current_provider}")
+            print("   Génération des recommandations en cours...")
             print()
 
-            self.wait_user("Appuyer sur ENTRÉE une fois la réponse copiée...")
+            try:
+                # Call AI provider with supplementary prompt
+                ai_response = self.ai_analyzer.analyze_session(
+                    prompt=supplementary_prompt,
+                    dataset=None
+                )
+                logger.info(f"AI provider responded: {len(ai_response)} chars")
 
-        except Exception as e:
-            print(f"⚠️  Erreur copie prompt : {e}")
-            self.wait_user()
-            return
+            except Exception as e:
+                logger.error(f"AI provider failed: {e}")
+                print(f"⚠️  Erreur provider {self.current_provider}: {e}")
+                print("   Basculement vers mode clipboard...")
+                ai_response = None
 
-        # Get AI response from clipboard
-        try:
-            clipboard = subprocess.run(
-                ['pbpaste'],
-                capture_output=True,
-                text=True,
-                check=True
-            )
-            ai_response = clipboard.stdout
-        except Exception as e:
-            print(f"⚠️  Impossible de lire le presse-papier : {e}")
+        # Fallback to clipboard if no provider or provider failed
+        if ai_response is None:
+            print()
+            print("📋 Mode manuel (clipboard)")
+            print()
+
+            try:
+                # Copy prompt to clipboard
+                process = subprocess.Popen(
+                    ['pbcopy'],
+                    stdin=subprocess.PIPE
+                )
+                process.communicate(input=supplementary_prompt.encode('utf-8'))
+
+                print("✅ Prompt asservissement copié dans le presse-papier")
+                print()
+                print("📋 INSTRUCTIONS :")
+                print("1. Retourne dans ton IA (même conversation)")
+                print("2. Colle le prompt supplémentaire (Cmd+V)")
+                print("3. Envoie le message")
+                print("4. Copie la réponse complète")
+                print()
+
+                self.wait_user("Appuyer sur ENTRÉE une fois la réponse copiée...")
+
+                # Get AI response from clipboard
+                clipboard = subprocess.run(
+                    ['pbpaste'],
+                    capture_output=True,
+                    text=True,
+                    check=True
+                )
+                ai_response = clipboard.stdout
+
+            except Exception as e:
+                print(f"⚠️  Erreur clipboard workflow : {e}")
+                self.wait_user()
+                return
+
+        if not ai_response or not ai_response.strip():
+            print("⚠️  Réponse AI vide")
             self.wait_user()
             return
 
