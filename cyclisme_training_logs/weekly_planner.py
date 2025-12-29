@@ -48,7 +48,17 @@ class WeeklyPlanner:
     def _init_api(self):
         """Initialiser l'API Intervals.icu"""
         try:
-            self.api = IntervalsAPI()
+            # Load credentials from .env or config file
+            from cyclisme_training_logs.config import get_intervals_config
+
+            config = get_intervals_config()
+            if not config.is_configured():
+                raise ValueError("Intervals.icu credentials not configured in .env")
+
+            self.api = IntervalsAPI(
+                athlete_id=config.athlete_id,
+                api_key=config.api_key
+            )
             print("✅ API Intervals.icu connectée")
         except Exception as e:
             print(f"⚠️ API non disponible : {e}")

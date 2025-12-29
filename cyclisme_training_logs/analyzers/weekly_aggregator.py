@@ -380,10 +380,20 @@ class WeeklyAggregator(DataAggregator):
 
         while current_date <= self.end_date:
             try:
-                wellness = self.api.get_wellness(current_date.isoformat())
+                date_str = current_date.isoformat()
+                wellness_data = self.api.get_wellness(oldest=date_str, newest=date_str)
+
+                # API returns list - convert to dict keyed by date
+                if isinstance(wellness_data, list) and len(wellness_data) > 0:
+                    wellness = wellness_data[0]  # Take first element
+                elif isinstance(wellness_data, dict):
+                    wellness = wellness_data
+                else:
+                    wellness = None
+
                 if wellness:
                     metrics.append({
-                        'date': current_date.isoformat(),
+                        'date': date_str,
                         'ctl': wellness.get('ctl', 0),
                         'atl': wellness.get('atl', 0),
                         'tsb': wellness.get('tsb', 0),
@@ -424,9 +434,19 @@ class WeeklyAggregator(DataAggregator):
 
         while current_date <= self.end_date:
             try:
-                data = self.api.get_wellness(current_date.isoformat())
+                date_str = current_date.isoformat()
+                wellness_data = self.api.get_wellness(oldest=date_str, newest=date_str)
+
+                # API returns list - convert to dict keyed by date
+                if isinstance(wellness_data, list) and len(wellness_data) > 0:
+                    data = wellness_data[0]  # Take first element
+                elif isinstance(wellness_data, dict):
+                    data = wellness_data
+                else:
+                    data = None
+
                 if data:
-                    wellness[current_date.isoformat()] = {
+                    wellness[date_str] = {
                         'sleep_quality': data.get('sleepQuality', 0),
                         'sleep_hours': data.get('sleepSecs', 0) / 3600 if data.get('sleepSecs') else 0,
                         'weight': data.get('weight', 0),
