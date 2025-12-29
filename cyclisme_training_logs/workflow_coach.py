@@ -2771,7 +2771,24 @@ Réponds maintenant."""
 
         # Ajouter et commiter
         try:
+            # Check if there's something to commit
+            status_check = subprocess.run(
+                ['git', 'status', '--short', 'logs/workouts-history.md'],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+
+            if not status_check.stdout.strip():
+                print()
+                print("✅ Fichier déjà à jour (rien à commiter)")
+                self.wait_user()
+                return
+
+            # Stage changes
             subprocess.run(['git', 'add', 'logs/workouts-history.md'], check=True)
+
+            # Commit
             subprocess.run(
                 ['git', 'commit', '-m', commit_msg],
                 check=True
@@ -2849,6 +2866,19 @@ Réponds maintenant."""
         commit_msg = f"{default_message}\n\n🤖 Generated with Claude Code\n\nCo-Authored-By: Claude <noreply@anthropic.com>"
 
         try:
+            # Check if there's something to commit
+            status_check = subprocess.run(
+                ['git', 'status', '--short', 'logs/workouts-history.md'],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+
+            if not status_check.stdout.strip():
+                print("   ℹ️  Fichier déjà à jour (rien à commiter)")
+                return
+
+            # Stage and commit
             subprocess.run(['git', 'add', 'logs/workouts-history.md'], check=True, capture_output=True)
             subprocess.run(['git', 'commit', '-m', commit_msg], check=True, capture_output=True)
             print("   ✅ Commit réussi !")
