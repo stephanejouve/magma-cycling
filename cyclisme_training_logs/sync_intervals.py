@@ -107,6 +107,19 @@ class IntervalsAPI:
         response.raise_for_status()
         return response.json()
 
+    def get_events(self, oldest=None, newest=None):
+        """Récupérer les événements du calendrier (workouts planifiés, notes, etc.)"""
+        url = f"{self.BASE_URL}/athlete/{self.athlete_id}/events"
+        params = {}
+        if oldest:
+            params['oldest'] = oldest
+        if newest:
+            params['newest'] = newest
+
+        response = self.session.get(url, params=params)
+        response.raise_for_status()
+        return response.json()
+
 
 class WorkoutLogger:
     """Gestionnaire de mise à jour des logs"""
