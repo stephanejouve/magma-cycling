@@ -1,0 +1,118 @@
+=== WORKOUT S074-01-END-EnduranceBase-V001 ===
+
+Endurance Base (75min, 55 TSS)
+
+Warmup
+- 12m ramp 50-65% 85rpm
+- 3m 65% 90rpm
+
+Main set
+- 50m 68-72% 88rpm
+
+Cooldown
+- 10m ramp 65-50% 85rpm
+
+=== FIN WORKOUT ===
+
+
+=== WORKOUT S074-02-INT-SweetSpot-V001 ===
+
+Sweet Spot 3x10 (79min, 82 TSS)
+
+Warmup
+- 12m ramp 50-65% 85rpm
+- 5m 65% 90rpm
+
+Main set 3x
+- 10m 90% 92rpm
+- 5m 62% 85rpm
+
+Cooldown
+- 10m ramp 65-50% 85rpm
+
+=== FIN WORKOUT ===
+
+
+=== WORKOUT S074-03-TEC-CadenceVariation-V001 ===
+
+Technique Cadence (50min, 42 TSS)
+
+Warmup
+- 10m ramp 50-65% 85rpm
+
+Main set
+- 5m 70% 80rpm
+- 2m 65% 85rpm
+- 5m 70% 95rpm
+- 2m 65% 85rpm
+- 5m 70% 75rpm
+- 2m 65% 85rpm
+- 5m 70% 100rpm
+- 4m 65% 85rpm
+
+Cooldown
+- 10m ramp 65-50% 85rpm
+
+=== FIN WORKOUT ===
+
+
+=== WORKOUT S074-04-END-EnduranceProgressive-V001 ===
+
+Endurance Progressive (80min, 62 TSS)
+
+Warmup
+- 12m ramp 50-65% 85rpm
+
+Main set
+- 20m 68% 87rpm
+- 20m 72% 89rpm
+- 20m 75% 91rpm
+
+Cooldown
+- 8m ramp 75-50% 85rpm
+
+=== FIN WORKOUT ===
+
+
+=== WORKOUT S074-05-INT-Activation-V001 ===
+
+Activation Pre Weekend (45min, 38 TSS)
+
+Warmup
+- 15m ramp 50-65% 85rpm
+
+Main set 3x
+- 1m 95% 95rpm
+- 4m 60% 85rpm
+
+Cooldown
+- 10m ramp 65-50% 85rpm
+
+=== FIN WORKOUT ===
+
+
+=== WORKOUT S074-06-END-EnduranceLongue-V001 ===
+
+Endurance Longue (90min, 68 TSS)
+
+Warmup
+- 15m ramp 50-65% 85rpm
+
+Main set
+- 60m 68-74% 88rpm
+
+Cooldown
+- 15m ramp 65-50% 85rpm
+
+=== FIN WORKOUT ===
+
+
+=== WORKOUT S074-07-REC-ReposComplet ===
+
+REPOS COMPLET OBLIGATOIRE
+
+Aucune activite cycliste
+Recuperation complete
+Hydratation et nutrition optimales
+
+=== FIN WORKOUT ===
