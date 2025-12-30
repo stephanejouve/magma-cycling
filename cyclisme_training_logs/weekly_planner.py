@@ -30,17 +30,28 @@ class WeeklyPlanner:
         self.start_date = start_date
         self.end_date = start_date + timedelta(days=6)
         self.project_root = project_root
-        
+
         # Chemins importants
         self.references_dir = project_root / "references"
         self.logs_dir = project_root / "logs"
         self.weekly_reports_dir = self.logs_dir / "weekly_reports"
-        
+
+        # Get planning directory from config
+        from cyclisme_training_logs.config import get_data_config
+        try:
+            config = get_data_config()
+            self.planning_dir = config.week_planning_dir
+        except FileNotFoundError:
+            # Fallback to legacy path
+            self.planning_dir = self.logs_dir / "data" / "week_planning"
+
+        self.planning_dir.mkdir(parents=True, exist_ok=True)
+
         # État collecté
         self.current_metrics = {}
         self.context_files = {}
         self.previous_week_bilan = ""
-        
+
         # API Intervals.icu
         self.api = None
         self._init_api()
@@ -619,6 +630,100 @@ Le but est que je puisse **copier-coller directement** chaque bloc dans Interval
             print(f"⚠️ Erreur copie presse-papier : {e}")
             return False
     
+    def update_session_status(self, session_id: str, status: str, reason: str = None):
+        """
+        Mettre à jour le statut d'une séance dans le JSON.
+
+        Args:
+            session_id: ID de la séance (ex: S074-01)
+            status: Nouveau statut (completed, cancelled, skipped, etc.)
+            reason: Raison de l'annulation/modification (optionnel)
+        """
+        json_file = self.planning_dir / f"week_planning_{self.week_number}.json"
+
+        if not json_file.exists():
+            print(f"⚠️ Planning JSON non trouvé : {json_file}")
+            return False
+
+        with open(json_file, 'r', encoding='utf-8') as f:
+            planning = json.load(f)
+
+        # Trouver et mettre à jour la séance
+        session_found = False
+        for session in planning['planned_sessions']:
+            if session['session_id'] == session_id:
+                session['status'] = status
+                if reason:
+                    if status == 'cancelled':
+                        session['cancellation_reason'] = reason
+                        session['cancellation_date'] = datetime.now().isoformat()
+                    elif status == 'skipped':
+                        session['skip_reason'] = reason
+                session_found = True
+                break
+
+        if not session_found:
+            print(f"⚠️ Séance {session_id} non trouvée dans le planning")
+            return False
+
+        # Mettre à jour last_updated
+        planning['last_updated'] = datetime.now().isoformat()
+
+        # Sauvegarder
+        with open(json_file, 'w', encoding='utf-8') as f:
+            json.dump(planning, f, indent=2, ensure_ascii=False)
+
+        print(f"✅ Séance {session_id} mise à jour : {status}")
+        if reason:
+            print(f"   Raison : {reason}")
+
+        return True
+
+    def save_planning_json(self, workouts_data: list = None):
+        """
+        Sauvegarder le planning au format JSON.
+
+        Args:
+            workouts_data: Liste des workouts générés (optionnel, créera template si None)
+        """
+        json_file = self.planning_dir / f"week_planning_{self.week_number}.json"
+
+        # Si pas de workouts fournis, créer template basique
+        if workouts_data is None:
+            workouts_data = []
+            for day in range(7):
+                date = self.start_date + timedelta(days=day)
+                session_num = day + 1
+                workouts_data.append({
+                    "session_id": f"{self.week_number}-{session_num:02d}",
+                    "date": date.strftime('%Y-%m-%d'),
+                    "name": f"Session{session_num}",
+                    "type": "END",  # Default type
+                    "version": "V001",
+                    "tss_planned": 0,
+                    "duration_min": 0,
+                    "description": "À définir",
+                    "status": "planned"
+                })
+
+        planning = {
+            "week_id": self.week_number,
+            "start_date": self.start_date.strftime('%Y-%m-%d'),
+            "end_date": self.end_date.strftime('%Y-%m-%d'),
+            "created_at": datetime.now().isoformat(),
+            "last_updated": datetime.now().isoformat(),
+            "version": 1,
+            "athlete_id": "i151223",  # TODO: Get from config
+            "tss_target": sum(w.get("tss_planned", 0) for w in workouts_data),
+            "planned_sessions": workouts_data
+        }
+
+        with open(json_file, 'w', encoding='utf-8') as f:
+            json.dump(planning, f, indent=2, ensure_ascii=False)
+
+        print(f"\n📄 Planning JSON sauvegardé : {json_file}")
+        return json_file
+
     def run(self):
         """Exécuter le workflow complet"""
         print("=" * 70)
@@ -637,7 +742,10 @@ Le but est que je puisse **copier-coller directement** chaque bloc dans Interval
         
         # Étape 4 : Générer prompt
         prompt = self.generate_planning_prompt()
-        
+
+        # Étape 4.5 : Créer JSON template du planning
+        self.save_planning_json()
+
         # Étape 5 : Copier dans presse-papier
         print("\n📋 Copie dans le presse-papier...")
         if self.copy_to_clipboard(prompt):
