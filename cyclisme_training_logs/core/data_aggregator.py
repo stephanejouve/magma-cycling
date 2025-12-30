@@ -187,7 +187,10 @@ class DataAggregator(ABC):
             )
 
         except Exception as e:
+            import traceback
+            tb_str = traceback.format_exc()
             logger.error(f"Aggregation failed: {e}")
+            logger.error(f"Traceback:\n{tb_str}")
             self.errors.append(str(e))
 
             return AggregationResult(

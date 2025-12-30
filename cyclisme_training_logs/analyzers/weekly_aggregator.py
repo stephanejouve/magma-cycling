@@ -392,12 +392,18 @@ class WeeklyAggregator(DataAggregator):
                     wellness = None
 
                 if wellness:
+                    # Handle None values explicitly
+                    ctl = wellness.get('ctl')
+                    atl = wellness.get('atl')
+                    tsb = wellness.get('tsb')
+                    ramp_rate = wellness.get('ramp_rate')
+
                     metrics.append({
                         'date': date_str,
-                        'ctl': wellness.get('ctl', 0),
-                        'atl': wellness.get('atl', 0),
-                        'tsb': wellness.get('tsb', 0),
-                        'ramp_rate': wellness.get('ramp_rate', 0)
+                        'ctl': ctl if ctl is not None else 0,
+                        'atl': atl if atl is not None else 0,
+                        'tsb': tsb if tsb is not None else 0,
+                        'ramp_rate': ramp_rate if ramp_rate is not None else 0
                     })
             except Exception as e:
                 logger.warning(f"No metrics for {current_date}: {e}")
@@ -471,9 +477,11 @@ class WeeklyAggregator(DataAggregator):
         try:
             planned = self.api.get_events(
                 oldest=start_str,
-                newest=end_str,
-                category='WORKOUT'
+                newest=end_str
             )
+            # Filter for WORKOUT category
+            if planned:
+                planned = [e for e in planned if e.get('category') == 'WORKOUT']
             return planned
         except Exception as e:
             logger.warning(f"Failed to fetch planned workouts: {e}")
@@ -487,30 +495,41 @@ class WeeklyAggregator(DataAggregator):
         - icu_training_load (TSS)
         - icu_intensity (IF en %, nécessite normalisation)
         """
+        # Defensive: filter out None values before summing
         summary = {
             'total_sessions': len(activities),
-            'total_tss': sum(a.get('icu_training_load', 0) for a in activities),
-            'total_duration': sum(a.get('moving_time', 0) for a in activities),
+            'total_tss': sum((a.get('icu_training_load') or 0) for a in activities),
+            'total_duration': sum((a.get('moving_time') or 0) for a in activities),
             'avg_tss': 0,
             'avg_if': 0,
-            'total_distance': sum(a.get('distance', 0) for a in activities)
+            'total_distance': sum((a.get('distance') or 0) for a in activities)
         }
 
         if activities:
             summary['avg_tss'] = summary['total_tss'] / len(activities)
 
-            # IF moyen (normaliser depuis pourcentage)
-            ifs = [a.get('icu_intensity', 0) / 100 for a in activities if a.get('icu_intensity', 0) > 0]
+            # IF moyen (normaliser depuis pourcentage) - Defensive: handle None
+            ifs = [
+                (a.get('icu_intensity') or 0) / 100
+                for a in activities
+                if a.get('icu_intensity') and a.get('icu_intensity') > 0
+            ]
             if ifs:
                 summary['avg_if'] = sum(ifs) / len(ifs)
 
         # Métriques finales (dernière journée)
         if activities:
             last_activity = activities[-1]
+
+            # Handle None values explicitly (get() returns None if key exists with None value)
+            ctl_val = last_activity.get('ctl')
+            atl_val = last_activity.get('atl')
+            tsb_val = last_activity.get('tsb')
+
             summary['final_metrics'] = {
-                'ctl': last_activity.get('ctl', 0),
-                'atl': last_activity.get('atl', 0),
-                'tsb': last_activity.get('tsb', 0)
+                'ctl': ctl_val if ctl_val is not None else 0,
+                'atl': atl_val if atl_val is not None else 0,
+                'tsb': tsb_val if tsb_val is not None else 0
             }
 
         return summary
@@ -574,15 +593,20 @@ class WeeklyAggregator(DataAggregator):
             'trends': {}
         }
 
-        # Calculer tendances
+        # Calculer tendances - Defensive: handle None values
         if len(metrics_daily) >= 2:
             first = metrics_daily[0]
             last = metrics_daily[-1]
 
+            # Only compute if values are not None
+            ctl_change = (last.get('ctl') - first.get('ctl')) if (last.get('ctl') is not None and first.get('ctl') is not None) else None
+            atl_change = (last.get('atl') - first.get('atl')) if (last.get('atl') is not None and first.get('atl') is not None) else None
+            tsb_change = (last.get('tsb') - first.get('tsb')) if (last.get('tsb') is not None and first.get('tsb') is not None) else None
+
             evolution['trends'] = {
-                'ctl_change': last['ctl'] - first['ctl'],
-                'atl_change': last['atl'] - first['atl'],
-                'tsb_change': last['tsb'] - first['tsb']
+                'ctl_change': ctl_change,
+                'atl_change': atl_change,
+                'tsb_change': tsb_change
             }
 
         return evolution
@@ -595,10 +619,10 @@ class WeeklyAggregator(DataAggregator):
         """Extraire enseignements training (pour AI analysis)."""
         learnings = []
 
-        # Patterns répétés
+        # Patterns répétés - Defensive: handle None values
         high_tss_days = [
             a for a in activities
-            if a.get('training_load', 0) > 80
+            if (a.get('training_load') or a.get('icu_training_load') or 0) > 80
         ]
 
         if high_tss_days:
@@ -606,10 +630,10 @@ class WeeklyAggregator(DataAggregator):
                 f"{len(high_tss_days)} séances haute charge (TSS >80)"
             )
 
-        # IF élevés
+        # IF élevés - Defensive: handle None values
         high_if_days = [
             a for a in activities
-            if a.get('if', 0) > 1.0
+            if (a.get('if') or (a.get('icu_intensity', 0) / 100 if a.get('icu_intensity') else 0)) > 1.0
         ]
 
         if high_if_days:
@@ -617,10 +641,10 @@ class WeeklyAggregator(DataAggregator):
                 f"{len(high_if_days)} séances intensité élevée (IF >1.0)"
             )
 
-        # Feedback patterns
+        # Feedback patterns - Defensive: handle None
         low_rpe = [
             fid for fid, f in feedback.items()
-            if f.get('rpe', 10) <= 3
+            if f.get('rpe') is not None and f.get('rpe') <= 3
         ]
 
         if low_rpe:
@@ -638,11 +662,11 @@ class WeeklyAggregator(DataAggregator):
         """Identifier changements protocoles nécessaires."""
         adaptations = []
 
-        # Check TSB trends
+        # Check TSB trends - Defensive: handle None
         trends = metrics_evolution.get('trends', {})
-        tsb_change = trends.get('tsb_change', 0)
+        tsb_change = trends.get('tsb_change')
 
-        if tsb_change < -10:
+        if tsb_change is not None and tsb_change < -10:
             adaptations.append({
                 'type': 'recovery',
                 'reason': f'TSB dropped {tsb_change:.1f} points',
@@ -694,14 +718,16 @@ class WeeklyAggregator(DataAggregator):
         # Recommandations basées sur TSB
         tsb = transition['current_state']['final_tsb']
 
-        if tsb < -15:
-            transition['recommendations'].append(
-                'Recovery week recommended (TSB very low)'
-            )
-        elif tsb > 10:
-            transition['recommendations'].append(
-                'Ready for intensity increase (TSB positive)'
-            )
+        # Handle None TSB gracefully
+        if tsb is not None:
+            if tsb < -15:
+                transition['recommendations'].append(
+                    'Recovery week recommended (TSB very low)'
+                )
+            elif tsb > 10:
+                transition['recommendations'].append(
+                    'Ready for intensity increase (TSB positive)'
+                )
 
         return transition
 
@@ -717,10 +743,10 @@ class WeeklyAggregator(DataAggregator):
         if not wellness:
             return insights
 
-        # Moyennes
+        # Moyennes - Defensive: handle None values
         sleep_qualities = [
             w['sleep_quality'] for w in wellness.values()
-            if w.get('sleep_quality', 0) > 0
+            if w.get('sleep_quality') is not None and w.get('sleep_quality') > 0
         ]
 
         if sleep_qualities:
@@ -728,17 +754,17 @@ class WeeklyAggregator(DataAggregator):
 
         sleep_hours = [
             w['sleep_hours'] for w in wellness.values()
-            if w.get('sleep_hours', 0) > 0
+            if w.get('sleep_hours') is not None and w.get('sleep_hours') > 0
         ]
 
         if sleep_hours:
             insights['sleep_hours_avg'] = sum(sleep_hours) / len(sleep_hours)
 
-        # Tendance poids
+        # Tendance poids - Defensive: handle None values
         weights = [
             (date, w['weight'])
             for date, w in wellness.items()
-            if w.get('weight', 0) > 0
+            if w.get('weight') is not None and w.get('weight') > 0
         ]
 
         if len(weights) >= 2:
