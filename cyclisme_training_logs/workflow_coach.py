@@ -477,6 +477,7 @@ class WorkflowCoach:
             # Prepare event data
             event = {
                 "category": "WORKOUT",
+                "type": "RIDE",  # Required by Intervals.icu API
                 "start_date_local": f"{date}T06:00:00",
                 "name": code,
                 "description": structure  # Format Intervals.icu (corrigé P0 #6)
