@@ -55,70 +55,11 @@ import json
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-import requests
 
-class IntervalsAPI:
-    """Client pour l'API Intervals.icu"""
-    
-    BASE_URL = "https://intervals.icu/api/v1"
-    
-    def __init__(self, athlete_id, api_key):
-        self.athlete_id = athlete_id
-        self.session = requests.Session()
-        self.session.auth = (f"API_KEY", api_key)
-        self.session.headers.update({"Content-Type": "application/json"})
-    
-    def get_athlete(self):
-        """Récupérer les infos de l'athlète"""
-        response = self.session.get(f"{self.BASE_URL}/athlete/{self.athlete_id}")
-        response.raise_for_status()
-        return response.json()
-    
-    def get_wellness(self, oldest=None, newest=None):
-        """Récupérer les données wellness (CTL/ATL/TSB, poids, sommeil)"""
-        url = f"{self.BASE_URL}/athlete/{self.athlete_id}/wellness"
-        params = {}
-        if oldest:
-            params['oldest'] = oldest
-        if newest:
-            params['newest'] = newest
-        
-        response = self.session.get(url, params=params)
-        response.raise_for_status()
-        return response.json()
-    
-    def get_activities(self, oldest=None, newest=None):
-        """Récupérer les activités (séances)"""
-        url = f"{self.BASE_URL}/athlete/{self.athlete_id}/activities"
-        params = {}
-        if oldest:
-            params['oldest'] = oldest
-        if newest:
-            params['newest'] = newest
-        
-        response = self.session.get(url, params=params)
-        response.raise_for_status()
-        return response.json()
-    
-    def get_activity(self, activity_id):
-        """Récupérer les détails d'une activité spécifique"""
-        url = f"{self.BASE_URL}/activity/{activity_id}"
-        response = self.session.get(url)
-        response.raise_for_status()
-        return response.json()
+from cyclisme_training_logs.api.intervals_client import IntervalsClient
 
-    def get_events(self, oldest=None, newest=None):
-        """Récupérer les événements du calendrier (workouts planifiés, notes, etc.)"""
-        url = f"{self.BASE_URL}/athlete/{self.athlete_id}/events"
-        params = {}
-        if oldest:
-            params['oldest'] = oldest
-        if newest:
-            params['newest'] = newest
-
-        response = self.session.get(url, params=params)
-        response.raise_for_status()
-        return response.json()
+# Alias for backwards compatibility
+IntervalsAPI = IntervalsClient
 
 
 class WorkoutLogger:
