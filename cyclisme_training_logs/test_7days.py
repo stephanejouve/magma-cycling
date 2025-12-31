@@ -6,13 +6,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from cyclisme_training_logs.prepare_analysis import IntervalsAPI
+from cyclisme_training_logs.api.intervals_client import IntervalsClient
 from cyclisme_training_logs.workflow_state import WorkflowState
 
 athlete_id = os.getenv('VITE_INTERVALS_ATHLETE_ID')
 api_key = os.getenv('VITE_INTERVALS_API_KEY')
 
-api = IntervalsAPI(athlete_id=athlete_id, api_key=api_key)
+api = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
 state = WorkflowState()
 
 # 7 JOURS comme le workflow
