@@ -68,11 +68,7 @@ from typing import Dict, List, Optional
 # Ajouter le répertoire parent au PYTHONPATH
 sys.path.insert(0, str(Path(__file__).parent))
 
-try:
-    from prepare_analysis import IntervalsAPI
-except ImportError:
-    print("❌ Erreur : prepare_analysis.py non trouvé")
-    sys.exit(1)
+from cyclisme_training_logs.api.intervals_client import IntervalsClient
 
 
 class WorkoutUploader:
@@ -104,7 +100,7 @@ class WorkoutUploader:
             if not athlete_id or not api_key:
                 raise ValueError("Credentials API manquants")
 
-            self.api = IntervalsAPI(athlete_id, api_key)
+            self.api = IntervalsClient(athlete_id, api_key)
             print("✅ API Intervals.icu connectée")
         except Exception as e:
             print(f"❌ Erreur connexion API : {e}")
