@@ -665,7 +665,7 @@ def process_week_with_rest_handling(
     Returns:
         Dict avec résumé réconciliation et chemins fichiers générés
     """
-    from prepare_analysis import IntervalsAPI
+    from cyclisme_training_logs.api.intervals_client import IntervalsClient
 
     logger.info(f"\n{'=' * 70}")
     logger.info(f"WORKFLOW SEMAINE {week_id} AVEC GESTION REPOS/ANNULATIONS")
@@ -683,7 +683,7 @@ def process_week_with_rest_handling(
         }
 
     # 2. Récupérer activités Intervals.icu
-    api = IntervalsAPI(athlete_id=athlete_id, api_key=api_key)
+    api = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
     activities = api.get_activities(oldest=start_date, newest=end_date)
     logger.info(f"Activités récupérées : {len(activities)}")
 

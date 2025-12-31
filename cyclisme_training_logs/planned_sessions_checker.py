@@ -57,7 +57,7 @@ Metadata:
 import logging
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
-from cyclisme_training_logs.prepare_analysis import IntervalsAPI
+from cyclisme_training_logs.api.intervals_client import IntervalsClient
 from cyclisme_training_logs.config import get_data_config
 
 # Configuration du logging
@@ -79,7 +79,7 @@ class PlannedSessionsChecker:
             athlete_id: ID athlète Intervals.icu
             api_key: Clé API Intervals.icu
         """
-        self.api = IntervalsAPI(athlete_id=athlete_id, api_key=api_key)
+        self.api = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
         self.athlete_id = athlete_id
 
     def get_planned_workouts(
