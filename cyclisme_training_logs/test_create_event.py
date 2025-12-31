@@ -10,7 +10,7 @@ from pathlib import Path
 # Ajouter le répertoire parent au PYTHONPATH
 sys.path.insert(0, str(Path(__file__).parent))
 
-from cyclisme_training_logs.prepare_analysis import IntervalsAPI
+from cyclisme_training_logs.api.intervals_client import IntervalsClient
 
 
 def test_create_event():
@@ -29,7 +29,7 @@ def test_create_event():
     with open(config_path, 'r') as f:
         config = json.load(f)
 
-    api = IntervalsAPI(
+    api = IntervalsClient(
         athlete_id=config.get('athlete_id'),
         api_key=config.get('api_key')
     )

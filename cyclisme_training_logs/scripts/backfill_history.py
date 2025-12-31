@@ -67,7 +67,7 @@ from requests.exceptions import HTTPError
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from cyclisme_training_logs.sync_intervals import IntervalsAPI
+from cyclisme_training_logs.api.intervals_client import IntervalsClient
 from cyclisme_training_logs.workflow_state import WorkflowState
 from cyclisme_training_logs.config import get_data_config
 
@@ -100,7 +100,7 @@ class HistoryBackfiller:
                 "  VITE_INTERVALS_API_KEY"
             )
 
-        self.api = IntervalsAPI(athlete_id, api_key)
+        self.api = IntervalsClient(athlete_id, api_key)
         self.state = WorkflowState()
 
         # Get data repo configuration
