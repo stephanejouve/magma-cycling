@@ -15,11 +15,7 @@ from typing import Dict, Optional
 # Ajouter le répertoire parent au PYTHONPATH
 sys.path.insert(0, str(Path(__file__).parent))
 
-try:
-    from prepare_analysis import IntervalsAPI
-except ImportError:
-    print("❌ Erreur : prepare_analysis.py non trouvé")
-    sys.exit(1)
+from cyclisme_training_logs.api.intervals_client import IntervalsClient
 
 
 class WeeklyPlanner:
@@ -66,7 +62,7 @@ class WeeklyPlanner:
             if not config.is_configured():
                 raise ValueError("Intervals.icu credentials not configured in .env")
 
-            self.api = IntervalsAPI(
+            self.api = IntervalsClient(
                 athlete_id=config.athlete_id,
                 api_key=config.api_key
             )
