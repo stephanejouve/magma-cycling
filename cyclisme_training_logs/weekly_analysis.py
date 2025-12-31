@@ -57,8 +57,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional
 
-# Import de la classe IntervalsAPI depuis prepare_analysis
-from cyclisme_training_logs.prepare_analysis import IntervalsAPI
+# Import du client API unifié
+from cyclisme_training_logs.api.intervals_client import IntervalsClient
 
 
 class WeeklyAnalysis:
@@ -103,7 +103,7 @@ class WeeklyAnalysis:
         if config_path.exists():
             with open(config_path, 'r') as f:
                 config = json.load(f)
-                self.api = IntervalsAPI(
+                self.api = IntervalsClient(
                     athlete_id=config.get('athlete_id'),
                     api_key=config.get('api_key')
                 )

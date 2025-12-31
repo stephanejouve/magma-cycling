@@ -80,7 +80,7 @@ import json
 import logging
 
 from cyclisme_training_logs.core.data_aggregator import DataAggregator
-from cyclisme_training_logs.sync_intervals import IntervalsAPI
+from cyclisme_training_logs.api.intervals_client import IntervalsClient
 from cyclisme_training_logs.config import get_intervals_config
 
 logger = logging.getLogger(__name__)
@@ -147,7 +147,7 @@ class WeeklyAggregator(DataAggregator):
         try:
             intervals_config = get_intervals_config()
             if intervals_config.is_configured():
-                self.api = IntervalsAPI(
+                self.api = IntervalsClient(
                     athlete_id=intervals_config.athlete_id,
                     api_key=intervals_config.api_key
                 )
