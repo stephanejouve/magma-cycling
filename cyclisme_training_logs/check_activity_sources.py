@@ -15,32 +15,8 @@ import json
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-import requests
 
-
-class IntervalsAPI:
-    """Client pour l'API Intervals.icu"""
-
-    BASE_URL = "https://intervals.icu/api/v1"
-
-    def __init__(self, athlete_id, api_key):
-        self.athlete_id = athlete_id
-        self.session = requests.Session()
-        self.session.auth = (f"API_KEY", api_key)
-        self.session.headers.update({"Content-Type": "application/json"})
-
-    def get_activities(self, oldest=None, newest=None):
-        """Récupérer les activités"""
-        url = f"{self.BASE_URL}/athlete/{self.athlete_id}/activities"
-        params = {}
-        if oldest:
-            params['oldest'] = oldest
-        if newest:
-            params['newest'] = newest
-
-        response = self.session.get(url, params=params)
-        response.raise_for_status()
-        return response.json()
+from cyclisme_training_logs.api.intervals_client import IntervalsClient
 
 
 def load_config(config_file):
@@ -116,7 +92,7 @@ def main():
 
     try:
         # Connexion à l'API
-        api = IntervalsAPI(athlete_id, api_key)
+        api = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
 
         # Récupérer les activités
         print("📥 Récupération des activités...")
