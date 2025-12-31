@@ -394,7 +394,7 @@ class WorkflowCoach:
         """
         try:
             # Import IntervalsAPI from prepare_analysis
-            from cyclisme_training_logs.prepare_analysis import IntervalsAPI
+            from cyclisme_training_logs.api.intervals_client import IntervalsClient
 
             # Load credentials
             athlete_id, api_key = self.load_credentials()
@@ -403,7 +403,7 @@ class WorkflowCoach:
                 return None
 
             # Create API client
-            api = IntervalsAPI(athlete_id=athlete_id, api_key=api_key)
+            api = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
 
             # Get events for the date
             events = api.get_events(oldest=date, newest=date)
@@ -430,7 +430,7 @@ class WorkflowCoach:
         """
         try:
             # Import IntervalsAPI
-            from cyclisme_training_logs.prepare_analysis import IntervalsAPI
+            from cyclisme_training_logs.api.intervals_client import IntervalsClient
 
             # Load credentials
             athlete_id, api_key = self.load_credentials()
@@ -438,7 +438,7 @@ class WorkflowCoach:
                 return False
 
             # Create API client
-            api = IntervalsAPI(athlete_id=athlete_id, api_key=api_key)
+            api = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
 
             # DELETE request
             url = f"{api.BASE_URL}/athlete/{athlete_id}/events/{workout_id}"
@@ -464,7 +464,7 @@ class WorkflowCoach:
         """
         try:
             # Import IntervalsAPI
-            from cyclisme_training_logs.prepare_analysis import IntervalsAPI
+            from cyclisme_training_logs.api.intervals_client import IntervalsClient
 
             # Load credentials
             athlete_id, api_key = self.load_credentials()
@@ -472,7 +472,7 @@ class WorkflowCoach:
                 return False
 
             # Create API client
-            api = IntervalsAPI(athlete_id=athlete_id, api_key=api_key)
+            api = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
 
             # Prepare event data
             event = {
@@ -678,7 +678,7 @@ class WorkflowCoach:
         )
 
         # 0. Initialiser API
-        from cyclisme_training_logs.prepare_analysis import IntervalsAPI
+        from cyclisme_training_logs.api.intervals_client import IntervalsClient
 
         athlete_id, api_key = self.load_credentials()
         if not athlete_id or not api_key:
@@ -686,7 +686,7 @@ class WorkflowCoach:
             print("   Vérifier ~/.intervals_config.json ou variables d'environnement")
             return
 
-        api = IntervalsAPI(athlete_id=athlete_id, api_key=api_key)
+        api = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
 
         # 1. Charger planning JSON local
         config = get_data_config()
@@ -1065,8 +1065,8 @@ class WorkflowCoach:
 
                     if validate_week_planning(self.planning):
                         # Réconciliation
-                        from cyclisme_training_logs.prepare_analysis import IntervalsAPI
-                        api = IntervalsAPI(athlete_id=athlete_id, api_key=api_key)
+                        from cyclisme_training_logs.api.intervals_client import IntervalsClient
+                        api = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
 
                         planning_activities = api.get_activities(
                             oldest=self.planning['start_date'],
@@ -1329,7 +1329,7 @@ class WorkflowCoach:
 
 # Lancer le script de collecte AVEC contexte
         try:
-            from cyclisme_training_logs.prepare_analysis import IntervalsAPI
+            from cyclisme_training_logs.api.intervals_client import IntervalsClient
 
             # FIX: Charger credentials
             athlete_id, api_key = self.load_credentials()
@@ -1340,7 +1340,7 @@ class WorkflowCoach:
                 print("   → Feedback sans contexte")
                 raise ValueError("No credentials")
 
-            api = IntervalsAPI(athlete_id=athlete_id, api_key=api_key)
+            api = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
 
             # Utiliser les gaps détectés par step_1b au lieu de requêter last 24h
             activity = None
