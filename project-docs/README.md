@@ -4,6 +4,14 @@ Documentation complète du système d'entraînement et d'analyse.
 
 ## 📚 Guides Principaux
 
+### 🗓️ Planification Entraînement ⭐ NEW
+- **[guides/GUIDE_PLANNING.md](guides/GUIDE_PLANNING.md)** : Système de planification (Sprint R3)
+  - Création plans 4-12 semaines
+  - Gestion objectifs et échéances
+  - Validation faisabilité (TSS, CTL)
+  - Calendrier hebdomadaire ISO
+  - Contraintes master athletes
+
 ### 🎯 Analyse Hebdomadaire
 - **[GUIDE_WEEKLY_ANALYSIS.md](GUIDE_WEEKLY_ANALYSIS.md)** : Utilisation de `weekly_analysis.py`
   - Génération automatique des 6 rapports hebdomadaires
@@ -57,6 +65,39 @@ cyclisme-training-logs/
 ```
 
 ## 🚀 Quick Start
+
+### Créer un Plan d'Entraînement ⭐ NEW
+
+```python
+from datetime import date
+from cyclisme_training_logs.planning import PlanningManager, PriorityLevel, ObjectiveType
+
+# Initialiser gestionnaire
+manager = PlanningManager()
+
+# Créer plan 8 semaines
+plan = manager.create_training_plan(
+    name="Build Printemps",
+    start_date=date(2026, 3, 1),
+    end_date=date(2026, 4, 26),  # 8 semaines
+    weekly_tss_targets=[250, 270, 290, 310, 320, 300, 280, 250],
+    notes="Phase build vers objectif mai"
+)
+
+# Ajouter objectif principal
+manager.add_deadline(
+    plan_name="Build Printemps",
+    deadline_date=date(2026, 5, 10),
+    event_name="Gran Fondo Alpes",
+    priority=PriorityLevel.HIGH,
+    objective_type=ObjectiveType.EVENT
+)
+
+# Valider faisabilité
+validation = manager.validate_plan_feasibility("Build Printemps", current_ctl=55.0)
+print(f"Faisable: {validation['feasible']}")
+print(f"Erreurs: {validation['errors']}")
+```
 
 ### Premier Rapport Hebdomadaire
 
@@ -112,5 +153,6 @@ bash scripts/migrate_to_logs_weekly_reports.sh --dry-run
 
 ---
 
-**Version Documentation :** 1.1
-**Dernière mise à jour :** 2025-11-25
+**Version Documentation :** 2.0
+**Dernière mise à jour :** 2026-01-01
+**Sprint :** R3 - Planning Manager & Calendar
