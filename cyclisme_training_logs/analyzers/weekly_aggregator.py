@@ -392,17 +392,16 @@ class WeeklyAggregator(DataAggregator):
                     wellness = None
 
                 if wellness:
-                    # Handle None values explicitly
-                    ctl = wellness.get('ctl')
-                    atl = wellness.get('atl')
-                    tsb = wellness.get('tsb')
+                    from cyclisme_training_logs.utils.metrics import extract_wellness_metrics
+
+                    wellness_metrics = extract_wellness_metrics(wellness)
                     ramp_rate = wellness.get('ramp_rate')
 
                     metrics.append({
                         'date': date_str,
-                        'ctl': ctl if ctl is not None else 0,
-                        'atl': atl if atl is not None else 0,
-                        'tsb': tsb if tsb is not None else 0,
+                        'ctl': wellness_metrics['ctl'],
+                        'atl': wellness_metrics['atl'],
+                        'tsb': wellness_metrics['tsb'],
                         'ramp_rate': ramp_rate if ramp_rate is not None else 0
                     })
             except Exception as e:
@@ -521,16 +520,11 @@ class WeeklyAggregator(DataAggregator):
         if activities:
             last_activity = activities[-1]
 
-            # Handle None values explicitly (get() returns None if key exists with None value)
-            ctl_val = last_activity.get('ctl')
-            atl_val = last_activity.get('atl')
-            tsb_val = last_activity.get('tsb')
+            # Extract wellness metrics from last activity
+            from cyclisme_training_logs.utils.metrics import extract_wellness_metrics
 
-            summary['final_metrics'] = {
-                'ctl': ctl_val if ctl_val is not None else 0,
-                'atl': atl_val if atl_val is not None else 0,
-                'tsb': tsb_val if tsb_val is not None else 0
-            }
+            final_metrics = extract_wellness_metrics(last_activity)
+            summary['final_metrics'] = final_metrics
 
         return summary
 
@@ -598,16 +592,10 @@ class WeeklyAggregator(DataAggregator):
             first = metrics_daily[0]
             last = metrics_daily[-1]
 
-            # Only compute if values are not None
-            ctl_change = (last.get('ctl') - first.get('ctl')) if (last.get('ctl') is not None and first.get('ctl') is not None) else None
-            atl_change = (last.get('atl') - first.get('atl')) if (last.get('atl') is not None and first.get('atl') is not None) else None
-            tsb_change = (last.get('tsb') - first.get('tsb')) if (last.get('tsb') is not None and first.get('tsb') is not None) else None
+            # Calculate metrics change using centralized utility
+            from cyclisme_training_logs.utils.metrics import calculate_metrics_change
 
-            evolution['trends'] = {
-                'ctl_change': ctl_change,
-                'atl_change': atl_change,
-                'tsb_change': tsb_change
-            }
+            evolution['trends'] = calculate_metrics_change(first, last)
 
         return evolution
 

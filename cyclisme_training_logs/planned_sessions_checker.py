@@ -320,9 +320,13 @@ class PlannedSessionsChecker:
         planned_duration = skipped_session['planned_duration']
         
         # Métriques pré-séance
-        ctl_pre = metrics_pre.get('ctl', 'N/A') if metrics_pre else 'N/A'
-        atl_pre = metrics_pre.get('atl', 'N/A') if metrics_pre else 'N/A'
-        tsb_pre = metrics_pre.get('tsb', 'N/A') if metrics_pre else 'N/A'
+        from cyclisme_training_logs.utils.metrics import extract_wellness_metrics
+
+        metrics_pre_values = extract_wellness_metrics(metrics_pre)
+        # Display as N/A if metrics are not available
+        ctl_pre = metrics_pre_values['ctl'] if metrics_pre else 'N/A'
+        atl_pre = metrics_pre_values['atl'] if metrics_pre else 'N/A'
+        tsb_pre = metrics_pre_values['tsb'] if metrics_pre else 'N/A'
         
         # Construire markdown
         markdown = f"""### {session_name} [SAUTÉE]

@@ -243,13 +243,18 @@ def generate_rest_day_entry(
     physio_notes = session_data.get('physiological_notes', '')
 
     # Métriques pré/post
-    ctl_pre = metrics_pre.get('ctl', 0)
-    atl_pre = metrics_pre.get('atl', 0)
-    tsb_pre = metrics_pre.get('tsb', 0)
+    from cyclisme_training_logs.utils.metrics import extract_wellness_metrics
 
-    ctl_post = metrics_post.get('ctl', 0)
-    atl_post = metrics_post.get('atl', 0)
-    tsb_post = metrics_post.get('tsb', 0)
+    metrics_pre_values = extract_wellness_metrics(metrics_pre)
+    metrics_post_values = extract_wellness_metrics(metrics_post)
+
+    ctl_pre = metrics_pre_values['ctl']
+    atl_pre = metrics_pre_values['atl']
+    tsb_pre = metrics_pre_values['tsb']
+
+    ctl_post = metrics_post_values['ctl']
+    atl_post = metrics_post_values['atl']
+    tsb_post = metrics_post_values['tsb']
 
     # Feedback athlète
     sleep_duration = "N/A"
@@ -369,9 +374,13 @@ def generate_skipped_session_entry(
                                              'Raison non documentée')
 
     # Métriques pré-séance
-    ctl_pre = metrics_pre.get('ctl', 'N/A')
-    atl_pre = metrics_pre.get('atl', 'N/A')
-    tsb_pre = metrics_pre.get('tsb', 'N/A')
+    from cyclisme_training_logs.utils.metrics import extract_wellness_metrics
+
+    metrics_pre_values = extract_wellness_metrics(metrics_pre)
+    # Display as N/A if metrics are not available (0 values from empty wellness data)
+    ctl_pre = metrics_pre_values['ctl'] if metrics_pre else 'N/A'
+    atl_pre = metrics_pre_values['atl'] if metrics_pre else 'N/A'
+    tsb_pre = metrics_pre_values['tsb'] if metrics_pre else 'N/A'
 
     # Contexte additionnel
     days_ago = session_data.get('days_ago', 0)
@@ -447,9 +456,12 @@ def generate_cancelled_session_entry(
     tss_planned = session_data.get('tss_planned', 0)
 
     # Métriques pré
-    ctl_pre = metrics_pre.get('ctl', 0)
-    atl_pre = metrics_pre.get('atl', 0)
-    tsb_pre = metrics_pre.get('tsb', 0)
+    from cyclisme_training_logs.utils.metrics import extract_wellness_metrics
+
+    metrics_pre_values = extract_wellness_metrics(metrics_pre)
+    ctl_pre = metrics_pre_values['ctl']
+    atl_pre = metrics_pre_values['atl']
+    tsb_pre = metrics_pre_values['tsb']
 
     # Feedback athlète (si disponible)
     sleep_info = ""
