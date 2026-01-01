@@ -34,7 +34,7 @@ from pathlib import Path
 from typing import List, Dict, Optional
 from collections import defaultdict
 
-from cyclisme_training_logs.config import get_data_config
+from cyclisme_training_logs.config import get_data_config, get_ai_config
 from cyclisme_training_logs.ai_providers.factory import AIProviderFactory
 
 
@@ -67,7 +67,9 @@ class MonthlyAnalyzer:
         # Initialize AI if needed
         self.ai_analyzer = None
         if not no_ai:
-            self.ai_analyzer = AIProviderFactory.create_analyzer(provider)
+            ai_config = get_ai_config()
+            provider_config = ai_config.get_provider_config(provider)
+            self.ai_analyzer = AIProviderFactory.create(provider, provider_config)
 
     def find_weeks_in_month(self) -> List[Path]:
         """
