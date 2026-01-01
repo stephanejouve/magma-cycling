@@ -358,7 +358,7 @@ Sois concret, direct et orienté action. Utilise des emojis pour la lisibilité.
             print(f"\n🤖 Génération analyse IA ({self.provider})...")
             try:
                 prompt = self.generate_ai_prompt(stats)
-                ai_analysis = self.ai_analyzer.analyze(prompt)
+                ai_analysis = self.ai_analyzer.analyze_session(prompt)
                 print(f"✅ Analyse IA générée")
             except Exception as e:
                 print(f"⚠️  Erreur analyse IA : {e}")
