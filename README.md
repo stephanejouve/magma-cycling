@@ -21,6 +21,78 @@ python scripts/prepare_analysis.py
 python scripts/insert_analysis.py
 ```
 
+## 🧮 Advanced Metrics & Safety (Sprint R2.1)
+
+### VETO Safety System ⚠️
+
+Protection automatique contre le surmenage pour athlètes master (50+ ans):
+
+```python
+from cyclisme_training_logs.rest_and_cancellations import check_pre_session_veto
+from cyclisme_training_logs.config import AthleteProfile
+
+# Vérifier avant séance haute intensité (>85% FTP)
+wellness = api.get_wellness(oldest=date, newest=date)[0]
+profile = AthleteProfile.from_env()
+
+result = check_pre_session_veto(wellness, profile.dict(), session_intensity=95.0)
+
+if result['cancel']:
+    print(f"⚠️  VETO: {result['recommendation']}")
+    print(f"Facteurs: {result['factors']}")
+    # Annuler la séance ou remplacer par Z1 <55% FTP
+```
+
+**Déclencheurs VETO** (athlète master 54 ans):
+- TSB < -25 (fatigue critique)
+- ATL/CTL > 1.8 (surcharge aiguë)
+- Sommeil < 5.5h (récupération insuffisante)
+- Sommeil < 6h + TSB < -15 (stress combiné)
+
+### Analytics Functions
+
+**6 fonctions avancées** pour analyse métriques (`utils/metrics_advanced.py`):
+
+```python
+from cyclisme_training_logs.utils.metrics_advanced import (
+    calculate_ramp_rate,
+    get_weekly_metrics_trend,
+    detect_training_peaks,
+    get_recovery_recommendation,
+    format_metrics_comparison,
+    detect_overtraining_risk
+)
+
+# 1. Taux progression CTL (points/semaine)
+ramp_rate = calculate_ramp_rate(start_ctl=60, end_ctl=67, days=7)
+# Master: max 5-7 pts/semaine recommandé
+
+# 2. Tendance hebdomadaire
+trend = get_weekly_metrics_trend(weekly_data, metric='ctl')
+# Returns: {'trend': 'rising', 'slope': 2.3, 'volatility': 0.8}
+
+# 3. Détection pics de charge
+peaks = detect_training_peaks(ctl_history, threshold_percent=10.0)
+# Identifie augmentations significatives (>10% baseline)
+
+# 4. Recommandations récupération
+rec = get_recovery_recommendation(tsb=-8, atl_ctl_ratio=1.15, profile)
+# Returns: priority (low/medium/high/critical), limits, rest_days
+
+# 5. Comparaison périodes
+comparison = format_metrics_comparison(last_week, this_week, 'Week')
+# "Week 1 → Week 2: CTL ↑ 3.5 | ATL ↓ 2.1 | TSB → 0.3"
+
+# 6. Détection surmenage (CRITIQUE)
+risk = detect_overtraining_risk(ctl, atl, tsb, sleep_hours, profile)
+# VETO logic: veto boolean, risk_level, recommendation, factors
+```
+
+**Documentation complète:**
+- [SPRINT_R2.1_DOCUMENTATION.md](project-docs/sprints/R2/SPRINT_R2.1_DOCUMENTATION.md)
+- [GUIDE_INSTALLATION_R2.1.md](project-docs/sprints/R2/GUIDE_INSTALLATION_R2.1.md)
+- [VETO_PROTOCOL.md](docs/VETO_PROTOCOL.md)
+
 ## 📁 Structure
 ```
 /project-docs/              → Documentation système (Project Prompt v2.3)
