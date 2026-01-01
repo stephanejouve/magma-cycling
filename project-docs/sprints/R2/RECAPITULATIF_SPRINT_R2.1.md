@@ -307,23 +307,51 @@ print(comparison)
 
 ---
 
+## 📦 Archive Livrable
+
+**Archive créée:**
+- 📦 `~/cyclisme-training-logs-sprint-r2.1-20260101.tar.gz`
+- **Taille:** 15 MB
+- **Contenu:** Projet complet (code + tests + documentation Sprint R2.1)
+- **Exclusions:** .git, __pycache__, .venv, .cache, node_modules, .env
+
+**Extraction:**
+```bash
+cd ~
+tar -xzf cyclisme-training-logs-sprint-r2.1-20260101.tar.gz
+```
+
+**Vérification archive:**
+```bash
+tar -tzf ~/cyclisme-training-logs-sprint-r2.1-20260101.tar.gz | grep -E "metrics_advanced|test_metrics_advanced|SPRINT_R2.1"
+# Expected:
+# cyclisme-training-logs/cyclisme_training_logs/utils/metrics_advanced.py
+# cyclisme-training-logs/tests/utils/test_metrics_advanced.py
+# cyclisme-training-logs/project-docs/sprints/R2/SPRINT_R2.1_DOCUMENTATION.md
+# cyclisme-training-logs/project-docs/sprints/R2/GUIDE_INSTALLATION_R2.1.md
+# cyclisme-training-logs/project-docs/sprints/R2/RECAPITULATIF_SPRINT_R2.1.md
+```
+
+---
+
 ## 🎯 Conclusion
 
 **Sprint R2.1 COMPLÉTÉ avec succès :**
 
 - ✅ 6 fonctions livrées (120% objectif)
-- ✅ 33 tests passing (183% minimum)
-- ✅ 100% coverage
-- ✅ Documentation complète (4 fichiers)
+- ✅ 32 tests passing (100% coverage)
+- ✅ Documentation complète (3 fichiers)
 - ✅ Fonction CRITIQUE sécurité ajoutée
 - ✅ Validation fonctionnelle réussie
+- ✅ Archive livrable créée (15 MB)
 - ✅ Ready for integration
 
 **Prêt pour Sprint R3 (Planning Manager - P1 CRITICAL)**
 
 ---
 
-**Généré par:** Claude (MOA Sprint R2.1)  
-**Date:** 2026-01-01  
-**Durée Sprint:** ~45 minutes  
+**Généré par:** Claude (MOA Sprint R2.1)
+**Date:** 2026-01-01
+**Durée Sprint:** ~45 minutes
+**Archive:** cyclisme-training-logs-sprint-r2.1-20260101.tar.gz (15 MB)
 **Status:** ✅ LIVRÉ ET VALIDÉ
