@@ -157,7 +157,7 @@ class HistoryBackfiller:
 
             # Retry avec backoff exponentiel
             max_retries = 3
-            base_delay = 2  # secondes
+            base_delay = 5  # secondes (5s, 10s, 20s)
             enriched = False
 
             for attempt in range(max_retries):
