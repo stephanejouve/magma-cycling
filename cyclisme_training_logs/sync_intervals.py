@@ -118,13 +118,18 @@ class WorkoutLogger:
         decoupling_str = f"{decoupling:.1f}%" if decoupling else "N/A"
         
         # CTL/ATL/TSB
-        ctl_pre = wellness_pre.get('ctl', 0) if wellness_pre else 0
-        atl_pre = wellness_pre.get('atl', 0) if wellness_pre else 0
-        tsb_pre = ctl_pre - atl_pre  # Calculé: TSB = CTL - ATL
-        
-        ctl_post = wellness_post.get('ctl', 0) if wellness_post else 0
-        atl_post = wellness_post.get('atl', 0) if wellness_post else 0
-        tsb_post = ctl_post - atl_post  # Calculé: TSB = CTL - ATL
+        from cyclisme_training_logs.utils.metrics import extract_wellness_metrics
+
+        metrics_pre = extract_wellness_metrics(wellness_pre)
+        metrics_post = extract_wellness_metrics(wellness_post)
+
+        ctl_pre = metrics_pre['ctl']
+        atl_pre = metrics_pre['atl']
+        tsb_pre = metrics_pre['tsb']
+
+        ctl_post = metrics_post['ctl']
+        atl_post = metrics_post['atl']
+        tsb_post = metrics_post['tsb']
         
         # Template markdown
         entry = f"""
@@ -226,10 +231,12 @@ _[À remplir : Observations techniques, validations, points d'attention]_
         w_kg = current_ftp / weight if weight and weight > 0 else 0
         
         # CTL/ATL/TSB actuels (dernier jour)
-        latest_wellness = wellness_data[0] if wellness_data else {}
-        ctl = latest_wellness.get('ctl', 0)
-        atl = latest_wellness.get('atl', 0)
-        tsb = ctl - atl  # Calculé: TSB = CTL - ATL
+        from cyclisme_training_logs.utils.metrics import get_metrics_safely
+
+        current_metrics = get_metrics_safely(wellness_data, index=0)
+        ctl = current_metrics['ctl']
+        atl = current_metrics['atl']
+        tsb = current_metrics['tsb']
         
         # TODO: Mettre à jour les tableaux existants plutôt que tout écraser
         # Pour l'instant, juste afficher un résumé

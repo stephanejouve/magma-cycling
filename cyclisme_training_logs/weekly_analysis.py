@@ -235,11 +235,14 @@ class WeeklyAnalysis:
                 day_wellness = next((w for w in wellness_data if w['id'] == date_str), None)
 
                 if day_wellness:
+                    from cyclisme_training_logs.utils.metrics import extract_wellness_metrics
+
+                    day_metrics = extract_wellness_metrics(day_wellness)
                     daily_metrics.append({
                         'date': date_str,
-                        'ctl': day_wellness.get('ctl', 0),
-                        'atl': day_wellness.get('atl', 0),
-                        'tsb': day_wellness.get('ctl', 0) - day_wellness.get('atl', 0),
+                        'ctl': day_metrics['ctl'],
+                        'atl': day_metrics['atl'],
+                        'tsb': day_metrics['tsb'],
                         'weight': day_wellness.get('weight'),
                     })
                 else:
@@ -253,18 +256,23 @@ class WeeklyAnalysis:
 
                 current_date += timedelta(days=1)
 
+            from cyclisme_training_logs.utils.metrics import extract_wellness_metrics
+
+            start_metrics = extract_wellness_metrics(wellness_start)
+            end_metrics = extract_wellness_metrics(wellness_end)
+
             metrics = {
                 'start': {
-                    'ctl': wellness_start.get('ctl', 0),
-                    'atl': wellness_start.get('atl', 0),
-                    'tsb': wellness_start.get('ctl', 0) - wellness_start.get('atl', 0),
-                    'weight': wellness_start.get('weight', 0),
+                    'ctl': start_metrics['ctl'],
+                    'atl': start_metrics['atl'],
+                    'tsb': start_metrics['tsb'],
+                    'weight': wellness_start.get('weight', 0) if wellness_start else 0,
                 },
                 'end': {
-                    'ctl': wellness_end.get('ctl', 0),
-                    'atl': wellness_end.get('atl', 0),
-                    'tsb': wellness_end.get('ctl', 0) - wellness_end.get('atl', 0),
-                    'weight': wellness_end.get('weight', 0),
+                    'ctl': end_metrics['ctl'],
+                    'atl': end_metrics['atl'],
+                    'tsb': end_metrics['tsb'],
+                    'weight': wellness_end.get('weight', 0) if wellness_end else 0,
                 },
                 'daily': daily_metrics,
                 'activities_count': len(activities) if activities else 0

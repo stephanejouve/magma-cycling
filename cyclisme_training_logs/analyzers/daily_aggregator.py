@@ -201,13 +201,16 @@ class DailyAggregator(DataAggregator):
         power_zones = raw_data.get('power_zones', {})
         fitness = raw_data.get('fitness_metrics', {})
 
+        from cyclisme_training_logs.utils.metrics import extract_wellness_metrics
+
+        fitness_metrics = extract_wellness_metrics(fitness)
         processed['athlete'] = {
             'FTP': power_zones.get('ftp', 0),
             'weight': activity.get('athlete_weight', 0),
             'resting_hr': activity.get('resting_hr', 0),
-            'ctl': fitness.get('ctl', 0),
-            'atl': fitness.get('atl', 0),
-            'tsb': fitness.get('tsb', 0)
+            'ctl': fitness_metrics['ctl'],
+            'atl': fitness_metrics['atl'],
+            'tsb': fitness_metrics['tsb']
         }
 
         # 3. Feedback athlète

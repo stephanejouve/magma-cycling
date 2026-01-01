@@ -225,13 +225,14 @@ class PromptGenerator:
                 'sleep_seconds': 0,
             }
 
-        ctl = wellness.get('ctl', 0)
-        atl = wellness.get('atl', 0)
+        from cyclisme_training_logs.utils.metrics import extract_wellness_metrics
+
+        metrics = extract_wellness_metrics(wellness)
 
         return {
-            'ctl': ctl,
-            'atl': atl,
-            'tsb': ctl - atl,
+            'ctl': metrics['ctl'],
+            'atl': metrics['atl'],
+            'tsb': metrics['tsb'],
             'weight': wellness.get('weight', 0),
             'sleep_seconds': wellness.get('sleepSecs', 0),
             'sleep_quality': wellness.get('sleepQuality', 0),
