@@ -36,6 +36,7 @@ sphinx-rtd-theme = "^3.0.2"
 # === Scripts Principaux (Usage Quotidien) ===
 weekly-analysis = "cyclisme_training_logs.workflows.workflow_weekly:main"
 weekly-analysis-legacy = "cyclisme_training_logs.weekly_analysis:main"  # DEPRECATED - Gartner E
+monthly-analysis = "cyclisme_training_logs.monthly_analysis:main"
 upload-workouts = "cyclisme_training_logs.upload_workouts:main"
 prepare-analysis = "cyclisme_training_logs.prepare_analysis:main"
 
