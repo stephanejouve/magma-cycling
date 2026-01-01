@@ -19,9 +19,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Project information
 project = 'Cyclisme Training Logs'
-copyright = '2025, Stéphane Jouve'
+copyright = '2025-2026, Stéphane Jouve'
 author = 'Stéphane Jouve'
-release = '1.0.0'
+release = '2.0.0'
+version = '2.0'
 
 # Extensions
 extensions = [
