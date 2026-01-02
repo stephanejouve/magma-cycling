@@ -54,6 +54,7 @@ planned-checker = "cyclisme_training_logs.planned_sessions_checker:main"
 update-session = "cyclisme_training_logs.update_session_status:main"
 stats = "cyclisme_training_logs.stats:main"
 validate-templates = "cyclisme_training_logs.scripts.validate_templates:main"
+backfill-intelligence = "cyclisme_training_logs.scripts.backfill_intelligence:main"
 
 # === Rapports & Organisation ===
 organize-report = "cyclisme_training_logs.organize_weekly_report:main"
