@@ -132,7 +132,7 @@ class IntervalsICUBackfiller:
             Workout type: "sweet-spot", "vo2", "tempo", "endurance", "recovery"
         """
         name = activity.get("name", "").lower()
-        intensity = activity.get("icu_intensity", 0)
+        intensity = activity.get("icu_intensity") or 0
 
         # Name-based classification (most reliable)
         if any(keyword in name for keyword in ["sweet", "ss", "sst"]):
@@ -177,8 +177,12 @@ class IntervalsICUBackfiller:
             print("   ⚠️  No Sweet-Spot sessions found")
             return
 
-        # Analyze metrics
-        intensities = [a.get("icu_intensity", 0) for a in sweet_spot_sessions]
+        # Analyze metrics (filter out None values)
+        intensities = [
+            a.get("icu_intensity", 0)
+            for a in sweet_spot_sessions
+            if a.get("icu_intensity") is not None
+        ]
         avg_intensity = sum(intensities) / len(intensities) if intensities else 0
 
         # Create learning
@@ -248,13 +252,18 @@ class IntervalsICUBackfiller:
             if not sleep_record:
                 continue
 
+            # Skip if sleep data is missing
+            sleep_secs = sleep_record.get("sleepSecs")
+            if sleep_secs is None:
+                continue
+
             total_analyzed += 1
-            sleep_hours = sleep_record.get("sleepSecs", 0) / 3600
+            sleep_hours = sleep_secs / 3600
 
             # Determine if session was completed successfully
             # Use IF and TSS as proxies (high IF + reasonable TSS = success)
-            intensity = activity.get("icu_intensity", 0)
-            tss = activity.get("icu_training_load", 0)
+            intensity = activity.get("icu_intensity") or 0
+            tss = activity.get("icu_training_load") or 0
             completed = intensity >= 1.05 and tss >= 30
 
             if sleep_hours < 6 and not completed:
@@ -310,9 +319,24 @@ class IntervalsICUBackfiller:
             print("   ⚠️  Insufficient data (need both outdoor and indoor)")
             return
 
-        # Calculate average IF for outdoor vs indoor
-        outdoor_if = sum(a.get("icu_intensity", 0) for a in outdoor_activities) / len(outdoor_activities)
-        indoor_if = sum(a.get("icu_intensity", 0) for a in indoor_activities) / len(indoor_activities)
+        # Calculate average IF for outdoor vs indoor (filter out None values)
+        outdoor_intensities = [
+            a.get("icu_intensity", 0)
+            for a in outdoor_activities
+            if a.get("icu_intensity") is not None
+        ]
+        indoor_intensities = [
+            a.get("icu_intensity", 0)
+            for a in indoor_activities
+            if a.get("icu_intensity") is not None
+        ]
+
+        if not outdoor_intensities or not indoor_intensities:
+            print("   ⚠️  Insufficient intensity data")
+            return
+
+        outdoor_if = sum(outdoor_intensities) / len(outdoor_intensities)
+        indoor_if = sum(indoor_intensities) / len(indoor_intensities)
 
         overshoot_pct = ((outdoor_if - indoor_if) / indoor_if) * 100
 
@@ -472,13 +496,22 @@ def main():
 
     args = parser.parse_args()
 
-    # Get credentials
-    athlete_id = args.athlete_id or os.getenv("INTERVALS_ATHLETE_ID")
-    api_key = args.api_key or os.getenv("INTERVALS_API_KEY")
+    # Get credentials (support both standard and VITE_ prefixed)
+    athlete_id = (
+        args.athlete_id or
+        os.getenv("INTERVALS_ATHLETE_ID") or
+        os.getenv("VITE_INTERVALS_ATHLETE_ID")
+    )
+    api_key = (
+        args.api_key or
+        os.getenv("INTERVALS_API_KEY") or
+        os.getenv("VITE_INTERVALS_API_KEY")
+    )
 
     if not athlete_id or not api_key:
         print("❌ Missing Intervals.icu credentials")
         print("   Set INTERVALS_ATHLETE_ID and INTERVALS_API_KEY environment variables")
+        print("   Or VITE_INTERVALS_ATHLETE_ID and VITE_INTERVALS_API_KEY")
         print("   Or pass --athlete-id and --api-key arguments")
         sys.exit(1)
 
