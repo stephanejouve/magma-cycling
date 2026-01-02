@@ -361,60 +361,194 @@ class IntervalsICUBackfiller:
         else:
             print(f"   ℹ️  No significant overshoot: +{overshoot_pct:.1f}%")
 
-    def analyze_ftp_progression(self, start_date: str, end_date: str) -> None:
+    def analyze_ftp_progression(
+        self,
+        start_date: str,
+        end_date: str,
+        activities: List[Dict[str, Any]],
+        wellness_data: List[Dict[str, Any]]
+    ) -> None:
         """
-        Extract FTP progression learning.
+        Extract FTP progression learning from real test data.
 
-        Analyzes FTP tests and progression over time period.
+        Detects FTP tests via two methods:
+        1. FTP changes in wellness data (Intervals.icu athlete profile)
+        2. Activities with "FTP", "test", "ramp" in name
 
         Args:
             start_date: Period start (YYYY-MM-DD)
             end_date: Period end (YYYY-MM-DD)
+            activities: List of activities from API
+            wellness_data: List of wellness entries from API
         """
         print("\n📈 Analyzing FTP progression...")
 
-        # Get athlete profile (includes current FTP)
         try:
-            athlete = self.client.get_athlete()
-            current_ftp = athlete.get("ftp", 0)
+            ftp_tests = []
 
-            if not current_ftp:
-                print("   ⚠️  No FTP data available")
+            # Method 1: Detect FTP changes in wellness data
+            print("   🔍 Method 1: Scanning wellness data for FTP changes...")
+            wellness_sorted = sorted(wellness_data, key=lambda w: w.get("id", ""))
+
+            prev_ftp = None
+            for entry in wellness_sorted:
+                # Extract eFTP from sportInfo (estimated FTP calculated by Intervals.icu)
+                sport_info = entry.get("sportInfo", [])
+                current_ftp = None
+
+                # Find Ride sport info
+                for sport in sport_info:
+                    if sport.get("type") == "Ride":
+                        current_ftp = sport.get("eftp")
+                        break
+
+                entry_date = entry.get("id")  # Date in YYYY-MM-DD format
+
+                if current_ftp is None:
+                    continue
+
+                # Detect FTP change (threshold: >2W to avoid noise)
+                if prev_ftp is not None and abs(current_ftp - prev_ftp) > 2:
+                    change_w = current_ftp - prev_ftp
+                    change_pct = (change_w / prev_ftp) * 100 if prev_ftp > 0 else 0
+
+                    ftp_tests.append({
+                        "date": entry_date,
+                        "ftp": current_ftp,
+                        "previous_ftp": prev_ftp,
+                        "change_w": change_w,
+                        "change_pct": change_pct,
+                        "source": "wellness_eftp"
+                    })
+                    print(f"      ✓ {entry_date}: {prev_ftp:.0f}W → {current_ftp:.0f}W ({change_w:+.0f}W, {change_pct:+.1f}%)")
+
+                prev_ftp = current_ftp
+
+            # Method 2: Find FTP test activities by name (only executed activities)
+            print("   🔍 Method 2: Scanning activities for FTP test keywords...")
+            ftp_keywords = ["ftp", "test", "ramp", "evaluation"]
+
+            for activity in activities:
+                # Skip manually created events (not executed)
+                if activity.get("source") == "MANUAL":
+                    continue
+
+                name = activity.get("name", "").lower()
+                activity_date = activity.get("start_date_local", "")[:10]  # Extract YYYY-MM-DD
+
+                # Check if name contains FTP test keywords
+                if any(keyword in name for keyword in ftp_keywords):
+                    # Use icu_average_watts (not average_watts)
+                    avg_watts = activity.get("icu_average_watts", 0)
+                    icu_ftp = activity.get("icu_ftp", 0)  # FTP at time of activity
+                    icu_rolling_ftp = activity.get("icu_rolling_ftp", 0)  # Calculated FTP
+
+                    # Try to extract FTP from power curve (20min * 0.95)
+                    max_watts = activity.get("max_avg_watts", {})
+                    ftp_20min = max_watts.get("1200", 0) * 0.95 if max_watts else 0  # 20min power * 0.95
+
+                    # Use best available FTP estimate
+                    estimated_ftp = ftp_20min or icu_rolling_ftp or icu_ftp
+
+                    ftp_tests.append({
+                        "date": activity_date,
+                        "activity_name": activity.get("name", ""),
+                        "avg_watts": avg_watts,
+                        "ftp": estimated_ftp if estimated_ftp > 0 else None,
+                        "ftp_20min": int(ftp_20min) if ftp_20min > 0 else None,
+                        "icu_ftp": icu_ftp,
+                        "source": "activity_executed"
+                    })
+                    ftp_display = f"{estimated_ftp:.0f}W FTP" if estimated_ftp > 0 else "no FTP data"
+                    print(f"      ✓ {activity_date}: '{activity.get('name', '')}' (avg: {avg_watts:.0f}W, {ftp_display})")
+
+            # Create learning if tests found
+            if not ftp_tests:
+                print("   ℹ️  No FTP tests detected")
                 return
 
-            # Calculate progression (simplified - assumes linear growth)
-            # In production, would analyze actual FTP test activities
-            start_dt = datetime.strptime(start_date, "%Y-%m-%d")
-            end_dt = datetime.strptime(end_date, "%Y-%m-%d")
-            months = (end_dt - start_dt).days / 30
+            # Sort by date
+            ftp_tests.sort(key=lambda t: t.get("date", ""))
 
-            # Estimate starting FTP (rough approximation)
-            # Assume +0.83W/month average progression
-            estimated_start_ftp = current_ftp - (months * 0.83)
-            progression_w = current_ftp - estimated_start_ftp
-            progression_pct = (progression_w / estimated_start_ftp) * 100
+            # Calculate overall progression
+            tests_with_ftp = [t for t in ftp_tests if t.get("ftp") is not None or t.get("ftp_20min") is not None]
 
+            if len(tests_with_ftp) < 2:
+                print(f"   ℹ️  Only {len(ftp_tests)} test(s) found, need at least 2 with FTP values for progression")
+                # Still create learning with single test
+                if ftp_tests:
+                    evidence = [f"{t['date']}: {t.get('activity_name', 'FTP change detected')}" for t in ftp_tests[:5]]
+                    learning = self.intelligence.add_learning(
+                        category="ftp_tests",
+                        description=f"{len(ftp_tests)} FTP test(s) detected",
+                        evidence=evidence,
+                        level=AnalysisLevel.MONTHLY
+                    )
+                    learning.confidence = ConfidenceLevel.LOW
+                    print(f"   ✅ Created learning: {len(ftp_tests)} test(s), confidence=LOW")
+                return
+
+            # Get first and last FTP values
+            first_test = tests_with_ftp[0]
+            last_test = tests_with_ftp[-1]
+
+            first_ftp = first_test.get("ftp") or first_test.get("ftp_20min") or 0
+            last_ftp = last_test.get("ftp") or last_test.get("ftp_20min") or 0
+
+            if first_ftp == 0 or last_ftp == 0:
+                print("   ⚠️  Cannot calculate progression (missing FTP values)")
+                return
+
+            # Calculate progression
+            progression_w = last_ftp - first_ftp
+            progression_pct = (progression_w / first_ftp) * 100
+
+            # Calculate time span
+            first_date = datetime.strptime(first_test["date"], "%Y-%m-%d")
+            last_date = datetime.strptime(last_test["date"], "%Y-%m-%d")
+            days = (last_date - first_date).days
+            months = days / 30.0
+            rate_per_month = progression_w / months if months > 0 else 0
+
+            # Build evidence
             evidence = [
-                f"FTP {estimated_start_ftp:.0f}W → {current_ftp:.0f}W",
-                f"+{progression_w:.0f}W (+{progression_pct:.1f}%)",
-                f"Rate: +{progression_w/months:.2f}W/month over {months:.0f} months"
+                f"Period: {first_test['date']} → {last_test['date']} ({days} days)",
+                f"FTP progression: {first_ftp:.0f}W → {last_ftp:.0f}W",
+                f"Change: {progression_w:+.0f}W ({progression_pct:+.1f}%)",
+                f"Rate: {rate_per_month:+.2f}W/month",
+                f"Total tests detected: {len(ftp_tests)}"
             ]
+
+            # Add individual test details (max 5)
+            for test in ftp_tests[:5]:
+                if test.get("source") == "wellness_data":
+                    evidence.append(f"  • {test['date']}: {test['previous_ftp']}W → {test['ftp']}W")
+                else:
+                    evidence.append(f"  • {test['date']}: {test.get('activity_name', 'FTP test')}")
 
             learning = self.intelligence.add_learning(
                 category="ftp_progression",
-                description=f"FTP progression {estimated_start_ftp:.0f}W → {current_ftp:.0f}W",
+                description=f"FTP progression: {first_ftp:.0f}W → {last_ftp:.0f}W over {len(ftp_tests)} tests",
                 evidence=evidence,
                 level=AnalysisLevel.MONTHLY
             )
 
-            # Confidence based on time period
-            if months >= 12:
+            # Set confidence based on number of tests and time period
+            if len(ftp_tests) >= 5 and months >= 6:
+                learning.confidence = ConfidenceLevel.VALIDATED
+            elif len(ftp_tests) >= 3 and months >= 3:
                 learning.confidence = ConfidenceLevel.HIGH
+            elif len(ftp_tests) >= 2:
+                learning.confidence = ConfidenceLevel.MEDIUM
+            else:
+                learning.confidence = ConfidenceLevel.LOW
 
-            print(f"   ✅ Created learning: +{progression_w:.0f}W over {months:.0f} months, confidence={learning.confidence.value}")
+            print(f"   ✅ Created learning: {len(ftp_tests)} tests, {progression_w:+.0f}W ({progression_pct:+.1f}%), confidence={learning.confidence.value}")
 
         except Exception as e:
             print(f"   ❌ Error analyzing FTP: {e}")
+            import traceback
+            traceback.print_exc()
 
     def run(self, start_date: str, end_date: str, output_path: Path) -> None:
         """
@@ -441,7 +575,7 @@ class IntervalsICUBackfiller:
         self.analyze_sweet_spot_sessions(activities)
         self.analyze_vo2_sleep_correlation(activities, wellness_data)
         self.analyze_outdoor_discipline(activities)
-        self.analyze_ftp_progression(start_date, end_date)
+        self.analyze_ftp_progression(start_date, end_date, activities, wellness_data)
 
         # Save intelligence
         print(f"\n💾 Saving intelligence to {output_path}...")
