@@ -69,7 +69,7 @@ logger = logging.getLogger(__name__)
 # CONSTANTES
 # ============================================================================
 
-VALID_STATUSES = ['completed', 'cancelled', 'rest_day', 'replaced', 'skipped', 'modified']
+VALID_STATUSES = ['planned', 'completed', 'cancelled', 'rest_day', 'replaced', 'skipped', 'modified']
 VALID_TYPES = ['END', 'INT', 'FTP', 'SPR', 'CLM', 'REC', 'FOR', 'CAD', 'TEC', 'MIX', 'PDC', 'TST']
 
 
