@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "cyclisme-training-logs"
-version = "1.0.0"
+version = "2.1.1"
 description = "Système automatisé d'analyse entraînements cyclisme"
 authors = ["Stéphane"]
 readme = "README.md"
@@ -31,6 +31,7 @@ ipython = "^8.18.1"
 ipdb = "^0.13.13"
 sphinx = "^9.0.4"
 sphinx-rtd-theme = "^3.0.2"
+poethepoet = "^0.39.0"
 
 [tool.poetry.scripts]
 # === Scripts Principaux (Usage Quotidien) ===
@@ -50,6 +51,7 @@ backfill-history = "cyclisme_training_logs.scripts.backfill_history:main"
 # === Utilitaires ===
 sync-intervals = "cyclisme_training_logs.sync_intervals:main"
 planned-checker = "cyclisme_training_logs.planned_sessions_checker:main"
+update-session = "cyclisme_training_logs.update_session_status:main"
 stats = "cyclisme_training_logs.stats:main"
 validate-templates = "cyclisme_training_logs.scripts.validate_templates:main"
 
@@ -79,3 +81,33 @@ ignore = ["E501", "B008", "C901"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = ["-v"]
+
+[tool.poe.tasks]
+# Tests
+test = "pytest tests/ -v"
+test-cov = "pytest tests/ -v --cov=cyclisme_training_logs --cov-report=html"
+test-intelligence = "pytest tests/intelligence/ -v"
+test-planning = "pytest tests/planning/ -v"
+test-quick = "pytest tests/ -x -v"
+
+# Code Quality
+lint = "ruff check ."
+lint-fix = "ruff check . --fix"
+format = "black ."
+format-check = "black . --check"
+type-check = "mypy cyclisme_training_logs/"
+
+# All checks
+check = ["format-check", "lint", "type-check", "test"]
+
+# Documentation
+docs-build = "sphinx-build -b html docs docs/_build/html"
+docs-clean = "rm -rf docs/_build"
+docs-rebuild = ["docs-clean", "docs-build"]
+
+# Utilities
+clean = """
+    rm -rf .pytest_cache .ruff_cache .mypy_cache
+    find . -type d -name __pycache__ -exec rm -rf {} +
+    find . -type f -name '*.pyc' -delete
+"""

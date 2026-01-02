@@ -305,3 +305,73 @@ class IntervalsClient:
             logger.error(f"Error creating event: {e}")
             logger.error(f"Event data: {event_data}")
             return None
+
+    def delete_event(self, event_id: int) -> bool:
+        """Delete a calendar event.
+
+        Args:
+            event_id: Event ID to delete
+
+        Returns:
+            True if deletion successful, False otherwise
+
+        Example:
+            >>> success = client.delete_event(event_id=12345)
+            >>> if success:
+            ...     print("Event deleted")
+        """
+        try:
+            url = f"{self.BASE_URL}/athlete/{self.athlete_id}/events/{event_id}"
+            response = self.session.delete(url)
+            response.raise_for_status()
+            logger.info(f"Deleted event ID: {event_id}")
+            return True
+
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"HTTP error deleting event {event_id}: {e}")
+            if e.response is not None:
+                logger.error(f"Response: {e.response.text}")
+            return False
+
+        except Exception as e:
+            logger.error(f"Error deleting event {event_id}: {e}")
+            return False
+
+    def update_event(self, event_id: int, event_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Update an existing calendar event.
+
+        Args:
+            event_id: Event ID to update
+            event_data: Updated event data (partial update supported)
+
+        Returns:
+            Updated event data, or None if update failed
+
+        Example:
+            >>> updated = client.update_event(
+            ...     event_id=12345,
+            ...     event_data={"name": "S074-05-CANCELLED", "description": "Cancelled due to fatigue"}
+            ... )
+        """
+        try:
+            url = f"{self.BASE_URL}/athlete/{self.athlete_id}/events/{event_id}"
+            response = self.session.put(url, json=event_data)
+            response.raise_for_status()
+
+            updated_event = response.json()
+            logger.info(f"Updated event ID: {event_id}")
+            return updated_event
+
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"HTTP error updating event {event_id}: {e}")
+            if e.response is not None:
+                try:
+                    error_detail = e.response.json()
+                    logger.error(f"Error detail: {error_detail}")
+                except:
+                    logger.error(f"Response: {e.response.text}")
+            return None
+
+        except Exception as e:
+            logger.error(f"Error updating event {event_id}: {e}")
+            return None

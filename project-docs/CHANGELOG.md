@@ -6,6 +6,86 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 
+## [2.1.1] - 2026-01-02
+
+### Fixed
+
+**Intervals.icu API Client** (`cyclisme_training_logs/api/intervals_client.py`):
+- Ajout méthode `delete_event(event_id)` : Suppression événements calendrier
+- Ajout méthode `update_event(event_id, event_data)` : Mise à jour événements calendrier
+- Support complet CRUD pour événements (Create, Read, Update, Delete)
+
+**Session Status Tool** (`cyclisme_training_logs/update_session_status.py` v2.1.0):
+- Correction comportement sync Intervals.icu pour respecter spec originale
+- `cancelled`/`skipped` : Convertit event en NOTE avec tag [ANNULÉE]/[SAUTÉE] au lieu de supprimer
+- Création automatique NOTE si événement n'existe pas (traçabilité complète)
+- Ajout support `TRAINING_DATA_REPO` via `get_data_config()` (résolution chemins correct)
+- Ajout chargement automatique `.env` via `load_dotenv()`
+- Format date corrigé pour API Intervals.icu (`YYYY-MM-DDTHH:MM:SS`)
+
+**Documentation**:
+- Ajout section "Behavior" dans docstring `update_session_status.py`
+- Exemples usage enrichis (cancel, skip, complete avec/sans sync)
+
+**Impact**:
+- Calendrier Intervals.icu cohérent avec séances annulées marquées [ANNULÉE]
+- Historique complet préservé (pas de suppression)
+- Compatible avec workflow existant LIVRAISON_MOA_20251230
+
+## [2.1.0] - 2026-01-01
+
+### Added - Sprint R4 (Training Intelligence & Feedback Loop)
+
+**Training Intelligence** (`cyclisme_training_logs/intelligence/training_intelligence.py`):
+- `TrainingIntelligence` : Gestionnaire mémoire partagée multi-temporelle
+  - `add_learning()` : Ajouter enseignements avec progression confidence (LOW→VALIDATED)
+  - `identify_pattern()` : Détecter patterns récurrents avec trigger conditions
+  - `propose_adaptation()` : Proposer évolution protocoles basée sur evidence
+  - `get_daily_insights()` : Insights quotidiens (warnings + recommendations)
+  - `get_weekly_synthesis()` : Synthèse hebdo (patterns émergents + learnings validés)
+  - `get_monthly_trends()` : Tendances mensuelles (protocoles validés + top patterns)
+  - `save_to_file()` / `load_from_file()` : Persistance JSON état complet
+- `TrainingLearning` : Dataclass enseignement avec confidence progressive
+  - Attributes: id, timestamp, level, category, description, evidence, confidence, impact, applied, validated
+  - `promote_confidence()` : Progression automatique confidence
+- `Pattern` : Dataclass pattern récurrent avec conditions déclencheurs
+  - Attributes: id, name, trigger_conditions, observed_outcome, frequency, first_seen, last_seen, confidence
+  - `matches()` : Vérification conditions (opérateurs <, >, =)
+  - `promote_confidence()` : Progression basée sur frequency
+- `ProtocolAdaptation` : Dataclass adaptation protocole
+  - Attributes: id, protocol_name, adaptation_type, current_rule, proposed_rule, justification, evidence, confidence, status
+  - Lifecycle: PROPOSED → TESTED → VALIDATED/REJECTED
+- **Enums** :
+  - `AnalysisLevel` (DAILY/WEEKLY/MONTHLY) : Niveau temporel analyse
+  - `ConfidenceLevel` (LOW/MEDIUM/HIGH/VALIDATED) : Progression validation
+- **Feedback Loop** : Enrichissement mutuel analyses quotidienne/hebdo/mensuelle
+- **19 tests unitaires** (100% coverage, 0 failures)
+
+**Architecture**:
+- 100% in-memory (Dict storage, 0 hardcoded paths)
+- JSON persistence optionnelle (`~/cyclisme-training-logs-data/intelligence/`)
+- Backward compatible (enrichit workflow existant sans breaking changes)
+- Progressive validation : 1-2 obs → LOW, 3-5 → MEDIUM, 6-10 → HIGH, 10+ → VALIDATED
+
+**Documentation**:
+- **GUIDE_INTELLIGENCE.md** (700+ lignes) : Guide complet avec cas d'usage et exemples
+- **Sphinx API** : Documentation auto-générée (docs/modules/intelligence.rst)
+- Exemples complets : Sweet-Spot Optimal, Prévention VO2 Échec
+
+**Impact**:
+- Résolution silos temporels : Analyses quotidienne/hebdo/mensuelle partagent mémoire
+- Détection patterns automatique : Prévention échecs (ex: sleep debt → VO2 failure)
+- Validation progressive protocoles : Evidence-based (10+ observations → VALIDATED)
+- Insights contextuels : Recommendations basées sur historique complet
+- Évolution protocoles : Adaptations proposées automatiquement selon patterns
+
+**Métriques Sprint R4**:
+- Code: 689 lignes (training_intelligence.py)
+- Tests: 19 tests (100% passing)
+- Documentation: 700+ lignes (GUIDE_INTELLIGENCE.md)
+- Coverage: 507/509 global tests passing (99.6%)
+
+
 ## [2.0.0] - 2026-01-01
 
 ### Added - Sprint R3 (Planning Manager & Calendar)
