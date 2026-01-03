@@ -951,7 +951,7 @@ class WorkflowCoach:
             newest_date: End date for activity search (YYYY-MM-DD)
 
         Returns:
-            List of unanalyzed activities or None if error/not found
+            List of unanalyzed activities or None if error/not found.
         """
         config_path = Path.home() / ".intervals_config.json"
         if not config_path.exists():
@@ -1000,7 +1000,7 @@ class WorkflowCoach:
             newest_date: End date for search (YYYY-MM-DD)
 
         Returns:
-            List of skipped sessions or None if error/not found
+            List of skipped sessions or None if error/not found.
         """
         try:
             checker = PlannedSessionsChecker(athlete_id=athlete_id, api_key=api_key)
@@ -1078,7 +1078,7 @@ class WorkflowCoach:
             api_key: Intervals.icu API key
 
         Returns:
-            Tuple of (rest_days, cancelled_sessions)
+            Tuple of (rest_days, cancelled_sessions).
         """
         rest_days = []
         cancelled_sessions = []
@@ -1126,7 +1126,7 @@ class WorkflowCoach:
             gaps_data: Dict with 'unanalyzed', 'skipped', 'rest_days', 'cancelled' lists
 
         Returns:
-            Total number of gaps detected
+            Total number of gaps detected.
         """
         print("\n" + "=" * 70)
         print("📊 RÉSUMÉ GAPS DÉTECTÉS")
@@ -1380,7 +1380,7 @@ class WorkflowCoach:
         Returns:
             Tuple of (should_collect, skip_reason)
                 - should_collect: True if feedback should be collected
-                - skip_reason: Reason for skipping (if should_collect is False)
+                - skip_reason: Reason for skipping (if should_collect is False).
         """
         # Check skip flag
         if self.skip_feedback:
@@ -1399,7 +1399,7 @@ class WorkflowCoach:
             Tuple of (activity, athlete_id, api_key)
                 - activity: Activity dict or None if not available
                 - athlete_id: Athlete ID from credentials
-                - api_key: API key from credentials
+                - api_key: API key from credentials.
         """
         try:
             # Load credentials

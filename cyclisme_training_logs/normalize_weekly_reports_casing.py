@@ -176,7 +176,7 @@ class CasingNormalizer:
         """Scan directories and validate result.
 
         Returns:
-            Tuple of (all_directories, to_change_directories) or (None, None) if scan failed
+            Tuple of (all_directories, to_change_directories) or (None, None) if scan failed.
         """
         print("🔍 Analyse des répertoires...")
         directories = self.scan_directories()
@@ -203,7 +203,7 @@ class CasingNormalizer:
         """Get user confirmation for normalization if needed.
 
         Returns:
-            True if should proceed, False if cancelled
+            True if should proceed, False if cancelled.
         """
         if self.dry_run or self.force:
             return True
