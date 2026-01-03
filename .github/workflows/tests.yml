@@ -42,6 +42,35 @@ jobs:
     - name: Install project
       run: poetry install --no-interaction
 
+    - name: Setup test environment
+      run: |
+        # Create minimal .env for tests
+        cat > .env << 'EOF'
+        # Test environment variables
+        ATHLETE_AGE=54
+        ATHLETE_CATEGORY=master
+        ATHLETE_RECOVERY_CAPACITY=exceptional
+        ATHLETE_SLEEP_DEPENDENT=true
+        ATHLETE_FTP=240
+        ATHLETE_WEIGHT=72.5
+        INTERVALS_ATHLETE_ID=test_athlete
+        INTERVALS_API_KEY=test_key
+        TRAINING_DATA_REPO=${{ github.workspace }}/test-data
+        EOF
+
+        # Create test data directory structure
+        mkdir -p ${{ github.workspace }}/test-data/week_planning
+        mkdir -p ${{ github.workspace }}/test-data/data
+
+        # Create S072 planning file (required by tests)
+        cat > ${{ github.workspace }}/test-data/week_planning/week_planning_S072.json << 'EOF'
+        {
+          "week": "S072",
+          "start_date": "2025-12-15",
+          "sessions": []
+        }
+        EOF
+
     - name: Run tests
       run: |
         poetry run pytest tests/ -v --cov=cyclisme_training_logs --cov-report=xml --cov-report=term
