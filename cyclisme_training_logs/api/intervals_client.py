@@ -44,7 +44,7 @@ class IntervalsClient:
             api_key: API key for authentication
 
         Raises:
-            ValueError: If athlete_id or api_key is empty
+            ValueError: If athlete_id or api_key is empty.
         """
         if not athlete_id or not api_key:
             raise ValueError("athlete_id and api_key are required")

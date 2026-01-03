@@ -106,7 +106,7 @@ class PromptGenerator:
         self.feedback_file = self.feedback_dir / "last_feedback.json"
 
     def load_athlete_context(self):
-        """Charger le contexte athlète depuis project_prompt_v2_1_revised.md"""
+        """Charger le contexte athlète depuis project_prompt_v2_1_revised.md."""
         prompt_file = self.references_dir / "project_prompt_v2_1_revised.md"
         if prompt_file.exists():
             with open(prompt_file, encoding="utf-8") as f:
@@ -114,7 +114,7 @@ class PromptGenerator:
         return None
 
     def load_recent_workouts(self, limit=5):
-        """Charger les N dernières séances depuis workouts-history.md"""
+        """Charger les N dernières séances depuis workouts-history.md."""
         history_file = self.logs_dir / "workouts-history.md"
         if not history_file.exists():
             return None
@@ -137,7 +137,7 @@ class PromptGenerator:
         return "\n".join(recent) if recent else None
 
     def load_cycling_concepts(self):
-        """Charger les concepts d'entraînement cyclisme"""
+        """Charger les concepts d'entraînement cyclisme."""
         concepts_file = self.references_dir / "cycling_training_concepts.md"
         if concepts_file.exists():
             with open(concepts_file, encoding="utf-8") as f:
@@ -145,7 +145,7 @@ class PromptGenerator:
         return None
 
     def load_athlete_feedback(self):
-        """Charger le feedback athlète s'il existe"""
+        """Charger le feedback athlète s'il existe."""
         if not self.feedback_file.exists():
             return None
 
@@ -157,7 +157,7 @@ class PromptGenerator:
             return None
 
     def format_athlete_feedback(self, feedback):
-        """Formater le feedback pour inclusion dans le prompt"""
+        """Formater le feedback pour inclusion dans le prompt."""
         if not feedback:
             return None
 
@@ -188,7 +188,7 @@ class PromptGenerator:
         return "\n\n".join(parts) if parts else None
 
     def format_activity_data(self, activity):
-        """Formater les données d'activité pour le prompt"""
+        """Formater les données d'activité pour le prompt."""
         date = datetime.fromisoformat(activity["start_date_local"].replace("Z", "+00:00"))
 
         # Vérifier si l'activité vient de Strava
@@ -217,7 +217,7 @@ class PromptGenerator:
         return data
 
     def format_wellness_data(self, wellness):
-        """Formater les données wellness"""
+        """Formater les données wellness."""
         if not wellness:
             return {
                 "ctl": 0,
@@ -241,13 +241,13 @@ class PromptGenerator:
         }
 
     def format_planned_workout(self, planned_event):
-        """Formater le workout planifié pour le prompt
+        """Formater le workout planifié pour le prompt.
 
         Args:
             planned_event: L'événement contenant le workout planifié
 
         Returns:
-            Dict avec les informations formatées ou None
+            Dict avec les informations formatées ou None.
         """
         if not planned_event or not planned_event.get("workout_doc"):
             return None
@@ -314,7 +314,7 @@ class PromptGenerator:
         return formatted
 
     def _format_power(self, power_dict):
-        """Formater une valeur de puissance (gère %, watts absolus, rampes)"""
+        """Formater une valeur de puissance (gère %, watts absolus, rampes)."""
         if not power_dict:
             return "N/A"
 
@@ -343,7 +343,7 @@ class PromptGenerator:
             default: Valeur par défaut si None
 
         Returns:
-            str: Valeur formatée ou default
+            str: Valeur formatée ou default.
         """
         if value is None:
             return default
@@ -361,7 +361,7 @@ class PromptGenerator:
             metric_type: 'avg' (moyenne) ou 'np' (normalisée)
 
         Returns:
-            float ou None: Valeur de puissance trouvée
+            float ou None: Valeur de puissance trouvée.
         """
         field_mappings = {
             "avg": ["avg_power", "power", "average_power", "watts", "avgWatts"],
@@ -378,7 +378,7 @@ class PromptGenerator:
         return None
 
     def get_cadence_value(self, activity, metric_type="avg"):
-        """Extraction robuste de la cadence avec fallback"""
+        """Extraction robuste de la cadence avec fallback."""
         field_mappings = {
             "avg": ["avg_cadence", "cadence", "avgCadence", "rpm"],
             "max": ["max_cadence", "maxCadence", "maximum_cadence"],
@@ -394,7 +394,7 @@ class PromptGenerator:
         return None
 
     def get_hr_value(self, activity, metric_type="avg"):
-        """Extraction robuste de la fréquence cardiaque avec fallback"""
+        """Extraction robuste de la fréquence cardiaque avec fallback."""
         field_mappings = {
             "avg": ["avg_hr", "hr", "avgHr", "heart_rate", "average_hr"],
             "max": ["max_hr", "maxHr", "max_heart_rate", "maximum_hr"],
@@ -420,8 +420,7 @@ class PromptGenerator:
         planned_workout=None,
         cycling_concepts=None,
     ):
-        """Générer le prompt complet pour analyse IA"""
-
+        """Générer le prompt complet pour analyse IA."""
         # Formater les données
         act = activity_data
         w_pre = self.format_wellness_data(wellness_pre)
@@ -460,7 +459,7 @@ Certaines métriques (puissance, découplage) peuvent être manquantes ou incomp
 
 """
 
-        prompt = f"""# Analyse d'Entraînement Cyclisme
+        prompt = f"""# Analyse d'Entraînement Cyclisme.
 
 ## Contexte Athlète
 
@@ -546,7 +545,7 @@ Certaines métriques (puissance, découplage) peuvent être manquantes ou incomp
 
 **Consigne d'analyse** : Évaluer l'adhérence au plan et identifier les écarts significatifs (>10% en durée/TSS, >5% en IF).
 
----
+---.
 """
 
         prompt += f"""
@@ -666,7 +665,7 @@ Génère maintenant l'entrée d'analyse.
 
 
 def load_config(config_file):
-    """Charger la configuration depuis un fichier JSON"""
+    """Charger la configuration depuis un fichier JSON."""
     config_path = Path(config_file).expanduser()
     if not config_path.exists():
         return None
@@ -676,7 +675,7 @@ def load_config(config_file):
 
 
 def analyze_batch(api, unanalyzed_activities, generator, state, project_root):
-    """Analyser plusieurs activités en mode batch
+    """Analyser plusieurs activités en mode batch.
 
     Args:
         api: Instance IntervalsAPI
@@ -686,7 +685,7 @@ def analyze_batch(api, unanalyzed_activities, generator, state, project_root):
         project_root: Racine du projet
 
     Returns:
-        None
+        None.
     """
     total = len(unanalyzed_activities)
     print()
@@ -896,7 +895,7 @@ def analyze_batch(api, unanalyzed_activities, generator, state, project_root):
 
 
 def display_activity_menu(unanalyzed_activities):
-    """Afficher le menu interactif pour sélectionner une activité
+    """Afficher le menu interactif pour sélectionner une activité.
 
     Args:
         unanalyzed_activities: Liste des activités non analysées
@@ -905,7 +904,7 @@ def display_activity_menu(unanalyzed_activities):
         Tuple (mode, selected_activity_id) où mode peut être:
         - 'single': analyser une seule activité (selected_activity_id fourni)
         - 'batch': analyser plusieurs activités (selected_activity_id = None)
-        - 'cancel': annuler (selected_activity_id = None)
+        - 'cancel': annuler (selected_activity_id = None).
     """
     count = len(unanalyzed_activities)
 

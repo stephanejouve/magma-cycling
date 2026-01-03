@@ -106,7 +106,7 @@ class PromptGenerator:
             athlete_data: Données athlète (FTP, poids, objectifs, etc.)
 
         Returns:
-            Bloc markdown contexte
+            Bloc markdown contexte.
         """
         context = "## Contexte Athlète\n\n"
 
@@ -132,7 +132,7 @@ class PromptGenerator:
             workout_data: Données activité (durée, TSS, puissance, etc.)
 
         Returns:
-            Bloc markdown données
+            Bloc markdown données.
         """
         data = "## Données Séance\n\n"
 
@@ -162,7 +162,7 @@ class PromptGenerator:
             instructions: Instructions texte
 
         Returns:
-            Bloc markdown instructions
+            Bloc markdown instructions.
         """
         return f"## Instructions\n\n{instructions}\n"
 
@@ -174,10 +174,10 @@ class PromptGenerator:
             format_type: Type format (markdown, json, etc.)
 
         Returns:
-            Bloc markdown format
+            Bloc markdown format.
         """
         formats = {
-            "markdown": """## Format Sortie
+            "markdown": """## Format Sortie.
 
 Répondre en markdown avec :
 
@@ -194,9 +194,9 @@ Répondre en markdown avec :
 - RPE: X/10
 
 #### Analyse
-[Analyse détaillée]
+[Analyse détaillée].
 """,
-            "json": """## Format Sortie
+            "json": """## Format Sortie.
 
 Répondre en JSON :
 ```json
@@ -229,7 +229,7 @@ Répondre en JSON :
             feedback: Feedback athlète (optionnel)
 
         Returns:
-            Prompt markdown complet
+            Prompt markdown complet.
         """
         blocks = [self.intro_block("daily"), ""]
 
@@ -249,11 +249,10 @@ Répondre en JSON :
 
         # Instructions
         instructions = """Analyser cette séance en détail :
-
 1. **Métriques clés** : TSS, IF, découplage cardiovasculaire
 2. **Qualité exécution** : Respect zones, pattern technique
 3. **Recommandations** : Adaptations séance suivante
-4. **Points vigilance** : Fatigue, récupération nécessaire"""
+4. **Points vigilance** : Fatigue, récupération nécessaire."""
 
         blocks.append(self.instructions_block(instructions))
         blocks.append("")
@@ -275,7 +274,7 @@ Répondre en JSON :
             metrics: Métriques CTL/ATL/TSB
 
         Returns:
-            Prompt markdown complet
+            Prompt markdown complet.
         """
         # Implémentation Phase 2
         raise NotImplementedError("Weekly prompt generation (Phase 2)")

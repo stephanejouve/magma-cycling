@@ -95,8 +95,7 @@ class WorkoutLogger:
             self.metrics_file = self.logs_dir / "metrics-evolution.md"
 
     def format_workout_entry(self, activity, wellness_pre, wellness_post):
-        """Formater une entrée de séance pour workouts-history.md"""
-
+        """Formater une entrée de séance pour workouts-history.md."""
         # Extraire les données
         date = datetime.fromisoformat(activity["start_date_local"].replace("Z", "+00:00"))
         date_str = date.strftime("%d/%m/%Y")
@@ -168,13 +167,12 @@ _[À remplir : Ressenti général, points positifs, difficultés rencontrées]_
 #### Notes Coach
 _[À remplir : Observations techniques, validations, points d'attention]_
 
----
+---.
 """
         return entry
 
     def update_workouts_history(self, activities, wellness_data):
-        """Mettre à jour workouts-history.md"""
-
+        """Mettre à jour workouts-history.md."""
         print(f"📝 Mise à jour de {self.workouts_file.name}...")
 
         # Lire le fichier existant
@@ -223,8 +221,7 @@ _[À remplir : Observations techniques, validations, points d'attention]_
         print(f"✅ {len(new_entries)} séance(s) ajoutée(s)")
 
     def update_metrics_evolution(self, athlete_data, wellness_data):
-        """Mettre à jour metrics-evolution.md"""
-
+        """Mettre à jour metrics-evolution.md."""
         print(f"📊 Mise à jour de {self.metrics_file.name}...")
 
         # FTP actuel
@@ -261,7 +258,7 @@ _[À remplir : Observations techniques, validations, points d'attention]_
 ---
 
 _Le reste du fichier metrics-evolution.md reste inchangé._
-_Pour une mise à jour complète des tableaux, voir le fichier original._
+_Pour une mise à jour complète des tableaux, voir le fichier original._.
 """
 
         # Pour l'instant, on crée un fichier séparé
@@ -275,7 +272,7 @@ _Pour une mise à jour complète des tableaux, voir le fichier original._
 
 
 def load_config(config_file):
-    """Charger la configuration depuis un fichier JSON"""
+    """Charger la configuration depuis un fichier JSON."""
     config_path = Path(config_file).expanduser()
     if not config_path.exists():
         return None

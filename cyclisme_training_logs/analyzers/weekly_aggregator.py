@@ -172,7 +172,7 @@ class WeeklyAggregator(DataAggregator):
             - metrics_daily: Évolution quotidienne CTL/ATL/TSB
             - feedback: Feedback athlète par séance
             - wellness: Données wellness quotidiennes
-            - planned: Workouts planifiés
+            - planned: Workouts planifiés.
         """
         raw_data = {}
 
@@ -234,7 +234,7 @@ class WeeklyAggregator(DataAggregator):
             raw_data: Données collectées
 
         Returns:
-            Données structurées pour 6 reports
+            Données structurées pour 6 reports.
         """
         processed = {}
 
@@ -286,7 +286,7 @@ class WeeklyAggregator(DataAggregator):
             processed_data: Données traitées
 
         Returns:
-            Markdown summary
+            Markdown summary.
         """
         summary = processed_data.get("summary", {})
 
@@ -323,7 +323,7 @@ class WeeklyAggregator(DataAggregator):
         que les champs basiques.
 
         Returns:
-            Liste activités enrichies avec training_load, if, normalized_power
+            Liste activités enrichies avec training_load, if, normalized_power.
         """
         if not self.api:
             logger.warning("No API available, returning empty activities")
@@ -487,7 +487,7 @@ class WeeklyAggregator(DataAggregator):
 
         Note: Utilise champs Intervals.icu avec préfixe 'icu_':
         - icu_training_load (TSS)
-        - icu_intensity (IF en %, nécessite normalisation)
+        - icu_intensity (IF en %, nécessite normalisation).
         """
         # Defensive: filter out None values before summing
         summary = {
@@ -533,7 +533,7 @@ class WeeklyAggregator(DataAggregator):
         - icu_training_load → tss
         - icu_intensity (%) → if (normalisé 0.0-1.0)
         - icu_weighted_avg_watts → normalized_power
-        - icu_average_watts → average_power
+        - icu_average_watts → average_power.
         """
         workouts = []
 

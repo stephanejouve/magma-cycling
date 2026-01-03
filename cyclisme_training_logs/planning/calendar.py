@@ -76,7 +76,7 @@ class TrainingSession:
             ...     planned_tss=50.0, completed=True, actual_tss=48.0
             ... )
             >>> session.get_effective_tss()
-            48.0
+            48.0.
         """
         return self.actual_tss if self.completed and self.actual_tss else self.planned_tss
 
@@ -94,7 +94,7 @@ class TrainingSession:
             ... )
             >>> data = session.to_dict()
             >>> data['workout_type']
-            'tempo'
+            'tempo'.
         """
         return {
             "date": self.date.isoformat(),

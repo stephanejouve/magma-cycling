@@ -64,7 +64,7 @@ def load_intervals_credentials() -> tuple[str | None, str | None]:
     """Load Intervals.icu credentials from environment.
 
     Returns:
-        Tuple of (athlete_id, api_key) or (None, None) if not configured
+        Tuple of (athlete_id, api_key) or (None, None) if not configured.
     """
     athlete_id = os.getenv("INTERVALS_ATHLETE_ID")
     api_key = os.getenv("INTERVALS_API_KEY")

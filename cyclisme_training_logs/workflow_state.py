@@ -59,12 +59,12 @@ class WorkflowState:
 
     STATE_FILE = Path(".workflow_state.json")
 
-    def __init__(self, project_root: Path = None):
+    def __init__(self, project_root: Path | None = None):
         """
         Initialiser le gestionnaire d'état
 
         Args:
-            project_root: Racine du projet (legacy, use data repo config instead)
+            project_root: Racine du projet (legacy, use data repo config instead).
         """
         # Use data repo config if available, fallback to project_root
         if project_root is None:
@@ -83,7 +83,7 @@ class WorkflowState:
         self.state = self._load_state()
 
     def _load_state(self) -> dict:
-        """Charger l'état depuis le fichier JSON"""
+        """Charger l'état depuis le fichier JSON."""
         if not self.state_file.exists():
             return {
                 "last_analyzed_activity_id": None,
@@ -105,20 +105,20 @@ class WorkflowState:
             }
 
     def _save_state(self):
-        """Sauvegarder l'état dans le fichier JSON"""
+        """Sauvegarder l'état dans le fichier JSON."""
         try:
             with open(self.state_file, "w", encoding="utf-8") as f:
                 json.dump(self.state, f, indent=2, ensure_ascii=False)
         except OSError as e:
             print(f"⚠️  Erreur sauvegarde state file: {e}")
 
-    def mark_analyzed(self, activity_id: str, activity_date: str = None):
+    def mark_analyzed(self, activity_id: str, activity_date: str | None = None):
         """
         Marquer une activité comme analysée
 
         Args:
             activity_id: ID de l'activité analysée
-            activity_date: Date de l'activité (ISO format)
+            activity_date: Date de l'activité (ISO format).
         """
         self.state["last_analyzed_activity_id"] = activity_id
         self.state["last_analyzed_date"] = datetime.now().isoformat()
@@ -138,7 +138,7 @@ class WorkflowState:
         self._save_state()
 
     def get_last_analyzed_id(self) -> str | None:
-        """Récupérer l'ID de la dernière activité analysée"""
+        """Récupérer l'ID de la dernière activité analysée."""
         return self.state.get("last_analyzed_activity_id")
 
     @staticmethod
@@ -183,7 +183,7 @@ class WorkflowState:
             all_activities: Liste de toutes les activités récentes (triées par date décroissante)
 
         Returns:
-            Liste des activités non analysées (filtrées pour exclure activités invalides)
+            Liste des activités non analysées (filtrées pour exclure activités invalides).
         """
         unanalyzed = []
         filtered_count = 0
@@ -212,7 +212,7 @@ class WorkflowState:
         return unanalyzed
 
     def get_stats(self) -> dict:
-        """Récupérer les statistiques du workflow"""
+        """Récupérer les statistiques du workflow."""
         return {
             "total_analyses": self.state.get("total_analyses", 0),
             "last_analyzed_id": self.state.get("last_analyzed_activity_id"),
@@ -221,7 +221,7 @@ class WorkflowState:
         }
 
     def is_activity_analyzed(self, activity_id: str) -> bool:
-        """Vérifier si une activité a déjà été analysée"""
+        """Vérifier si une activité a déjà été analysée."""
         # Vérifier dans l'historique
         history = self.state.get("history", [])
         return any(h["activity_id"] == activity_id for h in history)
@@ -229,7 +229,7 @@ class WorkflowState:
     # === TRACKING SESSIONS SPÉCIALES (PHASE 4) ===
 
     def mark_special_session_documented(self, session_id: str, session_type: str, date: str):
-        """Marquer une session spéciale comme documentée
+        """Marquer une session spéciale comme documentée.
 
         Args:
             session_id: ID session (ex: S072-07)
@@ -249,14 +249,14 @@ class WorkflowState:
         self._save_state()
 
     def is_special_session_documented(self, session_id: str, date: str) -> bool:
-        """Vérifier si session spéciale déjà documentée
+        """Vérifier si session spéciale déjà documentée.
 
         Args:
             session_id: ID session (ex: S072-07)
             date: Date session (YYYY-MM-DD)
 
         Returns:
-            True si déjà documentée, False sinon
+            True si déjà documentée, False sinon.
         """
         if not session_id or not date:
             return False
@@ -265,17 +265,17 @@ class WorkflowState:
         return key in self.state.get("documented_specials", {})
 
     def get_documented_specials(self) -> dict:
-        """Récupérer toutes les sessions spéciales documentées
+        """Récupérer toutes les sessions spéciales documentées.
 
         Returns:
-            Dict avec clés session_id_date et valeurs metadata
+            Dict avec clés session_id_date et valeurs metadata.
         """
         return self.state.get("documented_specials", {})
 
     # === PERSISTENCE FEEDBACK ATHLÈTE (PHASE 4) ===
 
     def save_session_feedback(self, activity_id: str, feedback: dict):
-        """Sauvegarder feedback athlète pour une session
+        """Sauvegarder feedback athlète pour une session.
 
         Args:
             activity_id: ID activité Intervals.icu
@@ -291,30 +291,30 @@ class WorkflowState:
         self._save_state()
 
     def get_session_feedback(self, activity_id: str) -> dict | None:
-        """Récupérer feedback existant pour une session
+        """Récupérer feedback existant pour une session.
 
         Args:
             activity_id: ID activité Intervals.icu
 
         Returns:
-            Dict avec 'feedback' et 'timestamp' ou None si absent
+            Dict avec 'feedback' et 'timestamp' ou None si absent.
         """
         feedbacks = self.state.get("feedbacks", {})
         return feedbacks.get(activity_id)
 
     def has_session_feedback(self, activity_id: str) -> bool:
-        """Vérifier si feedback existe pour cette session
+        """Vérifier si feedback existe pour cette session.
 
         Args:
             activity_id: ID activité Intervals.icu
 
         Returns:
-            True si feedback existe, False sinon
+            True si feedback existe, False sinon.
         """
         return activity_id in self.state.get("feedbacks", {})
 
     def reset(self):
-        """Réinitialiser l'état (debug/test)"""
+        """Réinitialiser l'état (debug/test)."""
         self.state = {
             "last_analyzed_activity_id": None,
             "last_analyzed_date": None,
@@ -325,7 +325,7 @@ class WorkflowState:
 
 
 def main():
-    """Test du module"""
+    """Test du module."""
     state = WorkflowState()
 
     print("📊 État actuel du workflow:")

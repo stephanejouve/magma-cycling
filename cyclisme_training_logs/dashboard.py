@@ -20,7 +20,7 @@ Examples:
     poetry run dashboard --week 2026-W02
 
     # Avec intelligence chargée
-    poetry run dashboard --intelligence ~/cyclisme-training-logs-data/intelligence/backfilled_2024-2025.json
+    poetry run dashboard --intelligence ~/cyclisme-training-logs-data/intelligence/backfilled_2024-2025.json.
 """
 
 import argparse
@@ -53,7 +53,7 @@ def print_current_week_stats(week: str) -> None:
 
     TODO: Integrate with real data from:
     - cyclisme_training_logs.analyzers.weekly_aggregator
-    - Intervals.icu API (activities, wellness)
+    - Intervals.icu API (activities, wellness).
     """
     print("║ 📊 Current Week                                          ║")
 
@@ -80,7 +80,7 @@ def print_ftp_progression(intelligence_path: Path | None) -> None:
 
     TODO: Integrate with:
     - cyclisme_training_logs.intelligence.training_intelligence
-    - cyclisme_training_logs.intelligence.pid_controller
+    - cyclisme_training_logs.intelligence.pid_controller.
     """
     print("║ 🎯 FTP Progression                                       ║")
 
@@ -131,7 +131,7 @@ def print_ftp_mock_data() -> None:
 def print_recent_learnings(intelligence_path: Path | None) -> None:
     """Print recent learnings.
 
-    TODO: Integrate with cyclisme_training_logs.intelligence.training_intelligence
+    TODO: Integrate with cyclisme_training_logs.intelligence.training_intelligence.
     """
     print("║ 🧠 Recent Learnings                                      ║")
 
@@ -178,7 +178,7 @@ def print_learnings_mock_data() -> None:
 def print_next_week_plan() -> None:
     """Print next week plan preview.
 
-    TODO: Integrate with cyclisme_training_logs.planning.planning_manager
+    TODO: Integrate with cyclisme_training_logs.planning.planning_manager.
     """
     print("║ 📅 Next Week Plan                                        ║")
 

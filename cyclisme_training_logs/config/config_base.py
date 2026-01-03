@@ -165,7 +165,7 @@ def get_data_config() -> DataRepoConfig:
         DataRepoConfig instance
 
     Raises:
-        FileNotFoundError: If data repository not found
+        FileNotFoundError: If data repository not found.
     """
     global _global_config
 
@@ -183,7 +183,7 @@ def set_data_config(config: DataRepoConfig | None):
     Useful for testing with temporary paths.
 
     Args:
-        config: DataRepoConfig instance or None to reset
+        config: DataRepoConfig instance or None to reset.
     """
     global _global_config
     _global_config = config
@@ -276,7 +276,7 @@ class AIProvidersConfig:
             >>> config.is_provider_configured('clipboard')
             True
             >>> config.is_provider_configured('claude_api')
-            False  # If CLAUDE_API_KEY not set
+            False  # If CLAUDE_API_KEY not set.
         """
         if provider == "clipboard":
             return True  # Always available
@@ -302,7 +302,7 @@ class AIProvidersConfig:
         Examples:
             >>> config = get_ai_config()
             >>> config.get_available_providers()
-            ['claude_api', 'mistral_api', 'clipboard']
+            ['claude_api', 'mistral_api', 'clipboard'].
         """
         available = []
         for provider in self.fallback_priority:
@@ -323,7 +323,7 @@ class AIProvidersConfig:
             >>> config = get_ai_config()
             >>> cfg = config.get_provider_config('claude_api')
             >>> print(cfg.get('claude_model'))
-            'claude-sonnet-4-20250514'
+            'claude-sonnet-4-20250514'.
         """
         return self._configs.get(provider, {})
 
@@ -336,7 +336,7 @@ class AIProvidersConfig:
         Examples:
             >>> config = get_ai_config()
             >>> config.get_fallback_chain()
-            ['claude_api', 'mistral_api', 'ollama', 'clipboard']
+            ['claude_api', 'mistral_api', 'ollama', 'clipboard'].
         """
         if not self.enable_fallback:
             return [self.default_provider]
@@ -356,7 +356,7 @@ def get_ai_config() -> AIProvidersConfig:
     Examples:
         >>> config = get_ai_config()
         >>> print(config.default_provider)
-        'clipboard'
+        'clipboard'.
     """
     global _ai_config_instance
     if _ai_config_instance is None:
@@ -369,7 +369,7 @@ def reset_ai_config():
 
     Examples:
         >>> reset_ai_config()
-        >>> config = get_ai_config()  # Creates new instance
+        >>> config = get_ai_config()  # Creates new instance.
     """
     global _ai_config_instance
     _ai_config_instance = None
@@ -396,7 +396,7 @@ class IntervalsConfig:
         >>> print(config.athlete_id)
         'i151223'
         >>> print(config.is_configured())
-        True
+        True.
     """
 
     def __init__(self):
@@ -419,7 +419,7 @@ class IntervalsConfig:
             ...     pass
             ... else:
             ...     # Fallback mode
-            ...     pass
+            ...     pass.
         """
         return bool(self.athlete_id and self.api_key)
 
@@ -434,7 +434,7 @@ class IntervalsConfig:
             >>> headers = config.get_headers()
             >>> # Use with requests
             >>> import requests
-            >>> response = requests.get(url, headers=headers)
+            >>> response = requests.get(url, headers=headers).
         """
         if not self.is_configured():
             raise ValueError("Intervals.icu API not configured")
@@ -462,7 +462,7 @@ def get_intervals_config() -> IntervalsConfig:
     Examples:
         >>> config = get_intervals_config()
         >>> print(config.athlete_id)
-        'i151223'
+        'i151223'.
     """
     global _intervals_config_instance
     if _intervals_config_instance is None:
@@ -475,7 +475,7 @@ def reset_intervals_config():
 
     Examples:
         >>> reset_intervals_config()
-        >>> config = get_intervals_config()  # Creates new instance
+        >>> config = get_intervals_config()  # Creates new instance.
     """
     global _intervals_config_instance
     _intervals_config_instance = None

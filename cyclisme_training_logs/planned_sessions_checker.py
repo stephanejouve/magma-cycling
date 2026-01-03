@@ -66,7 +66,7 @@ logger = logging.getLogger(__name__)
 
 
 class PlannedSessionsChecker:
-    """Détecteur de séances planifiées mais non exécutées"""
+    """Détecteur de séances planifiées mais non exécutées."""
 
     def __init__(self, athlete_id: str, api_key: str):
         """
@@ -74,7 +74,7 @@ class PlannedSessionsChecker:
 
         Args:
             athlete_id: ID athlète Intervals.icu
-            api_key: Clé API Intervals.icu
+            api_key: Clé API Intervals.icu.
         """
         self.api = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
         self.athlete_id = athlete_id
@@ -91,7 +91,7 @@ class PlannedSessionsChecker:
             category: Catégorie événement (défaut: WORKOUT)
 
         Returns:
-            Liste des workouts planifiés dans la période
+            Liste des workouts planifiés dans la période.
         """
         try:
             events = self.api.get_events(oldest=start_date, newest=end_date)
@@ -123,7 +123,7 @@ class PlannedSessionsChecker:
             tolerance_hours: Tolérance temporelle en heures
 
         Returns:
-            Activité correspondante ou None
+            Activité correspondante ou None.
         """
         workout_date = datetime.fromisoformat(workout["start_date_local"].replace("Z", "+00:00"))
         workout_name = workout.get("name", "").upper()
@@ -190,7 +190,7 @@ class PlannedSessionsChecker:
             exclude_future: Exclure workouts futurs (défaut: True)
 
         Returns:
-            Liste des séances sautées avec métadonnées
+            Liste des séances sautées avec métadonnées.
         """
         logger.info(f"\n{'=' * 70}")
         logger.info("DÉTECTION SÉANCES PLANIFIÉES SAUTÉES")
@@ -274,7 +274,7 @@ class PlannedSessionsChecker:
             metrics_pre: Métriques pré-séance (CTL/ATL/TSB)
 
         Returns:
-            Bloc markdown formaté
+            Bloc markdown formaté.
         """
         # Extraire données
         session_name = skipped_session["planned_name"]
@@ -297,7 +297,7 @@ class PlannedSessionsChecker:
         tsb_pre = metrics_pre_values["tsb"] if metrics_pre else "N/A"
 
         # Construire markdown
-        markdown = f"""### {session_name} [SAUTÉE]
+        markdown = f"""### {session_name} [SAUTÉE].
 Date : {date_str} ({day_of_week})
 
 #### Métriques Pré-séance
@@ -319,14 +319,14 @@ Date : {date_str} ({day_of_week})
 Séance planifiée non exécutée. Raison à documenter.
 Évaluer impact sur progression semaine et ajuster planning si nécessaire.
 
----
+---.
 """
         return markdown
 
 
 def main():
     """
-    Mode interactif : détection des séances sautées + réconciliation avec planning JSON local
+    Mode interactif : détection des séances sautées + réconciliation avec planning JSON local.
     """
     import json
     from pathlib import Path

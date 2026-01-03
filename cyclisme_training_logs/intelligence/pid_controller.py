@@ -124,7 +124,7 @@ class PIDController:
             >>> correction['error']
             40.0
             >>> correction['tss_adjustment'] > 0
-            True
+            True.
         """
         # Error calculation
         error = self.setpoint - measured_value

@@ -21,7 +21,7 @@ Metadata:
     Category: INTELLIGENCE
     Status: Production
     Priority: P1
-    Version: 1.0.0
+    Version: 1.0.0.
 """
 
 import argparse
@@ -61,7 +61,7 @@ class IntervalsICUBackfiller:
     Attributes:
         client: IntervalsClient API instance
         intelligence: TrainingIntelligence instance
-        athlete_id: Intervals.icu athlete ID
+        athlete_id: Intervals.icu athlete ID.
     """
 
     def __init__(self, athlete_id: str, api_key: str):
@@ -106,7 +106,7 @@ class IntervalsICUBackfiller:
             end_date: End date (YYYY-MM-DD)
 
         Returns:
-            List of wellness dicts (one per day)
+            List of wellness dicts (one per day).
         """
         print(f"😴 Fetching wellness data from {start_date} to {end_date}...")
 
@@ -163,7 +163,7 @@ class IntervalsICUBackfiller:
         intensity and duration patterns.
 
         Args:
-            activities: List of activities
+            activities: List of activities.
         """
         print("\n🍭 Analyzing Sweet-Spot sessions...")
 
@@ -221,7 +221,7 @@ class IntervalsICUBackfiller:
 
         Args:
             activities: List of activities
-            wellness_data: List of wellness entries
+            wellness_data: List of wellness entries.
         """
         print("\n😴 Analyzing VO2/sleep correlation...")
 
@@ -298,7 +298,7 @@ class IntervalsICUBackfiller:
         planned intensity outdoors.
 
         Args:
-            activities: List of activities
+            activities: List of activities.
         """
         print("\n🚴 Analyzing outdoor discipline...")
 
@@ -574,7 +574,7 @@ class IntervalsICUBackfiller:
         Args:
             start_date: Start date (YYYY-MM-DD)
             end_date: End date (YYYY-MM-DD)
-            output_path: Path to save intelligence JSON
+            output_path: Path to save intelligence JSON.
         """
         print(f"\n🚀 Starting backfill: {start_date} → {end_date}")
         print(f"📁 Output: {output_path}")

@@ -22,7 +22,7 @@ Examples:
         # Prompt copié dans clipboard, instructions affichées
 
 Author: Claude Code
-Created: 2025-12-09
+Created: 2025-12-09.
 """
 
 import logging
@@ -46,7 +46,7 @@ def _copy_to_clipboard_native(text: str) -> bool:
     Notes:
         - macOS: pbcopy
         - Linux: xclip or xsel
-        - Windows: clip
+        - Windows: clip.
     """
     system = platform.system()
 
@@ -97,7 +97,7 @@ def _copy_to_clipboard_pyperclip(text: str) -> bool:
         text: Text to copy
 
     Returns:
-        True if successful, False otherwise
+        True if successful, False otherwise.
     """
     try:
         import pyperclip
@@ -121,7 +121,7 @@ def copy_to_clipboard(text: str) -> bool:
     Notes:
         - Tries native OS commands first (pbcopy, xclip, clip)
         - Falls back to pyperclip if available
-        - Returns False if all methods fail
+        - Returns False if all methods fail.
     """
     # Try native first (more reliable on macOS)
     if _copy_to_clipboard_native(text):
@@ -188,7 +188,7 @@ class ClipboardAnalyzer(AIAnalyzer):
             - Copie prompt avec native OS commands (pbcopy, xclip, clip)
             - Fallback pyperclip si disponible
             - Retourne instructions workflow manuel
-            - Compatible macOS, Linux, Windows
+            - Compatible macOS, Linux, Windows.
         """
         logger.info(f"Copying prompt to clipboard ({len(prompt)} chars)")
 
@@ -315,7 +315,7 @@ Le prompt inclut:
         Notes:
             - Tests native commands (pbcopy, xclip, clip)
             - Falls back to pyperclip if available
-            - Returns False if all methods fail
+            - Returns False if all methods fail.
         """
         # Test clipboard with short text
         return copy_to_clipboard("test")

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script de diagnostic pour comprendre pourquoi le matching échoue
+Script de diagnostic pour comprendre pourquoi le matching échoue.
 """
 
 import json
@@ -15,7 +15,7 @@ from cyclisme_training_logs.planned_sessions_checker import PlannedSessionsCheck
 
 
 def load_credentials():
-    """Charger credentials depuis .intervals_config.json"""
+    """Charger credentials depuis .intervals_config.json."""
     config_path = Path.home() / ".intervals_config.json"
     with open(config_path) as f:
         config = json.load(f)
@@ -23,8 +23,7 @@ def load_credentials():
 
 
 def diagnose():
-    """Diagnostic détaillé du matching"""
-
+    """Diagnostic détaillé du matching."""
     print("\n" + "=" * 70)
     print("  DIAGNOSTIC DÉTAILLÉ MATCHING WORKOUTS ↔ ACTIVITÉS")
     print("=" * 70)

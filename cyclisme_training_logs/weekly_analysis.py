@@ -44,7 +44,7 @@ Ce script génère automatiquement les 6 fichiers markdown du rapport hebdomadai
 
 Usage (DEPRECATED):
     python3 cyclisme_training_logs/weekly_analysis.py --week-id S068
-    python3 cyclisme_training_logs/weekly_analysis.py --week-id S068 --start-date 2024-11-18
+    python3 cyclisme_training_logs/weekly_analysis.py --week-id S068 --start-date 2024-11-18.
 """
 
 import argparse
@@ -54,19 +54,20 @@ import subprocess
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 # Import du client API unifié
 from cyclisme_training_logs.api.intervals_client import IntervalsClient
 
 
 class WeeklyAnalysis:
-    """Orchestrateur de l'analyse hebdomadaire"""
+    """Orchestrateur de l'analyse hebdomadaire."""
 
     def __init__(self, week_number: str, start_date: str | None = None):
         """
         Args:
             week_number: Format SXXX (ex: S068)
-            start_date: Format YYYY-MM-DD (optionnel, auto si None)
+            start_date: Format YYYY-MM-DD (optionnel, auto si None).
         """
         self.week_number = week_number
         self.week_int = int(week_number[1:])  # Ex: S068 -> 68
@@ -110,12 +111,12 @@ class WeeklyAnalysis:
             print("⚠️  Config Intervals.icu non trouvée (~/.intervals_config.json)")
 
         # Données collectées
-        self.workouts = []
-        self.metrics = {}
-        self.context_files = {}
+        self.workouts: list[dict[str, Any]] = []
+        self.metrics: dict[str, Any] = {}
+        self.context_files: dict[str, str] = {}
 
     def _calculate_week_start(self) -> datetime:
-        """Calculer la date de début de la semaine basé sur le numéro"""
+        """Calculer la date de début de la semaine basé sur le numéro."""
         # Pour l'instant, utiliser une date de référence (à ajuster)
         # Exemple: S001 = 2024-01-01 (lundi)
         reference_date = datetime(2024, 1, 1)  # S001 commence le 1er janvier 2024
@@ -123,11 +124,11 @@ class WeeklyAnalysis:
         return reference_date + timedelta(weeks=weeks_offset)
 
     def _next_week(self) -> str:
-        """Calculer le numéro de la semaine suivante"""
+        """Calculer le numéro de la semaine suivante."""
         return f"S{self.week_int + 1:03d}"
 
     def collect_week_workouts(self) -> list[dict]:
-        """Extraire les séances de la semaine depuis workouts-history.md"""
+        """Extraire les séances de la semaine depuis workouts-history.md."""
         history_file = self.logs_dir / "workouts-history.md"
 
         if not history_file.exists():
@@ -195,7 +196,7 @@ class WeeklyAnalysis:
         return workouts
 
     def collect_week_metrics(self) -> dict:
-        """Collecter métriques évolution via API"""
+        """Collecter métriques évolution via API."""
         if not self.api:
             print("⚠️  API non disponible, skip métriques")
             return {}
@@ -292,7 +293,7 @@ class WeeklyAnalysis:
             return self._mock_metrics()
 
     def _mock_metrics(self) -> dict:
-        """Retourner des métriques mockées en cas d'erreur API"""
+        """Retourner des métriques mockées en cas d'erreur API."""
         return {
             "start": {"ctl": 0, "atl": 0, "tsb": 0, "weight": 0},
             "end": {"ctl": 0, "atl": 0, "tsb": 0, "weight": 0},
@@ -301,7 +302,7 @@ class WeeklyAnalysis:
         }
 
     def collect_context_files(self) -> dict[str, str]:
-        """Charger fichiers contexte projet"""
+        """Charger fichiers contexte projet."""
         print("📚 Chargement des fichiers contexte...")
 
         context = {}
@@ -327,8 +328,7 @@ class WeeklyAnalysis:
         return context
 
     def generate_weekly_prompt(self) -> str:
-        """Générer le prompt complet pour Claude"""
-
+        """Générer le prompt complet pour Claude."""
         next_week = f"S{int(self.week_number[1:]) + 1:03d}"
 
         # Formater les séances
@@ -340,7 +340,7 @@ class WeeklyAnalysis:
         start_date_str = self.start_date.strftime("%d/%m/%Y")
         end_date_str = self.end_date.strftime("%d/%m/%Y")
 
-        prompt = f"""# Analyse Hebdomadaire Cyclisme - {self.week_number}
+        prompt = f"""# Analyse Hebdomadaire Cyclisme - {self.week_number}.
 
 ## Contexte Athlète
 {self.context_files.get('project_prompt', '[Project prompt non chargé]')}
@@ -440,7 +440,7 @@ Commence maintenant l'analyse !
         return prompt
 
     def parse_claude_response(self, response: str) -> dict[str, str]:
-        """Parser la réponse de Claude en 6 fichiers
+        """Parser la réponse de Claude en 6 fichiers.
 
         Args:
             response: La réponse complète de Claude
@@ -450,7 +450,7 @@ Commence maintenant l'analyse !
         """
         files = {}
         current_file = None
-        current_content = []
+        current_content: list[str] = []
 
         lines = response.split("\n")
 
@@ -481,8 +481,7 @@ Commence maintenant l'analyse !
         return files
 
     def validate_generated_files(self, files: dict[str, str]) -> bool:
-        """Valider les fichiers générés"""
-
+        """Valider les fichiers générés."""
         next_week = f"S{int(self.week_number[1:]) + 1:03d}"
 
         expected_files = {
@@ -525,9 +524,8 @@ Commence maintenant l'analyse !
         return True
 
     def git_commit(self):
-        """Commit automatique des fichiers générés"""
-
-        commit_message = f"""Rapport Hebdomadaire {self.week_number}
+        """Commit automatique des fichiers générés."""
+        commit_message = f"""Rapport Hebdomadaire {self.week_number}.
 
 Période : {self.start_date.strftime('%d/%m/%Y')} → {self.end_date.strftime('%d/%m/%Y')}
 Séances : {len(self.workouts)}
@@ -542,7 +540,7 @@ Fichiers générés :
 
 🤖 Generated with Claude Code
 
-Co-Authored-By: Claude <noreply@anthropic.com>
+Co-Authored-By: Claude <noreply@anthropic.com>.
 """
 
         try:
@@ -561,7 +559,6 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
     def run(self):
         """Workflow complet interactif"""
-
         # DEPRECATION WARNING
         print("\n" + "=" * 70)
         print("⚠️  DEPRECATION WARNING")
@@ -741,7 +738,7 @@ Exemples:
   python3 cyclisme_training_logs/weekly_analysis.py --week-id S068
 
   # Analyse avec date de début spécifique
-  python3 cyclisme_training_logs/weekly_analysis.py --week-id S068 --start-date 2024-11-18
+  python3 cyclisme_training_logs/weekly_analysis.py --week-id S068 --start-date 2024-11-18.
 """,
     )
 

@@ -86,7 +86,7 @@ class IntervalsFormatValidator:
             workout_text: Texte workout à valider
 
         Returns:
-            Tuple (is_valid, errors, warnings)
+            Tuple (is_valid, errors, warnings).
         """
         self.errors = []
         self.warnings = []
@@ -223,18 +223,18 @@ class IntervalsFormatValidator:
         Générer exemples workouts corrects
 
         Returns:
-            Dict avec exemples valides
+            Dict avec exemples valides.
         """
         return {
-            "simple": """Warmup
+            "simple": """Warmup.
 - 10m ramp 50-65% 85rpm
 
 Main set
 - 20m 75% 88rpm
 
 Cooldown
-- 10m ramp 65-50% 85rpm""",
-            "repeated_block": """Warmup
+- 10m ramp 65-50% 85rpm.""",
+            "repeated_block": """Warmup.
 - 10m ramp 50-75% 85rpm
 
 Main set 3x
@@ -242,8 +242,8 @@ Main set 3x
 - 4m 62% 85rpm
 
 Cooldown
-- 10m ramp 75-50% 85rpm""",
-            "multiple_blocks": """Warmup
+- 10m ramp 75-50% 85rpm.""",
+            "multiple_blocks": """Warmup.
 - 15m ramp 50-75% 85-90rpm
 
 Main set 2x
@@ -255,12 +255,12 @@ Block 3x
 - 2m 60% 85rpm
 
 Cooldown
-- 12m ramp 75-50% 85rpm""",
+- 12m ramp 75-50% 85rpm.""",
         }
 
 
 def main():
-    """Test du validateur"""
+    """Test du validateur."""
     validator = IntervalsFormatValidator()
 
     # Test cas invalide 1
@@ -268,7 +268,7 @@ def main():
     print("TEST 1: Format incorrect (répétition dans intervalle)")
     print("=" * 70)
 
-    invalid1 = """Warmup
+    invalid1 = """Warmup.
 - 10m ramp 50-65%
 
 Main set
@@ -276,7 +276,7 @@ Main set
 - 2m 60%
 
 Cooldown
-- 10m ramp 65-50%"""
+- 10m ramp 65-50%."""
 
     is_valid, errors, warnings = validator.validate_workout(invalid1)
     print(f"Valid: {is_valid}")
@@ -289,7 +289,7 @@ Cooldown
     print("TEST 2: Format incorrect (section non standard avec répétition)")
     print("=" * 70)
 
-    invalid2 = """Warmup
+    invalid2 = """Warmup.
 - 10m ramp 50-65%
 
 Test capacité 3x
@@ -297,7 +297,7 @@ Test capacité 3x
 - 3m 60%
 
 Cooldown
-- 10m ramp 65-50%"""
+- 10m ramp 65-50%."""
 
     is_valid, errors, warnings = validator.validate_workout(invalid2)
     print(f"Valid: {is_valid}")
@@ -313,7 +313,7 @@ Cooldown
     print("TEST 3: Format correct")
     print("=" * 70)
 
-    valid = """Warmup
+    valid = """Warmup.
 - 10m ramp 50-75% 85rpm
 
 Main set 3x
@@ -321,7 +321,7 @@ Main set 3x
 - 4m 62% 85rpm
 
 Cooldown
-- 10m ramp 75-50% 85rpm"""
+- 10m ramp 75-50% 85rpm."""
 
     is_valid, errors, warnings = validator.validate_workout(valid)
     print(f"Valid: {is_valid}")

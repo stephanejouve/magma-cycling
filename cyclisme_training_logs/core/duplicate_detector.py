@@ -59,6 +59,7 @@ Metadata:
 import logging
 import re
 from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -73,13 +74,13 @@ class DuplicateDetectedError(Exception):
 
 
 class DuplicateDetector:
-    """Détection rapide des doublons dans workouts-history.md"""
+    """Détection rapide des doublons dans workouts-history.md."""
 
     def __init__(self, history_file: Path, check_window: int = 50):
         """
         Args:
             history_file: Chemin vers workouts-history.md
-            check_window: Nombre d'entrées à scanner (0 = tout le fichier)
+            check_window: Nombre d'entrées à scanner (0 = tout le fichier).
         """
         self.history_file = history_file
         self.check_window = check_window
@@ -90,7 +91,7 @@ class DuplicateDetector:
         Scan rapide des N dernières entrées pour détecter doublons.
 
         Returns:
-            Liste des doublons détectés avec métadata
+            Liste des doublons détectés avec métadata.
         """
         if not self.history_file.exists():
             return []
@@ -110,7 +111,7 @@ class DuplicateDetector:
             entries = entries[: self.check_window]
 
         # Détecter doublons
-        seen = {}
+        seen: dict[str, dict[str, Any]] = {}
         duplicates = []
 
         for entry in entries:
@@ -137,7 +138,7 @@ class DuplicateDetector:
             lines: Liste des lignes du fichier
 
         Returns:
-            (start_index, end_index) de l'entrée complète
+            (start_index, end_index) de l'entrée complète.
         """
         start = line_index
 
@@ -158,7 +159,7 @@ class DuplicateDetector:
             duplicates: Liste des doublons à supprimer
 
         Returns:
-            Nombre de lignes supprimées
+            Nombre de lignes supprimées.
         """
         if not duplicates:
             return 0
@@ -203,7 +204,7 @@ def check_and_handle_duplicates(
         check_window: Nombre d'entrées à scanner
 
     Raises:
-        DuplicateDetectedError: Si doublons détectés et auto_fix=False
+        DuplicateDetectedError: Si doublons détectés et auto_fix=False.
     """
     detector = DuplicateDetector(history_file, check_window)
     duplicates = detector.quick_scan()

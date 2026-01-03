@@ -26,7 +26,7 @@ Examples:
         })
 
 Author: Claude Code
-Created: 2025-12-09
+Created: 2025-12-09.
 """
 
 import logging
@@ -212,7 +212,7 @@ class AIProviderFactory:
         Examples:
             >>> providers = AIAnalyzerFactory.get_available_providers()
             >>> print(providers['clipboard'])
-            'Manual copy/paste (free, no API)'
+            'Manual copy/paste (free, no API)'.
         """
         return {
             "clipboard": "Manual copy/paste (free, no API) - Default",
@@ -239,7 +239,7 @@ class AIProviderFactory:
             ...     {'claude_api_key': 'sk-ant-xxx'}
             ... )
             >>> print(is_valid)
-            True
+            True.
         """
         provider = provider.lower().strip()
 

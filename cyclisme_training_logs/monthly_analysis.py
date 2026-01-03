@@ -23,7 +23,7 @@ Examples:
         poetry run monthly-analysis --month 2025-12 --output reports/dec-2025.md
 
 Author: Claude Code
-Created: 2026-01-01
+Created: 2026-01-01.
 """
 
 import argparse
@@ -75,7 +75,7 @@ class MonthlyAnalyzer:
         Find all weekly planning files that overlap with the target month.
 
         Returns:
-            List of paths to weekly planning JSON files
+            List of paths to weekly planning JSON files.
         """
         if not self.planning_dir.exists():
             return []
@@ -127,7 +127,7 @@ class MonthlyAnalyzer:
         Aggregate monthly statistics from weekly data.
 
         Returns:
-            Dictionary with monthly metrics
+            Dictionary with monthly metrics.
         """
         stats = {
             "total_weeks": len(weekly_data),
@@ -209,7 +209,7 @@ class MonthlyAnalyzer:
         """Generate markdown report."""
         month_name = self.month_date.strftime("%B %Y")
 
-        report = f"""# 📊 Analyse Mensuelle - {month_name}
+        report = f"""# 📊 Analyse Mensuelle - {month_name}.
 
 ## Résumé Exécutif
 
@@ -233,7 +233,7 @@ class MonthlyAnalyzer:
 ## 📈 Progression Hebdomadaire
 
 | Semaine | Dates | TSS Cible | TSS Réalisé | % Réalisation |
-|---------|-------|-----------|-------------|---------------|
+|---------|-------|-----------|-------------|---------------|.
 """
 
         for week in stats["tss_by_week"]:
@@ -285,7 +285,6 @@ class MonthlyAnalyzer:
         month_name = self.month_date.strftime("%B %Y")
 
         prompt = f"""Analyse ce mois d'entraînement cyclisme ({month_name}) et fournis des insights :
-
 📊 DONNÉES MENSUELLES :
 - {stats['total_weeks']} semaines analysées
 - TSS Cible : {stats['tss_target_total']}

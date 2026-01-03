@@ -108,7 +108,7 @@ class TimelineInjector:
 
         Args:
             history_file: Chemin vers workouts-history.md
-            check_duplicates: Vérifier duplicates avant injection
+            check_duplicates: Vérifier duplicates avant injection.
         """
         self.history_file = Path(history_file).expanduser()
         self.check_duplicates = check_duplicates
@@ -124,7 +124,7 @@ class TimelineInjector:
             entry: Contenu de l'entrée workout (markdown)
 
         Returns:
-            Date extraite ou None si non trouvée
+            Date extraite ou None si non trouvée.
         """
         match = self.DATE_PATTERN.search(entry)
         if match:
@@ -143,7 +143,7 @@ class TimelineInjector:
             target_date: Date du workout à insérer
 
         Returns:
-            Index de ligne où insérer (0 = début, len = fin)
+            Index de ligne où insérer (0 = début, len = fin).
         """
         # Déterminer ordre existant (chronologique ou reverse)
         dates_found = []
@@ -193,7 +193,7 @@ class TimelineInjector:
             entry: Entrée à vérifier
 
         Returns:
-            True si duplicate détecté
+            True si duplicate détecté.
         """
         # Extraire identifiant unique de l'entrée (ex: S073-01)
         entry_id_match = re.search(r"###\s+(S\d+-\d+)", entry)
@@ -217,7 +217,7 @@ class TimelineInjector:
             workout_date: Date du workout (extraite si None)
 
         Returns:
-            InjectionResult avec succès/erreur
+            InjectionResult avec succès/erreur.
         """
         # Extraire date si non fournie
         if workout_date is None:
@@ -274,7 +274,7 @@ class TimelineInjector:
             entries: Liste de (workout_entry, workout_date)
 
         Returns:
-            Liste de InjectionResult pour chaque entrée
+            Liste de InjectionResult pour chaque entrée.
         """
         results = []
 
@@ -305,7 +305,7 @@ def inject_workout_chronologically(
         workout_date: Date workout (extraite si None)
 
     Returns:
-        InjectionResult
+        InjectionResult.
     """
     injector = TimelineInjector(history_file)
     return injector.inject_chronologically(workout_entry, workout_date)

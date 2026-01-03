@@ -14,7 +14,7 @@ Metadata:
     Status: Production
     Priority: P1
     Version: 2.1.0
-    Sprint: R4
+    Sprint: R4.
 """
 
 import json
@@ -31,7 +31,7 @@ class AnalysisLevel(Enum):
     Attributes:
         DAILY: Post-session analysis
         WEEKLY: Week summary (6 markdown files)
-        MONTHLY: Strategic trends
+        MONTHLY: Strategic trends.
     """
 
     DAILY = "daily"
@@ -48,7 +48,7 @@ class ConfidenceLevel(Enum):
     - HIGH: 6-10 observations
     - VALIDATED: 10+ observations, official protocol
 
-    Progression: LOW → MEDIUM → HIGH → VALIDATED
+    Progression: LOW → MEDIUM → HIGH → VALIDATED.
     """
 
     LOW = "low"
@@ -217,7 +217,7 @@ class Pattern:
         - 1-2 observations → LOW
         - 3-5 observations → MEDIUM
         - 6-10 observations → HIGH
-        - 10+ observations → VALIDATED
+        - 10+ observations → VALIDATED.
         """
         if self.frequency >= 10:
             self.confidence = ConfidenceLevel.VALIDATED
@@ -586,7 +586,7 @@ class TrainingIntelligence:
 
         Example:
             >>> intelligence = TrainingIntelligence()
-            >>> synthesis = intelligence.get_weekly_synthesis(week_num=2)
+            >>> synthesis = intelligence.get_weekly_synthesis(week_num=2).
         """
         high_confidence_learnings = [
             learning
@@ -629,7 +629,7 @@ class TrainingIntelligence:
 
         Example:
             >>> intelligence = TrainingIntelligence()
-            >>> trends = intelligence.get_monthly_trends(month=1, year=2026)
+            >>> trends = intelligence.get_monthly_trends(month=1, year=2026).
         """
         validated_learnings = [
             learning for learning in self.learnings.values() if learning.validated
