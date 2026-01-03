@@ -26,6 +26,11 @@ Metadata:
     Sprint: R4
 """
 
+from cyclisme_training_logs.intelligence.pid_controller import (
+    PIDController,
+    PIDState,
+    compute_pid_gains_from_intelligence,
+)
 from cyclisme_training_logs.intelligence.training_intelligence import (
     AnalysisLevel,
     ConfidenceLevel,
@@ -33,11 +38,6 @@ from cyclisme_training_logs.intelligence.training_intelligence import (
     ProtocolAdaptation,
     TrainingIntelligence,
     TrainingLearning,
-)
-from cyclisme_training_logs.intelligence.pid_controller import (
-    PIDController,
-    PIDState,
-    compute_pid_gains_from_intelligence,
 )
 
 __all__ = [

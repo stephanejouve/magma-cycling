@@ -52,17 +52,17 @@ class AthleteFeedbackCollector:
             print()
 
         # Nom de la séance
-        if self.activity_context.get('name'):
+        if self.activity_context.get("name"):
             print(f"🚴 {self.activity_context['name']}")
 
         # Détails ligne par ligne (plus lisible)
-        if self.activity_context.get('date'):
+        if self.activity_context.get("date"):
             print(f"📅 Date : {self.activity_context['date']}")
-        if self.activity_context.get('duration_min'):
+        if self.activity_context.get("duration_min"):
             print(f"⏱️  Durée : {self.activity_context['duration_min']}min")
-        if self.activity_context.get('tss'):
+        if self.activity_context.get("tss"):
             print(f"📈 TSS : {self.activity_context['tss']:.0f}")
-        if self.activity_context.get('if_value'):
+        if self.activity_context.get("if_value"):
             print(f"💪 IF : {self.activity_context['if_value']:.2f}")
 
         print("\n" + "=" * 60)
@@ -134,7 +134,7 @@ class AthleteFeedbackCollector:
             if not response:
                 return default
 
-            return response in ['o', 'oui', 'y', 'yes']
+            return response in ["o", "oui", "y", "yes"]
         except KeyboardInterrupt:
             print("\n❌ Annulé")
             sys.exit(0)
@@ -148,10 +148,10 @@ class AthleteFeedbackCollector:
         self.display_activity_context()
 
         feedback = {
-            'timestamp': datetime.now().isoformat(),
-            'mode': 'quick',
-            'rpe': self.prompt_rpe(),
-            'ressenti_general': self.prompt_text("💭 Ressenti général en quelques mots"),
+            "timestamp": datetime.now().isoformat(),
+            "mode": "quick",
+            "rpe": self.prompt_rpe(),
+            "ressenti_general": self.prompt_text("💭 Ressenti général en quelques mots"),
         }
 
         return feedback
@@ -165,36 +165,32 @@ class AthleteFeedbackCollector:
         self.display_activity_context()
 
         feedback = {
-            'timestamp': datetime.now().isoformat(),
-            'mode': 'full',
+            "timestamp": datetime.now().isoformat(),
+            "mode": "full",
         }
 
         # RPE
-        feedback['rpe'] = self.prompt_rpe()
+        feedback["rpe"] = self.prompt_rpe()
 
         # Ressenti général
-        feedback['ressenti_general'] = self.prompt_text(
+        feedback["ressenti_general"] = self.prompt_text(
             "💭 Ressenti général (fatigue, forme, motivation)"
         )
 
         # Difficultés
         if self.prompt_yes_no("❓ Difficultés rencontrées durant la séance ?", default=False):
-            feedback['difficultes'] = self.prompt_multiline(
-                "📝 Décrivez les difficultés"
-            )
+            feedback["difficultes"] = self.prompt_multiline("📝 Décrivez les difficultés")
         else:
-            feedback['difficultes'] = None
+            feedback["difficultes"] = None
 
         # Points positifs
         if self.prompt_yes_no("✨ Points positifs à noter ?", default=True):
-            feedback['points_positifs'] = self.prompt_multiline(
-                "📝 Décrivez les points positifs"
-            )
+            feedback["points_positifs"] = self.prompt_multiline("📝 Décrivez les points positifs")
         else:
-            feedback['points_positifs'] = None
+            feedback["points_positifs"] = None
 
         # Contexte particulier
-        feedback['contexte'] = self.prompt_text(
+        feedback["contexte"] = self.prompt_text(
             "🔍 Contexte particulier ? (sommeil, nutrition, stress, météo...)"
         )
 
@@ -209,7 +205,7 @@ class AthleteFeedbackCollector:
             "Bonne récupération",
             "Fatigue générale",
             "Tension/raideur",
-            "Autre"
+            "Autre",
         ]
 
         for opt in options:
@@ -221,10 +217,10 @@ class AthleteFeedbackCollector:
                 else:
                     sensations.append(opt)
 
-        feedback['sensations_physiques'] = sensations if sensations else None
+        feedback["sensations_physiques"] = sensations if sensations else None
 
         # Notes libres
-        feedback['notes_libres'] = self.prompt_multiline(
+        feedback["notes_libres"] = self.prompt_multiline(
             "📝 Notes libres / Observations additionnelles"
         )
 
@@ -232,7 +228,7 @@ class AthleteFeedbackCollector:
 
     def save_feedback(self, feedback):
         """Sauvegarder le feedback"""
-        with open(self.feedback_file, 'w', encoding='utf-8') as f:
+        with open(self.feedback_file, "w", encoding="utf-8") as f:
             json.dump(feedback, f, ensure_ascii=False, indent=2)
 
         print("\n✅ Feedback sauvegardé !")
@@ -243,7 +239,7 @@ class AthleteFeedbackCollector:
         if not self.feedback_file.exists():
             return None
 
-        with open(self.feedback_file, 'r', encoding='utf-8') as f:
+        with open(self.feedback_file, encoding="utf-8") as f:
             return json.load(f)
 
     def clear_feedback(self):
@@ -260,109 +256,76 @@ class AthleteFeedbackCollector:
         print("📋 RÉSUMÉ DU FEEDBACK")
         print("=" * 60)
 
-        if feedback.get('rpe'):
+        if feedback.get("rpe"):
             print(f"\n📊 RPE : {feedback['rpe']}/10")
 
-        if feedback.get('ressenti_general'):
+        if feedback.get("ressenti_general"):
             print(f"\n💭 Ressenti : {feedback['ressenti_general']}")
 
-        if feedback.get('difficultes'):
-            print(f"\n❌ Difficultés :")
-            for line in feedback['difficultes'].split('\n'):
+        if feedback.get("difficultes"):
+            print("\n❌ Difficultés :")
+            for line in feedback["difficultes"].split("\n"):
                 print(f"   {line}")
 
-        if feedback.get('points_positifs'):
-            print(f"\n✅ Points positifs :")
-            for line in feedback['points_positifs'].split('\n'):
+        if feedback.get("points_positifs"):
+            print("\n✅ Points positifs :")
+            for line in feedback["points_positifs"].split("\n"):
                 print(f"   {line}")
 
-        if feedback.get('contexte'):
+        if feedback.get("contexte"):
             print(f"\n🔍 Contexte : {feedback['contexte']}")
 
-        if feedback.get('sensations_physiques'):
+        if feedback.get("sensations_physiques"):
             print(f"\n🦵 Sensations : {', '.join(feedback['sensations_physiques'])}")
 
-        if feedback.get('notes_libres'):
-            print(f"\n📝 Notes libres :")
-            for line in feedback['notes_libres'].split('\n'):
+        if feedback.get("notes_libres"):
+            print("\n📝 Notes libres :")
+            for line in feedback["notes_libres"].split("\n"):
                 print(f"   {line}")
 
         print("\n" + "=" * 60)
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Collecter le retour athlète après séance"
-    )
+    parser = argparse.ArgumentParser(description="Collecter le retour athlète après séance")
 
     parser.add_argument(
-        '--quick',
-        action='store_true',
-        help="Mode rapide (RPE + ressenti uniquement)"
+        "--quick", action="store_true", help="Mode rapide (RPE + ressenti uniquement)"
     )
+    parser.add_argument("--clear", action="store_true", help="Effacer le feedback en attente")
+    parser.add_argument("--show", action="store_true", help="Afficher le feedback en attente")
     parser.add_argument(
-        '--clear',
-        action='store_true',
-        help="Effacer le feedback en attente"
+        "--temp-dir",
+        default=".athlete_feedback",
+        help="Répertoire temporaire (défaut: .athlete_feedback/)",
     )
-    parser.add_argument(
-        '--show',
-        action='store_true',
-        help="Afficher le feedback en attente"
-    )
-    parser.add_argument(
-        '--temp-dir',
-        default='.athlete_feedback',
-        help="Répertoire temporaire (défaut: .athlete_feedback/)"
-    )
-    parser.add_argument(
-        '--activity-name',
-        help="Nom de la séance en cours d'analyse (mode batch)"
-    )
-    parser.add_argument(
-        '--activity-date',
-        help="Date de la séance (ex: 2025-11-21)"
-    )
-    parser.add_argument(
-        '--activity-duration',
-        type=int,
-        help="Durée de la séance en minutes"
-    )
-    parser.add_argument(
-        '--activity-tss',
-        type=float,
-        help="TSS de la séance"
-    )
-    parser.add_argument(
-        '--activity-if',
-        type=float,
-        help="IF (Intensity Factor) de la séance"
-    )
-    parser.add_argument(
-        '--batch-position',
-        help="Position dans le batch (format: 1/3, 2/3, etc.)"
-    )
+    parser.add_argument("--activity-name", help="Nom de la séance en cours d'analyse (mode batch)")
+    parser.add_argument("--activity-date", help="Date de la séance (ex: 2025-11-21)")
+    parser.add_argument("--activity-duration", type=int, help="Durée de la séance en minutes")
+    parser.add_argument("--activity-tss", type=float, help="TSS de la séance")
+    parser.add_argument("--activity-if", type=float, help="IF (Intensity Factor) de la séance")
+    parser.add_argument("--batch-position", help="Position dans le batch (format: 1/3, 2/3, etc.)")
 
     args = parser.parse_args()
 
     # Construire le contexte activité si fourni
     activity_context = {}
     if args.activity_name:
-        activity_context['name'] = args.activity_name
+        activity_context["name"] = args.activity_name
     if args.activity_date:
-        activity_context['date'] = args.activity_date
+        activity_context["date"] = args.activity_date
     if args.activity_duration:
-        activity_context['duration_min'] = args.activity_duration
+        activity_context["duration_min"] = args.activity_duration
     if args.activity_tss:
-        activity_context['tss'] = args.activity_tss
+        activity_context["tss"] = args.activity_tss
     if args.activity_if:
-        activity_context['if_value'] = args.activity_if
+        activity_context["if_value"] = args.activity_if
 
     # Parser batch position (format: "1/3")
     batch_position = None
-    if args.batch_position and '/' in args.batch_position:
+    if args.batch_position and "/" in args.batch_position:
         try:
-            current, total = args.batch_position.split('/')
+            current, total = args.batch_position.split("/")
             batch_position = (int(current), int(total))
         except (ValueError, AttributeError):
             pass
@@ -370,7 +333,7 @@ def main():
     collector = AthleteFeedbackCollector(
         temp_dir=args.temp_dir,
         activity_context=activity_context if activity_context else None,
-        batch_position=batch_position
+        batch_position=batch_position,
     )
 
     # Effacer feedback
@@ -414,5 +377,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

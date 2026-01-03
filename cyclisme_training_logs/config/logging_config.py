@@ -35,7 +35,6 @@ import os
 import sys
 from typing import Optional
 
-
 # Log level mapping
 LOG_LEVELS = {
     "DEBUG": logging.DEBUG,
@@ -54,9 +53,7 @@ LOG_FORMATS = {
 
 
 def setup_logging(
-    level: Optional[str] = None,
-    format_name: Optional[str] = None,
-    force: bool = False
+    level: Optional[str] = None, format_name: Optional[str] = None, force: bool = False
 ) -> None:
     """Setup logging configuration.
 
@@ -95,9 +92,7 @@ def setup_logging(
         format=log_format,
         datefmt="%Y-%m-%d %H:%M:%S",
         force=force,
-        handlers=[
-            logging.StreamHandler(sys.stdout)
-        ]
+        handlers=[logging.StreamHandler(sys.stdout)],
     )
 
     # Log configuration (only at DEBUG level)

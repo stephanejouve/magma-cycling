@@ -80,10 +80,10 @@ Le commit git a été skippé (--skip-git).
 def main():
     """Generate analysis prompt and copy to clipboard."""
     # ... prompt generation code ...
-    
+
     # Copy to clipboard
     pyperclip.copy(prompt)
-    
+
     # PROBLEMATIC: Hardcoded instructions
     print("""
 ============================================================
@@ -120,17 +120,17 @@ def main():
 def main():
     """Generate analysis prompt and copy to clipboard."""
     # ... existing prompt generation code ...
-    
+
     # Import AI config
     from .config import get_ai_config
-    
+
     # Get active provider
     config = get_ai_config()
     provider = config.default_provider
-    
+
     # Copy to clipboard
     pyperclip.copy(prompt)
-    
+
     # Conditional instructions based on provider
     if provider in ['claude_api', 'mistral_api', 'openai', 'ollama']:
         # API providers - automated workflow
@@ -141,7 +141,7 @@ def main():
 
 ⏳ Analyse en cours via API...
    Le résultat sera automatiquement copié dans le presse-papier.
-   
+
 ============================================================
 """)
     else:
@@ -187,14 +187,14 @@ def main():
 def step_7_git_commit(self):
     """Step 7: Git commit (optional)."""
     self._print_step_header("Git Commit", 7, 7, "Sauvegarde (optionnel)")
-    
+
     if self.skip_git:
         print("\nLe commit git a été skippé (--skip-git).")
         print("\nPour commiter manuellement plus tard :")
         print("  git add logs/workouts-history.md")
         print("  git commit -m \"Analyse: Séance du [DATE]\"")
         # MISSING: return statement here!
-    
+
     # Git commit code that may execute even with skip_git=True
     print("\n💾 Commit des modifications...")
     # ... git commands ...
@@ -209,22 +209,22 @@ Add explicit `return` statement immediately after skip message to prevent furthe
 def step_7_git_commit(self):
     """Step 7: Git commit (optional)."""
     self._print_step_header("Git Commit", 7, 7, "Sauvegarde (optionnel)")
-    
+
     if self.skip_git:
         print("\nLe commit git a été skippé (--skip-git).")
         print("\nPour commiter manuellement plus tard :")
         print("  git add logs/workouts-history.md")
         print("  git commit -m \"Analyse: Séance du [DATE]\"")
-        
+
         # CRITICAL FIX: Return immediately to prevent git execution
         return
-    
+
     # Git commit code - only executed if NOT skipped
     print("\n💾 Commit des modifications...")
     # ... git commands ...
 ```
 
-**Key point:** 
+**Key point:**
 - Single line addition: `return` after skip message block
 - Ensures no git commands execute when `--skip-git` flag is active
 
@@ -239,7 +239,7 @@ After implementing fixes, verify:
 poetry run workflow-coach --provider mistral_api --activity-id i101413894 \
   --skip-feedback --skip-git 2>&1 | grep -i "claude\.ai"
 
-# Expected: 
+# Expected:
 # - 0 matches in hardcoded instructions
 # - Only in generic example: "Claude.ai, ChatGPT, etc."
 ```
@@ -288,7 +288,7 @@ poetry run pytest tests/ -v
 - Shows generic manual instructions for clipboard
 - No hardcoded "Claude.ai" in primary workflow
 
-✅ Fix 2: `workflow_coach.py` 
+✅ Fix 2: `workflow_coach.py`
 - `step_7_git_commit()` has `return` after skip message
 - No git commands execute when `--skip-git` active
 - Manual git instructions still shown for reference

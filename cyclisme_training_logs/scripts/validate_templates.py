@@ -7,6 +7,7 @@ Vérifie que les templates respectent le format Intervals.icu
 
 import json
 from pathlib import Path
+
 from cyclisme_training_logs.intervals_format_validator import IntervalsFormatValidator
 
 
@@ -24,11 +25,11 @@ def main():
     for template_file in sorted(templates_dir.glob("*.json")):
         print(f"📄 {template_file.name}")
 
-        with open(template_file, 'r', encoding='utf-8') as f:
+        with open(template_file, encoding="utf-8") as f:
             template = json.load(f)
 
         # Extraire format Intervals.icu
-        intervals_format = template.get('intervals_icu_format', '')
+        intervals_format = template.get("intervals_icu_format", "")
 
         # Valider
         is_valid, errors, warnings = validator.validate_workout(intervals_format)
@@ -55,5 +56,5 @@ def main():
     print("=" * 70)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

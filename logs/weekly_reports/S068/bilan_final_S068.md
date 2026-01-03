@@ -8,10 +8,10 @@
 3. **Intégration drills techniques** : Moulinette, unijambiste, transitions cadence
 
 ### Réalisations Factuelles
-✅ **Sweet-Spot validé** : 2 séances (S068-02, S068-04) @ 88-90% FTP, 28min cumulés, découplage tous <7.5%  
-✅ **Drills techniques** : Intégrés 3 séances (moulinette, unijambiste partiels)  
-⚠️ **TSB stabilisation** : -3.2 → -2.8 (+0.4), amélioration modeste, cible ≥0 non atteinte  
-❌ **Progression CTL** : +0.3 insuffisant (cible +0.85-1.1 pour objectif FTP 260W)  
+✅ **Sweet-Spot validé** : 2 séances (S068-02, S068-04) @ 88-90% FTP, 28min cumulés, découplage tous <7.5%
+✅ **Drills techniques** : Intégrés 3 séances (moulinette, unijambiste partiels)
+⚠️ **TSB stabilisation** : -3.2 → -2.8 (+0.4), amélioration modeste, cible ≥0 non atteinte
+❌ **Progression CTL** : +0.3 insuffisant (cible +0.85-1.1 pour objectif FTP 260W)
 ❌ **Discipline planning** : Pattern surcharge reproduit S068-05 (+33% TSS non planifié)
 
 ---

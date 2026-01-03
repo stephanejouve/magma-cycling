@@ -326,4 +326,3 @@ Devient dans Intervals.icu :
 - Nom : `S069-02-INT-SweetSpotAdaptation-V002`
 - Permet recherche par : S069, INT, SweetSpot, V002
 - Lien fichier : `S069-02-INT-SweetSpotAdaptation-V002.zwo`
-

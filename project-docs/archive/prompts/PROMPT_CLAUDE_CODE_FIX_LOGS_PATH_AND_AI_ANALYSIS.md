@@ -106,24 +106,24 @@ from typing import Optional
 
 class Config:
     """Configuration for cyclisme training logs."""
-    
+
     def __init__(self):
         # Initialize .env loading
         self._load_env()
-        
+
         # Configure logs directory
         self._setup_logs_path()
-        
+
         # Initialize other paths
         self._setup_file_paths()
-        
+
         # Existing config (Intervals.icu, AI providers, etc.)
         # ... keep existing code ...
-    
+
     def _load_env(self):
         """Load environment variables from .env file."""
         from dotenv import load_dotenv
-        
+
         # Try to load .env from project root
         env_path = Path(__file__).parent.parent / '.env'
         if env_path.exists():
@@ -131,21 +131,21 @@ class Config:
         else:
             # Fallback to system .env
             load_dotenv()
-    
+
     def _setup_logs_path(self):
         """
         Setup logs directory path.
-        
+
         Priority:
         1. TRAINING_LOGS_PATH from .env (external repo)
         2. Fallback to local logs/ directory
         """
         training_logs_base = os.getenv('TRAINING_LOGS_PATH')
-        
+
         if training_logs_base:
             # Use external training-logs repository
             base_path = Path(training_logs_base)
-            
+
             # Validate path exists
             if not base_path.exists():
                 print(f"⚠️  Warning: TRAINING_LOGS_PATH not found: {base_path}")
@@ -158,17 +158,17 @@ class Config:
             # Fallback: local logs directory
             self.logs_dir = Path(__file__).parent.parent / "logs"
             print(f"ℹ️  Using local logs: {self.logs_dir}")
-        
+
         # Ensure logs directory exists
         self.logs_dir.mkdir(parents=True, exist_ok=True)
-    
+
     def _setup_file_paths(self):
         """Setup all log file paths."""
         self.workouts_history_path = self.logs_dir / "workouts-history.md"
         self.metrics_evolution_path = self.logs_dir / "metrics-evolution.md"
         self.training_learnings_path = self.logs_dir / "training-learnings.md"
         self.workout_templates_path = self.logs_dir / "workout-templates.md"
-        
+
         # State file (keep in cyclisme-training-logs)
         # This is NOT training data, it's tool state
         state_dir = Path(__file__).parent.parent / ".state"
@@ -221,7 +221,7 @@ MISTRAL_API_KEY=your_mistral_key
 OPENAI_API_KEY=your_openai_key
 
 # Training Logs Repository Path (Optional)
-# 
+#
 # Use this to store training logs in a separate git repository
 # for better data/code separation.
 #
@@ -295,29 +295,29 @@ TRAINING_LOGS_PATH=/Users/john/training-logs
 def main():
     """Main workflow."""
     args = parse_args()
-    
+
     print("\n" + "="*70)
     print("🔍 DEBUG: Workflow Steps")
     print("="*70)
-    
+
     # ... existing code ...
-    
+
     # After prompt generation
     print(f"\n✅ Prompt generated")
     print(f"   Provider: {args.provider}")
     print(f"   Auto mode: {args.auto}")
-    
+
     # After AI analysis
     print(f"\n✅ AI analysis received")
     print(f"   Length: {len(analysis_text)} characters")
     print(f"   Preview: {analysis_text[:200]}...")
-    
+
     # Before insertion
     print(f"\n🔄 Calling insert_analysis.py")
     print(f"   Activity: {activity_id}")
     print(f"   History path: {config.workouts_history_path}")
     print(f"   Auto mode: {args.auto}")
-    
+
     # After insertion
     print(f"\n✅ Analysis inserted")
     print(f"   File: {config.workouts_history_path}")
@@ -330,7 +330,7 @@ Check `backfill_history.py`:
 ```python
 def analyze_activity(self, activity: Dict) -> bool:
     """Analyze single activity using workflow-coach --auto."""
-    
+
     # Current command
     cmd = [
         'poetry', 'run', 'workflow-coach',
@@ -340,18 +340,18 @@ def analyze_activity(self, activity: Dict) -> bool:
         '--skip-feedback',     # No manual feedback
         '--skip-git'           # Batch commits later
     ]
-    
+
     # Add debug logging
     print(f"\n🔍 DEBUG: Command to execute:")
     print(f"   {' '.join(cmd)}")
-    
+
     result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-    
+
     # Add output inspection
     if result.returncode == 0:
         print(f"\n📋 Subprocess stdout:")
         print(result.stdout)
-        
+
         # Check if analysis was actually inserted
         if "Analyse insérée" in result.stdout or "Analysis inserted" in result.stdout:
             print(f"✅ Analysis confirmed inserted")
@@ -369,17 +369,17 @@ def main():
     parser = argparse.ArgumentParser()
     # ... existing args ...
     parser.add_argument('--yes', action='store_true', help='Auto-confirm insertion')
-    
+
     args = parser.parse_args()
-    
+
     # Debug
     print(f"\n🔍 insert_analysis.py called")
     print(f"   Activity ID: {args.activity_id}")
     print(f"   Analysis file: {args.analysis_file}")
     print(f"   Auto mode (--yes): {args.yes}")
-    
+
     # ... existing code ...
-    
+
     # Ensure analysis is inserted in auto mode
     if args.yes:
         print(f"✅ Auto mode: Inserting without confirmation")
@@ -400,24 +400,24 @@ Check that AI providers return proper format:
 
 def generate_analysis(self, prompt: str) -> str:
     """Generate analysis from prompt."""
-    
+
     response = self.client.chat(
         model=self.model,
         messages=[{"role": "user", "content": prompt}]
     )
-    
+
     analysis = response.choices[0].message.content
-    
+
     # Debug
     print(f"\n🔍 AI Response received")
     print(f"   Provider: Mistral API")
     print(f"   Length: {len(analysis)} chars")
     print(f"   First 200 chars: {analysis[:200]}")
-    
+
     # Validate response has content
     if not analysis or len(analysis) < 100:
         raise ValueError(f"AI response too short: {len(analysis)} chars")
-    
+
     return analysis
 ```
 
@@ -432,39 +432,39 @@ In `workflow_coach.py`, verify the complete workflow:
 ```python
 def run_workflow(args):
     """Run complete analysis workflow."""
-    
+
     # Step 1: Generate prompt
     print("\n📝 Step 1: Generating analysis prompt...")
     prompt_file = generate_prompt(args.activity_id)
-    
+
     # Step 2: Get AI analysis
     print("\n🤖 Step 2: Getting AI analysis...")
     analysis = get_ai_analysis(prompt_file, args.provider)
-    
+
     # Step 3: Save analysis
     print("\n💾 Step 3: Saving analysis...")
     analysis_file = save_analysis(analysis, args.activity_id)
-    
+
     # Step 4: Insert into history (CRITICAL)
     print("\n📋 Step 4: Inserting into workouts-history.md...")
-    
+
     # Build insert command
     insert_cmd = [
         'python', '-m', 'cyclisme_training_logs.insert_analysis',
         '--activity-id', args.activity_id,
         '--analysis-file', str(analysis_file)
     ]
-    
+
     # Add --yes if auto mode
     if args.auto:
         insert_cmd.append('--yes')
-    
+
     # Execute insertion
     result = subprocess.run(insert_cmd, check=True)
-    
+
     if result.returncode != 0:
         raise RuntimeError("Analysis insertion failed")
-    
+
     print("✅ Analysis inserted successfully")
 ```
 
@@ -480,17 +480,17 @@ from cyclisme_training_logs.insert_analysis import insert_analysis_to_history
 def run_workflow(args):
     # ... prompt generation ...
     # ... AI analysis ...
-    
+
     # Direct insertion (no subprocess)
     print("\n📋 Inserting analysis into history...")
-    
+
     insert_analysis_to_history(
         activity_id=args.activity_id,
         analysis_text=analysis,
         config=config,
         auto_confirm=args.auto  # or args.yes
     )
-    
+
     print("✅ Analysis inserted")
 ```
 
@@ -503,17 +503,17 @@ After insertion, verify the file was actually modified:
 
 def insert_analysis_to_history(activity_id, analysis_text, config, auto_confirm=False):
     """Insert analysis into workouts-history.md."""
-    
+
     history_path = config.workouts_history_path
-    
+
     # Get file modification time before
     mtime_before = history_path.stat().st_mtime if history_path.exists() else 0
-    
+
     # ... do insertion ...
-    
+
     # Verify file was modified
     mtime_after = history_path.stat().st_mtime
-    
+
     if mtime_after > mtime_before:
         print(f"✅ File updated: {history_path}")
         print(f"   Before: {mtime_before}")
@@ -553,7 +553,7 @@ def insert_analysis_to_history(activity_id, analysis_text, config, auto_confirm=
    echo "TRAINING_LOGS_PATH=/path/to/training-logs" >> .env
    poetry run workflow-coach --help
    # Should show: "✅ Using external logs: /path/to/training-logs/logs"
-   
+
    # Test 2: Without external path
    # Comment out TRAINING_LOGS_PATH
    poetry run workflow-coach --help
@@ -630,7 +630,7 @@ tail -100 ~/training-logs/logs/workouts-history.md
 # Should show:
 # ### SXXX-XX-...
 # Date: ...
-# 
+#
 # #### Analyse Coach IA
 # [Detailed analysis content]
 ```

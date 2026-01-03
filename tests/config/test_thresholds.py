@@ -1,7 +1,9 @@
 """Tests for thresholds module (Sprint R2)."""
 
 import os
+
 import pytest
+
 from cyclisme_training_logs.config.thresholds import TrainingThresholds
 
 

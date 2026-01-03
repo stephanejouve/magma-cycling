@@ -9,10 +9,10 @@
 - **TSS hebdomadaire** : 371 (limite basse cible)
 
 ### Validations Techniques
-✅ **Sweet-Spot 88-90% FTP** : Capacité confirmée sur 28min cumulés, découplage <7.5%  
-✅ **Équilibre pédalage G/D** : Excellent 50/50 sur Sweet-Spot, contraste asymétrie explosif  
-✅ **Protocoles récupération** : Drills techniques intégrés efficacement  
-⚠️ **Discipline planning** : Pattern surcharge reproduit S068-05 (+33% TSS), protocole strict établi  
+✅ **Sweet-Spot 88-90% FTP** : Capacité confirmée sur 28min cumulés, découplage <7.5%
+✅ **Équilibre pédalage G/D** : Excellent 50/50 sur Sweet-Spot, contraste asymétrie explosif
+✅ **Protocoles récupération** : Drills techniques intégrés efficacement
+⚠️ **Discipline planning** : Pattern surcharge reproduit S068-05 (+33% TSS), protocole strict établi
 ❌ **Sommeil cible** : Moyenne 5.35h/nuit (-24% vs 7h), facteur limitant validé
 
 ### Acquisitions Confirmées

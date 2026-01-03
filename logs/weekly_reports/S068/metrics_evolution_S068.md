@@ -75,8 +75,8 @@
 | 21/11 | 5.3h | N/A | N/A | 47 |
 | 22/11 | N/A | N/A | N/A | N/A |
 
-**Moyenne durée** : 5.35h (-24% vs cible 7h)  
-**VFC moyenne** : 40.5ms (faible, cible >50ms pour récupération optimale)  
+**Moyenne durée** : 5.35h (-24% vs cible 7h)
+**VFC moyenne** : 40.5ms (faible, cible >50ms pour récupération optimale)
 **FC repos** : 47-53bpm (élevé vs baseline 40bpm, fatigue résiduelle)
 
 **Facteur limitant confirmé** : Dette sommeil chronique impacte récupération cardiovasculaire (VFC faible) malgré protocoles compensatoires (sieste pré-séance).

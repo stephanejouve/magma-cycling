@@ -8,17 +8,16 @@ session.auth = ("API_KEY", api_key)
 
 # Tester différents paramètres
 params_sets = [
-    {'oldest': '2025-11-14', 'newest': '2025-11-14'},
-    {'oldest': '2025-11-14', 'newest': '2025-11-14', 'exclude_empty': 'true'},
-    {'oldest': '2025-11-14', 'newest': '2025-11-14', 'type': 'VirtualRide'},
-    {'oldest': '2025-11-14', 'newest': '2025-11-14', 'type': 'Ride'},
+    {"oldest": "2025-11-14", "newest": "2025-11-14"},
+    {"oldest": "2025-11-14", "newest": "2025-11-14", "exclude_empty": "true"},
+    {"oldest": "2025-11-14", "newest": "2025-11-14", "type": "VirtualRide"},
+    {"oldest": "2025-11-14", "newest": "2025-11-14", "type": "Ride"},
 ]
 
 for params in params_sets:
     print(f"\n=== TEST AVEC {params} ===")
     response = session.get(
-        f"https://intervals.icu/api/v1/athlete/{athlete_id}/activities",
-        params=params
+        f"https://intervals.icu/api/v1/athlete/{athlete_id}/activities", params=params
     )
     activities = response.json()
     print(f"Nombre activités: {len(activities)}")

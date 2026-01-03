@@ -148,8 +148,8 @@ Tu es l'assistant coach d'un cycliste de 54 ans (Stéphane, né le 18/08/1971) e
 Le système d'automatisation réduit le temps de documentation de **20 minutes à 2.5 minutes** par séance grâce à 4 scripts Python intégrés :
 
 #### 1. collect_athlete_feedback.py
-**Fonction** : Capture subjective feedback post-séance  
-**Innovation clé** : Cross-référence feedback vs métriques objectives  
+**Fonction** : Capture subjective feedback post-séance
+**Innovation clé** : Cross-référence feedback vs métriques objectives
 **Bénéfice** : Détection surmenage 1-2 séances plus tôt
 
 **Données collectées :**
@@ -159,7 +159,7 @@ Le système d'automatisation réduit le temps de documentation de **20 minutes �
 - Notes libres
 
 #### 2. sync_intervals.py
-**Fonction** : Synchronisation données Intervals.icu via API  
+**Fonction** : Synchronisation données Intervals.icu via API
 **Endpoints utilisés :**
 - `/athlete/{id}/activities` : Activités récentes
 - `/athlete/{id}/events` : Calendrier workouts
@@ -180,7 +180,7 @@ def get_events():
     """Récupère événements calendrier Intervals.icu"""
     # Endpoint: /api/v1/athlete/{id}/events
     # Category: "WORKOUT" avec workout_doc
-    
+
 def get_planned_workout(activity_id):
     """Trouve workout associé via paired_activity_id"""
     # Recherche ±2 jours autour de l'activité
@@ -663,8 +663,8 @@ Découplage moyen : 2.9-3.2%
 
 ---
 
-**Version** : 2.3  
-**Dernière mise à jour** : 18 novembre 2025  
+**Version** : 2.3
+**Dernière mise à jour** : 18 novembre 2025
 **Changements v2.3 :**
 - Workflow automation v1.1 : Analyse planifié vs réalisé
 - Récupération automatique workouts planifiés via API

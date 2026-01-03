@@ -1,7 +1,7 @@
 # 📝 TEMPLATE DOCSTRING v2 AVEC TAGS GARTNER TIME
 
-**Version :** 2.0  
-**Date :** 26 décembre 2025  
+**Version :** 2.0
+**Date :** 26 décembre 2025
 **Usage :** Tous fichiers Python du projet
 
 ---
@@ -31,10 +31,10 @@ Examples:
     Programmatic usage::
 
         from cyclisme_training_logs.module import Class
-        
+
         # Initialisation
         obj = Class(param="value")
-        
+
         # Utilisation
         result = obj.method()
         print(result)
@@ -47,7 +47,7 @@ Examples:
             param2="value2",
             debug=True
         )
-        
+
         # Méthodes chaînées
         result = obj.method1().method2().finalize()
 
@@ -80,10 +80,10 @@ Examples:
     Basic usage::
 
         from cyclisme_training_logs.core.module import NewClass
-        
+
         # Initialisation
         obj = NewClass()
-        
+
         # Utilisation
         result = obj.process()
 
@@ -91,11 +91,11 @@ Examples:
 
         from cyclisme_training_logs.workflow_coach import WorkflowCoach
         from cyclisme_training_logs.core.module import NewClass
-        
+
         # Intégration dans workflow existant
         workflow = WorkflowCoach()
         processor = NewClass(workflow_config=workflow.config)
-        
+
         result = processor.execute()
 
 Author: Claude Code
@@ -127,7 +127,7 @@ Examples:
     Current usage (v1)::
 
         from cyclisme_training_logs.old_module import OldClass
-        
+
         # Méthode actuelle (sera dépréciée)
         obj = OldClass()
         result = obj.old_method()
@@ -135,7 +135,7 @@ Examples:
     Future usage (v2) - After migration::
 
         from cyclisme_training_logs.core.new_module import NewClass
-        
+
         # Nouvelle méthode (post-migration)
         obj = NewClass()
         result = obj.new_method()
@@ -144,7 +144,7 @@ Examples:
 
         # Compatibilité temporaire
         from cyclisme_training_logs.old_module import migrate_to_new
-        
+
         old_obj = OldClass()
         new_obj = migrate_to_new(old_obj)
 
@@ -177,7 +177,7 @@ Examples:
     Current usage (still supported)::
 
         from cyclisme_training_logs.legacy_module import LegacyClass
-        
+
         # Méthode actuelle (fonctionnelle mais à éviter)
         obj = LegacyClass()
         result = obj.legacy_method()
@@ -186,7 +186,7 @@ Examples:
 
         # Utiliser plutôt le nouveau module
         from cyclisme_training_logs.new_module import NewClass
-        
+
         obj = NewClass()
         result = obj.modern_method()
 
@@ -224,7 +224,7 @@ Examples:
     Old usage (DEPRECATED - DO NOT USE)::
 
         from cyclisme_training_logs.deprecated_module import DeprecatedClass
-        
+
         # ❌ NE PLUS UTILISER
         obj = DeprecatedClass()
         result = obj.deprecated_method()
@@ -233,7 +233,7 @@ Examples:
 
         # ✅ Utiliser à la place
         from cyclisme_training_logs.new_module import NewClass
-        
+
         obj = NewClass()
         result = obj.new_method()
 
@@ -349,7 +349,7 @@ Valeurs possibles:
 Examples:
     Basic usage::
         [Code minimal fonctionnel]
-    
+
     Advanced usage::
         [Code avec options/configuration]
 ```
@@ -361,7 +361,7 @@ Examples:
     Basic usage::
 
         from cyclisme_training_logs.module import Class
-        
+
         obj = Class(param="value")
         result = obj.method()
         print(result)  # Output: ...
@@ -382,10 +382,10 @@ Examples:
 
         from cyclisme_training_logs.workflow_coach import WorkflowCoach
         from cyclisme_training_logs.module import Helper
-        
+
         workflow = WorkflowCoach()
         helper = Helper(workflow.config)
-        
+
         result = helper.process()
 
 # ❌ MAUVAIS - Imports manquants
@@ -407,10 +407,10 @@ Examples:
             debug=True,
             log_level="DEBUG"
         )
-        
+
         # Exécution avec validation
         result = obj.method(validate=True)
-        
+
         # Vérification résultat
         assert result.success, "Processing failed"
 
@@ -471,7 +471,7 @@ from pathlib import Path
 def validate_docstring(file_path: Path) -> dict:
     """
     Valider qu'un fichier Python a une docstring complète v2.
-    
+
     Returns:
         {
             'valid': bool,
@@ -481,41 +481,41 @@ def validate_docstring(file_path: Path) -> dict:
     """
     with open(file_path) as f:
         content = f.read()
-    
+
     tree = ast.parse(content)
     docstring = ast.get_docstring(tree)
-    
+
     errors = []
     warnings = []
-    
+
     if not docstring:
         errors.append("Missing module docstring")
         return {'valid': False, 'errors': errors, 'warnings': warnings}
-    
+
     # Check required tags
     required_tags = ['GARTNER_TIME', 'STATUS', 'LAST_REVIEW', 'PRIORITY', 'DOCSTRING']
     for tag in required_tags:
         if f'{tag}:' not in docstring:
             errors.append(f"Missing required tag: {tag}")
-    
+
     # Check GARTNER_TIME value
     if 'GARTNER_TIME:' in docstring:
         match = re.search(r'GARTNER_TIME:\s*([ITME])', docstring)
         if not match:
             errors.append("Invalid GARTNER_TIME value (must be I, T, M, or E)")
-    
+
     # Check Examples section
     if 'Examples:' not in docstring:
         warnings.append("Missing Examples section")
     elif docstring.count('::') < 2:
         warnings.append("Examples section should have at least 2 code blocks")
-    
+
     # Check Author/Created
     if 'Author:' not in docstring:
         warnings.append("Missing Author metadata")
     if 'Created:' not in docstring:
         warnings.append("Missing Created metadata")
-    
+
     return {
         'valid': len(errors) == 0,
         'errors': errors,
@@ -525,24 +525,24 @@ def validate_docstring(file_path: Path) -> dict:
 def validate_all_files():
     """Valider tous les fichiers Python du projet."""
     project_root = Path(__file__).parent.parent / 'cyclisme_training_logs'
-    
+
     results = {}
     for py_file in project_root.rglob('*.py'):
         if '__pycache__' not in str(py_file):
             results[py_file] = validate_docstring(py_file)
-    
+
     return results
 
 if __name__ == '__main__':
     results = validate_all_files()
-    
+
     print("📊 DOCSTRING VALIDATION REPORT\n")
-    
+
     valid_count = sum(1 for r in results.values() if r['valid'])
     total_count = len(results)
-    
+
     print(f"Valid: {valid_count}/{total_count} ({valid_count/total_count*100:.1f}%)\n")
-    
+
     # Print errors
     files_with_errors = {f: r for f, r in results.items() if r['errors']}
     if files_with_errors:
@@ -552,7 +552,7 @@ if __name__ == '__main__':
             for error in result['errors']:
                 print(f"    - {error}")
             print()
-    
+
     # Print warnings
     files_with_warnings = {f: r for f, r in results.items() if r['warnings']}
     if files_with_warnings:
@@ -639,6 +639,6 @@ Updated: {today} (Standardization Prompt 3)
 
 ---
 
-**Version :** 2.0  
-**Date :** 2025-12-26  
+**Version :** 2.0
+**Date :** 2025-12-26
 **Status :** Production Ready ✅

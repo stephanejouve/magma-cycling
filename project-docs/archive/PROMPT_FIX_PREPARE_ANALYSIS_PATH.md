@@ -5,7 +5,7 @@
 workflow_coach.py échoue en cherchant prepare_analysis.py:
 
 ```
-Python: can't open file '/Users/stephanejouve/training-logs/cyclisme_training_logs/prepare_analysis.py': 
+Python: can't open file '/Users/stephanejouve/training-logs/cyclisme_training_logs/prepare_analysis.py':
 [Errno 2] No such file or directory
 ```
 
@@ -255,7 +255,7 @@ Bloque:
 
 ---
 
-**Créé:** 2025-12-26 20:30  
-**Bloque:** Backfill production  
-**Solution:** Utiliser `-m` module import partout  
+**Créé:** 2025-12-26 20:30
+**Bloque:** Backfill production
+**Solution:** Utiliser `-m` module import partout
 **Priorité:** P0 (bloquant critique)

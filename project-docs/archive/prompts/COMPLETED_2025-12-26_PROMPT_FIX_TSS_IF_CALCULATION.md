@@ -37,13 +37,13 @@ from datetime import timedelta
 
 def collect_enriched_data(self) -> Dict:
     """Collect and enrich week data using DailyAggregator."""
-    
+
     # 1. Get week date range
     week_dates = [
         self.start_date + timedelta(days=i)
         for i in range(7)
     ]
-    
+
     # 2. Use DailyAggregator for each day (REUSE LOGIC)
     daily_results = []
     for date in week_dates:
@@ -52,12 +52,12 @@ def collect_enriched_data(self) -> Dict:
             athlete_id=self.athlete_id,
             api_key=self.api_key
         )
-        
+
         # Get enriched data with TSS/IF calculated
         daily_data = daily_agg.aggregate()
         if daily_data and daily_data.get('activities'):
             daily_results.extend(daily_data['activities'])
-    
+
     # 3. Combine results
     return {
         'activities': daily_results,  # NOW with TSS/IF
@@ -69,7 +69,7 @@ def _aggregate_week_metrics(self, activities: List[Dict]) -> Dict:
     """Aggregate metrics across the week."""
     total_tss = sum(a.get('tss', 0) for a in activities)
     avg_if = sum(a.get('if_value', 0) for a in activities) / len(activities) if activities else 0
-    
+
     return {
         'total_tss': total_tss,
         'average_if': avg_if,
@@ -108,7 +108,7 @@ class DailyAggregator:
         self.date = date
         self.athlete_id = athlete_id
         self.api_key = api_key
-    
+
     def aggregate(self) -> Dict:
         """Return enriched data with TSS/IF calculated."""
         # Existing working logic

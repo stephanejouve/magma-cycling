@@ -22,9 +22,9 @@ Created: 2026-01-02
 Version: 1.0.0
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from cyclisme_training_logs.intelligence.training_intelligence import TrainingIntelligence
@@ -43,6 +43,7 @@ class PIDState:
         prev_error: Previous error value for derivative calculation
         last_update: Timestamp of last compute() call
     """
+
     integral: float = 0.0
     prev_error: float = 0.0
     last_update: Optional[datetime] = None
@@ -100,7 +101,7 @@ class PIDController:
         self.setpoint = setpoint
         self.state = PIDState()
 
-    def compute(self, measured_value: float, dt: float = 1.0) -> Dict[str, float]:
+    def compute(self, measured_value: float, dt: float = 1.0) -> dict[str, float]:
         """
         Calculer correction PID.
 
@@ -166,7 +167,7 @@ class PIDController:
             "i_term": i_term,
             "d_term": d_term,
             "output": output,
-            "tss_adjustment": round(tss_adjustment)
+            "tss_adjustment": round(tss_adjustment),
         }
 
     def reset(self):
@@ -178,7 +179,7 @@ class PIDController:
         """
         self.state = PIDState()
 
-    def get_action_recommendation(self, correction: Dict[str, float]) -> str:
+    def get_action_recommendation(self, correction: dict[str, float]) -> str:
         """
         Traduire correction PID en recommandation actionnable.
 
@@ -204,34 +205,22 @@ class PIDController:
 
         # Augmentation TSS
         if tss_adj > 20:
-            return (
-                f"Augmenter TSS +{tss_adj}/semaine - "
-                "Focus Sweet-Spot 88-90% FTP"
-            )
+            return f"Augmenter TSS +{tss_adj}/semaine - " "Focus Sweet-Spot 88-90% FTP"
         elif tss_adj > 10:
-            return (
-                f"Augmenter TSS +{tss_adj}/semaine - "
-                "Progression modérée"
-            )
+            return f"Augmenter TSS +{tss_adj}/semaine - " "Progression modérée"
 
         # Réduction TSS
         elif tss_adj < -20:
-            return (
-                f"Réduire TSS {tss_adj}/semaine - "
-                "Priorité récupération"
-            )
+            return f"Réduire TSS {tss_adj}/semaine - " "Priorité récupération"
         elif tss_adj < -10:
-            return (
-                f"Réduire TSS {tss_adj}/semaine - "
-                "Ajustement léger"
-            )
+            return f"Réduire TSS {tss_adj}/semaine - " "Ajustement léger"
 
         # Maintien
         else:
             return "Maintien charge actuelle"
 
 
-def compute_pid_gains_from_intelligence(intelligence: 'TrainingIntelligence') -> Dict[str, float]:
+def compute_pid_gains_from_intelligence(intelligence: "TrainingIntelligence") -> dict[str, float]:
     """
     Calculer gains PID optimaux depuis Training Intelligence.
 
@@ -261,12 +250,10 @@ def compute_pid_gains_from_intelligence(intelligence: 'TrainingIntelligence') ->
         >>> 0.005 <= gains["kp"] <= 0.015
         True
     """
-    from cyclisme_training_logs.intelligence.training_intelligence import ConfidenceLevel
 
     # Kp: Based on confidence average from validated learnings
     validated_learnings = [
-        l for l in intelligence.learnings.values()
-        if l.confidence.value in ["high", "validated"]
+        l for l in intelligence.learnings.values() if l.confidence.value in ["high", "validated"]
     ]
 
     if validated_learnings:
@@ -277,9 +264,7 @@ def compute_pid_gains_from_intelligence(intelligence: 'TrainingIntelligence') ->
         kp = 0.005  # Conservative default
 
     # Ki: Based on cumulative evidence
-    total_evidence = sum(
-        len(l.evidence) for l in intelligence.learnings.values()
-    )
+    total_evidence = sum(len(l.evidence) for l in intelligence.learnings.values())
 
     if total_evidence > 50:
         ki = 0.003
@@ -289,10 +274,7 @@ def compute_pid_gains_from_intelligence(intelligence: 'TrainingIntelligence') ->
         ki = 0.001
 
     # Kd: Based on frequent patterns (trend detection)
-    frequent_patterns = [
-        p for p in intelligence.patterns.values()
-        if p.frequency >= 10
-    ]
+    frequent_patterns = [p for p in intelligence.patterns.values() if p.frequency >= 10]
 
     if len(frequent_patterns) >= 3:
         kd = 0.25

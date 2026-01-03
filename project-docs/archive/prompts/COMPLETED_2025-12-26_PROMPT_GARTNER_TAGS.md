@@ -4,7 +4,7 @@
 
 **Durée estimée :** 2-3 heures
 
-**Prérequis :** 
+**Prérequis :**
 - Documents lus : `GARTNER_TIME_INVENTORY.md` et `DOCSTRING_TEMPLATE_V2_GARTNER.md`
 - Projet : `~/cyclisme-training-logs/`
 
@@ -84,33 +84,33 @@ class ValidationResult:
 
 class GartnerTagValidator:
     """Validateur de tags Gartner TIME dans les docstrings."""
-    
+
     REQUIRED_TAGS = ['GARTNER_TIME', 'STATUS', 'LAST_REVIEW', 'PRIORITY', 'DOCSTRING']
     VALID_GARTNER_VALUES = ['I', 'T', 'M', 'E']
     VALID_PRIORITIES = ['P0', 'P1', 'P2', 'P3', 'P4']
-    
+
     def __init__(self, project_root: Path):
         """
         Initialiser le validateur.
-        
+
         Args:
             project_root: Racine du projet Python à valider
         """
         self.project_root = project_root
-    
+
     def validate_file(self, file_path: Path) -> ValidationResult:
         """
         Valider un fichier Python.
-        
+
         Args:
             file_path: Chemin du fichier à valider
-            
+
         Returns:
             ValidationResult avec détails de validation
         """
         errors = []
         warnings = []
-        
+
         # Lire le fichier
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
@@ -122,7 +122,7 @@ class GartnerTagValidator:
                 errors=[f"Impossible de lire le fichier: {e}"],
                 warnings=[]
             )
-        
+
         # Parser AST
         try:
             tree = ast.parse(content)
@@ -133,10 +133,10 @@ class GartnerTagValidator:
                 errors=[f"Erreur syntaxe Python: {e}"],
                 warnings=[]
             )
-        
+
         # Extraire docstring
         docstring = ast.get_docstring(tree)
-        
+
         if not docstring:
             return ValidationResult(
                 file_path=file_path,
@@ -144,7 +144,7 @@ class GartnerTagValidator:
                 errors=["Missing module docstring"],
                 warnings=[]
             )
-        
+
         # Vérifier tags requis
         result = ValidationResult(
             file_path=file_path,
@@ -152,11 +152,11 @@ class GartnerTagValidator:
             errors=[],
             warnings=[]
         )
-        
+
         for tag in self.REQUIRED_TAGS:
             if f'{tag}:' not in docstring:
                 errors.append(f"Missing required tag: {tag}")
-        
+
         # Extraire et valider GARTNER_TIME
         gartner_match = re.search(r'GARTNER_TIME:\s*([ITME])', docstring)
         if gartner_match:
@@ -166,29 +166,29 @@ class GartnerTagValidator:
         else:
             if 'GARTNER_TIME:' in docstring:
                 errors.append("GARTNER_TIME tag present but invalid format")
-        
+
         # Extraire STATUS
         status_match = re.search(r'STATUS:\s*(.+)', docstring)
         if status_match:
             result.status = status_match.group(1).strip()
-        
+
         # Extraire PRIORITY
         priority_match = re.search(r'PRIORITY:\s*(P[0-4])', docstring)
         if priority_match:
             result.priority = priority_match.group(1)
             if result.priority not in self.VALID_PRIORITIES:
                 errors.append(f"Invalid PRIORITY value: {result.priority}")
-        
+
         # Extraire DOCSTRING version
         docstring_match = re.search(r'DOCSTRING:\s*(.+)', docstring)
         if docstring_match:
             result.docstring_version = docstring_match.group(1).strip()
-        
+
         # Vérifier LAST_REVIEW format
         review_match = re.search(r'LAST_REVIEW:\s*(\d{4}-\d{2}-\d{2})', docstring)
         if not review_match and 'LAST_REVIEW:' in docstring:
             errors.append("LAST_REVIEW format incorrect (attendu: YYYY-MM-DD)")
-        
+
         # Vérifier Examples section
         if 'Examples:' not in docstring:
             warnings.append("Missing Examples section")
@@ -197,88 +197,88 @@ class GartnerTagValidator:
             code_blocks = docstring.count('::')
             if code_blocks < 2:
                 warnings.append("Examples section should have at least 2 code blocks")
-        
+
         # Vérifier Author/Created
         if 'Author:' not in docstring:
             warnings.append("Missing Author metadata")
         if 'Created:' not in docstring:
             warnings.append("Missing Created metadata")
-        
+
         # Vérifier tags conditionnels selon GARTNER_TIME
         if result.gartner_tag == 'M':  # Migrate
             if 'MIGRATION_TARGET:' not in docstring:
                 warnings.append("GARTNER_TIME=M but no MIGRATION_TARGET tag")
-        
+
         if result.gartner_tag == 'E':  # Eliminate
             if 'DEPRECATION_DATE:' not in docstring:
                 warnings.append("GARTNER_TIME=E but no DEPRECATION_DATE tag")
             if 'REMOVAL_DATE:' not in docstring:
                 warnings.append("GARTNER_TIME=E but no REMOVAL_DATE tag")
-        
+
         if result.gartner_tag == 'T':  # Tolerate
             if 'REPLACEMENT:' not in docstring:
                 warnings.append("GARTNER_TIME=T but no REPLACEMENT tag suggested")
-        
+
         result.errors = errors
         result.warnings = warnings
         result.valid = len(errors) == 0
-        
+
         return result
-    
+
     def validate_all_files(self, pattern: str = "*.py") -> Dict[Path, ValidationResult]:
         """
         Valider tous les fichiers Python du projet.
-        
+
         Args:
             pattern: Pattern de fichiers à valider (défaut: "*.py")
-            
+
         Returns:
             Dict avec chemin fichier → résultat validation
         """
         results = {}
-        
+
         for py_file in self.project_root.rglob(pattern):
             # Ignorer __pycache__, .venv, etc.
             if any(part.startswith('.') or part == '__pycache__' for part in py_file.parts):
                 continue
-            
+
             results[py_file] = self.validate_file(py_file)
-        
+
         return results
-    
+
     def print_report(self, results: Dict[Path, ValidationResult]):
         """
         Afficher rapport de validation dans le terminal.
-        
+
         Args:
             results: Résultats de validation à afficher
         """
         print("\n" + "="*80)
         print("📊 GARTNER TIME TAGS VALIDATION REPORT")
         print("="*80 + "\n")
-        
+
         # Statistiques globales
         total_files = len(results)
         valid_files = sum(1 for r in results.values() if r.valid)
         coverage_pct = (valid_files / total_files * 100) if total_files > 0 else 0
-        
+
         print(f"Total files: {total_files}")
         print(f"Valid files: {valid_files} ({coverage_pct:.1f}%)")
         print(f"Invalid files: {total_files - valid_files}\n")
-        
+
         # Distribution tags Gartner
         gartner_counts = {'I': 0, 'T': 0, 'M': 0, 'E': 0, 'None': 0}
         for result in results.values():
             tag = result.gartner_tag if result.gartner_tag else 'None'
             gartner_counts[tag] = gartner_counts.get(tag, 0) + 1
-        
+
         print("📋 GARTNER TIME Distribution:")
         print(f"  🟢 I (Invest):   {gartner_counts['I']:3d} files")
         print(f"  🟡 T (Tolerate): {gartner_counts['T']:3d} files")
         print(f"  🔵 M (Migrate):  {gartner_counts['M']:3d} files")
         print(f"  🔴 E (Eliminate):{gartner_counts['E']:3d} files")
         print(f"  ⚠️  None:        {gartner_counts['None']:3d} files\n")
-        
+
         # Fichiers avec erreurs
         files_with_errors = {f: r for f, r in results.items() if r.errors}
         if files_with_errors:
@@ -289,7 +289,7 @@ class GartnerTagValidator:
                 for error in result.errors:
                     print(f"    ❌ {error}")
                 print()
-        
+
         # Fichiers avec warnings
         files_with_warnings = {f: r for f, r in results.items() if r.warnings}
         if files_with_warnings:
@@ -300,7 +300,7 @@ class GartnerTagValidator:
                 for warning in result.warnings:
                     print(f"    ⚠️  {warning}")
                 print()
-        
+
         # Résumé final
         print("="*80)
         if valid_files == total_files:
@@ -308,11 +308,11 @@ class GartnerTagValidator:
         else:
             print(f"⚠️  {total_files - valid_files} file(s) need attention")
         print("="*80 + "\n")
-    
+
     def generate_html_report(self, results: Dict[Path, ValidationResult], output_path: Path):
         """
         Générer rapport HTML de validation.
-        
+
         Args:
             results: Résultats de validation
             output_path: Chemin du fichier HTML à générer
@@ -351,13 +351,13 @@ class GartnerTagValidator:
     <div class="container">
         <h1>📊 Gartner TIME Tags Validation Report</h1>
 """
-        
+
         # Stats
         total_files = len(results)
         valid_files = sum(1 for r in results.values() if r.valid)
         invalid_files = total_files - valid_files
         coverage_pct = (valid_files / total_files * 100) if total_files > 0 else 0
-        
+
         html += f"""
         <div class="stats">
             <div class="stat-box total">
@@ -374,13 +374,13 @@ class GartnerTagValidator:
             </div>
         </div>
 """
-        
+
         # Distribution
         gartner_counts = {'I': 0, 'T': 0, 'M': 0, 'E': 0, 'None': 0}
         for result in results.values():
             tag = result.gartner_tag if result.gartner_tag else 'None'
             gartner_counts[tag] = gartner_counts.get(tag, 0) + 1
-        
+
         html += '<div class="distribution"><h2>📋 GARTNER TIME Distribution</h2>'
         for tag, count in gartner_counts.items():
             pct = (count / total_files * 100) if total_files > 0 else 0
@@ -389,7 +389,7 @@ class GartnerTagValidator:
             label = {'I': 'Invest', 'T': 'Tolerate', 'M': 'Migrate', 'E': 'Eliminate', 'None': 'No Tag'}[tag]
             html += f'<div class="tag-bar tag-{tag}" style="width: {width}%;">{icon} {label}: {count} ({pct:.1f}%)</div>'
         html += '</div>'
-        
+
         # Table détails
         html += """
         <h2>📄 Detailed Results</h2>
@@ -403,12 +403,12 @@ class GartnerTagValidator:
                 <th>Issues</th>
             </tr>
 """
-        
+
         for file_path, result in sorted(results.items()):
             relative_path = file_path.relative_to(self.project_root)
             status_class = 'valid' if result.valid else 'error'
             issues_count = len(result.errors) + len(result.warnings)
-            
+
             html += f"""
             <tr>
                 <td>{relative_path}</td>
@@ -419,14 +419,14 @@ class GartnerTagValidator:
                 <td class="{status_class}">{issues_count} issue(s)</td>
             </tr>
 """
-        
+
         html += """
         </table>
     </div>
 </body>
 </html>
 """
-        
+
         output_path.write_text(html, encoding='utf-8')
         print(f"✅ HTML report generated: {output_path}")
 
@@ -452,45 +452,45 @@ def main():
         default='cyclisme_training_logs',
         help='Project root directory (default: cyclisme_training_logs)'
     )
-    
+
     args = parser.parse_args()
-    
+
     # Déterminer project root
     if Path(args.project_root).is_absolute():
         project_root = Path(args.project_root)
     else:
         project_root = Path.cwd() / args.project_root
-    
+
     if not project_root.exists():
         print(f"❌ Project root not found: {project_root}")
         sys.exit(1)
-    
+
     # Créer validateur
     validator = GartnerTagValidator(project_root)
-    
+
     # Valider
     if args.file:
         file_path = Path(args.file)
         if not file_path.is_absolute():
             file_path = project_root / file_path
-        
+
         if not file_path.exists():
             print(f"❌ File not found: {file_path}")
             sys.exit(1)
-        
+
         result = validator.validate_file(file_path)
         results = {file_path: result}
     else:
         results = validator.validate_all_files()
-    
+
     # Afficher rapport
     validator.print_report(results)
-    
+
     # Générer HTML si demandé
     if args.html:
         html_path = Path(args.html)
         validator.generate_html_report(results, html_path)
-    
+
     # Exit code selon résultats
     invalid_count = sum(1 for r in results.values() if not r.valid)
     sys.exit(0 if invalid_count == 0 else 1)
@@ -525,7 +525,7 @@ poetry run python scripts/validate_gartner_tags.py --html validation_report.html
 ```markdown
 # 🏗️ ARCHITECTURE DU PROJET
 
-**Dernière mise à jour :** 2025-12-26  
+**Dernière mise à jour :** 2025-12-26
 **Version :** 2.0 (Post-Prompt 1 + Gartner TIME)
 
 ---
@@ -764,7 +764,7 @@ Description détaillée en français...
 Examples:
     Command-line usage::
         poetry run command --option
-    
+
     Programmatic usage::
         from module import Class
         obj = Class()
@@ -836,8 +836,8 @@ poetry run python scripts/validate_gartner_tags.py
 
 ---
 
-**Version :** 2.0  
-**Dernière mise à jour :** 2025-12-26  
+**Version :** 2.0
+**Dernière mise à jour :** 2025-12-26
 **Prochaine révision :** Post-Prompt 2 Phase 1
 ```
 
@@ -880,7 +880,7 @@ Examples:
     Programmatic usage::
 
         from cyclisme_training_logs.[module] import [Class]
-        
+
         obj = [Class](param="value")
         result = obj.method()
 
@@ -910,11 +910,11 @@ Examples:
     Current usage (v1)::
 
         [Exemples actuels]
-    
+
     Future usage (v2) - After migration::
 
         from cyclisme_training_logs.core.timeline_injector import TimelineInjector
-        
+
         injector = TimelineInjector()
         injector.insert_chronologically(workout_data)
 

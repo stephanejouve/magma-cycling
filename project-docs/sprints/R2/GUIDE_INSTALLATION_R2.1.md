@@ -128,12 +128,12 @@ from cyclisme_training_logs.utils.metrics_advanced import detect_overtraining_ri
 # Dans la fonction principale
 def check_session_veto(wellness_data, athlete_profile):
     """Check if session should be vetoed due to overtraining risk."""
-    
+
     ctl = wellness_data.get('ctl', 0)
     atl = wellness_data.get('atl', 0)
     tsb = wellness_data.get('ctl', 0) - wellness_data.get('atl', 0)
     sleep_hours = wellness_data.get('sleep_hours')
-    
+
     risk = detect_overtraining_risk(
         ctl=ctl,
         atl=atl,
@@ -141,14 +141,14 @@ def check_session_veto(wellness_data, athlete_profile):
         sleep_hours=sleep_hours,
         profile=athlete_profile
     )
-    
+
     if risk['veto']:
         return {
             'cancel_session': True,
             'reason': risk['recommendation'],
             'factors': risk['factors']
         }
-    
+
     return {'cancel_session': False}
 ```
 
@@ -161,9 +161,9 @@ from cyclisme_training_logs.utils.metrics_advanced import get_recovery_recommend
 
 def adjust_weekly_plan(tsb, atl_ctl_ratio, athlete_profile):
     """Adjust weekly plan based on recovery needs."""
-    
+
     rec = get_recovery_recommendation(tsb, atl_ctl_ratio, athlete_profile)
-    
+
     if rec['priority'] in ['critical', 'high']:
         return {
             'reduce_intensity': True,
@@ -171,7 +171,7 @@ def adjust_weekly_plan(tsb, atl_ctl_ratio, athlete_profile):
             'max_duration_min': rec['duration_limit'],
             'add_rest_days': rec['rest_days']
         }
-    
+
     return {'reduce_intensity': False}
 ```
 
@@ -270,7 +270,7 @@ Aucune dépendance externe. Module utilise uniquement :
 
 ---
 
-**Version:** 1.0  
-**Date:** 2026-01-01  
-**Sprint:** R2.1  
+**Version:** 1.0
+**Date:** 2026-01-01
+**Sprint:** R2.1
 **Status:** ✅ READY FOR INTEGRATION

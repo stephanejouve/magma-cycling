@@ -29,13 +29,13 @@ Created: 2026-01-01
 import argparse
 import json
 import sys
+from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import List, Dict, Optional
-from collections import defaultdict
+from typing import Optional
 
-from cyclisme_training_logs.config import get_data_config, get_ai_config
 from cyclisme_training_logs.ai_providers.factory import AIProviderFactory
+from cyclisme_training_logs.config import get_ai_config, get_data_config
 
 
 class MonthlyAnalyzer:
@@ -71,7 +71,7 @@ class MonthlyAnalyzer:
             provider_config = ai_config.get_provider_config(provider)
             self.ai_analyzer = AIProviderFactory.create(provider, provider_config)
 
-    def find_weeks_in_month(self) -> List[Path]:
+    def find_weeks_in_month(self) -> list[Path]:
         """
         Find all weekly planning files that overlap with the target month.
 
@@ -93,11 +93,11 @@ class MonthlyAnalyzer:
 
         for planning_file in sorted(self.planning_dir.glob("week_planning_S*.json")):
             try:
-                with open(planning_file, 'r') as f:
+                with open(planning_file) as f:
                     planning = json.load(f)
 
-                week_start = datetime.strptime(planning['start_date'], "%Y-%m-%d")
-                week_end = datetime.strptime(planning['end_date'], "%Y-%m-%d")
+                week_start = datetime.strptime(planning["start_date"], "%Y-%m-%d")
+                week_end = datetime.strptime(planning["end_date"], "%Y-%m-%d")
 
                 # Check if week overlaps with month
                 if week_start <= month_end and week_end >= month_start.replace(day=1):
@@ -109,13 +109,13 @@ class MonthlyAnalyzer:
 
         return matching_weeks
 
-    def load_weekly_data(self, week_files: List[Path]) -> List[Dict]:
+    def load_weekly_data(self, week_files: list[Path]) -> list[dict]:
         """Load and parse weekly planning data."""
         weekly_data = []
 
         for week_file in week_files:
             try:
-                with open(week_file, 'r') as f:
+                with open(week_file) as f:
                     data = json.load(f)
                     weekly_data.append(data)
             except Exception as e:
@@ -123,7 +123,7 @@ class MonthlyAnalyzer:
 
         return weekly_data
 
-    def aggregate_statistics(self, weekly_data: List[Dict]) -> Dict:
+    def aggregate_statistics(self, weekly_data: list[dict]) -> dict:
         """
         Aggregate monthly statistics from weekly data.
 
@@ -131,80 +131,82 @@ class MonthlyAnalyzer:
             Dictionary with monthly metrics
         """
         stats = {
-            'total_weeks': len(weekly_data),
-            'total_sessions': 0,
-            'completed': 0,
-            'skipped': 0,
-            'cancelled': 0,
-            'modified': 0,
-            'rest_days': 0,
-            'tss_planned': 0,
-            'tss_target_total': 0,
-            'sessions_by_type': defaultdict(int),
-            'sessions_by_status': defaultdict(int),
-            'tss_by_week': [],
-            'weekly_details': []
+            "total_weeks": len(weekly_data),
+            "total_sessions": 0,
+            "completed": 0,
+            "skipped": 0,
+            "cancelled": 0,
+            "modified": 0,
+            "rest_days": 0,
+            "tss_planned": 0,
+            "tss_target_total": 0,
+            "sessions_by_type": defaultdict(int),
+            "sessions_by_status": defaultdict(int),
+            "tss_by_week": [],
+            "weekly_details": [],
         }
 
-        for week in sorted(weekly_data, key=lambda w: w['start_date']):
+        for week in sorted(weekly_data, key=lambda w: w["start_date"]):
             week_stats = {
-                'week_id': week['week_id'],
-                'start_date': week['start_date'],
-                'end_date': week['end_date'],
-                'tss_target': week.get('tss_target', 0),
-                'tss_actual': 0,
-                'sessions': len(week.get('planned_sessions', []))
+                "week_id": week["week_id"],
+                "start_date": week["start_date"],
+                "end_date": week["end_date"],
+                "tss_target": week.get("tss_target", 0),
+                "tss_actual": 0,
+                "sessions": len(week.get("planned_sessions", [])),
             }
 
-            stats['tss_target_total'] += week.get('tss_target', 0)
+            stats["tss_target_total"] += week.get("tss_target", 0)
 
-            for session in week.get('planned_sessions', []):
-                stats['total_sessions'] += 1
-                status = session.get('status', 'unknown')
-                session_type = session.get('type', 'unknown')
-                tss = session.get('tss_planned', 0)
+            for session in week.get("planned_sessions", []):
+                stats["total_sessions"] += 1
+                status = session.get("status", "unknown")
+                session_type = session.get("type", "unknown")
+                tss = session.get("tss_planned", 0)
 
                 # Count by status
-                stats['sessions_by_status'][status] += 1
+                stats["sessions_by_status"][status] += 1
 
-                if status == 'completed':
-                    stats['completed'] += 1
-                    stats['tss_planned'] += tss
-                    week_stats['tss_actual'] += tss
-                elif status == 'skipped':
-                    stats['skipped'] += 1
-                elif status == 'cancelled':
-                    stats['cancelled'] += 1
-                elif status == 'modified':
-                    stats['modified'] += 1
-                    stats['tss_planned'] += tss
-                    week_stats['tss_actual'] += tss
-                elif status == 'rest_day':
-                    stats['rest_days'] += 1
+                if status == "completed":
+                    stats["completed"] += 1
+                    stats["tss_planned"] += tss
+                    week_stats["tss_actual"] += tss
+                elif status == "skipped":
+                    stats["skipped"] += 1
+                elif status == "cancelled":
+                    stats["cancelled"] += 1
+                elif status == "modified":
+                    stats["modified"] += 1
+                    stats["tss_planned"] += tss
+                    week_stats["tss_actual"] += tss
+                elif status == "rest_day":
+                    stats["rest_days"] += 1
 
                 # Count by type (exclude rest days)
-                if status != 'rest_day':
-                    stats['sessions_by_type'][session_type] += 1
+                if status != "rest_day":
+                    stats["sessions_by_type"][session_type] += 1
 
-            stats['tss_by_week'].append(week_stats)
-            stats['weekly_details'].append(week_stats)
+            stats["tss_by_week"].append(week_stats)
+            stats["weekly_details"].append(week_stats)
 
         # Calculate adherence rate
-        total_planned = stats['completed'] + stats['skipped'] + stats['cancelled'] + stats['modified']
+        total_planned = (
+            stats["completed"] + stats["skipped"] + stats["cancelled"] + stats["modified"]
+        )
         if total_planned > 0:
-            stats['adherence_rate'] = (stats['completed'] + stats['modified']) / total_planned * 100
+            stats["adherence_rate"] = (stats["completed"] + stats["modified"]) / total_planned * 100
         else:
-            stats['adherence_rate'] = 0
+            stats["adherence_rate"] = 0
 
         # Calculate TSS achievement rate
-        if stats['tss_target_total'] > 0:
-            stats['tss_achievement_rate'] = stats['tss_planned'] / stats['tss_target_total'] * 100
+        if stats["tss_target_total"] > 0:
+            stats["tss_achievement_rate"] = stats["tss_planned"] / stats["tss_target_total"] * 100
         else:
-            stats['tss_achievement_rate'] = 0
+            stats["tss_achievement_rate"] = 0
 
         return stats
 
-    def generate_report(self, stats: Dict, ai_analysis: Optional[str] = None) -> str:
+    def generate_report(self, stats: dict, ai_analysis: Optional[str] = None) -> str:
         """Generate markdown report."""
         month_name = self.month_date.strftime("%B %Y")
 
@@ -235,30 +237,40 @@ class MonthlyAnalyzer:
 |---------|-------|-----------|-------------|---------------|
 """
 
-        for week in stats['tss_by_week']:
-            achievement = (week['tss_actual'] / week['tss_target'] * 100) if week['tss_target'] > 0 else 0
+        for week in stats["tss_by_week"]:
+            achievement = (
+                (week["tss_actual"] / week["tss_target"] * 100) if week["tss_target"] > 0 else 0
+            )
             report += f"| {week['week_id']} | {week['start_date']} → {week['end_date']} | {week['tss_target']} | {week['tss_actual']} | {achievement:.1f}% |\n"
 
-        report += f"\n## 🎯 Répartition par Type de Séance\n\n"
+        report += "\n## 🎯 Répartition par Type de Séance\n\n"
 
         type_labels = {
-            'END': 'Endurance',
-            'INT': 'Intensité',
-            'REC': 'Récupération',
-            'TEC': 'Technique',
-            'FOR': 'Force',
-            'CAD': 'Cadence',
-            'MIX': 'Mixte'
+            "END": "Endurance",
+            "INT": "Intensité",
+            "REC": "Récupération",
+            "TEC": "Technique",
+            "FOR": "Force",
+            "CAD": "Cadence",
+            "MIX": "Mixte",
         }
 
-        for session_type, count in sorted(stats['sessions_by_type'].items(), key=lambda x: x[1], reverse=True):
-            percentage = count / (stats['total_sessions'] - stats['rest_days']) * 100 if stats['total_sessions'] > stats['rest_days'] else 0
+        for session_type, count in sorted(
+            stats["sessions_by_type"].items(), key=lambda x: x[1], reverse=True
+        ):
+            percentage = (
+                count / (stats["total_sessions"] - stats["rest_days"]) * 100
+                if stats["total_sessions"] > stats["rest_days"]
+                else 0
+            )
             type_name = type_labels.get(session_type, session_type)
             report += f"- **{type_name} ({session_type})** : {count} sessions ({percentage:.1f}%)\n"
 
-        report += f"\n## 📊 Statut des Sessions\n\n"
-        for status, count in sorted(stats['sessions_by_status'].items(), key=lambda x: x[1], reverse=True):
-            percentage = count / stats['total_sessions'] * 100
+        report += "\n## 📊 Statut des Sessions\n\n"
+        for status, count in sorted(
+            stats["sessions_by_status"].items(), key=lambda x: x[1], reverse=True
+        ):
+            percentage = count / stats["total_sessions"] * 100
             report += f"- **{status.title()}** : {count} ({percentage:.1f}%)\n"
 
         # Add AI analysis if available
@@ -269,7 +281,7 @@ class MonthlyAnalyzer:
 
         return report
 
-    def generate_ai_prompt(self, stats: Dict) -> str:
+    def generate_ai_prompt(self, stats: dict) -> str:
         """Generate prompt for AI analysis."""
         month_name = self.month_date.strftime("%B %Y")
 
@@ -286,12 +298,18 @@ class MonthlyAnalyzer:
 
 📈 PROGRESSION HEBDOMADAIRE :
 """
-        for week in stats['tss_by_week']:
+        for week in stats["tss_by_week"]:
             prompt += f"\n- {week['week_id']} : {week['tss_actual']}/{week['tss_target']} TSS"
 
-        prompt += f"\n\n🎯 RÉPARTITION TYPES :\n"
-        for session_type, count in sorted(stats['sessions_by_type'].items(), key=lambda x: x[1], reverse=True):
-            percentage = count / (stats['total_sessions'] - stats['rest_days']) * 100 if stats['total_sessions'] > stats['rest_days'] else 0
+        prompt += "\n\n🎯 RÉPARTITION TYPES :\n"
+        for session_type, count in sorted(
+            stats["sessions_by_type"].items(), key=lambda x: x[1], reverse=True
+        ):
+            percentage = (
+                count / (stats["total_sessions"] - stats["rest_days"]) * 100
+                if stats["total_sessions"] > stats["rest_days"]
+                else 0
+            )
             prompt += f"- {session_type} : {count} sessions ({percentage:.0f}%)\n"
 
         prompt += """
@@ -341,16 +359,20 @@ Sois concret, direct et orienté action. Utilise des emojis pour la lisibilité.
             print(f"   - {wf.name}")
 
         # Load data
-        print(f"\n📥 Chargement des données...")
+        print("\n📥 Chargement des données...")
         weekly_data = self.load_weekly_data(week_files)
         print(f"✅ {len(weekly_data)} semaine(s) chargée(s)")
 
         # Aggregate statistics
-        print(f"\n📊 Calcul des statistiques...")
+        print("\n📊 Calcul des statistiques...")
         stats = self.aggregate_statistics(weekly_data)
-        print(f"✅ Statistiques calculées")
-        print(f"   - TSS : {stats['tss_planned']}/{stats['tss_target_total']} ({stats['tss_achievement_rate']:.1f}%)")
-        print(f"   - Sessions : {stats['completed']}/{stats['total_sessions']} ({stats['adherence_rate']:.1f}%)")
+        print("✅ Statistiques calculées")
+        print(
+            f"   - TSS : {stats['tss_planned']}/{stats['tss_target_total']} ({stats['tss_achievement_rate']:.1f}%)"
+        )
+        print(
+            f"   - Sessions : {stats['completed']}/{stats['total_sessions']} ({stats['adherence_rate']:.1f}%)"
+        )
 
         # AI Analysis
         ai_analysis = None
@@ -359,13 +381,13 @@ Sois concret, direct et orienté action. Utilise des emojis pour la lisibilité.
             try:
                 prompt = self.generate_ai_prompt(stats)
                 ai_analysis = self.ai_analyzer.analyze_session(prompt)
-                print(f"✅ Analyse IA générée")
+                print("✅ Analyse IA générée")
             except Exception as e:
                 print(f"⚠️  Erreur analyse IA : {e}")
-                print(f"   Rapport généré sans analyse IA")
+                print("   Rapport généré sans analyse IA")
 
         # Generate report
-        print(f"\n📝 Génération du rapport...")
+        print("\n📝 Génération du rapport...")
         report = self.generate_report(stats, ai_analysis)
         print(f"✅ Rapport généré ({len(report)} caractères)")
 
@@ -379,38 +401,26 @@ def main():
     )
 
     parser.add_argument(
-        '--month',
-        required=True,
-        help='Month to analyze in YYYY-MM format (e.g., 2025-12)'
+        "--month", required=True, help="Month to analyze in YYYY-MM format (e.g., 2025-12)"
     )
 
     parser.add_argument(
-        '--provider',
-        default='mistral_api',
-        choices=['mistral_api', 'claude_api', 'openai', 'ollama', 'clipboard'],
-        help='AI provider for analysis (default: mistral_api)'
+        "--provider",
+        default="mistral_api",
+        choices=["mistral_api", "claude_api", "openai", "ollama", "clipboard"],
+        help="AI provider for analysis (default: mistral_api)",
     )
 
     parser.add_argument(
-        '--no-ai',
-        action='store_true',
-        help='Skip AI analysis, only generate statistics'
+        "--no-ai", action="store_true", help="Skip AI analysis, only generate statistics"
     )
 
-    parser.add_argument(
-        '--output',
-        type=Path,
-        help='Output file path (default: print to stdout)'
-    )
+    parser.add_argument("--output", type=Path, help="Output file path (default: print to stdout)")
 
     args = parser.parse_args()
 
     try:
-        analyzer = MonthlyAnalyzer(
-            month=args.month,
-            provider=args.provider,
-            no_ai=args.no_ai
-        )
+        analyzer = MonthlyAnalyzer(month=args.month, provider=args.provider, no_ai=args.no_ai)
 
         report = analyzer.run()
 
@@ -420,7 +430,7 @@ def main():
         # Output
         if args.output:
             args.output.parent.mkdir(parents=True, exist_ok=True)
-            args.output.write_text(report, encoding='utf-8')
+            args.output.write_text(report, encoding="utf-8")
             print(f"\n✅ Rapport sauvegardé : {args.output}")
         else:
             print(f"\n{'='*70}")
@@ -432,5 +442,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -70,11 +70,11 @@ Author: Claude Code
 Created: 2025-12-26 (Migrated from v2)
 """
 
-from pathlib import Path
-from typing import Dict, Any, Optional
-from datetime import datetime
 import json
 import logging
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Optional
 
 from ..core.data_aggregator import DataAggregator
 
@@ -103,7 +103,7 @@ class DailyAggregator(DataAggregator):
         activity_id: str,
         data_dir: Optional[Path] = None,
         intervals_api_key: Optional[str] = None,
-        athlete_id: Optional[str] = None
+        athlete_id: Optional[str] = None,
     ):
         """
         Initialiser agrégateur daily.
@@ -120,11 +120,11 @@ class DailyAggregator(DataAggregator):
         self.athlete_id = athlete_id
 
         # Chemins fichiers
-        self.feedback_file = self.data_dir / 'daily-feedback.json'
-        self.workflow_state_file = self.data_dir / '.workflow_state.json'
-        self.power_zones_file = self.data_dir / 'power-zones.json'
+        self.feedback_file = self.data_dir / "daily-feedback.json"
+        self.workflow_state_file = self.data_dir / ".workflow_state.json"
+        self.power_zones_file = self.data_dir / "power-zones.json"
 
-    def collect_raw_data(self) -> Dict[str, Any]:
+    def collect_raw_data(self) -> dict[str, Any]:
         """
         Collecter données séance quotidienne.
 
@@ -141,31 +141,31 @@ class DailyAggregator(DataAggregator):
         # 1. Données activité Intervals.icu
         logger.info(f"Fetching activity data for {self.activity_id}")
         activity = self._fetch_intervals_activity()
-        raw_data['activity'] = activity
+        raw_data["activity"] = activity
 
         # 2. Feedback athlète
         logger.info("Loading athlete feedback")
         feedback = self._load_feedback()
-        raw_data['feedback'] = feedback
+        raw_data["feedback"] = feedback
 
         # 3. État workflow
         logger.info("Loading workflow state")
         workflow_state = self._load_workflow_state()
-        raw_data['workflow_state'] = workflow_state
+        raw_data["workflow_state"] = workflow_state
 
         # 4. Métriques fitness (CTL/ATL/TSB)
         logger.info("Fetching fitness metrics")
         fitness_metrics = self._fetch_fitness_metrics()
-        raw_data['fitness_metrics'] = fitness_metrics
+        raw_data["fitness_metrics"] = fitness_metrics
 
         # 5. Power zones
         logger.info("Loading power zones")
         power_zones = self._load_power_zones()
-        raw_data['power_zones'] = power_zones
+        raw_data["power_zones"] = power_zones
 
         return raw_data
 
-    def process_data(self, raw_data: Dict[str, Any]) -> Dict[str, Any]:
+    def process_data(self, raw_data: dict[str, Any]) -> dict[str, Any]:
         """
         Traiter données daily.
 
@@ -182,56 +182,56 @@ class DailyAggregator(DataAggregator):
         processed = {}
 
         # 1. Métriques workout
-        activity = raw_data.get('activity', {})
-        processed['workout'] = {
-            'activity_id': self.activity_id,
-            'date': activity.get('start_date_local', ''),
-            'duration': activity.get('moving_time', 0),
-            'tss': activity.get('tss', 0),
-            'normalized_power': activity.get('np', 0),
-            'average_power': activity.get('average_watts', 0),
-            'intensity_factor': activity.get('intensity', 0.0),
-            'average_hr': activity.get('average_hr', 0),
-            'max_hr': activity.get('max_hr', 0),
-            'workout_type': activity.get('type', ''),
-            'name': activity.get('name', '')
+        activity = raw_data.get("activity", {})
+        processed["workout"] = {
+            "activity_id": self.activity_id,
+            "date": activity.get("start_date_local", ""),
+            "duration": activity.get("moving_time", 0),
+            "tss": activity.get("tss", 0),
+            "normalized_power": activity.get("np", 0),
+            "average_power": activity.get("average_watts", 0),
+            "intensity_factor": activity.get("intensity", 0.0),
+            "average_hr": activity.get("average_hr", 0),
+            "max_hr": activity.get("max_hr", 0),
+            "workout_type": activity.get("type", ""),
+            "name": activity.get("name", ""),
         }
 
         # 2. Contexte athlète
-        power_zones = raw_data.get('power_zones', {})
-        fitness = raw_data.get('fitness_metrics', {})
+        power_zones = raw_data.get("power_zones", {})
+        fitness = raw_data.get("fitness_metrics", {})
 
         from cyclisme_training_logs.utils.metrics import extract_wellness_metrics
 
         fitness_metrics = extract_wellness_metrics(fitness)
-        processed['athlete'] = {
-            'FTP': power_zones.get('ftp', 0),
-            'weight': activity.get('athlete_weight', 0),
-            'resting_hr': activity.get('resting_hr', 0),
-            'ctl': fitness_metrics['ctl'],
-            'atl': fitness_metrics['atl'],
-            'tsb': fitness_metrics['tsb']
+        processed["athlete"] = {
+            "FTP": power_zones.get("ftp", 0),
+            "weight": activity.get("athlete_weight", 0),
+            "resting_hr": activity.get("resting_hr", 0),
+            "ctl": fitness_metrics["ctl"],
+            "atl": fitness_metrics["atl"],
+            "tsb": fitness_metrics["tsb"],
         }
 
         # 3. Feedback athlète
-        feedback = raw_data.get('feedback', {})
-        processed['feedback'] = feedback.get('notes', '')
+        feedback = raw_data.get("feedback", {})
+        processed["feedback"] = feedback.get("notes", "")
 
         # 4. Métriques dérivées
-        derived = self._calculate_derived_metrics(processed['workout'], processed['athlete'])
-        processed['derived_metrics'] = derived
+        derived = self._calculate_derived_metrics(processed["workout"], processed["athlete"])
+        processed["derived_metrics"] = derived
 
         # 5. Contexte analyse
-        processed['analysis_context'] = {
-            'workout_date': processed['workout']['date'],
-            'fitness_state': self._classify_fitness_state(processed['athlete']),
-            'intensity_level': self._classify_intensity(processed['workout']),
-            'workflow_complete': raw_data.get('workflow_state', {}).get('step_3_completed', False)
+        processed["analysis_context"] = {
+            "workout_date": processed["workout"]["date"],
+            "fitness_state": self._classify_fitness_state(processed["athlete"]),
+            "intensity_level": self._classify_intensity(processed["workout"]),
+            "workflow_complete": raw_data.get("workflow_state", {}).get("step_3_completed", False),
         }
 
         return processed
 
-    def format_output(self, processed_data: Dict[str, Any]) -> str:
+    def format_output(self, processed_data: dict[str, Any]) -> str:
         """
         Formater sortie daily en markdown.
 
@@ -241,10 +241,10 @@ class DailyAggregator(DataAggregator):
         Returns:
             Markdown formaté pour workouts-history.md
         """
-        workout = processed_data['workout']
-        athlete = processed_data['athlete']
-        feedback = processed_data['feedback']
-        derived = processed_data['derived_metrics']
+        workout = processed_data["workout"]
+        athlete = processed_data["athlete"]
+        feedback = processed_data["feedback"]
+        derived = processed_data["derived_metrics"]
 
         # Header
         output = f"### {workout['name']} ({workout['date']})\n"
@@ -272,7 +272,7 @@ class DailyAggregator(DataAggregator):
 
         return output
 
-    def _fetch_intervals_activity(self) -> Dict[str, Any]:
+    def _fetch_intervals_activity(self) -> dict[str, Any]:
         """
         Récupérer données activité depuis Intervals.icu.
 
@@ -283,20 +283,20 @@ class DailyAggregator(DataAggregator):
         # Pour l'instant, retourner données mock
         logger.warning("Using mock activity data (API not implemented)")
         return {
-            'id': self.activity_id,
-            'start_date_local': datetime.now().isoformat(),
-            'moving_time': 3600,
-            'tss': 45,
-            'np': 180,
-            'average_watts': 175,
-            'intensity': 0.82,
-            'average_hr': 140,
-            'max_hr': 165,
-            'type': 'Ride',
-            'name': 'Morning Ride'
+            "id": self.activity_id,
+            "start_date_local": datetime.now().isoformat(),
+            "moving_time": 3600,
+            "tss": 45,
+            "np": 180,
+            "average_watts": 175,
+            "intensity": 0.82,
+            "average_hr": 140,
+            "max_hr": 165,
+            "type": "Ride",
+            "name": "Morning Ride",
         }
 
-    def _load_feedback(self) -> Dict[str, Any]:
+    def _load_feedback(self) -> dict[str, Any]:
         """
         Charger feedback athlète depuis fichier.
 
@@ -308,12 +308,12 @@ class DailyAggregator(DataAggregator):
             return {}
 
         try:
-            with open(self.feedback_file, 'r', encoding='utf-8') as f:
+            with open(self.feedback_file, encoding="utf-8") as f:
                 feedback_data = json.load(f)
 
             # Trouver feedback pour cette activité
-            for entry in feedback_data.get('entries', []):
-                if entry.get('activity_id') == self.activity_id:
+            for entry in feedback_data.get("entries", []):
+                if entry.get("activity_id") == self.activity_id:
                     return entry
 
             return {}
@@ -323,7 +323,7 @@ class DailyAggregator(DataAggregator):
             self.errors.append(f"Failed to load feedback: {e}")
             return {}
 
-    def _load_workflow_state(self) -> Dict[str, Any]:
+    def _load_workflow_state(self) -> dict[str, Any]:
         """
         Charger état workflow depuis fichier.
 
@@ -335,14 +335,14 @@ class DailyAggregator(DataAggregator):
             return {}
 
         try:
-            with open(self.workflow_state_file, 'r', encoding='utf-8') as f:
+            with open(self.workflow_state_file, encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
             logger.error(f"Error loading workflow state: {e}")
             self.errors.append(f"Failed to load workflow state: {e}")
             return {}
 
-    def _fetch_fitness_metrics(self) -> Dict[str, Any]:
+    def _fetch_fitness_metrics(self) -> dict[str, Any]:
         """
         Récupérer métriques fitness depuis Intervals.icu.
 
@@ -351,13 +351,9 @@ class DailyAggregator(DataAggregator):
         """
         # TODO: Implémenter appel API Intervals.icu
         logger.warning("Using mock fitness metrics (API not implemented)")
-        return {
-            'ctl': 45.2,
-            'atl': 38.5,
-            'tsb': 6.7
-        }
+        return {"ctl": 45.2, "atl": 38.5, "tsb": 6.7}
 
-    def _load_power_zones(self) -> Dict[str, Any]:
+    def _load_power_zones(self) -> dict[str, Any]:
         """
         Charger zones puissance depuis fichier.
 
@@ -366,21 +362,19 @@ class DailyAggregator(DataAggregator):
         """
         if not self.power_zones_file.exists():
             logger.warning("No power zones file found")
-            return {'ftp': 220}
+            return {"ftp": 220}
 
         try:
-            with open(self.power_zones_file, 'r', encoding='utf-8') as f:
+            with open(self.power_zones_file, encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
             logger.error(f"Error loading power zones: {e}")
             self.errors.append(f"Failed to load power zones: {e}")
-            return {'ftp': 220}
+            return {"ftp": 220}
 
     def _calculate_derived_metrics(
-        self,
-        workout: Dict[str, Any],
-        athlete: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, workout: dict[str, Any], athlete: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Calculer métriques dérivées.
 
@@ -394,27 +388,27 @@ class DailyAggregator(DataAggregator):
         derived = {}
 
         # Découplage cardiovasculaire (approximation)
-        if workout['average_hr'] > 0 and workout['average_power'] > 0:
+        if workout["average_hr"] > 0 and workout["average_power"] > 0:
             # Formule simplifiée
-            derived['decoupling'] = 0.0  # TODO: Implémenter calcul réel
+            derived["decoupling"] = 0.0  # TODO: Implémenter calcul réel
         else:
-            derived['decoupling'] = 0.0
+            derived["decoupling"] = 0.0
 
         # Efficience (W/kg)
-        if athlete['weight'] > 0:
-            derived['power_to_weight'] = workout['average_power'] / athlete['weight']
+        if athlete["weight"] > 0:
+            derived["power_to_weight"] = workout["average_power"] / athlete["weight"]
         else:
-            derived['power_to_weight'] = 0.0
+            derived["power_to_weight"] = 0.0
 
         # Variability Index (NP / AP)
-        if workout['average_power'] > 0:
-            derived['variability_index'] = workout['normalized_power'] / workout['average_power']
+        if workout["average_power"] > 0:
+            derived["variability_index"] = workout["normalized_power"] / workout["average_power"]
         else:
-            derived['variability_index'] = 1.0
+            derived["variability_index"] = 1.0
 
         return derived
 
-    def _classify_fitness_state(self, athlete: Dict[str, Any]) -> str:
+    def _classify_fitness_state(self, athlete: dict[str, Any]) -> str:
         """
         Classifier état fitness basé sur TSB.
 
@@ -424,18 +418,18 @@ class DailyAggregator(DataAggregator):
         Returns:
             État: 'fresh', 'optimal', 'fatigued', 'overreached'
         """
-        tsb = athlete.get('tsb', 0)
+        tsb = athlete.get("tsb", 0)
 
         if tsb > 10:
-            return 'fresh'
+            return "fresh"
         elif tsb >= -10:
-            return 'optimal'
+            return "optimal"
         elif tsb >= -20:
-            return 'fatigued'
+            return "fatigued"
         else:
-            return 'overreached'
+            return "overreached"
 
-    def _classify_intensity(self, workout: Dict[str, Any]) -> str:
+    def _classify_intensity(self, workout: dict[str, Any]) -> str:
         """
         Classifier intensité workout basé sur IF.
 
@@ -445,15 +439,15 @@ class DailyAggregator(DataAggregator):
         Returns:
             Intensité: 'recovery', 'endurance', 'tempo', 'threshold', 'vo2max'
         """
-        intensity_factor = workout.get('intensity_factor', 0.0)
+        intensity_factor = workout.get("intensity_factor", 0.0)
 
         if intensity_factor < 0.55:
-            return 'recovery'
+            return "recovery"
         elif intensity_factor < 0.75:
-            return 'endurance'
+            return "endurance"
         elif intensity_factor < 0.85:
-            return 'tempo'
+            return "tempo"
         elif intensity_factor < 0.95:
-            return 'threshold'
+            return "threshold"
         else:
-            return 'vo2max'
+            return "vo2max"

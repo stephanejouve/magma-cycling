@@ -1,36 +1,34 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Tests for OpenAI API Provider.
 
 Tests OpenAIAnalyzer with realistic OpenAI SDK mocks.
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
-from cyclisme_training_logs.ai_providers.openai_api import OpenAIAnalyzer, WorkflowError
+
 from cyclisme_training_logs.ai_providers.base import AIProvider
+from cyclisme_training_logs.ai_providers.openai_api import OpenAIAnalyzer, WorkflowError
 
 
 @pytest.fixture
 def valid_api_key():
     """Valid OpenAI API key format."""
-    return 'sk-test-openai-key-12345'
+    return "sk-test-openai-key-12345"
 
 
 @pytest.fixture
 def openai_config(valid_api_key):
     """Valid OpenAI configuration."""
-    return {
-        'api_key': valid_api_key,
-        'model': 'gpt-4-turbo'
-    }
+    return {"api_key": valid_api_key, "model": "gpt-4-turbo"}
 
 
 @pytest.fixture
 def mock_openai_client():
     """Mock OpenAI client."""
-    with patch('cyclisme_training_logs.ai_providers.openai_api.OpenAI') as mock_class:
+    with patch("cyclisme_training_logs.ai_providers.openai_api.OpenAI") as mock_class:
         mock_client = MagicMock()
         mock_class.return_value = mock_client
         yield mock_client
@@ -43,45 +41,39 @@ class TestOpenAIAnalyzer:
 
     def test_init_success(self, valid_api_key):
         """Test successful initialization with valid config."""
-        analyzer = OpenAIAnalyzer(
-            api_key=valid_api_key,
-            model='gpt-4-turbo'
-        )
+        analyzer = OpenAIAnalyzer(api_key=valid_api_key, model="gpt-4-turbo")
 
         assert analyzer.provider == AIProvider.OPENAI
-        assert analyzer.model == 'gpt-4-turbo'
+        assert analyzer.model == "gpt-4-turbo"
         assert analyzer.client is not None
 
     def test_init_missing_api_key(self):
         """Test initialization fails without API key."""
         with pytest.raises(WorkflowError) as exc_info:
-            OpenAIAnalyzer(api_key=None, model='gpt-4-turbo')
+            OpenAIAnalyzer(api_key=None, model="gpt-4-turbo")
 
         error_msg = str(exc_info.value).lower()
-        assert 'api key' in error_msg or 'required' in error_msg
+        assert "api key" in error_msg or "required" in error_msg
 
     def test_init_empty_api_key(self):
         """Test initialization fails with empty API key."""
         with pytest.raises(WorkflowError) as exc_info:
-            OpenAIAnalyzer(api_key='', model='gpt-4-turbo')
+            OpenAIAnalyzer(api_key="", model="gpt-4-turbo")
 
         error_msg = str(exc_info.value).lower()
-        assert 'api key' in error_msg or 'required' in error_msg
+        assert "api key" in error_msg or "required" in error_msg
 
     def test_init_default_model(self, valid_api_key):
         """Test that default model is used when not specified."""
         analyzer = OpenAIAnalyzer(api_key=valid_api_key)
 
-        assert analyzer.model == 'gpt-4-turbo'
+        assert analyzer.model == "gpt-4-turbo"
 
     def test_init_custom_model(self, valid_api_key):
         """Test initialization with custom model."""
-        analyzer = OpenAIAnalyzer(
-            api_key=valid_api_key,
-            model='gpt-3.5-turbo'
-        )
+        analyzer = OpenAIAnalyzer(api_key=valid_api_key, model="gpt-3.5-turbo")
 
-        assert analyzer.model == 'gpt-3.5-turbo'
+        assert analyzer.model == "gpt-3.5-turbo"
 
     # === Success Tests ===
 
@@ -209,6 +201,7 @@ class TestOpenAIAnalyzer:
     def test_analyze_timeout_error(self, valid_api_key, mock_openai_client):
         """Test handling of timeout."""
         import requests
+
         mock_openai_client.chat.completions.create.side_effect = requests.Timeout("Request timeout")
 
         analyzer = OpenAIAnalyzer(api_key=valid_api_key)
@@ -221,7 +214,10 @@ class TestOpenAIAnalyzer:
     def test_analyze_connection_error(self, valid_api_key, mock_openai_client):
         """Test handling of connection error."""
         import requests
-        mock_openai_client.chat.completions.create.side_effect = requests.ConnectionError("Cannot connect")
+
+        mock_openai_client.chat.completions.create.side_effect = requests.ConnectionError(
+            "Cannot connect"
+        )
 
         analyzer = OpenAIAnalyzer(api_key=valid_api_key)
 
@@ -234,13 +230,13 @@ class TestOpenAIAnalyzer:
 
     def test_get_provider_info(self, valid_api_key):
         """Test get_provider_info returns correct information."""
-        analyzer = OpenAIAnalyzer(api_key=valid_api_key, model='gpt-3.5-turbo')
+        analyzer = OpenAIAnalyzer(api_key=valid_api_key, model="gpt-3.5-turbo")
 
         info = analyzer.get_provider_info()
 
-        assert info['provider'] == 'openai'
-        assert info['model'] == 'gpt-3.5-turbo'
-        assert info['requires_api_key'] is True
+        assert info["provider"] == "openai"
+        assert info["model"] == "gpt-3.5-turbo"
+        assert info["requires_api_key"] is True
 
     def test_get_provider_info_structure(self, valid_api_key):
         """Test provider info has expected structure."""
@@ -249,10 +245,10 @@ class TestOpenAIAnalyzer:
         info = analyzer.get_provider_info()
 
         assert isinstance(info, dict)
-        assert 'provider' in info
-        assert 'model' in info
-        assert 'cost_input' in info
-        assert 'cost_output' in info
+        assert "provider" in info
+        assert "model" in info
+        assert "cost_input" in info
+        assert "cost_output" in info
 
     def test_validate_config_success(self, valid_api_key):
         """Test config validation returns True with valid config."""
@@ -266,15 +262,15 @@ class TestOpenAIAnalyzer:
 
     def test_multiple_analyzers_independent(self, valid_api_key):
         """Test multiple analyzer instances are independent."""
-        analyzer1 = OpenAIAnalyzer(api_key=valid_api_key, model='gpt-4-turbo')
-        analyzer2 = OpenAIAnalyzer(api_key=valid_api_key, model='gpt-3.5-turbo')
+        analyzer1 = OpenAIAnalyzer(api_key=valid_api_key, model="gpt-4-turbo")
+        analyzer2 = OpenAIAnalyzer(api_key=valid_api_key, model="gpt-3.5-turbo")
 
         assert analyzer1 is not analyzer2
         assert analyzer1.model != analyzer2.model
 
     def test_model_parameter_preserved(self, valid_api_key):
         """Test that model parameter is preserved."""
-        custom_model = 'gpt-4'
+        custom_model = "gpt-4"
         analyzer = OpenAIAnalyzer(api_key=valid_api_key, model=custom_model)
 
         assert analyzer.model == custom_model
@@ -283,7 +279,7 @@ class TestOpenAIAnalyzer:
         """Test that OpenAI client is properly initialized."""
         analyzer = OpenAIAnalyzer(api_key=valid_api_key)
 
-        assert hasattr(analyzer, 'client')
+        assert hasattr(analyzer, "client")
         assert analyzer.client is not None
         assert analyzer.validate_config() is True
 
@@ -292,10 +288,10 @@ class TestOpenAIAnalyzer:
         analyzer = OpenAIAnalyzer(api_key=valid_api_key)
 
         assert analyzer.provider == AIProvider.OPENAI
-        assert analyzer.provider.value == 'openai'
+        assert analyzer.provider.value == "openai"
 
     def test_gpt4_turbo_default(self, valid_api_key):
         """Test that gpt-4-turbo is the default model."""
         analyzer = OpenAIAnalyzer(api_key=valid_api_key)
 
-        assert analyzer.model == 'gpt-4-turbo'
+        assert analyzer.model == "gpt-4-turbo"

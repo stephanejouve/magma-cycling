@@ -237,15 +237,15 @@ Task 3: Add Missing Method (if needed)
 If get_events() doesn’t exist, add it:
 class IntervalsAPI:
     # ... existing methods ...
-    
+
     def get_events(self, oldest: str, newest: str, category: str = None):
         """Fetch events (workouts, notes, etc.) for date range
-        
+
         Args:
             oldest: Start date YYYY-MM-DD
             newest: End date YYYY-MM-DD
             category: Optional filter (WORKOUT, NOTE, etc.)
-        
+
         Returns:
             list: Events matching criteria
         """
@@ -254,28 +254,28 @@ class IntervalsAPI:
             'oldest': oldest,
             'newest': newest
         }
-        
+
         response = self.session.get(url, params=params)
         response.raise_for_status()
-        
+
         events = response.json()
-        
+
         # Filter by category if specified
         if category:
             events = [e for e in events if e.get('category') == category]
-        
+
         return events
 class IntervalsAPI:
     # ... existing methods ...
-    
+
     def get_events(self, oldest: str, newest: str, category: str = None):
         """Fetch events (workouts, notes, etc.) for date range
-        
+
         Args:
             oldest: Start date YYYY-MM-DD
             newest: End date YYYY-MM-DD
             category: Optional filter (WORKOUT, NOTE, etc.)
-        
+
         Returns:
             list: Events matching criteria
         """
@@ -284,16 +284,16 @@ class IntervalsAPI:
             'oldest': oldest,
             'newest': newest
         }
-        
+
         response = self.session.get(url, params=params)
         response.raise_for_status()
-        
+
         events = response.json()
-        
+
         # Filter by category if specified
         if category:
             events = [e for e in events if e.get('category') == category]
-        
+
         return events
 Task 4: Test
 cd ~/cyclisme-training-logs
@@ -324,4 +324,3 @@ P2 - Affects weekly reports completeness
 **Envoie les 4 prompts à Claude Code dans l'ordre P1 → P2 → P3.**
 
 Chaque prompt est autonome et testable indépendamment! 🚀​​​​​​​​​​​​​​​​
-

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Ollama local LLM integration.
 
@@ -23,16 +22,17 @@ Created: 2025-12-09
 
 import logging
 from typing import Optional
+
 import requests
 
 from .base import AIAnalyzer, AIProvider
-
 
 logger = logging.getLogger(__name__)
 
 
 class WorkflowError(Exception):
     """Workflow error for AI provider operations."""
+
     pass
 
 
@@ -65,14 +65,10 @@ class OllamaAnalyzer(AIAnalyzer):
         "llama3.1:70b": "Llama 3.1 70B (best quality)",
         "llama3.1:8b": "Llama 3.1 8B (fast, good)",
         "mistral:7b": "Mistral 7B (balanced)",
-        "codellama:13b": "CodeLlama 13B (code-focused)"
+        "codellama:13b": "CodeLlama 13B (code-focused)",
     }
 
-    def __init__(
-        self,
-        host: str = "http://localhost:11434",
-        model: str = "mistral:7b"
-    ):
+    def __init__(self, host: str = "http://localhost:11434", model: str = "mistral:7b"):
         """Initialize Ollama analyzer.
 
         Args:
@@ -120,17 +116,13 @@ class OllamaAnalyzer(AIAnalyzer):
             # Call Ollama API (10min timeout for slow local models)
             response = requests.post(
                 self.api_url,
-                json={
-                    "model": self.model,
-                    "prompt": prompt,
-                    "stream": False
-                },
-                timeout=600
+                json={"model": self.model, "prompt": prompt, "stream": False},
+                timeout=600,
             )
 
             response.raise_for_status()
             result = response.json()
-            analysis = result.get('response', '')
+            analysis = result.get("response", "")
 
             logger.info(f"Received analysis from Ollama ({len(analysis)} chars)")
 
@@ -160,15 +152,15 @@ class OllamaAnalyzer(AIAnalyzer):
             '$0.00 (local)'
         """
         return {
-            'provider': 'ollama',
-            'model': self.model,
-            'host': self.host,
-            'status': 'ready' if self.validate_config() else 'server_offline',
-            'cost_input': '$0.00 (local)',
-            'cost_output': '$0.00 (local)',
-            'requires_api_key': False,
-            'privacy': '100% local',
-            'note': 'Free, unlimited, private 🔒'
+            "provider": "ollama",
+            "model": self.model,
+            "host": self.host,
+            "status": "ready" if self.validate_config() else "server_offline",
+            "cost_input": "$0.00 (local)",
+            "cost_output": "$0.00 (local)",
+            "requires_api_key": False,
+            "privacy": "100% local",
+            "note": "Free, unlimited, private 🔒",
         }
 
     def validate_config(self) -> bool:

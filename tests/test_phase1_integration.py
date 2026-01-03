@@ -11,19 +11,19 @@ Tests the complete pipeline:
 Run with: poetry run python test_phase1_integration.py
 """
 
-import sys
-from pathlib import Path
-from datetime import date, datetime
-import tempfile
 import shutil
+import sys
+import tempfile
+from datetime import date
+from pathlib import Path
 
 # Add project root to path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from cyclisme_training_logs.core.timeline_injector import TimelineInjector
-from cyclisme_training_logs.core.prompt_generator import PromptGenerator
 from cyclisme_training_logs.analyzers.daily_aggregator import DailyAggregator
+from cyclisme_training_logs.core.prompt_generator import PromptGenerator
+from cyclisme_training_logs.core.timeline_injector import TimelineInjector
 
 
 def print_section(title):
@@ -38,9 +38,10 @@ def test_timeline_injector():
     print_section("TEST 1: TimelineInjector")
 
     # Create temporary test file
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
         test_file = Path(f.name)
-        f.write("""# Workouts History
+        f.write(
+            """# Workouts History
 
 ## 2025
 
@@ -49,7 +50,8 @@ def test_timeline_injector():
 
 ### S073-01 (2025-01-06)
 **Durée:** 45min | **TSS:** 35 | **IF:** 0.75
-""")
+"""
+        )
 
     try:
         # Initialize injector
@@ -73,8 +75,7 @@ def test_timeline_injector():
         # Inject chronologically
         print("\nInjecting workout entry for 2025-01-07...")
         result = injector.inject_chronologically(
-            workout_entry=new_entry,
-            workout_date=date(2025, 1, 7)
+            workout_entry=new_entry, workout_date=date(2025, 1, 7)
         )
 
         if result.success:
@@ -84,13 +85,13 @@ def test_timeline_injector():
             return False
 
         # Verify chronological order
-        with open(test_file, 'r') as f:
+        with open(test_file) as f:
             content = f.read()
 
         # Check that S073-02 appears between S073-01 and S073-03
-        s01_pos = content.find('S073-01')
-        s02_pos = content.find('S073-02')
-        s03_pos = content.find('S073-03')
+        s01_pos = content.find("S073-01")
+        s02_pos = content.find("S073-02")
+        s03_pos = content.find("S073-03")
 
         # File is in reverse chronological order (newest first)
         # So: S073-03 (Jan 8) < S073-02 (Jan 7) < S073-01 (Jan 6)
@@ -105,8 +106,7 @@ def test_timeline_injector():
         # Test duplicate detection
         print("\nTesting duplicate detection...")
         duplicate_result = injector.inject_chronologically(
-            workout_entry=new_entry,
-            workout_date=date(2025, 1, 7)
+            workout_entry=new_entry, workout_date=date(2025, 1, 7)
         )
 
         if duplicate_result.duplicate_found:
@@ -132,8 +132,9 @@ def test_daily_aggregator():
 
     try:
         # Create mock data files
-        feedback_file = temp_dir / 'daily-feedback.json'
-        feedback_file.write_text("""
+        feedback_file = temp_dir / "daily-feedback.json"
+        feedback_file.write_text(
+            """
 {
   "entries": [
     {
@@ -143,10 +144,12 @@ def test_daily_aggregator():
     }
   ]
 }
-""")
+"""
+        )
 
-        power_zones_file = temp_dir / 'power-zones.json'
-        power_zones_file.write_text("""
+        power_zones_file = temp_dir / "power-zones.json"
+        power_zones_file.write_text(
+            """
 {
   "ftp": 220,
   "zones": {
@@ -158,14 +161,12 @@ def test_daily_aggregator():
     "Z6": [243, 308]
   }
 }
-""")
+"""
+        )
 
         # Initialize aggregator
         print(f"✓ Using temp directory: {temp_dir}")
-        aggregator = DailyAggregator(
-            activity_id="i123456789",
-            data_dir=temp_dir
-        )
+        aggregator = DailyAggregator(activity_id="i123456789", data_dir=temp_dir)
 
         print("✓ DailyAggregator initialized")
 
@@ -180,7 +181,7 @@ def test_daily_aggregator():
         print("✓ Aggregation completed successfully")
 
         # Validate raw data collection
-        raw_data = result.data['raw']
+        raw_data = result.data["raw"]
         print("\nValidating raw data collection:")
         print(f"  - Activity data: {'✓' if 'activity' in raw_data else '✗'}")
         print(f"  - Feedback data: {'✓' if 'feedback' in raw_data else '✗'}")
@@ -189,24 +190,24 @@ def test_daily_aggregator():
         print(f"  - Power zones: {'✓' if 'power_zones' in raw_data else '✗'}")
 
         # Validate processed data
-        processed_data = result.data['processed']
+        processed_data = result.data["processed"]
         print("\nValidating processed data:")
 
-        workout = processed_data.get('workout', {})
+        workout = processed_data.get("workout", {})
         print(f"  - Workout TSS: {workout.get('tss', 0)}")
         print(f"  - Workout IF: {workout.get('intensity_factor', 0.0):.2f}")
 
-        athlete = processed_data.get('athlete', {})
+        athlete = processed_data.get("athlete", {})
         print(f"  - Athlete FTP: {athlete.get('FTP', 0)}W")
         print(f"  - CTL: {athlete.get('ctl', 0):.1f}")
         print(f"  - ATL: {athlete.get('atl', 0):.1f}")
         print(f"  - TSB: {athlete.get('tsb', 0):.1f}")
 
-        feedback = processed_data.get('feedback', '')
+        feedback = processed_data.get("feedback", "")
         print(f"  - Feedback: {'✓ Loaded' if feedback else '✗ Missing'}")
 
         # Validate formatted output
-        formatted = result.data['formatted']
+        formatted = result.data["formatted"]
         print("\nValidating formatted output:")
         print(f"  - Output length: {len(formatted)} chars")
         print(f"  - Contains header: {'✓' if '###' in formatted else '✗'}")
@@ -234,19 +235,15 @@ def test_prompt_generator():
     intro = generator.intro_block("daily")
     print(f"  - Intro block: {'✓' if '# Analyse' in intro else '✗'}")
 
-    context = generator.context_block({
-        'FTP': 220,
-        'weight': 84,
-        'resting_hr': 45
-    })
+    context = generator.context_block({"FTP": 220, "weight": 84, "resting_hr": 45})
     print(f"  - Context block: {'✓' if 'FTP' in context else '✗'}")
 
     workout_data = {
-        'duration': 3600,
-        'tss': 45,
-        'normalized_power': 180,
-        'average_power': 175,
-        'intensity_factor': 0.82
+        "duration": 3600,
+        "tss": 45,
+        "normalized_power": 180,
+        "average_power": 175,
+        "intensity_factor": 0.82,
     }
     data = generator.data_block(workout_data)
     print(f"  - Data block: {'✓' if 'TSS' in data else '✗'}")
@@ -262,8 +259,8 @@ def test_prompt_generator():
     full_prompt = generator.generate_daily_analysis_prompt(
         activity_id="i123456789",
         workout_data=workout_data,
-        athlete_data={'FTP': 220, 'weight': 84},
-        feedback="Séance difficile, fatigue"
+        athlete_data={"FTP": 220, "weight": 84},
+        feedback="Séance difficile, fatigue",
     )
 
     print(f"  - Prompt length: {len(full_prompt)} chars")
@@ -274,7 +271,7 @@ def test_prompt_generator():
     print(f"  - Contains instructions: {'✓' if 'Analyser' in full_prompt else '✗'}")
 
     # Test prompt structure
-    sections = full_prompt.split('\n\n')
+    sections = full_prompt.split("\n\n")
     print(f"\n  - Prompt sections: {len(sections)}")
     print(f"  - Well-structured: {'✓' if len(sections) >= 5 else '✗'}")
 
@@ -288,18 +285,21 @@ def test_full_workflow_integration():
 
     # Create temporary environment
     temp_dir = Path(tempfile.mkdtemp())
-    history_file = temp_dir / 'workouts-history.md'
+    history_file = temp_dir / "workouts-history.md"
 
     try:
         # Initialize history file
-        history_file.write_text("""# Workouts History
+        history_file.write_text(
+            """# Workouts History
 
 ## 2025
-""")
+"""
+        )
 
         # Create mock data files
-        feedback_file = temp_dir / 'daily-feedback.json'
-        feedback_file.write_text("""
+        feedback_file = temp_dir / "daily-feedback.json"
+        feedback_file.write_text(
+            """
 {
   "entries": [
     {
@@ -309,19 +309,17 @@ def test_full_workflow_integration():
     }
   ]
 }
-""")
+"""
+        )
 
-        power_zones_file = temp_dir / 'power-zones.json'
+        power_zones_file = temp_dir / "power-zones.json"
         power_zones_file.write_text('{"ftp": 220}')
 
         print("✓ Test environment created")
 
         # Step 1: Aggregate data
         print("\n📊 Step 1: Aggregating workout data...")
-        aggregator = DailyAggregator(
-            activity_id="i987654321",
-            data_dir=temp_dir
-        )
+        aggregator = DailyAggregator(activity_id="i987654321", data_dir=temp_dir)
 
         agg_result = aggregator.aggregate()
 
@@ -335,12 +333,12 @@ def test_full_workflow_integration():
         print("\n🤖 Step 2: Generating AI analysis prompt...")
         generator = PromptGenerator()
 
-        processed = agg_result.data['processed']
+        processed = agg_result.data["processed"]
         prompt = generator.generate_daily_analysis_prompt(
             activity_id="i987654321",
-            workout_data=processed['workout'],
-            athlete_data=processed['athlete'],
-            feedback=processed['feedback']
+            workout_data=processed["workout"],
+            athlete_data=processed["athlete"],
+            feedback=processed["feedback"],
         )
 
         print(f"✓ Prompt generated ({len(prompt)} chars)")
@@ -349,10 +347,9 @@ def test_full_workflow_integration():
         print("\n📝 Step 3: Injecting workout into history...")
         injector = TimelineInjector(history_file=history_file)
 
-        formatted_output = agg_result.data['formatted']
+        formatted_output = agg_result.data["formatted"]
         inject_result = injector.inject_chronologically(
-            workout_entry=formatted_output,
-            workout_date=date.today()
+            workout_entry=formatted_output, workout_date=date.today()
         )
 
         if not inject_result.success:
@@ -365,7 +362,7 @@ def test_full_workflow_integration():
         print("\n✅ Workflow Integration Validation:")
 
         # Check history file was updated
-        with open(history_file, 'r') as f:
+        with open(history_file) as f:
             history_content = f.read()
 
         print(f"  - History file updated: {'✓' if 'Morning Ride' in history_content else '✗'}")
@@ -380,7 +377,9 @@ def test_full_workflow_integration():
         # Check error/warning handling
         has_errors = len(agg_result.errors) > 0
         has_warnings = len(agg_result.warnings) > 0
-        print(f"  - Error handling: {'✓' if not has_errors else f'⚠️  {len(agg_result.errors)} errors'}")
+        print(
+            f"  - Error handling: {'✓' if not has_errors else f'⚠️  {len(agg_result.errors)} errors'}"
+        )
         print(f"  - Warnings logged: {'✓' if has_warnings else 'No warnings'}")
 
         print("\n✅ Full Workflow Integration: ALL TESTS PASSED")
@@ -395,19 +394,21 @@ def main():
     """Run all Phase 1 integration tests."""
     print_section("PHASE 1 CORE INFRASTRUCTURE - INTEGRATION TESTS")
 
-    print("""
+    print(
+        """
 Testing modules:
   1. TimelineInjector - Chronological workout injection
   2. DailyAggregator - Multi-source data aggregation
   3. PromptGenerator - Composable AI prompt building
   4. Full Workflow - Complete pipeline integration
-""")
+"""
+    )
 
     tests = [
         ("TimelineInjector", test_timeline_injector),
         ("DailyAggregator", test_daily_aggregator),
         ("PromptGenerator", test_prompt_generator),
-        ("Full Workflow Integration", test_full_workflow_integration)
+        ("Full Workflow Integration", test_full_workflow_integration),
     ]
 
     results = []
@@ -419,6 +420,7 @@ Testing modules:
         except Exception as e:
             print(f"\n❌ {test_name} CRASHED: {e}")
             import traceback
+
             traceback.print_exc()
             results.append((test_name, False))
 
@@ -445,5 +447,5 @@ Testing modules:
         return 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

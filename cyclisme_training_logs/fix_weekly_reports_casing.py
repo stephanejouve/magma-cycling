@@ -21,12 +21,11 @@ Usage:
     python3 cyclisme_training_logs/fix_weekly_reports_casing.py --rollback
 """
 
-import os
+import argparse
 import shutil
 import sys
-from pathlib import Path
 from datetime import datetime
-import argparse
+from pathlib import Path
 
 
 class WeeklyReportsFixing:
@@ -43,7 +42,7 @@ class WeeklyReportsFixing:
         """Logger message console + fichier"""
         print(message)
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        with open(self.log_file, 'a', encoding='utf-8') as f:
+        with open(self.log_file, "a", encoding="utf-8") as f:
             f.write(f"[{timestamp}] {message}\n")
 
     def backup_weekly_reports(self):
@@ -99,18 +98,15 @@ class WeeklyReportsFixing:
             print(f"  {status} {d} ({files_count} fichiers)")
 
         # Identifier problèmes
-        problems = {
-            'lowercase': [d for d in dirs if d[0].islower()],
-            'duplicates': []
-        }
+        problems = {"lowercase": [d for d in dirs if d[0].islower()], "duplicates": []}
 
         # Détecter doublons (ex: S067 et s067)
-        for d in problems['lowercase']:
+        for d in problems["lowercase"]:
             upper_version = d.upper()
             if upper_version in dirs:
-                problems['duplicates'].append((d, upper_version))
+                problems["duplicates"].append((d, upper_version))
 
-        print(f"\n📊 Problèmes détectés :")
+        print("\n📊 Problèmes détectés :")
         print(f"  • Casse incorrecte : {len(problems['lowercase'])}")
         print(f"  • Doublons : {len(problems['duplicates'])}")
 
@@ -140,7 +136,7 @@ class WeeklyReportsFixing:
             action = f"Supprimer {lower_dir}"
         else:
             print(f"   ⚠️  {lower_dir} plus récent que {upper_dir}")
-            print(f"   → Recommandation manuelle requise")
+            print("   → Recommandation manuelle requise")
             return False
 
         if dry_run:
@@ -169,7 +165,7 @@ class WeeklyReportsFixing:
         # Vérifier que majuscule n'existe pas déjà
         if upper_path.exists():
             print(f"   ⚠️  {upper_name} existe déjà")
-            print(f"   → Utiliser fix_duplicate() pour gérer doublon")
+            print("   → Utiliser fix_duplicate() pour gérer doublon")
             return False
 
         files_count = len(list(lower_path.glob("*.md")))
@@ -184,7 +180,7 @@ class WeeklyReportsFixing:
             lower_path.rename(upper_path)
             self.log(f"✅ Renommé : {lower_dir} → {upper_name}")
             self.changes.append(f"Renommé : {lower_dir} → {upper_name}")
-            print(f"   ✅ Renommé")
+            print("   ✅ Renommé")
             return True
         except Exception as e:
             self.log(f"❌ Erreur renommage {lower_dir} : {e}")
@@ -205,7 +201,7 @@ class WeeklyReportsFixing:
             return False
 
         # Vérifier format
-        invalid = [d for d in dirs if not (d[0] == 'S' and len(d) == 4 and d[1:].isdigit())]
+        invalid = [d for d in dirs if not (d[0] == "S" and len(d) == 4 and d[1:].isdigit())]
         if invalid:
             print(f"❌ Format invalide : {invalid}")
             return False
@@ -213,7 +209,7 @@ class WeeklyReportsFixing:
         # Compter fichiers
         total_files = sum(1 for _ in self.weekly_dir.rglob("*.md"))
 
-        print(f"\n✅ Structure valide")
+        print("\n✅ Structure valide")
         print(f"   Répertoires : {len(dirs)}")
         print(f"   Fichiers .md : {total_files}")
         print(f"   Format : {'✅ Tous SXXX' if not invalid else '❌'}")
@@ -232,18 +228,18 @@ class WeeklyReportsFixing:
             return False
 
         success_count = 0
-        total_fixes = len(problems['duplicates']) + len(problems['lowercase'])
+        total_fixes = len(problems["duplicates"]) + len(problems["lowercase"])
 
         # Traiter doublons d'abord
-        for lower, upper in problems['duplicates']:
+        for lower, upper in problems["duplicates"]:
             if self.fix_duplicate(lower, upper, dry_run):
                 success_count += 1
                 # Retirer de la liste des minuscules (déjà traité)
-                if lower in problems['lowercase']:
-                    problems['lowercase'].remove(lower)
+                if lower in problems["lowercase"]:
+                    problems["lowercase"].remove(lower)
 
         # Traiter minuscules restantes (sans doublon)
-        for lower_dir in problems['lowercase']:
+        for lower_dir in problems["lowercase"]:
             if self.fix_lowercase(lower_dir, dry_run):
                 success_count += 1
 
@@ -285,7 +281,7 @@ class WeeklyReportsFixing:
             shutil.copytree(latest_backup, self.weekly_dir)
 
             self.log(f"✅ Rollback réussi depuis : {latest_backup}")
-            print(f"\n✅ Rollback terminé")
+            print("\n✅ Rollback terminé")
             return True
 
         except Exception as e:
@@ -297,25 +293,17 @@ class WeeklyReportsFixing:
 def main():
     parser = argparse.ArgumentParser(
         description="Corriger casse weekly_reports avec backup/rollback",
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+
+    parser.add_argument("--dry-run", action="store_true", help="Simulation sans modifications")
+
+    parser.add_argument(
+        "--force", action="store_true", help="Exécuter sans confirmation (DANGEREUX)"
     )
 
     parser.add_argument(
-        '--dry-run',
-        action='store_true',
-        help="Simulation sans modifications"
-    )
-
-    parser.add_argument(
-        '--force',
-        action='store_true',
-        help="Exécuter sans confirmation (DANGEREUX)"
-    )
-
-    parser.add_argument(
-        '--rollback',
-        action='store_true',
-        help="Restaurer depuis backup le plus récent"
+        "--rollback", action="store_true", help="Restaurer depuis backup le plus récent"
     )
 
     args = parser.parse_args()
@@ -330,7 +318,7 @@ def main():
     # Audit initial
     problems = fixer.audit_structure()
 
-    if not problems or (not problems['lowercase'] and not problems['duplicates']):
+    if not problems or (not problems["lowercase"] and not problems["duplicates"]):
         print("\n✅ Aucun problème détecté")
         sys.exit(0)
 

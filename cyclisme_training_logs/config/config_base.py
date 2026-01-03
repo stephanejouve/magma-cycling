@@ -49,6 +49,7 @@ Metadata:
 import os
 from pathlib import Path
 from typing import Optional
+
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -72,12 +73,12 @@ class DataRepoConfig:
         """
         if data_repo_path is None:
             # Try env var first
-            env_path = os.getenv('TRAINING_DATA_REPO')
+            env_path = os.getenv("TRAINING_DATA_REPO")
             if env_path:
                 data_repo_path = Path(env_path).expanduser()
             else:
                 # Default to ~/training-logs
-                data_repo_path = Path.home() / 'training-logs'
+                data_repo_path = Path.home() / "training-logs"
 
         self.data_repo_path = Path(data_repo_path).resolve()
 
@@ -90,39 +91,39 @@ class DataRepoConfig:
             )
 
         # Duplicate detection settings (paranoid mode for backfill testing)
-        self.paranoid_duplicate_check = True   # Check après chaque insertion
-        self.auto_fix_duplicates = False       # Auto-suppression ou erreur (fail-fast)
-        self.duplicate_check_window = 50        # Lignes à scanner (optimisation)
+        self.paranoid_duplicate_check = True  # Check après chaque insertion
+        self.auto_fix_duplicates = False  # Auto-suppression ou erreur (fail-fast)
+        self.duplicate_check_window = 50  # Lignes à scanner (optimisation)
 
     @property
     def workouts_history_path(self) -> Path:
         """Path to workouts-history.md in data repo."""
-        return self.data_repo_path / 'workouts-history.md'
+        return self.data_repo_path / "workouts-history.md"
 
     @property
     def bilans_dir(self) -> Path:
         """Path to bilans/ directory in data repo."""
-        return self.data_repo_path / 'bilans'
+        return self.data_repo_path / "bilans"
 
     @property
     def data_dir(self) -> Path:
         """Path to data/ directory in data repo."""
-        return self.data_repo_path / 'data'
+        return self.data_repo_path / "data"
 
     @property
     def week_planning_dir(self) -> Path:
         """Path to data/week_planning/ directory in data repo."""
-        return self.data_dir / 'week_planning'
+        return self.data_dir / "week_planning"
 
     @property
     def workout_templates_dir(self) -> Path:
         """Path to data/workout_templates/ directory in data repo."""
-        return self.data_dir / 'workout_templates'
+        return self.data_dir / "workout_templates"
 
     @property
     def workflow_state_path(self) -> Path:
         """Path to .workflow_state.json in data repo."""
-        return self.data_repo_path / '.workflow_state.json'
+        return self.data_repo_path / ".workflow_state.json"
 
     def ensure_directories(self):
         """Create required directories if they don't exist."""
@@ -199,6 +200,7 @@ def reset_data_config():
 # AI Providers Configuration
 # ============================================================================
 
+
 class AIProvidersConfig:
     """Configuration for AI providers.
 
@@ -220,51 +222,45 @@ class AIProvidersConfig:
     def __init__(self):
         """Initialize AI providers configuration from environment variables."""
         # General settings
-        self.default_provider = os.getenv('DEFAULT_AI_PROVIDER', 'clipboard')
-        self.enable_fallback = os.getenv('ENABLE_AI_FALLBACK', 'true').lower() == 'true'
-        self.fallback_priority = ['claude_api', 'mistral_api', 'openai', 'ollama', 'clipboard']
+        self.default_provider = os.getenv("DEFAULT_AI_PROVIDER", "clipboard")
+        self.enable_fallback = os.getenv("ENABLE_AI_FALLBACK", "true").lower() == "true"
+        self.fallback_priority = ["claude_api", "mistral_api", "openai", "ollama", "clipboard"]
 
         # Mistral AI - Direct attributes for easy access
-        self.mistral_api_key = os.getenv('MISTRAL_API_KEY')
-        self.mistral_model = os.getenv('MISTRAL_MODEL', 'mistral-large-latest')
-        self.mistral_temperature = float(os.getenv('MISTRAL_TEMPERATURE', '0.7'))
-        self.mistral_max_tokens = int(os.getenv('MISTRAL_MAX_TOKENS', '4000'))
-        self.mistral_timeout = int(os.getenv('MISTRAL_TIMEOUT', '60'))
+        self.mistral_api_key = os.getenv("MISTRAL_API_KEY")
+        self.mistral_model = os.getenv("MISTRAL_MODEL", "mistral-large-latest")
+        self.mistral_temperature = float(os.getenv("MISTRAL_TEMPERATURE", "0.7"))
+        self.mistral_max_tokens = int(os.getenv("MISTRAL_MAX_TOKENS", "4000"))
+        self.mistral_timeout = int(os.getenv("MISTRAL_TIMEOUT", "60"))
 
         # Claude API (Anthropic) - Direct attributes
-        self.claude_api_key = os.getenv('CLAUDE_API_KEY')
-        self.claude_model = os.getenv('CLAUDE_MODEL', 'claude-sonnet-4-20250514')
+        self.claude_api_key = os.getenv("CLAUDE_API_KEY")
+        self.claude_model = os.getenv("CLAUDE_MODEL", "claude-sonnet-4-20250514")
 
         # OpenAI - Direct attributes
-        self.openai_api_key = os.getenv('OPENAI_API_KEY')
-        self.openai_model = os.getenv('OPENAI_MODEL', 'gpt-4-turbo-preview')
+        self.openai_api_key = os.getenv("OPENAI_API_KEY")
+        self.openai_model = os.getenv("OPENAI_MODEL", "gpt-4-turbo-preview")
 
         # Ollama (local LLMs) - Direct attributes
-        self.ollama_base_url = os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')
-        self.ollama_model = os.getenv('OLLAMA_MODEL', 'mistral:7b')
+        self.ollama_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+        self.ollama_model = os.getenv("OLLAMA_MODEL", "mistral:7b")
 
         # Provider-specific configs (for backward compatibility with factory)
         self._configs = {
-            'clipboard': {},
-            'claude_api': {
-                'claude_api_key': self.claude_api_key,
-                'claude_model': self.claude_model
+            "clipboard": {},
+            "claude_api": {
+                "claude_api_key": self.claude_api_key,
+                "claude_model": self.claude_model,
             },
-            'mistral_api': {
-                'mistral_api_key': self.mistral_api_key,
-                'mistral_model': self.mistral_model,
-                'mistral_temperature': self.mistral_temperature,
-                'mistral_max_tokens': self.mistral_max_tokens,
-                'mistral_timeout': self.mistral_timeout
+            "mistral_api": {
+                "mistral_api_key": self.mistral_api_key,
+                "mistral_model": self.mistral_model,
+                "mistral_temperature": self.mistral_temperature,
+                "mistral_max_tokens": self.mistral_max_tokens,
+                "mistral_timeout": self.mistral_timeout,
             },
-            'openai': {
-                'openai_api_key': self.openai_api_key,
-                'openai_model': self.openai_model
-            },
-            'ollama': {
-                'ollama_base_url': self.ollama_base_url,
-                'ollama_model': self.ollama_model
-            }
+            "openai": {"openai_api_key": self.openai_api_key, "openai_model": self.openai_model},
+            "ollama": {"ollama_base_url": self.ollama_base_url, "ollama_model": self.ollama_model},
         }
 
     def is_provider_configured(self, provider: str) -> bool:
@@ -283,17 +279,17 @@ class AIProvidersConfig:
             >>> config.is_provider_configured('claude_api')
             False  # If CLAUDE_API_KEY not set
         """
-        if provider == 'clipboard':
+        if provider == "clipboard":
             return True  # Always available
-        if provider == 'ollama':
+        if provider == "ollama":
             return True  # Assume localhost available
 
         # Check API key from direct attributes
-        if provider == 'claude_api':
+        if provider == "claude_api":
             return bool(self.claude_api_key)
-        elif provider == 'mistral_api':
+        elif provider == "mistral_api":
             return bool(self.mistral_api_key)
-        elif provider == 'openai':
+        elif provider == "openai":
             return bool(self.openai_api_key)
 
         return False
@@ -384,6 +380,7 @@ def reset_ai_config():
 # Intervals.icu API Configuration
 # ============================================================================
 
+
 class IntervalsConfig:
     """Configuration for Intervals.icu API.
 
@@ -406,9 +403,9 @@ class IntervalsConfig:
     def __init__(self):
         """Initialize Intervals.icu configuration from environment variables."""
         # Read from VITE_ prefixed variables (React compatibility)
-        self.athlete_id = os.getenv('VITE_INTERVALS_ATHLETE_ID')
-        self.api_key = os.getenv('VITE_INTERVALS_API_KEY')
-        self.base_url = os.getenv('VITE_INTERVALS_BASE_URL', 'https://intervals.icu/api/v1')
+        self.athlete_id = os.getenv("VITE_INTERVALS_ATHLETE_ID")
+        self.api_key = os.getenv("VITE_INTERVALS_API_KEY")
+        self.base_url = os.getenv("VITE_INTERVALS_BASE_URL", "https://intervals.icu/api/v1")
 
     def is_configured(self) -> bool:
         """Check if Intervals.icu API is properly configured.
@@ -444,15 +441,13 @@ class IntervalsConfig:
             raise ValueError("Intervals.icu API not configured")
 
         import base64
-        auth_string = f"API_KEY:{self.api_key}"
-        auth_bytes = auth_string.encode('ascii')
-        base64_bytes = base64.b64encode(auth_bytes)
-        base64_string = base64_bytes.decode('ascii')
 
-        return {
-            'Authorization': f'Basic {base64_string}',
-            'Content-Type': 'application/json'
-        }
+        auth_string = f"API_KEY:{self.api_key}"
+        auth_bytes = auth_string.encode("ascii")
+        base64_bytes = base64.b64encode(auth_bytes)
+        base64_string = base64_bytes.decode("ascii")
+
+        return {"Authorization": f"Basic {base64_string}", "Content-Type": "application/json"}
 
 
 # Global Intervals config instance
@@ -493,16 +488,16 @@ def reset_intervals_config():
 
 __all__ = [
     # Data repo config
-    'DataRepoConfig',
-    'get_data_config',
-    'set_data_config',
-    'reset_data_config',
+    "DataRepoConfig",
+    "get_data_config",
+    "set_data_config",
+    "reset_data_config",
     # AI providers config
-    'AIProvidersConfig',
-    'get_ai_config',
-    'reset_ai_config',
+    "AIProvidersConfig",
+    "get_ai_config",
+    "reset_ai_config",
     # Intervals.icu config
-    'IntervalsConfig',
-    'get_intervals_config',
-    'reset_intervals_config',
+    "IntervalsConfig",
+    "get_intervals_config",
+    "reset_intervals_config",
 ]

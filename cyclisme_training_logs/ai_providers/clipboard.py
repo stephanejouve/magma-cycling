@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Clipboard-based AI analysis provider.
 
@@ -33,7 +32,6 @@ from typing import Optional
 
 from .base import AIAnalyzer, AIProvider
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -54,24 +52,18 @@ def _copy_to_clipboard_native(text: str) -> bool:
     system = platform.system()
 
     try:
-        if system == 'Darwin':  # macOS
-            process = subprocess.Popen(
-                ['pbcopy'],
-                stdin=subprocess.PIPE,
-                close_fds=True
-            )
-            process.communicate(text.encode('utf-8'))
+        if system == "Darwin":  # macOS
+            process = subprocess.Popen(["pbcopy"], stdin=subprocess.PIPE, close_fds=True)
+            process.communicate(text.encode("utf-8"))
             return process.returncode == 0
 
-        elif system == 'Linux':
+        elif system == "Linux":
             # Try xclip first
             try:
                 process = subprocess.Popen(
-                    ['xclip', '-selection', 'clipboard'],
-                    stdin=subprocess.PIPE,
-                    close_fds=True
+                    ["xclip", "-selection", "clipboard"], stdin=subprocess.PIPE, close_fds=True
                 )
-                process.communicate(text.encode('utf-8'))
+                process.communicate(text.encode("utf-8"))
                 if process.returncode == 0:
                     return True
             except FileNotFoundError:
@@ -80,23 +72,16 @@ def _copy_to_clipboard_native(text: str) -> bool:
             # Try xsel as fallback
             try:
                 process = subprocess.Popen(
-                    ['xsel', '--clipboard', '--input'],
-                    stdin=subprocess.PIPE,
-                    close_fds=True
+                    ["xsel", "--clipboard", "--input"], stdin=subprocess.PIPE, close_fds=True
                 )
-                process.communicate(text.encode('utf-8'))
+                process.communicate(text.encode("utf-8"))
                 return process.returncode == 0
             except FileNotFoundError:
                 pass
 
-        elif system == 'Windows':
-            process = subprocess.Popen(
-                ['clip'],
-                stdin=subprocess.PIPE,
-                close_fds=True,
-                shell=True
-            )
-            process.communicate(text.encode('utf-16'))
+        elif system == "Windows":
+            process = subprocess.Popen(["clip"], stdin=subprocess.PIPE, close_fds=True, shell=True)
+            process.communicate(text.encode("utf-16"))
             return process.returncode == 0
 
     except Exception as e:
@@ -117,6 +102,7 @@ def _copy_to_clipboard_pyperclip(text: str) -> bool:
     """
     try:
         import pyperclip
+
         pyperclip.copy(text)
         return True
     except Exception as e:
@@ -309,11 +295,11 @@ Le prompt inclut:
             {'provider': 'clipboard', 'model': 'manual', 'status': 'ready'}
         """
         return {
-            'provider': 'clipboard',
-            'model': 'manual (user choice)',
-            'status': 'ready',
-            'cost': '$0.00',
-            'requires_api_key': False
+            "provider": "clipboard",
+            "model": "manual (user choice)",
+            "status": "ready",
+            "cost": "$0.00",
+            "requires_api_key": False,
         }
 
     def validate_config(self) -> bool:

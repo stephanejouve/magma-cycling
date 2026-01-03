@@ -2,15 +2,15 @@
 
 ## Contexte Semaine
 
-**Période** : 10-16 novembre 2025 (Dimanche → Samedi)  
-**Semaine** : S067 - Semaine 1/4 Phase 1 (Consolidation Base)  
+**Période** : 10-16 novembre 2025 (Dimanche → Samedi)
+**Semaine** : S067 - Semaine 1/4 Phase 1 (Consolidation Base)
 **Position Macro** : S067-S074 (Objectif FTP 220W → 235W)
 
-**TSS Planifié** : 340-360  
-**TSS Réalisé** : 489 (+35% surcharge)  
+**TSS Planifié** : 340-360
+**TSS Réalisé** : 489 (+35% surcharge)
 **Raison écart** : Sortie terrain non planifiée (233 TSS) + Extension NYC (28 TSS)
 
-**Discipline** : Indoor-only VIOLÉ (1 sortie terrain)  
+**Discipline** : Indoor-only VIOLÉ (1 sortie terrain)
 **Tests semaine** : VO2 4×4min @251W validé
 
 ---
@@ -18,7 +18,7 @@
 ## Chronologie Séances
 
 ### S067-01-TERRAIN (Dimanche 10/11)
-**Type** : Sortie Outdoor NON PLANIFIÉE  
+**Type** : Sortie Outdoor NON PLANIFIÉE
 **Durée** : 3h13 | **TSS** : 233 | **IF** : 0.85
 
 #### Métriques Pré-séance
@@ -42,7 +42,7 @@ Sortie terrain 3h13 avec erreur navigation nécessitant adaptation itinéraire. 
 ---
 
 ### S067-02-REC-DecrassageActif (Lundi 11/11)
-**Type** : Récupération Active  
+**Type** : Récupération Active
 **Durée** : 40min | **TSS** : 17 | **IF** : 0.50
 
 #### Métriques Pré-séance
@@ -66,7 +66,7 @@ Récupération active 40min lendemain grosse charge terrain (TSB -20→-13). Dé
 ---
 
 ### S067-03-INT-SweetSpotMaintien (Mardi 12/11)
-**Type** : Sweet-Spot Adapté  
+**Type** : Sweet-Spot Adapté
 **Durée** : 58min | **TSS** : 58 | **IF** : 0.77
 
 #### Métriques Pré-séance
@@ -91,11 +91,11 @@ Séance Sweet-Spot adaptée à la baisse (77% vs 88-90% standard) post-terrain p
 ---
 
 ### S067-04-REC-ReposObligatoire (Mercredi 13/11)
-**Type** : Repos Planifié  
+**Type** : Repos Planifié
 **Durée** : 0min | **TSS** : 0 | **IF** : 0.00
 
 #### Métriques Pré/Post-séance
-Pré : CTL: 58 | ATL: 66 | TSB: -8  
+Pré : CTL: 58 | ATL: 66 | TSB: -8
 Post : CTL: 58 | ATL: 64 | TSB: -6
 
 #### Justification
@@ -107,7 +107,7 @@ Repos obligatoire suite surcharge terrain S067-01 et récupération progressive 
 ---
 
 ### S067-05-MIX-Z2plusExtensionNYC (Jeudi 14/11)
-**Type** : Endurance Z2 + Extension Spontanée  
+**Type** : Endurance Z2 + Extension Spontanée
 **Durée** : 1h32 (75min Z2 + 17min NYC) | **TSS** : 90 (62+28) | **IF** : 0.84
 
 #### Métriques Pré-séance
@@ -138,7 +138,7 @@ Séance Z2 75min exécutée correctement. Suivie extension spontanée 17min nouv
 ---
 
 ### S067-06A-INT-VO2Complete4x4 (Vendredi 15/11)
-**Type** : VO2 Max 4×4min  
+**Type** : VO2 Max 4×4min
 **Durée** : 62min | **TSS** : 76 | **IF** : 0.85
 
 #### Métriques Pré-séance
@@ -165,7 +165,7 @@ Intensité bien gérée sur 4 blocs VO2 à 251W. Limite physiologique atteinte -
 ---
 
 ### S067-07-REC-RecuperationActive (Samedi 16/11)
-**Type** : Récupération Active  
+**Type** : Récupération Active
 **Durée** : 45min | **TSS** : 25 | **IF** : 0.58
 
 #### Métriques Pré-séance
@@ -190,9 +190,9 @@ Récupération active légère 45min post-VO2 vendredi. Format West Drive (6 col
 
 ## Métriques Évolution Semaine
 
-**CTL** : 60 (dim) → 58 (sam) | Variation : -2  
-**ATL** : 80 (dim) → 61 (sam) | Variation : -19 (dissipation fatigue aiguë)  
-**TSB** : -20 (dim) → -3 (sam) | Amélioration : +17 points  
+**CTL** : 60 (dim) → 58 (sam) | Variation : -2
+**ATL** : 80 (dim) → 61 (sam) | Variation : -19 (dissipation fatigue aiguë)
+**TSB** : -20 (dim) → -3 (sam) | Amélioration : +17 points
 **Poids** : 85.5kg → 85.7kg (stable, ±0.2kg)
 
 **TSS Distribution** :

@@ -10,33 +10,33 @@
 def create_event(self, event_data: Dict) -> Optional[Dict]:
     """
     Créer un événement (workout) sur Intervals.icu
-    
+
     Args:
         event_data: Dictionnaire contenant :
             - category: "WORKOUT"
             - name: Nom du workout
             - description: Contenu au format Intervals.icu
             - start_date_local: Date au format YYYY-MM-DD
-    
+
     Returns:
         Réponse API si succès, None sinon
-    
+
     API Documentation:
         POST /api/v1/athlete/{id}/events
     """
     try:
         url = f"{self.base_url}/athlete/{self.athlete_id}/events"
-        
+
         headers = {
             'Authorization': f'Basic {self._get_auth_token()}',
             'Content-Type': 'application/json'
         }
-        
+
         response = requests.post(url, json=event_data, headers=headers)
         response.raise_for_status()
-        
+
         return response.json()
-        
+
     except requests.exceptions.HTTPError as e:
         print(f"❌ Erreur HTTP : {e}")
         print(f"   Réponse : {e.response.text if e.response else 'N/A'}")
@@ -124,33 +124,33 @@ from typing import Dict, Optional
 
 class SimpleIntervalsAPI:
     """API minimale pour upload workouts"""
-    
+
     def __init__(self):
         self.athlete_id = os.getenv('VITE_INTERVALS_ATHLETE_ID', 'i151223')
         self.api_key = os.getenv('VITE_INTERVALS_API_KEY')
         self.base_url = 'https://intervals.icu/api/v1'
-        
+
         if not self.api_key:
             raise ValueError("API key manquante")
-    
+
     def _get_auth_token(self) -> str:
         """Générer token Basic Auth"""
         credentials = f"API_KEY:{self.api_key}"
         return base64.b64encode(credentials.encode()).decode()
-    
+
     def create_event(self, event_data: Dict) -> Optional[Dict]:
         """Créer un workout"""
         try:
             url = f"{self.base_url}/athlete/{self.athlete_id}/events"
-            
+
             headers = {
                 'Authorization': f'Basic {self._get_auth_token()}',
                 'Content-Type': 'application/json'
             }
-            
+
             response = requests.post(url, json=event_data, headers=headers)
             response.raise_for_status()
-            
+
             return response.json()
         except Exception as e:
             print(f"❌ Erreur : {e}")

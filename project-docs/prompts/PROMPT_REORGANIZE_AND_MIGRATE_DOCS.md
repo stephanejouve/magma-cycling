@@ -466,7 +466,7 @@ cyclisme-training-logs/
 
 ---
 
-**Créé:** 2025-12-27 15:15  
-**Priorité:** P0 (réorganisation + migration complète)  
-**Standard:** Python ecosystem best practices  
+**Créé:** 2025-12-27 15:15
+**Priorité:** P0 (réorganisation + migration complète)
+**Standard:** Python ecosystem best practices
 **Compatible:** Read the Docs, GitHub Pages

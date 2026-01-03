@@ -33,12 +33,12 @@ if [ -f "${DEST}/${BACKUP_NAME}" ]; then
     SIZE=$(du -h "${DEST}/${BACKUP_NAME}" | cut -f1)
     echo "✅ Backup créé: ${BACKUP_NAME} (${SIZE})"
     echo "📂 Emplacement: ${DEST}/"
-    
+
     # Lister les backups existants
     echo ""
     echo "📋 Backups disponibles:"
     ls -lh "${DEST}"/cyclisme_training_*.tar.gz 2>/dev/null || echo "Aucun backup précédent"
-    
+
     # Optionnel: supprimer les backups >30 jours
     read -p "Nettoyer les backups >30 jours? (y/N) " -n 1 -r
     echo

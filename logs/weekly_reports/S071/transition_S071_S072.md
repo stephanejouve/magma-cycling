@@ -9,16 +9,16 @@
 - **TSS hebdo** : 282 (planifié ~280, adhérence 101%)
 
 ### Validations Techniques
-✅ **Découplage <7.5%** : 5/5 séances >60min validées (range 1.0%-3.0%)  
-✅ **Double séance endurance** : 77+41min (TSS 77) tolérés, TSB +8 maintenu  
-✅ **Template technique cadence V001** : Opérationnel (64min, TSS 37, RPE 6/10)  
-✅ **Hydratation compensatoire** : Post-alcool validée, double séance qualité maintenue  
+✅ **Découplage <7.5%** : 5/5 séances >60min validées (range 1.0%-3.0%)
+✅ **Double séance endurance** : 77+41min (TSS 77) tolérés, TSB +8 maintenu
+✅ **Template technique cadence V001** : Opérationnel (64min, TSS 37, RPE 6/10)
+✅ **Hydratation compensatoire** : Post-alcool validée, double séance qualité maintenue
 ⚠️ **Découplage négatif reproductible** : 3 séances (-3.2% à -15.6%), pattern à investiguer S072
 
 ### Échecs/Limites
-❌ **Discipline critérium** : Abandon -7min Glasgow Crit, cadence 74rpm vs 84-86rpm cible  
-❌ **Intensité récupération** : S071-02 dépassée (IF 0.65 vs 0.50, TSS +72%)  
-❌ **Données sommeil** : 0.0h renseigné systématiquement, intégration Withings défaillante  
+❌ **Discipline critérium** : Abandon -7min Glasgow Crit, cadence 74rpm vs 84-86rpm cible
+❌ **Intensité récupération** : S071-02 dépassée (IF 0.65 vs 0.50, TSS +72%)
+❌ **Données sommeil** : 0.0h renseigné systématiquement, intégration Withings défaillante
 ⚠️ **Poids variation** : +1.3kg (84.6→85.9kg), rétention eau vs masse grasse à distinguer
 
 ---
@@ -77,7 +77,7 @@ Cooldown: 10m Ramp 65-50% 85rpm
 - Samedi : Double séance (80+40min, TSS 75)
 - Dimanche : Repos obligatoire
 
-**TSS hebdo** : 290-310  
+**TSS hebdo** : 290-310
 **Objectif** : Maintien CTL 48, stabilisation poids, validation sommeil >7h
 
 ---
@@ -93,7 +93,7 @@ Cooldown: 10m Ramp 65-50% 85rpm
 - Samedi : Double endurance (75+40min, TSS 70)
 - Dimanche : Repos obligatoire
 
-**TSS hebdo** : 305-325  
+**TSS hebdo** : 305-325
 **Objectif** : Test réponse Sweet-Spot post-maladie, progression CTL vers 50
 
 ---
@@ -109,7 +109,7 @@ Cooldown: 10m Ramp 65-50% 85rpm
 - Samedi : Double séance (90+50min, TSS 85)
 - Dimanche : Repos obligatoire
 
-**TSS hebdo** : 325-350  
+**TSS hebdo** : 325-350
 **Objectif** : Progression CTL vers 52, test capacité volume endurance
 
 ---
@@ -153,18 +153,18 @@ Total: 62min | TSS cible: 55 | IF: 0.78
 ## Timeline Objectifs Cycle
 
 ### Court-terme (S072-S074)
-**Semaine S072** : Introduction Sweet-Spot court (2×8min), validation réponse physiologique  
-**Semaine S073** : Progression Sweet-Spot (3×8min ou 2×10min) si S072 validé  
+**Semaine S072** : Introduction Sweet-Spot court (2×8min), validation réponse physiologique
+**Semaine S073** : Progression Sweet-Spot (3×8min ou 2×10min) si S072 validé
 **Semaine S074** : Décharge (-30% TSS), test FTP optionnel si Sweet-Spot consolidé
 
 ### Moyen-terme (S075-S078)
-**Cycle Seuil Lactique** : Développement Sweet-Spot 88-93% FTP (formats 3×10min, 2×15min)  
-**Fréquence** : 2×/semaine Sweet-Spot si capacité validée S072-S074  
+**Cycle Seuil Lactique** : Développement Sweet-Spot 88-93% FTP (formats 3×10min, 2×15min)
+**Fréquence** : 2×/semaine Sweet-Spot si capacité validée S072-S074
 **Objectif FTP** : Progression 220W → 225-230W fin cycle (validation test S078)
 
 ### Long-terme (S079+)
-**Transition VO2 Max** : Introduction formats 106-120% FTP (prérequis Sweet-Spot consolidé)  
-**Arsenal HIIT** : Rotation 5 formats (2×2, 30/30, Pyramide, Tabata, Dégressif)  
+**Transition VO2 Max** : Introduction formats 106-120% FTP (prérequis Sweet-Spot consolidé)
+**Arsenal HIIT** : Rotation 5 formats (2×2, 30/30, Pyramide, Tabata, Dégressif)
 **Objectif FTP final** : 235-240W (progression +15W vs actuel 220W)
 
 ---

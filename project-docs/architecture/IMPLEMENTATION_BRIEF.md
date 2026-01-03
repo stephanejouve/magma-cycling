@@ -107,9 +107,9 @@ train
 🔄 Allégement via 'Récupération Active 30 TSS'
    Date : 2025-12-18
    Raison : HRV -15%
-   
+
    Appliquer ? (o/n) : o
-   
+
    🗑️  Ancien workout supprimé
    ⬆️  Nouveau workout uploadé
    📝 Planning JSON mis à jour

@@ -3,7 +3,7 @@
 ## 1. Sweet-Spot : Cadence Optimale Établie
 
 ### Ajustement Seuil
-**Ancien protocole** : Cadence Sweet-Spot 85-92rpm  
+**Ancien protocole** : Cadence Sweet-Spot 85-92rpm
 **Nouveau protocole** : Cadence Sweet-Spot **90-95rpm** (zone optimale validée)
 
 ### Justification Data
@@ -26,7 +26,7 @@ Cadence 90-95rpm améliore :
 ## 2. Drills Unijambiste : Intensité Réduite
 
 ### Ajustement Critère
-**Ancien protocole** : Drills unijambiste 75% FTP × 90s  
+**Ancien protocole** : Drills unijambiste 75% FTP × 90s
 **Nouveau protocole** : Drills unijambiste **60-65% FTP × 45-60s**
 
 ### Justification Data
@@ -99,7 +99,7 @@ S068-02 : Sommeil 47 score + VFC 32ms → séance Sweet-Spot 88% exécutée avec
 ## 5. Hydratation : Fréquence Séances Sweet-Spot
 
 ### Ajustement Protocole
-**Ancien protocole** : Hydratation standard 500ml/h toutes séances  
+**Ancien protocole** : Hydratation standard 500ml/h toutes séances
 **Nouveau protocole** : Hydratation **renforcée 600ml/h** séances Sweet-Spot >60min
 
 ### Justification Physiologique
@@ -118,7 +118,7 @@ Prévoir bidons supplémentaires séances Sweet-Spot prévues S069-02 (si 3×10m
 ## 6. TSS Hebdomadaire : Cible Augmentée
 
 ### Ajustement Cible
-**Ancien protocole** : TSS hebdomadaire 350-380 (zone maintenance)  
+**Ancien protocole** : TSS hebdomadaire 350-380 (zone maintenance)
 **Nouveau protocole** : TSS hebdomadaire **400-420** (zone progression)
 
 ### Justification Objectif

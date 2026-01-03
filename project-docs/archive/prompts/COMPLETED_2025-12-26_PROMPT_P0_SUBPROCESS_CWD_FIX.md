@@ -58,22 +58,22 @@ import sys
 def analyze_activity(self, activity: Dict) -> bool:
     """
     Analyze single activity using workflow-coach.
-    
+
     Uses direct Python execution instead of 'poetry run' to avoid
     pyproject.toml lookup in wrong directory.
     """
     activity_id = str(activity.get('id', ''))
-    
+
     if not activity_id:
         print(f"⚠️  Activité sans ID, skip")
         return False
-    
+
     print(f"🚀 Lancement analyse automatique...")
-    
+
     # Construire commande Python directe
     # Au lieu de: poetry run workflow-coach --activity-id ...
     # Utiliser: python -m cyclisme_training_logs.workflow_coach --activity-id ...
-    
+
     cmd = [
         sys.executable,  # Python actuel (même que backfill)
         '-m', 'cyclisme_training_logs.workflow_coach',
@@ -83,7 +83,7 @@ def analyze_activity(self, activity: Dict) -> bool:
         '--skip-feedback',
         '--skip-git'
     ]
-    
+
     try:
         result = subprocess.run(
             cmd,
@@ -92,7 +92,7 @@ def analyze_activity(self, activity: Dict) -> bool:
             text=True,
             timeout=300
         )
-        
+
         if result.returncode == 0:
             print(f"✅ Succès: {activity_id}")
             return True
@@ -102,11 +102,11 @@ def analyze_activity(self, activity: Dict) -> bool:
             if result.stderr:
                 print(f"   Error:\n{result.stderr[:500]}")
             return False
-            
+
     except subprocess.TimeoutExpired:
         print(f"⏱️  Timeout (300s) pour {activity_id}")
         return False
-        
+
     except Exception as e:
         print(f"❌ Exception: {type(e).__name__}: {e}")
         return False
@@ -121,9 +121,9 @@ Si problème avec Python module import, utiliser ce pattern:
 ```python
 def analyze_activity(self, activity: Dict) -> bool:
     """Analyze with proper CWD handling"""
-    
+
     activity_id = str(activity.get('id', ''))
-    
+
     # Commande Poetry MAIS depuis code repo
     cmd = [
         'poetry', 'run', 'workflow-coach',
@@ -133,11 +133,11 @@ def analyze_activity(self, activity: Dict) -> bool:
         '--skip-feedback',
         '--skip-git'
     ]
-    
+
     # Définir variables d'environnement pour pointer vers data repo
     env = os.environ.copy()
     env['TRAINING_DATA_REPO'] = str(self.data_config.data_repo_path)
-    
+
     try:
         result = subprocess.run(
             cmd,
@@ -147,7 +147,7 @@ def analyze_activity(self, activity: Dict) -> bool:
             text=True,
             timeout=300
         )
-        
+
         # ... reste identique
 ```
 
@@ -211,10 +211,10 @@ poetry run backfill-history \
 ```
 af47692 - fix(P0): Backfill write to correct data repo
   → Fixait CWD mais créait ce nouveau bug Poetry
-  
+
 b4caf45 - fix(P0): Rate limiting retry
   → Enrichissement fonctionne maintenant
-  
+
 [CE COMMIT] - fix(P0): Use Python direct instead of Poetry in subprocess
   → Évite lookup pyproject.toml dans mauvais repo
 ```
@@ -261,7 +261,7 @@ Avec fix:
 
 ---
 
-**Créé:** 2025-12-26 19:15  
-**Bloque:** Backfill production toutes périodes  
-**Dépend de:** Commits af47692, b4caf45  
+**Créé:** 2025-12-26 19:15
+**Bloque:** Backfill production toutes périodes
+**Dépend de:** Commits af47692, b4caf45
 **Priorité:** P0 (système non fonctionnel)

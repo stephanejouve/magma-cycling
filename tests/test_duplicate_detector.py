@@ -15,12 +15,14 @@ Created: 2025-12-27
 Updated: 2025-12-27 (Initial test suite)
 """
 
-import pytest
 from pathlib import Path
+
+import pytest
+
 from cyclisme_training_logs.core.duplicate_detector import (
-    DuplicateDetector,
     DuplicateDetectedError,
-    check_and_handle_duplicates
+    DuplicateDetector,
+    check_and_handle_duplicates,
 )
 
 
@@ -90,9 +92,9 @@ def test_detect_duplicates(sample_history_with_duplicates):
     duplicates = detector.quick_scan()
 
     assert len(duplicates) == 1
-    assert duplicates[0]['id'] == 'S073-01-END-Test'
-    assert duplicates[0]['first_line'] == 1
-    assert duplicates[0]['duplicate_line'] == 17
+    assert duplicates[0]["id"] == "S073-01-END-Test"
+    assert duplicates[0]["first_line"] == 1
+    assert duplicates[0]["duplicate_line"] == 17
 
 
 def test_no_duplicates_found(sample_history_no_duplicates):
@@ -114,10 +116,7 @@ def test_check_window_limitation(sample_history_with_duplicates):
 
 def test_auto_fix(sample_history_with_duplicates):
     """Test suppression automatique"""
-    check_and_handle_duplicates(
-        sample_history_with_duplicates,
-        auto_fix=True
-    )
+    check_and_handle_duplicates(sample_history_with_duplicates, auto_fix=True)
 
     # Vérifier que doublon supprimé
     detector = DuplicateDetector(sample_history_with_duplicates)
@@ -127,21 +126,18 @@ def test_auto_fix(sample_history_with_duplicates):
 
     # Vérifier que première occurrence reste
     content = sample_history_with_duplicates.read_text()
-    assert 'S073-01-END-Test' in content
-    assert 'Test 1 DOUBLON' not in content
+    assert "S073-01-END-Test" in content
+    assert "Test 1 DOUBLON" not in content
 
 
 def test_fail_fast_mode(sample_history_with_duplicates):
     """Test mode fail-fast"""
     with pytest.raises(DuplicateDetectedError) as exc_info:
-        check_and_handle_duplicates(
-            sample_history_with_duplicates,
-            auto_fix=False
-        )
+        check_and_handle_duplicates(sample_history_with_duplicates, auto_fix=False)
 
     # Vérifier que l'exception contient les bons duplicates
     assert len(exc_info.value.duplicates) == 1
-    assert exc_info.value.duplicates[0]['id'] == 'S073-01-END-Test'
+    assert exc_info.value.duplicates[0]["id"] == "S073-01-END-Test"
 
 
 def test_no_action_when_no_duplicates(sample_history_no_duplicates):
@@ -149,10 +145,7 @@ def test_no_action_when_no_duplicates(sample_history_no_duplicates):
     original_content = sample_history_no_duplicates.read_text()
 
     # Mode fail-fast - ne devrait pas lever d'exception
-    check_and_handle_duplicates(
-        sample_history_no_duplicates,
-        auto_fix=False
-    )
+    check_and_handle_duplicates(sample_history_no_duplicates, auto_fix=False)
 
     # Vérifier que le contenu n'a pas changé
     assert sample_history_no_duplicates.read_text() == original_content
@@ -169,7 +162,7 @@ def test_nonexistent_file():
 def test_find_entry_bounds(sample_history_with_duplicates):
     """Test recherche des bornes d'une entrée"""
     detector = DuplicateDetector(sample_history_with_duplicates)
-    lines = sample_history_with_duplicates.read_text().split('\n')
+    lines = sample_history_with_duplicates.read_text().split("\n")
 
     # Première entrée (ligne 0)
     start, end = detector.find_entry_bounds(0, lines)
@@ -224,6 +217,6 @@ Test 2 DUP
 
     # Vérifier que les originaux restent
     content_after = history.read_text()
-    assert 'S073-01' in content_after
-    assert 'S073-02' in content_after
-    assert 'DUP' not in content_after
+    assert "S073-01" in content_after
+    assert "S073-02" in content_after
+    assert "DUP" not in content_after

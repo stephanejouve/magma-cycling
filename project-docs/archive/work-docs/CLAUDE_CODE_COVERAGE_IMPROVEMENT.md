@@ -1,8 +1,8 @@
 # 🎯 Instructions Claude Code - Amélioration Coverage 80%
 
-**Projet** : cyclisme-training-logs  
-**Objectif** : Améliorer coverage de 68% → 80%  
-**Durée estimée** : 2-3h  
+**Projet** : cyclisme-training-logs
+**Objectif** : Améliorer coverage de 68% → 80%
+**Durée estimée** : 2-3h
 **Branch** : main (directement)
 
 ---
@@ -105,7 +105,7 @@ def test_clipboard_instructions_format():
     """Vérifier format instructions utilisateur."""
     analyzer = ClipboardAnalyzer()
     result = analyzer.analyze_session("Test prompt", None)
-    
+
     # Vérifier présence étapes clés
     assert "Prompt copié" in result
     assert "Claude.ai" in result
@@ -116,7 +116,7 @@ def test_clipboard_provider_info():
     """Tester get_provider_info()."""
     analyzer = ClipboardAnalyzer()
     info = analyzer.get_provider_info()
-    
+
     assert info['provider'] == 'clipboard'
     assert info['model'] == 'manual'
     assert 'description' in info
@@ -170,10 +170,10 @@ def test_claude_analyze_success(claude_config, mock_anthropic_client):
     mock_message = MagicMock()
     mock_message.content = [MagicMock(text="Analyse complète de la séance.")]
     mock_anthropic_client.messages.create.return_value = mock_message
-    
+
     analyzer = ClaudeAPIAnalyzer(claude_config)
     result = analyzer.analyze_session("Analyser cette séance", None)
-    
+
     assert "Analyse complète" in result
     mock_anthropic_client.messages.create.assert_called_once()
 
@@ -182,11 +182,11 @@ def test_claude_with_dataset(claude_config, mock_anthropic_client):
     mock_message = MagicMock()
     mock_message.content = [MagicMock(text="Analyse avec données.")]
     mock_anthropic_client.messages.create.return_value = mock_message
-    
+
     analyzer = ClaudeAPIAnalyzer(claude_config)
     dataset = {"tss": 65, "if": 0.85}
     result = analyzer.analyze_session("Prompt", dataset)
-    
+
     assert "Analyse avec données" in result
     # Vérifier que dataset est passé dans le prompt
     call_args = mock_anthropic_client.messages.create.call_args
@@ -204,11 +204,11 @@ def test_claude_missing_api_key():
 def test_claude_invalid_api_key(claude_config, mock_anthropic_client):
     """Test erreur 401 Unauthorized."""
     from anthropic import AuthenticationError
-    
+
     mock_anthropic_client.messages.create.side_effect = AuthenticationError(
         "Invalid API key"
     )
-    
+
     analyzer = ClaudeAPIAnalyzer(claude_config)
     with pytest.raises(AuthenticationError):
         analyzer.analyze_session("Test", None)
@@ -216,11 +216,11 @@ def test_claude_invalid_api_key(claude_config, mock_anthropic_client):
 def test_claude_rate_limit(claude_config, mock_anthropic_client):
     """Test erreur 429 Rate Limit."""
     from anthropic import RateLimitError
-    
+
     mock_anthropic_client.messages.create.side_effect = RateLimitError(
         "Rate limit exceeded"
     )
-    
+
     analyzer = ClaudeAPIAnalyzer(claude_config)
     with pytest.raises(RateLimitError):
         analyzer.analyze_session("Test", None)
@@ -228,11 +228,11 @@ def test_claude_rate_limit(claude_config, mock_anthropic_client):
 def test_claude_server_error(claude_config, mock_anthropic_client):
     """Test erreur 500 serveur."""
     from anthropic import APIError
-    
+
     mock_anthropic_client.messages.create.side_effect = APIError(
         "Internal server error"
     )
-    
+
     analyzer = ClaudeAPIAnalyzer(claude_config)
     with pytest.raises(APIError):
         analyzer.analyze_session("Test", None)
@@ -240,11 +240,11 @@ def test_claude_server_error(claude_config, mock_anthropic_client):
 def test_claude_timeout(claude_config, mock_anthropic_client):
     """Test timeout."""
     import requests
-    
+
     mock_anthropic_client.messages.create.side_effect = requests.Timeout(
         "Request timeout"
     )
-    
+
     analyzer = ClaudeAPIAnalyzer(claude_config)
     with pytest.raises(requests.Timeout):
         analyzer.analyze_session("Test", None)
@@ -256,7 +256,7 @@ def test_claude_empty_prompt(claude_config, mock_anthropic_client):
     mock_message = MagicMock()
     mock_message.content = [MagicMock(text="")]
     mock_anthropic_client.messages.create.return_value = mock_message
-    
+
     analyzer = ClaudeAPIAnalyzer(claude_config)
     result = analyzer.analyze_session("", None)
     assert result == ""
@@ -266,18 +266,18 @@ def test_claude_huge_prompt(claude_config, mock_anthropic_client):
     mock_message = MagicMock()
     mock_message.content = [MagicMock(text="Réponse")]
     mock_anthropic_client.messages.create.return_value = mock_message
-    
+
     analyzer = ClaudeAPIAnalyzer(claude_config)
     huge_prompt = "A" * 50000
     result = analyzer.analyze_session(huge_prompt, None)
-    
+
     assert "Réponse" in result
 
 def test_claude_provider_info(claude_config):
     """Tester get_provider_info()."""
     analyzer = ClaudeAPIAnalyzer(claude_config)
     info = analyzer.get_provider_info()
-    
+
     assert info['provider'] == 'claude_api'
     assert info['model'] == 'claude-sonnet-4-20250514'
     assert info['requires_api_key'] is True
@@ -370,10 +370,10 @@ def test_ollama_analyze_success(mock_post, ollama_config):
         'response': 'Analyse Ollama complète.'
     }
     mock_post.return_value = mock_response
-    
+
     analyzer = OllamaAnalyzer(ollama_config)
     result = analyzer.analyze_session("Test", None)
-    
+
     assert "Analyse Ollama" in result
 
 @patch('requests.post')
@@ -382,7 +382,7 @@ def test_ollama_server_available(mock_post, ollama_config):
     mock_response = Mock()
     mock_response.status_code = 200
     mock_post.return_value = mock_response
-    
+
     analyzer = OllamaAnalyzer(ollama_config)
     assert analyzer.model == 'mistral:7b'
 
@@ -392,7 +392,7 @@ def test_ollama_server_available(mock_post, ollama_config):
 def test_ollama_connection_error(mock_post, ollama_config):
     """Test erreur connexion serveur."""
     mock_post.side_effect = requests.ConnectionError("Cannot connect")
-    
+
     analyzer = OllamaAnalyzer(ollama_config)
     with pytest.raises(requests.ConnectionError):
         analyzer.analyze_session("Test", None)
@@ -401,7 +401,7 @@ def test_ollama_connection_error(mock_post, ollama_config):
 def test_ollama_timeout(mock_post, ollama_config):
     """Test timeout."""
     mock_post.side_effect = requests.Timeout("Request timeout")
-    
+
     analyzer = OllamaAnalyzer(ollama_config)
     with pytest.raises(requests.Timeout):
         analyzer.analyze_session("Test", None)
@@ -413,7 +413,7 @@ def test_ollama_model_not_found(mock_post, ollama_config):
     mock_response.status_code = 404
     mock_response.text = "Model not found"
     mock_post.return_value = mock_response
-    
+
     analyzer = OllamaAnalyzer(ollama_config)
     with pytest.raises(Exception):
         analyzer.analyze_session("Test", None)
@@ -425,7 +425,7 @@ def test_ollama_server_error(mock_post, ollama_config):
     mock_response.status_code = 500
     mock_response.text = "Internal error"
     mock_post.return_value = mock_response
-    
+
     analyzer = OllamaAnalyzer(ollama_config)
     with pytest.raises(Exception):
         analyzer.analyze_session("Test", None)
@@ -439,7 +439,7 @@ def test_ollama_empty_response(mock_post, ollama_config):
     mock_response.status_code = 200
     mock_response.json.return_value = {'response': ''}
     mock_post.return_value = mock_response
-    
+
     analyzer = OllamaAnalyzer(ollama_config)
     result = analyzer.analyze_session("Test", None)
     assert result == ''
@@ -455,10 +455,10 @@ def test_ollama_custom_host(mock_post):
     mock_response.status_code = 200
     mock_response.json.return_value = {'response': 'OK'}
     mock_post.return_value = mock_response
-    
+
     analyzer = OllamaAnalyzer(config)
     result = analyzer.analyze_session("Test", None)
-    
+
     # Vérifier URL appelée
     call_args = mock_post.call_args
     assert '192.168.1.100:11434' in call_args[0][0]

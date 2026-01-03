@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Base classes and enums for AI analysis providers.
 
@@ -40,6 +39,7 @@ class AIProvider(Enum):
         >>> provider.value
         'clipboard'
     """
+
     CLIPBOARD = "clipboard"
     CLAUDE = "claude_api"
     OPENAI = "openai"
@@ -106,9 +106,9 @@ class AIAnalyzer(ABC):
             'clipboard'
         """
         return {
-            'provider': self.provider.value if self.provider else 'unknown',
-            'model': self.model or 'default',
-            'status': 'ready'
+            "provider": self.provider.value if self.provider else "unknown",
+            "model": self.model or "default",
+            "status": "ready",
         }
 
     def validate_config(self) -> bool:

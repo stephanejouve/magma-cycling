@@ -107,26 +107,26 @@ from cyclisme_training_logs.core.timeline_injector import TimelineInjector
 
 def analyze_activity(self, activity: Dict) -> bool:
     """Analyze activity and inject chronologically."""
-    
+
     # 1. Générer analyse
     analysis_text = self._generate_analysis(activity)
     if not analysis_text:
         return False
-    
+
     # 2. Injecter chronologiquement
     injector = TimelineInjector(
         history_file=self.data_config.workouts_history_path
     )
-    
+
     workout_date = activity.get('start_date_local', '')[:10]
     activity_id = str(activity.get('id', ''))
-    
+
     result = injector.inject_chronologically(
         workout_entry=analysis_text,
         workout_date=workout_date,
         activity_id=activity_id
     )
-    
+
     if result.success:
         print(f"✅ Injecté ligne {result.line_number}")
         return True

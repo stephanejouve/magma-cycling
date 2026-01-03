@@ -11,13 +11,12 @@ Author: Claude Code
 Created: 2025-12-26
 """
 
-import pytest
-from pathlib import Path
 from datetime import date
-from cyclisme_training_logs.core.timeline_injector import (
-    TimelineInjector,
-    InjectionResult
-)
+from pathlib import Path
+
+import pytest
+
+from cyclisme_training_logs.core.timeline_injector import TimelineInjector
 
 
 @pytest.fixture
@@ -109,7 +108,7 @@ def test_inject_multiple_entries(sample_history_file):
 
     entries = [
         ("### S073-02 (2025-01-07)\n**Durée:** 50min", date(2025, 1, 7)),
-        ("### S073-04 (2025-01-09)\n**Durée:** 65min", date(2025, 1, 9))
+        ("### S073-04 (2025-01-09)\n**Durée:** 65min", date(2025, 1, 9)),
     ]
 
     results = injector.inject_multiple(entries)
@@ -124,7 +123,13 @@ def test_inject_multiple_entries(sample_history_file):
         "S073-02": content.index("S073-02"),
         "S073-03": content.index("S073-03"),
         "S073-04": content.index("S073-04"),
-        "S073-05": content.index("S073-05")
+        "S073-05": content.index("S073-05"),
     }
 
-    assert positions["S073-01"] < positions["S073-02"] < positions["S073-03"] < positions["S073-04"] < positions["S073-05"]
+    assert (
+        positions["S073-01"]
+        < positions["S073-02"]
+        < positions["S073-03"]
+        < positions["S073-04"]
+        < positions["S073-05"]
+    )

@@ -66,11 +66,11 @@ Author: Claude Code
 Created: 2025-12-26 (Migrated from v2)
 """
 
-from abc import ABC, abstractmethod
-from pathlib import Path
-from typing import Dict, Any, Optional
-from dataclasses import dataclass
 import logging
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -78,8 +78,9 @@ logger = logging.getLogger(__name__)
 @dataclass
 class AggregationResult:
     """Résultat d'une agrégation de données."""
+
     success: bool
-    data: Dict[str, Any]
+    data: dict[str, Any]
     errors: list[str]
     warnings: list[str]
 
@@ -94,11 +95,7 @@ class DataAggregator(ABC):
     3. format_output() - Formatage sortie (markdown, JSON, etc.)
     """
 
-    def __init__(
-        self,
-        data_dir: Optional[Path] = None,
-        config: Optional[Dict[str, Any]] = None
-    ):
+    def __init__(self, data_dir: Optional[Path] = None, config: Optional[dict[str, Any]] = None):
         """
         Initialiser l'agrégateur.
 
@@ -106,13 +103,13 @@ class DataAggregator(ABC):
             data_dir: Répertoire données (défaut: ~/training-logs)
             config: Configuration optionnelle
         """
-        self.data_dir = data_dir or Path.home() / 'training-logs'
+        self.data_dir = data_dir or Path.home() / "training-logs"
         self.config = config or {}
         self.errors = []
         self.warnings = []
 
     @abstractmethod
-    def collect_raw_data(self) -> Dict[str, Any]:
+    def collect_raw_data(self) -> dict[str, Any]:
         """
         Collecter les données brutes nécessaires.
 
@@ -122,7 +119,7 @@ class DataAggregator(ABC):
         pass
 
     @abstractmethod
-    def process_data(self, raw_data: Dict[str, Any]) -> Dict[str, Any]:
+    def process_data(self, raw_data: dict[str, Any]) -> dict[str, Any]:
         """
         Traiter et analyser les données brutes.
 
@@ -135,7 +132,7 @@ class DataAggregator(ABC):
         pass
 
     @abstractmethod
-    def format_output(self, processed_data: Dict[str, Any]) -> str:
+    def format_output(self, processed_data: dict[str, Any]) -> str:
         """
         Formater la sortie (markdown, JSON, etc.).
 
@@ -177,30 +174,24 @@ class DataAggregator(ABC):
 
             return AggregationResult(
                 success=True,
-                data={
-                    'raw': raw_data,
-                    'processed': processed_data,
-                    'formatted': formatted_output
-                },
+                data={"raw": raw_data, "processed": processed_data, "formatted": formatted_output},
                 errors=self.errors,
-                warnings=self.warnings
+                warnings=self.warnings,
             )
 
         except Exception as e:
             import traceback
+
             tb_str = traceback.format_exc()
             logger.error(f"Aggregation failed: {e}")
             logger.error(f"Traceback:\n{tb_str}")
             self.errors.append(str(e))
 
             return AggregationResult(
-                success=False,
-                data={},
-                errors=self.errors,
-                warnings=self.warnings
+                success=False, data={}, errors=self.errors, warnings=self.warnings
             )
 
-    def validate_data(self, data: Dict[str, Any]) -> bool:
+    def validate_data(self, data: dict[str, Any]) -> bool:
         """
         Valider les données (hook optionnel).
 
@@ -212,7 +203,7 @@ class DataAggregator(ABC):
         """
         return True
 
-    def add_metadata(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def add_metadata(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Ajouter metadata aux données (hook optionnel).
 
@@ -224,10 +215,10 @@ class DataAggregator(ABC):
         """
         from datetime import datetime
 
-        data['_metadata'] = {
-            'aggregator': self.__class__.__name__,
-            'timestamp': datetime.now().isoformat(),
-            'config': self.config
+        data["_metadata"] = {
+            "aggregator": self.__class__.__name__,
+            "timestamp": datetime.now().isoformat(),
+            "config": self.config,
         }
 
         return data
@@ -244,11 +235,7 @@ class DailyDataAggregator(DataAggregator):
     - Métriques pré/post séance
     """
 
-    def __init__(
-        self,
-        activity_id: str,
-        data_dir: Optional[Path] = None
-    ):
+    def __init__(self, activity_id: str, data_dir: Optional[Path] = None):
         """
         Initialiser agrégateur daily.
 
@@ -259,16 +246,16 @@ class DailyDataAggregator(DataAggregator):
         super().__init__(data_dir=data_dir)
         self.activity_id = activity_id
 
-    def collect_raw_data(self) -> Dict[str, Any]:
+    def collect_raw_data(self) -> dict[str, Any]:
         """Collecter données séance quotidienne."""
         # Implémentation dans daily_aggregator.py (Étape 4)
         raise NotImplementedError("Use DailyAggregator from analyzers/")
 
-    def process_data(self, raw_data: Dict[str, Any]) -> Dict[str, Any]:
+    def process_data(self, raw_data: dict[str, Any]) -> dict[str, Any]:
         """Traiter données daily."""
         raise NotImplementedError("Use DailyAggregator from analyzers/")
 
-    def format_output(self, processed_data: Dict[str, Any]) -> str:
+    def format_output(self, processed_data: dict[str, Any]) -> str:
         """Formater sortie daily."""
         raise NotImplementedError("Use DailyAggregator from analyzers/")
 
@@ -286,12 +273,7 @@ class WeeklyDataAggregator(DataAggregator):
     - bilan_final_sXXX.md
     """
 
-    def __init__(
-        self,
-        week: str,
-        start_date: str,
-        data_dir: Optional[Path] = None
-    ):
+    def __init__(self, week: str, start_date: str, data_dir: Optional[Path] = None):
         """
         Initialiser agrégateur weekly.
 
@@ -304,15 +286,15 @@ class WeeklyDataAggregator(DataAggregator):
         self.week = week
         self.start_date = start_date
 
-    def collect_raw_data(self) -> Dict[str, Any]:
+    def collect_raw_data(self) -> dict[str, Any]:
         """Collecter données hebdomadaires."""
         # Implémentation dans weekly_aggregator.py (Phase 2)
         raise NotImplementedError("Weekly aggregation not yet implemented (Phase 2)")
 
-    def process_data(self, raw_data: Dict[str, Any]) -> Dict[str, Any]:
+    def process_data(self, raw_data: dict[str, Any]) -> dict[str, Any]:
         """Traiter données weekly."""
         raise NotImplementedError("Weekly aggregation not yet implemented (Phase 2)")
 
-    def format_output(self, processed_data: Dict[str, Any]) -> str:
+    def format_output(self, processed_data: dict[str, Any]) -> str:
         """Formater sortie weekly."""
         raise NotImplementedError("Weekly aggregation not yet implemented (Phase 2)")

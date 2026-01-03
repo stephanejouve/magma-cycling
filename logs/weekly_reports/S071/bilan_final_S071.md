@@ -3,20 +3,20 @@
 ## Objectifs Visés vs Réalisés
 
 ### Objectif 1 : Phase Tapering Low-Load (~280 TSS)
-✅ **Réalisé** : 282 TSS (adhérence 101%)  
+✅ **Réalisé** : 282 TSS (adhérence 101%)
 - CTL décharge planifiée : 50→48 (-2)
 - ATL réduction fatigue : 38→36 (-2)
 - TSB amélioration forme : +11→+12 (+1)
 
 ### Objectif 2 : Validation Capacité Double Séance
-✅ **Réalisé** : S071-06A+06B (77+41min, TSS 77, TSB +8 maintenu)  
+✅ **Réalisé** : S071-06A+06B (77+41min, TSS 77, TSB +8 maintenu)
 - Format double endurance reproductible démontré
 - Prérequis établis : TSB >+7, sommeil >6h, intervalle 4h+
 - Application future : 1×/semaine maximum validée
 
 ### Objectif 3 : Consolidation Formats Techniques
-✅ **Partiellement réalisé** : Template technique cadence V001 opérationnel  
-❌ **Échec** : Discipline critérium (abandon -7min, cadence 74rpm vs 84-86rpm cible)  
+✅ **Partiellement réalisé** : Template technique cadence V001 opérationnel
+❌ **Échec** : Discipline critérium (abandon -7min, cadence 74rpm vs 84-86rpm cible)
 - Template V000 corrigé → V001 fonctionnel (64min, TSS 37, découplage 3.0%)
 - RPE subjectif 6/10 élevé vs métriques objectives, surveillance sommeil requise
 - Format critérium non-consolidé, exclusion temporaire recommandée S072
@@ -162,33 +162,33 @@
 ## Protocoles Établis/Validés
 
 ### 1. Format Double Séance Endurance
-**Structure** : 75-80min (TSS 50-55) + 40min (TSS 20-25)  
-**Prérequis** : TSB >+7, sommeil >6h, intervalle 4h+  
-**Fréquence** : 1×/semaine maximum  
+**Structure** : 75-80min (TSS 50-55) + 40min (TSS 20-25)
+**Prérequis** : TSB >+7, sommeil >6h, intervalle 4h+
+**Fréquence** : 1×/semaine maximum
 **Validation** : S071-06A+06B
 
 ---
 
 ### 2. Template Technique Cadence V001
-**Structure** : Warmup 12m + Main 5×(3min 65% 60rpm + 2min 60% 100rpm) + Cooldown 10m  
-**Durée** : 64min | TSS : 35-40 | IF : 0.56-0.58  
-**Application** : Récupération active ou post-endurance  
+**Structure** : Warmup 12m + Main 5×(3min 65% 60rpm + 2min 60% 100rpm) + Cooldown 10m
+**Durée** : 64min | TSS : 35-40 | IF : 0.56-0.58
+**Application** : Récupération active ou post-endurance
 **Validation** : S071-03
 
 ---
 
 ### 3. Protocole Hydratation Compensatoire
-**Application** : Post-alcool ou alimentation festive J-1  
-**Méthode** : Supplémentation isotonique renforcée (quantification à standardiser)  
-**Limite** : Exceptionnel, non-systématique  
+**Application** : Post-alcool ou alimentation festive J-1
+**Méthode** : Supplémentation isotonique renforcée (quantification à standardiser)
+**Limite** : Exceptionnel, non-systématique
 **Validation** : S071-06A+06B
 
 ---
 
 ### 4. Critères Découplage Cardiovasculaire
-**Seuil validation** : <7.5% séances >60min  
-**Pattern S071** : 5/5 séances validées (1.0%-3.0%)  
-**Nouveau pattern** : Découplage négatif <-3% à investiguer S072  
+**Seuil validation** : <7.5% séances >60min
+**Pattern S071** : 5/5 séances validées (1.0%-3.0%)
+**Nouveau pattern** : Découplage négatif <-3% à investiguer S072
 **Application** : Métrique fiabilité qualité exécution endurance
 
 ---

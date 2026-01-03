@@ -5,11 +5,11 @@ This module provides tools for generating weekly training calendars,
 managing rest days, adding sessions, and calculating weekly TSS summaries.
 """
 
+import logging
 from dataclasses import dataclass, field
 from datetime import date, timedelta
-from typing import Dict, List, Any, Optional
 from enum import Enum
-import logging
+from typing import Any, Optional
 
 from cyclisme_training_logs.config.athlete_profile import AthleteProfile
 
@@ -80,7 +80,7 @@ class TrainingSession:
         """
         return self.actual_tss if self.completed and self.actual_tss else self.planned_tss
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert session to dictionary for serialization.
 
@@ -142,10 +142,10 @@ class WeeklySummary:
     total_tss: float = 0.0
     sessions_count: int = 0
     rest_days_count: int = 0
-    tss_by_type: Dict[str, float] = field(default_factory=dict)
+    tss_by_type: dict[str, float] = field(default_factory=dict)
     avg_intensity: float = 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert summary to dictionary.
 
@@ -215,13 +215,11 @@ class TrainingCalendar:
         self.athlete_profile = athlete_profile or AthleteProfile.from_env()
 
         # In-memory storage for sessions (date -> TrainingSession)
-        self.sessions: Dict[date, TrainingSession] = {}
+        self.sessions: dict[date, TrainingSession] = {}
 
         # Rest days configuration (0=Monday, 6=Sunday)
         # Master athletes: Sunday (6) mandatory
-        self.rest_days: List[int] = (
-            [6] if self.athlete_profile.category == "master" else []
-        )
+        self.rest_days: list[int] = [6] if self.athlete_profile.category == "master" else []
 
         logger.info(
             f"TrainingCalendar initialized for {year} "
@@ -229,7 +227,7 @@ class TrainingCalendar:
             f"rest days: {self.rest_days})"
         )
 
-    def generate_weekly_calendar(self, week_num: int) -> List[date]:
+    def generate_weekly_calendar(self, week_num: int) -> list[date]:
         """
         Generate list of dates for a specific ISO week.
 
@@ -267,21 +265,18 @@ class TrainingCalendar:
         # Verify year consistency
         target_year, target_week, _ = target_monday.isocalendar()
         if target_year != self.year or target_week != week_num:
-            raise ValueError(
-                f"Week {week_num} does not exist in year {self.year}"
-            )
+            raise ValueError(f"Week {week_num} does not exist in year {self.year}")
 
         # Generate 7 days (Monday to Sunday)
         week_dates = [target_monday + timedelta(days=i) for i in range(7)]
 
         logger.debug(
-            f"Generated week {week_num}/{self.year}: "
-            f"{week_dates[0]} to {week_dates[6]}"
+            f"Generated week {week_num}/{self.year}: " f"{week_dates[0]} to {week_dates[6]}"
         )
 
         return week_dates
 
-    def mark_rest_days(self, days: Optional[List[int]] = None) -> None:
+    def mark_rest_days(self, days: Optional[list[int]] = None) -> None:
         """
         Configure rest days for calendar.
 
@@ -311,8 +306,7 @@ class TrainingCalendar:
         for day in days:
             if day < 0 or day > 6:
                 raise ValueError(
-                    f"Invalid weekday number: {day} (must be 0-6, "
-                    f"0=Monday, 6=Sunday)"
+                    f"Invalid weekday number: {day} (must be 0-6, " f"0=Monday, 6=Sunday)"
                 )
 
         self.rest_days = sorted(list(set(days)))  # Remove duplicates, sort
@@ -428,7 +422,7 @@ class TrainingCalendar:
         total_tss = 0.0
         sessions_count = 0
         rest_days_count = 0
-        tss_by_type: Dict[str, float] = {}
+        tss_by_type: dict[str, float] = {}
         total_intensity = 0.0
 
         # Collect sessions for this week

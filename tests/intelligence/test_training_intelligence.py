@@ -19,9 +19,6 @@ Metadata:
 
 import json
 from datetime import date, datetime
-from pathlib import Path
-
-import pytest
 
 from cyclisme_training_logs.intelligence.training_intelligence import (
     AnalysisLevel,
@@ -31,7 +28,6 @@ from cyclisme_training_logs.intelligence.training_intelligence import (
     TrainingIntelligence,
     TrainingLearning,
 )
-
 
 # ============================================================================
 # TESTS DATACLASSES (3)
@@ -48,7 +44,7 @@ def test_training_learning_promote_confidence():
         description="Test learning",
         evidence=["Evidence 1"],
         confidence=ConfidenceLevel.LOW,
-        impact="MEDIUM"
+        impact="MEDIUM",
     )
 
     assert learning.confidence == ConfidenceLevel.LOW
@@ -77,7 +73,7 @@ def test_pattern_matches_conditions():
         frequency=1,
         first_seen=date.today(),
         last_seen=date.today(),
-        confidence=ConfidenceLevel.LOW
+        confidence=ConfidenceLevel.LOW,
     )
 
     # Should match
@@ -104,7 +100,7 @@ def test_protocol_adaptation_creation():
         justification="Better performance",
         evidence=["Evidence 1", "Evidence 2"],
         confidence=ConfidenceLevel.MEDIUM,
-        status="PROPOSED"
+        status="PROPOSED",
     )
 
     assert adaptation.protocol_name == "test_protocol"
@@ -128,7 +124,7 @@ def test_add_learning_new():
         description="88% FTP sustainable",
         evidence=["S024-04: Success"],
         level=AnalysisLevel.DAILY,
-        impact="MEDIUM"
+        impact="MEDIUM",
     )
 
     assert learning.confidence == ConfidenceLevel.LOW
@@ -147,7 +143,7 @@ def test_add_learning_reinforce_similar():
         category="sweet-spot",
         description="88% FTP sustainable",
         evidence=["S024-04: Success"],
-        level=AnalysisLevel.DAILY
+        level=AnalysisLevel.DAILY,
     )
     assert learning1.confidence == ConfidenceLevel.LOW
 
@@ -156,7 +152,7 @@ def test_add_learning_reinforce_similar():
         category="sweet-spot",
         description="88% FTP sustainable",  # Exact match
         evidence=["S024-06: Success"],
-        level=AnalysisLevel.DAILY
+        level=AnalysisLevel.DAILY,
     )
 
     # Should be same learning, reinforced
@@ -170,7 +166,7 @@ def test_add_learning_reinforce_similar():
         category="sweet-spot",
         description="88% FTP sustainable",
         evidence=["S024-08: Success"],
-        level=AnalysisLevel.DAILY
+        level=AnalysisLevel.DAILY,
     )
     assert len(learning3.evidence) == 3
     assert learning3.confidence == ConfidenceLevel.MEDIUM
@@ -184,14 +180,14 @@ def test_add_learning_different_creates_new():
         category="sweet-spot",
         description="88% FTP sustainable",
         evidence=["Evidence 1"],
-        level=AnalysisLevel.DAILY
+        level=AnalysisLevel.DAILY,
     )
 
     learning2 = intelligence.add_learning(
         category="hydration",  # Different category
         description="500ml/h optimal",
         evidence=["Evidence 2"],
-        level=AnalysisLevel.DAILY
+        level=AnalysisLevel.DAILY,
     )
 
     assert learning1.id != learning2.id
@@ -213,7 +209,7 @@ def test_identify_pattern_new():
         name="sleep_debt_vo2_failure",
         trigger_conditions={"sleep": "<6h", "workout_type": "VO2"},
         observed_outcome="Failure",
-        observation_date=date.today()
+        observation_date=date.today(),
     )
 
     assert pattern.frequency == 1
@@ -232,7 +228,7 @@ def test_identify_pattern_update_existing():
         name="sleep_debt_vo2_failure",
         trigger_conditions={"sleep": "<6h"},
         observed_outcome="Failure",
-        observation_date=date(2026, 1, 1)
+        observation_date=date(2026, 1, 1),
     )
     assert pattern1.frequency == 1
 
@@ -241,7 +237,7 @@ def test_identify_pattern_update_existing():
         name="sleep_debt_vo2_failure",
         trigger_conditions={"sleep": "<6h"},
         observed_outcome="Failure",
-        observation_date=date(2026, 1, 2)
+        observation_date=date(2026, 1, 2),
     )
 
     assert pattern1.id == pattern2.id
@@ -258,7 +254,7 @@ def test_pattern_confidence_progression_by_frequency():
         name="test_pattern",
         trigger_conditions={"test": "value"},
         observed_outcome="Outcome",
-        observation_date=date.today()
+        observation_date=date.today(),
     )
 
     # Frequency 1 → LOW
@@ -270,7 +266,7 @@ def test_pattern_confidence_progression_by_frequency():
             name="test_pattern",
             trigger_conditions={"test": "value"},
             observed_outcome="Outcome",
-            observation_date=date.today()
+            observation_date=date.today(),
         )
     assert pattern.frequency == 3
     assert pattern.confidence == ConfidenceLevel.MEDIUM
@@ -281,7 +277,7 @@ def test_pattern_confidence_progression_by_frequency():
             name="test_pattern",
             trigger_conditions={"test": "value"},
             observed_outcome="Outcome",
-            observation_date=date.today()
+            observation_date=date.today(),
         )
     assert pattern.frequency == 6
     assert pattern.confidence == ConfidenceLevel.HIGH
@@ -292,7 +288,7 @@ def test_pattern_confidence_progression_by_frequency():
             name="test_pattern",
             trigger_conditions={"test": "value"},
             observed_outcome="Outcome",
-            observation_date=date.today()
+            observation_date=date.today(),
         )
     assert pattern.frequency == 10
     assert pattern.confidence == ConfidenceLevel.VALIDATED
@@ -314,7 +310,7 @@ def test_propose_adaptation_confidence_by_evidence():
         current_rule="Old",
         proposed_rule="New",
         justification="Better",
-        evidence=["E1"]
+        evidence=["E1"],
     )
     assert adaptation1.confidence == ConfidenceLevel.LOW
 
@@ -325,7 +321,7 @@ def test_propose_adaptation_confidence_by_evidence():
         current_rule="None",
         proposed_rule="New rule",
         justification="Needed",
-        evidence=["E1", "E2", "E3"]
+        evidence=["E1", "E2", "E3"],
     )
     assert adaptation2.confidence == ConfidenceLevel.MEDIUM
 
@@ -336,7 +332,7 @@ def test_propose_adaptation_confidence_by_evidence():
         current_rule="Old rule",
         proposed_rule="None",
         justification="Obsolete",
-        evidence=["E1", "E2", "E3", "E4", "E5", "E6"]
+        evidence=["E1", "E2", "E3", "E4", "E5", "E6"],
     )
     assert adaptation3.confidence == ConfidenceLevel.HIGH
 
@@ -347,7 +343,7 @@ def test_propose_adaptation_confidence_by_evidence():
         current_rule="Old",
         proposed_rule="New",
         justification="Proven",
-        evidence=["E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10"]
+        evidence=["E1", "E2", "E3", "E4", "E5", "E6", "E7", "E8", "E9", "E10"],
     )
     assert adaptation4.confidence == ConfidenceLevel.VALIDATED
 
@@ -362,7 +358,7 @@ def test_propose_adaptation_status_proposed():
         current_rule="Old",
         proposed_rule="New",
         justification="Better",
-        evidence=["E1", "E2", "E3"]
+        evidence=["E1", "E2", "E3"],
     )
 
     assert adaptation.status == "PROPOSED"
@@ -379,7 +375,7 @@ def test_propose_adaptation_types():
         current_rule="None",
         proposed_rule="New",
         justification="Needed",
-        evidence=["E1"]
+        evidence=["E1"],
     )
     assert add.adaptation_type == "ADD"
 
@@ -389,7 +385,7 @@ def test_propose_adaptation_types():
         current_rule="Old",
         proposed_rule="New",
         justification="Better",
-        evidence=["E1"]
+        evidence=["E1"],
     )
     assert modify.adaptation_type == "MODIFY"
 
@@ -399,7 +395,7 @@ def test_propose_adaptation_types():
         current_rule="Old",
         proposed_rule="None",
         justification="Obsolete",
-        evidence=["E1"]
+        evidence=["E1"],
     )
     assert remove.adaptation_type == "REMOVE"
 
@@ -420,14 +416,11 @@ def test_get_daily_insights_pattern_matching():
         name="sleep_debt_vo2_failure",
         trigger_conditions={"sleep": "<6h", "workout_type": "VO2"},
         observed_outcome="Failure",
-        observation_date=date.today()
+        observation_date=date.today(),
     )
 
     # Get insights with matching conditions
-    insights = intelligence.get_daily_insights({
-        "sleep": 5.5,
-        "workout_type": "VO2"
-    })
+    insights = intelligence.get_daily_insights({"sleep": 5.5, "workout_type": "VO2"})
 
     assert len(insights["active_patterns"]) == 1
     assert len(insights["recommendations"]) == 1
@@ -444,15 +437,14 @@ def test_get_daily_insights_relevant_learnings():
         category="sweet-spot",
         description="88-90% FTP optimal",
         evidence=["E1", "E2", "E3", "E4", "E5", "E6"],
-        level=AnalysisLevel.DAILY
+        level=AnalysisLevel.DAILY,
     )
     assert learning.confidence == ConfidenceLevel.HIGH
 
     # Get insights for sweet-spot workout
-    insights = intelligence.get_daily_insights({
-        "workout_type": "sweet-spot",
-        "planned_intensity": 89
-    })
+    insights = intelligence.get_daily_insights(
+        {"workout_type": "sweet-spot", "planned_intensity": 89}
+    )
 
     assert len(insights["relevant_learnings"]) == 1
     assert len(insights["recommendations"]) == 1
@@ -466,10 +458,7 @@ def test_get_weekly_synthesis_high_confidence_learnings():
 
     # Add LOW confidence learning
     intelligence.add_learning(
-        category="test1",
-        description="Test 1",
-        evidence=["E1"],
-        level=AnalysisLevel.DAILY
+        category="test1", description="Test 1", evidence=["E1"], level=AnalysisLevel.DAILY
     )
 
     # Add HIGH confidence learning
@@ -477,7 +466,7 @@ def test_get_weekly_synthesis_high_confidence_learnings():
         category="test2",
         description="Test 2",
         evidence=["E1", "E2", "E3", "E4", "E5", "E6"],
-        level=AnalysisLevel.WEEKLY
+        level=AnalysisLevel.WEEKLY,
     )
     assert learning_high.confidence == ConfidenceLevel.HIGH
 
@@ -497,7 +486,7 @@ def test_get_monthly_trends_validated_protocols():
         category="sweet-spot",
         description="88-90% optimal",
         evidence=["E" + str(i) for i in range(10)],
-        level=AnalysisLevel.DAILY
+        level=AnalysisLevel.DAILY,
     )
     assert learning.confidence == ConfidenceLevel.VALIDATED
     assert learning.validated is True
@@ -523,14 +512,14 @@ def test_save_and_load_json(tmp_path):
         category="test",
         description="Test learning",
         evidence=["E1", "E2"],
-        level=AnalysisLevel.DAILY
+        level=AnalysisLevel.DAILY,
     )
 
     pattern = intelligence.identify_pattern(
         name="test_pattern",
         trigger_conditions={"test": "value"},
         observed_outcome="Outcome",
-        observation_date=date.today()
+        observation_date=date.today(),
     )
 
     adaptation = intelligence.propose_adaptation(
@@ -539,7 +528,7 @@ def test_save_and_load_json(tmp_path):
         current_rule="Old",
         proposed_rule="New",
         justification="Better",
-        evidence=["E1", "E2", "E3"]
+        evidence=["E1", "E2", "E3"],
     )
 
     # Save
@@ -583,17 +572,14 @@ def test_save_creates_valid_json(tmp_path):
     intelligence = TrainingIntelligence()
 
     intelligence.add_learning(
-        category="test",
-        description="Test",
-        evidence=["E1"],
-        level=AnalysisLevel.DAILY
+        category="test", description="Test", evidence=["E1"], level=AnalysisLevel.DAILY
     )
 
     filepath = tmp_path / "test_intelligence.json"
     intelligence.save_to_file(filepath)
 
     # Verify JSON is valid
-    with open(filepath, 'r') as f:
+    with open(filepath) as f:
         data = json.load(f)
 
     assert "learnings" in data

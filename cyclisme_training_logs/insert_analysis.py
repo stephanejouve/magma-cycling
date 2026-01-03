@@ -56,19 +56,19 @@ Metadata:
 """
 
 import argparse
+import logging
 import re
 import subprocess
 import sys
-from datetime import datetime, date
+from datetime import date
 from pathlib import Path
 
-from cyclisme_training_logs.core.timeline_injector import TimelineInjector
 from cyclisme_training_logs.config import get_data_config
 from cyclisme_training_logs.core.duplicate_detector import (
+    DuplicateDetectedError,
     check_and_handle_duplicates,
-    DuplicateDetectedError
 )
-import logging
+from cyclisme_training_logs.core.timeline_injector import TimelineInjector
 
 logger = logging.getLogger(__name__)
 
@@ -80,12 +80,7 @@ class ClipboardReader:
     def read_clipboard():
         """Lire le contenu du presse-papier"""
         try:
-            result = subprocess.run(
-                ['pbpaste'],
-                capture_output=True,
-                text=True,
-                check=True
-            )
+            result = subprocess.run(["pbpaste"], capture_output=True, text=True, check=True)
             return result.stdout
         except Exception as e:
             print(f"❌ Erreur lecture presse-papier : {e}")
@@ -103,26 +98,26 @@ class AnalysisParser:
         text = text.strip()
 
         # Cas 1 : Le texte est déjà un bloc markdown propre (commence par ###)
-        if text.startswith('###'):
+        if text.startswith("###"):
             return text
 
         # Cas 2 : Le texte contient un bloc de code markdown (```markdown ... ```)
-        markdown_block_pattern = r'```(?:markdown)?\s*\n(.*?)\n```'
+        markdown_block_pattern = r"```(?:markdown)?\s*\n(.*?)\n```"
         match = re.search(markdown_block_pattern, text, re.DOTALL)
         if match:
             return match.group(1).strip()
 
         # Cas 3 : Chercher la première ligne commençant par ###
-        lines = text.split('\n')
+        lines = text.split("\n")
         start_idx = None
         for i, line in enumerate(lines):
-            if line.strip().startswith('###'):
+            if line.strip().startswith("###"):
                 start_idx = i
                 break
 
         if start_idx is not None:
             # Prendre tout depuis ### jusqu'à la fin ou jusqu'à un marqueur de fin
-            remaining = '\n'.join(lines[start_idx:])
+            remaining = "\n".join(lines[start_idx:])
             return remaining.strip()
 
         # Cas 4 : Échec - retourner le texte brut
@@ -140,15 +135,17 @@ class AnalysisParser:
         text_lower = text.lower()
 
         # Détecter repos
-        if any(marker in text_lower for marker in ['repos planifié', 'jour de repos', 'rest day']):
+        if any(marker in text_lower for marker in ["repos planifié", "jour de repos", "rest day"]):
             return "rest"
 
         # Détecter annulation
-        if any(marker in text_lower for marker in ['séance annulée', 'session annulée', 'cancelled']):
+        if any(
+            marker in text_lower for marker in ["séance annulée", "session annulée", "cancelled"]
+        ):
             return "cancelled"
 
         # Détecter séance exécutée (présence sections techniques)
-        if '#### Exécution' in text or '#### Charge d\'Entraînement' in text:
+        if "#### Exécution" in text or "#### Charge d'Entraînement" in text:
             return "executed"
 
         return "unknown"
@@ -162,7 +159,8 @@ class AnalysisParser:
         """
         # Compter les lignes commençant par ### (titres de session)
         import re
-        sessions = re.findall(r'^###\s+', text, re.MULTILINE)
+
+        sessions = re.findall(r"^###\s+", text, re.MULTILINE)
         return len(sessions)
 
     @staticmethod
@@ -186,15 +184,15 @@ class AnalysisParser:
         if session_type == "executed":
             # Validation stricte pour séances exécutées
             required_sections = [
-                'Date :',
-                '#### Métriques Pré-séance',
-                '#### Exécution',
-                '#### Exécution Technique',
-                '#### Charge d\'Entraînement',
-                '#### Validation Objectifs',
-                '#### Points d\'Attention',
-                '#### Recommandations Progression',
-                '#### Métriques Post-séance'
+                "Date :",
+                "#### Métriques Pré-séance",
+                "#### Exécution",
+                "#### Exécution Technique",
+                "#### Charge d'Entraînement",
+                "#### Validation Objectifs",
+                "#### Points d'Attention",
+                "#### Recommandations Progression",
+                "#### Métriques Post-séance",
             ]
 
             missing = []
@@ -210,7 +208,7 @@ class AnalysisParser:
 
         elif session_type in ["rest", "cancelled"]:
             # Validation allégée pour repos/annulations
-            required_sections = ['Date :']
+            required_sections = ["Date :"]
 
             missing = []
             for section in required_sections:
@@ -226,7 +224,7 @@ class AnalysisParser:
         else:
             # Type inconnu : validation minimale
             print("⚠️  Type de session inconnu, validation minimale")
-            if 'Date :' not in text:
+            if "Date :" not in text:
                 print("   - Date obligatoire manquante")
                 return False
 
@@ -235,7 +233,7 @@ class AnalysisParser:
     @staticmethod
     def extract_date_from_analysis(text):
         """Extraire la date de l'analyse pour détecter les doublons"""
-        match = re.search(r'Date\s*:\s*(\d{2}/\d{2}/\d{4})', text)
+        match = re.search(r"Date\s*:\s*(\d{2}/\d{2}/\d{4})", text)
         if match:
             return match.group(1)
         return None
@@ -264,7 +262,7 @@ class WorkoutHistoryManager:
                 self.logs_dir = config.data_repo_path
             except FileNotFoundError:
                 # Fallback to default logs directory (legacy)
-                self.logs_dir = Path.cwd() / 'logs'
+                self.logs_dir = Path.cwd() / "logs"
                 self.history_file = self.logs_dir / "workouts-history.md"
         else:
             # Legacy: explicit logs_dir provided
@@ -277,14 +275,14 @@ class WorkoutHistoryManager:
             print(f"❌ Fichier non trouvé : {self.history_file}")
             return None
 
-        with open(self.history_file, 'r', encoding='utf-8') as f:
+        with open(self.history_file, encoding="utf-8") as f:
             return f.read()
 
     def check_duplicate(self, content, analysis_text):
         """Vérifier si une entrée similaire existe déjà"""
 
         # Extraire le nom de la séance depuis l'analyse
-        match = re.search(r'###\s*(.+?)\s*\n', analysis_text)
+        match = re.search(r"###\s*(.+?)\s*\n", analysis_text)
         if not match:
             return False
 
@@ -297,7 +295,7 @@ class WorkoutHistoryManager:
 
         # Chercher dans le contenu existant
         # Pattern : ### NOM\nDate : DATE
-        pattern = rf'###\s*{re.escape(workout_name)}\s*\nDate\s*:\s*{re.escape(date)}'
+        pattern = rf"###\s*{re.escape(workout_name)}\s*\nDate\s*:\s*{re.escape(date)}"
 
         if re.search(pattern, content):
             return True
@@ -318,10 +316,10 @@ class WorkoutHistoryManager:
             print(f"⚠️  Une entrée similaire existe déjà pour la date {date_str}")
             if self.yes_confirm:
                 print("   ✅ Overwrite confirmé (--yes)")
-                response = 'y'
+                response = "y"
             else:
                 response = input("   Continuer quand même ? (y/N) : ")
-                if response.lower() != 'y':
+                if response.lower() != "y":
                     print("❌ Insertion annulée")
                     return False
 
@@ -329,7 +327,7 @@ class WorkoutHistoryManager:
         date_str = AnalysisParser.extract_date_from_analysis(analysis_text)
         if date_str:
             # Convertir format DD/MM/YYYY vers YYYY-MM-DD
-            day, month, year = date_str.split('/')
+            day, month, year = date_str.split("/")
             workout_date = date(int(year), int(month), int(day))
         else:
             # Fallback: utiliser date actuelle
@@ -339,13 +337,11 @@ class WorkoutHistoryManager:
         # Utiliser TimelineInjector pour insertion chronologique
         try:
             injector = TimelineInjector(
-                history_file=self.history_file,
-                check_duplicates=False  # Déjà fait ci-dessus
+                history_file=self.history_file, check_duplicates=False  # Déjà fait ci-dessus
             )
 
             result = injector.inject_chronologically(
-                workout_entry=analysis_text,
-                workout_date=workout_date
+                workout_entry=analysis_text, workout_date=workout_date
             )
 
             if result.success:
@@ -361,7 +357,7 @@ class WorkoutHistoryManager:
                         check_and_handle_duplicates(
                             history_file=self.history_file,
                             auto_fix=config.auto_fix_duplicates,
-                            check_window=config.duplicate_check_window
+                            check_window=config.duplicate_check_window,
                         )
 
                         logger.info("✅ Aucun doublon détecté")
@@ -392,10 +388,10 @@ class WorkoutHistoryManager:
         """Afficher le git diff"""
         try:
             result = subprocess.run(
-                ['git', 'diff', str(self.history_file)],
+                ["git", "diff", str(self.history_file)],
                 capture_output=True,
                 text=True,
-                cwd=self.logs_dir.parent
+                cwd=self.logs_dir.parent,
             )
             if result.stdout:
                 print("\n" + "=" * 60)
@@ -413,24 +409,15 @@ def main():
         description="Insérer l'analyse Claude.ai dans workouts-history.md"
     )
 
+    parser.add_argument("--dry-run", action="store_true", help="Mode test : affiche sans modifier")
+    parser.add_argument("--file", help="Lire depuis un fichier au lieu du presse-papier")
     parser.add_argument(
-        '--dry-run',
-        action='store_true',
-        help="Mode test : affiche sans modifier"
+        "--logs-dir", default=None, help="Répertoire des logs (défaut: utilise config.py)"
     )
     parser.add_argument(
-        '--file',
-        help="Lire depuis un fichier au lieu du presse-papier"
-    )
-    parser.add_argument(
-        '--logs-dir',
-        default=None,
-        help="Répertoire des logs (défaut: utilise config.py)"
-    )
-    parser.add_argument(
-        '--yes',
-        action='store_true',
-        help="Confirmer automatiquement l'insertion (mode non-interactif)"
+        "--yes",
+        action="store_true",
+        help="Confirmer automatiquement l'insertion (mode non-interactif)",
     )
 
     args = parser.parse_args()
@@ -445,7 +432,7 @@ def main():
         if not file_path.exists():
             print(f"❌ Fichier non trouvé : {args.file}")
             sys.exit(1)
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding="utf-8") as f:
             raw_text = f.read()
     else:
         print("📋 Lecture du presse-papier...")
@@ -475,7 +462,7 @@ def main():
     if not AnalysisParser.validate_analysis(analysis):
         print()
         response = input("   Continuer malgré les avertissements ? (y/N) : ")
-        if response.lower() != 'y':
+        if response.lower() != "y":
             print("❌ Insertion annulée")
             sys.exit(1)
     else:
@@ -487,7 +474,7 @@ def main():
     print()
 
     # Afficher un aperçu
-    lines = analysis.split('\n')
+    lines = analysis.split("\n")
     preview_lines = lines[:10] if len(lines) > 10 else lines
     print("📄 Aperçu de l'analyse :")
     print("-" * 60)
@@ -506,10 +493,10 @@ def main():
     # Confirmer
     if args.yes:
         print("✓ Insertion automatique activée (--yes)")
-        response = 'y'
+        response = "y"
     else:
         response = input("Insérer cette analyse ? (Y/n) : ")
-        if response.lower() == 'n':
+        if response.lower() == "n":
             print("❌ Insertion annulée")
             sys.exit(0)
 
@@ -554,5 +541,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

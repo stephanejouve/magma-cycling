@@ -4,8 +4,8 @@
 
 Système automatisé d'entraînement cyclisme avec analyse quotidienne par AI et ajustement adaptatif du planning hebdomadaire. L'objectif est d'implémenter une **boucle d'asservissement** permettant au coach AI de détecter les signaux de fatigue et d'ajuster automatiquement les séances futures de la semaine.
 
-**Athlète** : Stéphane, 54 ans, FTP actuel 220W, objectif 260W  
-**Stack** : Python 3.11, Poetry, API Intervals.icu, Git  
+**Athlète** : Stéphane, 54 ans, FTP actuel 220W, objectif 260W
+**Stack** : Python 3.11, Poetry, API Intervals.icu, Git
 **Repo** : `~/cyclisme-training-logs/`
 
 ---
@@ -220,30 +220,30 @@ mkdir -p data/workout_templates
 ````python
 def load_remaining_sessions(self, week_id):
     """Charge séances planifiées futures de la semaine
-    
+
     Args:
         week_id: ID semaine (ex: S072)
-        
+
     Returns:
         list: Séances futures (date >= aujourd'hui)
     """
     planning_file = self.project_root / "data" / "week_planning" / f"week_planning_{week_id}.json"
-    
+
     if not planning_file.exists():
         print(f"⚠️  Planning {week_id} non trouvé")
         return []
-    
+
     with open(planning_file, 'r') as f:
         planning = json.load(f)
-    
+
     today = datetime.now().date()
-    
+
     remaining = []
     for session in planning['sessions']:
         session_date = datetime.strptime(session['day'], '%Y-%m-%d').date()
         if session_date >= today:
             remaining.append(session)
-    
+
     return remaining
 ````
 
@@ -251,25 +251,25 @@ def load_remaining_sessions(self, week_id):
 ````python
 def format_remaining_sessions_compact(self, remaining_sessions):
     """Format compact planning pour prompt AI (cible ~150 tokens)
-    
+
     Returns:
         str: Planning formaté
     """
     if not remaining_sessions:
         return ""
-    
+
     lines = [f"\n## PLANNING RESTANT ({len(remaining_sessions)} séances)\n"]
-    
+
     for session in remaining_sessions:
         date = session['day']
         code = session['workout_code']
         tss = session['tss_planned']
-        
+
         if session.get('status') == 'rest_day':
             lines.append(f"{date}: REPOS")
         else:
             lines.append(f"{date}: {code} ({tss} TSS)")
-    
+
     return "\n".join(lines)
 ````
 
@@ -281,22 +281,22 @@ def format_remaining_sessions_compact(self, remaining_sessions):
 ````python
 def load_workout_templates(self):
     """Charge catalogue templates au démarrage
-    
+
     Returns:
         dict: Templates indexés par ID
     """
     templates = {}
     templates_dir = self.project_root / "data" / "workout_templates"
-    
+
     if not templates_dir.exists():
         print("⚠️  Dossier workout_templates absent")
         return templates
-    
+
     for template_file in templates_dir.glob("*.json"):
         with open(template_file) as f:
             template = json.load(f)
             templates[template['id']] = template
-    
+
     print(f"✅ {len(templates)} templates chargés")
     return templates
 ````
@@ -305,7 +305,7 @@ def load_workout_templates(self):
 ````python
 def __init__(self, ...):
     # ... code existant ...
-    
+
     # 🆕 Charger catalogue templates
     self.workout_templates = self.load_workout_templates()
 ````
@@ -318,16 +318,16 @@ def __init__(self, ...):
 ````python
 def build_ai_prompt(self, session_data, week_context, remaining_sessions):
     """Construit prompt AI avec planning restant
-    
+
     Args:
         session_data: Données séance du jour
         week_context: Contexte semaine (CTL/ATL/TSB, historique)
         remaining_sessions: Séances planifiées futures
     """
-    
+
     # Planning restant (format compact ~150 tokens)
     planning_section = self.format_remaining_sessions_compact(remaining_sessions)
-    
+
     # Instructions catalogue (~180 tokens)
     catalogue_instructions = """
 ## CATALOGUE WORKOUTS REMPLACEMENT
@@ -361,7 +361,7 @@ Si modification planning nécessaire, utilisez templates prédéfinis :
 
 **Si aucune modification** : Ne rien ajouter (pas de JSON).
 """
-    
+
     prompt = f"""
 {self.base_system_prompt}
 
@@ -384,7 +384,7 @@ Si modification planning nécessaire, utilisez templates prédéfinis :
 
 {self._format_session_data(session_data)}
 """
-    
+
     return prompt
 ````
 
@@ -396,25 +396,25 @@ Si modification planning nécessaire, utilisez templates prédéfinis :
 ````python
 def parse_ai_modifications(self, ai_response):
     """Parse modifications planning depuis réponse AI
-    
+
     Args:
         ai_response: Texte réponse AI complet
-        
+
     Returns:
         list: Modifications à appliquer (vide si aucune)
     """
     import re
-    
+
     # Chercher bloc JSON modifications
     json_match = re.search(
         r'```json\s*\n(\{.*?"modifications".*?\})\s*\n```',
         ai_response,
         re.DOTALL
     )
-    
+
     if not json_match:
         return []  # Pas de modification = comportement normal
-    
+
     try:
         data = json.loads(json_match.group(1))
         return data.get('modifications', [])
@@ -431,7 +431,7 @@ def parse_ai_modifications(self, ai_response):
 ````python
 def apply_planning_modifications(self, modifications, week_id):
     """Applique modifications planning
-    
+
     Args:
         modifications: Liste modifications AI
         week_id: ID semaine
@@ -439,12 +439,12 @@ def apply_planning_modifications(self, modifications, week_id):
     if not modifications:
         print("\n✅ Planning maintenu tel quel")
         return
-    
+
     print(f"\n📋 {len(modifications)} modification(s) détectée(s)")
-    
+
     for mod in modifications:
         action = mod['action']
-        
+
         if action == 'lighten':
             self._apply_lighten(mod, week_id)
         elif action == 'cancel':
@@ -456,43 +456,43 @@ def apply_planning_modifications(self, modifications, week_id):
 ````python
 def _apply_lighten(self, mod, week_id):
     """Applique allégement séance via template
-    
+
     Args:
         mod: Modification dict avec template_id
         week_id: ID semaine
     """
     template_id = mod['template_id']
-    
+
     if template_id not in self.workout_templates:
         print(f"❌ Template inconnu: {template_id}")
         return
-    
+
     template = self.workout_templates[template_id]
-    
+
     print(f"\n🔄 Allégement via '{template['name']}'")
     print(f"   Date : {mod['target_date']}")
     print(f"   {template['tss']} TSS, {template['duration_minutes']}min")
     print(f"   Raison : {mod['reason']}")
-    
+
     # Confirmation utilisateur
     confirm = input("   Appliquer ? (o/n) : ").strip().lower()
     if confirm != 'o':
         print("   ❌ Ignoré")
         return
-    
+
     # 1. Générer workout code depuis template
     day_num = self._extract_day_number(mod['target_date'], week_id)
     workout_code = template['workout_code_pattern'].format(
         week_id=week_id,
         day_num=day_num
     )
-    
+
     # 2. Supprimer ancien workout Intervals.icu
     old_workout_id = self._get_workout_id_intervals(mod['target_date'])
     if old_workout_id:
         self._delete_workout_intervals(old_workout_id)
         print("   🗑️  Ancien workout supprimé")
-    
+
     # 3. Upload nouveau workout
     self._upload_workout_intervals(
         date=mod['target_date'],
@@ -500,7 +500,7 @@ def _apply_lighten(self, mod, week_id):
         structure=template['intervals_icu_format']
     )
     print("   ⬆️  Nouveau workout uploadé")
-    
+
     # 4. Mettre à jour planning JSON
     self._update_planning_json(
         week_id=week_id,
@@ -522,10 +522,10 @@ def _apply_lighten(self, mod, week_id):
 ````python
 def _get_workout_id_intervals(self, date):
     """Récupère ID workout Intervals.icu pour une date
-    
+
     Args:
         date: Date YYYY-MM-DD
-        
+
     Returns:
         str: ID workout ou None
     """
@@ -535,16 +535,16 @@ def _get_workout_id_intervals(self, date):
         'newest': date,
         'category': 'WORKOUT'
     }
-    
+
     response = self.session.get(url, params=params)
     response.raise_for_status()
     events = response.json()
-    
+
     return events[0]['id'] if events else None
 
 def _delete_workout_intervals(self, workout_id):
     """Supprime workout Intervals.icu
-    
+
     Args:
         workout_id: ID workout à supprimer
     """
@@ -554,7 +554,7 @@ def _delete_workout_intervals(self, workout_id):
 
 def _upload_workout_intervals(self, date, code, structure):
     """Upload nouveau workout Intervals.icu
-    
+
     Args:
         date: Date YYYY-MM-DD
         code: Workout code (ex: S072-03-REC-V001)
@@ -567,14 +567,14 @@ def _upload_workout_intervals(self, date, code, structure):
         "description": code,
         "workout_doc": structure
     }
-    
+
     url = f"https://intervals.icu/api/v1/athlete/{self.athlete_id}/events"
     response = self.session.post(url, json=event)
     response.raise_for_status()
 
 def _update_planning_json(self, week_id, date, new_workout, old_workout, reason):
     """Met à jour week_planning_SXXX.json avec historique
-    
+
     Args:
         week_id: ID semaine
         date: Date modification
@@ -583,16 +583,16 @@ def _update_planning_json(self, week_id, date, new_workout, old_workout, reason)
         reason: Raison modification
     """
     planning_file = self.project_root / "data" / "week_planning" / f"week_planning_{week_id}.json"
-    
+
     with open(planning_file, 'r') as f:
         planning = json.load(f)
-    
+
     # Trouver session à modifier
     for i, session in enumerate(planning['sessions']):
         if session['day'] == date:
             # Sauvegarder dans historique
             timestamp = datetime.now().isoformat()
-            
+
             history_entry = {
                 "timestamp": timestamp,
                 "action": "modified_by_ai_coach",
@@ -602,7 +602,7 @@ def _update_planning_json(self, week_id, date, new_workout, old_workout, reason)
                 "new_tss": new_workout['tss'],
                 "reason": reason
             }
-            
+
             # Mettre à jour session
             planning['sessions'][i].update({
                 "workout_code": new_workout['code'],
@@ -611,38 +611,38 @@ def _update_planning_json(self, week_id, date, new_workout, old_workout, reason)
                 "description": new_workout['description'],
                 "status": "modified"
             })
-            
+
             if 'history' not in planning['sessions'][i]:
                 planning['sessions'][i]['history'] = []
             planning['sessions'][i]['history'].append(history_entry)
-            
+
             break
-    
+
     # Update metadata planning
     planning['last_updated'] = datetime.now().isoformat()
     planning['version'] = planning.get('version', 1) + 1
-    
+
     # Sauvegarder
     with open(planning_file, 'w', encoding='utf-8') as f:
         json.dump(planning, f, indent=2, ensure_ascii=False)
 
 def _extract_day_number(self, date_str, week_id):
     """Extrait numéro jour (1-7) depuis date
-    
+
     Args:
         date_str: "2025-12-18"
         week_id: "S072"
-        
+
     Returns:
         int: Numéro jour 1-7
     """
     planning_file = self.project_root / "data" / "week_planning" / f"week_planning_{week_id}.json"
     with open(planning_file) as f:
         planning = json.load(f)
-    
+
     start_date = datetime.strptime(planning['start_date'], '%Y-%m-%d').date()
     target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-    
+
     delta = (target_date - start_date).days
     return delta + 1  # Jour 1-7
 ````
@@ -655,48 +655,48 @@ def _extract_day_number(self, date_str, week_id):
 ````python
 def run_daily_workflow(self):
     """Workflow quotidien avec boucle asservissement intégrée"""
-    
+
     print("\n" + "="*70)
     print("  🤖 WORKFLOW COACH AI - Analyse Quotidienne")
     print("="*70)
-    
+
     # 1. Collecte données séance
     session_data = self.collect_session_data()
-    
+
     # 2. Détection semaine
     week_id = self.detect_week_id(session_data['date'])
     print(f"\n📅 Semaine : {week_id}")
-    
+
     # 3. Chargement contexte semaine
     week_context = self.load_week_context(week_id)
-    
+
     # 🆕 4. Chargement planning restant
     remaining_sessions = self.load_remaining_sessions(week_id)
     print(f"📋 Planning restant : {len(remaining_sessions)} séances")
-    
+
     # 5. Construction prompt AI enrichi
     ai_prompt = self.build_ai_prompt(
         session_data,
         week_context,
         remaining_sessions  # 🆕 Contexte planning
     )
-    
+
     # 6. Appel AI
     print("\n🤖 Analyse AI en cours...")
     ai_response = self.call_ai_analysis(ai_prompt)
-    
+
     # 7. Sauvegarde analyse
     self.save_analysis(ai_response, session_data, week_id)
-    
+
     # 🆕 8. Parsing modifications
     modifications = self.parse_ai_modifications(ai_response)
-    
+
     # 🆕 9. Application modifications planning
     if modifications:
         self.apply_planning_modifications(modifications, week_id)
     else:
         print("\n✅ Planning maintenu tel quel")
-    
+
     # 10. Git commit
     if not self.skip_git:
         self.git_commit(
@@ -704,10 +704,10 @@ def run_daily_workflow(self):
             week_id,
             has_modifications=bool(modifications)
         )
-    
+
     # 11. Résumé
     self.print_summary(session_data, modifications)
-    
+
     print("\n✅ WORKFLOW TERMINÉ")
 ````
 

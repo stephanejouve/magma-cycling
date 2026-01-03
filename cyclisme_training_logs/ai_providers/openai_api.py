@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 OpenAI API integration.
 
@@ -12,16 +11,17 @@ Created: 2025-12-09
 
 import logging
 from typing import Optional
+
 from openai import OpenAI
 
 from .base import AIAnalyzer, AIProvider
-
 
 logger = logging.getLogger(__name__)
 
 
 class WorkflowError(Exception):
     """Workflow error for AI provider operations."""
+
     pass
 
 
@@ -42,7 +42,7 @@ class OpenAIAnalyzer(AIAnalyzer):
     MODELS = {
         "gpt-4-turbo": "GPT-4 Turbo (recommended)",
         "gpt-4": "GPT-4 (legacy)",
-        "gpt-3.5-turbo": "GPT-3.5 (cheaper)"
+        "gpt-3.5-turbo": "GPT-3.5 (cheaper)",
     }
 
     def __init__(self, api_key: str, model: str = "gpt-4-turbo"):
@@ -66,10 +66,7 @@ class OpenAIAnalyzer(AIAnalyzer):
 
         try:
             response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {"role": "user", "content": prompt}
-                ]
+                model=self.model, messages=[{"role": "user", "content": prompt}]
             )
 
             analysis = response.choices[0].message.content
@@ -84,13 +81,13 @@ class OpenAIAnalyzer(AIAnalyzer):
     def get_provider_info(self) -> dict:
         """Get OpenAI provider info."""
         return {
-            'provider': 'openai',
-            'model': self.model,
-            'status': 'ready',
-            'cost_input': '$10.00/1M tokens',
-            'cost_output': '$30.00/1M tokens',
-            'requires_api_key': True,
-            'context_window': '128k tokens'
+            "provider": "openai",
+            "model": self.model,
+            "status": "ready",
+            "cost_input": "$10.00/1M tokens",
+            "cost_output": "$30.00/1M tokens",
+            "requires_api_key": True,
+            "context_window": "128k tokens",
         }
 
     def validate_config(self) -> bool:

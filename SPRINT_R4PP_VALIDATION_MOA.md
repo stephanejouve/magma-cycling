@@ -1,7 +1,7 @@
 # Validation MOA - Sprint R4++ Training Intelligence
 
-**Date :** 2026-01-02  
-**Version :** v2.2.0  
+**Date :** 2026-01-02
+**Version :** v2.2.0
 **Score Final :** 120/100 🏆
 
 ## Résumé Exécutif
@@ -168,14 +168,14 @@ result = intelligence.get_pid_correction(
   - identify_pattern : 3
   - propose_adaptation : 4
   - Multi-temporal : 5
-  
+
 - Phase 2 (Backfill) : 9 tests
   - Sweet-Spot extraction : 2
   - VO2/Sleep correlation : 2
   - Outdoor discipline : 2
   - FTP progression : 1
   - Persistance : 2
-  
+
 - Phase 3 (PID) : 16 tests
   - PID compute : 5
   - Gains adaptatifs : 4
@@ -239,12 +239,12 @@ result = intelligence.get_pid_correction(
   - compute_pid_gains_from_intelligence()
   - TrainingIntelligence.get_pid_correction()
   - 25 nouveaux tests (9 backfill + 16 PID)
-  
+
 - **Changed** :
   - GUIDE_INTELLIGENCE.md v2.1.0 → v2.2.0 (+770 lignes)
-  
+
 - **Breaking Changes** : Aucun
-  
+
 - **Migration** :
   - get_pid_correction() optionnel (backward compatible)
   - Backfill CLI séparé (indépendant)

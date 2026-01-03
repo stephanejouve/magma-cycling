@@ -1,6 +1,6 @@
 # Enseignements d'Entraînement
 
-> Journal des découvertes techniques, patterns physiologiques, protocoles validés/invalidés.  
+> Journal des découvertes techniques, patterns physiologiques, protocoles validés/invalidés.
 > Mise à jour : Après chaque découverte significative + bilans hebdomadaires
 
 ---
@@ -81,12 +81,12 @@
 ```markdown
 ### [Titre Découverte]
 
-**Date** : JJ/MM/AAAA  
-**Contexte** : Séance/Semaine concernée  
-**Observation** : [Description factuelle]  
-**Données** : [Métriques objectives supportant observation]  
-**Analyse** : [Interprétation]  
-**Action** : [Protocole modifié ou à tester]  
+**Date** : JJ/MM/AAAA
+**Contexte** : Séance/Semaine concernée
+**Observation** : [Description factuelle]
+**Données** : [Métriques objectives supportant observation]
+**Analyse** : [Interprétation]
+**Action** : [Protocole modifié ou à tester]
 **Statut** : 🔄 À valider / ✅ Validé / ❌ Invalidé
 ```
 

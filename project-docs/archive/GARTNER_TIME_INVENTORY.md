@@ -1,7 +1,7 @@
 # 🏷️ INVENTAIRE GARTNER TIME - Cyclisme Training Logs
 
-**Date :** 26 décembre 2025  
-**Version projet :** Post-Prompt 1 (Logs Path Fix)  
+**Date :** 26 décembre 2025
+**Version projet :** Post-Prompt 1 (Logs Path Fix)
 **Total fichiers :** ~40 Python files
 
 ---
@@ -587,7 +587,7 @@ Examples:
     Programmatic usage::
 
         from cyclisme_training_logs.module import Class
-        
+
         obj = Class(param="value")
         result = obj.method()
 
@@ -616,7 +616,7 @@ Examples:
     Basic usage::
 
         from cyclisme_training_logs.core.module import Class
-        
+
         obj = Class()
         result = obj.method()
 
@@ -736,6 +736,6 @@ def generate_html_dashboard():
 
 ---
 
-**Version :** 1.0  
-**Dernière mise à jour :** 2025-12-26  
+**Version :** 1.0
+**Dernière mise à jour :** 2025-12-26
 **Prochaine révision :** Post-Prompt 2 Phase 1

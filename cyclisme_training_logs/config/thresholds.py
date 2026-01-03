@@ -23,6 +23,7 @@ Created: 2026-01-01
 
 import os
 from typing import Literal
+
 from pydantic import BaseModel, Field, ValidationError
 
 
@@ -47,29 +48,19 @@ class TrainingThresholds(BaseModel):
     """
 
     # TSB Thresholds
-    tsb_fresh_min: float = Field(
-        description="Minimum TSB for 'fresh' state (TSB > this value)"
-    )
-    tsb_optimal_min: float = Field(
-        description="Minimum TSB for 'optimal' training state"
-    )
+    tsb_fresh_min: float = Field(description="Minimum TSB for 'fresh' state (TSB > this value)")
+    tsb_optimal_min: float = Field(description="Minimum TSB for 'optimal' training state")
     tsb_fatigued_min: float = Field(
         description="Minimum TSB for 'fatigued' state (not yet critical)"
     )
-    tsb_critical: float = Field(
-        description="Critical TSB threshold indicating overreach risk"
-    )
+    tsb_critical: float = Field(description="Critical TSB threshold indicating overreach risk")
 
     # ATL/CTL Ratio Thresholds
     atl_ctl_ratio_optimal: float = Field(
         gt=0, description="Optimal ATL/CTL ratio (< this = optimal)"
     )
-    atl_ctl_ratio_warning: float = Field(
-        gt=0, description="Warning ATL/CTL ratio threshold"
-    )
-    atl_ctl_ratio_critical: float = Field(
-        gt=0, description="Critical ATL/CTL ratio threshold"
-    )
+    atl_ctl_ratio_warning: float = Field(gt=0, description="Warning ATL/CTL ratio threshold")
+    atl_ctl_ratio_critical: float = Field(gt=0, description="Critical ATL/CTL ratio threshold")
 
     # Recovery Indicators (for RecoveryAnalyzer)
     recovery_hrv_threshold_percent: float = Field(
@@ -118,15 +109,11 @@ class TrainingThresholds(BaseModel):
                 tsb_critical=float(os.getenv("TSB_CRITICAL", "-25")),
                 atl_ctl_ratio_optimal=float(os.getenv("ATL_CTL_RATIO_OPTIMAL", "1.0")),
                 atl_ctl_ratio_warning=float(os.getenv("ATL_CTL_RATIO_WARNING", "1.3")),
-                atl_ctl_ratio_critical=float(
-                    os.getenv("ATL_CTL_RATIO_CRITICAL", "1.8")
-                ),
+                atl_ctl_ratio_critical=float(os.getenv("ATL_CTL_RATIO_CRITICAL", "1.8")),
                 recovery_hrv_threshold_percent=float(
                     os.getenv("RECOVERY_HRV_THRESHOLD_PERCENT", "90")
                 ),
-                recovery_sleep_hours_min=float(
-                    os.getenv("RECOVERY_SLEEP_HOURS_MIN", "7.0")
-                ),
+                recovery_sleep_hours_min=float(os.getenv("RECOVERY_SLEEP_HOURS_MIN", "7.0")),
                 recovery_resting_hr_deviation_max=int(
                     os.getenv("RECOVERY_RESTING_HR_DEVIATION_MAX", "10")
                 ),
@@ -135,14 +122,10 @@ class TrainingThresholds(BaseModel):
             raise ValueError(f"Invalid training thresholds configuration: {e}") from e
         except ValueError as e:
             if "invalid literal" in str(e):
-                raise ValueError(
-                    f"Invalid numeric value in thresholds configuration: {e}"
-                ) from e
+                raise ValueError(f"Invalid numeric value in thresholds configuration: {e}") from e
             raise
 
-    def get_tsb_state(
-        self, tsb: float
-    ) -> Literal["fresh", "optimal", "fatigued", "overreached"]:
+    def get_tsb_state(self, tsb: float) -> Literal["fresh", "optimal", "fatigued", "overreached"]:
         """
         Determine training state based on TSB value.
 
@@ -189,9 +172,7 @@ class TrainingThresholds(BaseModel):
         """
         return self.tsb_optimal_min < tsb <= self.tsb_fresh_min
 
-    def get_atl_ctl_ratio_state(
-        self, ratio: float
-    ) -> Literal["optimal", "warning", "critical"]:
+    def get_atl_ctl_ratio_state(self, ratio: float) -> Literal["optimal", "warning", "critical"]:
         """
         Determine training state based on ATL/CTL ratio.
 

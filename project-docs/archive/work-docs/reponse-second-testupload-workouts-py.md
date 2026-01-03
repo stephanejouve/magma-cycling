@@ -53,17 +53,17 @@ stephanejouve@Tiresias cyclisme-training-logs % python3 scripts/upload_workouts.
 1. **Z2 (Endurance)** : 60-75% FTP
    - Durée : 45-90min
    - Cadence : 85-90 rpm naturelle
-   
+
 2. **Sweet-Spot** : 88-93% FTP
    - Blocs : 8-12min maximum
    - Récupération : 50% de la durée bloc
    - Maximum 3-4 blocs par séance
-   
+
 3. **Seuil** : 95-105% FTP
    - Blocs : 5-8min maximum
    - Récupération : durée bloc minimum
    - Précédé de validation TSB
-   
+
 4. **VO2 Max** : 106-120% FTP
    - **UNIQUEMENT si TSB ≥ +5**
    - Blocs : 3-5min
@@ -215,17 +215,17 @@ Mode : RÉEL
 1. **Z2 (Endurance)** : 60-75% FTP
    - Durée : 45-90min
    - Cadence : 85-90 rpm naturelle
-   
+
 2. **Sweet-Spot** : 88-93% FTP
    - Blocs : 8-12min maximum
    - Récupération : 50% de la durée bloc
    - Maximum 3-4 blocs par séance
-   
+
 3. **Seuil** : 95-105% FTP
    - Blocs : 5-8min maximum
    - Récupération : durée bloc minimum
    - Précédé de validation TSB
-   
+
 4. **VO2 Max** : 106-120% FTP
    - **UNIQUEMENT si TSB ≥ +5**
    - Blocs : 3-5min
@@ -320,4 +320,4 @@ Génère **7 blocs WORKOUT** (un par jour, dimanche = mention repos) au format t
 ⏭️  Ignorés  : 1
 📝 Total    : 3
 ======================================================================
-stephanejouve@Tiresias cyclisme-training-logs % 
+stephanejouve@Tiresias cyclisme-training-logs %

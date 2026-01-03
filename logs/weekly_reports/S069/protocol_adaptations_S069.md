@@ -51,8 +51,8 @@ Cooldown
 - 10m Ramp 50-40% 80rpm
 ```
 
-**Durée totale :** 35 minutes  
-**TSS cible :** 15-20  
+**Durée totale :** 35 minutes
+**TSS cible :** 15-20
 **IF cible :** 0.50-0.55
 
 **Critères Validation Progression :**

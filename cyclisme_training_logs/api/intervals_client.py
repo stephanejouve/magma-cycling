@@ -6,10 +6,11 @@ This module provides a single, canonical implementation of the Intervals.icu API
 replacing multiple duplicated implementations across the codebase.
 """
 
-import requests
-from datetime import datetime, timedelta
-from typing import Optional, List, Dict, Any
 import logging
+from datetime import datetime, timedelta
+from typing import Any, Optional
+
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -50,10 +51,10 @@ class IntervalsClient:
 
         self.athlete_id = athlete_id
         self.session = requests.Session()
-        self.session.auth = (f"API_KEY", api_key)
+        self.session.auth = ("API_KEY", api_key)
         self.session.headers.update({"Content-Type": "application/json"})
 
-    def get_athlete(self) -> Dict[str, Any]:
+    def get_athlete(self) -> dict[str, Any]:
         """
         Get athlete profile information.
         Récupérer les informations du profil athlète.
@@ -74,10 +75,8 @@ class IntervalsClient:
         return response.json()
 
     def get_activities(
-        self,
-        oldest: Optional[str] = None,
-        newest: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+        self, oldest: Optional[str] = None, newest: Optional[str] = None
+    ) -> list[dict[str, Any]]:
         """
         Get activities (workouts) for a date range.
         Récupérer les activités (séances) pour une période.
@@ -102,15 +101,15 @@ class IntervalsClient:
         url = f"{self.BASE_URL}/athlete/{self.athlete_id}/activities"
         params = {}
         if oldest:
-            params['oldest'] = oldest
+            params["oldest"] = oldest
         if newest:
-            params['newest'] = newest
+            params["newest"] = newest
 
         response = self.session.get(url, params=params)
         response.raise_for_status()
         return response.json()
 
-    def get_activity(self, activity_id: str) -> Dict[str, Any]:
+    def get_activity(self, activity_id: str) -> dict[str, Any]:
         """
         Get complete details for a single activity.
         Récupérer les détails complets d'une activité.
@@ -134,10 +133,8 @@ class IntervalsClient:
         return response.json()
 
     def get_wellness(
-        self,
-        oldest: Optional[str] = None,
-        newest: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+        self, oldest: Optional[str] = None, newest: Optional[str] = None
+    ) -> list[dict[str, Any]]:
         """
         Get wellness data (CTL, ATL, TSB, weight, sleep, etc.).
         Récupérer les données wellness (CTL, ATL, TSB, poids, sommeil, etc.).
@@ -167,19 +164,17 @@ class IntervalsClient:
         url = f"{self.BASE_URL}/athlete/{self.athlete_id}/wellness"
         params = {}
         if oldest:
-            params['oldest'] = oldest
+            params["oldest"] = oldest
         if newest:
-            params['newest'] = newest
+            params["newest"] = newest
 
         response = self.session.get(url, params=params)
         response.raise_for_status()
         return response.json()
 
     def get_events(
-        self,
-        oldest: Optional[str] = None,
-        newest: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+        self, oldest: Optional[str] = None, newest: Optional[str] = None
+    ) -> list[dict[str, Any]]:
         """
         Get calendar events (planned workouts, notes, etc.).
         Récupérer les événements du calendrier (workouts planifiés, notes, etc.).
@@ -204,19 +199,17 @@ class IntervalsClient:
         url = f"{self.BASE_URL}/athlete/{self.athlete_id}/events"
         params = {}
         if oldest:
-            params['oldest'] = oldest
+            params["oldest"] = oldest
         if newest:
-            params['newest'] = newest
+            params["newest"] = newest
 
         response = self.session.get(url, params=params)
         response.raise_for_status()
         return response.json()
 
     def get_planned_workout(
-        self,
-        activity_id: str,
-        activity_date: datetime
-    ) -> Optional[Dict[str, Any]]:
+        self, activity_id: str, activity_date: datetime
+    ) -> Optional[dict[str, Any]]:
         """
         Find the planned workout associated with a completed activity.
         Trouver le workout planifié associé à une activité réalisée.
@@ -239,19 +232,19 @@ class IntervalsClient:
             ...     print(f"Planned workout: {planned.get('name')}")
         """
         # Search in a ±2 day window around the activity
-        oldest = (activity_date - timedelta(days=2)).strftime('%Y-%m-%d')
-        newest = (activity_date + timedelta(days=2)).strftime('%Y-%m-%d')
+        oldest = (activity_date - timedelta(days=2)).strftime("%Y-%m-%d")
+        newest = (activity_date + timedelta(days=2)).strftime("%Y-%m-%d")
 
         events = self.get_events(oldest=oldest, newest=newest)
 
         # Find event with matching paired_activity_id
         for event in events:
-            if event.get('paired_activity_id') == activity_id:
+            if event.get("paired_activity_id") == activity_id:
                 return event
 
         return None
 
-    def create_event(self, event_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def create_event(self, event_data: dict[str, Any]) -> Optional[dict[str, Any]]:
         """
         Create a calendar event (planned workout, note, etc.).
         Créer un événement du calendrier (workout planifié, note, etc.).
@@ -337,7 +330,7 @@ class IntervalsClient:
             logger.error(f"Error deleting event {event_id}: {e}")
             return False
 
-    def update_event(self, event_id: int, event_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def update_event(self, event_id: int, event_data: dict[str, Any]) -> Optional[dict[str, Any]]:
         """Update an existing calendar event.
 
         Args:

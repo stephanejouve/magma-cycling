@@ -321,7 +321,7 @@ pip install pydocstyle sphinx sphinx-rtd-theme
 
 ---
 
-**Créé:** 2025-12-27 14:45  
-**Priorité:** P0 (compléter travail commencé)  
-**Dépend de:** PROMPT_DOCSTRING_MIGRATION_GOOGLE_STYLE.md  
+**Créé:** 2025-12-27 14:45
+**Priorité:** P0 (compléter travail commencé)
+**Dépend de:** PROMPT_DOCSTRING_MIGRATION_GOOGLE_STYLE.md
 **Bloquant:** tests/test_docstring_migrator.py (importe module absent)

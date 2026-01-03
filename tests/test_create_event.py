@@ -26,13 +26,10 @@ def test_create_event():
         print("❌ Config non trouvée : ~/.intervals_config.json")
         return 1
 
-    with open(config_path, 'r') as f:
+    with open(config_path) as f:
         config = json.load(f)
 
-    api = IntervalsClient(
-        athlete_id=config.get('athlete_id'),
-        api_key=config.get('api_key')
-    )
+    api = IntervalsClient(athlete_id=config.get("athlete_id"), api_key=config.get("api_key"))
 
     print("✅ API connectée")
     print()
@@ -45,7 +42,7 @@ def test_create_event():
         "category": "WORKOUT",
         "name": "Test Simple",
         "description": "Warmup 10min\nMain set 20min\nCooldown 10min",
-        "start_date_local": "2025-12-01"
+        "start_date_local": "2025-12-01",
     }
 
     print(f"Données : {json.dumps(test_workout_1, indent=2)}")
@@ -69,7 +66,7 @@ def test_create_event():
         "category": "WORKOUT",
         "name": "Test Avec Heure",
         "description": "Warmup 10min\nMain set 20min\nCooldown 10min",
-        "start_date_local": "2025-12-02T08:00:00"
+        "start_date_local": "2025-12-02T08:00:00",
     }
 
     print(f"Données : {json.dumps(test_workout_2, indent=2)}")
@@ -88,5 +85,5 @@ def test_create_event():
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(test_create_event())

@@ -1,8 +1,8 @@
 # 📊 PROMPT CLAUDE CODE - WEEKLY ANALYSIS SYSTEM (PHASE 2)
 
-**Phase :** Prompt 2 - Phase 2 (Weekly Analysis Automation)  
-**Objectif :** Système complet d'analyse hebdomadaire avec 6 reports automatisés  
-**Durée estimée :** 2-3 heures  
+**Phase :** Prompt 2 - Phase 2 (Weekly Analysis Automation)
+**Objectif :** Système complet d'analyse hebdomadaire avec 6 reports automatisés
+**Durée estimée :** 2-3 heures
 **Priorité :** 🔥 HIGH (dépend Phase 1 complétée)
 
 ---
@@ -46,7 +46,7 @@ weekly_analysis.py: 25,190 bytes (à deprecate)
 Système automatisé:
   Input:  --week S073 --start-date 2025-01-06
   Output: 6 fichiers markdown (workout_history, metrics, learnings, etc.)
-  
+
 Remplace:
   - weekly_analysis.py (manuel)
   - weekly_planner.py (partiel)
@@ -83,15 +83,15 @@ Examples:
 
         from cyclisme_training_logs.analyzers.weekly_aggregator import WeeklyAggregator
         from datetime import date
-        
+
         # Agréger semaine S073
         aggregator = WeeklyAggregator(
             week="S073",
             start_date=date(2025, 1, 6)
         )
-        
+
         result = aggregator.aggregate()
-        
+
         if result.success:
             # Données disponibles
             workouts = result.data['processed']['workouts']
@@ -101,7 +101,7 @@ Examples:
     Advanced with custom config::
 
         from pathlib import Path
-        
+
         # Configuration personnalisée
         aggregator = WeeklyAggregator(
             week="S073",
@@ -113,9 +113,9 @@ Examples:
                 'validate_compliance': True
             }
         )
-        
+
         result = aggregator.aggregate()
-        
+
         # Accès détaillé
         weekly_data = result.data['processed']
         print(f"Total TSS: {weekly_data['summary']['total_tss']}")
@@ -124,11 +124,11 @@ Examples:
     Integration with analyzer::
 
         from cyclisme_training_logs.analyzers.weekly_analyzer import WeeklyAnalyzer
-        
+
         # Pipeline complet
         aggregator = WeeklyAggregator(week="S073", start_date=date(2025, 1, 6))
         aggregation = aggregator.aggregate()
-        
+
         # Passer au analyzer
         analyzer = WeeklyAnalyzer(aggregation.data['processed'])
         reports = analyzer.generate_all_reports()
@@ -152,14 +152,14 @@ logger = logging.getLogger(__name__)
 class WeeklyAggregator(DataAggregator):
     """
     Agrégateur hebdomadaire pour analyse complète semaine.
-    
+
     Collecte et agrège :
     - 7 workouts de la semaine (activités Intervals.icu)
     - Métriques évolution quotidienne (CTL/ATL/TSB)
     - Feedback athlète pour chaque séance
     - Données wellness (sommeil, poids, HRV)
     - Compliance planifié vs exécuté
-    
+
     Structure données pour 6 reports :
     1. workout_history - Chronologie détaillée
     2. metrics_evolution - Évolution métriques
@@ -168,7 +168,7 @@ class WeeklyAggregator(DataAggregator):
     5. transition - Recommandations semaine suivante
     6. bilan_final - Synthèse globale
     """
-    
+
     def __init__(
         self,
         week: str,
@@ -178,7 +178,7 @@ class WeeklyAggregator(DataAggregator):
     ):
         """
         Initialiser agrégateur weekly.
-        
+
         Args:
             week: Numéro semaine (ex: S073)
             start_date: Date début semaine (lundi)
@@ -190,11 +190,11 @@ class WeeklyAggregator(DataAggregator):
         self.start_date = start_date
         self.end_date = start_date + timedelta(days=6)
         self.api = IntervalsAPI()
-    
+
     def collect_raw_data(self) -> Dict[str, Any]:
         """
         Collecter données brutes hebdomadaires.
-        
+
         Returns:
             Dict avec :
             - activities: Liste 7 activités
@@ -204,7 +204,7 @@ class WeeklyAggregator(DataAggregator):
             - planned: Workouts planifiés
         """
         raw_data = {}
-        
+
         # 1. Activités hebdomadaires
         try:
             logger.info(f"Fetching activities for week {self.week}")
@@ -215,7 +215,7 @@ class WeeklyAggregator(DataAggregator):
             logger.error(f"Failed to fetch activities: {e}")
             self.errors.append(f"Activities fetch error: {e}")
             raw_data['activities'] = []
-        
+
         # 2. Métriques quotidiennes
         try:
             logger.info("Fetching daily metrics evolution")
@@ -225,7 +225,7 @@ class WeeklyAggregator(DataAggregator):
             logger.warning(f"Failed to fetch metrics: {e}")
             self.warnings.append(f"Metrics incomplete: {e}")
             raw_data['metrics_daily'] = []
-        
+
         # 3. Feedback athlète
         try:
             feedback = self._load_weekly_feedback()
@@ -235,7 +235,7 @@ class WeeklyAggregator(DataAggregator):
             logger.warning(f"No feedback found: {e}")
             self.warnings.append("No athlete feedback available")
             raw_data['feedback'] = {}
-        
+
         # 4. Wellness data
         try:
             wellness = self._fetch_wellness_data()
@@ -243,7 +243,7 @@ class WeeklyAggregator(DataAggregator):
         except Exception as e:
             logger.warning(f"No wellness data: {e}")
             raw_data['wellness'] = {}
-        
+
         # 5. Planned workouts (compliance)
         if self.config.get('validate_compliance', True):
             try:
@@ -252,93 +252,93 @@ class WeeklyAggregator(DataAggregator):
             except Exception as e:
                 logger.warning(f"No planned workouts: {e}")
                 raw_data['planned'] = []
-        
+
         return raw_data
-    
+
     def process_data(self, raw_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Traiter données brutes hebdomadaires.
-        
+
         Args:
             raw_data: Données collectées
-            
+
         Returns:
             Données structurées pour 6 reports
         """
         processed = {}
-        
+
         # 1. Summary général
         processed['summary'] = self._compute_weekly_summary(raw_data['activities'])
-        
+
         # 2. Workouts détaillés (pour workout_history)
         processed['workouts'] = self._process_workouts_detailed(
             raw_data['activities'],
             raw_data.get('feedback', {})
         )
-        
+
         # 3. Metrics evolution (pour metrics_evolution)
         processed['metrics_evolution'] = self._process_metrics_evolution(
             raw_data.get('metrics_daily', [])
         )
-        
+
         # 4. Training learnings (pour training_learnings)
         processed['learnings'] = self._extract_training_learnings(
             raw_data['activities'],
             raw_data.get('feedback', {})
         )
-        
+
         # 5. Protocol adaptations (pour protocol_adaptations)
         processed['protocol_adaptations'] = self._identify_protocol_changes(
             processed['learnings'],
             processed['metrics_evolution']
         )
-        
+
         # 6. Compliance (pour transition)
         if 'planned' in raw_data:
             processed['compliance'] = self._compute_compliance(
                 raw_data['activities'],
                 raw_data['planned']
             )
-        
+
         # 7. Transition data (pour transition + bilan)
         processed['transition'] = self._prepare_transition_data(
             processed['summary'],
             processed['metrics_evolution'],
             processed['learnings']
         )
-        
+
         # 8. Wellness insights
         if raw_data.get('wellness'):
             processed['wellness_insights'] = self._analyze_wellness(
                 raw_data['wellness']
             )
-        
+
         return processed
-    
+
     def format_output(self, processed_data: Dict[str, Any]) -> str:
         """
         Formater sortie markdown (summary).
-        
+
         Args:
             processed_data: Données traitées
-            
+
         Returns:
             Markdown summary
         """
         summary = processed_data.get('summary', {})
-        
+
         output = [f"# Semaine {self.week} - Summary\n"]
-        
+
         # Période
         output.append(f"**Période :** {self.start_date} → {self.end_date}\n")
-        
+
         # Metrics
         output.append("## Métriques Globales\n")
         output.append(f"- **Séances :** {summary.get('total_sessions', 0)}")
         output.append(f"- **TSS total :** {summary.get('total_tss', 0)}")
         output.append(f"- **Durée totale :** {summary.get('total_duration', 0) // 60} min")
         output.append(f"- **TSS moyen :** {summary.get('avg_tss', 0):.1f}")
-        
+
         # CTL/ATL/TSB
         if 'final_metrics' in summary:
             metrics = summary['final_metrics']
@@ -346,31 +346,31 @@ class WeeklyAggregator(DataAggregator):
             output.append(f"- **CTL :** {metrics.get('ctl', 0):.1f}")
             output.append(f"- **ATL :** {metrics.get('atl', 0):.1f}")
             output.append(f"- **TSB :** {metrics.get('tsb', 0):.1f}")
-        
+
         return "\n".join(output)
-    
+
     # ==================== MÉTHODES PRIVÉES ====================
-    
+
     def _fetch_weekly_activities(self) -> List[Dict[str, Any]]:
         """Fetch activités semaine depuis Intervals.icu."""
         start_str = self.start_date.isoformat()
         end_str = self.end_date.isoformat()
-        
+
         activities = self.api.get_activities(
             oldest=start_str,
             newest=end_str
         )
-        
+
         # Trier par date
         activities.sort(key=lambda x: x.get('start_date_local', ''))
-        
+
         return activities
-    
+
     def _fetch_daily_metrics(self) -> List[Dict[str, Any]]:
         """Fetch métriques quotidiennes (CTL/ATL/TSB)."""
         metrics = []
         current_date = self.start_date
-        
+
         while current_date <= self.end_date:
             try:
                 wellness = self.api.get_wellness(current_date.isoformat())
@@ -384,17 +384,17 @@ class WeeklyAggregator(DataAggregator):
                     })
             except Exception as e:
                 logger.warning(f"No metrics for {current_date}: {e}")
-            
+
             current_date += timedelta(days=1)
-        
+
         return metrics
-    
+
     def _load_weekly_feedback(self) -> Dict[str, Any]:
         """Charger feedback athlète pour la semaine."""
         feedback_dir = self.data_dir / 'feedback'
         if not feedback_dir.exists():
             return {}
-        
+
         feedback = {}
         for feedback_file in feedback_dir.glob('*.json'):
             try:
@@ -404,14 +404,14 @@ class WeeklyAggregator(DataAggregator):
                     feedback[activity_id] = data
             except Exception as e:
                 logger.warning(f"Failed to load {feedback_file}: {e}")
-        
+
         return feedback
-    
+
     def _fetch_wellness_data(self) -> Dict[str, Any]:
         """Fetch données wellness (sommeil, poids, HRV)."""
         wellness = {}
         current_date = self.start_date
-        
+
         while current_date <= self.end_date:
             try:
                 data = self.api.get_wellness(current_date.isoformat())
@@ -425,24 +425,24 @@ class WeeklyAggregator(DataAggregator):
                     }
             except Exception as e:
                 logger.warning(f"No wellness for {current_date}: {e}")
-            
+
             current_date += timedelta(days=1)
-        
+
         return wellness
-    
+
     def _fetch_planned_workouts(self) -> List[Dict[str, Any]]:
         """Fetch workouts planifiés pour compliance check."""
         start_str = self.start_date.isoformat()
         end_str = self.end_date.isoformat()
-        
+
         planned = self.api.get_events(
             oldest=start_str,
             newest=end_str,
             category='WORKOUT'
         )
-        
+
         return planned
-    
+
     def _compute_weekly_summary(self, activities: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Calculer summary hebdomadaire."""
         summary = {
@@ -453,15 +453,15 @@ class WeeklyAggregator(DataAggregator):
             'avg_if': 0,
             'total_distance': sum(a.get('distance', 0) for a in activities)
         }
-        
+
         if activities:
             summary['avg_tss'] = summary['total_tss'] / len(activities)
-            
+
             # IF moyen (si disponible)
             ifs = [a.get('if', 0) for a in activities if a.get('if', 0) > 0]
             if ifs:
                 summary['avg_if'] = sum(ifs) / len(ifs)
-        
+
         # Métriques finales (dernière journée)
         if activities:
             last_activity = activities[-1]
@@ -470,9 +470,9 @@ class WeeklyAggregator(DataAggregator):
                 'atl': last_activity.get('atl', 0),
                 'tsb': last_activity.get('tsb', 0)
             }
-        
+
         return summary
-    
+
     def _process_workouts_detailed(
         self,
         activities: List[Dict[str, Any]],
@@ -480,10 +480,10 @@ class WeeklyAggregator(DataAggregator):
     ) -> List[Dict[str, Any]]:
         """Traiter workouts avec détails pour workout_history."""
         workouts = []
-        
+
         for i, activity in enumerate(activities, 1):
             activity_id = str(activity.get('id', ''))
-            
+
             workout = {
                 'session_number': i,
                 'date': activity.get('start_date_local', ''),
@@ -498,15 +498,15 @@ class WeeklyAggregator(DataAggregator):
                 'average_hr': activity.get('average_hr', 0),
                 'max_hr': activity.get('max_hr', 0)
             }
-            
+
             # Ajouter feedback si disponible
             if activity_id in feedback:
                 workout['feedback'] = feedback[activity_id]
-            
+
             workouts.append(workout)
-        
+
         return workouts
-    
+
     def _process_metrics_evolution(
         self,
         metrics_daily: List[Dict[str, Any]]
@@ -514,25 +514,25 @@ class WeeklyAggregator(DataAggregator):
         """Traiter évolution métriques."""
         if not metrics_daily:
             return {}
-        
+
         evolution = {
             'daily': metrics_daily,
             'trends': {}
         }
-        
+
         # Calculer tendances
         if len(metrics_daily) >= 2:
             first = metrics_daily[0]
             last = metrics_daily[-1]
-            
+
             evolution['trends'] = {
                 'ctl_change': last['ctl'] - first['ctl'],
                 'atl_change': last['atl'] - first['atl'],
                 'tsb_change': last['tsb'] - first['tsb']
             }
-        
+
         return evolution
-    
+
     def _extract_training_learnings(
         self,
         activities: List[Dict[str, Any]],
@@ -540,42 +540,42 @@ class WeeklyAggregator(DataAggregator):
     ) -> List[str]:
         """Extraire enseignements training (pour AI analysis)."""
         learnings = []
-        
+
         # Patterns répétés
         high_tss_days = [
-            a for a in activities 
+            a for a in activities
             if a.get('training_load', 0) > 80
         ]
-        
+
         if high_tss_days:
             learnings.append(
                 f"{len(high_tss_days)} séances haute charge (TSS >80)"
             )
-        
+
         # IF élevés
         high_if_days = [
             a for a in activities
             if a.get('if', 0) > 1.0
         ]
-        
+
         if high_if_days:
             learnings.append(
                 f"{len(high_if_days)} séances intensité élevée (IF >1.0)"
             )
-        
+
         # Feedback patterns
         low_rpe = [
             fid for fid, f in feedback.items()
             if f.get('rpe', 10) <= 3
         ]
-        
+
         if low_rpe:
             learnings.append(
                 f"{len(low_rpe)} séances RPE faible (≤3)"
             )
-        
+
         return learnings
-    
+
     def _identify_protocol_changes(
         self,
         learnings: List[str],
@@ -583,20 +583,20 @@ class WeeklyAggregator(DataAggregator):
     ) -> List[Dict[str, Any]]:
         """Identifier changements protocoles nécessaires."""
         adaptations = []
-        
+
         # Check TSB trends
         trends = metrics_evolution.get('trends', {})
         tsb_change = trends.get('tsb_change', 0)
-        
+
         if tsb_change < -10:
             adaptations.append({
                 'type': 'recovery',
                 'reason': f'TSB dropped {tsb_change:.1f} points',
                 'recommendation': 'Add recovery day next week'
             })
-        
+
         return adaptations
-    
+
     def _compute_compliance(
         self,
         activities: List[Dict[str, Any]],
@@ -610,16 +610,16 @@ class WeeklyAggregator(DataAggregator):
             'missed': [],
             'extra': []
         }
-        
+
         if planned:
             compliance['rate'] = (len(activities) / len(planned)) * 100
-        
+
         # Identifier séances manquées (simplification)
         if len(activities) < len(planned):
             compliance['missed'] = planned[len(activities):]
-        
+
         return compliance
-    
+
     def _prepare_transition_data(
         self,
         summary: Dict[str, Any],
@@ -636,10 +636,10 @@ class WeeklyAggregator(DataAggregator):
             'recommendations': [],
             'focus_areas': learnings[:3] if learnings else []
         }
-        
+
         # Recommandations basées sur TSB
         tsb = transition['current_state']['final_tsb']
-        
+
         if tsb < -15:
             transition['recommendations'].append(
                 'Recovery week recommended (TSB very low)'
@@ -648,9 +648,9 @@ class WeeklyAggregator(DataAggregator):
             transition['recommendations'].append(
                 'Ready for intensity increase (TSB positive)'
             )
-        
+
         return transition
-    
+
     def _analyze_wellness(self, wellness: Dict[str, Any]) -> Dict[str, Any]:
         """Analyser données wellness."""
         insights = {
@@ -659,38 +659,38 @@ class WeeklyAggregator(DataAggregator):
             'weight_trend': 0,
             'hrv_avg': 0
         }
-        
+
         if not wellness:
             return insights
-        
+
         # Moyennes
         sleep_qualities = [
             w['sleep_quality'] for w in wellness.values()
             if w.get('sleep_quality', 0) > 0
         ]
-        
+
         if sleep_qualities:
             insights['sleep_quality_avg'] = sum(sleep_qualities) / len(sleep_qualities)
-        
+
         sleep_hours = [
             w['sleep_hours'] for w in wellness.values()
             if w.get('sleep_hours', 0) > 0
         ]
-        
+
         if sleep_hours:
             insights['sleep_hours_avg'] = sum(sleep_hours) / len(sleep_hours)
-        
+
         # Tendance poids
         weights = [
             (date, w['weight'])
             for date, w in wellness.items()
             if w.get('weight', 0) > 0
         ]
-        
+
         if len(weights) >= 2:
             weights.sort()
             insights['weight_trend'] = weights[-1][1] - weights[0][1]
-        
+
         return insights
 ```
 
@@ -730,7 +730,7 @@ def test_weekly_aggregator_initialization(sample_week_data):
         week=sample_week_data['week'],
         start_date=sample_week_data['start_date']
     )
-    
+
     assert aggregator.week == 'S073'
     assert aggregator.start_date == date(2025, 1, 6)
     assert aggregator.end_date == date(2025, 1, 12)
@@ -739,14 +739,14 @@ def test_weekly_aggregator_initialization(sample_week_data):
 def test_compute_weekly_summary():
     """Test calcul summary hebdomadaire."""
     aggregator = WeeklyAggregator(week="S073", start_date=date(2025, 1, 6))
-    
+
     activities = [
         {'training_load': 45, 'moving_time': 3600, 'if': 1.2},
         {'training_load': 50, 'moving_time': 4200, 'if': 1.1},
     ]
-    
+
     summary = aggregator._compute_weekly_summary(activities)
-    
+
     assert summary['total_sessions'] == 2
     assert summary['total_tss'] == 95
     assert summary['avg_tss'] == 47.5
@@ -755,7 +755,7 @@ def test_compute_weekly_summary():
 def test_process_workouts_detailed():
     """Test traitement workouts détaillés."""
     aggregator = WeeklyAggregator(week="S073", start_date=date(2025, 1, 6))
-    
+
     activities = [
         {
             'id': 'i123',
@@ -765,13 +765,13 @@ def test_process_workouts_detailed():
             'start_date_local': '2025-01-06'
         }
     ]
-    
+
     feedback = {
         'i123': {'rpe': 6, 'comments': 'Good session'}
     }
-    
+
     workouts = aggregator._process_workouts_detailed(activities, feedback)
-    
+
     assert len(workouts) == 1
     assert workouts[0]['tss'] == 45
     assert workouts[0]['feedback']['rpe'] == 6
@@ -807,19 +807,19 @@ Examples:
         from cyclisme_training_logs.analyzers.weekly_analyzer import WeeklyAnalyzer
         from cyclisme_training_logs.analyzers.weekly_aggregator import WeeklyAggregator
         from datetime import date
-        
+
         # Pipeline complet
         aggregator = WeeklyAggregator(week="S073", start_date=date(2025, 1, 6))
         aggregation = aggregator.aggregate()
-        
+
         # Générer reports
         analyzer = WeeklyAnalyzer(
             week="S073",
             weekly_data=aggregation.data['processed']
         )
-        
+
         reports = analyzer.generate_all_reports()
-        
+
         # 6 fichiers générés
         print(reports['workout_history'])
         print(reports['metrics_evolution'])
@@ -829,18 +829,18 @@ Examples:
 
         # Générer seulement workout_history
         analyzer = WeeklyAnalyzer(week="S073", weekly_data=data)
-        
+
         history = analyzer.generate_workout_history()
         print(history)
 
     Save reports to disk::
 
         from pathlib import Path
-        
+
         # Sauvegarder tous reports
         reports = analyzer.generate_all_reports()
         output_dir = Path("~/training-logs/weekly-reports/S073")
-        
+
         analyzer.save_reports(reports, output_dir)
 
 Author: Claude Code
@@ -860,7 +860,7 @@ logger = logging.getLogger(__name__)
 class WeeklyAnalyzer:
     """
     Analyseur hebdomadaire générant 6 reports markdown.
-    
+
     Reports générés :
     1. workout_history_sXXX.md - Chronologie détaillée séances
     2. metrics_evolution_sXXX.md - Évolution CTL/ATL/TSB
@@ -869,7 +869,7 @@ class WeeklyAnalyzer:
     5. transition_sXXX_sYYY.md - Recommandations semaine suivante
     6. bilan_final_sXXX.md - Synthèse globale
     """
-    
+
     def __init__(
         self,
         week: str,
@@ -878,7 +878,7 @@ class WeeklyAnalyzer:
     ):
         """
         Initialiser analyzer.
-        
+
         Args:
             week: Numéro semaine (S073)
             weekly_data: Données traitées par WeeklyAggregator
@@ -887,17 +887,17 @@ class WeeklyAnalyzer:
         self.week = week
         self.data = weekly_data
         self.prompt_generator = prompt_generator or PromptGenerator()
-    
+
     def generate_all_reports(self) -> Dict[str, str]:
         """
         Générer les 6 reports complets.
-        
+
         Returns:
             Dict avec clés : workout_history, metrics_evolution,
             training_learnings, protocol_adaptations, transition, bilan_final
         """
         logger.info(f"Generating all 6 reports for {self.week}")
-        
+
         reports = {
             'workout_history': self.generate_workout_history(),
             'metrics_evolution': self.generate_metrics_evolution(),
@@ -906,166 +906,166 @@ class WeeklyAnalyzer:
             'transition': self.generate_transition(),
             'bilan_final': self.generate_bilan_final()
         }
-        
+
         logger.info("All reports generated successfully")
         return reports
-    
+
     def generate_workout_history(self) -> str:
         """
         Générer workout_history_sXXX.md.
-        
+
         Format :
         # Historique Entraînements SXXX
-        
+
         ## SXXX-01 (YYYY-MM-DD)
         **Durée:** XXmin | **TSS:** XX | **IF:** X.XX
-        
+
         ### Métriques Pré-séance
         ...
         """
         workouts = self.data.get('workouts', [])
-        
+
         lines = [
             f"# Historique Entraînements {self.week}\n",
             f"**Période :** {self._get_period()}\n",
             f"**Nombre séances :** {len(workouts)}\n"
         ]
-        
+
         for workout in workouts:
             lines.append(f"\n## {self.week}-{workout['session_number']:02d} ({workout['date']})\n")
-            
+
             # Métriques principales
             duration_min = workout['duration'] // 60
             lines.append(f"**Durée:** {duration_min}min | **TSS:** {workout['tss']} | **IF:** {workout.get('if', 0):.2f}\n")
-            
+
             # Puissance
             if workout.get('normalized_power', 0) > 0:
                 lines.append("\n### Puissance")
                 lines.append(f"- Normalisée: {workout['normalized_power']}W")
                 lines.append(f"- Moyenne: {workout.get('average_power', 0)}W\n")
-            
+
             # FC
             if workout.get('average_hr', 0) > 0:
                 lines.append("\n### Fréquence Cardiaque")
                 lines.append(f"- Moyenne: {workout['average_hr']} bpm")
                 lines.append(f"- Max: {workout.get('max_hr', 0)} bpm\n")
-            
+
             # Feedback
             if 'feedback' in workout:
                 feedback = workout['feedback']
                 lines.append("\n### Feedback Athlète")
-                
+
                 if 'rpe' in feedback:
                     lines.append(f"- RPE: {feedback['rpe']}/10")
-                
+
                 if 'comments' in feedback:
                     lines.append(f"- Notes: {feedback['comments']}\n")
-        
+
         return "\n".join(lines)
-    
+
     def generate_metrics_evolution(self) -> str:
         """
         Générer metrics_evolution_sXXX.md.
-        
+
         Format :
         # Évolution Métriques SXXX
-        
+
         ## CTL/ATL/TSB Quotidien
         | Date | CTL | ATL | TSB |
         """
         metrics_evolution = self.data.get('metrics_evolution', {})
         daily = metrics_evolution.get('daily', [])
         trends = metrics_evolution.get('trends', {})
-        
+
         lines = [
             f"# Évolution Métriques {self.week}\n",
             "## CTL/ATL/TSB Quotidien\n"
         ]
-        
+
         if daily:
             # Table
             lines.append("| Date | CTL | ATL | TSB |")
             lines.append("|------|-----|-----|-----|")
-            
+
             for day in daily:
                 lines.append(
                     f"| {day['date']} | {day['ctl']:.1f} | "
                     f"{day['atl']:.1f} | {day['tsb']:.1f} |"
                 )
-            
+
             lines.append("")
-        
+
         # Tendances
         if trends:
             lines.append("\n## Tendances Hebdomadaires\n")
             lines.append(f"- **Variation CTL :** {trends.get('ctl_change', 0):+.1f}")
             lines.append(f"- **Variation ATL :** {trends.get('atl_change', 0):+.1f}")
             lines.append(f"- **Variation TSB :** {trends.get('tsb_change', 0):+.1f}\n")
-        
+
         # Wellness insights
         if 'wellness_insights' in self.data:
             insights = self.data['wellness_insights']
             lines.append("\n## Wellness\n")
-            
+
             if insights.get('sleep_hours_avg', 0) > 0:
                 lines.append(f"- **Sommeil moyen :** {insights['sleep_hours_avg']:.1f}h")
-            
+
             if insights.get('weight_trend', 0) != 0:
                 lines.append(f"- **Évolution poids :** {insights['weight_trend']:+.1f}kg\n")
-        
+
         return "\n".join(lines)
-    
+
     def generate_training_learnings(self) -> str:
         """
         Générer training_learnings_sXXX.md.
-        
+
         Format :
         # Enseignements d'Entraînement SXXX
-        
+
         ## Découvertes Majeures
         - Point 1
         - Point 2
         """
         learnings = self.data.get('learnings', [])
-        
+
         lines = [
             f"# Enseignements d'Entraînement {self.week}\n",
             "## Découvertes Majeures\n"
         ]
-        
+
         if learnings:
             for learning in learnings:
                 lines.append(f"- {learning}")
         else:
             lines.append("*Aucun enseignement spécifique identifié*")
-        
+
         lines.append("")
-        
+
         # Patterns techniques (à enrichir avec AI analysis)
         lines.append("\n## Patterns Techniques\n")
         lines.append("*À compléter avec analyse IA détaillée*\n")
-        
+
         return "\n".join(lines)
-    
+
     def generate_protocol_adaptations(self) -> str:
         """
         Générer protocol_adaptations_sXXX.md.
-        
+
         Format :
         # Adaptations Protocoles SXXX
-        
+
         ## Ajustements Identifiés
         - Type: recovery
           Raison: TSB dropped
           Recommandation: Add recovery day
         """
         adaptations = self.data.get('protocol_adaptations', [])
-        
+
         lines = [
             f"# Adaptations Protocoles {self.week}\n",
             "## Ajustements Identifiés\n"
         ]
-        
+
         if adaptations:
             for adaptation in adaptations:
                 lines.append(f"\n### {adaptation.get('type', 'Unknown').title()}")
@@ -1073,20 +1073,20 @@ class WeeklyAnalyzer:
                 lines.append(f"- **Recommandation :** {adaptation.get('recommendation', 'N/A')}\n")
         else:
             lines.append("*Aucune adaptation protocole nécessaire*\n")
-        
+
         return "\n".join(lines)
-    
+
     def generate_transition(self) -> str:
         """
         Générer transition_sXXX_sYYY.md.
-        
+
         Format :
         # Transition SXXX → SYYY
-        
+
         ## État Final SXXX
         - TSS total: XXX
         - TSB final: XX
-        
+
         ## Recommandations SYYY
         - Focus 1
         - Focus 2
@@ -1095,108 +1095,108 @@ class WeeklyAnalyzer:
         current_state = transition.get('current_state', {})
         recommendations = transition.get('recommendations', [])
         focus_areas = transition.get('focus_areas', [])
-        
+
         # Calculer numéro semaine suivante
         week_num = int(self.week[1:]) if self.week.startswith('S') else 0
         next_week = f"S{week_num + 1:03d}"
-        
+
         lines = [
             f"# Transition {self.week} → {next_week}\n",
             f"## État Final {self.week}\n"
         ]
-        
+
         # État actuel
         lines.append(f"- **TSS total :** {current_state.get('total_tss', 0)}")
         lines.append(f"- **TSS moyen :** {current_state.get('avg_tss', 0):.1f}")
         lines.append(f"- **TSB final :** {current_state.get('final_tsb', 0):.1f}\n")
-        
+
         # Recommandations
         lines.append(f"\n## Recommandations {next_week}\n")
-        
+
         if recommendations:
             for rec in recommendations:
                 lines.append(f"- {rec}")
         else:
             lines.append("- Continuer progression actuelle")
-        
+
         lines.append("")
-        
+
         # Focus areas
         if focus_areas:
             lines.append("\n## Points d'Attention\n")
             for focus in focus_areas:
                 lines.append(f"- {focus}")
             lines.append("")
-        
+
         return "\n".join(lines)
-    
+
     def generate_bilan_final(self) -> str:
         """
         Générer bilan_final_sXXX.md.
-        
+
         Format :
         # Bilan Final SXXX
-        
+
         ## Objectifs vs Réalisé
         ## Métriques Clés
         ## Conclusion
         """
         summary = self.data.get('summary', {})
         compliance = self.data.get('compliance', {})
-        
+
         lines = [
             f"# Bilan Final {self.week}\n",
             "## Objectifs vs Réalisé\n"
         ]
-        
+
         # Compliance
         if compliance:
             rate = compliance.get('rate', 0)
             lines.append(f"- **Compliance :** {rate:.1f}%")
             lines.append(f"- **Séances planifiées :** {compliance.get('planned_count', 0)}")
             lines.append(f"- **Séances exécutées :** {compliance.get('executed_count', 0)}\n")
-        
+
         # Métriques clés
         lines.append("\n## Métriques Clés\n")
         lines.append(f"- **TSS total :** {summary.get('total_tss', 0)}")
         lines.append(f"- **TSS moyen :** {summary.get('avg_tss', 0):.1f}")
         lines.append(f"- **IF moyen :** {summary.get('avg_if', 0):.2f}\n")
-        
+
         # Conclusion
         lines.append("\n## Conclusion\n")
         lines.append("*Semaine complétée avec succès.*\n")
-        
+
         return "\n".join(lines)
-    
+
     def save_reports(self, reports: Dict[str, str], output_dir: Path) -> None:
         """
         Sauvegarder reports sur disque.
-        
+
         Args:
             reports: Dict reports générés
             output_dir: Répertoire destination
         """
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         for report_name, content in reports.items():
             filename = f"{report_name}_{self.week.lower()}.md"
             filepath = output_dir / filename
-            
+
             with open(filepath, 'w', encoding='utf-8') as f:
                 f.write(content)
-            
+
             logger.info(f"Saved {filename}")
-    
+
     def _get_period(self) -> str:
         """Helper pour obtenir période formatée."""
         workouts = self.data.get('workouts', [])
         if not workouts:
             return "N/A"
-        
+
         first_date = workouts[0].get('date', '')
         last_date = workouts[-1].get('date', '')
-        
+
         return f"{first_date} → {last_date}"
 ```
 
@@ -1254,7 +1254,7 @@ def sample_weekly_data():
 def test_weekly_analyzer_initialization(sample_weekly_data):
     """Test initialisation WeeklyAnalyzer."""
     analyzer = WeeklyAnalyzer(week="S073", weekly_data=sample_weekly_data)
-    
+
     assert analyzer.week == "S073"
     assert analyzer.data == sample_weekly_data
 
@@ -1262,9 +1262,9 @@ def test_weekly_analyzer_initialization(sample_weekly_data):
 def test_generate_workout_history(sample_weekly_data):
     """Test génération workout_history."""
     analyzer = WeeklyAnalyzer(week="S073", weekly_data=sample_weekly_data)
-    
+
     history = analyzer.generate_workout_history()
-    
+
     assert "# Historique Entraînements S073" in history
     assert "S073-01" in history
     assert "TSS:** 45" in history
@@ -1273,9 +1273,9 @@ def test_generate_workout_history(sample_weekly_data):
 def test_generate_all_reports(sample_weekly_data):
     """Test génération complète 6 reports."""
     analyzer = WeeklyAnalyzer(week="S073", weekly_data=sample_weekly_data)
-    
+
     reports = analyzer.generate_all_reports()
-    
+
     assert len(reports) == 6
     assert 'workout_history' in reports
     assert 'metrics_evolution' in reports
@@ -1314,10 +1314,10 @@ Examples:
 
         # Analyse semaine courante
         poetry run weekly-analysis --week current
-        
+
         # Analyse semaine spécifique
         poetry run weekly-analysis --week S073 --start-date 2025-01-06
-        
+
         # Avec AI analysis (clipboard)
         poetry run weekly-analysis --week S073 --ai-analysis
 
@@ -1325,21 +1325,21 @@ Examples:
 
         from cyclisme_training_logs.workflows.workflow_weekly import run_weekly_analysis
         from datetime import date
-        
+
         # Exécution programmatique
         reports = run_weekly_analysis(
             week="S073",
             start_date=date(2025, 1, 6),
             save_reports=True
         )
-        
+
         print(f"Generated {len(reports)} reports")
 
     Integration with existing::
 
         # Compatible avec workflow actuel
         from cyclisme_training_logs.workflows.workflow_weekly import WeeklyWorkflow
-        
+
         workflow = WeeklyWorkflow(week="S073", start_date=date(2025, 1, 6))
         workflow.run()
 
@@ -1363,14 +1363,14 @@ logger = logging.getLogger(__name__)
 class WeeklyWorkflow:
     """
     Workflow complet analyse hebdomadaire.
-    
+
     Pipeline :
     1. WeeklyAggregator - Collecte et agrégation données
     2. WeeklyAnalyzer - Génération 6 reports
     3. Save reports - Sauvegarde markdown
     4. Optional: AI analysis via clipboard
     """
-    
+
     def __init__(
         self,
         week: str,
@@ -1380,7 +1380,7 @@ class WeeklyWorkflow:
     ):
         """
         Initialiser workflow.
-        
+
         Args:
             week: Numéro semaine (S073)
             start_date: Date début (lundi)
@@ -1391,16 +1391,16 @@ class WeeklyWorkflow:
         self.start_date = start_date
         self.config = config or DataRepoConfig()
         self.ai_analysis = ai_analysis
-    
+
     def run(self) -> Dict[str, str]:
         """
         Exécuter workflow complet.
-        
+
         Returns:
             Dict avec 6 reports générés
         """
         logger.info(f"Starting weekly workflow for {self.week}")
-        
+
         # 1. Aggregation
         logger.info("Step 1/3: Aggregating weekly data")
         aggregator = WeeklyAggregator(
@@ -1408,46 +1408,46 @@ class WeeklyWorkflow:
             start_date=self.start_date,
             data_dir=self.config.data_repo_path
         )
-        
+
         aggregation = aggregator.aggregate()
-        
+
         if not aggregation.success:
             logger.error(f"Aggregation failed: {aggregation.errors}")
             raise RuntimeError("Weekly aggregation failed")
-        
+
         # 2. Analysis
         logger.info("Step 2/3: Generating reports")
         analyzer = WeeklyAnalyzer(
             week=self.week,
             weekly_data=aggregation.data['processed']
         )
-        
+
         reports = analyzer.generate_all_reports()
-        
+
         # 3. Save
         logger.info("Step 3/3: Saving reports")
         output_dir = self.config.data_repo_path / 'weekly-reports' / self.week
         analyzer.save_reports(reports, output_dir)
-        
+
         logger.info(f"Weekly workflow completed: {len(reports)} reports saved")
-        
+
         # 4. Optional: AI analysis
         if self.ai_analysis:
             self._trigger_ai_analysis(reports)
-        
+
         return reports
-    
+
     def _trigger_ai_analysis(self, reports: Dict[str, str]) -> None:
         """Trigger AI analysis via clipboard (optionnel)."""
         try:
             from cyclisme_training_logs.ai_providers.clipboard import copy_to_clipboard
-            
+
             # Combiner prompts pour AI
             combined = "\n\n---\n\n".join([
                 f"# {name.upper()}\n{content}"
                 for name, content in reports.items()
             ])
-            
+
             copy_to_clipboard(combined)
             logger.info("Reports copied to clipboard for AI analysis")
         except Exception as e:
@@ -1462,13 +1462,13 @@ def run_weekly_analysis(
 ) -> Dict[str, str]:
     """
     Fonction utilitaire pour workflow weekly.
-    
+
     Args:
         week: Numéro semaine (S073)
         start_date: Date début
         save_reports: Sauvegarder reports sur disque
         ai_analysis: Activer AI analysis
-        
+
     Returns:
         Dict avec 6 reports générés
     """
@@ -1477,27 +1477,27 @@ def run_weekly_analysis(
         start_date=start_date,
         ai_analysis=ai_analysis
     )
-    
+
     return workflow.run()
 
 
 def get_current_week_info() -> tuple[str, date]:
     """
     Calculer numéro semaine courante et date début.
-    
+
     Returns:
         (week, start_date) tuple
     """
     today = date.today()
-    
+
     # Trouver lundi de la semaine
     days_since_monday = today.weekday()
     monday = today - timedelta(days=days_since_monday)
-    
+
     # Calculer numéro semaine (simplification)
     week_number = monday.isocalendar()[1]
     week = f"S{week_number:03d}"
-    
+
     return week, monday
 
 
@@ -1506,54 +1506,54 @@ def main():
     parser = argparse.ArgumentParser(
         description="Weekly analysis workflow - Generate 6 automated reports"
     )
-    
+
     parser.add_argument(
         '--week',
         type=str,
         help='Week number (S073) or "current"',
         default='current'
     )
-    
+
     parser.add_argument(
         '--start-date',
         type=str,
         help='Start date YYYY-MM-DD (Monday)',
         default=None
     )
-    
+
     parser.add_argument(
         '--ai-analysis',
         action='store_true',
         help='Enable AI analysis via clipboard'
     )
-    
+
     parser.add_argument(
         '--verbose',
         action='store_true',
         help='Verbose logging'
     )
-    
+
     args = parser.parse_args()
-    
+
     # Setup logging
     logging.basicConfig(
         level=logging.DEBUG if args.verbose else logging.INFO,
         format='%(levelname)s: %(message)s'
     )
-    
+
     # Déterminer semaine et date
     if args.week == 'current':
         week, start_date = get_current_week_info()
         logger.info(f"Current week detected: {week} (starting {start_date})")
     else:
         week = args.week
-        
+
         if args.start_date:
             start_date = datetime.strptime(args.start_date, '%Y-%m-%d').date()
         else:
             logger.error("--start-date required when using custom week")
             return 1
-    
+
     # Exécuter workflow
     try:
         reports = run_weekly_analysis(
@@ -1561,14 +1561,14 @@ def main():
             start_date=start_date,
             ai_analysis=args.ai_analysis
         )
-        
+
         print(f"\n✅ Weekly analysis completed for {week}")
         print(f"📊 Generated {len(reports)} reports:")
         for name in reports.keys():
             print(f"   - {name}")
-        
+
         return 0
-        
+
     except Exception as e:
         logger.error(f"Weekly analysis failed: {e}")
         if args.verbose:
@@ -1608,7 +1608,7 @@ from cyclisme_training_logs.workflows.workflow_weekly import (
 def test_get_current_week_info():
     """Test calcul semaine courante."""
     week, start_date = get_current_week_info()
-    
+
     assert week.startswith('S')
     assert isinstance(start_date, date)
     assert start_date.weekday() == 0  # Lundi
@@ -1655,7 +1655,7 @@ Programmatic migration::
     # Old
     from cyclisme_training_logs.weekly_analysis import analyze_week
     result = analyze_week("S073")
-    
+
     # New
     from cyclisme_training_logs.workflows.workflow_weekly import run_weekly_analysis
     from datetime import date
@@ -1901,7 +1901,7 @@ def migrate():
     """Guide migration interactive."""
     print("🔄 Migration weekly_analysis.py → workflow_weekly.py")
     print()
-    
+
     # Test nouveau système
     print("Testing new workflow...")
     result = subprocess.run(
@@ -1909,7 +1909,7 @@ def migrate():
         capture_output=True,
         text=True
     )
-    
+
     if result.returncode == 0:
         print("✅ New workflow functional!")
         print()
@@ -1920,7 +1920,7 @@ def migrate():
         print("❌ Migration failed")
         print(result.stderr)
         return 1
-    
+
     return 0
 
 if __name__ == '__main__':
@@ -1943,7 +1943,7 @@ New Infrastructure (3 files):
 
 Features:
 ✅ CLI: poetry run weekly-analysis --week S073 --start-date YYYY-MM-DD
-✅ 6 automated reports: workout_history, metrics_evolution, learnings, 
+✅ 6 automated reports: workout_history, metrics_evolution, learnings,
    protocol_adaptations, transition, bilan_final
 ✅ Integration v2 infrastructure (DataAggregator, PromptGenerator)
 ✅ AI analysis clipboard integration (optional --ai-analysis)

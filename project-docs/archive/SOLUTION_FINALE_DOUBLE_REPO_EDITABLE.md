@@ -305,7 +305,7 @@ poetry run backfill-history \
 
 ---
 
-**Créé:** 2025-12-26 19:45  
-**Résout:** Contradiction mono-repo vs double repo  
-**Préserve:** Principes séparation code/data  
+**Créé:** 2025-12-26 19:45
+**Résout:** Contradiction mono-repo vs double repo
+**Préserve:** Principes séparation code/data
 **Implémente:** Poetry editable package pattern

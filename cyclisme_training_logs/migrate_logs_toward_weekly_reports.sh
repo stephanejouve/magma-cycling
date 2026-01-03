@@ -129,24 +129,24 @@ BACKUP_DIR="backups/migration_$(date +%Y%m%d_%H%M%S)"
 
 if [ "$DRY_RUN" = false ]; then
     mkdir -p "$BACKUP_DIR"
-    
+
     # Backup scripts
     if [ -f "scripts/organize_weekly_report.py" ]; then
         cp scripts/organize_weekly_report.py "$BACKUP_DIR/"
         print_step "Sauvegarde organize_weekly_report.py"
     fi
-    
+
     if [ -f "scripts/prepare_weekly_report.py" ]; then
         cp scripts/prepare_weekly_report.py "$BACKUP_DIR/"
         print_step "Sauvegarde prepare_weekly_report.py"
     fi
-    
+
     # Backup bilans_hebdo si existe
     if [ -d "bilans_hebdo" ]; then
         cp -r bilans_hebdo "$BACKUP_DIR/"
         print_step "Sauvegarde bilans_hebdo/"
     fi
-    
+
     echo ""
     echo "  📁 Backup créé dans : $BACKUP_DIR"
 else
@@ -162,41 +162,41 @@ if [ -d "bilans_hebdo" ]; then
     echo "  Source : bilans_hebdo/"
     echo "  Cible  : logs/weekly_reports/"
     echo ""
-    
+
     # Compter les fichiers
     FILE_COUNT=$(find bilans_hebdo -type f | wc -l | tr -d ' ')
     DIR_COUNT=$(find bilans_hebdo -mindepth 1 -type d | wc -l | tr -d ' ')
-    
+
     echo "  Contenu détecté :"
     echo "    - $DIR_COUNT dossier(s)"
     echo "    - $FILE_COUNT fichier(s)"
     echo ""
-    
+
     if [ "$DRY_RUN" = false ]; then
         # Créer le répertoire cible
         mkdir -p logs/weekly_reports
-        
+
         # Migration avec préservation de la structure
         # Renommer s067 → S067 si nécessaire
         for source_dir in bilans_hebdo/*; do
             if [ -d "$source_dir" ]; then
                 basename=$(basename "$source_dir")
-                
+
                 # Convertir s067 → S067 (minuscule → majuscule)
                 if [[ "$basename" =~ ^s[0-9]{3}$ ]]; then
                     target_basename=$(echo "$basename" | tr 's' 'S')
                 else
                     target_basename="$basename"
                 fi
-                
+
                 target_dir="logs/weekly_reports/$target_basename"
-                
+
                 # Copier
                 cp -r "$source_dir" "$target_dir"
                 print_step "Migré : $basename → $target_basename"
             fi
         done
-        
+
         echo ""
         print_step "Migration des données terminée"
     else
@@ -227,7 +227,7 @@ print_header "🔧 ÉTAPE 3/7 : Correction organize_weekly_report.py"
 if [ -f "scripts/organize_weekly_report.py" ]; then
     echo "  Ligne 73 : bilans_hebdo → logs/weekly_reports"
     echo ""
-    
+
     if [ "$DRY_RUN" = false ]; then
         # Correction avec sed (compatible macOS et Linux)
         if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -237,7 +237,7 @@ if [ -f "scripts/organize_weekly_report.py" ]; then
             # Linux
             sed -i 's|self.bilans_dir = self.project_root / "bilans_hebdo"|self.bilans_dir = self.project_root / "logs" / "weekly_reports"|g' scripts/organize_weekly_report.py
         fi
-        
+
         # Vérifier la modification
         if grep -q 'self.bilans_dir = self.project_root / "logs" / "weekly_reports"' scripts/organize_weekly_report.py; then
             print_step "Correction appliquée avec succès"
@@ -260,7 +260,7 @@ if [ -f "scripts/prepare_weekly_report.py" ]; then
     echo "  Ligne 56 : bilans_hebdo → logs/weekly_reports"
     echo "  Ligne 64 : project_prompt_v2.md → project_prompt_v2_1_revised.md"
     echo ""
-    
+
     if [ "$DRY_RUN" = false ]; then
         # Correction bilans_hebdo
         if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -270,7 +270,7 @@ if [ -f "scripts/prepare_weekly_report.py" ]; then
             sed -i 's|self.bilans_dir = self.project_root / "bilans_hebdo"|self.bilans_dir = self.project_root / "logs" / "weekly_reports"|g' scripts/prepare_weekly_report.py
             sed -i 's|project_prompt_v2.md|project_prompt_v2_1_revised.md|g' scripts/prepare_weekly_report.py
         fi
-        
+
         # Vérifier les modifications
         ERRORS=0
         if ! grep -q 'self.bilans_dir = self.project_root / "logs" / "weekly_reports"' scripts/prepare_weekly_report.py; then
@@ -279,14 +279,14 @@ if [ -f "scripts/prepare_weekly_report.py" ]; then
         else
             print_step "Ligne 56 corrigée"
         fi
-        
+
         if ! grep -q 'project_prompt_v2_1_revised.md' scripts/prepare_weekly_report.py; then
             print_error "Échec correction ligne 64"
             ERRORS=$((ERRORS + 1))
         else
             print_step "Ligne 64 corrigée"
         fi
-        
+
         if [ $ERRORS -eq 0 ]; then
             print_step "Toutes les corrections appliquées avec succès"
         fi
@@ -310,11 +310,11 @@ if [ -d "bilans_hebdo" ]; then
     else
         echo "  Dossier : bilans_hebdo/"
         echo ""
-        
+
         if [ "$DRY_RUN" = false ]; then
             echo -n "  Supprimer bilans_hebdo/ ? (o/n) : "
             read -r CONFIRM
-            
+
             if [ "$CONFIRM" = "o" ] || [ "$CONFIRM" = "O" ]; then
                 rm -rf bilans_hebdo/
                 print_step "Dossier bilans_hebdo/ supprimé"
@@ -367,7 +367,7 @@ if [ -f "scripts/prepare_weekly_report.py" ]; then
         print_error "prepare_weekly_report.py non corrigé (ligne 56)"
         ERRORS=$((ERRORS + 1))
     fi
-    
+
     if grep -q 'project_prompt_v2_1_revised.md' scripts/prepare_weekly_report.py; then
         print_step "prepare_weekly_report.py corrigé (ligne 64)"
     else
@@ -397,10 +397,10 @@ if [ "$DRY_RUN" = false ]; then
     echo ""
     git status --short | sed 's/^/    /'
     echo ""
-    
+
     echo -n "  Commiter ces modifications ? (o/n) : "
     read -r COMMIT
-    
+
     if [ "$COMMIT" = "o" ] || [ "$COMMIT" = "O" ]; then
         # Message de commit
         COMMIT_MSG="🔧 Migration complète vers logs/weekly_reports/
@@ -409,31 +409,31 @@ if [ "$DRY_RUN" = false ]; then
 - Corrigé organize_weekly_report.py (logs/weekly_reports)
 - Corrigé prepare_weekly_report.py (logs/weekly_reports + project_prompt ref)
 "
-        
+
         if [ ! -d "bilans_hebdo" ]; then
             COMMIT_MSG="$COMMIT_MSG- Supprimé ancien dossier bilans_hebdo/
 "
         fi
-        
+
         COMMIT_MSG="$COMMIT_MSG
 Tous les scripts utilisent maintenant logs/weekly_reports/
 
 🤖 Migration automatique avec migrate_to_logs_weekly_reports.sh"
-        
+
         # Add et commit
         git add -A
         git commit -m "$COMMIT_MSG"
-        
+
         print_step "Commit effectué avec succès"
         echo ""
         echo "  Message de commit :"
         echo "$COMMIT_MSG" | sed 's/^/    /'
         echo ""
-        
+
         # Proposer le push
         echo -n "  Pousser vers remote ? (o/n) : "
         read -r PUSH
-        
+
         if [ "$PUSH" = "o" ] || [ "$PUSH" = "O" ]; then
             git push
             print_step "Push effectué avec succès"
@@ -464,13 +464,13 @@ if [ "$DRY_RUN" = true ]; then
 else
     echo "  ✅ Données migrées vers logs/weekly_reports/"
     echo "  ✅ Scripts corrigés"
-    
+
     if [ ! -d "bilans_hebdo" ]; then
         echo "  ✅ Ancien dossier supprimé"
     else
         echo "  ⚠️  Ancien dossier conservé : bilans_hebdo/"
     fi
-    
+
     echo ""
     echo "  📁 Backup de sécurité : $BACKUP_DIR"
 fi

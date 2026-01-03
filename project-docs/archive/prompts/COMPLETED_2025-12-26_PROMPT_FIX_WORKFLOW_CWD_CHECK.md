@@ -220,7 +220,7 @@ Safe à supprimer ! ✅
 
 ---
 
-**Créé:** 2025-12-26 20:15  
-**Bloque:** Backfill production  
-**Solution:** Supprimer vérification CWD obsolète  
+**Créé:** 2025-12-26 20:15
+**Bloque:** Backfill production
+**Solution:** Supprimer vérification CWD obsolète
 **Priorité:** P0 (bloquant système complet)

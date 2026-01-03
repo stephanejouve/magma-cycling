@@ -8,7 +8,7 @@ insert_analysis.py utilise 3 paths hardcodés au lieu de config.py:
 # Ligne 37
 history_file=Path("~/training-logs/logs/workouts-history.md")
 
-# Ligne 258  
+# Ligne 258
 self.history_file = self.logs_dir / "workouts-history.md"
 
 # Ligne 262
@@ -54,7 +54,7 @@ class WorkoutHistoryManager:
 
     def __init__(self, logs_dir=None, yes_confirm=False):
         self.yes_confirm = yes_confirm
-        
+
         if logs_dir is None:
             # Try to use config
             try:
@@ -79,7 +79,7 @@ class WorkoutHistoryManager:
 
     def __init__(self, logs_dir=None, yes_confirm=False):
         self.yes_confirm = yes_confirm
-        
+
         if logs_dir is None:
             # Use config (modern approach)
             config = get_data_config()
@@ -89,7 +89,7 @@ class WorkoutHistoryManager:
             # Legacy: explicit logs_dir provided (backward compat)
             self.logs_dir = Path(logs_dir)
             self.history_file = self.logs_dir / "workouts-history.md"
-            
+
             # Warn about deprecated usage
             import warnings
             warnings.warn(
@@ -125,7 +125,7 @@ injector = TimelineInjector(
     history_file=Path("~/training-logs/logs/workouts-history.md")
 )
 
-# Après  
+# Après
 config = get_data_config()
 injector = TimelineInjector(
     history_file=config.workouts_history_path
@@ -136,7 +136,7 @@ injector = TimelineInjector(
 ```python
 def __init__(self, logs_dir=None, yes_confirm=False):
     self.yes_confirm = yes_confirm
-    
+
     if logs_dir is None:
         # Use config (modern)
         config = get_data_config()

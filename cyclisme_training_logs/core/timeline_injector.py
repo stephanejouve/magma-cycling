@@ -75,15 +75,16 @@ Created: 2025-12-26 (Migrated from v2)
 """
 
 import re
-from pathlib import Path
-from datetime import datetime, date
-from typing import Optional, Tuple, List
 from dataclasses import dataclass
+from datetime import date, datetime
+from pathlib import Path
+from typing import Optional
 
 
 @dataclass
 class InjectionResult:
     """Résultat d'une injection chronologique."""
+
     success: bool
     line_number: Optional[int] = None
     error: Optional[str] = None
@@ -100,13 +101,9 @@ class TimelineInjector:
     """
 
     # Pattern pour extraire date d'une entrée workout
-    DATE_PATTERN = re.compile(r'###\s+S\d+-\d+\s+\((\d{4}-\d{2}-\d{2})\)')
+    DATE_PATTERN = re.compile(r"###\s+S\d+-\d+\s+\((\d{4}-\d{2}-\d{2})\)")
 
-    def __init__(
-        self,
-        history_file: Path,
-        check_duplicates: bool = True
-    ):
+    def __init__(self, history_file: Path, check_duplicates: bool = True):
         """
         Initialiser l'injecteur.
 
@@ -118,9 +115,7 @@ class TimelineInjector:
         self.check_duplicates = check_duplicates
 
         if not self.history_file.exists():
-            raise FileNotFoundError(
-                f"History file not found: {self.history_file}"
-            )
+            raise FileNotFoundError(f"History file not found: {self.history_file}")
 
     def extract_date_from_entry(self, entry: str) -> Optional[date]:
         """
@@ -135,14 +130,10 @@ class TimelineInjector:
         match = self.DATE_PATTERN.search(entry)
         if match:
             date_str = match.group(1)
-            return datetime.strptime(date_str, '%Y-%m-%d').date()
+            return datetime.strptime(date_str, "%Y-%m-%d").date()
         return None
 
-    def find_insertion_point(
-        self,
-        content_lines: List[str],
-        target_date: date
-    ) -> int:
+    def find_insertion_point(self, content_lines: list[str], target_date: date) -> int:
         """
         Trouver le point d'insertion chronologique.
 
@@ -163,9 +154,7 @@ class TimelineInjector:
             match = self.DATE_PATTERN.search(line)
             if match:
                 existing_date_str = match.group(1)
-                existing_date = datetime.strptime(
-                    existing_date_str, '%Y-%m-%d'
-                ).date()
+                existing_date = datetime.strptime(existing_date_str, "%Y-%m-%d").date()
                 dates_found.append(existing_date)
                 date_indices.append(i)
 
@@ -174,13 +163,14 @@ class TimelineInjector:
             return 0
 
         # Déterminer si ordre chronologique ou reverse
-        is_chronological = all(
-            dates_found[i] <= dates_found[i+1]
-            for i in range(len(dates_found)-1)
-        ) if len(dates_found) > 1 else True
+        is_chronological = (
+            all(dates_found[i] <= dates_found[i + 1] for i in range(len(dates_found) - 1))
+            if len(dates_found) > 1
+            else True
+        )
 
         # Trouver position d'insertion selon l'ordre
-        for i, (existing_date, line_idx) in enumerate(zip(dates_found, date_indices)):
+        for i, (existing_date, line_idx) in enumerate(zip(dates_found, date_indices, strict=False)):
             if is_chronological:
                 # Ordre chronologique (ancien → récent)
                 if target_date < existing_date:
@@ -195,11 +185,7 @@ class TimelineInjector:
         # Si pas de position trouvée, insérer à la fin
         return len(content_lines)
 
-    def check_duplicate(
-        self,
-        content_lines: List[str],
-        entry: str
-    ) -> bool:
+    def check_duplicate(self, content_lines: list[str], entry: str) -> bool:
         """
         Vérifier si l'entrée existe déjà (duplicate).
 
@@ -211,20 +197,18 @@ class TimelineInjector:
             True si duplicate détecté
         """
         # Extraire identifiant unique de l'entrée (ex: S073-01)
-        entry_id_match = re.search(r'###\s+(S\d+-\d+)', entry)
+        entry_id_match = re.search(r"###\s+(S\d+-\d+)", entry)
         if not entry_id_match:
             return False
 
         entry_id = entry_id_match.group(1)
 
         # Chercher cet ID dans le contenu
-        content = '\n'.join(content_lines)
+        content = "\n".join(content_lines)
         return entry_id in content
 
     def inject_chronologically(
-        self,
-        workout_entry: str,
-        workout_date: Optional[date] = None
+        self, workout_entry: str, workout_date: Optional[date] = None
     ) -> InjectionResult:
         """
         Injecter une entrée workout dans l'ordre chronologique.
@@ -241,41 +225,33 @@ class TimelineInjector:
             workout_date = self.extract_date_from_entry(workout_entry)
 
         if workout_date is None:
-            return InjectionResult(
-                success=False,
-                error="Cannot extract date from entry"
-            )
+            return InjectionResult(success=False, error="Cannot extract date from entry")
 
         # Lire contenu actuel
         try:
-            with open(self.history_file, 'r', encoding='utf-8') as f:
+            with open(self.history_file, encoding="utf-8") as f:
                 content = f.read()
         except Exception as e:
-            return InjectionResult(
-                success=False,
-                error=f"Failed to read history file: {e}"
-            )
+            return InjectionResult(success=False, error=f"Failed to read history file: {e}")
 
-        content_lines = content.split('\n')
+        content_lines = content.split("\n")
 
         # Vérifier duplicates
         if self.check_duplicates:
             if self.check_duplicate(content_lines, workout_entry):
                 return InjectionResult(
-                    success=False,
-                    error="Duplicate entry detected",
-                    duplicate_found=True
+                    success=False, error="Duplicate entry detected", duplicate_found=True
                 )
 
         # Trouver point d'insertion
         insertion_index = self.find_insertion_point(content_lines, workout_date)
 
         # Insérer l'entrée
-        entry_lines = workout_entry.strip().split('\n')
+        entry_lines = workout_entry.strip().split("\n")
 
         # Ajouter séparateur si nécessaire
         if insertion_index < len(content_lines) and content_lines[insertion_index].strip():
-            entry_lines.append('')  # Ligne vide après l'entrée
+            entry_lines.append("")  # Ligne vide après l'entrée
 
         # Insérer
         for i, line in enumerate(entry_lines):
@@ -283,24 +259,15 @@ class TimelineInjector:
 
         # Écrire le nouveau contenu
         try:
-            new_content = '\n'.join(content_lines)
-            with open(self.history_file, 'w', encoding='utf-8') as f:
+            new_content = "\n".join(content_lines)
+            with open(self.history_file, "w", encoding="utf-8") as f:
                 f.write(new_content)
         except Exception as e:
-            return InjectionResult(
-                success=False,
-                error=f"Failed to write history file: {e}"
-            )
+            return InjectionResult(success=False, error=f"Failed to write history file: {e}")
 
-        return InjectionResult(
-            success=True,
-            line_number=insertion_index
-        )
+        return InjectionResult(success=True, line_number=insertion_index)
 
-    def inject_multiple(
-        self,
-        entries: List[Tuple[str, date]]
-    ) -> List[InjectionResult]:
+    def inject_multiple(self, entries: list[tuple[str, date]]) -> list[InjectionResult]:
         """
         Injecter plusieurs entrées en une fois.
 
@@ -328,9 +295,7 @@ class TimelineInjector:
 
 # Fonction utilitaire pour migration facile
 def inject_workout_chronologically(
-    workout_entry: str,
-    history_file: Path,
-    workout_date: Optional[date] = None
+    workout_entry: str, history_file: Path, workout_date: Optional[date] = None
 ) -> InjectionResult:
     """
     Fonction utilitaire pour injection rapide.

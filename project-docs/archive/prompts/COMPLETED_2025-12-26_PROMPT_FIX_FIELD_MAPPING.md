@@ -17,7 +17,7 @@ training_load: None         # ❌ Wrong field
 if: None                    # ❌ Wrong field
 ```
 
-**Activities ARE enriched** (log shows "Successfully enriched 4 activities")  
+**Activities ARE enriched** (log shows "Successfully enriched 4 activities")
 **But WeeklyAnalyzer reads wrong field names.**
 
 ---
@@ -42,7 +42,7 @@ def _generate_workout_history(self, data: Dict) -> str:
         # Use ICU-prefixed fields (actual field names from API)
         tss = activity.get('icu_training_load', 0)      # ✅ Correct field
         if_value = activity.get('icu_intensity', 0.0)   # ✅ Already correct
-        
+
         # Normalize IF (icu_intensity is in %, divide by 100)
         if_value = if_value / 100 if if_value > 10 else if_value
 ```
@@ -83,7 +83,7 @@ Field Mapping (Intervals.icu API):
     - IF: activity['icu_intensity'] / 100  (API returns percentage)
     - NP: activity['icu_weighted_avg_watts']
     - Average Power: activity['icu_average_watts']
-    
+
 Note: All power/intensity metrics use 'icu_' prefix from Intervals.icu API.
 """
 ```

@@ -2,9 +2,9 @@
 
 ## 📋 Résumé
 
-**Sprint:** R2.1  
-**Objectif:** Compléter `utils/metrics_advanced.py` avec 5 fonctions MOA + 1 CRITIQUE  
-**Status:** ✅ COMPLÉTÉ  
+**Sprint:** R2.1
+**Objectif:** Compléter `utils/metrics_advanced.py` avec 5 fonctions MOA + 1 CRITIQUE
+**Status:** ✅ COMPLÉTÉ
 **Priorité:** P3 (Nice-to-have) + P0 (detect_overtraining_risk)
 
 ---
@@ -341,7 +341,7 @@ monthly_ramp = calculate_ramp_rate(
 
 ---
 
-**Généré le:** 2026-01-01  
-**Sprint:** R2.1  
-**Status:** ✅ COMPLÉTÉ  
+**Généré le:** 2026-01-01
+**Sprint:** R2.1
+**Status:** ✅ COMPLÉTÉ
 **Tests:** 33/33 PASSING

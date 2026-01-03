@@ -58,9 +58,9 @@ Metadata:
     Version: v2
 """
 
-from pathlib import Path
-from typing import Dict, Any, Optional
 import logging
+from pathlib import Path
+from typing import Any, Optional
 
 from cyclisme_training_logs.core.prompt_generator import PromptGenerator
 
@@ -83,8 +83,8 @@ class WeeklyAnalyzer:
     def __init__(
         self,
         week: str,
-        weekly_data: Dict[str, Any],
-        prompt_generator: Optional[PromptGenerator] = None
+        weekly_data: dict[str, Any],
+        prompt_generator: Optional[PromptGenerator] = None,
     ):
         """
         Initialiser analyzer.
@@ -98,7 +98,7 @@ class WeeklyAnalyzer:
         self.data = weekly_data
         self.prompt_generator = prompt_generator or PromptGenerator()
 
-    def generate_all_reports(self) -> Dict[str, str]:
+    def generate_all_reports(self) -> dict[str, str]:
         """
         Générer les 6 reports complets.
 
@@ -109,12 +109,12 @@ class WeeklyAnalyzer:
         logger.info(f"Generating all 6 reports for {self.week}")
 
         reports = {
-            'workout_history': self.generate_workout_history(),
-            'metrics_evolution': self.generate_metrics_evolution(),
-            'training_learnings': self.generate_training_learnings(),
-            'protocol_adaptations': self.generate_protocol_adaptations(),
-            'transition': self.generate_transition(),
-            'bilan_final': self.generate_bilan_final()
+            "workout_history": self.generate_workout_history(),
+            "metrics_evolution": self.generate_metrics_evolution(),
+            "training_learnings": self.generate_training_learnings(),
+            "protocol_adaptations": self.generate_protocol_adaptations(),
+            "transition": self.generate_transition(),
+            "bilan_final": self.generate_bilan_final(),
         }
 
         logger.info("All reports generated successfully")
@@ -133,47 +133,53 @@ class WeeklyAnalyzer:
         ### Métriques Pré-séance
         ...
         """
-        workouts = self.data.get('workouts', [])
+        workouts = self.data.get("workouts", [])
 
         lines = [
             f"# Historique Entraînements {self.week}\n",
             f"**Période :** {self._get_period()}\n",
-            f"**Nombre séances :** {len(workouts)}\n"
+            f"**Nombre séances :** {len(workouts)}\n",
         ]
 
         for workout in workouts:
             # Include workout name if available
-            workout_name = workout.get('name', '')
+            workout_name = workout.get("name", "")
             if workout_name:
-                lines.append(f"\n## {self.week}-{workout['session_number']:02d}: {workout_name} ({workout['date']})\n")
+                lines.append(
+                    f"\n## {self.week}-{workout['session_number']:02d}: {workout_name} ({workout['date']})\n"
+                )
             else:
-                lines.append(f"\n## {self.week}-{workout['session_number']:02d} ({workout['date']})\n")
+                lines.append(
+                    f"\n## {self.week}-{workout['session_number']:02d} ({workout['date']})\n"
+                )
 
             # Métriques principales
-            duration_min = workout['duration'] // 60
-            lines.append(f"**Durée:** {duration_min}min | **TSS:** {workout['tss']} | **IF:** {workout.get('if', 0):.2f}\n")
+            duration_min = workout["duration"] // 60
+            lines.append(
+                f"**Durée:** {duration_min}min | **TSS:** {workout['tss']} | **IF:** {workout.get('if', 0):.2f}\n"
+            )
 
             # Puissance
-            if workout.get('normalized_power', 0) > 0:
+            if workout.get("normalized_power", 0) > 0:
                 lines.append("\n### Puissance")
                 lines.append(f"- Normalisée: {workout['normalized_power']}W")
                 lines.append(f"- Moyenne: {workout.get('average_power', 0)}W\n")
 
             # FC
-            if workout.get('average_hr', 0) > 0:
+            if workout.get("average_hr", 0) > 0:
                 lines.append("\n### Fréquence Cardiaque")
                 lines.append(f"- Moyenne: {workout['average_hr']} bpm")
                 lines.append(f"- Max: {workout.get('max_hr', 0)} bpm\n")
 
             # Feedback
-            if 'feedback' in workout:
-                feedback = workout['feedback']
+            if "feedback" in workout:
+                feedback = workout["feedback"]
                 lines.append("\n### Feedback Athlète")
 
-                if 'rpe' in feedback:
+                if "rpe" in feedback:
                     lines.append(f"- RPE: {feedback['rpe']}/10")
 
-                if 'comments' in feedback:
+                if "comments" in feedback:
                     lines.append(f"- Notes: {feedback['comments']}\n")
 
         return "\n".join(lines)
@@ -188,14 +194,11 @@ class WeeklyAnalyzer:
         ## CTL/ATL/TSB Quotidien
         | Date | CTL | ATL | TSB |
         """
-        metrics_evolution = self.data.get('metrics_evolution', {})
-        daily = metrics_evolution.get('daily', [])
-        trends = metrics_evolution.get('trends', {})
+        metrics_evolution = self.data.get("metrics_evolution", {})
+        daily = metrics_evolution.get("daily", [])
+        trends = metrics_evolution.get("trends", {})
 
-        lines = [
-            f"# Évolution Métriques {self.week}\n",
-            "## CTL/ATL/TSB Quotidien\n"
-        ]
+        lines = [f"# Évolution Métriques {self.week}\n", "## CTL/ATL/TSB Quotidien\n"]
 
         if daily:
             # Table
@@ -218,14 +221,14 @@ class WeeklyAnalyzer:
             lines.append(f"- **Variation TSB :** {trends.get('tsb_change', 0):+.1f}\n")
 
         # Wellness insights
-        if 'wellness_insights' in self.data:
-            insights = self.data['wellness_insights']
+        if "wellness_insights" in self.data:
+            insights = self.data["wellness_insights"]
             lines.append("\n## Wellness\n")
 
-            if insights.get('sleep_hours_avg', 0) > 0:
+            if insights.get("sleep_hours_avg", 0) > 0:
                 lines.append(f"- **Sommeil moyen :** {insights['sleep_hours_avg']:.1f}h")
 
-            if insights.get('weight_trend', 0) != 0:
+            if insights.get("weight_trend", 0) != 0:
                 lines.append(f"- **Évolution poids :** {insights['weight_trend']:+.1f}kg\n")
 
         return "\n".join(lines)
@@ -241,12 +244,9 @@ class WeeklyAnalyzer:
         - Point 1
         - Point 2
         """
-        learnings = self.data.get('learnings', [])
+        learnings = self.data.get("learnings", [])
 
-        lines = [
-            f"# Enseignements d'Entraînement {self.week}\n",
-            "## Découvertes Majeures\n"
-        ]
+        lines = [f"# Enseignements d'Entraînement {self.week}\n", "## Découvertes Majeures\n"]
 
         if learnings:
             for learning in learnings:
@@ -274,12 +274,9 @@ class WeeklyAnalyzer:
           Raison: TSB dropped
           Recommandation: Add recovery day
         """
-        adaptations = self.data.get('protocol_adaptations', [])
+        adaptations = self.data.get("protocol_adaptations", [])
 
-        lines = [
-            f"# Adaptations Protocoles {self.week}\n",
-            "## Ajustements Identifiés\n"
-        ]
+        lines = [f"# Adaptations Protocoles {self.week}\n", "## Ajustements Identifiés\n"]
 
         if adaptations:
             for adaptation in adaptations:
@@ -306,19 +303,16 @@ class WeeklyAnalyzer:
         - Focus 1
         - Focus 2
         """
-        transition = self.data.get('transition', {})
-        current_state = transition.get('current_state', {})
-        recommendations = transition.get('recommendations', [])
-        focus_areas = transition.get('focus_areas', [])
+        transition = self.data.get("transition", {})
+        current_state = transition.get("current_state", {})
+        recommendations = transition.get("recommendations", [])
+        focus_areas = transition.get("focus_areas", [])
 
         # Calculer numéro semaine suivante
-        week_num = int(self.week[1:]) if self.week.startswith('S') else 0
+        week_num = int(self.week[1:]) if self.week.startswith("S") else 0
         next_week = f"S{week_num + 1:03d}"
 
-        lines = [
-            f"# Transition {self.week} → {next_week}\n",
-            f"## État Final {self.week}\n"
-        ]
+        lines = [f"# Transition {self.week} → {next_week}\n", f"## État Final {self.week}\n"]
 
         # État actuel
         lines.append(f"- **TSS total :** {current_state.get('total_tss', 0)}")
@@ -356,17 +350,14 @@ class WeeklyAnalyzer:
         ## Métriques Clés
         ## Conclusion
         """
-        summary = self.data.get('summary', {})
-        compliance = self.data.get('compliance', {})
+        summary = self.data.get("summary", {})
+        compliance = self.data.get("compliance", {})
 
-        lines = [
-            f"# Bilan Final {self.week}\n",
-            "## Objectifs vs Réalisé\n"
-        ]
+        lines = [f"# Bilan Final {self.week}\n", "## Objectifs vs Réalisé\n"]
 
         # Compliance
         if compliance:
-            rate = compliance.get('rate', 0)
+            rate = compliance.get("rate", 0)
             lines.append(f"- **Compliance :** {rate:.1f}%")
             lines.append(f"- **Séances planifiées :** {compliance.get('planned_count', 0)}")
             lines.append(f"- **Séances exécutées :** {compliance.get('executed_count', 0)}\n")
@@ -383,7 +374,7 @@ class WeeklyAnalyzer:
 
         return "\n".join(lines)
 
-    def save_reports(self, reports: Dict[str, str], output_dir: Path) -> None:
+    def save_reports(self, reports: dict[str, str], output_dir: Path) -> None:
         """
         Sauvegarder reports sur disque.
 
@@ -398,18 +389,18 @@ class WeeklyAnalyzer:
             filename = f"{report_name}_{self.week.lower()}.md"
             filepath = output_dir / filename
 
-            with open(filepath, 'w', encoding='utf-8') as f:
+            with open(filepath, "w", encoding="utf-8") as f:
                 f.write(content)
 
             logger.info(f"Saved {filename}")
 
     def _get_period(self) -> str:
         """Helper pour obtenir période formatée."""
-        workouts = self.data.get('workouts', [])
+        workouts = self.data.get("workouts", [])
         if not workouts:
             return "N/A"
 
-        first_date = workouts[0].get('date', '')
-        last_date = workouts[-1].get('date', '')
+        first_date = workouts[0].get("date", "")
+        last_date = workouts[-1].get("date", "")
 
         return f"{first_date} → {last_date}"

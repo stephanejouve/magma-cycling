@@ -1,15 +1,17 @@
 """Tests for planning_manager module (Sprint R3)."""
 
+from datetime import date
+
 import pytest
-from datetime import date, timedelta
+
+from cyclisme_training_logs.config.athlete_profile import AthleteProfile
 from cyclisme_training_logs.planning.planning_manager import (
-    TrainingObjective,
-    TrainingPlan,
+    ObjectiveType,
     PlanningManager,
     PriorityLevel,
-    ObjectiveType,
+    TrainingObjective,
+    TrainingPlan,
 )
-from cyclisme_training_logs.config.athlete_profile import AthleteProfile
 
 
 class TestTrainingObjective:
@@ -302,9 +304,7 @@ class TestPlanningManager:
             "Checkpoint 1",
             PriorityLevel.MEDIUM,
         )
-        manager.add_deadline(
-            "Test Plan", date(2026, 1, 28), "Checkpoint 2", PriorityLevel.HIGH
-        )
+        manager.add_deadline("Test Plan", date(2026, 1, 28), "Checkpoint 2", PriorityLevel.HIGH)
 
         timeline = manager.get_plan_timeline("Test Plan")
 
@@ -329,9 +329,7 @@ class TestPlanningManager:
             "Critical Event",
             PriorityLevel.CRITICAL,
         )
-        manager.add_deadline(
-            "Test Plan", date(2026, 1, 28), "Normal Event", PriorityLevel.MEDIUM
-        )
+        manager.add_deadline("Test Plan", date(2026, 1, 28), "Normal Event", PriorityLevel.MEDIUM)
 
         timeline = manager.get_plan_timeline("Test Plan")
 

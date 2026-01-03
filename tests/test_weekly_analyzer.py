@@ -12,6 +12,7 @@ Created: 2025-12-26
 """
 
 import pytest
+
 from cyclisme_training_logs.analyzers.weekly_analyzer import WeeklyAnalyzer
 
 
@@ -19,87 +20,62 @@ from cyclisme_training_logs.analyzers.weekly_analyzer import WeeklyAnalyzer
 def sample_weekly_data():
     """Données hebdomadaires pour tests."""
     return {
-        'summary': {
-            'total_tss': 320,
-            'avg_tss': 45.7,
-            'avg_if': 1.15,
-            'total_duration': 21600,
-            'final_metrics': {
-                'ctl': 62.5,
-                'atl': 60.0,
-                'tsb': 2.5
-            }
+        "summary": {
+            "total_tss": 320,
+            "avg_tss": 45.7,
+            "avg_if": 1.15,
+            "total_duration": 21600,
+            "final_metrics": {"ctl": 62.5, "atl": 60.0, "tsb": 2.5},
         },
-        'workouts': [
+        "workouts": [
             {
-                'session_number': 1,
-                'date': '2025-01-06',
-                'name': 'Sweet Spot',
-                'tss': 45,
-                'if': 1.2,
-                'duration': 3600,
-                'normalized_power': 180,
-                'average_power': 175,
-                'average_hr': 140,
-                'max_hr': 165
+                "session_number": 1,
+                "date": "2025-01-06",
+                "name": "Sweet Spot",
+                "tss": 45,
+                "if": 1.2,
+                "duration": 3600,
+                "normalized_power": 180,
+                "average_power": 175,
+                "average_hr": 140,
+                "max_hr": 165,
             },
             {
-                'session_number': 2,
-                'date': '2025-01-07',
-                'name': 'Endurance',
-                'tss': 50,
-                'if': 0.75,
-                'duration': 5400,
-                'normalized_power': 150,
-                'average_power': 148,
-                'average_hr': 130,
-                'max_hr': 155,
-                'feedback': {
-                    'rpe': 5,
-                    'comments': 'Easy pace'
-                }
-            }
+                "session_number": 2,
+                "date": "2025-01-07",
+                "name": "Endurance",
+                "tss": 50,
+                "if": 0.75,
+                "duration": 5400,
+                "normalized_power": 150,
+                "average_power": 148,
+                "average_hr": 130,
+                "max_hr": 155,
+                "feedback": {"rpe": 5, "comments": "Easy pace"},
+            },
         ],
-        'metrics_evolution': {
-            'daily': [
-                {'date': '2025-01-06', 'ctl': 60, 'atl': 58, 'tsb': 2},
-                {'date': '2025-01-07', 'ctl': 61.5, 'atl': 59.2, 'tsb': 2.3}
+        "metrics_evolution": {
+            "daily": [
+                {"date": "2025-01-06", "ctl": 60, "atl": 58, "tsb": 2},
+                {"date": "2025-01-07", "ctl": 61.5, "atl": 59.2, "tsb": 2.3},
             ],
-            'trends': {
-                'ctl_change': 2.5,
-                'atl_change': 1.8,
-                'tsb_change': 0.7
-            }
+            "trends": {"ctl_change": 2.5, "atl_change": 1.8, "tsb_change": 0.7},
         },
-        'learnings': [
-            '2 séances haute charge (TSS >80)',
-            '1 séance intensité élevée (IF >1.0)'
-        ],
-        'protocol_adaptations': [
+        "learnings": ["2 séances haute charge (TSS >80)", "1 séance intensité élevée (IF >1.0)"],
+        "protocol_adaptations": [
             {
-                'type': 'recovery',
-                'reason': 'TSB dropped 5 points',
-                'recommendation': 'Add recovery day'
+                "type": "recovery",
+                "reason": "TSB dropped 5 points",
+                "recommendation": "Add recovery day",
             }
         ],
-        'transition': {
-            'current_state': {
-                'total_tss': 320,
-                'avg_tss': 45.7,
-                'final_tsb': 2.5
-            },
-            'recommendations': ['Continue progression'],
-            'focus_areas': ['High TSS days', 'Recovery monitoring']
+        "transition": {
+            "current_state": {"total_tss": 320, "avg_tss": 45.7, "final_tsb": 2.5},
+            "recommendations": ["Continue progression"],
+            "focus_areas": ["High TSS days", "Recovery monitoring"],
         },
-        'compliance': {
-            'planned_count': 7,
-            'executed_count': 7,
-            'rate': 100.0
-        },
-        'wellness_insights': {
-            'sleep_hours_avg': 7.5,
-            'weight_trend': -0.2
-        }
+        "compliance": {"planned_count": 7, "executed_count": 7, "rate": 100.0},
+        "wellness_insights": {"sleep_hours_avg": 7.5, "weight_trend": -0.2},
     }
 
 
@@ -197,12 +173,12 @@ def test_generate_all_reports(sample_weekly_data):
     reports = analyzer.generate_all_reports()
 
     assert len(reports) == 6
-    assert 'workout_history' in reports
-    assert 'metrics_evolution' in reports
-    assert 'training_learnings' in reports
-    assert 'protocol_adaptations' in reports
-    assert 'transition' in reports
-    assert 'bilan_final' in reports
+    assert "workout_history" in reports
+    assert "metrics_evolution" in reports
+    assert "training_learnings" in reports
+    assert "protocol_adaptations" in reports
+    assert "transition" in reports
+    assert "bilan_final" in reports
 
     # Verify each report is not empty
     for name, content in reports.items():
@@ -223,13 +199,13 @@ def test_get_period(sample_weekly_data):
 def test_empty_workouts_data():
     """Test analyzer avec données vides."""
     empty_data = {
-        'summary': {},
-        'workouts': [],
-        'metrics_evolution': {},
-        'learnings': [],
-        'protocol_adaptations': [],
-        'transition': {},
-        'compliance': {}
+        "summary": {},
+        "workouts": [],
+        "metrics_evolution": {},
+        "learnings": [],
+        "protocol_adaptations": [],
+        "transition": {},
+        "compliance": {},
     }
 
     analyzer = WeeklyAnalyzer(week="S073", weekly_data=empty_data)

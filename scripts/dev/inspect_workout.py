@@ -10,74 +10,68 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from prepare_analysis import IntervalsAPI
 
+
 def inspect_existing_workout():
     """Récupérer un workout existant pour voir la structure"""
-    
+
     # Charger credentials
     config_path = Path.home() / ".intervals_config.json"
-    with open(config_path, 'r') as f:
+    with open(config_path) as f:
         config = json.load(f)
-    
-    api = IntervalsAPI(
-        athlete_id=config.get('athlete_id'),
-        api_key=config.get('api_key')
-    )
-    
+
+    api = IntervalsAPI(athlete_id=config.get("athlete_id"), api_key=config.get("api_key"))
+
     # Récupérer événements du mois
     print("📥 Récupération des événements existants...")
-    
+
     # Utiliser la méthode get_events (à vérifier qu'elle existe)
     # Sinon faire un appel direct
-    import requests
     import base64
-    
-    athlete_id = config.get('athlete_id')
-    api_key = config.get('api_key')
-    
+
+    import requests
+
+    athlete_id = config.get("athlete_id")
+    api_key = config.get("api_key")
+
     url = f"https://intervals.icu/api/v1/athlete/{athlete_id}/events"
-    params = {
-        'oldest': '2025-01-01',
-        'newest': '2025-12-31'
-    }
-    
+    params = {"oldest": "2025-01-01", "newest": "2025-12-31"}
+
     credentials = f"API_KEY:{api_key}"
     auth_token = base64.b64encode(credentials.encode()).decode()
-    
-    headers = {
-        'Authorization': f'Basic {auth_token}'
-    }
-    
+
+    headers = {"Authorization": f"Basic {auth_token}"}
+
     response = requests.get(url, params=params, headers=headers)
     response.raise_for_status()
-    
+
     events = response.json()
-    
+
     # Trouver un workout
-    workouts = [e for e in events if e.get('category') == 'WORKOUT']
-    
+    workouts = [e for e in events if e.get("category") == "WORKOUT"]
+
     if not workouts:
         print("⚠️  Aucun workout trouvé")
         print("\n💡 Solution : Crée un workout manuellement sur Intervals.icu")
         print("   Puis relance ce script pour voir sa structure")
         return
-    
+
     print(f"\n✅ {len(workouts)} workout(s) trouvé(s)\n")
-    print("="*70)
+    print("=" * 70)
     print("STRUCTURE D'UN WORKOUT EXISTANT")
-    print("="*70)
-    
+    print("=" * 70)
+
     # Afficher le premier workout
     workout = workouts[0]
     print(json.dumps(workout, indent=2, ensure_ascii=False))
-    
-    print("\n" + "="*70)
+
+    print("\n" + "=" * 70)
     print("CHAMPS IMPORTANTS")
-    print("="*70)
-    
-    for key in ['category', 'type', 'name', 'description', 
-                'start_date_local', 'workout_doc']:
+    print("=" * 70)
+
+    for key in ["category", "type", "name", "description", "start_date_local", "workout_doc"]:
         if key in workout:
             print(f"{key}: {workout[key]}")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     inspect_existing_workout()

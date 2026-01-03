@@ -1,14 +1,16 @@
 """Tests for calendar module (Sprint R3 Module 2)."""
 
+from datetime import date
+
 import pytest
-from datetime import date, timedelta
+
+from cyclisme_training_logs.config.athlete_profile import AthleteProfile
 from cyclisme_training_logs.planning.calendar import (
-    TrainingSession,
     TrainingCalendar,
+    TrainingSession,
     WeeklySummary,
     WorkoutType,
 )
-from cyclisme_training_logs.config.athlete_profile import AthleteProfile
 
 
 class TestTrainingSession:
@@ -251,15 +253,9 @@ class TestTrainingCalendar:
         calendar.mark_rest_days([6])  # Sunday
 
         # Add sessions to week 3 (Jan 12-18)
-        calendar.add_session(
-            date(2026, 1, 12), WorkoutType.ENDURANCE, 60.0, 90, 70.0  # Monday
-        )
-        calendar.add_session(
-            date(2026, 1, 14), WorkoutType.THRESHOLD, 85.0, 90, 95.0  # Wednesday
-        )
-        calendar.add_session(
-            date(2026, 1, 16), WorkoutType.VO2MAX, 95.0, 60, 110.0  # Friday
-        )
+        calendar.add_session(date(2026, 1, 12), WorkoutType.ENDURANCE, 60.0, 90, 70.0)  # Monday
+        calendar.add_session(date(2026, 1, 14), WorkoutType.THRESHOLD, 85.0, 90, 95.0)  # Wednesday
+        calendar.add_session(date(2026, 1, 16), WorkoutType.VO2MAX, 95.0, 60, 110.0)  # Friday
 
         summary = calendar.get_week_summary(week_num=3)
 
@@ -274,9 +270,7 @@ class TestTrainingCalendar:
     def test_get_week_summary_completed_sessions(self, calendar):
         """Test summary uses actual TSS for completed sessions."""
         # Add session
-        calendar.add_session(
-            date(2026, 1, 12), WorkoutType.ENDURANCE, 60.0, 90, 70.0
-        )
+        calendar.add_session(date(2026, 1, 12), WorkoutType.ENDURANCE, 60.0, 90, 70.0)
 
         # Mark as completed with different actual TSS
         session = calendar.sessions[date(2026, 1, 12)]

@@ -5,15 +5,15 @@ Tests PID control logic, gain calculation, and integration with TrainingIntellig
 """
 
 import pytest
+
 from cyclisme_training_logs.intelligence.pid_controller import (
     PIDController,
-    PIDState,
-    compute_pid_gains_from_intelligence
+    compute_pid_gains_from_intelligence,
 )
 from cyclisme_training_logs.intelligence.training_intelligence import (
-    TrainingIntelligence,
     AnalysisLevel,
-    ConfidenceLevel
+    ConfidenceLevel,
+    TrainingIntelligence,
 )
 
 
@@ -161,7 +161,7 @@ def test_compute_gains_from_validated_learnings():
             category="test",
             description=f"Test learning {i}",
             evidence=[f"evidence_{i}"],
-            level=AnalysisLevel.WEEKLY
+            level=AnalysisLevel.WEEKLY,
         )
         learning.confidence = ConfidenceLevel.VALIDATED
 
@@ -179,12 +179,13 @@ def test_compute_gains_with_many_patterns():
 
     # Add 5 frequent patterns
     from datetime import date
+
     for i in range(5):
         pattern = intelligence.identify_pattern(
             name=f"pattern_{i}",
             trigger_conditions={"condition": f"value_{i}"},
             observed_outcome=f"outcome_{i}",
-            observation_date=date.today()
+            observation_date=date.today(),
         )
         pattern.frequency = 15  # Frequent pattern
 
@@ -205,7 +206,7 @@ def test_compute_gains_with_high_evidence():
             category=f"test_{i}",  # Different category each time
             description=f"Test {i}",
             evidence=evidence,
-            level=AnalysisLevel.DAILY
+            level=AnalysisLevel.DAILY,
         )
 
     gains = compute_pid_gains_from_intelligence(intelligence)
@@ -224,16 +225,12 @@ def test_training_intelligence_get_pid_correction():
             category="test",
             description=f"Test {i}",
             evidence=[f"ev{i}"],
-            level=AnalysisLevel.WEEKLY
+            level=AnalysisLevel.WEEKLY,
         )
         learning.confidence = ConfidenceLevel.HIGH
 
     # Get PID correction
-    result = intelligence.get_pid_correction(
-        current_ftp=220,
-        target_ftp=260,
-        dt=1.0
-    )
+    result = intelligence.get_pid_correction(current_ftp=220, target_ftp=260, dt=1.0)
 
     # Verify result structure
     assert "correction" in result

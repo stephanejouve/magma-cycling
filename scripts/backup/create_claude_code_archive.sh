@@ -302,7 +302,7 @@ class WorkflowCoach:
     def __init__(self):
         # Root projet
         self.project_root = Path(__file__).parent.parent
-        
+
         # Chemins relatifs
         self.data_dir = self.project_root / "data"
         self.templates_dir = self.data_dir / "workout_templates"
@@ -350,14 +350,14 @@ class IntervalsAPI:
         response = self.session.get(url, params=params)
         response.raise_for_status()
         return response.json()
-    
+
     def delete_event(self, event_id):
         """DELETE /athlete/{id}/events/{event_id}"""
         url = f"{self.base_url}/athlete/{self.athlete_id}/events/{event_id}"
         response = self.session.delete(url)
         response.raise_for_status()
         return True
-    
+
     def create_event(self, event_data):
         """POST /athlete/{id}/events"""
         url = f"{self.base_url}/athlete/{self.athlete_id}/events"

@@ -6,11 +6,11 @@ including deadline tracking, objective setting, and automatic validation against
 athlete capabilities (TSS limits, CTL progression rates).
 """
 
-from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
-from typing import List, Dict, Any, Optional
-from enum import Enum
 import logging
+from dataclasses import dataclass, field
+from datetime import date, timedelta
+from enum import Enum
+from typing import Any, Optional
 
 from cyclisme_training_logs.config.athlete_profile import AthleteProfile
 from cyclisme_training_logs.utils.metrics_advanced import calculate_ramp_rate
@@ -151,9 +151,9 @@ class TrainingPlan:
     name: str
     start_date: date
     end_date: date
-    objectives: List[TrainingObjective] = field(default_factory=list)
+    objectives: list[TrainingObjective] = field(default_factory=list)
     athlete_profile: Optional[AthleteProfile] = None
-    weekly_tss_targets: List[float] = field(default_factory=list)
+    weekly_tss_targets: list[float] = field(default_factory=list)
     notes: str = ""
 
     def duration_weeks(self) -> int:
@@ -174,9 +174,7 @@ class TrainingPlan:
         days = (self.end_date - self.start_date).days + 1
         return (days + 6) // 7  # Round up to full weeks
 
-    def get_objectives_by_priority(
-        self, priority: PriorityLevel
-    ) -> List[TrainingObjective]:
+    def get_objectives_by_priority(self, priority: PriorityLevel) -> list[TrainingObjective]:
         """
         Filter objectives by priority level.
 
@@ -202,7 +200,7 @@ class TrainingPlan:
         """
         return [obj for obj in self.objectives if obj.priority == priority]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert plan to dictionary for JSON serialization.
 
@@ -269,7 +267,7 @@ class PlanningManager:
             athlete_profile: Athlete characteristics (optional, can load from env)
         """
         self.athlete_profile = athlete_profile or AthleteProfile.from_env()
-        self.plans: Dict[str, TrainingPlan] = {}
+        self.plans: dict[str, TrainingPlan] = {}
         logger.info(
             f"PlanningManager initialized for {self.athlete_profile.category} "
             f"athlete (age {self.athlete_profile.age})"
@@ -280,8 +278,8 @@ class PlanningManager:
         name: str,
         start_date: date,
         end_date: date,
-        objectives: List[TrainingObjective],
-        weekly_tss_targets: Optional[List[float]] = None,
+        objectives: list[TrainingObjective],
+        weekly_tss_targets: Optional[list[float]] = None,
         notes: str = "",
     ) -> TrainingPlan:
         """
@@ -332,19 +330,14 @@ class PlanningManager:
         # Validate duration (4-12 weeks per Issue #6)
         duration = plan.duration_weeks()
         if duration < 4:
-            raise ValueError(
-                f"Plan duration too short: {duration} weeks (minimum 4 weeks)"
-            )
+            raise ValueError(f"Plan duration too short: {duration} weeks (minimum 4 weeks)")
         if duration > 12:
-            raise ValueError(
-                f"Plan duration too long: {duration} weeks (maximum 12 weeks)"
-            )
+            raise ValueError(f"Plan duration too long: {duration} weeks (maximum 12 weeks)")
 
         # Store plan
         self.plans[name] = plan
         logger.info(
-            f"Created training plan '{name}' ({duration} weeks, "
-            f"{len(objectives)} objectives)"
+            f"Created training plan '{name}' ({duration} weeks, " f"{len(objectives)} objectives)"
         )
 
         return plan
@@ -401,8 +394,7 @@ class PlanningManager:
         # (Allow deadlines slightly after plan end for peak events)
         if deadline_date < plan.start_date:
             raise ValueError(
-                f"Deadline date {deadline_date} is before plan start "
-                f"{plan.start_date}"
+                f"Deadline date {deadline_date} is before plan start " f"{plan.start_date}"
             )
 
         # Create objective
@@ -424,7 +416,7 @@ class PlanningManager:
 
         return objective
 
-    def get_plan_timeline(self, plan_name: str) -> Dict[str, Any]:
+    def get_plan_timeline(self, plan_name: str) -> dict[str, Any]:
         """
         Get timeline of deadlines and milestones for a plan.
 
@@ -475,9 +467,7 @@ class PlanningManager:
 
             # Find objectives in this week
             week_objectives = [
-                obj
-                for obj in sorted_objectives
-                if current_date <= obj.target_date <= week_end
+                obj for obj in sorted_objectives if current_date <= obj.target_date <= week_end
             ]
 
             weeks_breakdown.append(
@@ -533,9 +523,7 @@ class PlanningManager:
             "weeks_breakdown": weeks_breakdown,
         }
 
-    def validate_plan_feasibility(
-        self, plan_name: str, current_ctl: float = 0.0
-    ) -> Dict[str, Any]:
+    def validate_plan_feasibility(self, plan_name: str, current_ctl: float = 0.0) -> dict[str, Any]:
         """
         Validate training plan feasibility against athlete capabilities.
 
@@ -625,9 +613,7 @@ class PlanningManager:
 
         # Validate objectives timeline
         if plan.objectives:
-            high_priority_count = len(
-                plan.get_objectives_by_priority(PriorityLevel.HIGH)
-            )
+            high_priority_count = len(plan.get_objectives_by_priority(PriorityLevel.HIGH))
             critical_count = len(plan.get_objectives_by_priority(PriorityLevel.CRITICAL))
 
             if critical_count > 2:
