@@ -6,8 +6,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from cyclisme_training_logs.api.intervals_client import IntervalsClient
-from cyclisme_training_logs.workflow_state import WorkflowState
+from cyclisme_training_logs.api.intervals_client import IntervalsClient  # noqa: E402
+from cyclisme_training_logs.workflow_state import WorkflowState  # noqa: E402
 
 athlete_id = os.getenv("VITE_INTERVALS_ATHLETE_ID")
 api_key = os.getenv("VITE_INTERVALS_API_KEY")

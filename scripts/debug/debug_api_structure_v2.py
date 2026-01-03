@@ -26,7 +26,7 @@ if not os.getenv("VITE_INTERVALS_ATHLETE_ID"):
         print(f"❌ Fichier .env non trouvé: {env_file}")
         sys.exit(1)
 
-from cyclisme_training_logs.sync_intervals import IntervalsAPI
+from cyclisme_training_logs.sync_intervals import IntervalsAPI  # noqa: E402
 
 
 def main():

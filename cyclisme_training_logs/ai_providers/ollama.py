@@ -133,7 +133,7 @@ class OllamaAnalyzer(AIAnalyzer):
                 "Make sure Ollama is running: https://ollama.ai"
             )
             logger.error(error_msg)
-            raise WorkflowError(error_msg)
+            raise WorkflowError(error_msg) from None
 
         except Exception as e:
             logger.error(f"Ollama API call failed: {e}")

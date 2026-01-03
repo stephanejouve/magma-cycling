@@ -9,7 +9,7 @@ from pathlib import Path
 # Ajouter le répertoire parent au PYTHONPATH
 sys.path.insert(0, str(Path(__file__).parent))
 
-from cyclisme_training_logs.weekly_analysis import WeeklyAnalysis
+from cyclisme_training_logs.weekly_analysis import WeeklyAnalysis  # noqa: E402
 
 
 def test_correctifs():

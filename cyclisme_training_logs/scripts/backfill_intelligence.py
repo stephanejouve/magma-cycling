@@ -41,8 +41,8 @@ if env_file.exists():
 # Add project to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from cyclisme_training_logs.api.intervals_client import IntervalsClient
-from cyclisme_training_logs.intelligence.training_intelligence import (
+from cyclisme_training_logs.api.intervals_client import IntervalsClient  # noqa: E402
+from cyclisme_training_logs.intelligence.training_intelligence import (  # noqa: E402
     AnalysisLevel,
     ConfidenceLevel,
     TrainingIntelligence,

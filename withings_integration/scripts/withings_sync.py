@@ -153,7 +153,7 @@ def sync_daily_data(days_back: int = 1):
                 print("   ✅ CONDITIONS OPTIMALES POUR VO2 MAX")
             else:
                 print("   ⚠️  VO2 max déconseillé")
-    except:
+    except Exception:
         pass
 
     print()

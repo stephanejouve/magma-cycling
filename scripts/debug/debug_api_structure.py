@@ -9,7 +9,7 @@ from pathlib import Path
 # Add project to path
 sys.path.insert(0, str(Path.home() / "cyclisme-training-logs"))
 
-from cyclisme_training_logs.sync_intervals import IntervalsAPI
+from cyclisme_training_logs.sync_intervals import IntervalsAPI  # noqa: E402
 
 
 def main():

@@ -56,8 +56,8 @@ class MonthlyAnalyzer:
         # Parse month
         try:
             self.month_date = datetime.strptime(month, "%Y-%m")
-        except ValueError:
-            raise ValueError(f"Invalid month format: {month}. Use YYYY-MM (e.g., 2025-12)")
+        except ValueError as e:
+            raise ValueError(f"Invalid month format: {month}. Use YYYY-MM (e.g., 2025-12)") from e
 
         # Get data repo config
         self.data_config = get_data_config()

@@ -56,6 +56,8 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import requests
+
 from cyclisme_training_logs.api.intervals_client import IntervalsClient
 
 # Alias for backwards compatibility

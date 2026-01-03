@@ -10,7 +10,7 @@ from pathlib import Path
 # Ajouter le répertoire parent au PYTHONPATH
 sys.path.insert(0, str(Path(__file__).parent))
 
-from cyclisme_training_logs.api.intervals_client import IntervalsClient
+from cyclisme_training_logs.api.intervals_client import IntervalsClient  # noqa: E402
 
 
 def test_create_event():

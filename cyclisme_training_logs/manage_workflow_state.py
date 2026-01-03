@@ -113,7 +113,7 @@ def list_activities(state: WorkflowState, count: int = 10):
             try:
                 dt = datetime.fromisoformat(analyzed_at)
                 analyzed_at = dt.strftime("%Y-%m-%d %H:%M:%S")
-            except:
+            except Exception:
                 pass
 
         print(f"{i:2d}. {activity_id:15s} | Séance: {activity_date} | Analysé: {analyzed_at}")

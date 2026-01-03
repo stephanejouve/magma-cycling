@@ -3,6 +3,7 @@ Script de vérification de l'installation Withings
 Vérifie que tous les composants sont correctement configurés
 """
 
+import importlib.util
 import json
 import os
 
@@ -20,7 +21,9 @@ def check_dependencies():
     for module, package in required.items():
         try:
             if module == "dotenv":
-                import dotenv
+                # Use importlib to check availability without importing
+                if importlib.util.find_spec("dotenv") is None:
+                    raise ImportError
             else:
                 __import__(module)
             print(f"✓ {package}")

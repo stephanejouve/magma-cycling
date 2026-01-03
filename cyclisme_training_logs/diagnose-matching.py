@@ -11,7 +11,7 @@ from pathlib import Path
 # Ajouter le répertoire scripts au path
 sys.path.insert(0, str(Path(__file__).parent / "scripts"))
 
-from cyclisme_training_logs.planned_sessions_checker import PlannedSessionsChecker
+from cyclisme_training_logs.planned_sessions_checker import PlannedSessionsChecker  # noqa: E402
 
 
 def load_credentials():

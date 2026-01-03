@@ -53,8 +53,8 @@ if env_file.exists():
 # Add parent to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from api.intervals_client import IntervalsClient
-from weekly_planner import WeeklyPlanner
+from api.intervals_client import IntervalsClient  # noqa: E402
+from weekly_planner import WeeklyPlanner  # noqa: E402
 
 # Statuses that should remove the event from Intervals.icu
 STATUSES_TO_DELETE = ["cancelled", "skipped"]
