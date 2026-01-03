@@ -93,7 +93,7 @@ PROVIDER_DISPLAY_NAMES = {
 
 
 class WorkflowCoach:
-    """Orchestrateur du workflow d'analyse de séance"""
+    """Orchestrateur du workflow d'analyse de séance."""
 
     def __init__(
         self,
@@ -105,6 +105,17 @@ class WorkflowCoach:
         provider=None,
         auto_mode=False,
     ):
+        """Initialize the workflow coach.
+
+        Args:
+            skip_feedback: Skip feedback collection step
+            skip_git: Skip git commit step
+            activity_id: Specific activity ID to analyze (bypass detection)
+            week_id: Specific week ID for context
+            servo_mode: Enable servo mode for session management
+            provider: AI provider to use (openai, claude, mistral, ollama, clipboard)
+            auto_mode: Enable automatic mode (minimal prompts)
+        """
         from cyclisme_training_logs.config import get_data_config
 
         self.skip_feedback = skip_feedback
