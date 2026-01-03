@@ -395,6 +395,7 @@ def generate_rest_day_entry(
 
     # Construire markdown
     markdown = f"""### {session_id}-{session_type}-{session_name}.
+
 Date : {date_str}
 
 #### Métriques Pré-séance
@@ -508,6 +509,7 @@ def generate_skipped_session_entry(
 
     # Construire markdown
     markdown = f"""### {session_id} - {session_name} [SAUTÉE].
+
 Date : {formatted_date} ({day_of_week})
 
 #### Métriques Pré-séance
@@ -595,6 +597,7 @@ def generate_cancelled_session_entry(
 
     # Construire markdown
     markdown = f"""### {session_id}-{session_type}-{session_name}-{version}.
+
 Date : {date_str}
 
 #### Métriques Pré-séance

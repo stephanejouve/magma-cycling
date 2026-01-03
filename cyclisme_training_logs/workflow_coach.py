@@ -2302,6 +2302,7 @@ class WorkflowCoach:
         name = planned_name
 
         markdown = f"""### {session_id}.
+
 Date : {date_formatted}
 
 #### Statut

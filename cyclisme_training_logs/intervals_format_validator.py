@@ -227,6 +227,7 @@ class IntervalsFormatValidator:
         """
         return {
             "simple": """Warmup.
+
 - 10m ramp 50-65% 85rpm
 
 Main set
@@ -235,6 +236,7 @@ Main set
 Cooldown
 - 10m ramp 65-50% 85rpm.""",
             "repeated_block": """Warmup.
+
 - 10m ramp 50-75% 85rpm
 
 Main set 3x
@@ -244,6 +246,7 @@ Main set 3x
 Cooldown
 - 10m ramp 75-50% 85rpm.""",
             "multiple_blocks": """Warmup.
+
 - 15m ramp 50-75% 85-90rpm
 
 Main set 2x
@@ -269,6 +272,7 @@ def main():
     print("=" * 70)
 
     invalid1 = """Warmup.
+
 - 10m ramp 50-65%
 
 Main set
@@ -290,6 +294,7 @@ Cooldown
     print("=" * 70)
 
     invalid2 = """Warmup.
+
 - 10m ramp 50-65%
 
 Test capacité 3x
@@ -314,6 +319,7 @@ Cooldown
     print("=" * 70)
 
     valid = """Warmup.
+
 - 10m ramp 50-75% 85rpm
 
 Main set 3x
