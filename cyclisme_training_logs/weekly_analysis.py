@@ -100,6 +100,7 @@ class WeeklyAnalysis:
 
         # API Intervals.icu
         config_path = Path.home() / ".intervals_config.json"
+        self.api: IntervalsClient | None
         if config_path.exists():
             with open(config_path) as f:
                 config = json.load(f)
@@ -264,7 +265,7 @@ class WeeklyAnalysis:
             start_metrics = extract_wellness_metrics(wellness_start)
             end_metrics = extract_wellness_metrics(wellness_end)
 
-            metrics = {
+            metrics: dict[str, Any] = {
                 "start": {
                     "ctl": start_metrics["ctl"],
                     "atl": start_metrics["atl"],

@@ -245,6 +245,10 @@ class WorkoutUploader:
                 "start_date_local": f"{workout['date']}T{start_time}",
             }
 
+            if self.api is None:
+                print("  ❌ Erreur : API non initialisée")
+                return False
+
             response = self.api.create_event(event_data)
 
             if response:

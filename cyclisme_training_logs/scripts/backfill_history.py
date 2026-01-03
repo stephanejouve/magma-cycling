@@ -112,7 +112,7 @@ class HistoryBackfiller:
         self.to_analyze = 0
         self.analyzed_success = 0
         self.analyzed_failed = 0
-        self.start_time = None
+        self.start_time: float | None = None
 
     def get_analyzed_activities(self) -> set[str]:
         """Get set of already analyzed activity IDs."""
