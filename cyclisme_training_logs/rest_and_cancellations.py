@@ -53,15 +53,12 @@ Metadata:
 
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 
 # Configuration du logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='[%(levelname)s] %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -69,19 +66,26 @@ logger = logging.getLogger(__name__)
 # CONSTANTES
 # ============================================================================
 
-VALID_STATUSES = ['planned', 'completed', 'cancelled', 'rest_day', 'replaced', 'skipped', 'modified']
-VALID_TYPES = ['END', 'INT', 'FTP', 'SPR', 'CLM', 'REC', 'FOR', 'CAD', 'TEC', 'MIX', 'PDC', 'TST']
+VALID_STATUSES = [
+    "planned",
+    "completed",
+    "cancelled",
+    "rest_day",
+    "replaced",
+    "skipped",
+    "modified",
+]
+VALID_TYPES = ["END", "INT", "FTP", "SPR", "CLM", "REC", "FOR", "CAD", "TEC", "MIX", "PDC", "TST"]
 
 
 # ============================================================================
 # PRE-SESSION VETO CHECK (Sprint R2.1 - P0 CRITICAL)
 # ============================================================================
 
+
 def check_pre_session_veto(
-    wellness_data: Dict,
-    athlete_profile: Dict,
-    session_intensity: Optional[float] = None
-) -> Dict:
+    wellness_data: dict, athlete_profile: dict, session_intensity: Optional[float] = None
+) -> dict:
     """Check if session should be vetoed due to overtraining risk (CRITICAL safety).
 
     This function implements VETO logic to protect master athletes from
@@ -156,9 +160,9 @@ def check_pre_session_veto(
     from cyclisme_training_logs.utils.metrics_advanced import detect_overtraining_risk
 
     # Extract metrics from wellness data
-    ctl = wellness_data.get('ctl', 0)
-    atl = wellness_data.get('atl', 0)
-    tsb = wellness_data.get('tsb')
+    ctl = wellness_data.get("ctl", 0)
+    atl = wellness_data.get("atl", 0)
+    tsb = wellness_data.get("tsb")
 
     # Calculate TSB if not provided
     if tsb is None and ctl > 0:
@@ -166,33 +170,27 @@ def check_pre_session_veto(
     elif tsb is None:
         tsb = 0
 
-    sleep_hours = wellness_data.get('sleep_hours')
+    sleep_hours = wellness_data.get("sleep_hours")
 
     # Call VETO detection (Sprint R2.1)
     risk_result = detect_overtraining_risk(
-        ctl=ctl,
-        atl=atl,
-        tsb=tsb,
-        sleep_hours=sleep_hours,
-        profile=athlete_profile
+        ctl=ctl, atl=atl, tsb=tsb, sleep_hours=sleep_hours, profile=athlete_profile
     )
 
     # Build result with additional context
     result = {
-        'cancel': risk_result['veto'],
-        'veto': risk_result['veto'],  # Backward compatibility
-        'risk_level': risk_result['risk_level'],
-        'recommendation': risk_result['recommendation'],
-        'factors': risk_result['factors']
+        "cancel": risk_result["veto"],
+        "veto": risk_result["veto"],  # Backward compatibility
+        "risk_level": risk_result["risk_level"],
+        "recommendation": risk_result["recommendation"],
+        "factors": risk_result["factors"],
     }
 
     # Add session intensity context if provided
-    if session_intensity and risk_result['veto']:
-        logger.warning(
-            f"⚠️  VETO: Session cancelled (intensity={session_intensity:.0f}% FTP)"
-        )
+    if session_intensity and risk_result["veto"]:
+        logger.warning(f"⚠️  VETO: Session cancelled (intensity={session_intensity:.0f}% FTP)")
         logger.warning(f"Factors: {', '.join(risk_result['factors'])}")
-        result['session_intensity'] = session_intensity
+        result["session_intensity"] = session_intensity
 
     return result
 
@@ -200,6 +198,7 @@ def check_pre_session_veto(
 # ============================================================================
 # CHARGEMENT ET VALIDATION DU PLANNING
 # ============================================================================
+
 
 def load_week_planning(week_id: str, planning_dir: Optional[Path] = None) -> dict:
     """
@@ -219,6 +218,7 @@ def load_week_planning(week_id: str, planning_dir: Optional[Path] = None) -> dic
     if planning_dir is None:
         # Use data repo config if available
         from cyclisme_training_logs.config import get_data_config
+
         try:
             config = get_data_config()
             planning_dir = config.week_planning_dir
@@ -235,7 +235,7 @@ def load_week_planning(week_id: str, planning_dir: Optional[Path] = None) -> dic
         )
 
     try:
-        with open(planning_file, 'r', encoding='utf-8') as f:
+        with open(planning_file, encoding="utf-8") as f:
             planning = json.load(f)
     except json.JSONDecodeError as e:
         raise ValueError(f"Format JSON invalide: {e}")
@@ -266,26 +266,26 @@ def validate_week_planning(planning: dict) -> bool:
         True si valide, False sinon
     """
     # Champs obligatoires
-    required_fields = ['week_id', 'start_date', 'end_date', 'planned_sessions']
+    required_fields = ["week_id", "start_date", "end_date", "planned_sessions"]
     for field in required_fields:
         if field not in planning:
             logger.error(f"Champ obligatoire manquant: {field}")
             return False
 
     # Valider les sessions
-    sessions = planning['planned_sessions']
+    sessions = planning["planned_sessions"]
     session_ids = set()
 
     for session in sessions:
         # Champs obligatoires session
-        session_required = ['session_id', 'date', 'type', 'name', 'status']
+        session_required = ["session_id", "date", "type", "name", "status"]
         for field in session_required:
             if field not in session:
                 logger.error(f"Session {session.get('session_id', '?')}: champ manquant {field}")
                 return False
 
         # Valider statut
-        status = session['status']
+        status = session["status"]
         if status not in VALID_STATUSES:
             logger.error(
                 f"Session {session['session_id']}: statut invalide '{status}' "
@@ -294,12 +294,12 @@ def validate_week_planning(planning: dict) -> bool:
             return False
 
         # Valider raison pour cancelled
-        if status == 'cancelled' and 'cancellation_reason' not in session:
+        if status == "cancelled" and "cancellation_reason" not in session:
             logger.error(f"Session {session['session_id']}: raison obligatoire pour cancelled")
             return False
 
         # Valider type
-        session_type = session['type']
+        session_type = session["type"]
         if session_type not in VALID_TYPES:
             logger.warning(
                 f"Session {session['session_id']}: type '{session_type}' non standard "
@@ -307,7 +307,7 @@ def validate_week_planning(planning: dict) -> bool:
             )
 
         # Vérifier doublons
-        sid = session['session_id']
+        sid = session["session_id"]
         if sid in session_ids:
             logger.error(f"Session ID dupliqué: {sid}")
             return False
@@ -315,15 +315,15 @@ def validate_week_planning(planning: dict) -> bool:
 
         # Valider format date
         try:
-            datetime.strptime(session['date'], '%Y-%m-%d')
+            datetime.strptime(session["date"], "%Y-%m-%d")
         except ValueError:
             logger.error(f"Session {sid}: format date invalide (attendu YYYY-MM-DD)")
             return False
 
     # Valider cohérence dates semaine
     try:
-        start = datetime.strptime(planning['start_date'], '%Y-%m-%d')
-        end = datetime.strptime(planning['end_date'], '%Y-%m-%d')
+        start = datetime.strptime(planning["start_date"], "%Y-%m-%d")
+        end = datetime.strptime(planning["end_date"], "%Y-%m-%d")
         delta = (end - start).days
 
         if delta != 6:
@@ -340,11 +340,12 @@ def validate_week_planning(planning: dict) -> bool:
 # GÉNÉRATION MARKDOWN REPOS PLANIFIÉ
 # ============================================================================
 
+
 def generate_rest_day_entry(
     session_data: dict,
     metrics_pre: dict,
     metrics_post: dict,
-    athlete_feedback: Optional[dict] = None
+    athlete_feedback: Optional[dict] = None,
 ) -> str:
     """
     Génère bloc markdown pour jour de repos planifié
@@ -359,12 +360,12 @@ def generate_rest_day_entry(
         Bloc markdown formaté selon template repos
     """
     # Extraire données session
-    session_id = session_data['session_id']
-    session_type = session_data['type']
-    session_name = session_data['name']
-    date_str = datetime.strptime(session_data['date'], '%Y-%m-%d').strftime('%d/%m/%Y')
-    rest_reason = session_data.get('rest_reason', 'Repos planifié')
-    physio_notes = session_data.get('physiological_notes', '')
+    session_id = session_data["session_id"]
+    session_type = session_data["type"]
+    session_name = session_data["name"]
+    date_str = datetime.strptime(session_data["date"], "%Y-%m-%d").strftime("%d/%m/%Y")
+    rest_reason = session_data.get("rest_reason", "Repos planifié")
+    physio_notes = session_data.get("physiological_notes", "")
 
     # Métriques pré/post
     from cyclisme_training_logs.utils.metrics import extract_wellness_metrics
@@ -372,13 +373,13 @@ def generate_rest_day_entry(
     metrics_pre_values = extract_wellness_metrics(metrics_pre)
     metrics_post_values = extract_wellness_metrics(metrics_post)
 
-    ctl_pre = metrics_pre_values['ctl']
-    atl_pre = metrics_pre_values['atl']
-    tsb_pre = metrics_pre_values['tsb']
+    ctl_pre = metrics_pre_values["ctl"]
+    atl_pre = metrics_pre_values["atl"]
+    tsb_pre = metrics_pre_values["tsb"]
 
-    ctl_post = metrics_post_values['ctl']
-    atl_post = metrics_post_values['atl']
-    tsb_post = metrics_post_values['tsb']
+    ctl_post = metrics_post_values["ctl"]
+    atl_post = metrics_post_values["atl"]
+    tsb_post = metrics_post_values["tsb"]
 
     # Feedback athlète
     sleep_duration = "N/A"
@@ -387,10 +388,10 @@ def generate_rest_day_entry(
     resting_hr = "N/A"
 
     if athlete_feedback:
-        sleep_duration = athlete_feedback.get('sleep_duration', 'N/A')
-        sleep_score = athlete_feedback.get('sleep_score', 'N/A')
-        hrv = athlete_feedback.get('hrv', 'N/A')
-        resting_hr = athlete_feedback.get('resting_hr', 'N/A')
+        sleep_duration = athlete_feedback.get("sleep_duration", "N/A")
+        sleep_score = athlete_feedback.get("sleep_score", "N/A")
+        hrv = athlete_feedback.get("hrv", "N/A")
+        resting_hr = athlete_feedback.get("resting_hr", "N/A")
 
     # Construire markdown
     markdown = f"""### {session_id}-{session_type}-{session_name}
@@ -399,7 +400,7 @@ Date : {date_str}
 #### Métriques Pré-séance
 - CTL : {ctl_pre}
 - ATL : {atl_pre}
-- TSB : {tsb_pre:+d}
+- TSB : {int(tsb_pre):+d}
 - Sommeil : {sleep_duration} (score {sleep_score}, VFC {hrv}ms)
 - FC repos : {resting_hr} bpm
 
@@ -449,7 +450,7 @@ Le repos planifié permet une récupération complète sans impact négatif sur 
 #### Métriques Post-séance
 - CTL : {ctl_post} (stable)
 - ATL : {atl_post} (stable)
-- TSB : {tsb_post:+d} (stable)
+- TSB : {int(tsb_post):+d} (stable)
 
 ---
 """
@@ -458,9 +459,7 @@ Le repos planifié permet une récupération complète sans impact négatif sur 
 
 
 def generate_skipped_session_entry(
-    session_data: dict,
-    metrics_pre: dict,
-    reason: Optional[str] = None
+    session_data: dict, metrics_pre: dict, reason: Optional[str] = None
 ) -> str:
     """
     Génère bloc markdown pour séance planifiée mais sautée
@@ -474,40 +473,38 @@ def generate_skipped_session_entry(
         Bloc markdown formaté selon template séance sautée
     """
     # Extraire données session
-    session_id = session_data.get('session_id', 'N/A')
-    session_name = session_data.get('name', session_data.get('planned_name', 'Séance'))
-    date_str = session_data.get('date', session_data.get('planned_date', ''))
+    session_id = session_data.get("session_id", "N/A")
+    session_name = session_data.get("name", session_data.get("planned_name", "Séance"))
+    date_str = session_data.get("date", session_data.get("planned_date", ""))
 
     # Formatter date
     try:
-        date_obj = datetime.strptime(date_str, '%Y-%m-%d')
-        formatted_date = date_obj.strftime('%d/%m/%Y')
-        day_of_week = date_obj.strftime('%A')
+        date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+        formatted_date = date_obj.strftime("%d/%m/%Y")
+        day_of_week = date_obj.strftime("%A")
     except:
         formatted_date = date_str
-        day_of_week = 'N/A'
+        day_of_week = "N/A"
 
     # TSS et durée prévus
-    planned_tss = session_data.get('tss_planned', session_data.get('planned_tss', 0))
-    planned_duration = session_data.get('duration_planned',
-                                       session_data.get('planned_duration', 0))
+    planned_tss = session_data.get("tss_planned", session_data.get("planned_tss", 0))
+    planned_duration = session_data.get("duration_planned", session_data.get("planned_duration", 0))
     planned_duration_min = planned_duration // 60 if planned_duration > 0 else 0
 
     # Raison du saut
-    skip_reason = reason or session_data.get('skip_reason',
-                                             'Raison non documentée')
+    skip_reason = reason or session_data.get("skip_reason", "Raison non documentée")
 
     # Métriques pré-séance
     from cyclisme_training_logs.utils.metrics import extract_wellness_metrics
 
     metrics_pre_values = extract_wellness_metrics(metrics_pre)
     # Display as N/A if metrics are not available (0 values from empty wellness data)
-    ctl_pre = metrics_pre_values['ctl'] if metrics_pre else 'N/A'
-    atl_pre = metrics_pre_values['atl'] if metrics_pre else 'N/A'
-    tsb_pre = metrics_pre_values['tsb'] if metrics_pre else 'N/A'
+    ctl_pre = metrics_pre_values["ctl"] if metrics_pre else "N/A"
+    atl_pre = metrics_pre_values["atl"] if metrics_pre else "N/A"
+    tsb_pre = metrics_pre_values["tsb"] if metrics_pre else "N/A"
 
     # Contexte additionnel
-    days_ago = session_data.get('days_ago', 0)
+    days_ago = session_data.get("days_ago", 0)
 
     # Construire markdown
     markdown = f"""### {session_id} - {session_name} [SAUTÉE]
@@ -553,11 +550,9 @@ Séance planifiée non exécutée. Impact sur progression hebdomadaire à évalu
 # GÉNÉRATION MARKDOWN SÉANCE ANNULÉE
 # ============================================================================
 
+
 def generate_cancelled_session_entry(
-    session_data: dict,
-    metrics_pre: dict,
-    reason: str,
-    impact_notes: Optional[str] = None
+    session_data: dict, metrics_pre: dict, reason: str, impact_notes: Optional[str] = None
 ) -> str:
     """
     Génère bloc markdown pour séance annulée/reportée
@@ -572,31 +567,31 @@ def generate_cancelled_session_entry(
         Bloc markdown formaté selon template annulation
     """
     # Extraire données session
-    session_id = session_data['session_id']
-    session_type = session_data['type']
-    session_name = session_data['name']
-    version = session_data.get('version', 'V001')
-    date_str = datetime.strptime(session_data['date'], '%Y-%m-%d').strftime('%d/%m/%Y')
-    tss_planned = session_data.get('tss_planned', 0)
+    session_id = session_data["session_id"]
+    session_type = session_data["type"]
+    session_name = session_data["name"]
+    version = session_data.get("version", "V001")
+    date_str = datetime.strptime(session_data["date"], "%Y-%m-%d").strftime("%d/%m/%Y")
+    tss_planned = session_data.get("tss_planned", 0)
 
     # Métriques pré
     from cyclisme_training_logs.utils.metrics import extract_wellness_metrics
 
     metrics_pre_values = extract_wellness_metrics(metrics_pre)
-    ctl_pre = metrics_pre_values['ctl']
-    atl_pre = metrics_pre_values['atl']
-    tsb_pre = metrics_pre_values['tsb']
+    ctl_pre = metrics_pre_values["ctl"]
+    atl_pre = metrics_pre_values["atl"]
+    tsb_pre = metrics_pre_values["tsb"]
 
     # Feedback athlète (si disponible)
     sleep_info = ""
-    if 'sleep_duration' in metrics_pre:
-        sleep_duration = metrics_pre.get('sleep_duration', 'N/A')
-        sleep_score = metrics_pre.get('sleep_score', 'N/A')
+    if "sleep_duration" in metrics_pre:
+        sleep_duration = metrics_pre.get("sleep_duration", "N/A")
+        sleep_score = metrics_pre.get("sleep_score", "N/A")
         sleep_info = f"- Sommeil : {sleep_duration} (score {sleep_score})\n"
 
     # Impact planning
     if impact_notes is None:
-        impact_notes = session_data.get('impact_notes', 'Impact à évaluer')
+        impact_notes = session_data.get("impact_notes", "Impact à évaluer")
 
     # Construire markdown
     markdown = f"""### {session_id}-{session_type}-{session_name}-{version}
@@ -605,7 +600,7 @@ Date : {date_str}
 #### Métriques Pré-séance
 - CTL : {ctl_pre}
 - ATL : {atl_pre}
-- TSB : {tsb_pre:+d}
+- TSB : {int(tsb_pre):+d}
 {sleep_info}
 #### Exécution
 - Durée : 0min (séance non réalisée)
@@ -617,7 +612,7 @@ Date : {date_str}
 {impact_notes}
 
 **Conséquences :**
-- TSS nul, métriques maintenues (CTL/ATL/TSB {ctl_pre}/{atl_pre}/{tsb_pre:+d})
+- TSS nul, métriques maintenues (CTL/ATL/TSB {ctl_pre}/{atl_pre}/{int(tsb_pre):+d})
 - Repos involontaire maintient ou améliore TSB
 - Nécessité de réévaluer progression semaine
 
@@ -639,7 +634,7 @@ Date : {date_str}
 #### Métriques Post-séance
 - CTL : {ctl_pre} (inchangé)
 - ATL : {atl_pre} (inchangé)
-- TSB : {tsb_pre:+d} (inchangé)
+- TSB : {int(tsb_pre):+d} (inchangé)
 
 ---
 """
@@ -651,10 +646,10 @@ Date : {date_str}
 # RÉCONCILIATION PLANNING VS ACTIVITÉS
 # ============================================================================
 
+
 def reconcile_planned_vs_actual(
-    week_planning: dict,
-    intervals_activities: List[dict]
-) -> Dict[str, List]:
+    week_planning: dict, intervals_activities: list[dict]
+) -> dict[str, list]:
     """
     Compare planning hebdomadaire vs activités réelles Intervals.icu
 
@@ -669,51 +664,44 @@ def reconcile_planned_vs_actual(
         - 'cancelled': Séances annulées
         - 'unplanned': Activités non planifiées
     """
-    result = {
-        'matched': [],
-        'rest_days': [],
-        'cancelled': [],
-        'skipped': [],
-        'unplanned': []
-    }
+    result = {"matched": [], "rest_days": [], "cancelled": [], "skipped": [], "unplanned": []}
 
     # Index activités par date
     activities_by_date = {}
     for activity in intervals_activities:
-        date = activity['start_date_local'][:10]  # YYYY-MM-DD
+        date = activity["start_date_local"][:10]  # YYYY-MM-DD
         if date not in activities_by_date:
             activities_by_date[date] = []
         activities_by_date[date].append(activity)
 
     # Traiter chaque session planifiée
     planned_dates = set()
-    for session in week_planning['planned_sessions']:
-        session_date = session['date']
+    for session in week_planning["planned_sessions"]:
+        session_date = session["date"]
         planned_dates.add(session_date)
-        status = session['status']
+        status = session["status"]
 
-        if status == 'rest_day':
-            result['rest_days'].append(session)
+        if status == "rest_day":
+            result["rest_days"].append(session)
 
-        elif status == 'cancelled':
-            result['cancelled'].append(session)
+        elif status == "cancelled":
+            result["cancelled"].append(session)
 
-        elif status == 'skipped':
-            result['skipped'].append(session)
+        elif status == "skipped":
+            result["skipped"].append(session)
 
-        elif status in ['completed', 'replaced']:
+        elif status in ["completed", "replaced"]:
             # Chercher activité correspondante
             if session_date in activities_by_date:
                 # Trouver la meilleure correspondance
                 matched_activity = None
                 for activity in activities_by_date[session_date]:
                     # Heuristique : comparer noms ou IDs
-                    activity_name = activity.get('name', '').upper()
-                    session_id = session['session_id'].upper()
-                    session_name = session['name'].upper()
+                    activity_name = activity.get("name", "").upper()
+                    session_id = session["session_id"].upper()
+                    session_name = session["name"].upper()
 
-                    if (session_id in activity_name or
-                        session_name in activity_name):
+                    if session_id in activity_name or session_name in activity_name:
                         matched_activity = activity
                         break
 
@@ -722,10 +710,7 @@ def reconcile_planned_vs_actual(
                     matched_activity = activities_by_date[session_date][0]
 
                 if matched_activity:
-                    result['matched'].append({
-                        'session': session,
-                        'activity': matched_activity
-                    })
+                    result["matched"].append({"session": session, "activity": matched_activity})
                     # Retirer de la liste pour détecter non planifiées
                     activities_by_date[session_date].remove(matched_activity)
             else:
@@ -737,15 +722,15 @@ def reconcile_planned_vs_actual(
                     f"→ Reclassée comme SKIPPED"
                 )
                 # Marquer comme sautée avec contexte (modification directe pour persistence)
-                session['status'] = 'skipped'
-                session['skip_reason'] = 'Planifiée completed mais activité introuvable'
-                result['skipped'].append(session)
+                session["status"] = "skipped"
+                session["skip_reason"] = "Planifiée completed mais activité introuvable"
+                result["skipped"].append(session)
 
     # Activités restantes = non planifiées
     for date, activities in activities_by_date.items():
         for activity in activities:
             # Toute activité restante est non planifiée
-            result['unplanned'].append(activity)
+            result["unplanned"].append(activity)
 
     # Log résumé
     logger.info("=" * 70)
@@ -766,6 +751,7 @@ def reconcile_planned_vs_actual(
 # WORKFLOW PRINCIPAL AVEC GESTION REPOS
 # ============================================================================
 
+
 def process_week_with_rest_handling(
     week_id: str,
     start_date: str,
@@ -773,8 +759,8 @@ def process_week_with_rest_handling(
     athlete_id: str,
     api_key: str,
     planning_dir: Optional[Path] = None,
-    output_file: Optional[Path] = None
-) -> Dict:
+    output_file: Optional[Path] = None,
+) -> dict:
     """
     Workflow complet avec gestion repos/annulations
 
@@ -813,10 +799,7 @@ def process_week_with_rest_handling(
     except FileNotFoundError as e:
         logger.warning(f"Planning non trouvé : {e}")
         logger.warning("Fallback mode standard (sans planning)")
-        return {
-            'status': 'fallback',
-            'message': 'Planning non trouvé, utiliser workflow standard'
-        }
+        return {"status": "fallback", "message": "Planning non trouvé, utiliser workflow standard"}
 
     # 2. Récupérer activités Intervals.icu
     api = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
@@ -830,70 +813,57 @@ def process_week_with_rest_handling(
     markdown_entries = []
 
     # Traiter par ordre chronologique
-    all_sessions = sorted(
-        planning['planned_sessions'],
-        key=lambda x: x['date']
-    )
+    all_sessions = sorted(planning["planned_sessions"], key=lambda x: x["date"])
 
     for session in all_sessions:
-        status = session['status']
+        status = session["status"]
 
         # Récupérer métriques (simulation pour l'exemple)
         # En production, récupérer depuis API Intervals.icu wellness
-        metrics_pre = {
-            'ctl': 50,
-            'atl': 35,
-            'tsb': 15,
-            'sleep_duration': '7h00',
-            'sleep_score': 75
-        }
-        metrics_post = {
-            'ctl': 50,
-            'atl': 35,
-            'tsb': 15
-        }
+        metrics_pre = {"ctl": 50, "atl": 35, "tsb": 15, "sleep_duration": "7h00", "sleep_score": 75}
+        metrics_post = {"ctl": 50, "atl": 35, "tsb": 15}
 
-        if status == 'rest_day':
+        if status == "rest_day":
             entry = generate_rest_day_entry(
                 session_data=session,
                 metrics_pre=metrics_pre,
                 metrics_post=metrics_post,
                 athlete_feedback={
-                    'sleep_duration': '6h12min',
-                    'sleep_score': 78,
-                    'hrv': 66,
-                    'resting_hr': 44
-                }
+                    "sleep_duration": "6h12min",
+                    "sleep_score": 78,
+                    "hrv": 66,
+                    "resting_hr": 44,
+                },
             )
             markdown_entries.append(entry)
             logger.info(f"✓ Repos : {session['session_id']}")
 
-        elif status == 'cancelled':
+        elif status == "cancelled":
             entry = generate_cancelled_session_entry(
-                session_data=session,
-                metrics_pre=metrics_pre,
-                reason=session['cancellation_reason']
+                session_data=session, metrics_pre=metrics_pre, reason=session["cancellation_reason"]
             )
             markdown_entries.append(entry)
             logger.info(f"✗ Annulée : {session['session_id']}")
 
-        elif status == 'skipped':
+        elif status == "skipped":
             # Nouvelle gestion séances sautées
             entry = generate_skipped_session_entry(
                 session_data=session,
                 metrics_pre=metrics_pre,
-                reason=session.get('skip_reason',
-                                  'Séance planifiée non exécutée')
+                reason=session.get("skip_reason", "Séance planifiée non exécutée"),
             )
             markdown_entries.append(entry)
             logger.info(f"⏭️  Sautée : {session['session_id']}")
 
-        elif status == 'completed':
+        elif status == "completed":
             # Chercher dans les matched
             matched = next(
-                (m for m in reconciliation['matched']
-                 if m['session']['session_id'] == session['session_id']),
-                None
+                (
+                    m
+                    for m in reconciliation["matched"]
+                    if m["session"]["session_id"] == session["session_id"]
+                ),
+                None,
             )
             if matched:
                 logger.info(f"✓ Exécutée : {session['session_id']}")
@@ -907,7 +877,7 @@ def process_week_with_rest_handling(
 
     # 5. Écrire dans fichier si spécifié
     if output_file:
-        with open(output_file, 'a', encoding='utf-8') as f:
+        with open(output_file, "a", encoding="utf-8") as f:
             for entry in markdown_entries:
                 f.write(entry + "\n")
         logger.info(f"\n✓ Entrées écrites dans {output_file}")
@@ -918,15 +888,8 @@ def process_week_with_rest_handling(
     logger.info(f"{'=' * 70}")
 
     # Calculer TSS
-    tss_completed = sum(
-        m['session'].get('tss_planned', 0)
-        for m in reconciliation['matched']
-    )
-    tss_planned = sum(
-        s.get('tss_planned', 0)
-        for s in all_sessions
-        if s['status'] != 'rest_day'
-    )
+    tss_completed = sum(m["session"].get("tss_planned", 0) for m in reconciliation["matched"])
+    tss_planned = sum(s.get("tss_planned", 0) for s in all_sessions if s["status"] != "rest_day")
     tss_completion = (tss_completed / tss_planned * 100) if tss_planned > 0 else 0
 
     logger.info(f"\nSessions planifiées : {len(all_sessions)}")
@@ -934,14 +897,16 @@ def process_week_with_rest_handling(
     logger.info(f"Repos planifiés : {len(reconciliation['rest_days'])}")
     logger.info(f"Séances annulées : {len(reconciliation['cancelled'])}")
     logger.info(f"Séances sautées : {len(reconciliation['skipped'])}")
-    logger.info(f"\nTSS Semaine : {tss_completed} réalisé / {tss_planned} planifié ({tss_completion:.0f}%)")
+    logger.info(
+        f"\nTSS Semaine : {tss_completed} réalisé / {tss_planned} planifié ({tss_completion:.0f}%)"
+    )
     logger.info(f"{'=' * 70}\n")
 
     return {
-        'status': 'success',
-        'week_id': week_id,
-        'reconciliation': reconciliation,
-        'tss_completed': tss_completed,
-        'tss_planned': tss_planned,
-        'markdown_entries_count': len(markdown_entries)
+        "status": "success",
+        "week_id": week_id,
+        "reconciliation": reconciliation,
+        "tss_completed": tss_completed,
+        "tss_planned": tss_planned,
+        "markdown_entries_count": len(markdown_entries),
     }

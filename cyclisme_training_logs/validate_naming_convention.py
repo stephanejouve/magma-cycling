@@ -24,72 +24,69 @@ Exit codes:
     2 : Erreur exécution
 """
 
-import sys
-import re
-import json
-from pathlib import Path
-from typing import List, Dict, Any
 import argparse
+import json
+import re
+import sys
+from pathlib import Path
+from typing import Any
 
 
 class NamingValidator:
     """Validateur de conventions de nommage weekly_reports"""
 
     # Convention stricte : SXXX (S majuscule + 3 chiffres)
-    DIR_PATTERN = re.compile(r'^S\d{3}$')
-    FILE_PATTERN = re.compile(r'^[a-z_]+_S\d{3}(?:_S\d{3})?\.md$')
+    DIR_PATTERN = re.compile(r"^S\d{3}$")
+    FILE_PATTERN = re.compile(r"^[a-z_]+_S\d{3}(?:_S\d{3})?\.md$")
 
     # Patterns invalides à détecter
-    LOWERCASE_DIR = re.compile(r'^s\d{3}$')
-    LOWERCASE_FILE = re.compile(r'_s\d{3}')
+    LOWERCASE_DIR = re.compile(r"^s\d{3}$")
+    LOWERCASE_FILE = re.compile(r"_s\d{3}")
 
     def __init__(self, project_root: str = "."):
         self.project_root = Path(project_root)
         self.weekly_dir = self.project_root / "logs" / "weekly_reports"
-        self.issues: List[Dict[str, Any]] = []
+        self.issues: list[dict[str, Any]] = []
 
-    def validate_directory_name(self, dir_name: str) -> Dict[str, Any]:
+    def validate_directory_name(self, dir_name: str) -> dict[str, Any]:
         """Valider nom de répertoire"""
-        result = {
-            'type': 'directory',
-            'name': dir_name,
-            'valid': True,
-            'issues': []
-        }
+        result = {"type": "directory", "name": dir_name, "valid": True, "issues": []}
 
         # Vérifier minuscule
         if self.LOWERCASE_DIR.match(dir_name):
-            result['valid'] = False
-            result['issues'].append(f"Minuscule détecté : {dir_name} → devrait être {dir_name.upper()}")
+            result["valid"] = False
+            result["issues"].append(
+                f"Minuscule détecté : {dir_name} → devrait être {dir_name.upper()}"
+            )
 
         # Vérifier format
         elif not self.DIR_PATTERN.match(dir_name):
-            result['valid'] = False
-            result['issues'].append(f"Format invalide : {dir_name} (attendu: SXXX)")
+            result["valid"] = False
+            result["issues"].append(f"Format invalide : {dir_name} (attendu: SXXX)")
 
         return result
 
-    def validate_file_name(self, file_name: str, parent_dir: str) -> Dict[str, Any]:
+    def validate_file_name(self, file_name: str, parent_dir: str) -> dict[str, Any]:
         """Valider nom de fichier"""
         result = {
-            'type': 'file',
-            'name': file_name,
-            'parent': parent_dir,
-            'valid': True,
-            'issues': []
+            "type": "file",
+            "name": file_name,
+            "parent": parent_dir,
+            "valid": True,
+            "issues": [],
         }
 
         # Vérifier minuscule dans numéro semaine
         if self.LOWERCASE_FILE.search(file_name):
             # Proposer correction
-            corrected = re.sub(r'_s(\d{3})', r'_S\1', file_name)
-            result['valid'] = False
-            result['issues'].append(f"Minuscule détecté : {file_name} → devrait être {corrected}")
+            corrected = re.sub(r"_s(\d{3})", r"_S\1", file_name)
+            result["valid"] = False
+            result["issues"].append(f"Minuscule détecté : {file_name} → devrait être {corrected}")
 
         # Vérifier format global
         elif not self.FILE_PATTERN.match(file_name):
-            result['valid'] = False
-            result['issues'].append(f"Format invalide : {file_name} (attendu: nom_SXXX.md)")
+            result["valid"] = False
+            result["issues"].append(f"Format invalide : {file_name} (attendu: nom_SXXX.md)")
 
         return result
 
@@ -108,14 +105,14 @@ class NamingValidator:
 
             # Valider nom répertoire
             dir_result = self.validate_directory_name(item.name)
-            if not dir_result['valid']:
+            if not dir_result["valid"]:
                 all_valid = False
                 self.issues.append(dir_result)
 
             # Valider fichiers dans répertoire
             for file_path in sorted(item.glob("*.md")):
                 file_result = self.validate_file_name(file_path.name, item.name)
-                if not file_result['valid']:
+                if not file_result["valid"]:
                     all_valid = False
                     self.issues.append(file_result)
 
@@ -136,7 +133,7 @@ class NamingValidator:
         dirs = [d for d in self.weekly_dir.iterdir() if d.is_dir()]
         files = list(self.weekly_dir.rglob("*.md"))
 
-        print(f"📊 Éléments analysés :")
+        print("📊 Éléments analysés :")
         print(f"   Répertoires : {len(dirs)}")
         print(f"   Fichiers .md : {len(files)}")
         print()
@@ -154,14 +151,14 @@ class NamingValidator:
             print()
 
             # Grouper par type
-            dir_issues = [i for i in self.issues if i['type'] == 'directory']
-            file_issues = [i for i in self.issues if i['type'] == 'file']
+            dir_issues = [i for i in self.issues if i["type"] == "directory"]
+            file_issues = [i for i in self.issues if i["type"] == "file"]
 
             if dir_issues:
                 print(f"📁 Répertoires ({len(dir_issues)}) :")
                 for issue in dir_issues:
                     print(f"   ❌ {issue['name']}")
-                    for msg in issue['issues']:
+                    for msg in issue["issues"]:
                         print(f"      → {msg}")
                 print()
 
@@ -169,7 +166,7 @@ class NamingValidator:
                 print(f"📄 Fichiers ({len(file_issues)}) :")
                 for issue in file_issues:
                     print(f"   ❌ {issue['parent']}/{issue['name']}")
-                    for msg in issue['issues']:
+                    for msg in issue["issues"]:
                         print(f"      → {msg}")
                 print()
 
@@ -186,18 +183,22 @@ class NamingValidator:
 
     def get_json_report(self) -> str:
         """Générer rapport JSON"""
-        dirs = [d.name for d in self.weekly_dir.iterdir() if d.is_dir()] if self.weekly_dir.exists() else []
-        files = [str(f.relative_to(self.weekly_dir)) for f in self.weekly_dir.rglob("*.md")] if self.weekly_dir.exists() else []
+        dirs = (
+            [d.name for d in self.weekly_dir.iterdir() if d.is_dir()]
+            if self.weekly_dir.exists()
+            else []
+        )
+        files = (
+            [str(f.relative_to(self.weekly_dir)) for f in self.weekly_dir.rglob("*.md")]
+            if self.weekly_dir.exists()
+            else []
+        )
 
         report = {
-            'valid': len(self.issues) == 0,
-            'weekly_reports_path': str(self.weekly_dir),
-            'stats': {
-                'directories': len(dirs),
-                'files': len(files),
-                'issues': len(self.issues)
-            },
-            'issues': self.issues
+            "valid": len(self.issues) == 0,
+            "weekly_reports_path": str(self.weekly_dir),
+            "stats": {"directories": len(dirs), "files": len(files), "issues": len(self.issues)},
+            "issues": self.issues,
         }
 
         return json.dumps(report, indent=2, ensure_ascii=False)
@@ -206,25 +207,17 @@ class NamingValidator:
 def main():
     parser = argparse.ArgumentParser(
         description="Valider conventions nommage weekly_reports (SXXX strict)",
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
     parser.add_argument(
-        '--verbose', '-v',
-        action='store_true',
-        help="Mode verbeux : afficher tous les fichiers"
+        "--verbose", "-v", action="store_true", help="Mode verbeux : afficher tous les fichiers"
     )
 
-    parser.add_argument(
-        '--json',
-        action='store_true',
-        help="Output JSON (pour CI/CD)"
-    )
+    parser.add_argument("--json", action="store_true", help="Output JSON (pour CI/CD)")
 
     parser.add_argument(
-        '--project-root',
-        default='.',
-        help="Racine du projet (défaut: répertoire courant)"
+        "--project-root", default=".", help="Racine du projet (défaut: répertoire courant)"
     )
 
     args = parser.parse_args()

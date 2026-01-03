@@ -23,6 +23,7 @@ Created: 2026-01-01
 
 import os
 from typing import Literal
+
 from pydantic import BaseModel, Field, ValidationError
 
 
@@ -40,15 +41,11 @@ class AthleteProfile(BaseModel):
     """
 
     age: int = Field(gt=0, le=120, description="Athlete age in years")
-    category: Literal["junior", "senior", "master"] = Field(
-        description="Competition category"
-    )
+    category: Literal["junior", "senior", "master"] = Field(description="Competition category")
     recovery_capacity: Literal["normal", "good", "exceptional"] = Field(
         description="Recovery ability level"
     )
-    sleep_dependent: bool = Field(
-        description="Whether performance is strongly sleep-dependent"
-    )
+    sleep_dependent: bool = Field(description="Whether performance is strongly sleep-dependent")
     ftp: int = Field(gt=0, description="Functional Threshold Power in watts")
     weight: float = Field(gt=0, description="Athlete weight in kg")
 
@@ -93,9 +90,7 @@ class AthleteProfile(BaseModel):
             if not category:
                 raise ValueError("ATHLETE_CATEGORY environment variable is required")
             if not recovery:
-                raise ValueError(
-                    "ATHLETE_RECOVERY_CAPACITY environment variable is required"
-                )
+                raise ValueError("ATHLETE_RECOVERY_CAPACITY environment variable is required")
             if ftp == 0:
                 raise ValueError("ATHLETE_FTP environment variable is required")
             if weight == 0:

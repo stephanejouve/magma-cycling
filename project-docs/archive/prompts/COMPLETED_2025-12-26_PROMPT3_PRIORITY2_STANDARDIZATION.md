@@ -1,8 +1,8 @@
 # 📚 PROMPT CLAUDE CODE - STANDARDISATION DOCSTRINGS V2 (PRIORITY 2)
 
-**Phase :** Prompt 3 - Priority 2 (Standardisation Suite)  
-**Objectif :** Standardiser 10 fichiers critiques P1-P2 avec docstrings v2 + tags Gartner TIME  
-**Durée estimée :** 2-3 heures  
+**Phase :** Prompt 3 - Priority 2 (Standardisation Suite)
+**Objectif :** Standardiser 10 fichiers critiques P1-P2 avec docstrings v2 + tags Gartner TIME
+**Durée estimée :** 2-3 heures
 **Priorité :** 🎯 HIGH (après ou parallèle Prompt 2 Phase 1)
 
 ---
@@ -88,13 +88,13 @@ Examples:
     Sync recent activities::
 
         from cyclisme_training_logs.sync_intervals import IntervalsAPI
-        
+
         # Initialiser API
         api = IntervalsAPI()
-        
+
         # Sync dernières 7 jours
         activities = api.sync_recent_activities(days=7)
-        
+
         for activity in activities:
             print(f"{activity['start_date']}: {activity['name']}")
 
@@ -102,7 +102,7 @@ Examples:
 
         # Récupérer métriques forme aujourd'hui
         wellness = api.get_wellness_today()
-        
+
         print(f"CTL: {wellness['ctl']}")
         print(f"ATL: {wellness['atl']}")
         print(f"TSB: {wellness['tsb']}")
@@ -111,7 +111,7 @@ Examples:
 
         # Fetch activité par ID
         activity = api.get_activity('i123456')
-        
+
         print(f"TSS: {activity['training_load']}")
         print(f"IF: {activity['if']:.2f}")
         print(f"NP: {activity['normalized_power']}W")
@@ -160,37 +160,37 @@ Examples:
 
         from cyclisme_training_logs.upload_workouts import upload_workout
         from pathlib import Path
-        
+
         # Upload fichier .zwo
         workout_file = Path("S073-01-INT-SweetSpot-V001.zwo")
-        
+
         result = upload_workout(
             workout_file,
             target_date="2025-01-06"
         )
-        
+
         if result.success:
             print(f"Uploaded: {result.workout_id}")
 
     Batch upload week::
 
         from cyclisme_training_logs.upload_workouts import upload_week
-        
+
         # Upload semaine complète
         week_dir = Path("workouts/S073-Semaine73")
-        
+
         results = upload_week(
             week_dir,
             start_date="2025-01-06"
         )
-        
+
         print(f"Uploaded {len(results)} workouts")
 
     CLI usage::
 
         # Command-line upload
         poetry run upload-workouts --file S073-01-INT-SweetSpot-V001.zwo --date 2025-01-06
-        
+
         # Upload entire week
         poetry run upload-workouts --week S073 --start-date 2025-01-06
 
@@ -237,13 +237,13 @@ Examples:
     Check weekly compliance::
 
         from cyclisme_training_logs.planned_sessions_checker import check_week
-        
+
         # Vérifier semaine S073
         compliance = check_week(
             week="S073",
             start_date="2025-01-06"
         )
-        
+
         print(f"Completed: {compliance['completed']}/7")
         print(f"Missed: {compliance['missed']}")
         print(f"Compliance: {compliance['rate']:.1f}%")
@@ -251,13 +251,13 @@ Examples:
     Detailed session comparison::
 
         from cyclisme_training_logs.planned_sessions_checker import compare_sessions
-        
+
         # Comparer séance planifiée vs exécutée
         comparison = compare_sessions(
             planned_id="workout_123",
             activity_id="i654321"
         )
-        
+
         if comparison['tss_delta'] > 10:
             print("Warning: TSS mismatch")
 
@@ -265,7 +265,7 @@ Examples:
 
         # Check current week
         poetry run check-planned --week current
-        
+
         # Generate weekly report
         poetry run check-planned --week S073 --report
 
@@ -312,18 +312,18 @@ Examples:
     Validate workout syntax::
 
         from cyclisme_training_logs.intervals_format_validator import validate_workout
-        
+
         workout_text = '''
         Warmup
         - 10m 50-75% 85rpm
-        
+
         Main set 4x
         - 8m 90% 90rpm
         - 3m 65% 85rpm
         '''
-        
+
         result = validate_workout(workout_text)
-        
+
         if result.valid:
             print("✅ Valid Intervals.icu format")
         else:
@@ -332,12 +332,12 @@ Examples:
     Check file before upload::
 
         from pathlib import Path
-        
+
         # Valider fichier .txt avant conversion
         workout_file = Path("S073-01-workout.txt")
-        
+
         result = validate_workout(workout_file.read_text())
-        
+
         # Afficher warnings
         for warning in result.warnings:
             print(f"⚠️  {warning}")
@@ -346,7 +346,7 @@ Examples:
 
         # Validate all workouts in directory
         poetry run validate-workouts --dir workouts/S073/
-        
+
         # Validate single file
         poetry run validate-workouts --file S073-01-workout.txt
 
@@ -389,10 +389,10 @@ Examples:
     Get AI provider::
 
         from cyclisme_training_logs.ai_providers import get_provider
-        
+
         # Provider par défaut (Claude)
         provider = get_provider()
-        
+
         # Provider spécifique
         mistral = get_provider('mistral')
         openai = get_provider('openai')
@@ -401,7 +401,7 @@ Examples:
 
         # Essayer Claude, fallback Mistral
         providers = ['claude', 'mistral']
-        
+
         for provider_name in providers:
             try:
                 provider = get_provider(provider_name)
@@ -414,7 +414,7 @@ Examples:
     List available providers::
 
         from cyclisme_training_logs.ai_providers import list_providers
-        
+
         providers = list_providers()
         print(f"Available: {', '.join(providers)}")
 
@@ -455,14 +455,14 @@ Examples:
     Basic analysis::
 
         from cyclisme_training_logs.ai_providers.mistral_api import MistralProvider
-        
+
         provider = MistralProvider()
-        
+
         analysis = provider.analyze(
             prompt="Analyser séance S073-01",
             workout_data={"tss": 45, "if": 1.2}
         )
-        
+
         print(analysis)
 
     Streaming response::
@@ -474,9 +474,9 @@ Examples:
     Error handling::
 
         from cyclisme_training_logs.ai_providers.mistral_api import MistralProvider
-        
+
         provider = MistralProvider(max_retries=3)
-        
+
         try:
             analysis = provider.analyze(prompt, data)
         except Exception as e:
@@ -520,9 +520,9 @@ Examples:
     Standard analysis::
 
         from cyclisme_training_logs.ai_providers.claude_api import ClaudeProvider
-        
+
         provider = ClaudeProvider()
-        
+
         analysis = provider.analyze(
             prompt="Analyser découplage cardiovasculaire",
             workout_data={"hr_avg": 120, "power_avg": 180}
@@ -532,9 +532,9 @@ Examples:
 
         # Activer extended thinking
         provider = ClaudeProvider(enable_thinking=True)
-        
+
         result = provider.analyze(prompt, data)
-        
+
         # Accéder thinking blocks
         if result.thinking:
             print("Reasoning:", result.thinking)
@@ -543,7 +543,7 @@ Examples:
 
         # Analyser plusieurs workouts
         workouts = [workout1, workout2, workout3]
-        
+
         analyses = provider.batch_analyze(
             prompts=[...],
             workouts_data=workouts
@@ -594,7 +594,7 @@ Examples:
     Log rest day::
 
         from cyclisme_training_logs.rest_and_cancellations import log_rest
-        
+
         # Logger repos programmé
         log_rest(
             date="2025-01-12",
@@ -620,7 +620,7 @@ Examples:
             current_ctl=65,
             current_atl=58
         )
-        
+
         print(f"TSB après repos: {impact['tsb_after']}")
 
 Author: Stéphane Jouve
@@ -666,10 +666,10 @@ Examples:
     Load workflow state::
 
         from cyclisme_training_logs.workflow_state import WorkflowState
-        
+
         # Charger état
         state = WorkflowState.load()
-        
+
         # Vérifier étapes complétées
         if state.is_completed('fetch_activity'):
             print("Activity already fetched")
@@ -681,7 +681,7 @@ Examples:
             step='generate_analysis',
             metadata={'activity_id': 'i123456'}
         )
-        
+
         # Persister
         state.save()
 
@@ -737,23 +737,23 @@ Examples:
     Basic stats (legacy)::
 
         from cyclisme_training_logs.stats import compute_weekly_stats
-        
+
         # ⚠️  Legacy - à remplacer
         stats = compute_weekly_stats(
             week="S073",
             activities=[...]
         )
-        
+
         print(f"Total TSS: {stats['total_tss']}")
 
     Migration to new system::
 
         # ✅ NOUVEAU (Phase 2) - À utiliser pour nouveau code
         from cyclisme_training_logs.analyzers.weekly_analyzer import WeeklyAnalyzer
-        
+
         analyzer = WeeklyAnalyzer(week="S073")
         analysis = analyzer.analyze()
-        
+
         # 6 reports générés automatiquement
         print(analysis['reports'])
 
@@ -761,7 +761,7 @@ Examples:
 
         # ⚠️  Legacy command
         poetry run stats --week S073
-        
+
         # ✅ NOUVEAU (Phase 2)
         poetry run weekly-analysis --week S073
 
@@ -904,19 +904,19 @@ Examples:
     Basic usage::
 
         from cyclisme_training_logs.sync_intervals import IntervalsAPI
-        
+
         api = IntervalsAPI()
         activities = api.sync_recent_activities(days=7)
-        
+
         for activity in activities:
             print(f"{activity['start_date']}: {activity['name']}")
 
     Advanced with error handling::
 
         from cyclisme_training_logs.sync_intervals import IntervalsAPI
-        
+
         api = IntervalsAPI()
-        
+
         try:
             wellness = api.get_wellness_today()
             print(f"CTL: {wellness['ctl']}")
@@ -929,7 +929,7 @@ Examples:
 Examples:
     # ❌ Pas d'import explicite
     api = IntervalsAPI()
-    
+
     # ❌ Code incomplet
     activities = api.sync_recent_activities(...)
 ```

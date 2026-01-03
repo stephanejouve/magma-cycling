@@ -18,11 +18,11 @@ Metadata:
 """
 
 import json
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from datetime import date, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 
 class AnalysisLevel(Enum):
@@ -91,7 +91,7 @@ class TrainingLearning:
     level: AnalysisLevel
     category: str
     description: str
-    evidence: List[str]
+    evidence: list[str]
     confidence: ConfidenceLevel
     impact: str  # LOW/MEDIUM/HIGH
     applied: bool = False
@@ -114,7 +114,7 @@ class TrainingLearning:
         transitions = {
             ConfidenceLevel.LOW: ConfidenceLevel.MEDIUM,
             ConfidenceLevel.MEDIUM: ConfidenceLevel.HIGH,
-            ConfidenceLevel.HIGH: ConfidenceLevel.VALIDATED
+            ConfidenceLevel.HIGH: ConfidenceLevel.VALIDATED,
         }
         if self.confidence in transitions:
             self.confidence = transitions[self.confidence]
@@ -153,14 +153,14 @@ class Pattern:
 
     id: str
     name: str
-    trigger_conditions: Dict[str, Any]
+    trigger_conditions: dict[str, Any]
     observed_outcome: str
     frequency: int
     first_seen: date
     last_seen: date
     confidence: ConfidenceLevel
 
-    def matches(self, conditions: Dict[str, Any]) -> bool:
+    def matches(self, conditions: dict[str, Any]) -> bool:
         """Check if current conditions match this pattern triggers.
 
         Args:
@@ -264,7 +264,7 @@ class ProtocolAdaptation:
     current_rule: str
     proposed_rule: str
     justification: str
-    evidence: List[str]
+    evidence: list[str]
     confidence: ConfidenceLevel
     status: str  # PROPOSED/TESTED/VALIDATED/REJECTED
 
@@ -305,18 +305,18 @@ class TrainingIntelligence:
 
     def __init__(self) -> None:
         """Initialize TrainingIntelligence with empty memory stores."""
-        self.learnings: Dict[str, TrainingLearning] = {}
-        self.patterns: Dict[str, Pattern] = {}
-        self.adaptations: Dict[str, ProtocolAdaptation] = {}
+        self.learnings: dict[str, TrainingLearning] = {}
+        self.patterns: dict[str, Pattern] = {}
+        self.adaptations: dict[str, ProtocolAdaptation] = {}
 
     def add_learning(
         self,
         category: str,
         description: str,
-        evidence: List[str],
+        evidence: list[str],
         level: AnalysisLevel,
         impact: str = "MEDIUM",
-        confidence: Optional[ConfidenceLevel] = None
+        confidence: Optional[ConfidenceLevel] = None,
     ) -> TrainingLearning:
         """Add new learning or update existing one.
 
@@ -392,7 +392,7 @@ class TrainingIntelligence:
                 evidence=evidence,
                 confidence=confidence,
                 impact=impact,
-                validated=(confidence == ConfidenceLevel.VALIDATED)
+                validated=(confidence == ConfidenceLevel.VALIDATED),
             )
 
             self.learnings[learning_id] = learning
@@ -401,9 +401,9 @@ class TrainingIntelligence:
     def identify_pattern(
         self,
         name: str,
-        trigger_conditions: Dict[str, Any],
+        trigger_conditions: dict[str, Any],
         observed_outcome: str,
-        observation_date: date
+        observation_date: date,
     ) -> Pattern:
         """Identify or update recurring pattern.
 
@@ -453,7 +453,7 @@ class TrainingIntelligence:
                 frequency=1,
                 first_seen=observation_date,
                 last_seen=observation_date,
-                confidence=ConfidenceLevel.LOW
+                confidence=ConfidenceLevel.LOW,
             )
 
             self.patterns[pattern_id] = pattern
@@ -466,7 +466,7 @@ class TrainingIntelligence:
         current_rule: str,
         proposed_rule: str,
         justification: str,
-        evidence: List[str]
+        evidence: list[str],
     ) -> ProtocolAdaptation:
         """Propose protocol adaptation based on evidence.
 
@@ -515,16 +515,13 @@ class TrainingIntelligence:
             justification=justification,
             evidence=evidence,
             confidence=confidence,
-            status="PROPOSED"
+            status="PROPOSED",
         )
 
         self.adaptations[adaptation_id] = adaptation
         return adaptation
 
-    def get_daily_insights(
-        self,
-        context: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def get_daily_insights(self, context: dict[str, Any]) -> dict[str, Any]:
         """Get daily insights based on current context and accumulated intelligence.
 
         Args:
@@ -571,13 +568,10 @@ class TrainingIntelligence:
         return {
             "relevant_learnings": relevant_learnings,
             "active_patterns": active_patterns,
-            "recommendations": recommendations
+            "recommendations": recommendations,
         }
 
-    def get_weekly_synthesis(
-        self,
-        week_number: int
-    ) -> Dict[str, Any]:
+    def get_weekly_synthesis(self, week_number: int) -> dict[str, Any]:
         """Get weekly synthesis of intelligence state.
 
         Args:
@@ -595,17 +589,21 @@ class TrainingIntelligence:
             >>> synthesis = intelligence.get_weekly_synthesis(week_num=2)
         """
         high_confidence_learnings = [
-            learning for learning in self.learnings.values()
+            learning
+            for learning in self.learnings.values()
             if learning.confidence in [ConfidenceLevel.HIGH, ConfidenceLevel.VALIDATED]
         ]
 
         active_patterns = [
-            pattern for pattern in self.patterns.values()
-            if pattern.confidence in [ConfidenceLevel.MEDIUM, ConfidenceLevel.HIGH, ConfidenceLevel.VALIDATED]
+            pattern
+            for pattern in self.patterns.values()
+            if pattern.confidence
+            in [ConfidenceLevel.MEDIUM, ConfidenceLevel.HIGH, ConfidenceLevel.VALIDATED]
         ]
 
         pending_adaptations = [
-            adaptation for adaptation in self.adaptations.values()
+            adaptation
+            for adaptation in self.adaptations.values()
             if adaptation.status == "PROPOSED"
         ]
 
@@ -613,14 +611,10 @@ class TrainingIntelligence:
             "total_learnings": len(self.learnings),
             "high_confidence_learnings": high_confidence_learnings,
             "active_patterns": active_patterns,
-            "pending_adaptations": pending_adaptations
+            "pending_adaptations": pending_adaptations,
         }
 
-    def get_monthly_trends(
-        self,
-        month: int,
-        year: int
-    ) -> Dict[str, Any]:
+    def get_monthly_trends(self, month: int, year: int) -> dict[str, Any]:
         """Get monthly trends analysis.
 
         Args:
@@ -638,34 +632,29 @@ class TrainingIntelligence:
             >>> trends = intelligence.get_monthly_trends(month=1, year=2026)
         """
         validated_learnings = [
-            learning for learning in self.learnings.values()
-            if learning.validated
+            learning for learning in self.learnings.values() if learning.validated
         ]
 
         # Sort patterns by frequency
-        top_patterns = sorted(
-            self.patterns.values(),
-            key=lambda p: p.frequency,
-            reverse=True
-        )[:10]  # Top 10 patterns
+        top_patterns = sorted(self.patterns.values(), key=lambda p: p.frequency, reverse=True)[
+            :10
+        ]  # Top 10 patterns
 
         validated_adaptations = [
-            adaptation for adaptation in self.adaptations.values()
+            adaptation
+            for adaptation in self.adaptations.values()
             if adaptation.status == "VALIDATED"
         ]
 
         return {
             "validated_learnings": validated_learnings,
             "top_patterns": top_patterns,
-            "validated_adaptations": validated_adaptations
+            "validated_adaptations": validated_adaptations,
         }
 
     def get_pid_correction(
-        self,
-        current_ftp: float,
-        target_ftp: float,
-        dt: float = 1.0
-    ) -> Dict[str, Any]:
+        self, current_ftp: float, target_ftp: float, dt: float = 1.0
+    ) -> dict[str, Any]:
         """
         Obtenir correction PID automatique pour progression FTP.
 
@@ -695,29 +684,20 @@ class TrainingIntelligence:
         """
         from cyclisme_training_logs.intelligence.pid_controller import (
             PIDController,
-            compute_pid_gains_from_intelligence
+            compute_pid_gains_from_intelligence,
         )
 
         # Calculate gains from current intelligence
         gains = compute_pid_gains_from_intelligence(self)
 
         # Initialize PID controller
-        pid = PIDController(
-            kp=gains["kp"],
-            ki=gains["ki"],
-            kd=gains["kd"],
-            setpoint=target_ftp
-        )
+        pid = PIDController(kp=gains["kp"], ki=gains["ki"], kd=gains["kd"], setpoint=target_ftp)
 
         # Compute correction
         correction = pid.compute(current_ftp, dt)
         recommendation = pid.get_action_recommendation(correction)
 
-        return {
-            "correction": correction,
-            "recommendation": recommendation,
-            "gains": gains
-        }
+        return {"correction": correction, "recommendation": recommendation, "gains": gains}
 
     def save_to_file(self, file_path: Path) -> None:
         """Save intelligence state to JSON file.
@@ -730,6 +710,7 @@ class TrainingIntelligence:
             >>> from pathlib import Path
             >>> intelligence.save_to_file(Path("/tmp/intelligence_state.json"))
         """
+
         def serialize_obj(obj: Any) -> Any:
             """Serialize dataclass objects to dict."""
             if isinstance(obj, (TrainingLearning, Pattern, ProtocolAdaptation)):
@@ -752,10 +733,10 @@ class TrainingIntelligence:
         state = {
             "learnings": {lid: serialize_obj(l) for lid, l in self.learnings.items()},
             "patterns": {pid: serialize_obj(p) for pid, p in self.patterns.items()},
-            "adaptations": {aid: serialize_obj(a) for aid, a in self.adaptations.items()}
+            "adaptations": {aid: serialize_obj(a) for aid, a in self.adaptations.items()},
         }
 
-        with open(file_path, 'w') as f:
+        with open(file_path, "w") as f:
             json.dump(state, f, indent=2)
 
     @classmethod
@@ -774,7 +755,7 @@ class TrainingIntelligence:
             ...     Path("/tmp/intelligence_state.json")
             ... )
         """
-        with open(file_path, 'r') as f:
+        with open(file_path) as f:
             state = json.load(f)
 
         intelligence = cls()

@@ -225,7 +225,7 @@ Voir `docs/SKIPPED_SESSIONS_DETECTION.md` pour :
 
 ## 🎉 Succès !
 
-Si tous les tests passent, le système est opérationnel. 
+Si tous les tests passent, le système est opérationnel.
 
 **Prochaines utilisations :**
 - Lancer `workflow_coach.py` comme d'habitude
@@ -233,11 +233,11 @@ Si tous les tests passent, le système est opérationnel.
 - Option batch disponible pour les documenter
 
 **Bénéfices :**
-✅ Détection 100% automatique (pas de JSON manuel)  
-✅ Synchronisé temps réel avec Intervals.icu  
-✅ Calcul impact TSS automatique  
-✅ Documentation markdown générée  
-✅ Intégré dans workflow existant  
+✅ Détection 100% automatique (pas de JSON manuel)
+✅ Synchronisé temps réel avec Intervals.icu
+✅ Calcul impact TSS automatique
+✅ Documentation markdown générée
+✅ Intégré dans workflow existant
 
 ---
 

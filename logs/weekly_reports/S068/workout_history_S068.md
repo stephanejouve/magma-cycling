@@ -2,7 +2,7 @@
 
 ## Contexte Semaine
 - **Période** : 17/11/2025 → 23/11/2025
-- **TSS réalisé** : 371 
+- **TSS réalisé** : 371
 - **TSS planifié** : ~350
 - **Écart** : +6% (surcharge modérée)
 - **Discipline** : 100% indoor

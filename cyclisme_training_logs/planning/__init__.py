@@ -10,16 +10,16 @@ Modules:
     intervals_sync: Bidirectional sync with Intervals.icu API
 """
 
-from cyclisme_training_logs.planning.planning_manager import (
-    TrainingObjective,
-    TrainingPlan,
-    PlanningManager,
-)
 from cyclisme_training_logs.planning.calendar import (
     TrainingCalendar,
     TrainingSession,
     WeeklySummary,
     WorkoutType,
+)
+from cyclisme_training_logs.planning.planning_manager import (
+    PlanningManager,
+    TrainingObjective,
+    TrainingPlan,
 )
 
 __all__ = [

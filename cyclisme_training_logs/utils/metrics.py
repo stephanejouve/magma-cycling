@@ -25,12 +25,10 @@ Author: Claude Code
 Created: 2026-01-01
 """
 
-from typing import Dict, List, Optional, Any
+from typing import Any, Optional
 
 
-def extract_wellness_metrics(
-    wellness_data: Optional[Dict[str, Any]]
-) -> Dict[str, float]:
+def extract_wellness_metrics(wellness_data: Optional[dict[str, Any]]) -> dict[str, float]:
     """
     Extract CTL/ATL/TSB metrics from wellness data with proper None handling.
 
@@ -58,12 +56,12 @@ def extract_wellness_metrics(
         {'ctl': 0.0, 'atl': 35.0, 'tsb': -35.0}
     """
     if not wellness_data:
-        return {'ctl': 0.0, 'atl': 0.0, 'tsb': 0.0}
+        return {"ctl": 0.0, "atl": 0.0, "tsb": 0.0}
 
     # Extract with None handling (Pattern B)
-    ctl = wellness_data.get('ctl')
-    atl = wellness_data.get('atl')
-    tsb = wellness_data.get('tsb')
+    ctl = wellness_data.get("ctl")
+    atl = wellness_data.get("atl")
+    tsb = wellness_data.get("tsb")
 
     # Convert None to 0.0
     ctl = ctl if ctl is not None else 0.0
@@ -76,9 +74,9 @@ def extract_wellness_metrics(
         tsb = float(tsb)
 
     return {
-        'ctl': float(ctl),
-        'atl': float(atl),
-        'tsb': float(tsb),
+        "ctl": float(ctl),
+        "atl": float(atl),
+        "tsb": float(tsb),
     }
 
 
@@ -104,7 +102,7 @@ def calculate_tsb(ctl: float, atl: float) -> float:
     return ctl - atl
 
 
-def format_metrics_display(metrics: Dict[str, float]) -> str:
+def format_metrics_display(metrics: dict[str, float]) -> str:
     """
     Format CTL/ATL/TSB metrics for display.
 
@@ -130,17 +128,17 @@ def format_metrics_display(metrics: Dict[str, float]) -> str:
         >>> format_metrics_display(metrics)
         'CTL: 0.0 | ATL: 0.0 | TSB: +0.0'
     """
-    ctl = metrics.get('ctl', 0)
-    atl = metrics.get('atl', 0)
-    tsb = metrics.get('tsb', 0)
+    ctl = metrics.get("ctl", 0)
+    atl = metrics.get("atl", 0)
+    tsb = metrics.get("tsb", 0)
 
     # Add + sign for positive TSB
-    tsb_sign = '+' if tsb >= 0 else ''
+    tsb_sign = "+" if tsb >= 0 else ""
 
     return f"CTL: {ctl:.1f} | ATL: {atl:.1f} | TSB: {tsb_sign}{tsb:.1f}"
 
 
-def is_metrics_complete(metrics: Dict[str, Any]) -> bool:
+def is_metrics_complete(metrics: dict[str, Any]) -> bool:
     """
     Check if all CTL/ATL/TSB metrics are present and valid.
 
@@ -173,7 +171,7 @@ def is_metrics_complete(metrics: Dict[str, Any]) -> bool:
     if not metrics:
         return False
 
-    required_keys = ['ctl', 'atl', 'tsb']
+    required_keys = ["ctl", "atl", "tsb"]
 
     for key in required_keys:
         value = metrics.get(key)
@@ -188,8 +186,8 @@ def is_metrics_complete(metrics: Dict[str, Any]) -> bool:
 
 
 def calculate_metrics_change(
-    metrics_start: Dict[str, float], metrics_end: Dict[str, float]
-) -> Dict[str, Optional[float]]:
+    metrics_start: dict[str, float], metrics_end: dict[str, float]
+) -> dict[str, Optional[float]]:
     """
     Calculate change in metrics between two timepoints.
 
@@ -216,42 +214,30 @@ def calculate_metrics_change(
         {'ctl_change': None, 'atl_change': 2.7, 'tsb_change': None}
     """
     # Calculate CTL change
-    ctl_start = metrics_start.get('ctl')
-    ctl_end = metrics_end.get('ctl')
-    ctl_change = (
-        (ctl_end - ctl_start)
-        if (ctl_start is not None and ctl_end is not None)
-        else None
-    )
+    ctl_start = metrics_start.get("ctl")
+    ctl_end = metrics_end.get("ctl")
+    ctl_change = (ctl_end - ctl_start) if (ctl_start is not None and ctl_end is not None) else None
 
     # Calculate ATL change
-    atl_start = metrics_start.get('atl')
-    atl_end = metrics_end.get('atl')
-    atl_change = (
-        (atl_end - atl_start)
-        if (atl_start is not None and atl_end is not None)
-        else None
-    )
+    atl_start = metrics_start.get("atl")
+    atl_end = metrics_end.get("atl")
+    atl_change = (atl_end - atl_start) if (atl_start is not None and atl_end is not None) else None
 
     # Calculate TSB change
-    tsb_start = metrics_start.get('tsb')
-    tsb_end = metrics_end.get('tsb')
-    tsb_change = (
-        (tsb_end - tsb_start)
-        if (tsb_start is not None and tsb_end is not None)
-        else None
-    )
+    tsb_start = metrics_start.get("tsb")
+    tsb_end = metrics_end.get("tsb")
+    tsb_change = (tsb_end - tsb_start) if (tsb_start is not None and tsb_end is not None) else None
 
     return {
-        'ctl_change': ctl_change,
-        'atl_change': atl_change,
-        'tsb_change': tsb_change,
+        "ctl_change": ctl_change,
+        "atl_change": atl_change,
+        "tsb_change": tsb_change,
     }
 
 
 def get_metrics_safely(
-    wellness_list: Optional[List[Dict[str, Any]]], index: int = 0
-) -> Dict[str, float]:
+    wellness_list: Optional[list[dict[str, Any]]], index: int = 0
+) -> dict[str, float]:
     """
     Safely extract metrics from wellness list with fallback.
 
@@ -285,11 +271,11 @@ def get_metrics_safely(
     """
     # Handle None or empty list
     if not wellness_list:
-        return {'ctl': 0.0, 'atl': 0.0, 'tsb': 0.0}
+        return {"ctl": 0.0, "atl": 0.0, "tsb": 0.0}
 
     # Handle out of bounds index
     if index < 0 or index >= len(wellness_list):
-        return {'ctl': 0.0, 'atl': 0.0, 'tsb': 0.0}
+        return {"ctl": 0.0, "atl": 0.0, "tsb": 0.0}
 
     # Extract metrics from the specified index
     wellness_data = wellness_list[index]

@@ -10,17 +10,15 @@ Metadata:
     Version: 1.0.0
 """
 
-import pytest
-from pathlib import Path
 import sys
+from pathlib import Path
+
+import pytest
 
 # Add scripts to path for import
-sys.path.insert(0, str(Path(__file__).parent.parent / 'scripts' / 'maintenance'))
+sys.path.insert(0, str(Path(__file__).parent.parent / "scripts" / "maintenance"))
 
-from migrate_docstrings import (
-    DocstringMigrator,
-    DocstringMetadata
-)
+from migrate_docstrings import DocstringMetadata, DocstringMigrator
 
 
 @pytest.fixture
@@ -56,64 +54,56 @@ def test_parse_old_docstring(sample_old_docstring):
     metadata = migrator.parse_old_docstring(sample_old_docstring)
 
     assert metadata is not None
-    assert metadata.category == 'I'
-    assert metadata.status == 'Production'
-    assert metadata.priority == 'P0'
-    assert metadata.version == 'v2'
+    assert metadata.category == "I"
+    assert metadata.status == "Production"
+    assert metadata.priority == "P0"
+    assert metadata.version == "v2"
 
 
 def test_generate_google_style():
     """Test Google Style docstring generation."""
     metadata = DocstringMetadata(
-        category='CORE',
-        status='Production',
-        last_review='2025-12-27',
-        priority='P0',
-        version='1.0',
-        description='Brief summary.\n\nExtended description.'
+        category="CORE",
+        status="Production",
+        last_review="2025-12-27",
+        priority="P0",
+        version="1.0",
+        description="Brief summary.\n\nExtended description.",
     )
 
     migrator = DocstringMigrator(project_root=Path.cwd())
     result = migrator.generate_google_style_docstring(metadata)
 
-    assert 'Brief summary.' in result
-    assert 'Metadata:' in result
-    assert 'Created: 2025-12-27' in result
-    assert 'Category: CORE' in result
-    assert 'Priority: P0' in result
+    assert "Brief summary." in result
+    assert "Metadata:" in result
+    assert "Created: 2025-12-27" in result
+    assert "Category: CORE" in result
+    assert "Priority: P0" in result
 
 
 def test_migrate_file(temp_python_file):
     """Test file migration with backup."""
-    migrator = DocstringMigrator(
-        project_root=temp_python_file.parent,
-        backup=True,
-        dry_run=False
-    )
+    migrator = DocstringMigrator(project_root=temp_python_file.parent, backup=True, dry_run=False)
 
     # Migrate
     result = migrator.migrate_file(temp_python_file)
     assert result is True
 
     # Verify backup created
-    backup_file = temp_python_file.with_suffix('.py.bak')
+    backup_file = temp_python_file.with_suffix(".py.bak")
     assert backup_file.exists()
 
     # Verify new content
     new_content = temp_python_file.read_text()
-    assert 'Metadata:' in new_content
-    assert 'GARTNER_TIME:' not in new_content
+    assert "Metadata:" in new_content
+    assert "GARTNER_TIME:" not in new_content
 
 
 def test_dry_run_mode(temp_python_file):
     """Test dry-run mode doesn't modify files."""
     original_content = temp_python_file.read_text()
 
-    migrator = DocstringMigrator(
-        project_root=temp_python_file.parent,
-        backup=False,
-        dry_run=True
-    )
+    migrator = DocstringMigrator(project_root=temp_python_file.parent, backup=False, dry_run=True)
 
     migrator.migrate_file(temp_python_file)
 
@@ -126,12 +116,8 @@ def test_no_old_format(tmp_path):
     test_file = tmp_path / "test_module.py"
     test_file.write_text('"""Already Google Style."""\n\nimport os')
 
-    migrator = DocstringMigrator(
-        project_root=tmp_path,
-        backup=False,
-        dry_run=False
-    )
+    migrator = DocstringMigrator(project_root=tmp_path, backup=False, dry_run=False)
 
     result = migrator.migrate_file(test_file)
     assert result is False
-    assert migrator.stats['skipped'] == 1
+    assert migrator.stats["skipped"] == 1

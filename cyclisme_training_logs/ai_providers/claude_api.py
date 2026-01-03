@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Claude AI provider implementation (Anthropic API).
 Implémentation provider Claude AI (Anthropic) pour analyses workouts.
@@ -53,16 +52,17 @@ Metadata:
 
 import logging
 from typing import Optional
+
 from anthropic import Anthropic
 
 from .base import AIAnalyzer, AIProvider
-
 
 logger = logging.getLogger(__name__)
 
 
 class WorkflowError(Exception):
     """Workflow error for AI provider operations."""
+
     pass
 
 
@@ -94,14 +94,11 @@ class ClaudeAPIAnalyzer(AIAnalyzer):
     MODELS = {
         "claude-sonnet-4-20250514": "Latest Sonnet 4 (recommended)",
         "claude-3-5-sonnet-20241022": "Sonnet 3.5 (legacy)",
-        "claude-3-opus-20240229": "Opus 3 (highest quality, expensive)"
+        "claude-3-opus-20240229": "Opus 3 (highest quality, expensive)",
     }
 
     def __init__(
-        self,
-        api_key: str,
-        model: str = "claude-sonnet-4-20250514",
-        max_tokens: int = 4000
+        self, api_key: str, model: str = "claude-sonnet-4-20250514", max_tokens: int = 4000
     ):
         """Initialize Claude API analyzer.
 
@@ -124,7 +121,7 @@ class ClaudeAPIAnalyzer(AIAnalyzer):
         self.model = model
         self.max_tokens = max_tokens
 
-        if not api_key or not api_key.startswith('sk-ant-'):
+        if not api_key or not api_key.startswith("sk-ant-"):
             raise WorkflowError("Invalid Claude API key format (must start with 'sk-ant-')")
 
         try:
@@ -163,9 +160,7 @@ class ClaudeAPIAnalyzer(AIAnalyzer):
             response = self.client.messages.create(
                 model=self.model,
                 max_tokens=self.max_tokens,
-                messages=[
-                    {"role": "user", "content": prompt}
-                ]
+                messages=[{"role": "user", "content": prompt}],
             )
 
             # Extract analysis text
@@ -190,13 +185,13 @@ class ClaudeAPIAnalyzer(AIAnalyzer):
             'claude_api'
         """
         return {
-            'provider': 'claude_api',
-            'model': self.model,
-            'status': 'ready',
-            'cost_input': '$3.00/1M tokens',
-            'cost_output': '$15.00/1M tokens',
-            'requires_api_key': True,
-            'context_window': '200k tokens'
+            "provider": "claude_api",
+            "model": self.model,
+            "status": "ready",
+            "cost_input": "$3.00/1M tokens",
+            "cost_output": "$15.00/1M tokens",
+            "requires_api_key": True,
+            "context_window": "200k tokens",
         }
 
     def validate_config(self) -> bool:

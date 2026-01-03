@@ -9,8 +9,8 @@ sys.path.insert(0, str(Path(__file__).parent))
 from cyclisme_training_logs.api.intervals_client import IntervalsClient
 from cyclisme_training_logs.workflow_state import WorkflowState
 
-athlete_id = os.getenv('VITE_INTERVALS_ATHLETE_ID')
-api_key = os.getenv('VITE_INTERVALS_API_KEY')
+athlete_id = os.getenv("VITE_INTERVALS_ATHLETE_ID")
+api_key = os.getenv("VITE_INTERVALS_API_KEY")
 
 api = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
 state = WorkflowState()
@@ -20,13 +20,12 @@ oldest_date = datetime.now() - timedelta(days=7)
 newest_date = datetime.now()
 
 activities = api.get_activities(
-    oldest=oldest_date.strftime('%Y-%m-%d'),
-    newest=newest_date.strftime('%Y-%m-%d')
+    oldest=oldest_date.strftime("%Y-%m-%d"), newest=newest_date.strftime("%Y-%m-%d")
 )
 
 unanalyzed = state.get_unanalyzed_activities(activities)
 
-print(f"📊 Période : 7 derniers jours")
+print("📊 Période : 7 derniers jours")
 print(f"   API retourne : {len(activities)} activités")
 print(f"   Non analysées : {len(unanalyzed)} activités")
 print()

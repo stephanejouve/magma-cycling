@@ -11,17 +11,17 @@
 - **VFC dernière mesure** : 61ms (jeudi 27/11, récupération validée)
 
 ### Validations Acquises
-✅ **Capacité Z2 confirmée** : Découplages exceptionnels (0.2%-4.9%, moyenne 1.9%)  
-✅ **Adaptation cadence validée** : 90rpm transitions techniques maîtrisées (S069-03)  
-✅ **VFC indicateur prédictif fiable** : Chute <55ms précède symptômes +24h  
-✅ **Protocole outdoor récupération** : Prospect Park acceptable (IF 0.67, TSS 53, découplage 4.9%)  
+✅ **Capacité Z2 confirmée** : Découplages exceptionnels (0.2%-4.9%, moyenne 1.9%)
+✅ **Adaptation cadence validée** : 90rpm transitions techniques maîtrisées (S069-03)
+✅ **VFC indicateur prédictif fiable** : Chute <55ms précède symptômes +24h
+✅ **Protocole outdoor récupération** : Prospect Park acceptable (IF 0.67, TSS 53, découplage 4.9%)
 ✅ **Arrêt préventif économiquement rationnel** : Évite aggravation + érosion CTL supplémentaire
 
 ### Échecs/Limitations Identifiées
-❌ **Progression sweet-spot impossible** : Dette sommeil (3 nuits <6h) + VFC instable (51ms point bas)  
-❌ **Dette sommeil chronique** : Moyenne 5.6h vs cible 7h (-21%)  
-❌ **Profondeur sommeil insuffisante** : 11-12% profond vs 15-20% normal  
-❌ **TSS déficit majeur** : 190 vs 320-380 planifié (-41%)  
+❌ **Progression sweet-spot impossible** : Dette sommeil (3 nuits <6h) + VFC instable (51ms point bas)
+❌ **Dette sommeil chronique** : Moyenne 5.6h vs cible 7h (-21%)
+❌ **Profondeur sommeil insuffisante** : 11-12% profond vs 15-20% normal
+❌ **TSS déficit majeur** : 190 vs 320-380 planifié (-41%)
 ❌ **Surcondition excessive** : TSB +19 risque déconditionnement si prolongé
 
 ---
@@ -237,8 +237,8 @@ Répétition Scénario A standard si test #2 validé. Sinon, consultation médic
 ## Risques Identifiés Progression
 
 ### Risque Majeur #1 : Dette Sommeil Chronique Non Résolue
-**Probabilité** : Élevée (historique 5.6h moyenne S069)  
-**Impact** : Bloque progression sweet-spot authentique, limite CTL reconstruction  
+**Probabilité** : Élevée (historique 5.6h moyenne S069)
+**Impact** : Bloque progression sweet-spot authentique, limite CTL reconstruction
 **Mitigation** :
 - Consultation spécialiste sommeil si <6h30 maintenu 3 semaines consécutives
 - Investigations apnée du sommeil (âge 54, ronflements ?)
@@ -248,8 +248,8 @@ Répétition Scénario A standard si test #2 validé. Sinon, consultation médic
 ---
 
 ### Risque Majeur #2 : VFC Instabilité Résiduelle
-**Probabilité** : Modérée (récupération 51ms→61ms validée mais amplitude variation -37% inquiétante)  
-**Impact** : Rechute <55ms interrompt progression, impose Z1 uniquement  
+**Probabilité** : Modérée (récupération 51ms→61ms validée mais amplitude variation -37% inquiétante)
+**Impact** : Rechute <55ms interrompt progression, impose Z1 uniquement
 **Mitigation** :
 - Monitoring VFC quotidien obligatoire 8 semaines minimum
 - Seuils décisionnels stricts (matrice VFC × Sommeil)
@@ -259,8 +259,8 @@ Répétition Scénario A standard si test #2 validé. Sinon, consultation médic
 ---
 
 ### Risque Majeur #3 : Toux Résiduelle Persistante
-**Probabilité** : Faible-Modérée (rhinopharyngite généralement 7-10 jours)  
-**Impact** : Prolonge arrêt, accélère érosion CTL, retarde timeline 2-3 semaines  
+**Probabilité** : Faible-Modérée (rhinopharyngite généralement 7-10 jours)
+**Impact** : Prolonge arrêt, accélère érosion CTL, retarde timeline 2-3 semaines
 **Mitigation** :
 - Test reprise obligatoire avant toute progression
 - Stop immédiat si toux aggravée effort (même Z1)
@@ -270,8 +270,8 @@ Répétition Scénario A standard si test #2 validé. Sinon, consultation médic
 ---
 
 ### Risque Mineur #4 : Surcondition TSB +19 Prolongée
-**Probabilité** : Faible (correction naturelle reprise entraînement)  
-**Impact** : Déconditionnement si maintenu >14 jours, perte adaptations cardiovasculaires  
+**Probabilité** : Faible (correction naturelle reprise entraînement)
+**Impact** : Déconditionnement si maintenu >14 jours, perte adaptations cardiovasculaires
 **Mitigation** :
 - Reprise S070 progressive (240 TSS) corrige TSB vers +5/+10 fin semaine
 - Surveillance CTL : objectif +3-4 points/semaine évite érosion excessive
@@ -280,8 +280,8 @@ Répétition Scénario A standard si test #2 validé. Sinon, consultation médic
 ---
 
 ### Risque Mineur #5 : Compensation Réactive Volume
-**Probabilité** : Modérée (tentation "rattraper" TSS perdu)  
-**Impact** : Nouvelle surcharge VFC, reproduction pattern S069  
+**Probabilité** : Modérée (tentation "rattraper" TSS perdu)
+**Impact** : Nouvelle surcharge VFC, reproduction pattern S069
 **Mitigation** :
 - Protocole anti-compensation formalisé (section 6 Protocol Adaptations)
 - TSS S070 plafonné 240 (-25% baseline) NON NÉGOCIABLE

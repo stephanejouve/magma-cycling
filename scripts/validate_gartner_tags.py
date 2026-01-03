@@ -28,22 +28,22 @@ Author: Claude Code
 Created: 2025-12-26
 """
 
+import argparse
 import ast
 import re
 import sys
-from pathlib import Path
-from typing import Dict, List, Tuple
 from dataclasses import dataclass
-import argparse
+from pathlib import Path
 
 
 @dataclass
 class ValidationResult:
     """Résultat de validation d'un fichier."""
+
     file_path: Path
     valid: bool
-    errors: List[str]
-    warnings: List[str]
+    errors: list[str]
+    warnings: list[str]
     gartner_tag: str = ""
     status: str = ""
     priority: str = ""
@@ -53,9 +53,9 @@ class ValidationResult:
 class GartnerTagValidator:
     """Validateur de tags Gartner TIME dans les docstrings."""
 
-    REQUIRED_TAGS = ['GARTNER_TIME', 'STATUS', 'LAST_REVIEW', 'PRIORITY', 'DOCSTRING']
-    VALID_GARTNER_VALUES = ['I', 'T', 'M', 'E']
-    VALID_PRIORITIES = ['P0', 'P1', 'P2', 'P3', 'P4']
+    REQUIRED_TAGS = ["GARTNER_TIME", "STATUS", "LAST_REVIEW", "PRIORITY", "DOCSTRING"]
+    VALID_GARTNER_VALUES = ["I", "T", "M", "E"]
+    VALID_PRIORITIES = ["P0", "P1", "P2", "P3", "P4"]
 
     def __init__(self, project_root: Path):
         """
@@ -81,14 +81,14 @@ class GartnerTagValidator:
 
         # Lire le fichier
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
         except Exception as e:
             return ValidationResult(
                 file_path=file_path,
                 valid=False,
                 errors=[f"Impossible de lire le fichier: {e}"],
-                warnings=[]
+                warnings=[],
             )
 
         # Parser AST
@@ -99,7 +99,7 @@ class GartnerTagValidator:
                 file_path=file_path,
                 valid=False,
                 errors=[f"Erreur syntaxe Python: {e}"],
-                warnings=[]
+                warnings=[],
             )
 
         # Extraire docstring
@@ -107,84 +107,76 @@ class GartnerTagValidator:
 
         if not docstring:
             return ValidationResult(
-                file_path=file_path,
-                valid=False,
-                errors=["Missing module docstring"],
-                warnings=[]
+                file_path=file_path, valid=False, errors=["Missing module docstring"], warnings=[]
             )
 
         # Vérifier tags requis
-        result = ValidationResult(
-            file_path=file_path,
-            valid=True,
-            errors=[],
-            warnings=[]
-        )
+        result = ValidationResult(file_path=file_path, valid=True, errors=[], warnings=[])
 
         for tag in self.REQUIRED_TAGS:
-            if f'{tag}:' not in docstring:
+            if f"{tag}:" not in docstring:
                 errors.append(f"Missing required tag: {tag}")
 
         # Extraire et valider GARTNER_TIME
-        gartner_match = re.search(r'GARTNER_TIME:\s*([ITME])', docstring)
+        gartner_match = re.search(r"GARTNER_TIME:\s*([ITME])", docstring)
         if gartner_match:
             result.gartner_tag = gartner_match.group(1)
             if result.gartner_tag not in self.VALID_GARTNER_VALUES:
                 errors.append(f"Invalid GARTNER_TIME value: {result.gartner_tag}")
         else:
-            if 'GARTNER_TIME:' in docstring:
+            if "GARTNER_TIME:" in docstring:
                 errors.append("GARTNER_TIME tag present but invalid format")
 
         # Extraire STATUS
-        status_match = re.search(r'STATUS:\s*(.+)', docstring)
+        status_match = re.search(r"STATUS:\s*(.+)", docstring)
         if status_match:
             result.status = status_match.group(1).strip()
 
         # Extraire PRIORITY
-        priority_match = re.search(r'PRIORITY:\s*(P[0-4])', docstring)
+        priority_match = re.search(r"PRIORITY:\s*(P[0-4])", docstring)
         if priority_match:
             result.priority = priority_match.group(1)
             if result.priority not in self.VALID_PRIORITIES:
                 errors.append(f"Invalid PRIORITY value: {result.priority}")
 
         # Extraire DOCSTRING version
-        docstring_match = re.search(r'DOCSTRING:\s*(.+)', docstring)
+        docstring_match = re.search(r"DOCSTRING:\s*(.+)", docstring)
         if docstring_match:
             result.docstring_version = docstring_match.group(1).strip()
 
         # Vérifier LAST_REVIEW format
-        review_match = re.search(r'LAST_REVIEW:\s*(\d{4}-\d{2}-\d{2})', docstring)
-        if not review_match and 'LAST_REVIEW:' in docstring:
+        review_match = re.search(r"LAST_REVIEW:\s*(\d{4}-\d{2}-\d{2})", docstring)
+        if not review_match and "LAST_REVIEW:" in docstring:
             errors.append("LAST_REVIEW format incorrect (attendu: YYYY-MM-DD)")
 
         # Vérifier Examples section
-        if 'Examples:' not in docstring:
+        if "Examples:" not in docstring:
             warnings.append("Missing Examples section")
         else:
             # Compter les code blocks (::)
-            code_blocks = docstring.count('::')
+            code_blocks = docstring.count("::")
             if code_blocks < 2:
                 warnings.append("Examples section should have at least 2 code blocks")
 
         # Vérifier Author/Created
-        if 'Author:' not in docstring:
+        if "Author:" not in docstring:
             warnings.append("Missing Author metadata")
-        if 'Created:' not in docstring:
+        if "Created:" not in docstring:
             warnings.append("Missing Created metadata")
 
         # Vérifier tags conditionnels selon GARTNER_TIME
-        if result.gartner_tag == 'M':  # Migrate
-            if 'MIGRATION_TARGET:' not in docstring:
+        if result.gartner_tag == "M":  # Migrate
+            if "MIGRATION_TARGET:" not in docstring:
                 warnings.append("GARTNER_TIME=M but no MIGRATION_TARGET tag")
 
-        if result.gartner_tag == 'E':  # Eliminate
-            if 'DEPRECATION_DATE:' not in docstring:
+        if result.gartner_tag == "E":  # Eliminate
+            if "DEPRECATION_DATE:" not in docstring:
                 warnings.append("GARTNER_TIME=E but no DEPRECATION_DATE tag")
-            if 'REMOVAL_DATE:' not in docstring:
+            if "REMOVAL_DATE:" not in docstring:
                 warnings.append("GARTNER_TIME=E but no REMOVAL_DATE tag")
 
-        if result.gartner_tag == 'T':  # Tolerate
-            if 'REPLACEMENT:' not in docstring:
+        if result.gartner_tag == "T":  # Tolerate
+            if "REPLACEMENT:" not in docstring:
                 warnings.append("GARTNER_TIME=T but no REPLACEMENT tag suggested")
 
         result.errors = errors
@@ -193,7 +185,7 @@ class GartnerTagValidator:
 
         return result
 
-    def validate_all_files(self, pattern: str = "*.py") -> Dict[Path, ValidationResult]:
+    def validate_all_files(self, pattern: str = "*.py") -> dict[Path, ValidationResult]:
         """
         Valider tous les fichiers Python du projet.
 
@@ -207,23 +199,23 @@ class GartnerTagValidator:
 
         for py_file in self.project_root.rglob(pattern):
             # Ignorer __pycache__, .venv, etc.
-            if any(part.startswith('.') or part == '__pycache__' for part in py_file.parts):
+            if any(part.startswith(".") or part == "__pycache__" for part in py_file.parts):
                 continue
 
             results[py_file] = self.validate_file(py_file)
 
         return results
 
-    def print_report(self, results: Dict[Path, ValidationResult]):
+    def print_report(self, results: dict[Path, ValidationResult]):
         """
         Afficher rapport de validation dans le terminal.
 
         Args:
             results: Résultats de validation à afficher
         """
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("📊 GARTNER TIME TAGS VALIDATION REPORT")
-        print("="*80 + "\n")
+        print("=" * 80 + "\n")
 
         # Statistiques globales
         total_files = len(results)
@@ -235,9 +227,9 @@ class GartnerTagValidator:
         print(f"Invalid files: {total_files - valid_files}\n")
 
         # Distribution tags Gartner
-        gartner_counts = {'I': 0, 'T': 0, 'M': 0, 'E': 0, 'None': 0}
+        gartner_counts = {"I": 0, "T": 0, "M": 0, "E": 0, "None": 0}
         for result in results.values():
-            tag = result.gartner_tag if result.gartner_tag else 'None'
+            tag = result.gartner_tag if result.gartner_tag else "None"
             gartner_counts[tag] = gartner_counts.get(tag, 0) + 1
 
         print("📋 GARTNER TIME Distribution:")
@@ -270,14 +262,14 @@ class GartnerTagValidator:
                 print()
 
         # Résumé final
-        print("="*80)
+        print("=" * 80)
         if valid_files == total_files:
             print("✅ ALL FILES VALID!")
         else:
             print(f"⚠️  {total_files - valid_files} file(s) need attention")
-        print("="*80 + "\n")
+        print("=" * 80 + "\n")
 
-    def generate_html_report(self, results: Dict[Path, ValidationResult], output_path: Path):
+    def generate_html_report(self, results: dict[Path, ValidationResult], output_path: Path):
         """
         Générer rapport HTML de validation.
 
@@ -344,19 +336,25 @@ class GartnerTagValidator:
 """
 
         # Distribution
-        gartner_counts = {'I': 0, 'T': 0, 'M': 0, 'E': 0, 'None': 0}
+        gartner_counts = {"I": 0, "T": 0, "M": 0, "E": 0, "None": 0}
         for result in results.values():
-            tag = result.gartner_tag if result.gartner_tag else 'None'
+            tag = result.gartner_tag if result.gartner_tag else "None"
             gartner_counts[tag] = gartner_counts.get(tag, 0) + 1
 
         html += '<div class="distribution"><h2>📋 GARTNER TIME Distribution</h2>'
         for tag, count in gartner_counts.items():
             pct = (count / total_files * 100) if total_files > 0 else 0
             width = pct
-            icon = {'I': '🟢', 'T': '🟡', 'M': '🔵', 'E': '🔴', 'None': '⚠️'}[tag]
-            label = {'I': 'Invest', 'T': 'Tolerate', 'M': 'Migrate', 'E': 'Eliminate', 'None': 'No Tag'}[tag]
+            icon = {"I": "🟢", "T": "🟡", "M": "🔵", "E": "🔴", "None": "⚠️"}[tag]
+            label = {
+                "I": "Invest",
+                "T": "Tolerate",
+                "M": "Migrate",
+                "E": "Eliminate",
+                "None": "No Tag",
+            }[tag]
             html += f'<div class="tag-bar tag-{tag}" style="width: {width}%;">{icon} {label}: {count} ({pct:.1f}%)</div>'
-        html += '</div>'
+        html += "</div>"
 
         # Table détails
         html += """
@@ -374,7 +372,7 @@ class GartnerTagValidator:
 
         for file_path, result in sorted(results.items()):
             relative_path = file_path.relative_to(self.project_root)
-            status_class = 'valid' if result.valid else 'error'
+            status_class = "valid" if result.valid else "error"
             issues_count = len(result.errors) + len(result.warnings)
 
             html += f"""
@@ -395,30 +393,20 @@ class GartnerTagValidator:
 </html>
 """
 
-        output_path.write_text(html, encoding='utf-8')
+        output_path.write_text(html, encoding="utf-8")
         print(f"✅ HTML report generated: {output_path}")
 
 
 def main():
     """Point d'entrée du script."""
-    parser = argparse.ArgumentParser(
-        description="Validate Gartner TIME tags in Python docstrings"
-    )
+    parser = argparse.ArgumentParser(description="Validate Gartner TIME tags in Python docstrings")
+    parser.add_argument("--file", type=str, help="Validate specific file instead of all project")
+    parser.add_argument("--html", type=str, help="Generate HTML report at specified path")
     parser.add_argument(
-        '--file',
+        "--project-root",
         type=str,
-        help='Validate specific file instead of all project'
-    )
-    parser.add_argument(
-        '--html',
-        type=str,
-        help='Generate HTML report at specified path'
-    )
-    parser.add_argument(
-        '--project-root',
-        type=str,
-        default='cyclisme_training_logs',
-        help='Project root directory (default: cyclisme_training_logs)'
+        default="cyclisme_training_logs",
+        help="Project root directory (default: cyclisme_training_logs)",
     )
 
     args = parser.parse_args()
@@ -464,5 +452,5 @@ def main():
     sys.exit(0 if invalid_count == 0 else 1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

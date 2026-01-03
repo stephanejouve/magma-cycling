@@ -58,7 +58,7 @@ from api.intervals_client import IntervalsClient
 from weekly_planner import WeeklyPlanner
 
 # Statuses that should remove the event from Intervals.icu
-STATUSES_TO_DELETE = ['cancelled', 'skipped']
+STATUSES_TO_DELETE = ["cancelled", "skipped"]
 
 
 def load_intervals_credentials() -> tuple[Optional[str], Optional[str]]:
@@ -67,8 +67,8 @@ def load_intervals_credentials() -> tuple[Optional[str], Optional[str]]:
     Returns:
         Tuple of (athlete_id, api_key) or (None, None) if not configured
     """
-    athlete_id = os.getenv('INTERVALS_ATHLETE_ID')
-    api_key = os.getenv('INTERVALS_API_KEY')
+    athlete_id = os.getenv("INTERVALS_ATHLETE_ID")
+    api_key = os.getenv("INTERVALS_API_KEY")
 
     if not athlete_id or not api_key:
         return None, None
@@ -77,9 +77,7 @@ def load_intervals_credentials() -> tuple[Optional[str], Optional[str]]:
 
 
 def find_event_by_session(
-    client: IntervalsClient,
-    session_id: str,
-    session_date: str
+    client: IntervalsClient, session_id: str, session_date: str
 ) -> Optional[dict]:
     """Find Intervals.icu event matching a session.
 
@@ -97,7 +95,7 @@ def find_event_by_session(
 
         # Find event matching session_id in name
         for event in events:
-            event_name = event.get('name', '')
+            event_name = event.get("name", "")
             if session_id in event_name:
                 return event
 
@@ -114,7 +112,7 @@ def sync_with_intervals(
     session_date: str,
     new_status: str,
     reason: Optional[str] = None,
-    session_info: Optional[dict] = None
+    session_info: Optional[dict] = None,
 ) -> bool:
     """Synchronize session status change with Intervals.icu.
 
@@ -129,7 +127,7 @@ def sync_with_intervals(
     Returns:
         True if sync successful, False otherwise
     """
-    print(f"\n🔄 Synchronizing with Intervals.icu...")
+    print("\n🔄 Synchronizing with Intervals.icu...")
 
     # Find the event
     event = find_event_by_session(client, session_id, session_date)
@@ -138,22 +136,22 @@ def sync_with_intervals(
     if new_status in STATUSES_TO_DELETE:
         if event:
             # Event exists - convert to NOTE with [ANNULÉE] tag
-            event_id = event.get('id')
-            event_name = event.get('name', 'Unknown')
-            event_category = event.get('category', 'WORKOUT')
+            event_id = event.get("id")
+            event_name = event.get("name", "Unknown")
+            event_category = event.get("category", "WORKOUT")
 
             print(f"   Found event: {event_name} (ID: {event_id}, Type: {event_category})")
 
             # Check if already marked as cancelled
-            if event_name.startswith('[ANNULÉE]'):
-                print(f"   ℹ️  Event already marked as cancelled")
+            if event_name.startswith("[ANNULÉE]"):
+                print("   ℹ️  Event already marked as cancelled")
                 return True
 
             # Prepare cancelled note format
             status_emoji = "❌" if new_status == "cancelled" else "⏭️"
             status_text = "ANNULÉE" if new_status == "cancelled" else "SAUTÉE"
 
-            original_description = event.get('description', '')
+            original_description = event.get("description", "")
             new_description = (
                 f"{status_emoji} SÉANCE {status_text}\n"
                 f"Raison: {reason or 'Non spécifiée'}\n\n"
@@ -162,50 +160,50 @@ def sync_with_intervals(
             )
 
             update_data = {
-                'name': f"[{status_text}] {event_name}",
-                'category': 'NOTE',
-                'description': new_description
+                "name": f"[{status_text}] {event_name}",
+                "category": "NOTE",
+                "description": new_description,
             }
 
             print(f"   Action: Converting to NOTE with [{status_text}] tag...")
             updated = client.update_event(event_id, update_data)
 
             if updated:
-                print(f"   ✅ Event converted to NOTE on Intervals.icu")
+                print("   ✅ Event converted to NOTE on Intervals.icu")
                 return True
             else:
-                print(f"   ❌ Failed to update event on Intervals.icu")
+                print("   ❌ Failed to update event on Intervals.icu")
                 return False
         else:
             # Event doesn't exist - create NOTE with [ANNULÉE] tag
             print(f"   ℹ️  No matching event found on Intervals.icu for {session_id}")
 
             if not session_info:
-                print(f"   ⚠️  Cannot create cancelled note without session info")
+                print("   ⚠️  Cannot create cancelled note without session info")
                 return True
 
             status_emoji = "❌" if new_status == "cancelled" else "⏭️"
             status_text = "ANNULÉE" if new_status == "cancelled" else "SAUTÉE"
 
-            session_name = session_info.get('name', 'Unknown')
-            session_type = session_info.get('type', '')
-            session_version = session_info.get('version', '')
-            session_desc = session_info.get('description', '')
-            session_tss = session_info.get('tss_planned', 0)
-            session_duration = session_info.get('duration_min', 0)
+            session_name = session_info.get("name", "Unknown")
+            session_type = session_info.get("type", "")
+            session_version = session_info.get("version", "")
+            session_desc = session_info.get("description", "")
+            session_tss = session_info.get("tss_planned", 0)
+            session_duration = session_info.get("duration_min", 0)
 
             full_name = f"{session_id}-{session_type}-{session_name}-{session_version}"
 
             event_data = {
-                'category': 'NOTE',
-                'name': f"[{status_text}] {full_name}",
-                'description': (
+                "category": "NOTE",
+                "name": f"[{status_text}] {full_name}",
+                "description": (
                     f"{status_emoji} SÉANCE {status_text}\n"
                     f"Raison: {reason or 'Non spécifiée'}\n\n"
                     f"--- Description originale ---\n"
                     f"{session_desc} ({session_duration}min, {session_tss} TSS)"
                 ),
-                'start_date_local': f"{session_date}T00:00:00"
+                "start_date_local": f"{session_date}T00:00:00",
             }
 
             print(f"   Action: Creating NOTE with [{status_text}] tag...")
@@ -215,37 +213,38 @@ def sync_with_intervals(
                 print(f"   ✅ Cancelled note created on Intervals.icu (ID: {created.get('id')})")
                 return True
             else:
-                print(f"   ❌ Failed to create cancelled note on Intervals.icu")
+                print("   ❌ Failed to create cancelled note on Intervals.icu")
                 return False
 
-    elif new_status == 'modified':
+    elif new_status == "modified":
         if not event:
             print(f"   ℹ️  No matching event found on Intervals.icu for {session_id}")
             return True
 
-        event_id = event.get('id')
-        event_name = event.get('name', 'Unknown')
+        event_id = event.get("id")
+        event_name = event.get("name", "Unknown")
         print(f"   Found event: {event_name} (ID: {event_id})")
 
         # Update event description to indicate modification
-        print(f"   Action: Updating event description...")
+        print("   Action: Updating event description...")
 
         update_data = {
-            'description': event.get('description', '') + f"\n\n⚠️ MODIFIED: {reason or 'See local planning'}"
+            "description": event.get("description", "")
+            + f"\n\n⚠️ MODIFIED: {reason or 'See local planning'}"
         }
 
         updated = client.update_event(event_id, update_data)
 
         if updated:
-            print(f"   ✅ Event updated on Intervals.icu")
+            print("   ✅ Event updated on Intervals.icu")
             return True
         else:
-            print(f"   ❌ Failed to update event on Intervals.icu")
+            print("   ❌ Failed to update event on Intervals.icu")
             return False
 
-    elif new_status == 'completed':
+    elif new_status == "completed":
         # Leave event - actual activity will exist
-        print(f"   Action: No change (activity should exist)")
+        print("   Action: No change (activity should exist)")
         return True
 
     else:
@@ -278,64 +277,59 @@ Valid statuses:
   - replaced    : Session was replaced (requires --reason)
   - rest_day    : Converted to rest day
   - modified    : Session was modified
-        """
+        """,
     )
 
+    parser.add_argument("--week", type=str, required=True, help="Week ID (e.g., S074)")
+
+    parser.add_argument("--session", type=str, required=True, help="Session ID (e.g., S074-05)")
+
     parser.add_argument(
-        '--week',
+        "--status",
         type=str,
         required=True,
-        help='Week ID (e.g., S074)'
+        choices=[
+            "planned",
+            "completed",
+            "cancelled",
+            "skipped",
+            "rest_day",
+            "replaced",
+            "modified",
+        ],
+        help="New status for the session",
     )
 
     parser.add_argument(
-        '--session',
+        "--reason",
         type=str,
-        required=True,
-        help='Session ID (e.g., S074-05)'
+        help="Reason for status change (required for cancelled/skipped/replaced)",
     )
 
     parser.add_argument(
-        '--status',
-        type=str,
-        required=True,
-        choices=['planned', 'completed', 'cancelled', 'skipped', 'rest_day', 'replaced', 'modified'],
-        help='New status for the session'
+        "--start-date", type=str, help="Week start date (YYYY-MM-DD) - optional if JSON exists"
     )
 
     parser.add_argument(
-        '--reason',
-        type=str,
-        help='Reason for status change (required for cancelled/skipped/replaced)'
-    )
-
-    parser.add_argument(
-        '--start-date',
-        type=str,
-        help='Week start date (YYYY-MM-DD) - optional if JSON exists'
-    )
-
-    parser.add_argument(
-        '--sync',
-        action='store_true',
-        help='Synchronize change with Intervals.icu calendar'
+        "--sync", action="store_true", help="Synchronize change with Intervals.icu calendar"
     )
 
     args = parser.parse_args()
 
     # Validate reason requirement
-    if args.status in ['cancelled', 'skipped', 'replaced'] and not args.reason:
+    if args.status in ["cancelled", "skipped", "replaced"] and not args.reason:
         parser.error(f"Status '{args.status}' requires --reason")
 
     try:
         # Parse start date if provided
         if args.start_date:
-            start_date = datetime.strptime(args.start_date, '%Y-%m-%d')
+            start_date = datetime.strptime(args.start_date, "%Y-%m-%d")
         else:
             start_date = datetime.now()
 
         # Get data repository configuration
         from cyclisme_training_logs.config import get_data_config
+
         try:
             data_config = get_data_config()
             planning_dir = data_config.week_planning_dir
@@ -356,50 +350,48 @@ Valid statuses:
 
         # Update local JSON
         success = planner.update_session_status(
-            session_id=args.session,
-            status=args.status,
-            reason=args.reason
+            session_id=args.session, status=args.status, reason=args.reason
         )
 
         if not success:
-            print(f"\n❌ Failed to update local planning JSON")
+            print("\n❌ Failed to update local planning JSON")
             sys.exit(1)
 
-        print(f"\n✅ Local planning JSON updated successfully")
+        print("\n✅ Local planning JSON updated successfully")
 
         # Sync with Intervals.icu if requested
         if args.sync:
             athlete_id, api_key = load_intervals_credentials()
 
             if not athlete_id or not api_key:
-                print(f"\n⚠️  Warning: Intervals.icu credentials not configured")
-                print(f"   Set INTERVALS_ATHLETE_ID and INTERVALS_API_KEY environment variables")
-                print(f"   Skipping sync with Intervals.icu")
+                print("\n⚠️  Warning: Intervals.icu credentials not configured")
+                print("   Set INTERVALS_ATHLETE_ID and INTERVALS_API_KEY environment variables")
+                print("   Skipping sync with Intervals.icu")
                 sys.exit(0)
 
             # Get session date from planning
             planning_file = planning_dir / f"week_planning_{args.week}.json"
 
             if not planning_file.exists():
-                print(f"\n⚠️  Warning: Could not find planning file to get session date")
+                print("\n⚠️  Warning: Could not find planning file to get session date")
                 print(f"   Expected: {planning_file}")
-                print(f"   Skipping sync with Intervals.icu")
+                print("   Skipping sync with Intervals.icu")
                 sys.exit(0)
 
-            with open(planning_file, 'r') as f:
+            with open(planning_file) as f:
                 planning = json.load(f)
 
             session_date = None
             session_info = None
-            for session in planning.get('planned_sessions', []):
-                if session.get('session_id') == args.session:
-                    session_date = session.get('date')
+            for session in planning.get("planned_sessions", []):
+                if session.get("session_id") == args.session:
+                    session_date = session.get("date")
                     session_info = session
                     break
 
             if not session_date:
-                print(f"\n⚠️  Warning: Could not find session date in planning")
-                print(f"   Skipping sync with Intervals.icu")
+                print("\n⚠️  Warning: Could not find session date in planning")
+                print("   Skipping sync with Intervals.icu")
                 sys.exit(0)
 
             # Create Intervals.icu client
@@ -412,23 +404,24 @@ Valid statuses:
                 session_date=session_date,
                 new_status=args.status,
                 reason=args.reason,
-                session_info=session_info
+                session_info=session_info,
             )
 
             if sync_success:
-                print(f"\n✅ Successfully synchronized with Intervals.icu")
+                print("\n✅ Successfully synchronized with Intervals.icu")
             else:
-                print(f"\n⚠️  Warning: Sync with Intervals.icu failed (local changes preserved)")
+                print("\n⚠️  Warning: Sync with Intervals.icu failed (local changes preserved)")
 
-        print(f"\n✨ Done!")
+        print("\n✨ Done!")
         sys.exit(0)
 
     except Exception as e:
         print(f"\n❌ Error: {e}", file=sys.stderr)
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -3,9 +3,10 @@ Tests for IntervalsClient unified API client.
 Tests pour le client API unifié IntervalsClient.
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 from cyclisme_training_logs.api.intervals_client import IntervalsClient
 
@@ -13,7 +14,7 @@ from cyclisme_training_logs.api.intervals_client import IntervalsClient
 @pytest.fixture
 def mock_session():
     """Create a mock requests.Session."""
-    with patch('cyclisme_training_logs.api.intervals_client.requests.Session') as mock:
+    with patch("cyclisme_training_logs.api.intervals_client.requests.Session") as mock:
         session = MagicMock()
         mock.return_value = session
         yield session
@@ -60,7 +61,7 @@ class TestGetAthlete:
             "id": "i151223",
             "name": "Test Athlete",
             "ftp": 250,
-            "weight": 75.0
+            "weight": 75.0,
         }
         mock_session.get.return_value = mock_response
 
@@ -68,9 +69,7 @@ class TestGetAthlete:
 
         assert result["id"] == "i151223"
         assert result["ftp"] == 250
-        mock_session.get.assert_called_once_with(
-            "https://intervals.icu/api/v1/athlete/i151223"
-        )
+        mock_session.get.assert_called_once_with("https://intervals.icu/api/v1/athlete/i151223")
         mock_response.raise_for_status.assert_called_once()
 
 
@@ -90,8 +89,7 @@ class TestGetActivities:
         assert len(result) == 1
         assert result[0]["id"] == "i107424849"
         mock_session.get.assert_called_once_with(
-            "https://intervals.icu/api/v1/athlete/i151223/activities",
-            params={}
+            "https://intervals.icu/api/v1/athlete/i151223/activities", params={}
         )
 
     def test_get_activities_with_dates(self, client, mock_session):
@@ -104,7 +102,7 @@ class TestGetActivities:
 
         mock_session.get.assert_called_once_with(
             "https://intervals.icu/api/v1/athlete/i151223/activities",
-            params={"oldest": "2025-12-22", "newest": "2025-12-28"}
+            params={"oldest": "2025-12-22", "newest": "2025-12-28"},
         )
 
 
@@ -117,7 +115,7 @@ class TestGetActivity:
         mock_response.json.return_value = {
             "id": "i107424849",
             "icu_training_load": 65,
-            "icu_intensity": 0.68
+            "icu_intensity": 0.68,
         }
         mock_session.get.return_value = mock_response
 
@@ -125,9 +123,7 @@ class TestGetActivity:
 
         assert result["id"] == "i107424849"
         assert result["icu_training_load"] == 65
-        mock_session.get.assert_called_once_with(
-            "https://intervals.icu/api/v1/activity/i107424849"
-        )
+        mock_session.get.assert_called_once_with("https://intervals.icu/api/v1/activity/i107424849")
 
 
 class TestGetWellness:
@@ -137,12 +133,7 @@ class TestGetWellness:
         """Test successful wellness data fetch."""
         mock_response = Mock()
         mock_response.json.return_value = [
-            {
-                "id": "2025-12-22",
-                "ctl": 45.6,
-                "atl": 37.7,
-                "weight": 75.0
-            }
+            {"id": "2025-12-22", "ctl": 45.6, "atl": 37.7, "weight": 75.0}
         ]
         mock_session.get.return_value = mock_response
 
@@ -152,7 +143,7 @@ class TestGetWellness:
         assert result[0]["ctl"] == 45.6
         mock_session.get.assert_called_once_with(
             "https://intervals.icu/api/v1/athlete/i151223/wellness",
-            params={"oldest": "2025-12-22", "newest": "2025-12-22"}
+            params={"oldest": "2025-12-22", "newest": "2025-12-22"},
         )
 
     def test_get_wellness_returns_list(self, client, mock_session):
@@ -160,7 +151,7 @@ class TestGetWellness:
         mock_response = Mock()
         mock_response.json.return_value = [
             {"id": "2025-12-22", "ctl": 45.6},
-            {"id": "2025-12-23", "ctl": 45.8}
+            {"id": "2025-12-23", "ctl": 45.8},
         ]
         mock_session.get.return_value = mock_response
 
@@ -177,11 +168,7 @@ class TestGetEvents:
         """Test successful events fetch."""
         mock_response = Mock()
         mock_response.json.return_value = [
-            {
-                "id": 86044984,
-                "category": "WORKOUT",
-                "name": "S074-01-END-EnduranceBase"
-            }
+            {"id": 86044984, "category": "WORKOUT", "name": "S074-01-END-EnduranceBase"}
         ]
         mock_session.get.return_value = mock_response
 
@@ -191,7 +178,7 @@ class TestGetEvents:
         assert result[0]["category"] == "WORKOUT"
         mock_session.get.assert_called_once_with(
             "https://intervals.icu/api/v1/athlete/i151223/events",
-            params={"oldest": "2025-12-29", "newest": "2026-01-04"}
+            params={"oldest": "2025-12-29", "newest": "2026-01-04"},
         )
 
 
@@ -202,11 +189,7 @@ class TestGetPlannedWorkout:
         """Test finding a planned workout."""
         mock_response = Mock()
         mock_response.json.return_value = [
-            {
-                "id": 86044984,
-                "category": "WORKOUT",
-                "paired_activity_id": "i107424849"
-            }
+            {"id": 86044984, "category": "WORKOUT", "paired_activity_id": "i107424849"}
         ]
         mock_session.get.return_value = mock_response
 
@@ -220,11 +203,7 @@ class TestGetPlannedWorkout:
         """Test when no planned workout is found."""
         mock_response = Mock()
         mock_response.json.return_value = [
-            {
-                "id": 86044984,
-                "category": "WORKOUT",
-                "paired_activity_id": "i999999"  # Different ID
-            }
+            {"id": 86044984, "category": "WORKOUT", "paired_activity_id": "i999999"}  # Different ID
         ]
         mock_session.get.return_value = mock_response
 
@@ -240,17 +219,14 @@ class TestCreateEvent:
     def test_create_event_success(self, client, mock_session):
         """Test successful event creation."""
         mock_response = Mock()
-        mock_response.json.return_value = {
-            "id": 86044984,
-            "name": "S074-01-END-EnduranceBase"
-        }
+        mock_response.json.return_value = {"id": 86044984, "name": "S074-01-END-EnduranceBase"}
         mock_session.post.return_value = mock_response
 
         event_data = {
             "category": "WORKOUT",
             "name": "S074-01-END-EnduranceBase",
             "description": "60min @ 70% FTP",
-            "start_date_local": "2025-12-29"
+            "start_date_local": "2025-12-29",
         }
 
         result = client.create_event(event_data)
@@ -258,13 +234,13 @@ class TestCreateEvent:
         assert result is not None
         assert result["id"] == 86044984
         mock_session.post.assert_called_once_with(
-            "https://intervals.icu/api/v1/athlete/i151223/events",
-            json=event_data
+            "https://intervals.icu/api/v1/athlete/i151223/events", json=event_data
         )
 
     def test_create_event_http_error(self, client, mock_session):
         """Test event creation with HTTP error."""
         import requests
+
         mock_response = Mock()
         mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("404")
         mock_response.response = None
@@ -293,6 +269,7 @@ class TestErrorHandling:
     def test_http_error_propagation(self, client, mock_session):
         """Test that HTTP errors are propagated correctly."""
         import requests
+
         mock_response = Mock()
         mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("500")
         mock_session.get.return_value = mock_response

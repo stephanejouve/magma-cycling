@@ -57,44 +57,55 @@ Metadata:
 """
 
 import argparse
-import os
-import sys
-import subprocess
-from pathlib import Path
-from datetime import datetime, timedelta
-from typing import Optional
 import json
+import logging
+import os
+import subprocess
+import sys
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Optional
+
 import requests
-from cyclisme_training_logs.workflow_state import WorkflowState
-from cyclisme_training_logs.rest_and_cancellations import (
-    load_week_planning,
-    validate_week_planning,
-    generate_rest_day_entry,
-    generate_cancelled_session_entry,
-    reconcile_planned_vs_actual
-)
-from cyclisme_training_logs.planned_sessions_checker import PlannedSessionsChecker
+
 from cyclisme_training_logs.ai_providers import AIProviderFactory
 from cyclisme_training_logs.config import get_ai_config, get_data_config
 from cyclisme_training_logs.core.timeline_injector import TimelineInjector
-import logging
+from cyclisme_training_logs.planned_sessions_checker import PlannedSessionsChecker
+from cyclisme_training_logs.rest_and_cancellations import (
+    generate_cancelled_session_entry,
+    generate_rest_day_entry,
+    load_week_planning,
+    reconcile_planned_vs_actual,
+    validate_week_planning,
+)
+from cyclisme_training_logs.workflow_state import WorkflowState
 
 logger = logging.getLogger(__name__)
 
 # Provider display names for UI messages
 PROVIDER_DISPLAY_NAMES = {
-    'clipboard': 'Claude.ai (manuel)',
-    'mistral_api': 'Mistral AI',
-    'claude_api': 'Claude API',
-    'openai': 'OpenAI',
-    'ollama': 'Ollama'
+    "clipboard": "Claude.ai (manuel)",
+    "mistral_api": "Mistral AI",
+    "claude_api": "Claude API",
+    "openai": "OpenAI",
+    "ollama": "Ollama",
 }
 
 
 class WorkflowCoach:
     """Orchestrateur du workflow d'analyse de séance"""
 
-    def __init__(self, skip_feedback=False, skip_git=False, activity_id=None, week_id=None, servo_mode=False, provider=None, auto_mode=False):
+    def __init__(
+        self,
+        skip_feedback=False,
+        skip_git=False,
+        activity_id=None,
+        week_id=None,
+        servo_mode=False,
+        provider=None,
+        auto_mode=False,
+    ):
         from cyclisme_training_logs.config import get_data_config
 
         self.skip_feedback = skip_feedback
@@ -139,7 +150,7 @@ class WorkflowCoach:
         if provider is None:
             # Auto-detect: use first available provider in fallback chain
             available = self.ai_config.get_available_providers()
-            provider = available[0] if available else 'clipboard'
+            provider = available[0] if available else "clipboard"
             logger.info(f"Auto-selected AI provider: {provider}")
         else:
             logger.info(f"Using specified AI provider: {provider}")
@@ -147,7 +158,7 @@ class WorkflowCoach:
         # Validate and initialize provider
         if not self.ai_config.is_provider_configured(provider):
             logger.warning(f"Provider {provider} not configured, falling back to clipboard")
-            provider = 'clipboard'
+            provider = "clipboard"
 
         provider_config = self.ai_config.get_provider_config(provider)
         self.ai_analyzer = AIProviderFactory.create(provider, provider_config)
@@ -157,24 +168,24 @@ class WorkflowCoach:
 
     def load_credentials(self):
         """Charger credentials Intervals.icu de manière robuste"""
-        import os
         import json
+        import os
         from pathlib import Path
 
         config_path = Path.home() / ".intervals_config.json"
         if config_path.exists():
             try:
-                with open(config_path, 'r') as f:
+                with open(config_path) as f:
                     config = json.load(f)
-                    athlete_id = config.get('athlete_id')
-                    api_key = config.get('api_key')
+                    athlete_id = config.get("athlete_id")
+                    api_key = config.get("api_key")
                     if athlete_id and api_key:
                         return athlete_id, api_key
             except Exception as e:
                 print(f"⚠️  Erreur config : {e}")
 
-        athlete_id = os.getenv('VITE_INTERVALS_ATHLETE_ID')
-        api_key = os.getenv('VITE_INTERVALS_API_KEY')
+        athlete_id = os.getenv("VITE_INTERVALS_ATHLETE_ID")
+        api_key = os.getenv("VITE_INTERVALS_API_KEY")
         if athlete_id and api_key:
             return athlete_id, api_key
 
@@ -196,9 +207,9 @@ class WorkflowCoach:
 
         try:
             for template_file in templates_dir.glob("*.json"):
-                with open(template_file, 'r', encoding='utf-8') as f:
+                with open(template_file, encoding="utf-8") as f:
                     template = json.load(f)
-                    templates[template['id']] = template
+                    templates[template["id"]] = template
 
             if templates:
                 print(f"✅ {len(templates)} templates chargés")
@@ -227,14 +238,14 @@ class WorkflowCoach:
             return []
 
         try:
-            with open(planning_file, 'r', encoding='utf-8') as f:
+            with open(planning_file, encoding="utf-8") as f:
                 planning = json.load(f)
 
             today = datetime.now().date()
 
             remaining = []
-            for session in planning.get('planned_sessions', []):
-                session_date = datetime.strptime(session['date'], '%Y-%m-%d').date()
+            for session in planning.get("planned_sessions", []):
+                session_date = datetime.strptime(session["date"], "%Y-%m-%d").date()
                 if session_date >= today:
                     remaining.append(session)
 
@@ -259,16 +270,16 @@ class WorkflowCoach:
         lines = [f"\n## PLANNING RESTANT ({len(remaining_sessions)} séances)\n"]
 
         for session in remaining_sessions:
-            date = session['date']
-            session_id = session['session_id']
-            name = session['name']
-            workout_type = session['type']
-            tss = session.get('tss_planned', 0)
+            date = session["date"]
+            session_id = session["session_id"]
+            name = session["name"]
+            workout_type = session["type"]
+            tss = session.get("tss_planned", 0)
 
             # Construct workout code
             workout_code = f"{session_id}-{workout_type}-{name}-{session.get('version', 'V001')}"
 
-            if session.get('status') == 'rest_day':
+            if session.get("status") == "rest_day":
                 lines.append(f"{date}: REPOS")
             else:
                 lines.append(f"{date}: {workout_code} ({tss} TSS)")
@@ -301,11 +312,7 @@ class WorkflowCoach:
         text = ai_response.strip()
 
         # Strategy 1: Try to extract from markdown code block
-        json_match = re.search(
-            r'```json\s*\n?(\{.*?\})\s*\n?```',
-            text,
-            re.DOTALL | re.MULTILINE
-        )
+        json_match = re.search(r"```json\s*\n?(\{.*?\})\s*\n?```", text, re.DOTALL | re.MULTILINE)
 
         if json_match:
             logger.debug("Found JSON in markdown code block")
@@ -313,9 +320,7 @@ class WorkflowCoach:
         else:
             # Strategy 2: Try to find JSON object directly (without markdown)
             json_match = re.search(
-                r'\{[^{}]*"modifications"[^{}]*\[[^\]]*\][^{}]*\}',
-                text,
-                re.DOTALL | re.MULTILINE
+                r'\{[^{}]*"modifications"[^{}]*\[[^\]]*\][^{}]*\}', text, re.DOTALL | re.MULTILINE
             )
 
             if json_match:
@@ -323,17 +328,15 @@ class WorkflowCoach:
                 json_str = json_match.group(0)
             else:
                 # Strategy 3: Look for any JSON-like structure with "modifications" key
-                json_match = re.search(
-                    r'\{.*?"modifications".*?\}',
-                    text,
-                    re.DOTALL | re.MULTILINE
-                )
+                json_match = re.search(r'\{.*?"modifications".*?\}', text, re.DOTALL | re.MULTILINE)
 
                 if json_match:
                     logger.debug("Found JSON-like structure with modifications key")
                     json_str = json_match.group(0)
                 else:
-                    logger.info("No JSON modifications found in response (normal if no changes needed)")
+                    logger.info(
+                        "No JSON modifications found in response (normal if no changes needed)"
+                    )
                     return []
 
         # Parse JSON
@@ -347,7 +350,7 @@ class WorkflowCoach:
             return []
 
         # Extract modifications list
-        modifications = data.get('modifications', [])
+        modifications = data.get("modifications", [])
 
         if not isinstance(modifications, list):
             logger.error(f"'modifications' is not a list: {type(modifications)}")
@@ -370,11 +373,11 @@ class WorkflowCoach:
         planning_file = config.week_planning_dir / f"week_planning_{week_id}.json"
 
         try:
-            with open(planning_file, 'r', encoding='utf-8') as f:
+            with open(planning_file, encoding="utf-8") as f:
                 planning = json.load(f)
 
-            start_date = datetime.strptime(planning['start_date'], '%Y-%m-%d').date()
-            target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            start_date = datetime.strptime(planning["start_date"], "%Y-%m-%d").date()
+            target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
 
             delta = (target_date - start_date).days
             return delta + 1  # Jour 1-7
@@ -410,8 +413,8 @@ class WorkflowCoach:
 
             # Filter for WORKOUT category
             for event in events:
-                if event.get('category') == 'WORKOUT':
-                    return event.get('id')
+                if event.get("category") == "WORKOUT":
+                    return event.get("id")
 
             return None
 
@@ -480,7 +483,7 @@ class WorkflowCoach:
                 "type": "VirtualRide",  # Required by Intervals.icu API
                 "start_date_local": f"{date}T06:00:00",
                 "name": code,
-                "description": structure  # Format Intervals.icu (corrigé P0 #6)
+                "description": structure,  # Format Intervals.icu (corrigé P0 #6)
             }
 
             # Create event using existing method
@@ -492,7 +495,9 @@ class WorkflowCoach:
             print(f"⚠️  Erreur upload workout : {e}")
             return False
 
-    def _update_planning_json(self, week_id: str, date: str, new_workout: dict, old_workout: str, reason: str) -> bool:
+    def _update_planning_json(
+        self, week_id: str, date: str, new_workout: dict, old_workout: str, reason: str
+    ) -> bool:
         """Met à jour week_planning_SXXX.json avec historique
 
         Args:
@@ -510,12 +515,12 @@ class WorkflowCoach:
 
         try:
             # Load planning
-            with open(planning_file, 'r', encoding='utf-8') as f:
+            with open(planning_file, encoding="utf-8") as f:
                 planning = json.load(f)
 
             # Find session to modify
-            for i, session in enumerate(planning['planned_sessions']):
-                if session['date'] == date:
+            for i, session in enumerate(planning["planned_sessions"]):
+                if session["date"] == date:
                     # Save to history
                     timestamp = datetime.now().isoformat()
 
@@ -523,34 +528,36 @@ class WorkflowCoach:
                         "timestamp": timestamp,
                         "action": "modified_by_ai_coach",
                         "previous_workout": old_workout,
-                        "previous_tss": session['tss_planned'],
-                        "new_workout": new_workout['code'],
-                        "new_tss": new_workout['tss'],
-                        "reason": reason
+                        "previous_tss": session["tss_planned"],
+                        "new_workout": new_workout["code"],
+                        "new_tss": new_workout["tss"],
+                        "reason": reason,
                     }
 
                     # Update session
-                    planning['planned_sessions'][i].update({
-                        "session_id": new_workout.get('session_id', session['session_id']),
-                        "name": new_workout.get('name', session['name']),
-                        "type": new_workout['type'],
-                        "tss_planned": new_workout['tss'],
-                        "description": new_workout['description'],
-                        "status": "modified"
-                    })
+                    planning["planned_sessions"][i].update(
+                        {
+                            "session_id": new_workout.get("session_id", session["session_id"]),
+                            "name": new_workout.get("name", session["name"]),
+                            "type": new_workout["type"],
+                            "tss_planned": new_workout["tss"],
+                            "description": new_workout["description"],
+                            "status": "modified",
+                        }
+                    )
 
-                    if 'history' not in planning['planned_sessions'][i]:
-                        planning['planned_sessions'][i]['history'] = []
-                    planning['planned_sessions'][i]['history'].append(history_entry)
+                    if "history" not in planning["planned_sessions"][i]:
+                        planning["planned_sessions"][i]["history"] = []
+                    planning["planned_sessions"][i]["history"].append(history_entry)
 
                     break
 
             # Update metadata
-            planning['last_updated'] = datetime.now().isoformat()
-            planning['version'] = planning.get('version', 1) + 1
+            planning["last_updated"] = datetime.now().isoformat()
+            planning["version"] = planning.get("version", 1) + 1
 
             # Save
-            with open(planning_file, 'w', encoding='utf-8') as f:
+            with open(planning_file, "w", encoding="utf-8") as f:
                 json.dump(planning, f, indent=2, ensure_ascii=False)
 
             return True
@@ -566,7 +573,7 @@ class WorkflowCoach:
             mod: Modification dict avec template_id
             week_id: ID semaine
         """
-        template_id = mod['template_id']
+        template_id = mod["template_id"]
 
         if template_id not in self.workout_templates:
             print(f"❌ Template inconnu: {template_id}")
@@ -581,19 +588,16 @@ class WorkflowCoach:
 
         # Confirmation utilisateur (CRITIQUE)
         confirm = input("   Appliquer ? (o/n) : ").strip().lower()
-        if confirm != 'o':
+        if confirm != "o":
             print("   ❌ Ignoré")
             return
 
         # 1. Générer workout code depuis template
-        day_num = self._extract_day_number(mod['target_date'], week_id)
-        workout_code = template['workout_code_pattern'].format(
-            week_id=week_id,
-            day_num=day_num
-        )
+        day_num = self._extract_day_number(mod["target_date"], week_id)
+        workout_code = template["workout_code_pattern"].format(week_id=week_id, day_num=day_num)
 
         # 2. Supprimer ancien workout Intervals.icu
-        old_workout_id = self._get_workout_id_intervals(mod['target_date'])
+        old_workout_id = self._get_workout_id_intervals(mod["target_date"])
         if old_workout_id:
             if self._delete_workout_intervals(old_workout_id):
                 print("   🗑️  Ancien workout supprimé")
@@ -602,9 +606,7 @@ class WorkflowCoach:
 
         # 3. Upload nouveau workout
         if self._upload_workout_intervals(
-            date=mod['target_date'],
-            code=workout_code,
-            structure=template['intervals_icu_format']
+            date=mod["target_date"], code=workout_code, structure=template["intervals_icu_format"]
         ):
             print("   ⬆️  Nouveau workout uploadé")
         else:
@@ -614,15 +616,15 @@ class WorkflowCoach:
         # 4. Mettre à jour planning JSON
         if self._update_planning_json(
             week_id=week_id,
-            date=mod['target_date'],
+            date=mod["target_date"],
             new_workout={
-                'code': workout_code,
-                'type': template['type'],
-                'tss': template['tss'],
-                'description': template['description']
+                "code": workout_code,
+                "type": template["type"],
+                "tss": template["tss"],
+                "description": template["description"],
             },
-            old_workout=mod['current_workout'],
-            reason=mod['reason']
+            old_workout=mod["current_workout"],
+            reason=mod["reason"],
         ):
             print("   📝 Planning JSON mis à jour")
             print("   ✅ Modification appliquée")
@@ -643,14 +645,14 @@ class WorkflowCoach:
         print(f"\n📋 {len(modifications)} modification(s) détectée(s)")
 
         for mod in modifications:
-            action = mod.get('action', 'unknown')
+            action = mod.get("action", "unknown")
 
-            if action == 'lighten':
+            if action == "lighten":
                 self._apply_lighten(mod, week_id)
-            elif action == 'cancel':
+            elif action == "cancel":
                 # TODO: Implémenter cancel si nécessaire
                 print(f"⚠️  Action 'cancel' non implémentée: {mod}")
-            elif action == 'reschedule':
+            elif action == "reschedule":
                 # TODO: Implémenter reschedule si nécessaire
                 print(f"⚠️  Action 'reschedule' non implémentée: {mod}")
             else:
@@ -672,10 +674,7 @@ class WorkflowCoach:
             week_id: ID semaine (ex: S070)
         """
         self.clear_screen()
-        self.print_header(
-            "🤖 WORKFLOW COACH AI - Réconciliation Batch",
-            f"Semaine {week_id}"
-        )
+        self.print_header("🤖 WORKFLOW COACH AI - Réconciliation Batch", f"Semaine {week_id}")
 
         # 0. Initialiser API
         from cyclisme_training_logs.api.intervals_client import IntervalsClient
@@ -705,11 +704,10 @@ class WorkflowCoach:
             return
 
         # 2. Récupérer activités réalisées depuis API
-        print(f"\n🔍 Récupération activités depuis Intervals.icu...")
+        print("\n🔍 Récupération activités depuis Intervals.icu...")
         try:
             activities = api.get_activities(
-                oldest=planning['start_date'],
-                newest=planning['end_date']
+                oldest=planning["start_date"], newest=planning["end_date"]
             )
             print(f"✅ {len(activities)} activité(s) trouvée(s)")
         except Exception as e:
@@ -717,12 +715,13 @@ class WorkflowCoach:
             return
 
         # 3. Réconcilier planifié vs réalisé
-        print(f"\n⚙️  Réconciliation en cours...")
+        print("\n⚙️  Réconciliation en cours...")
         try:
             reconciliation = reconcile_planned_vs_actual(planning, activities)
         except Exception as e:
             print(f"❌ Erreur réconciliation: {e}")
             import traceback
+
             traceback.print_exc()
             return
 
@@ -741,11 +740,11 @@ class WorkflowCoach:
         skipped_count = 0
 
         # 5. Traiter séances sautées
-        if reconciliation['skipped']:
+        if reconciliation["skipped"]:
             print(f"\n⏭️  SÉANCES SAUTÉES À TRAITER ({len(reconciliation['skipped'])})")
             print("=" * 70)
 
-            for session in reconciliation['skipped']:
+            for session in reconciliation["skipped"]:
                 print(f"\n📌 Séance: {session['session_id']}")
                 print(f"   Date: {session['date']}")
                 print(f"   Nom: {session.get('name', 'N/A')}")
@@ -753,99 +752,103 @@ class WorkflowCoach:
                 print(f"   TSS planifié: {session.get('tss_planned', 0)}")
 
                 # Vérifier si déjà marquée comme sautée
-                if session.get('status') == 'skipped':
-                    print(f"   ℹ️  Déjà marquée comme sautée")
+                if session.get("status") == "skipped":
+                    print("   ℹ️  Déjà marquée comme sautée")
                     skipped_count += 1
                     continue
 
                 # Prompt utilisateur
-                print(f"\n💡 Actions possibles:")
-                print(f"   [1] Marquer comme sautée (oubli)")
-                print(f"   [2] Marquer comme annulée (raison manuelle)")
-                print(f"   [3] Ignorer (garder status actuel)")
+                print("\n💡 Actions possibles:")
+                print("   [1] Marquer comme sautée (oubli)")
+                print("   [2] Marquer comme annulée (raison manuelle)")
+                print("   [3] Ignorer (garder status actuel)")
 
-                choice = input(f"\n   Choix (1-3): ").strip()
+                choice = input("\n   Choix (1-3): ").strip()
 
-                if choice == '1':
-                    reason = input(f"   Raison (optionnel): ").strip()
+                if choice == "1":
+                    reason = input("   Raison (optionnel): ").strip()
                     if not reason:
                         reason = "Séance sautée - réconciliation batch"
 
                     # Mettre à jour la session
-                    session['status'] = 'skipped'
-                    if 'history' not in session:
-                        session['history'] = []
-                    session['history'].append({
-                        'timestamp': datetime.now().strftime('%Y-%m-%dT%H:%M:%S'),
-                        'action': 'reconciled_skipped',
-                        'reason': reason
-                    })
+                    session["status"] = "skipped"
+                    if "history" not in session:
+                        session["history"] = []
+                    session["history"].append(
+                        {
+                            "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+                            "action": "reconciled_skipped",
+                            "reason": reason,
+                        }
+                    )
 
                     # Supprimer le workout de Intervals.icu si présent (évite boucle infinie)
-                    workout_id = self._get_workout_id_intervals(session['date'])
+                    workout_id = self._get_workout_id_intervals(session["date"])
                     if workout_id:
                         print(f"   🗑️  Suppression workout Intervals.icu (ID: {workout_id})...")
                         if self._delete_workout_intervals(workout_id):
-                            print(f"   ✅ Workout supprimé de l'API")
+                            print("   ✅ Workout supprimé de l'API")
                         else:
-                            print(f"   ⚠️  Échec suppression workout API")
+                            print("   ⚠️  Échec suppression workout API")
 
                     updated_count += 1
-                    print(f"   ✅ Marquée comme sautée")
+                    print("   ✅ Marquée comme sautée")
 
-                elif choice == '2':
-                    reason = input(f"   Raison annulation: ").strip()
+                elif choice == "2":
+                    reason = input("   Raison annulation: ").strip()
                     if not reason:
                         reason = "Séance annulée - réconciliation batch"
 
                     # Mettre à jour la session
-                    session['status'] = 'cancelled'
-                    session['cancellation_reason'] = reason
-                    if 'history' not in session:
-                        session['history'] = []
-                    session['history'].append({
-                        'timestamp': datetime.now().strftime('%Y-%m-%dT%H:%M:%S'),
-                        'action': 'reconciled_cancelled',
-                        'reason': reason
-                    })
+                    session["status"] = "cancelled"
+                    session["cancellation_reason"] = reason
+                    if "history" not in session:
+                        session["history"] = []
+                    session["history"].append(
+                        {
+                            "timestamp": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"),
+                            "action": "reconciled_cancelled",
+                            "reason": reason,
+                        }
+                    )
                     updated_count += 1
-                    print(f"   ✅ Marquée comme annulée")
+                    print("   ✅ Marquée comme annulée")
 
                 else:
-                    print(f"   ⏭️  Ignorée")
+                    print("   ⏭️  Ignorée")
 
         # 6. Traiter séances annulées (déjà marquées comme cancelled)
-        if reconciliation['cancelled']:
+        if reconciliation["cancelled"]:
             print(f"\n\n❌ SÉANCES ANNULÉES ({len(reconciliation['cancelled'])})")
             print("=" * 70)
 
-            for session in reconciliation['cancelled']:
+            for session in reconciliation["cancelled"]:
                 print(f"\n📌 Séance: {session['session_id']}")
                 print(f"   Date: {session['date']}")
                 print(f"   Nom: {session.get('name', 'N/A')}")
                 print(f"   Raison: {session.get('cancellation_reason', 'Non spécifiée')}")
-                print(f"   ℹ️  Déjà marquée comme annulée")
+                print("   ℹ️  Déjà marquée comme annulée")
 
         # 7. Afficher repos planifiés (informatif)
-        if reconciliation['rest_days']:
+        if reconciliation["rest_days"]:
             print(f"\n\n💤 REPOS PLANIFIÉS ({len(reconciliation['rest_days'])})")
             print("=" * 70)
 
-            for session in reconciliation['rest_days']:
+            for session in reconciliation["rest_days"]:
                 print(f"   • {session['date']}: {session.get('name', 'Repos')}")
 
         # 8. Sauvegarder planning mis à jour
         if updated_count > 0:
-            print(f"\n\n💾 Sauvegarde planning mis à jour...")
+            print("\n\n💾 Sauvegarde planning mis à jour...")
 
             # Incrémenter version
-            planning['version'] = planning.get('version', 1) + 1
-            planning['last_updated'] = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+            planning["version"] = planning.get("version", 1) + 1
+            planning["last_updated"] = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
             # Sauvegarder
             planning_file = planning_dir / f"week_planning_{week_id}.json"
             try:
-                with open(planning_file, 'w', encoding='utf-8') as f:
+                with open(planning_file, "w", encoding="utf-8") as f:
                     json.dump(planning, f, indent=2, ensure_ascii=False)
                 print(f"✅ Planning sauvegardé: {planning_file.name}")
                 print(f"   Version: {planning['version']}")
@@ -864,13 +867,13 @@ class WorkflowCoach:
         print(f"{'=' * 70}\n")
 
         if updated_count > 0:
-            print(f"💡 Prochaine étape: Committer les modifications")
+            print("💡 Prochaine étape: Committer les modifications")
             print(f"   git add {planning_file}")
             print(f"   git commit -m 'fix: Réconciliation {week_id}'")
 
     def clear_screen(self):
         """Nettoyer l'écran"""
-        os.system('clear' if os.name == 'posix' else 'cls')
+        os.system("clear" if os.name == "posix" else "cls")
 
     def print_header(self, title, subtitle=None):
         """Afficher un header stylisé"""
@@ -896,7 +899,7 @@ class WorkflowCoach:
         self.clear_screen()
         self.print_header(
             "🎯 WORKFLOW COACH - Analyse de Séance",
-            "Orchestrateur intelligent pour l'analyse cyclisme"
+            "Orchestrateur intelligent pour l'analyse cyclisme",
         )
 
         print("Ce workflow va te guider à travers 6 étapes :")
@@ -935,14 +938,11 @@ class WorkflowCoach:
         """
         # Skip si activity_id fourni (bypass détection gaps)
         if self.activity_id:
-            gaps_data = {'unanalyzed': [], 'skipped': [], 'rest_days': [], 'cancelled': []}
+            gaps_data = {"unanalyzed": [], "skipped": [], "rest_days": [], "cancelled": []}
             return "single_executed", gaps_data
 
         self.clear_screen()
-        self.print_header(
-            "🔍 Détection Gaps",
-            "Étape 1b/7 : Détection séances à documenter"
-        )
+        self.print_header("🔍 Détection Gaps", "Étape 1b/7 : Détection séances à documenter")
 
         # === PARTIE 1 : Détecter activités exécutées non analysées ===
         state = WorkflowState(project_root=self.project_root)
@@ -955,11 +955,11 @@ class WorkflowCoach:
             return "exit"
 
         try:
-            with open(config_path, 'r') as f:
+            with open(config_path) as f:
                 config = json.load(f)
 
-            athlete_id = config.get('athlete_id')
-            api_key = config.get('api_key')
+            athlete_id = config.get("athlete_id")
+            api_key = config.get("api_key")
 
             if not athlete_id or not api_key:
                 print("⚠️  Credentials invalides → Skip détection")
@@ -975,19 +975,19 @@ class WorkflowCoach:
             last_analyzed_id = state.get_last_analyzed_id()
 
             if last_analyzed_id:
-                oldest_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+                oldest_date = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
             else:
-                oldest_date = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
+                oldest_date = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
 
-            newest_date = datetime.now().strftime('%Y-%m-%d')
+            newest_date = datetime.now().strftime("%Y-%m-%d")
 
             url = f"https://intervals.icu/api/v1/athlete/{athlete_id}/activities"
-            response = session.get(url, params={'oldest': oldest_date, 'newest': newest_date})
+            response = session.get(url, params={"oldest": oldest_date, "newest": newest_date})
             response.raise_for_status()
             activities = response.json()
 
             # Filtrer activités non analysées
-            activities.sort(key=lambda x: x['start_date_local'], reverse=True)
+            activities.sort(key=lambda x: x["start_date_local"], reverse=True)
             unanalyzed = state.get_unanalyzed_activities(activities)
             self.unanalyzed_activities = unanalyzed if unanalyzed else None
 
@@ -1000,16 +1000,13 @@ class WorkflowCoach:
 
         try:
             # Utiliser le nouveau checker pour détecter séances sautées
-            checker = PlannedSessionsChecker(
-                athlete_id=athlete_id,
-                api_key=api_key
-            )
+            checker = PlannedSessionsChecker(athlete_id=athlete_id, api_key=api_key)
 
             # Chercher dans même période que activités
             skipped_sessions = checker.detect_skipped_sessions(
                 start_date=oldest_date,
                 end_date=newest_date,
-                exclude_future=True  # Ignorer workouts futurs
+                exclude_future=True,  # Ignorer workouts futurs
             )
 
             self.skipped_sessions = skipped_sessions if skipped_sessions else None
@@ -1027,16 +1024,16 @@ class WorkflowCoach:
             for skip in self.skipped_sessions:
                 # Extraire session_id depuis planned_name
                 # Format possible: "S072-05 - Name" ou "S072-05-TEC-TechniqueCadence-V001"
-                planned_name = skip.get('planned_name', '')
+                planned_name = skip.get("planned_name", "")
 
                 # Extraire SXXX-XX (2 premiers segments)
-                if ' - ' in planned_name:
-                    session_id = planned_name.split(' - ')[0]
+                if " - " in planned_name:
+                    session_id = planned_name.split(" - ")[0]
                 else:
-                    parts = planned_name.split('-')
+                    parts = planned_name.split("-")
                     session_id = f"{parts[0]}-{parts[1]}" if len(parts) >= 2 else planned_name
 
-                date = skip.get('planned_date', '')
+                date = skip.get("planned_date", "")
 
                 # Vérifier si déjà documentée
                 if not state.is_special_session_documented(session_id, date):
@@ -1045,7 +1042,9 @@ class WorkflowCoach:
             # Log filtrage si sessions retirées
             filtered_count = skipped_original_count - len(skipped_filtered)
             if filtered_count > 0:
-                print(f"[INFO] {filtered_count} séance(s) sautée(s) déjà documentée(s) - ignorée(s)")
+                print(
+                    f"[INFO] {filtered_count} séance(s) sautée(s) déjà documentée(s) - ignorée(s)"
+                )
 
             self.skipped_sessions = skipped_filtered if skipped_filtered else None
 
@@ -1060,26 +1059,25 @@ class WorkflowCoach:
 
             if planning_file.exists():
                 try:
-                    with open(planning_file, 'r', encoding='utf-8') as f:
+                    with open(planning_file, encoding="utf-8") as f:
                         self.planning = json.load(f)
 
                     if validate_week_planning(self.planning):
                         # Réconciliation
                         from cyclisme_training_logs.api.intervals_client import IntervalsClient
+
                         api = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
 
                         planning_activities = api.get_activities(
-                            oldest=self.planning['start_date'],
-                            newest=self.planning['end_date']
+                            oldest=self.planning["start_date"], newest=self.planning["end_date"]
                         )
 
                         self.reconciliation = reconcile_planned_vs_actual(
-                            self.planning,
-                            planning_activities
+                            self.planning, planning_activities
                         )
 
-                        rest_days = self.reconciliation.get('rest_days', [])
-                        cancelled_sessions = self.reconciliation.get('cancelled', [])
+                        rest_days = self.reconciliation.get("rest_days", [])
+                        cancelled_sessions = self.reconciliation.get("cancelled", [])
 
                         # PHASE 4: Filtrer repos planifiés déjà documentés
                         if rest_days:
@@ -1087,8 +1085,8 @@ class WorkflowCoach:
                             rest_filtered = []
 
                             for rest in rest_days:
-                                session_id = rest.get('session_id', '')
-                                date = rest.get('date', '')
+                                session_id = rest.get("session_id", "")
+                                date = rest.get("date", "")
 
                                 # Vérifier si déjà documenté
                                 if not state.is_special_session_documented(session_id, date):
@@ -1097,7 +1095,9 @@ class WorkflowCoach:
                             # Log filtrage
                             filtered_count = rest_original_count - len(rest_filtered)
                             if filtered_count > 0:
-                                print(f"[INFO] {filtered_count} repos planifié(s) déjà documenté(s) - ignoré(s)")
+                                print(
+                                    f"[INFO] {filtered_count} repos planifié(s) déjà documenté(s) - ignoré(s)"
+                                )
 
                             rest_days = rest_filtered
 
@@ -1107,8 +1107,8 @@ class WorkflowCoach:
                             cancelled_filtered = []
 
                             for cancel in cancelled_sessions:
-                                session_id = cancel.get('session_id', '')
-                                date = cancel.get('date', '')
+                                session_id = cancel.get("session_id", "")
+                                date = cancel.get("date", "")
 
                                 # Vérifier si déjà documentée
                                 if not state.is_special_session_documented(session_id, date):
@@ -1117,7 +1117,9 @@ class WorkflowCoach:
                             # Log filtrage
                             filtered_count = cancelled_original_count - len(cancelled_filtered)
                             if filtered_count > 0:
-                                print(f"[INFO] {filtered_count} annulation(s) déjà documentée(s) - ignorée(s)")
+                                print(
+                                    f"[INFO] {filtered_count} annulation(s) déjà documentée(s) - ignorée(s)"
+                                )
 
                             cancelled_sessions = cancelled_filtered
 
@@ -1142,20 +1144,15 @@ class WorkflowCoach:
             print()
             self.wait_user()
             # PHASE 4: Retourner tuple avec gaps_data vide
-            gaps_data = {
-                'unanalyzed': [],
-                'skipped': [],
-                'rest_days': [],
-                'cancelled': []
-            }
+            gaps_data = {"unanalyzed": [], "skipped": [], "rest_days": [], "cancelled": []}
             return "exit", gaps_data
 
         # Détails séances exécutées
         if count_executed > 0:
             print(f"\n🚴 Séances exécutées non analysées : {count_executed}")
             for i, act in enumerate(self.unanalyzed_activities[:3], 1):
-                date = act['start_date_local'][:10]
-                name = act.get('name', 'Séance')[:40]
+                date = act["start_date_local"][:10]
+                name = act.get("name", "Séance")[:40]
                 print(f"   {i}. [{date}] {name}")
             if count_executed > 3:
                 print(f"   ... et {count_executed - 3} autres")
@@ -1164,9 +1161,9 @@ class WorkflowCoach:
         if count_rest > 0:
             print(f"\n💤 Repos planifiés non documentés : {count_rest}")
             for rest in rest_days[:3]:
-                date = rest['date']
-                session_id = rest['session_id']
-                reason = rest.get('rest_reason', 'Repos planifié')[:40]
+                date = rest["date"]
+                session_id = rest["session_id"]
+                reason = rest.get("rest_reason", "Repos planifié")[:40]
                 print(f"   • [{date}] {session_id} - {reason}")
             if count_rest > 3:
                 print(f"   ... et {count_rest - 3} autres")
@@ -1175,9 +1172,9 @@ class WorkflowCoach:
         if count_cancelled > 0:
             print(f"\n❌ Séances annulées non documentées : {count_cancelled}")
             for cancelled in cancelled_sessions[:3]:
-                date = cancelled['date']
-                session_id = cancelled['session_id']
-                reason = cancelled.get('cancellation_reason', 'Annulée')[:40]
+                date = cancelled["date"]
+                session_id = cancelled["session_id"]
+                reason = cancelled.get("cancellation_reason", "Annulée")[:40]
                 print(f"   • [{date}] {session_id} - {reason}")
             if count_cancelled > 3:
                 print(f"   ... et {count_cancelled - 3} autres")
@@ -1186,10 +1183,10 @@ class WorkflowCoach:
         if count_skipped > 0:
             print(f"\n⏭️  Séances planifiées sautées : {count_skipped}")
             for skipped in self.skipped_sessions[:3]:
-                date = skipped['planned_date']
-                name = skipped['planned_name'][:40]
-                tss = skipped['planned_tss']
-                days = skipped['days_ago']
+                date = skipped["planned_date"]
+                name = skipped["planned_name"][:40]
+                tss = skipped["planned_tss"]
+                days = skipped["days_ago"]
                 print(f"   • [{date}] {name} ({tss} TSS, il y a {days}j)")
             if count_skipped > 3:
                 print(f"   ... et {count_skipped - 3} autres")
@@ -1242,10 +1239,10 @@ class WorkflowCoach:
 
         # PHASE 4: Préparer gaps_data pour signature (sortie intelligente boucle)
         gaps_data = {
-            'unanalyzed': self.unanalyzed_activities or [],
-            'skipped': self.skipped_sessions or [],
-            'rest_days': rest_days,
-            'cancelled': cancelled_sessions
+            "unanalyzed": self.unanalyzed_activities or [],
+            "skipped": self.skipped_sessions or [],
+            "rest_days": rest_days,
+            "cancelled": cancelled_sessions,
         }
 
         while True:
@@ -1274,8 +1271,7 @@ class WorkflowCoach:
         if self.skip_feedback:
             self.clear_screen()
             self.print_header(
-                "⏭️  Feedback Athlète (Skip)",
-                "Étape 2/7 : Collecte feedback (optionnel)"
+                "⏭️  Feedback Athlète (Skip)", "Étape 2/7 : Collecte feedback (optionnel)"
             )
             print("Le feedback athlète a été skippé (--skip-feedback).")
             print("L'analyse sera basée uniquement sur les métriques objectives.")
@@ -1289,8 +1285,7 @@ class WorkflowCoach:
 
         self.clear_screen()
         self.print_header(
-            "💭 Collecte Feedback Athlète",
-            "Étape 2/7 : Ressenti subjectif (optionnel)"
+            "💭 Collecte Feedback Athlète", "Étape 2/7 : Ressenti subjectif (optionnel)"
         )
 
         # Show gap count to user
@@ -1309,7 +1304,7 @@ class WorkflowCoach:
 
         collect = input("Collecter le feedback ? (o/n) : ").strip().lower()
 
-        if collect != 'o':
+        if collect != "o":
             print()
             print("⏭️  Feedback skippé. L'analyse sera basée sur les métriques.")
             self.wait_user()
@@ -1323,11 +1318,11 @@ class WorkflowCoach:
         mode_choice = input("Choix (1/2) : ").strip()
 
         print()
-        mode_str = "quick" if mode_choice == '1' else "full"
+        mode_str = "quick" if mode_choice == "1" else "full"
         print(f"Lancement de collect_athlete_feedback.py (mode {mode_str})...")
         self.print_separator()
 
-# Lancer le script de collecte AVEC contexte
+        # Lancer le script de collecte AVEC contexte
         try:
             from cyclisme_training_logs.api.intervals_client import IntervalsClient
 
@@ -1348,27 +1343,33 @@ class WorkflowCoach:
                 # Prendre la première activité non analysée détectée
                 activity = self.unanalyzed_activities[0]
                 print()
-                print(f"✓ Contexte : {activity.get('name', 'Séance')} du {activity.get('start_date_local', '')[:10]}")
+                print(
+                    f"✓ Contexte : {activity.get('name', 'Séance')} du {activity.get('start_date_local', '')[:10]}"
+                )
 
             if activity:
-
                 # Commande avec contexte - Module import au lieu de path absolu
                 cmd = [
                     sys.executable,
-                    "-m", "cyclisme_training_logs.collect_athlete_feedback",
-                    "--activity-name", activity.get('name', 'Séance'),
-                    "--activity-date", activity.get('start_date_local', ''),
-                    "--activity-duration", str(activity.get('moving_time', 0) // 60),
-                    "--activity-tss", str(int(activity.get('icu_training_load', 0))),
+                    "-m",
+                    "cyclisme_training_logs.collect_athlete_feedback",
+                    "--activity-name",
+                    activity.get("name", "Séance"),
+                    "--activity-date",
+                    activity.get("start_date_local", ""),
+                    "--activity-duration",
+                    str(activity.get("moving_time", 0) // 60),
+                    "--activity-tss",
+                    str(int(activity.get("icu_training_load", 0))),
                 ]
 
                 # Ajouter IF si disponible
-                if activity.get('icu_intensity'):
-                    if_value = activity.get('icu_intensity', 0) / 100.0
+                if activity.get("icu_intensity"):
+                    if_value = activity.get("icu_intensity", 0) / 100.0
                     cmd.extend(["--activity-if", f"{if_value:.2f}"])
 
                 # Mode quick
-                if mode_choice == '1':
+                if mode_choice == "1":
                     cmd.append("--quick")
 
                 result = subprocess.run(cmd)
@@ -1377,7 +1378,7 @@ class WorkflowCoach:
                 print()
                 print("⚠️  Impossible de récupérer le contexte de la séance")
                 cmd = [sys.executable, "-m", "cyclisme_training_logs.collect_athlete_feedback"]
-                if mode_choice == '1':
+                if mode_choice == "1":
                     cmd.append("--quick")
                 result = subprocess.run(cmd)
 
@@ -1387,7 +1388,7 @@ class WorkflowCoach:
             print("   → Collecte feedback sans contexte activité")
             # Fallback sans contexte
             cmd = [sys.executable, "-m", "cyclisme_training_logs.collect_athlete_feedback"]
-            if mode_choice == '1':
+            if mode_choice == "1":
                 cmd.append("--quick")
             result = subprocess.run(cmd)
 
@@ -1402,7 +1403,9 @@ class WorkflowCoach:
             print("✅ Feedback collecté et sauvegardé !")
             self.wait_user()
 
-    def _ask_fallback_consent(self, failed_provider: str, next_provider: str, error_msg: str) -> str:
+    def _ask_fallback_consent(
+        self, failed_provider: str, next_provider: str, error_msg: str
+    ) -> str:
         """Ask user consent before falling back to another provider.
 
         Args:
@@ -1423,13 +1426,13 @@ class WorkflowCoach:
         print("🔀 OPTIONS DISPONIBLES :")
         print()
         print(f"  [F] Fallback  - Essayer {next_provider} (provider suivant)")
-        print(f"  [C] Clipboard - Basculer vers le mode manuel (presse-papier)")
-        print(f"  [Q] Quit      - Quitter le workflow")
+        print("  [C] Clipboard - Basculer vers le mode manuel (presse-papier)")
+        print("  [Q] Quit      - Quitter le workflow")
         print()
 
         while True:
             choice = input("Votre choix [F/C/Q] : ").strip().upper()
-            if choice in ['F', 'C', 'Q']:
+            if choice in ["F", "C", "Q"]:
                 return choice
             print("⚠️  Choix invalide. Veuillez entrer F, C ou Q.")
             print()
@@ -1437,10 +1440,7 @@ class WorkflowCoach:
     def step_3_prepare_analysis(self):
         """Étape 3 : Préparer le prompt d'analyse"""
         self.clear_screen()
-        self.print_header(
-            "📝 Préparation Prompt d'Analyse",
-            "Étape 3/7 : Génération du prompt"
-        )
+        self.print_header("📝 Préparation Prompt d'Analyse", "Étape 3/7 : Génération du prompt")
 
         print("Récupération de la séance depuis Intervals.icu...")
         print("Génération du prompt optimisé pour l'IA...")
@@ -1466,17 +1466,13 @@ class WorkflowCoach:
 
         # Read prompt from clipboard (prepare_analysis.py copied it there)
         try:
-            clipboard = subprocess.run(
-                ['pbpaste'],
-                capture_output=True,
-                text=True
-            )
+            clipboard = subprocess.run(["pbpaste"], capture_output=True, text=True)
             prompt = clipboard.stdout
 
             # Extract activity name from prompt
-            for line in prompt.split('\n'):
-                if line.strip().startswith('- **Nom** :'):
-                    self.activity_name = line.split(':', 1)[1].strip()
+            for line in prompt.split("\n"):
+                if line.strip().startswith("- **Nom** :"):
+                    self.activity_name = line.split(":", 1)[1].strip()
                     break
         except Exception as e:
             logger.error(f"Failed to read prompt from clipboard: {e}")
@@ -1487,7 +1483,7 @@ class WorkflowCoach:
         if self.activity_name:
             print()
             print("=" * 70)
-            print(f"🚴 SÉANCE EN COURS D'ANALYSE")
+            print("🚴 SÉANCE EN COURS D'ANALYSE")
             print("=" * 70)
             print(f"\n{self.activity_name}\n")
             print("=" * 70)
@@ -1497,7 +1493,7 @@ class WorkflowCoach:
         print()
 
         # Execute analysis based on provider type
-        if self.current_provider == 'clipboard':
+        if self.current_provider == "clipboard":
             # Clipboard workflow: user pastes in IA manually
             print("✅ Prompt copié dans le presse-papier")
             print()
@@ -1540,10 +1536,10 @@ class WorkflowCoach:
                     choice = self._ask_fallback_consent(
                         failed_provider=self.current_provider,
                         next_provider=next_provider,
-                        error_msg=str(e)
+                        error_msg=str(e),
                     )
 
-                    if choice == 'F':
+                    if choice == "F":
                         # Fallback to next provider
                         print()
                         print(f"🔄 Basculement vers provider de secours : {next_provider}")
@@ -1557,14 +1553,14 @@ class WorkflowCoach:
                         self.step_3_prepare_analysis()
                         return
 
-                    elif choice == 'C':
+                    elif choice == "C":
                         # Switch to clipboard
                         print()
                         print("📋 Basculement vers mode manuel (clipboard)")
                         print()
 
-                        self.current_provider = 'clipboard'
-                        self.ai_analyzer = AIProviderFactory.create('clipboard', {})
+                        self.current_provider = "clipboard"
+                        self.ai_analyzer = AIProviderFactory.create("clipboard", {})
 
                         # Retry
                         self.step_3_prepare_analysis()
@@ -1599,8 +1595,8 @@ class WorkflowCoach:
         print("\n💡 Pour le mode réconciliation, un identifiant de semaine est requis")
         week_id = input("Identifiant semaine (ex: S070) : ").strip().upper()
 
-        if not week_id.startswith('S'):
-            week_id = 'S' + week_id
+        if not week_id.startswith("S"):
+            week_id = "S" + week_id
 
         return week_id
 
@@ -1631,38 +1627,38 @@ class WorkflowCoach:
         print("📊 RAPPORT RÉCONCILIATION")
         print("=" * 70)
 
-        sessions_planned = len(self.planning['planned_sessions'])
+        sessions_planned = len(self.planning["planned_sessions"])
         print(f"\nSessions planifiées   : {sessions_planned}")
         print(f"Sessions exécutées    : {len(result['matched'])}")
         print(f"Repos planifiés       : {len(result['rest_days'])}")
         print(f"Séances annulées      : {len(result['cancelled'])}")
 
-        if result.get('unplanned'):
+        if result.get("unplanned"):
             print(f"⚠️  Activités non planifiées : {len(result['unplanned'])}")
 
         # Détail par catégorie
-        if result['matched']:
+        if result["matched"]:
             print("\n✅ Séances exécutées :")
-            for match in result['matched']:
-                session = match['session']
+            for match in result["matched"]:
+                session = match["session"]
                 print(f"   - {session['session_id']} ({session['date']})")
 
-        if result['rest_days']:
+        if result["rest_days"]:
             print("\n💤 Repos planifiés :")
-            for rest in result['rest_days']:
+            for rest in result["rest_days"]:
                 print(f"   - {rest['session_id']} ({rest['date']})")
 
-        if result['cancelled']:
+        if result["cancelled"]:
             print("\n❌ Séances annulées :")
-            for cancelled in result['cancelled']:
-                reason = cancelled.get('cancellation_reason', 'Non spécifié')[:50]
+            for cancelled in result["cancelled"]:
+                reason = cancelled.get("cancellation_reason", "Non spécifié")[:50]
                 print(f"   - {cancelled['session_id']} ({cancelled['date']}) - {reason}...")
 
-        if result.get('unplanned'):
+        if result.get("unplanned"):
             print("\n⚠️  Activités non planifiées :")
-            for unplanned in result['unplanned']:
-                name = unplanned.get('name', 'Sans nom')[:40]
-                date = unplanned['start_date_local'][:10]
+            for unplanned in result["unplanned"]:
+                name = unplanned.get("name", "Sans nom")[:40]
+                date = unplanned["start_date_local"][:10]
                 print(f"   - {name} ({date})")
 
         print("=" * 70)
@@ -1688,7 +1684,7 @@ class WorkflowCoach:
             "sleep_duration": sleep,
             "sleep_score": int(sleep_score) if sleep_score else None,
             "hrv": int(hrv) if hrv else None,
-            "resting_hr": int(resting_hr) if resting_hr else None
+            "resting_hr": int(resting_hr) if resting_hr else None,
         }
 
     def _preview_markdowns(self, markdowns: list):
@@ -1702,7 +1698,7 @@ class WorkflowCoach:
         print("=" * 70)
 
         for i, (date, markdown) in enumerate(markdowns, 1):
-            lines = markdown.split('\n')
+            lines = markdown.split("\n")
             chars = len(markdown)
             title = lines[0] if lines else "Sans titre"
 
@@ -1711,7 +1707,7 @@ class WorkflowCoach:
             print(f"   Titre   : {title}")
             print(f"   Lignes  : {len(lines)}")
             print(f"   Chars   : {chars}")
-            print(f"\n   Début :")
+            print("\n   Début :")
             for line in lines[:10]:
                 print(f"   {line}")
             if len(lines) > 10:
@@ -1734,12 +1730,9 @@ class WorkflowCoach:
         try:
             # Copier via pbcopy (macOS)
             process = subprocess.Popen(
-                ['pbcopy'],
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+                ["pbcopy"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
-            process.communicate(input=combined.encode('utf-8'))
+            process.communicate(input=combined.encode("utf-8"))
 
             if process.returncode == 0:
                 print(f"\n✅ {len(markdowns)} markdowns copiés dans le presse-papier")
@@ -1768,7 +1761,7 @@ class WorkflowCoach:
         output_file = output_dir / f"special_sessions_{week_id}.md"
 
         try:
-            with open(output_file, 'w', encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 f.write(f"# Sessions Spéciales - Semaine {week_id}\n\n")
                 f.write(f"Généré le : {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
                 f.write("---\n\n")
@@ -1797,15 +1790,15 @@ class WorkflowCoach:
         markdown_lower = markdown.lower()
 
         # Patterns pour repos
-        if any(pattern in markdown_lower for pattern in ['-rec-', 'repos', 'recovery', 'rest day']):
+        if any(pattern in markdown_lower for pattern in ["-rec-", "repos", "recovery", "rest day"]):
             return "rest"
 
         # Patterns pour annulations
-        if any(pattern in markdown_lower for pattern in ['annul', 'cancelled', 'cancel']):
+        if any(pattern in markdown_lower for pattern in ["annul", "cancelled", "cancel"]):
             return "cancelled"
 
         # Patterns pour sautées
-        if any(pattern in markdown_lower for pattern in ['saut', 'skipped', 'skip']):
+        if any(pattern in markdown_lower for pattern in ["saut", "skipped", "skip"]):
             return "skipped"
 
         return None
@@ -1824,6 +1817,7 @@ class WorkflowCoach:
             history_file = self.config.workouts_history_path
         else:
             from cyclisme_training_logs.config import get_data_config
+
             history_file = get_data_config().workouts_history_path
 
         if not history_file.exists():
@@ -1832,20 +1826,17 @@ class WorkflowCoach:
 
         try:
             # Phase 4: Insertion chronologique intelligente avec TimelineInjector
-            injector = TimelineInjector(
-                history_file=history_file,
-                check_duplicates=True
-            )
+            injector = TimelineInjector(history_file=history_file, check_duplicates=True)
 
             injection_results = []
             for date, markdown in markdowns:
                 # Extraire date du markdown (format: YYYY-MM-DD)
                 from datetime import datetime
-                workout_date = datetime.strptime(date, '%Y-%m-%d').date()
+
+                workout_date = datetime.strptime(date, "%Y-%m-%d").date()
 
                 result = injector.inject_chronologically(
-                    workout_entry=markdown.strip(),
-                    workout_date=workout_date
+                    workout_entry=markdown.strip(), workout_date=workout_date
                 )
                 injection_results.append((date, result))
 
@@ -1871,7 +1862,7 @@ class WorkflowCoach:
 
             for date, markdown in markdowns:
                 # Extraire session_id depuis markdown (format: "### S072-07-REC-...")
-                match = re.search(r'###\s+(S\d+-\d+)', markdown)
+                match = re.search(r"###\s+(S\d+-\d+)", markdown)
                 if match:
                     session_id = match.group(1)
 
@@ -1881,7 +1872,9 @@ class WorkflowCoach:
                     if session_type:
                         try:
                             state.mark_special_session_documented(session_id, session_type, date)
-                            print(f"   ✓ {session_type.capitalize()} {session_id} marquée documentée")
+                            print(
+                                f"   ✓ {session_type.capitalize()} {session_id} marquée documentée"
+                            )
                         except Exception as e:
                             print(f"   ⚠️  Erreur marking {session_id}: {e}")
 
@@ -1906,9 +1899,9 @@ class WorkflowCoach:
         markdowns_generated = []
 
         # Générer repos planifiés
-        if self.reconciliation['rest_days']:
+        if self.reconciliation["rest_days"]:
             print(f"\n💤 Génération {len(self.reconciliation['rest_days'])} repos planifiés...")
-            for rest in self.reconciliation['rest_days']:
+            for rest in self.reconciliation["rest_days"]:
                 print(f"\n   → {rest['session_id']} - {rest['name']}")
 
                 # Collecter feedback
@@ -1919,26 +1912,24 @@ class WorkflowCoach:
                     session_data=rest,
                     metrics_pre=metrics_default,
                     metrics_post=metrics_default,
-                    athlete_feedback=feedback
+                    athlete_feedback=feedback,
                 )
-                markdowns_generated.append((rest['date'], markdown))
+                markdowns_generated.append((rest["date"], markdown))
                 print(f"      ✓ Généré ({len(markdown)} chars)")
 
         # Générer séances annulées
-        if self.reconciliation['cancelled']:
+        if self.reconciliation["cancelled"]:
             print(f"\n❌ Génération {len(self.reconciliation['cancelled'])} séances annulées...")
-            for cancelled in self.reconciliation['cancelled']:
+            for cancelled in self.reconciliation["cancelled"]:
                 print(f"\n   → {cancelled['session_id']} - {cancelled['name']}")
 
-                reason = cancelled.get('cancellation_reason', 'Non spécifié')
+                reason = cancelled.get("cancellation_reason", "Non spécifié")
 
                 # Générer markdown
                 markdown = generate_cancelled_session_entry(
-                    session_data=cancelled,
-                    metrics_pre=metrics_default,
-                    reason=reason
+                    session_data=cancelled, metrics_pre=metrics_default, reason=reason
                 )
-                markdowns_generated.append((cancelled['date'], markdown))
+                markdowns_generated.append((cancelled["date"], markdown))
                 print(f"      ✓ Généré ({len(markdown)} chars)")
 
         if not markdowns_generated:
@@ -1988,8 +1979,12 @@ class WorkflowCoach:
 
         elif action == "2":
             # Insertion directe
-            confirm = input("\n⚠️  Confirmer insertion directe (sans enrichissement) ? (o/n) : ").strip().lower()
-            if confirm == 'o':
+            confirm = (
+                input("\n⚠️  Confirmer insertion directe (sans enrichissement) ? (o/n) : ")
+                .strip()
+                .lower()
+            )
+            if confirm == "o":
                 self._insert_to_history(markdowns_generated)
                 print("\n✅ Sessions documentées")
             else:
@@ -1998,7 +1993,7 @@ class WorkflowCoach:
 
         elif action == "3":
             # Export fichier
-            self._export_markdowns(markdowns_generated, self.planning['week_id'])
+            self._export_markdowns(markdowns_generated, self.planning["week_id"])
             return "exit_workflow"
 
         elif action == "4":
@@ -2055,20 +2050,20 @@ class WorkflowCoach:
 
         for skipped in skipped_sessions:
             # Extraire session_id (SXXX-XX)
-            planned_name = skipped.get('planned_name', '')
-            if ' - ' in planned_name:
-                session_id = planned_name.split(' - ')[0]
+            planned_name = skipped.get("planned_name", "")
+            if " - " in planned_name:
+                session_id = planned_name.split(" - ")[0]
             else:
-                parts = planned_name.split('-')
+                parts = planned_name.split("-")
                 session_id = f"{parts[0]}-{parts[1]}" if len(parts) >= 2 else planned_name
 
-            date = skipped.get('planned_date', '')
+            date = skipped.get("planned_date", "")
             name = planned_name
 
             print(f"\n   → {session_id} [{date}]")
 
             # Demander raison saut
-            print(f"   Raison (fatigue/météo/emploi du temps/autre) : ", end='')
+            print("   Raison (fatigue/météo/emploi du temps/autre) : ", end="")
             reason = input().strip()
             if not reason:
                 reason = "Non spécifié"
@@ -2118,8 +2113,12 @@ class WorkflowCoach:
 
         elif action == "2":
             # Insertion directe
-            confirm = input("\n⚠️  Confirmer insertion directe (sans enrichissement) ? (o/n) : ").strip().lower()
-            if confirm == 'o':
+            confirm = (
+                input("\n⚠️  Confirmer insertion directe (sans enrichissement) ? (o/n) : ")
+                .strip()
+                .lower()
+            )
+            if confirm == "o":
                 self._insert_to_history(markdowns_generated)
                 print("\n✅ Séances sautées documentées")
             else:
@@ -2151,15 +2150,15 @@ class WorkflowCoach:
             str: Markdown formaté
         """
         # Extraire session_id (SXXX-XX)
-        planned_name = skipped.get('planned_name', '')
-        if ' - ' in planned_name:
-            session_id = planned_name.split(' - ')[0]
+        planned_name = skipped.get("planned_name", "")
+        if " - " in planned_name:
+            session_id = planned_name.split(" - ")[0]
         else:
-            parts = planned_name.split('-')
+            parts = planned_name.split("-")
             session_id = f"{parts[0]}-{parts[1]}" if len(parts) >= 2 else planned_name
 
-        date_obj = datetime.strptime(skipped.get('planned_date', ''), '%Y-%m-%d')
-        date_formatted = date_obj.strftime('%d/%m/%Y')
+        date_obj = datetime.strptime(skipped.get("planned_date", ""), "%Y-%m-%d")
+        date_formatted = date_obj.strftime("%d/%m/%Y")
         name = planned_name
 
         markdown = f"""### {session_id}
@@ -2220,12 +2219,14 @@ Session planifiée non réalisée. Aucune donnée d'exécution disponible.
         """
         try:
             # 1. Charger prompt projet
-            project_prompt_file = self.project_root / "references" / "project_prompt_v2_1_revised.md"
+            project_prompt_file = (
+                self.project_root / "references" / "project_prompt_v2_1_revised.md"
+            )
             if not project_prompt_file.exists():
                 print(f"\n⚠️  Prompt projet non trouvé : {project_prompt_file}")
                 return False
 
-            with open(project_prompt_file, 'r', encoding='utf-8') as f:
+            with open(project_prompt_file, encoding="utf-8") as f:
                 project_prompt = f.read()
 
             # 2. Charger historique récent (5 dernières séances)
@@ -2234,16 +2235,18 @@ Session planifiée non réalisée. Aucune donnée d'exécution disponible.
                 history_file = self.config.workouts_history_path
             else:
                 from cyclisme_training_logs.config import get_data_config
+
                 history_file = get_data_config().workouts_history_path
             recent_history = ""
 
             if history_file.exists():
-                with open(history_file, 'r', encoding='utf-8') as f:
+                with open(history_file, encoding="utf-8") as f:
                     content = f.read()
 
                 # Extraire les 5 dernières séances (regex simple)
                 import re
-                sessions = re.findall(r'###\s+S\d+-\d+.*?(?=###\s+S\d+-\d+|\Z)', content, re.DOTALL)
+
+                sessions = re.findall(r"###\s+S\d+-\d+.*?(?=###\s+S\d+-\d+|\Z)", content, re.DOTALL)
                 recent_sessions = sessions[-5:] if len(sessions) >= 5 else sessions
 
                 if recent_sessions:
@@ -2252,9 +2255,7 @@ Session planifiée non réalisée. Aucune donnée d'exécution disponible.
                     recent_history = "(Pas d'historique récent disponible)"
 
             # 3. Construire markdowns combinés
-            combined_markdowns = "\n\n---\n\n".join(
-                markdown for _, markdown in markdowns
-            )
+            combined_markdowns = "\n\n---\n\n".join(markdown for _, markdown in markdowns)
 
             # 4. Construire prompt enrichissement
             enrichment_prompt = f"""# Mission Coach IA : Enrichissement Sessions Spéciales
@@ -2324,12 +2325,9 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
 
             # 5. Copier dans clipboard
             process = subprocess.Popen(
-                ['pbcopy'],
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+                ["pbcopy"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
-            process.communicate(input=enrichment_prompt.encode('utf-8'))
+            process.communicate(input=enrichment_prompt.encode("utf-8"))
 
             if process.returncode == 0:
                 return True
@@ -2339,6 +2337,7 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
         except Exception as e:
             print(f"\n❌ Erreur : {e}")
             import traceback
+
             traceback.print_exc()
             return False
 
@@ -2348,16 +2347,13 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
 
         # Afficher le nom de la séance dans le header
         # Get provider display name
-        provider_name = PROVIDER_DISPLAY_NAMES.get(self.current_provider, 'IA')
+        provider_name = PROVIDER_DISPLAY_NAMES.get(self.current_provider, "IA")
 
         subtitle = "Étape 4/7 : Envoi du prompt"
         if self.activity_name:
             subtitle += f"\n🚴 {self.activity_name}"
 
-        self.print_header(
-            f"🤖 Analyse par {provider_name}",
-            subtitle
-        )
+        self.print_header(f"🤖 Analyse par {provider_name}", subtitle)
 
         print("Le prompt est prêt dans ton presse-papier.")
         print()
@@ -2392,10 +2388,7 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
         if self.activity_name:
             subtitle += f"\n🚴 {self.activity_name}"
 
-        self.print_header(
-            "✅ Validation de l'Analyse",
-            subtitle
-        )
+        self.print_header("✅ Validation de l'Analyse", subtitle)
 
         print("Avant d'insérer l'analyse dans les logs, vérifie que :")
         print()
@@ -2422,11 +2415,11 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
             else:
                 valid = input("✓ L'analyse est-elle valide et prête ? (o/n) : ").strip().lower()
 
-            if valid in ['o', 'n']:
+            if valid in ["o", "n"]:
                 break
             print("⚠️  Répondre 'o' ou 'n'")
 
-        if valid != 'o':
+        if valid != "o":
             print()
             print("⚠️  Analyse non validée.")
             print()
@@ -2451,10 +2444,7 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
         if self.activity_name:
             subtitle += f"\n🚴 {self.activity_name}"
 
-        self.print_header(
-            "💾 Insertion dans les Logs",
-            subtitle
-        )
+        self.print_header("💾 Insertion dans les Logs", subtitle)
 
         print("Insertion de l'analyse depuis le presse-papier...")
         print()
@@ -2462,14 +2452,12 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
         self.print_separator()
 
         # For API providers, write analysis to clipboard first
-        if self.current_provider != 'clipboard' and hasattr(self, 'analysis_result'):
+        if self.current_provider != "clipboard" and hasattr(self, "analysis_result"):
             try:
-                subprocess.run(
-                    ['pbcopy'],
-                    input=self.analysis_result.encode('utf-8'),
-                    check=True
+                subprocess.run(["pbcopy"], input=self.analysis_result.encode("utf-8"), check=True)
+                logger.info(
+                    f"Analysis written to clipboard for insert_analysis.py ({len(self.analysis_result)} chars)"
                 )
-                logger.info(f"Analysis written to clipboard for insert_analysis.py ({len(self.analysis_result)} chars)")
             except Exception as e:
                 logger.error(f"Failed to write analysis to clipboard: {e}")
                 print(f"❌ Erreur écriture clipboard : {e}")
@@ -2493,13 +2481,15 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
         # Mark activity as analyzed ONLY after successful insertion
         if self.activity_id:
             from cyclisme_training_logs.workflow_state import WorkflowState
+
             state = WorkflowState(self.project_root)
             # Extract date from activity_data if available
-            if hasattr(self, 'activity_data') and self.activity_data:
-                activity_date = self.activity_data.get('start_date_local', '')[:10]  # YYYY-MM-DD
+            if hasattr(self, "activity_data") and self.activity_data:
+                activity_date = self.activity_data.get("start_date_local", "")[:10]  # YYYY-MM-DD
             else:
                 from datetime import datetime
-                activity_date = datetime.now().strftime('%Y-%m-%d')
+
+                activity_date = datetime.now().strftime("%Y-%m-%d")
 
             state.mark_analyzed(self.activity_id, activity_date)
             print(f"✅ Activité {self.activity_id} marquée comme analysée")
@@ -2520,10 +2510,7 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
         if self.activity_name:
             subtitle += f"\n🚴 {self.activity_name}"
 
-        self.print_header(
-            "🔄 Asservissement Planning",
-            subtitle
-        )
+        self.print_header("🔄 Asservissement Planning", subtitle)
 
         print("Le mode asservissement est activé.")
         print("Vérification si le coach AI recommande des ajustements au planning...")
@@ -2532,8 +2519,8 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
         # Detect week_id from activity or ask user
         if not self.week_id:
             week_id_input = input("Identifiant semaine (ex: S072) : ").strip().upper()
-            if not week_id_input.startswith('S'):
-                week_id_input = 'S' + week_id_input
+            if not week_id_input.startswith("S"):
+                week_id_input = "S" + week_id_input
             week_id = week_id_input
         else:
             week_id = self.week_id
@@ -2552,14 +2539,14 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
 
         print(f"📋 {len(remaining_sessions)} séances restantes dans le planning:")
         for session in remaining_sessions:
-            date = session['date']
-            session_id = session['session_id']
-            name = session['name']
-            workout_type = session['type']
-            tss = session.get('tss_planned', 0)
+            date = session["date"]
+            session_id = session["session_id"]
+            name = session["name"]
+            workout_type = session["type"]
+            tss = session.get("tss_planned", 0)
             # Construct workout code
             code = f"{session_id}-{workout_type}-{name}-{session.get('version', 'V001')}"
-            if session.get('status') == 'rest_day':
+            if session.get("status") == "rest_day":
                 print(f"   • {date}: REPOS")
             else:
                 print(f"   • {date}: {code} ({tss} TSS)")
@@ -2570,7 +2557,7 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
         print()
         request_mods = input("Demander recommandations au coach AI ? (o/n) : ").strip().lower()
 
-        if request_mods != 'o':
+        if request_mods != "o":
             print("✅ Planning maintenu sans modification")
             self.wait_user()
             return
@@ -2627,7 +2614,7 @@ Réponds maintenant."""
         # Get AI response - Use provider directly if available (fix Issue #2)
         ai_response = None
 
-        if self.current_provider != 'clipboard':
+        if self.current_provider != "clipboard":
             # Use AI provider directly
             print()
             print(f"🤖 Appel AI provider: {self.current_provider}")
@@ -2637,8 +2624,7 @@ Réponds maintenant."""
             try:
                 # Call AI provider with supplementary prompt
                 ai_response = self.ai_analyzer.analyze_session(
-                    prompt=supplementary_prompt,
-                    dataset=None
+                    prompt=supplementary_prompt, dataset=None
                 )
                 logger.info(f"AI provider responded: {len(ai_response)} chars")
 
@@ -2656,11 +2642,8 @@ Réponds maintenant."""
 
             try:
                 # Copy prompt to clipboard
-                process = subprocess.Popen(
-                    ['pbcopy'],
-                    stdin=subprocess.PIPE
-                )
-                process.communicate(input=supplementary_prompt.encode('utf-8'))
+                process = subprocess.Popen(["pbcopy"], stdin=subprocess.PIPE)
+                process.communicate(input=supplementary_prompt.encode("utf-8"))
 
                 print("✅ Prompt asservissement copié dans le presse-papier")
                 print()
@@ -2674,12 +2657,7 @@ Réponds maintenant."""
                 self.wait_user("Appuyer sur ENTRÉE une fois la réponse copiée...")
 
                 # Get AI response from clipboard
-                clipboard = subprocess.run(
-                    ['pbpaste'],
-                    capture_output=True,
-                    text=True,
-                    check=True
-                )
+                clipboard = subprocess.run(["pbpaste"], capture_output=True, text=True, check=True)
                 ai_response = clipboard.stdout
 
             except Exception as e:
@@ -2710,10 +2688,7 @@ Réponds maintenant."""
         """Étape 7 : Commit git optionnel"""
         if self.skip_git:
             self.clear_screen()
-            self.print_header(
-                "⏭️  Git Commit (Skip)",
-                "Étape 7/7 : Sauvegarde (optionnel)"
-            )
+            self.print_header("⏭️  Git Commit (Skip)", "Étape 7/7 : Sauvegarde (optionnel)")
             print("Le commit git a été skippé (--skip-git).")
             print()
             print("Pour commiter manuellement plus tard (dans ~/training-logs/) :")
@@ -2723,10 +2698,7 @@ Réponds maintenant."""
             return
 
         self.clear_screen()
-        self.print_header(
-            "💾 Sauvegarde Git",
-            "Étape 7/7 : Commit (optionnel)"
-        )
+        self.print_header("💾 Sauvegarde Git", "Étape 7/7 : Commit (optionnel)")
 
         print("Veux-tu commiter cette analyse maintenant ?")
         print()
@@ -2738,7 +2710,7 @@ Réponds maintenant."""
 
         commit = input("Commiter maintenant ? (o/n) : ").strip().lower()
 
-        if commit != 'o':
+        if commit != "o":
             print()
             print("⏭️  Commit skippé.")
             print()
@@ -2756,12 +2728,12 @@ Réponds maintenant."""
             short_name = self.activity_name[:30]
         else:
             # Fallback sur la date
-            short_name = datetime.now().strftime('%Y-%m-%d')
+            short_name = datetime.now().strftime("%Y-%m-%d")
 
         print(f"Nom de séance détecté : {short_name}")
         custom = input("Utiliser ce nom ? (o pour oui, ou taper un nom personnalisé) : ").strip()
 
-        if custom.lower() != 'o' and custom:
+        if custom.lower() != "o" and custom:
             short_name = custom
 
         # Construire le message de commit
@@ -2774,10 +2746,10 @@ Réponds maintenant."""
         try:
             # Check if there's something to commit
             status_check = subprocess.run(
-                ['git', 'status', '--short', 'logs/workouts-history.md'],
+                ["git", "status", "--short", "logs/workouts-history.md"],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
 
             if not status_check.stdout.strip():
@@ -2787,21 +2759,18 @@ Réponds maintenant."""
                 return
 
             # Stage changes
-            subprocess.run(['git', 'add', 'logs/workouts-history.md'], check=True)
+            subprocess.run(["git", "add", "logs/workouts-history.md"], check=True)
 
             # Commit
-            subprocess.run(
-                ['git', 'commit', '-m', commit_msg],
-                check=True
-            )
+            subprocess.run(["git", "commit", "-m", commit_msg], check=True)
             print()
             print("✅ Commit réussi !")
 
             # Proposer le push
             print()
             push = input("Pousser vers remote ? (o/n) : ").strip().lower()
-            if push == 'o':
-                subprocess.run(['git', 'push'], check=True)
+            if push == "o":
+                subprocess.run(["git", "push"], check=True)
                 print()
                 print("✅ Push réussi !")
 
@@ -2815,15 +2784,12 @@ Réponds maintenant."""
     def show_summary(self):
         """Afficher le résumé final"""
         self.clear_screen()
-        self.print_header(
-            "🎉 Workflow Terminé !",
-            "Analyse de séance complète"
-        )
+        self.print_header("🎉 Workflow Terminé !", "Analyse de séance complète")
 
         print("✅ RÉCAPITULATIF :")
         print()
         print(f"   Feedback collecté : {'Non' if self.skip_feedback else 'Oui'}")
-        print(f"   Analyse insérée : Oui")
+        print("   Analyse insérée : Oui")
         print(f"   Git commit : {'Non' if self.skip_git else 'Oui'}")
         if self.activity_name:
             print(f"   Séance analysée : {self.activity_name}")
@@ -2859,7 +2825,7 @@ Réponds maintenant."""
 
         commit = input("Commiter les modifications ? (o/n) : ").strip().lower()
 
-        if commit != 'o':
+        if commit != "o":
             print("   ⏭️  Commit skippé")
             return
 
@@ -2869,10 +2835,10 @@ Réponds maintenant."""
         try:
             # Check if there's something to commit
             status_check = subprocess.run(
-                ['git', 'status', '--short', 'logs/workouts-history.md'],
+                ["git", "status", "--short", "logs/workouts-history.md"],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
 
             if not status_check.stdout.strip():
@@ -2880,14 +2846,16 @@ Réponds maintenant."""
                 return
 
             # Stage and commit
-            subprocess.run(['git', 'add', 'logs/workouts-history.md'], check=True, capture_output=True)
-            subprocess.run(['git', 'commit', '-m', commit_msg], check=True, capture_output=True)
+            subprocess.run(
+                ["git", "add", "logs/workouts-history.md"], check=True, capture_output=True
+            )
+            subprocess.run(["git", "commit", "-m", commit_msg], check=True, capture_output=True)
             print("   ✅ Commit réussi !")
 
             # Proposer push
             push = input("Pousser vers remote ? (o/n) : ").strip().lower()
-            if push == 'o':
-                subprocess.run(['git', 'push'], check=True, capture_output=True)
+            if push == "o":
+                subprocess.run(["git", "push"], check=True, capture_output=True)
                 print("   ✅ Push réussi !")
 
         except subprocess.CalledProcessError as e:
@@ -2909,27 +2877,27 @@ Réponds maintenant."""
         ids = []
 
         # Activités non analysées
-        for act in gaps_data.get('unanalyzed', []):
+        for act in gaps_data.get("unanalyzed", []):
             ids.append(f"act_{act.get('id', '')}")
 
         # Séances sautées
-        for skip in gaps_data.get('skipped', []):
-            planned_name = skip.get('planned_name', '')
-            session_id = planned_name.split(' - ')[0] if ' - ' in planned_name else planned_name
-            date = skip.get('planned_date', '')
+        for skip in gaps_data.get("skipped", []):
+            planned_name = skip.get("planned_name", "")
+            session_id = planned_name.split(" - ")[0] if " - " in planned_name else planned_name
+            date = skip.get("planned_date", "")
             ids.append(f"skip_{session_id}_{date}")
 
         # Repos planifiés
-        for rest in gaps_data.get('rest_days', []):
+        for rest in gaps_data.get("rest_days", []):
             ids.append(f"rest_{rest.get('session_id', '')}_{rest.get('date', '')}")
 
         # Annulations
-        for cancel in gaps_data.get('cancelled', []):
+        for cancel in gaps_data.get("cancelled", []):
             ids.append(f"cancel_{cancel.get('session_id', '')}_{cancel.get('date', '')}")
 
         # Trier et hasher
         ids_sorted = sorted(ids)
-        signature = hashlib.md5('|'.join(ids_sorted).encode()).hexdigest()
+        signature = hashlib.md5("|".join(ids_sorted).encode()).hexdigest()
         return signature
 
     def run(self):
@@ -2981,7 +2949,7 @@ Réponds maintenant."""
 
                     # Step 4 only for clipboard provider (manual paste)
                     # API providers already completed analysis in step 3
-                    if self.current_provider == 'clipboard':
+                    if self.current_provider == "clipboard":
                         self.step_4_paste_prompt()
 
                     self.step_5_validate_analysis()
@@ -3008,7 +2976,7 @@ Réponds maintenant."""
                     if result == "continue":
                         # Enrichissement IA choisi → continuer workflow
                         # Step 4 only for clipboard provider
-                        if self.current_provider == 'clipboard':
+                        if self.current_provider == "clipboard":
                             self.step_4_paste_prompt()
                         self.step_5_validate_analysis()
                         self.step_6_insert_analysis()
@@ -3030,12 +2998,12 @@ Réponds maintenant."""
 
                 elif choice == "batch_skipped":
                     # P2 FIX: Traiter séances sautées uniquement
-                    result = self._handle_skipped_sessions(gaps_data['skipped'])
+                    result = self._handle_skipped_sessions(gaps_data["skipped"])
 
                     if result == "continue":
                         # Enrichissement IA choisi → continuer workflow
                         # Step 4 only for clipboard provider
-                        if self.current_provider == 'clipboard':
+                        if self.current_provider == "clipboard":
                             self.step_4_paste_prompt()
                         self.step_5_validate_analysis()
                         self.step_6_insert_analysis()
@@ -3073,6 +3041,7 @@ Réponds maintenant."""
         except Exception as e:
             print(f"\n\n❌ Erreur inattendue : {e}")
             import traceback
+
             traceback.print_exc()
             sys.exit(1)
 
@@ -3103,61 +3072,51 @@ Exemples:
 
   # Mode réconciliation + rapide
   python3 cyclisme_training_logs/workflow_coach.py --week-id S070 --skip-feedback --skip-git
-        """
+        """,
     )
 
     parser.add_argument(
-        '--skip-feedback',
-        action='store_true',
-        help="Ne pas collecter le feedback athlète"
+        "--skip-feedback", action="store_true", help="Ne pas collecter le feedback athlète"
+    )
+
+    parser.add_argument("--skip-git", action="store_true", help="Ne pas proposer le commit git")
+
+    parser.add_argument(
+        "--activity-id", help="ID de l'activité spécifique à analyser (sinon prend la dernière)"
+    )
+
+    parser.add_argument("--week-id", help="ID semaine pour mode réconciliation planning (ex: S070)")
+
+    parser.add_argument(
+        "--servo-mode",
+        action="store_true",
+        help="Activer le mode asservissement (modifications planning AI)",
     )
 
     parser.add_argument(
-        '--skip-git',
-        action='store_true',
-        help="Ne pas proposer le commit git"
-    )
-
-    parser.add_argument(
-        '--activity-id',
-        help="ID de l'activité spécifique à analyser (sinon prend la dernière)"
-    )
-
-    parser.add_argument(
-        '--week-id',
-        help="ID semaine pour mode réconciliation planning (ex: S070)"
-    )
-
-    parser.add_argument(
-        '--servo-mode',
-        action='store_true',
-        help="Activer le mode asservissement (modifications planning AI)"
-    )
-
-    parser.add_argument(
-        '--provider',
+        "--provider",
         type=str,
-        choices=['clipboard', 'claude_api', 'mistral_api', 'openai', 'ollama'],
+        choices=["clipboard", "claude_api", "mistral_api", "openai", "ollama"],
         default=None,
-        help="AI provider à utiliser (défaut: auto-détection)"
+        help="AI provider à utiliser (défaut: auto-détection)",
     )
 
     parser.add_argument(
-        '--list-providers',
-        action='store_true',
-        help="Lister les providers AI disponibles et quitter"
+        "--list-providers",
+        action="store_true",
+        help="Lister les providers AI disponibles et quitter",
     )
 
     parser.add_argument(
-        '--reconcile',
-        action='store_true',
-        help="Mode réconciliation batch pour séances sautées/annulées (requiert --week-id)"
+        "--reconcile",
+        action="store_true",
+        help="Mode réconciliation batch pour séances sautées/annulées (requiert --week-id)",
     )
 
     parser.add_argument(
-        '--auto',
-        action='store_true',
-        help="Mode automatique non-interactif (skip tous les wait/input)"
+        "--auto",
+        action="store_true",
+        help="Mode automatique non-interactif (skip tous les wait/input)",
     )
 
     args = parser.parse_args()
@@ -3168,11 +3127,11 @@ Exemples:
 
         print("\n📋 AI PROVIDERS DISPONIBLES\n")
         all_providers = {
-            'clipboard': 'Manual copy/paste (gratuit, sans API)',
-            'claude_api': 'Claude Sonnet 4 ($3/1M entrée, $15/1M sortie)',
-            'mistral_api': 'Mistral Large ($2/1M entrée, $6/1M sortie)',
-            'openai': 'GPT-4 Turbo ($10/1M entrée, $30/1M sortie)',
-            'ollama': 'LLMs locaux (gratuit, requiert Ollama installé)'
+            "clipboard": "Manual copy/paste (gratuit, sans API)",
+            "claude_api": "Claude Sonnet 4 ($3/1M entrée, $15/1M sortie)",
+            "mistral_api": "Mistral Large ($2/1M entrée, $6/1M sortie)",
+            "openai": "GPT-4 Turbo ($10/1M entrée, $30/1M sortie)",
+            "ollama": "LLMs locaux (gratuit, requiert Ollama installé)",
         }
 
         available = config.get_available_providers()
@@ -3202,7 +3161,7 @@ Exemples:
         week_id=args.week_id,
         servo_mode=args.servo_mode,
         provider=args.provider,
-        auto_mode=args.auto
+        auto_mode=args.auto,
     )
 
     # Mode réconciliation batch
@@ -3212,5 +3171,5 @@ Exemples:
         coach.run()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

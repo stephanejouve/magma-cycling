@@ -10,7 +10,6 @@ import subprocess
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, Optional
 
 # Ajouter le répertoire parent au PYTHONPATH
 sys.path.insert(0, str(Path(__file__).parent))
@@ -20,7 +19,7 @@ from cyclisme_training_logs.api.intervals_client import IntervalsClient
 
 class WeeklyPlanner:
     """Générateur de prompt pour planification hebdomadaire"""
-    
+
     def __init__(self, week_number: str, start_date: datetime, project_root: Path):
         self.week_number = week_number
         self.start_date = start_date
@@ -34,6 +33,7 @@ class WeeklyPlanner:
 
         # Get planning directory from config
         from cyclisme_training_logs.config import get_data_config
+
         try:
             config = get_data_config()
             self.planning_dir = config.week_planning_dir
@@ -51,7 +51,7 @@ class WeeklyPlanner:
         # API Intervals.icu
         self.api = None
         self._init_api()
-    
+
     def _init_api(self):
         """Initialiser l'API Intervals.icu"""
         try:
@@ -62,110 +62,109 @@ class WeeklyPlanner:
             if not config.is_configured():
                 raise ValueError("Intervals.icu credentials not configured in .env")
 
-            self.api = IntervalsClient(
-                athlete_id=config.athlete_id,
-                api_key=config.api_key
-            )
+            self.api = IntervalsClient(athlete_id=config.athlete_id, api_key=config.api_key)
             print("✅ API Intervals.icu connectée")
         except Exception as e:
             print(f"⚠️ API non disponible : {e}")
             print("   Les métriques seront approximatives")
-    
+
     def _previous_week_number(self) -> str:
         """Calculer le numéro de la semaine précédente"""
         current_num = int(self.week_number[1:])
         return f"S{current_num - 1:03d}"
-    
+
     def _next_week_number(self) -> str:
         """Calculer le numéro de la semaine suivante"""
         current_num = int(self.week_number[1:])
         return f"S{current_num + 1:03d}"
-    
-    def collect_current_metrics(self) -> Dict:
+
+    def collect_current_metrics(self) -> dict:
         """Collecter les métriques actuelles depuis API"""
         print("\n📊 Collecte des métriques actuelles...")
-        
+
         if not self.api:
             print("  ⚠️ API non disponible, métriques approximatives")
             return self._mock_current_metrics()
-        
+
         try:
             # Date actuelle pour wellness
-            today = datetime.now().strftime('%Y-%m-%d')
-            
+            today = datetime.now().strftime("%Y-%m-%d")
+
             # Wellness actuel
             wellness = self.api.get_wellness(oldest=today, newest=today)
-            
+
             if wellness and len(wellness) > 0:
                 current = wellness[0]
-                
+
                 from cyclisme_training_logs.utils.metrics import extract_wellness_metrics
 
                 wellness_metrics = extract_wellness_metrics(current)
                 metrics = {
-                    'ctl': wellness_metrics['ctl'],
-                    'atl': wellness_metrics['atl'],
-                    'tsb': wellness_metrics['tsb'],
-                    'weight': current.get('weight', 0),
-                    'resting_hr': current.get('restingHR', 0),
-                    'hrv': current.get('hrv', 0),
-                    'date': today
+                    "ctl": wellness_metrics["ctl"],
+                    "atl": wellness_metrics["atl"],
+                    "tsb": wellness_metrics["tsb"],
+                    "weight": current.get("weight", 0),
+                    "resting_hr": current.get("restingHR", 0),
+                    "hrv": current.get("hrv", 0),
+                    "date": today,
                 }
-                
-                print(f"  ✅ Métriques collectées (CTL: {metrics['ctl']:.0f}, TSB: {metrics['tsb']:+.0f})")
+
+                print(
+                    f"  ✅ Métriques collectées (CTL: {metrics['ctl']:.0f}, TSB: {metrics['tsb']:+.0f})"
+                )
                 return metrics
             else:
                 print("  ⚠️ Aucune donnée wellness disponible")
                 return self._mock_current_metrics()
-                
+
         except Exception as e:
             print(f"  ⚠️ Erreur collecte métriques : {e}")
             return self._mock_current_metrics()
-    
-    def _mock_current_metrics(self) -> Dict:
+
+    def _mock_current_metrics(self) -> dict:
         """Métriques mockées si API indisponible"""
         return {
-            'ctl': 0,
-            'atl': 0,
-            'tsb': 0,
-            'weight': 0,
-            'resting_hr': 0,
-            'hrv': 0,
-            'date': datetime.now().strftime('%Y-%m-%d'),
-            'note': 'Métriques approximatives (API indisponible)'
+            "ctl": 0,
+            "atl": 0,
+            "tsb": 0,
+            "weight": 0,
+            "resting_hr": 0,
+            "hrv": 0,
+            "date": datetime.now().strftime("%Y-%m-%d"),
+            "note": "Métriques approximatives (API indisponible)",
         }
-    
+
     def load_previous_week_bilan(self) -> str:
         """Charger le bilan de la semaine précédente"""
         print("\n📄 Chargement bilan semaine précédente...")
-        
+
         prev_week = self._previous_week_number()
         bilan_file = self.weekly_reports_dir / prev_week / f"bilan_final_{prev_week}.md"
-        
+
         if bilan_file.exists():
-            content = bilan_file.read_text(encoding='utf-8')
+            content = bilan_file.read_text(encoding="utf-8")
             print(f"  ✅ Bilan {prev_week} chargé ({len(content)} chars)")
             return content
         else:
             print(f"  ⚠️ Bilan {prev_week} non trouvé : {bilan_file}")
             return f"[Bilan {prev_week} non disponible]"
-    
-    def load_context_files(self) -> Dict[str, str]:
+
+    def load_context_files(self) -> dict[str, str]:
         """Charger les fichiers de contexte"""
         print("\n📚 Chargement fichiers contexte...")
-        
+
         context = {}
-        
+
         files_to_load = {
-            'project_prompt': self.references_dir / 'project_prompt_v2_1_revised.md',
-            'cycling_concepts': self.references_dir / 'cycling_training_concepts.md',
-            'documentation': self.project_root / 'Documentation_Complète_du_Suivi_v1_5.md',
+            "project_prompt": self.references_dir / "project_prompt_v2_1_revised.md",
+            "cycling_concepts": self.references_dir / "cycling_training_concepts.md",
+            "documentation": self.project_root / "Documentation_Complète_du_Suivi_v1_5.md",
         }
-        
+
         for key, filepath in files_to_load.items():
             try:
                 if filepath.exists():
-                    context[key] = filepath.read_text(encoding='utf-8')
+                    context[key] = filepath.read_text(encoding="utf-8")
                     print(f"  ✅ {filepath.name}")
                 else:
                     print(f"  ⚠️ Non trouvé : {filepath.name}")
@@ -173,31 +172,31 @@ class WeeklyPlanner:
             except Exception as e:
                 print(f"  ⚠️ Erreur {filepath.name} : {e}")
                 context[key] = f"[Erreur lecture {filepath.name}]"
-        
+
         # Charger protocoles si disponibles
-        protocols_dir = self.references_dir / 'protocols'
+        protocols_dir = self.references_dir / "protocols"
         if protocols_dir.exists():
             protocols = []
-            for protocol_file in protocols_dir.glob('*.md'):
+            for protocol_file in protocols_dir.glob("*.md"):
                 try:
-                    protocols.append(protocol_file.read_text(encoding='utf-8'))
+                    protocols.append(protocol_file.read_text(encoding="utf-8"))
                     print(f"  ✅ {protocol_file.name}")
                 except Exception as e:
                     print(f"  ⚠️ Erreur {protocol_file.name} : {e}")
-            
+
             if protocols:
-                context['protocols'] = "\n\n---\n\n".join(protocols)
-        
+                context["protocols"] = "\n\n---\n\n".join(protocols)
+
         return context
-    
+
     def generate_planning_prompt(self) -> str:
         """Générer le prompt complet pour Claude.ai"""
         print("\n✍️ Génération du prompt de planification...")
-        
+
         next_week = self._next_week_number()
-        date_start_str = self.start_date.strftime('%d/%m/%Y')
-        date_end_str = self.end_date.strftime('%d/%m/%Y')
-        
+        date_start_str = self.start_date.strftime("%d/%m/%Y")
+        date_end_str = self.end_date.strftime("%d/%m/%Y")
+
         prompt = f"""# Planification Hebdomadaire Cyclisme - {self.week_number}
 
 ## Contexte Athlète
@@ -395,13 +394,13 @@ Warmup
 Main set
 - [structure]
 
-Cooldown  
+Cooldown
 - [durée] [intensité%] [cadence]rpm
 
 === FIN WORKOUT ===
 ```
 
-**IMPORTANT** : 
+**IMPORTANT** :
 - Pas de `###`, `**`, ou autre markdown
 - Format texte pur Intervals.icu uniquement
 - Chaque workout séparé par `=== WORKOUT ... ===` et `=== FIN WORKOUT ===`
@@ -457,17 +456,17 @@ Cooldown
 1. **Z2 (Endurance)** : 60-75% FTP
    - Durée : 45-90min
    - Cadence : 85-90 rpm naturelle
-   
+
 2. **Sweet-Spot** : 88-93% FTP
    - Blocs : 8-12min maximum
    - Récupération : 50% de la durée bloc
    - Maximum 3-4 blocs par séance
-   
+
 3. **Seuil** : 95-105% FTP
    - Blocs : 5-8min maximum
    - Récupération : durée bloc minimum
    - Précédé de validation TSB
-   
+
 4. **VO2 Max** : 106-120% FTP
    - **UNIQUEMENT si TSB ≥ +5**
    - Blocs : 3-5min
@@ -617,18 +616,18 @@ Main set 4x
 
 Le but est que je puisse **copier-coller directement** chaque bloc dans Intervals.icu Workout Builder sans modification.
 """
-        
+
         return prompt
-    
+
     def copy_to_clipboard(self, text: str) -> bool:
         """Copier le texte dans le presse-papier (macOS)"""
         try:
-            subprocess.run(['pbcopy'], input=text.encode('utf-8'), check=True)
+            subprocess.run(["pbcopy"], input=text.encode("utf-8"), check=True)
             return True
         except Exception as e:
             print(f"⚠️ Erreur copie presse-papier : {e}")
             return False
-    
+
     def update_session_status(self, session_id: str, status: str, reason: str = None):
         """
         Mettre à jour le statut d'une séance dans le JSON.
@@ -644,20 +643,20 @@ Le but est que je puisse **copier-coller directement** chaque bloc dans Interval
             print(f"⚠️ Planning JSON non trouvé : {json_file}")
             return False
 
-        with open(json_file, 'r', encoding='utf-8') as f:
+        with open(json_file, encoding="utf-8") as f:
             planning = json.load(f)
 
         # Trouver et mettre à jour la séance
         session_found = False
-        for session in planning['planned_sessions']:
-            if session['session_id'] == session_id:
-                session['status'] = status
+        for session in planning["planned_sessions"]:
+            if session["session_id"] == session_id:
+                session["status"] = status
                 if reason:
-                    if status == 'cancelled':
-                        session['cancellation_reason'] = reason
-                        session['cancellation_date'] = datetime.now().isoformat()
-                    elif status == 'skipped':
-                        session['skip_reason'] = reason
+                    if status == "cancelled":
+                        session["cancellation_reason"] = reason
+                        session["cancellation_date"] = datetime.now().isoformat()
+                    elif status == "skipped":
+                        session["skip_reason"] = reason
                 session_found = True
                 break
 
@@ -666,10 +665,10 @@ Le but est que je puisse **copier-coller directement** chaque bloc dans Interval
             return False
 
         # Mettre à jour last_updated
-        planning['last_updated'] = datetime.now().isoformat()
+        planning["last_updated"] = datetime.now().isoformat()
 
         # Sauvegarder
-        with open(json_file, 'w', encoding='utf-8') as f:
+        with open(json_file, "w", encoding="utf-8") as f:
             json.dump(planning, f, indent=2, ensure_ascii=False)
 
         print(f"✅ Séance {session_id} mise à jour : {status}")
@@ -693,31 +692,33 @@ Le but est que je puisse **copier-coller directement** chaque bloc dans Interval
             for day in range(7):
                 date = self.start_date + timedelta(days=day)
                 session_num = day + 1
-                workouts_data.append({
-                    "session_id": f"{self.week_number}-{session_num:02d}",
-                    "date": date.strftime('%Y-%m-%d'),
-                    "name": f"Session{session_num}",
-                    "type": "END",  # Default type
-                    "version": "V001",
-                    "tss_planned": 0,
-                    "duration_min": 0,
-                    "description": "À définir",
-                    "status": "planned"
-                })
+                workouts_data.append(
+                    {
+                        "session_id": f"{self.week_number}-{session_num:02d}",
+                        "date": date.strftime("%Y-%m-%d"),
+                        "name": f"Session{session_num}",
+                        "type": "END",  # Default type
+                        "version": "V001",
+                        "tss_planned": 0,
+                        "duration_min": 0,
+                        "description": "À définir",
+                        "status": "planned",
+                    }
+                )
 
         planning = {
             "week_id": self.week_number,
-            "start_date": self.start_date.strftime('%Y-%m-%d'),
-            "end_date": self.end_date.strftime('%Y-%m-%d'),
+            "start_date": self.start_date.strftime("%Y-%m-%d"),
+            "end_date": self.end_date.strftime("%Y-%m-%d"),
             "created_at": datetime.now().isoformat(),
             "last_updated": datetime.now().isoformat(),
             "version": 1,
             "athlete_id": "i151223",  # TODO: Get from config
             "tss_target": sum(w.get("tss_planned", 0) for w in workouts_data),
-            "planned_sessions": workouts_data
+            "planned_sessions": workouts_data,
         }
 
-        with open(json_file, 'w', encoding='utf-8') as f:
+        with open(json_file, "w", encoding="utf-8") as f:
             json.dump(planning, f, indent=2, ensure_ascii=False)
 
         print(f"\n📄 Planning JSON sauvegardé : {json_file}")
@@ -727,18 +728,20 @@ Le but est que je puisse **copier-coller directement** chaque bloc dans Interval
         """Exécuter le workflow complet"""
         print("=" * 70)
         print(f"📅 PLANIFICATION HEBDOMADAIRE {self.week_number}")
-        print(f"Période : {self.start_date.strftime('%d/%m/%Y')} → {self.end_date.strftime('%d/%m/%Y')}")
+        print(
+            f"Période : {self.start_date.strftime('%d/%m/%Y')} → {self.end_date.strftime('%d/%m/%Y')}"
+        )
         print("=" * 70)
-        
+
         # Étape 1 : Collecter métriques
         self.current_metrics = self.collect_current_metrics()
-        
+
         # Étape 2 : Charger bilan semaine précédente
         self.previous_week_bilan = self.load_previous_week_bilan()
-        
+
         # Étape 3 : Charger contexte
         self.context_files = self.load_context_files()
-        
+
         # Étape 4 : Générer prompt
         prompt = self.generate_planning_prompt()
 
@@ -754,7 +757,7 @@ Le but est que je puisse **copier-coller directement** chaque bloc dans Interval
             print("\n" + "=" * 70)
             print(prompt)
             print("=" * 70)
-        
+
         # Instructions
         print("\n" + "=" * 70)
         print("📝 PROCHAINES ÉTAPES :")
@@ -778,61 +781,53 @@ def main():
         description="Générer prompt de planification hebdomadaire pour Claude.ai"
     )
     parser.add_argument(
-        '--week-id',
-        type=str,
-        required=True,
-        help='Numéro de semaine (format SXXX, ex: S072)'
+        "--week-id", type=str, required=True, help="Numéro de semaine (format SXXX, ex: S072)"
     )
     parser.add_argument(
-        '--start-date',
-        type=str,
-        required=True,
-        help='Date de début (lundi) au format YYYY-MM-DD'
+        "--start-date", type=str, required=True, help="Date de début (lundi) au format YYYY-MM-DD"
     )
     parser.add_argument(
-        '--project-root',
-        type=str,
-        help='Racine du projet (défaut: répertoire parent du script)'
+        "--project-root", type=str, help="Racine du projet (défaut: répertoire parent du script)"
     )
-    
+
     args = parser.parse_args()
-    
+
     # Validation format semaine
-    if not args.week_id.startswith('S') or len(args.week_id) != 4:
+    if not args.week_id.startswith("S") or len(args.week_id) != 4:
         print(f"❌ Format semaine invalide : {args.week_id}")
         print("   Utiliser le format SXXX (ex: S072)")
         sys.exit(1)
-    
+
     # Parsing date
     try:
-        start_date = datetime.strptime(args.start_date, '%Y-%m-%d')
+        start_date = datetime.strptime(args.start_date, "%Y-%m-%d")
     except ValueError:
         print(f"❌ Format date invalide : {args.start_date}")
         print("   Utiliser le format YYYY-MM-DD (ex: 2024-11-24)")
         sys.exit(1)
-    
+
     # Vérifier que c'est un lundi
     if start_date.weekday() != 0:
         print(f"⚠️ Attention : {args.start_date} n'est pas un lundi")
         print(f"   Jour détecté : {start_date.strftime('%A')}")
         response = input("Continuer quand même ? (o/n) : ")
-        if response.lower() != 'o':
+        if response.lower() != "o":
             sys.exit(0)
-    
+
     # Déterminer project_root
     if args.project_root:
         project_root = Path(args.project_root)
     else:
         project_root = Path(__file__).parent.parent
-    
+
     if not project_root.exists():
         print(f"❌ Répertoire projet non trouvé : {project_root}")
         sys.exit(1)
-    
+
     # Exécuter planification
     planner = WeeklyPlanner(args.week_id, start_date, project_root)
     planner.run()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

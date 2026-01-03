@@ -1,8 +1,8 @@
 # Sprint R4 - Training Intelligence & Feedback Loop
 
-**Date :** 2026-01-01  
-**Estimation :** 8-12h (1 session)  
-**Priority :** P0-CRITICAL  
+**Date :** 2026-01-01
+**Estimation :** 8-12h (1 session)
+**Priority :** P0-CRITICAL
 **Status :** ✅ APPROUVÉ PO
 
 ---
@@ -80,7 +80,7 @@ import logging
 ```python
 class AnalysisLevel(Enum):
     """Temporal level of training analysis."""
-    
+
     DAILY = "daily"      # Post-session analysis
     WEEKLY = "weekly"    # Week summary (6 markdown files)
     MONTHLY = "monthly"  # Strategic trends
@@ -103,7 +103,7 @@ learning = TrainingLearning(
 ```python
 class ConfidenceLevel(Enum):
     """Confidence in a learning or pattern discovery."""
-    
+
     LOW = "low"          # 1-2 observations
     MEDIUM = "medium"    # 3-5 observations
     HIGH = "high"        # 6-10 observations
@@ -128,7 +128,7 @@ observations
 class TrainingLearning:
     """
     A learning extracted from training data with progressive validation.
-    
+
     Attributes:
         id: Unique identifier (category_timestamp)
         timestamp: When learning was discovered
@@ -140,7 +140,7 @@ class TrainingLearning:
         impact: Estimated impact (LOW/MEDIUM/HIGH)
         applied: Whether learning has been applied to protocols
         validated: Whether learning has reached VALIDATED status
-        
+
     Example:
         >>> learning = TrainingLearning(
         ...     id="sweet-spot_1735689600",
@@ -153,7 +153,7 @@ class TrainingLearning:
         ...     impact="MEDIUM"
         ... )
     """
-    
+
     id: str
     timestamp: datetime
     level: AnalysisLevel
@@ -164,16 +164,16 @@ class TrainingLearning:
     impact: str  # LOW/MEDIUM/HIGH
     applied: bool = False
     validated: bool = False
-    
+
     def promote_confidence(self) -> None:
         """
         Promote confidence level after additional validation.
-        
+
         Transition rules:
         - LOW (1-2 obs) → MEDIUM (3-5 obs)
         - MEDIUM (3-5 obs) → HIGH (6-10 obs)
         - HIGH (6-10 obs) → VALIDATED (10+ obs)
-        
+
         Example:
             >>> learning = TrainingLearning(..., confidence=ConfidenceLevel.LOW)
             >>> learning.evidence.append("S024-06: 2x10@89% RPE 7")
@@ -187,7 +187,7 @@ class TrainingLearning:
         }
         if self.confidence in transitions:
             self.confidence = transitions[self.confidence]
-            
+
             # Mark as validated if reached VALIDATED status
             if self.confidence == ConfidenceLevel.VALIDATED:
                 self.validated = True
@@ -210,7 +210,7 @@ class TrainingLearning:
 class Pattern:
     """
     Recurring pattern identified across multiple training sessions.
-    
+
     Attributes:
         id: Unique identifier (pattern_name_timestamp)
         name: Pattern name (descriptive, snake_case)
@@ -220,7 +220,7 @@ class Pattern:
         first_seen: Date first observed
         last_seen: Date last observed
         confidence: Confidence level based on frequency
-        
+
     Example:
         >>> pattern = Pattern(
         ...     id="pattern_sleep_debt_vo2_failure_1735689600",
@@ -233,7 +233,7 @@ class Pattern:
         ...     confidence=ConfidenceLevel.MEDIUM
         ... )
     """
-    
+
     id: str
     name: str
     trigger_conditions: Dict[str, Any]
@@ -242,17 +242,17 @@ class Pattern:
     first_seen: date
     last_seen: date
     confidence: ConfidenceLevel
-    
+
     def matches(self, conditions: Dict[str, Any]) -> bool:
         """
         Check if current conditions match this pattern triggers.
-        
+
         Args:
             conditions: Current session/day conditions
-            
+
         Returns:
             True if pattern triggers match, False otherwise
-            
+
         Example:
             >>> pattern = Pattern(
             ...     trigger_conditions={"sleep": "<6h", "workout_type": "VO2"},
@@ -266,9 +266,9 @@ class Pattern:
         for key, condition in self.trigger_conditions.items():
             if key not in conditions:
                 return False
-            
+
             value = conditions[key]
-            
+
             # Handle string conditions (e.g. "<6h", "=VO2")
             if isinstance(condition, str):
                 if condition.startswith("<"):
@@ -291,13 +291,13 @@ class Pattern:
                 # Direct comparison
                 if value != condition:
                     return False
-        
+
         return True
-    
+
     def promote_confidence(self) -> None:
         """
         Promote confidence based on frequency.
-        
+
         Rules:
         - 1-2 observations → LOW
         - 3-5 observations → MEDIUM
@@ -330,7 +330,7 @@ class Pattern:
 class ProtocolAdaptation:
     """
     Recommended adaptation to existing training protocol.
-    
+
     Attributes:
         id: Unique identifier (protocol_type_timestamp)
         protocol_name: Name of protocol to adapt (e.g. "hydration", "vo2_veto")
@@ -341,7 +341,7 @@ class ProtocolAdaptation:
         evidence: Supporting data points
         confidence: Confidence based on evidence count
         status: Current status (PROPOSED/TESTED/VALIDATED/REJECTED)
-        
+
     Example:
         >>> adaptation = ProtocolAdaptation(
         ...     id="vo2_veto_MODIFY_1735689600",
@@ -355,7 +355,7 @@ class ProtocolAdaptation:
         ...     status="PROPOSED"
         ... )
     """
-    
+
     id: str
     protocol_name: str
     adaptation_type: str  # ADD/MODIFY/REMOVE
@@ -382,21 +382,21 @@ class ProtocolAdaptation:
 class TrainingIntelligence:
     """
     Central intelligence managing learnings, patterns, and protocol adaptations.
-    
+
     Maintains unified memory across temporal scales (daily/weekly/monthly) to:
     - Accumulate learnings with progressive validation
     - Detect recurring patterns automatically
     - Propose evidence-based protocol adaptations
     - Provide context-aware insights and recommendations
-    
+
     Attributes:
         learnings: Dict[str, TrainingLearning] - Indexed by learning.id
         patterns: Dict[str, Pattern] - Indexed by pattern.id
         adaptations: Dict[str, ProtocolAdaptation] - Indexed by adaptation.id
-        
+
     Example:
         >>> intelligence = TrainingIntelligence()
-        >>> 
+        >>>
         >>> # Add learning from daily analysis
         >>> learning = intelligence.add_learning(
         ...     category="sweet-spot",
@@ -404,7 +404,7 @@ class TrainingIntelligence:
         ...     evidence=["S024-04: 2x10@88% RPE 7"],
         ...     level=AnalysisLevel.DAILY
         ... )
-        >>> 
+        >>>
         >>> # Get daily insights
         >>> insights = intelligence.get_daily_insights({
         ...     "workout_type": "sweet-spot",
@@ -413,13 +413,13 @@ class TrainingIntelligence:
         >>> print(insights["recommendations"])
         ["88-90% FTP validated (Confidence: MEDIUM, 3 observations)"]
     """
-    
+
     def __init__(self):
         """Initialize empty intelligence memory."""
         self.learnings: Dict[str, TrainingLearning] = {}
         self.patterns: Dict[str, Pattern] = {}
         self.adaptations: Dict[str, ProtocolAdaptation] = {}
-        
+
         logger.info("TrainingIntelligence initialized (empty memory)")
 ```
 
@@ -441,27 +441,27 @@ def add_learning(
 ) -> TrainingLearning:
     """
     Add new learning or reinforce existing one.
-    
+
     If similar learning exists (same category + similar description):
     - Append evidence to existing
     - Promote confidence level
-    
+
     Otherwise:
     - Create new learning with confidence LOW
-    
+
     Args:
         category: Learning category (e.g. "sweet-spot", "hydration")
         description: What was learned (concise)
         evidence: Supporting data (e.g. ["S024-04: 2x10@88% RPE 7"])
         level: Where discovered (DAILY/WEEKLY/MONTHLY)
         impact: Estimated impact (LOW/MEDIUM/HIGH)
-        
+
     Returns:
         TrainingLearning object (new or reinforced)
-        
+
     Example:
         >>> intelligence = TrainingIntelligence()
-        >>> 
+        >>>
         >>> # First observation
         >>> learning = intelligence.add_learning(
         ...     category="sweet-spot",
@@ -470,7 +470,7 @@ def add_learning(
         ...     level=AnalysisLevel.DAILY
         ... )
         >>> assert learning.confidence == ConfidenceLevel.LOW
-        >>> 
+        >>>
         >>> # Second observation (similar → reinforce)
         >>> learning = intelligence.add_learning(
         ...     category="sweet-spot",
@@ -485,7 +485,7 @@ def add_learning(
 **Implémentation :**
 ```python
     learning_id = f"{category}_{datetime.now().timestamp()}"
-    
+
     # Check if similar learning exists
     similar = self._find_similar_learning(category, description)
     if similar:
@@ -494,7 +494,7 @@ def add_learning(
         similar.promote_confidence()
         logger.info(f"Reinforced learning '{similar.id}' (confidence: {similar.confidence.value})")
         return similar
-    
+
     # Create new
     learning = TrainingLearning(
         id=learning_id,
@@ -506,10 +506,10 @@ def add_learning(
         confidence=ConfidenceLevel.LOW,
         impact=impact
     )
-    
+
     self.learnings[learning_id] = learning
     logger.info(f"Added new learning '{learning_id}' (category: {category})")
-    
+
     return learning
 ```
 
@@ -533,26 +533,26 @@ def identify_pattern(
 ) -> Pattern:
     """
     Register new pattern or update existing one.
-    
+
     If pattern with same name exists:
     - Increment frequency
     - Update last_seen date
     - Promote confidence based on new frequency
-    
+
     Otherwise:
     - Create new pattern with frequency 1, confidence LOW
-    
+
     Args:
         name: Pattern name (descriptive, snake_case)
         trigger_conditions: Conditions triggering pattern
         observed_outcome: What happens when triggered
-        
+
     Returns:
         Pattern object (new or updated)
-        
+
     Example:
         >>> intelligence = TrainingIntelligence()
-        >>> 
+        >>>
         >>> # First observation
         >>> pattern = intelligence.identify_pattern(
         ...     name="sleep_debt_vo2_failure",
@@ -561,7 +561,7 @@ def identify_pattern(
         ... )
         >>> assert pattern.frequency == 1
         >>> assert pattern.confidence == ConfidenceLevel.LOW
-        >>> 
+        >>>
         >>> # Second observation (same name → update)
         >>> pattern = intelligence.identify_pattern(
         ...     name="sleep_debt_vo2_failure",
@@ -582,7 +582,7 @@ def identify_pattern(
         existing.promote_confidence()
         logger.info(f"Updated pattern '{name}' (frequency: {existing.frequency}, confidence: {existing.confidence.value})")
         return existing
-    
+
     # Create new
     pattern_id = f"pattern_{name}_{datetime.now().timestamp()}"
     pattern = Pattern(
@@ -595,10 +595,10 @@ def identify_pattern(
         last_seen=date.today(),
         confidence=ConfidenceLevel.LOW
     )
-    
+
     self.patterns[pattern_id] = pattern
     logger.info(f"Identified new pattern '{name}'")
-    
+
     return pattern
 ```
 
@@ -625,12 +625,12 @@ def propose_adaptation(
 ) -> ProtocolAdaptation:
     """
     Propose adaptation to existing protocol.
-    
+
     Confidence determined by evidence count:
     - 1-2 evidence → LOW
     - 3-5 evidence → MEDIUM
     - 6+ evidence → HIGH
-    
+
     Args:
         protocol_name: Protocol to adapt (e.g. "hydration", "vo2_veto")
         adaptation_type: ADD/MODIFY/REMOVE
@@ -638,13 +638,13 @@ def propose_adaptation(
         proposed_rule: Proposed new rule
         justification: Why this change
         evidence: Supporting data points
-        
+
     Returns:
         ProtocolAdaptation object (status: PROPOSED)
-        
+
     Example:
         >>> intelligence = TrainingIntelligence()
-        >>> 
+        >>>
         >>> adaptation = intelligence.propose_adaptation(
         ...     protocol_name="sweet_spot_targets",
         ...     adaptation_type="MODIFY",
@@ -665,7 +665,7 @@ def propose_adaptation(
 **Implémentation :**
 ```python
     adaptation_id = f"{protocol_name}_{adaptation_type}_{datetime.now().timestamp()}"
-    
+
     # Determine confidence from evidence count
     evidence_count = len(evidence)
     if evidence_count >= 6:
@@ -674,7 +674,7 @@ def propose_adaptation(
         confidence = ConfidenceLevel.MEDIUM
     else:
         confidence = ConfidenceLevel.LOW
-    
+
     adaptation = ProtocolAdaptation(
         id=adaptation_id,
         protocol_name=protocol_name,
@@ -686,10 +686,10 @@ def propose_adaptation(
         confidence=confidence,
         status="PROPOSED"
     )
-    
+
     self.adaptations[adaptation_id] = adaptation
     logger.info(f"Proposed adaptation for protocol '{protocol_name}' (confidence: {confidence.value})")
-    
+
     return adaptation
 ```
 
@@ -707,12 +707,12 @@ def propose_adaptation(
 def get_daily_insights(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Generate insights for daily post-session analysis.
-    
+
     Uses accumulated knowledge to provide:
     - Matched patterns (warnings)
     - Relevant learnings (recommendations)
     - Context-aware suggestions
-    
+
     Args:
         session_data: Current session metrics
             - tss: int
@@ -721,28 +721,28 @@ def get_daily_insights(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
             - rpe: int
             - decoupling: float (optional)
             - planned_intensity: float (optional)
-            
+
     Returns:
         Dict with:
             - matched_patterns: List[Pattern]
             - relevant_learnings: List[TrainingLearning]
             - warnings: List[str]
             - recommendations: List[str]
-            
+
     Example:
         >>> intelligence = TrainingIntelligence()
         >>> # ... add learnings and patterns ...
-        >>> 
+        >>>
         >>> insights = intelligence.get_daily_insights({
         ...     "tss": 85,
         ...     "workout_type": "VO2",
         ...     "sleep_last_night": 5.5,
         ...     "rpe": 7
         ... })
-        >>> 
+        >>>
         >>> print(insights["warnings"])
         ["Pattern matched: sleep_debt_vo2_failure - Consider postponing"]
-        >>> 
+        >>>
         >>> print(insights["recommendations"])
         ["VO2 Max: 106-110% FTP validated (Confidence: HIGH, 8 obs)"]
     """
@@ -756,7 +756,7 @@ def get_daily_insights(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
         "warnings": [],
         "recommendations": []
     }
-    
+
     # Check patterns
     for pattern in self.patterns.values():
         if pattern.matches(session_data):
@@ -764,7 +764,7 @@ def get_daily_insights(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
             insights["warnings"].append(
                 f"⚠️ Pattern matched: {pattern.name} - {pattern.observed_outcome}"
             )
-    
+
     # Find relevant learnings
     workout_type = session_data.get("workout_type", "").lower()
     for learning in self.learnings.values():
@@ -775,7 +775,7 @@ def get_daily_insights(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
                     f"✅ {learning.category.title()}: {learning.description} "
                     f"(Confidence: {learning.confidence.value.upper()}, {len(learning.evidence)} obs)"
                 )
-    
+
     return insights
 ```
 
@@ -794,27 +794,27 @@ def get_daily_insights(self, session_data: Dict[str, Any]) -> Dict[str, Any]:
 def get_weekly_synthesis(self, week_data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Generate weekly synthesis using daily learnings + patterns.
-    
+
     Analyzes week to:
     - Identify new patterns emerging
     - Validate learnings with multiple observations
     - Propose protocol adaptations
     - Recommend focus areas for next week
-    
+
     Args:
         week_data: Week summary
             - total_tss: int
             - sessions: int
             - completion_rate: float
             - workout_types: Dict[str, int]
-            
+
     Returns:
         Dict with:
             - new_patterns_identified: List[Pattern]
             - validated_learnings: List[TrainingLearning]
             - proposed_adaptations: List[ProtocolAdaptation]
             - next_week_focus: List[str]
-            
+
     Example:
         >>> synthesis = intelligence.get_weekly_synthesis({
         ...     "total_tss": 320,
@@ -822,7 +822,7 @@ def get_weekly_synthesis(self, week_data: Dict[str, Any]) -> Dict[str, Any]:
         ...     "completion_rate": 100,
         ...     "workout_types": {"sweet-spot": 3, "endurance": 4}
         ... })
-        >>> 
+        >>>
         >>> print(synthesis["validated_learnings"])
         [TrainingLearning(category="sweet-spot", confidence=HIGH, ...)]
     """
@@ -836,34 +836,34 @@ def get_weekly_synthesis(self, week_data: Dict[str, Any]) -> Dict[str, Any]:
         "proposed_adaptations": [],
         "next_week_focus": []
     }
-    
+
     # Identify new patterns (frequency 1-2, first seen this week)
     for pattern in self.patterns.values():
         if pattern.frequency <= 2:
             synthesis["new_patterns_identified"].append(pattern)
-    
+
     # Find validated learnings (promoted this week to HIGH/VALIDATED)
     for learning in self.learnings.values():
         if learning.confidence in [ConfidenceLevel.HIGH, ConfidenceLevel.VALIDATED]:
             synthesis["validated_learnings"].append(learning)
-    
+
     # Find proposed adaptations (status PROPOSED)
     for adaptation in self.adaptations.values():
         if adaptation.status == "PROPOSED":
             synthesis["proposed_adaptations"].append(adaptation)
-    
+
     # Generate focus areas
     if synthesis["new_patterns_identified"]:
         synthesis["next_week_focus"].append(
             f"Validate {len(synthesis['new_patterns_identified'])} new patterns "
             f"(need 3+ observations)"
         )
-    
+
     if synthesis["proposed_adaptations"]:
         synthesis["next_week_focus"].append(
             f"Test {len(synthesis['proposed_adaptations'])} protocol adaptations"
         )
-    
+
     return synthesis
 ```
 
@@ -882,33 +882,33 @@ def get_weekly_synthesis(self, week_data: Dict[str, Any]) -> Dict[str, Any]:
 def get_monthly_trends(self, month_data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Generate monthly trends and strategic recommendations.
-    
+
     Analyzes month to:
     - List validated protocols (confidence VALIDATED)
     - Identify emerging patterns (frequency 5-9)
     - Recommend strategic adaptations
     - Define next month objectives
-    
+
     Args:
         month_data: Month summary
             - total_sessions: int
             - total_tss: int
             - ctl_progression: float
-            
+
     Returns:
         Dict with:
             - validated_protocols: List[TrainingLearning]
             - emerging_patterns: List[Pattern]
             - strategic_adaptations: List[ProtocolAdaptation]
             - next_month_objectives: List[str]
-            
+
     Example:
         >>> trends = intelligence.get_monthly_trends({
         ...     "total_sessions": 28,
         ...     "total_tss": 1240,
         ...     "ctl_progression": +12
         ... })
-        >>> 
+        >>>
         >>> print(len(trends["validated_protocols"]))
         3  # Sweet-Spot 88-90%, Hydration 500ml/h, VO2 VETO <6h
     """
@@ -922,35 +922,35 @@ def get_monthly_trends(self, month_data: Dict[str, Any]) -> Dict[str, Any]:
         "strategic_adaptations": [],
         "next_month_objectives": []
     }
-    
+
     # Validated protocols (confidence VALIDATED, 10+ observations)
     for learning in self.learnings.values():
         if learning.confidence == ConfidenceLevel.VALIDATED:
             trends["validated_protocols"].append(learning)
-    
+
     # Emerging patterns (frequency 5-9, not yet validated)
     for pattern in self.patterns.values():
         if 5 <= pattern.frequency < 10:
             trends["emerging_patterns"].append(pattern)
-    
+
     # Strategic adaptations (confidence HIGH/VALIDATED)
     for adaptation in self.adaptations.values():
         if adaptation.confidence in [ConfidenceLevel.HIGH, ConfidenceLevel.VALIDATED]:
             trends["strategic_adaptations"].append(adaptation)
-    
+
     # Generate objectives
     if trends["emerging_patterns"]:
         trends["next_month_objectives"].append(
             f"Validate {len(trends['emerging_patterns'])} emerging patterns "
             f"(5-9 obs → 10+ for VALIDATED)"
         )
-    
+
     if trends["validated_protocols"]:
         trends["next_month_objectives"].append(
             f"Integrate {len(trends['validated_protocols'])} validated protocols "
             f"into default planning"
         )
-    
+
     return trends
 ```
 
@@ -969,17 +969,17 @@ def get_monthly_trends(self, month_data: Dict[str, Any]) -> Dict[str, Any]:
 def save_to_file(self, filepath: Path) -> None:
     """
     Save intelligence state to JSON file.
-    
+
     Converts dataclasses to dict, serializes enums to strings.
     Creates parent directories if needed.
-    
+
     Args:
         filepath: Path to JSON file
-        
+
     Example:
         >>> intelligence = TrainingIntelligence()
         >>> # ... add learnings ...
-        >>> 
+        >>>
         >>> intelligence.save_to_file(
         ...     Path("~/cyclisme-training-logs-data/intelligence/training_intelligence_2026.json")
         ... )
@@ -990,15 +990,15 @@ def save_to_file(self, filepath: Path) -> None:
 ```python
     from pathlib import Path
     from dataclasses import asdict
-    
+
     # Ensure parent directory exists
     filepath = Path(filepath).expanduser()
     filepath.parent.mkdir(parents=True, exist_ok=True)
-    
+
     # Convert to dict
     data = {
         "learnings": {
-            k: self._serialize_dataclass(v) 
+            k: self._serialize_dataclass(v)
             for k, v in self.learnings.items()
         },
         "patterns": {
@@ -1021,11 +1021,11 @@ def save_to_file(self, filepath: Path) -> None:
             )
         }
     }
-    
+
     # Write JSON
     with open(filepath, 'w') as f:
         json.dump(data, f, indent=2, default=str)
-    
+
     logger.info(f"Saved intelligence to {filepath}")
 
 def _serialize_dataclass(self, obj) -> Dict:
@@ -1057,19 +1057,19 @@ def _serialize_dataclass(self, obj) -> Dict:
 def load_from_file(cls, filepath: Path) -> 'TrainingIntelligence':
     """
     Load intelligence state from JSON file.
-    
+
     Deserializes JSON, converts strings to enums/dates.
-    
+
     Args:
         filepath: Path to JSON file
-        
+
     Returns:
         TrainingIntelligence instance with loaded state
-        
+
     Raises:
         FileNotFoundError: If file doesn't exist
         json.JSONDecodeError: If file is corrupted
-        
+
     Example:
         >>> intelligence = TrainingIntelligence.load_from_file(
         ...     Path("~/cyclisme-training-logs-data/intelligence/training_intelligence_2026.json")
@@ -1082,34 +1082,34 @@ def load_from_file(cls, filepath: Path) -> 'TrainingIntelligence':
 **Implémentation :**
 ```python
     from pathlib import Path
-    
+
     filepath = Path(filepath).expanduser()
-    
+
     if not filepath.exists():
         logger.warning(f"File {filepath} not found, returning empty intelligence")
         return cls()
-    
+
     with open(filepath, 'r') as f:
         data = json.load(f)
-    
+
     instance = cls()
-    
+
     # Deserialize learnings
     for learning_id, learning_data in data.get("learnings", {}).items():
         instance.learnings[learning_id] = cls._deserialize_learning(learning_data)
-    
+
     # Deserialize patterns
     for pattern_id, pattern_data in data.get("patterns", {}).items():
         instance.patterns[pattern_id] = cls._deserialize_pattern(pattern_data)
-    
+
     # Deserialize adaptations
     for adaptation_id, adaptation_data in data.get("adaptations", {}).items():
         instance.adaptations[adaptation_id] = cls._deserialize_adaptation(adaptation_data)
-    
+
     logger.info(f"Loaded intelligence from {filepath} "
                 f"({len(instance.learnings)} learnings, "
                 f"{len(instance.patterns)} patterns)")
-    
+
     return instance
 
 @staticmethod
@@ -1191,15 +1191,15 @@ def test_training_learning_promote_confidence():
         confidence=ConfidenceLevel.LOW,
         impact="MEDIUM"
     )
-    
+
     assert learning.confidence == ConfidenceLevel.LOW
-    
+
     learning.promote_confidence()
     assert learning.confidence == ConfidenceLevel.MEDIUM
-    
+
     learning.promote_confidence()
     assert learning.confidence == ConfidenceLevel.HIGH
-    
+
     learning.promote_confidence()
     assert learning.confidence == ConfidenceLevel.VALIDATED
     assert learning.validated is True
@@ -1217,13 +1217,13 @@ def test_pattern_matches_conditions():
         last_seen=date.today(),
         confidence=ConfidenceLevel.LOW
     )
-    
+
     # Should match
     assert pattern.matches({"sleep": 5.5, "workout_type": "VO2"}) is True
-    
+
     # Should not match (sleep >= 6)
     assert pattern.matches({"sleep": 6.5, "workout_type": "VO2"}) is False
-    
+
     # Should not match (wrong workout_type)
     assert pattern.matches({"sleep": 5.5, "workout_type": "Endurance"}) is False
 
@@ -1241,7 +1241,7 @@ def test_protocol_adaptation_creation():
         confidence=ConfidenceLevel.MEDIUM,
         status="PROPOSED"
     )
-    
+
     assert adaptation.protocol_name == "test_protocol"
     assert adaptation.status == "PROPOSED"
     assert len(adaptation.evidence) == 2
@@ -1253,7 +1253,7 @@ def test_protocol_adaptation_creation():
 def test_add_learning_new():
     """Test adding new learning creates LOW confidence."""
     intelligence = TrainingIntelligence()
-    
+
     learning = intelligence.add_learning(
         category="sweet-spot",
         description="88% FTP sustainable",
@@ -1261,7 +1261,7 @@ def test_add_learning_new():
         level=AnalysisLevel.DAILY,
         impact="MEDIUM"
     )
-    
+
     assert learning.confidence == ConfidenceLevel.LOW
     assert len(learning.evidence) == 1
     assert len(intelligence.learnings) == 1
@@ -1270,7 +1270,7 @@ def test_add_learning_new():
 def test_add_learning_reinforce_similar():
     """Test adding similar learning reinforces existing."""
     intelligence = TrainingIntelligence()
-    
+
     # First learning
     learning1 = intelligence.add_learning(
         category="sweet-spot",
@@ -1278,7 +1278,7 @@ def test_add_learning_reinforce_similar():
         evidence=["S024-04: Success"],
         level=AnalysisLevel.DAILY
     )
-    
+
     # Similar learning (should reinforce)
     learning2 = intelligence.add_learning(
         category="sweet-spot",
@@ -1286,7 +1286,7 @@ def test_add_learning_reinforce_similar():
         evidence=["S024-06: Success"],
         level=AnalysisLevel.DAILY
     )
-    
+
     # Should be same learning, reinforced
     assert learning1.id == learning2.id
     assert len(learning2.evidence) == 2
@@ -1297,21 +1297,21 @@ def test_add_learning_reinforce_similar():
 def test_add_learning_different_creates_new():
     """Test adding different learning creates separate entry."""
     intelligence = TrainingIntelligence()
-    
+
     learning1 = intelligence.add_learning(
         category="sweet-spot",
         description="88% FTP sustainable",
         evidence=["Evidence 1"],
         level=AnalysisLevel.DAILY
     )
-    
+
     learning2 = intelligence.add_learning(
         category="hydration",  # Different category
         description="500ml/h optimal",
         evidence=["Evidence 2"],
         level=AnalysisLevel.DAILY
     )
-    
+
     assert learning1.id != learning2.id
     assert len(intelligence.learnings) == 2
 ```
@@ -1322,13 +1322,13 @@ def test_add_learning_different_creates_new():
 def test_identify_pattern_new():
     """Test identifying new pattern creates frequency 1."""
     intelligence = TrainingIntelligence()
-    
+
     pattern = intelligence.identify_pattern(
         name="sleep_debt_vo2_failure",
         trigger_conditions={"sleep": "<6h", "workout_type": "VO2"},
         observed_outcome="Failure"
     )
-    
+
     assert pattern.frequency == 1
     assert pattern.confidence == ConfidenceLevel.LOW
     assert pattern.first_seen == date.today()
@@ -1337,21 +1337,21 @@ def test_identify_pattern_new():
 def test_identify_pattern_update_existing():
     """Test identifying existing pattern increments frequency."""
     intelligence = TrainingIntelligence()
-    
+
     # First observation
     pattern1 = intelligence.identify_pattern(
         name="sleep_debt_vo2_failure",
         trigger_conditions={"sleep": "<6h"},
         observed_outcome="Failure"
     )
-    
+
     # Second observation (same name)
     pattern2 = intelligence.identify_pattern(
         name="sleep_debt_vo2_failure",
         trigger_conditions={"sleep": "<6h"},
         observed_outcome="Failure"
     )
-    
+
     assert pattern1.id == pattern2.id
     assert pattern2.frequency == 2
     assert len(intelligence.patterns) == 1
@@ -1360,16 +1360,16 @@ def test_identify_pattern_update_existing():
 def test_pattern_confidence_progression_by_frequency():
     """Test pattern confidence increases with frequency."""
     intelligence = TrainingIntelligence()
-    
+
     pattern = intelligence.identify_pattern(
         name="test_pattern",
         trigger_conditions={"test": "value"},
         observed_outcome="Outcome"
     )
-    
+
     # Frequency 1-2 → LOW
     assert pattern.confidence == ConfidenceLevel.LOW
-    
+
     # Simulate 2 more observations → MEDIUM
     for _ in range(2):
         pattern = intelligence.identify_pattern(
@@ -1379,7 +1379,7 @@ def test_pattern_confidence_progression_by_frequency():
         )
     assert pattern.frequency == 3
     assert pattern.confidence == ConfidenceLevel.MEDIUM
-    
+
     # Simulate 3 more observations → HIGH
     for _ in range(3):
         pattern = intelligence.identify_pattern(
@@ -1397,7 +1397,7 @@ def test_pattern_confidence_progression_by_frequency():
 def test_propose_adaptation_confidence_by_evidence():
     """Test adaptation confidence determined by evidence count."""
     intelligence = TrainingIntelligence()
-    
+
     # 1-2 evidence → LOW
     adaptation1 = intelligence.propose_adaptation(
         protocol_name="test",
@@ -1408,7 +1408,7 @@ def test_propose_adaptation_confidence_by_evidence():
         evidence=["E1"]
     )
     assert adaptation1.confidence == ConfidenceLevel.LOW
-    
+
     # 3-5 evidence → MEDIUM
     adaptation2 = intelligence.propose_adaptation(
         protocol_name="test2",
@@ -1419,7 +1419,7 @@ def test_propose_adaptation_confidence_by_evidence():
         evidence=["E1", "E2", "E3"]
     )
     assert adaptation2.confidence == ConfidenceLevel.MEDIUM
-    
+
     # 6+ evidence → HIGH
     adaptation3 = intelligence.propose_adaptation(
         protocol_name="test3",
@@ -1435,7 +1435,7 @@ def test_propose_adaptation_confidence_by_evidence():
 def test_propose_adaptation_status_proposed():
     """Test new adaptations always have status PROPOSED."""
     intelligence = TrainingIntelligence()
-    
+
     adaptation = intelligence.propose_adaptation(
         protocol_name="test",
         adaptation_type="MODIFY",
@@ -1444,14 +1444,14 @@ def test_propose_adaptation_status_proposed():
         justification="Better",
         evidence=["E1", "E2", "E3"]
     )
-    
+
     assert adaptation.status == "PROPOSED"
 
 
 def test_propose_adaptation_types():
     """Test all adaptation types (ADD/MODIFY/REMOVE)."""
     intelligence = TrainingIntelligence()
-    
+
     add = intelligence.propose_adaptation(
         protocol_name="test1",
         adaptation_type="ADD",
@@ -1461,7 +1461,7 @@ def test_propose_adaptation_types():
         evidence=["E1"]
     )
     assert add.adaptation_type == "ADD"
-    
+
     modify = intelligence.propose_adaptation(
         protocol_name="test2",
         adaptation_type="MODIFY",
@@ -1471,7 +1471,7 @@ def test_propose_adaptation_types():
         evidence=["E1"]
     )
     assert modify.adaptation_type == "MODIFY"
-    
+
     remove = intelligence.propose_adaptation(
         protocol_name="test3",
         adaptation_type="REMOVE",
@@ -1489,20 +1489,20 @@ def test_propose_adaptation_types():
 def test_get_daily_insights_pattern_matching():
     """Test daily insights match patterns and warn."""
     intelligence = TrainingIntelligence()
-    
+
     # Add pattern
     intelligence.identify_pattern(
         name="sleep_debt_vo2_failure",
         trigger_conditions={"sleep": "<6h", "workout_type": "VO2"},
         observed_outcome="Failure"
     )
-    
+
     # Get insights with matching conditions
     insights = intelligence.get_daily_insights({
         "sleep": 5.5,
         "workout_type": "VO2"
     })
-    
+
     assert len(insights["matched_patterns"]) == 1
     assert len(insights["warnings"]) == 1
     assert "sleep_debt_vo2_failure" in insights["warnings"][0]
@@ -1511,7 +1511,7 @@ def test_get_daily_insights_pattern_matching():
 def test_get_daily_insights_relevant_learnings():
     """Test daily insights return relevant validated learnings."""
     intelligence = TrainingIntelligence()
-    
+
     # Add validated learning
     learning = intelligence.add_learning(
         category="sweet-spot",
@@ -1520,13 +1520,13 @@ def test_get_daily_insights_relevant_learnings():
         level=AnalysisLevel.DAILY
     )
     learning.confidence = ConfidenceLevel.VALIDATED  # Manually promote for test
-    
+
     # Get insights for sweet-spot workout
     insights = intelligence.get_daily_insights({
         "workout_type": "sweet-spot",
         "planned_intensity": 89
     })
-    
+
     assert len(insights["relevant_learnings"]) == 1
     assert len(insights["recommendations"]) == 1
     assert "88-90% FTP optimal" in insights["recommendations"][0]
@@ -1535,19 +1535,19 @@ def test_get_daily_insights_relevant_learnings():
 def test_get_weekly_synthesis_new_patterns():
     """Test weekly synthesis identifies new patterns."""
     intelligence = TrainingIntelligence()
-    
+
     # Add new pattern (frequency 1-2)
     intelligence.identify_pattern(
         name="new_pattern",
         trigger_conditions={"test": "value"},
         observed_outcome="Outcome"
     )
-    
+
     synthesis = intelligence.get_weekly_synthesis({
         "total_tss": 320,
         "sessions": 7
     })
-    
+
     assert len(synthesis["new_patterns_identified"]) == 1
     assert synthesis["new_patterns_identified"][0].name == "new_pattern"
 
@@ -1555,7 +1555,7 @@ def test_get_weekly_synthesis_new_patterns():
 def test_get_monthly_trends_validated_protocols():
     """Test monthly trends list validated protocols."""
     intelligence = TrainingIntelligence()
-    
+
     # Add validated learning
     learning = intelligence.add_learning(
         category="sweet-spot",
@@ -1564,12 +1564,12 @@ def test_get_monthly_trends_validated_protocols():
         level=AnalysisLevel.DAILY
     )
     learning.confidence = ConfidenceLevel.VALIDATED
-    
+
     trends = intelligence.get_monthly_trends({
         "total_sessions": 28,
         "total_tss": 1240
     })
-    
+
     assert len(trends["validated_protocols"]) == 1
     assert trends["validated_protocols"][0].description == "88-90% optimal"
 ```
@@ -1580,7 +1580,7 @@ def test_get_monthly_trends_validated_protocols():
 def test_save_and_load_json(tmp_path):
     """Test save/load roundtrip preserves all data."""
     intelligence = TrainingIntelligence()
-    
+
     # Add data
     intelligence.add_learning(
         category="test",
@@ -1588,13 +1588,13 @@ def test_save_and_load_json(tmp_path):
         evidence=["E1", "E2"],
         level=AnalysisLevel.DAILY
     )
-    
+
     intelligence.identify_pattern(
         name="test_pattern",
         trigger_conditions={"test": "value"},
         observed_outcome="Outcome"
     )
-    
+
     intelligence.propose_adaptation(
         protocol_name="test_protocol",
         adaptation_type="MODIFY",
@@ -1603,19 +1603,19 @@ def test_save_and_load_json(tmp_path):
         justification="Better",
         evidence=["E1", "E2", "E3"]
     )
-    
+
     # Save
     filepath = tmp_path / "test_intelligence.json"
     intelligence.save_to_file(filepath)
-    
+
     # Load
     loaded = TrainingIntelligence.load_from_file(filepath)
-    
+
     # Verify
     assert len(loaded.learnings) == 1
     assert len(loaded.patterns) == 1
     assert len(loaded.adaptations) == 1
-    
+
     # Verify learning preserved
     learning = list(loaded.learnings.values())[0]
     assert learning.category == "test"
@@ -1626,11 +1626,11 @@ def test_save_and_load_json(tmp_path):
 def test_load_nonexistent_file_returns_empty():
     """Test loading nonexistent file returns empty intelligence."""
     from pathlib import Path
-    
+
     loaded = TrainingIntelligence.load_from_file(
         Path("/tmp/nonexistent_12345.json")
     )
-    
+
     assert len(loaded.learnings) == 0
     assert len(loaded.patterns) == 0
     assert len(loaded.adaptations) == 0
@@ -1645,12 +1645,12 @@ def test_save_creates_parent_directories(tmp_path):
         evidence=["E1"],
         level=AnalysisLevel.DAILY
     )
-    
+
     # Path with multiple parent levels
     filepath = tmp_path / "deep" / "nested" / "path" / "intelligence.json"
-    
+
     intelligence.save_to_file(filepath)
-    
+
     assert filepath.exists()
     assert filepath.parent.exists()
 ```
@@ -1955,7 +1955,7 @@ ConfidenceLevel
         AnalysisLevel,
         ConfidenceLevel
     )
-    
+
     __all__ = [
         "TrainingIntelligence",
         "TrainingLearning",
@@ -1989,7 +1989,7 @@ ConfidenceLevel
     ```bash
     poetry run pytest tests/intelligence/ -v
     # Attendu: 15-20/15-20 passing
-    
+
     poetry run pytest tests/ -v
     # Attendu: 503-508/510 passing (0 régression)
     ```
@@ -2032,6 +2032,6 @@ ConfidenceLevel
 
 **Sprint R4 - Training Intelligence - READY TO START 🚀**
 
-**MOA - Claude Code**  
-**Status :** Specs complètes, prêt développement  
+**MOA - Claude Code**
+**Status :** Specs complètes, prêt développement
 **PO Approval :** ✅ Validé

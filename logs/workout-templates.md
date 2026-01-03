@@ -1,6 +1,6 @@
 # Templates d'Entraînement
 
-> Catalogue évolutif des formats de séances validés avec contextes d'utilisation.  
+> Catalogue évolutif des formats de séances validés avec contextes d'utilisation.
 > Mise à jour : Après validation nouveau format ou modification >20%
 
 ---

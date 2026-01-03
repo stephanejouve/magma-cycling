@@ -4,6 +4,7 @@ test_intervals_format.py - Tests validation format Intervals.icu
 """
 
 import pytest
+
 from cyclisme_training_logs.intervals_format_validator import IntervalsFormatValidator
 
 
@@ -187,5 +188,5 @@ def test_workout_without_sections(validator):
     assert is_valid is True
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

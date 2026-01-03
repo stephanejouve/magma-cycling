@@ -6358,5 +6358,3 @@ emploi du temps
 
 #### Notes
 Session planifiée non réalisée. Aucune donnée d'exécution disponible.
-
-

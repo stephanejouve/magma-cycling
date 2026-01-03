@@ -36,18 +36,14 @@ Todo:
     * Implement rollback mechanism
 """
 
-import re
-import ast
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 import argparse
 import logging
+import re
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Optional
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(levelname)s: %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -63,6 +59,7 @@ class DocstringMetadata:
         version: Docstring version.
         description: Original module description.
     """
+
     category: str
     status: str
     last_review: str
@@ -99,20 +96,15 @@ class DocstringMigrator:
     # Pattern pour détecter l'ancien format
     GARTNER_PATTERN = re.compile(
         r'"""[\s\S]*?'
-        r'GARTNER_TIME:\s*(?P<category>\w+)\s*\n'
-        r'STATUS:\s*(?P<status>\w+)\s*\n'
-        r'LAST_REVIEW:\s*(?P<review>[\d-]+)\s*\n'
-        r'PRIORITY:\s*(?P<priority>\w+)\s*\n'
-        r'DOCSTRING:\s*(?P<version>[\w.]+)\s*\n',
-        re.MULTILINE
+        r"GARTNER_TIME:\s*(?P<category>\w+)\s*\n"
+        r"STATUS:\s*(?P<status>\w+)\s*\n"
+        r"LAST_REVIEW:\s*(?P<review>[\d-]+)\s*\n"
+        r"PRIORITY:\s*(?P<priority>\w+)\s*\n"
+        r"DOCSTRING:\s*(?P<version>[\w.]+)\s*\n",
+        re.MULTILINE,
     )
 
-    def __init__(
-        self,
-        project_root: Path,
-        backup: bool = True,
-        dry_run: bool = False
-    ):
+    def __init__(self, project_root: Path, backup: bool = True, dry_run: bool = False):
         """
         Initialize the migrator.
 
@@ -124,12 +116,7 @@ class DocstringMigrator:
         self.project_root = project_root
         self.backup = backup
         self.dry_run = dry_run
-        self.stats = {
-            'scanned': 0,
-            'migrated': 0,
-            'skipped': 0,
-            'errors': 0
-        }
+        self.stats = {"scanned": 0, "migrated": 0, "skipped": 0, "errors": 0}
 
     def extract_description(self, docstring: str) -> str:
         """
@@ -142,13 +129,10 @@ class DocstringMigrator:
             Cleaned description text without metadata lines.
         """
         # Enlever les lignes de métadonnées
-        lines = docstring.split('\n')
+        lines = docstring.split("\n")
         description_lines = []
 
-        skip_keywords = {
-            'GARTNER_TIME:', 'STATUS:', 'LAST_REVIEW:',
-            'PRIORITY:', 'DOCSTRING:'
-        }
+        skip_keywords = {"GARTNER_TIME:", "STATUS:", "LAST_REVIEW:", "PRIORITY:", "DOCSTRING:"}
 
         for line in lines:
             # Skip metadata lines
@@ -160,7 +144,7 @@ class DocstringMigrator:
             description_lines.append(line)
 
         # Nettoyer et rejoindre
-        description = '\n'.join(description_lines).strip()
+        description = "\n".join(description_lines).strip()
         return description
 
     def parse_old_docstring(self, content: str) -> Optional[DocstringMetadata]:
@@ -183,23 +167,20 @@ class DocstringMigrator:
         # Extraire la description complète
         docstring_start = content.find('"""')
         docstring_end = content.find('"""', docstring_start + 3)
-        full_docstring = content[docstring_start:docstring_end + 3]
+        full_docstring = content[docstring_start : docstring_end + 3]
 
         description = self.extract_description(full_docstring)
 
         return DocstringMetadata(
-            category=data['category'],
-            status=data['status'],
-            last_review=data['review'],
-            priority=data['priority'],
-            version=data['version'],
-            description=description
+            category=data["category"],
+            status=data["status"],
+            last_review=data["review"],
+            priority=data["priority"],
+            version=data["version"],
+            description=description,
         )
 
-    def generate_google_style_docstring(
-        self,
-        metadata: DocstringMetadata
-    ) -> str:
+    def generate_google_style_docstring(self, metadata: DocstringMetadata) -> str:
         """
         Generate Google Style docstring from metadata.
 
@@ -210,20 +191,21 @@ class DocstringMigrator:
             Formatted Google Style docstring string.
         """
         # Séparer première ligne du reste
-        lines = metadata.description.split('\n')
+        lines = metadata.description.split("\n")
         brief = lines[0].strip() if lines else "Module description."
 
         # Description étendue (tout sauf première ligne)
-        extended = '\n'.join(lines[1:]).strip() if len(lines) > 1 else ""
+        extended = "\n".join(lines[1:]).strip() if len(lines) > 1 else ""
 
         # Construire docstring
         parts = [f'"""\n{brief}']
 
         if extended:
-            parts.append(f'\n{extended}')
+            parts.append(f"\n{extended}")
 
         # Metadata section
-        parts.append(f"""
+        parts.append(
+            f"""
 
 Metadata:
     Created: {metadata.last_review}
@@ -232,11 +214,12 @@ Metadata:
     Status: {metadata.status}
     Priority: {metadata.priority}
     Version: {metadata.version}
-""")
+"""
+        )
 
         parts.append('"""')
 
-        return ''.join(parts)
+        return "".join(parts)
 
     def migrate_file(self, file_path: Path) -> bool:
         """
@@ -252,14 +235,14 @@ Metadata:
             IOError: If file cannot be read or written.
         """
         try:
-            content = file_path.read_text(encoding='utf-8')
+            content = file_path.read_text(encoding="utf-8")
 
             # Parser ancien format
             metadata = self.parse_old_docstring(content)
 
             if not metadata:
                 logger.debug(f"No old format found: {file_path}")
-                self.stats['skipped'] += 1
+                self.stats["skipped"] += 1
                 return False
 
             # Générer nouveau format
@@ -274,11 +257,7 @@ Metadata:
             doc_start = content.find('"""')
             doc_end = content.find('"""', doc_start + 3) + 3
 
-            new_content = (
-                content[:doc_start] +
-                new_docstring +
-                content[doc_end:]
-            )
+            new_content = content[:doc_start] + new_docstring + content[doc_end:]
 
             # Preview ou écriture
             if self.dry_run:
@@ -287,23 +266,23 @@ Metadata:
             else:
                 # Backup si demandé
                 if self.backup:
-                    backup_path = file_path.with_suffix(file_path.suffix + '.bak')
-                    backup_path.write_text(content, encoding='utf-8')
+                    backup_path = file_path.with_suffix(file_path.suffix + ".bak")
+                    backup_path.write_text(content, encoding="utf-8")
                     logger.debug(f"Backup created: {backup_path}")
 
                 # Écrire nouveau contenu
-                file_path.write_text(new_content, encoding='utf-8')
+                file_path.write_text(new_content, encoding="utf-8")
                 logger.info(f"✅ Migrated: {file_path}")
 
-            self.stats['migrated'] += 1
+            self.stats["migrated"] += 1
             return True
 
         except Exception as e:
             logger.error(f"Error migrating {file_path}: {e}")
-            self.stats['errors'] += 1
+            self.stats["errors"] += 1
             return False
 
-    def migrate_all(self) -> Dict[str, int]:
+    def migrate_all(self) -> dict[str, int]:
         """
         Migrate all Python files in project root.
 
@@ -311,19 +290,19 @@ Metadata:
             Statistics dictionary with counts of scanned/migrated/skipped/errors.
         """
         # Trouver tous les fichiers Python
-        python_files = list(self.project_root.rglob('*.py'))
+        python_files = list(self.project_root.rglob("*.py"))
 
         # Exclure patterns
         exclude_patterns = {
-            '__pycache__',
-            '.git',
-            '.venv',
-            'venv',
-            '.pytest_cache',
-            'build',
-            'dist',
-            '.eggs',
-            'tests'  # Optionnel: exclure tests
+            "__pycache__",
+            ".git",
+            ".venv",
+            "venv",
+            ".pytest_cache",
+            "build",
+            "dist",
+            ".eggs",
+            "tests",  # Optionnel: exclure tests
         }
 
         for py_file in python_files:
@@ -331,7 +310,7 @@ Metadata:
             if any(pattern in py_file.parts for pattern in exclude_patterns):
                 continue
 
-            self.stats['scanned'] += 1
+            self.stats["scanned"] += 1
             self.migrate_file(py_file)
 
         return self.stats
@@ -351,7 +330,7 @@ def main():
             python migrate_docstrings.py --dry-run
     """
     parser = argparse.ArgumentParser(
-        description='Migrate GARTNER_TIME docstrings to Google Style',
+        description="Migrate GARTNER_TIME docstrings to Google Style",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -366,30 +345,22 @@ Examples:
 
   # Verbose output
   python migrate_docstrings.py --backup --verbose
-        """
+        """,
     )
 
     parser.add_argument(
-        '--input-dir',
+        "--input-dir",
         type=Path,
-        default=Path.cwd() / 'cyclisme_training_logs',
-        help='Root directory to scan (default: ./cyclisme_training_logs)'
+        default=Path.cwd() / "cyclisme_training_logs",
+        help="Root directory to scan (default: ./cyclisme_training_logs)",
     )
     parser.add_argument(
-        '--backup',
-        action='store_true',
-        help='Create .bak files before modification'
+        "--backup", action="store_true", help="Create .bak files before modification"
     )
     parser.add_argument(
-        '--dry-run',
-        action='store_true',
-        help='Preview changes without writing files'
+        "--dry-run", action="store_true", help="Preview changes without writing files"
     )
-    parser.add_argument(
-        '--verbose',
-        action='store_true',
-        help='Enable debug logging'
-    )
+    parser.add_argument("--verbose", action="store_true", help="Enable debug logging")
 
     args = parser.parse_args()
 
@@ -404,9 +375,7 @@ Examples:
 
     # Créer migrator
     migrator = DocstringMigrator(
-        project_root=args.input_dir,
-        backup=args.backup,
-        dry_run=args.dry_run
+        project_root=args.input_dir, backup=args.backup, dry_run=args.dry_run
     )
 
     # Exécuter migration
@@ -416,25 +385,25 @@ Examples:
     stats = migrator.migrate_all()
 
     # Afficher résumé
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print("MIGRATION SUMMARY")
-    print("="*50)
+    print("=" * 50)
     print(f"Files scanned:  {stats['scanned']}")
     print(f"Files migrated: {stats['migrated']}")
     print(f"Files skipped:  {stats['skipped']}")
     print(f"Errors:         {stats['errors']}")
-    print("="*50)
+    print("=" * 50)
 
     if args.dry_run:
         print("\n⚠️  DRY-RUN MODE - No files were modified")
         print("Remove --dry-run to apply changes")
-    elif stats['migrated'] > 0:
+    elif stats["migrated"] > 0:
         print(f"\n✅ Successfully migrated {stats['migrated']} file(s)")
         if args.backup:
             print("📦 Backup files created with .bak extension")
 
-    return 0 if stats['errors'] == 0 else 1
+    return 0 if stats["errors"] == 0 else 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     exit(main())

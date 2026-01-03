@@ -60,26 +60,25 @@ Metadata:
 """
 
 import re
-from typing import List, Tuple, Optional
 
 
 class IntervalsFormatValidator:
     """Validateur format Intervals.icu"""
 
     # Patterns validation
-    REPETITION_PATTERN = r'^\s*(\d+)x\s*$'  # "3x" seul sur ligne
-    SECTION_WITH_REP_PATTERN = r'^(.*?)\s+(\d+x)\s*$'  # "Main set 3x"
-    INTERVAL_PATTERN = r'^\s*-\s+\d+[msh].*$'  # "- 10m 90% 85rpm"
-    MARKDOWN_PATTERN = r'\*\*|###|`|__|~~'  # Markdown interdit
+    REPETITION_PATTERN = r"^\s*(\d+)x\s*$"  # "3x" seul sur ligne
+    SECTION_WITH_REP_PATTERN = r"^(.*?)\s+(\d+x)\s*$"  # "Main set 3x"
+    INTERVAL_PATTERN = r"^\s*-\s+\d+[msh].*$"  # "- 10m 90% 85rpm"
+    MARKDOWN_PATTERN = r"\*\*|###|`|__|~~"  # Markdown interdit
 
     # Sections valides
-    VALID_SECTIONS = ['Warmup', 'Main set', 'Cooldown', 'Block']
+    VALID_SECTIONS = ["Warmup", "Main set", "Cooldown", "Block"]
 
     def __init__(self):
         self.errors = []
         self.warnings = []
 
-    def validate_workout(self, workout_text: str) -> Tuple[bool, List[str], List[str]]:
+    def validate_workout(self, workout_text: str) -> tuple[bool, list[str], list[str]]:
         """
         Valider un workout complet
 
@@ -92,7 +91,7 @@ class IntervalsFormatValidator:
         self.errors = []
         self.warnings = []
 
-        lines = workout_text.split('\n')
+        lines = workout_text.split("\n")
 
         # Check 1: Pas de markdown
         if re.search(self.MARKDOWN_PATTERN, workout_text):
@@ -106,7 +105,7 @@ class IntervalsFormatValidator:
 
         return (len(self.errors) == 0, self.errors, self.warnings)
 
-    def _check_repetition_format(self, lines: List[str]):
+    def _check_repetition_format(self, lines: list[str]):
         """
         Vérifier format blocs répétés
 
@@ -131,7 +130,7 @@ class IntervalsFormatValidator:
                 )
 
             # Détecter répétition dans intervalle (ex: "- 3x 10m 90%")
-            if stripped.startswith('-') and re.search(r'\b\d+x\b', stripped):
+            if stripped.startswith("-") and re.search(r"\b\d+x\b", stripped):
                 self.errors.append(
                     f"Ligne {i+1}: Répétition dans intervalle '{stripped}'. "
                     f"Format incorrect. Utiliser 'Main set Nx' avant le bloc."
@@ -144,10 +143,7 @@ class IntervalsFormatValidator:
                 repetition = match.group(2)
 
                 # Vérifier si section valide
-                is_valid_section = any(
-                    valid in section_name
-                    for valid in self.VALID_SECTIONS
-                )
+                is_valid_section = any(valid in section_name for valid in self.VALID_SECTIONS)
 
                 if not is_valid_section:
                     self.warnings.append(
@@ -155,7 +151,7 @@ class IntervalsFormatValidator:
                         f"non standard. Sections valides: {', '.join(self.VALID_SECTIONS)}"
                     )
 
-    def _check_interval_format(self, lines: List[str]):
+    def _check_interval_format(self, lines: list[str]):
         """
         Vérifier format lignes intervalles
 
@@ -166,14 +162,12 @@ class IntervalsFormatValidator:
             stripped = line.strip()
 
             # Ignorer lignes vides et sections
-            if not stripped or not stripped.startswith('-'):
+            if not stripped or not stripped.startswith("-"):
                 continue
 
             # Vérifier présence durée
-            if not re.search(r'\d+[msh]', stripped):
-                self.warnings.append(
-                    f"Ligne {i+1}: Aucune durée détectée dans '{stripped}'"
-                )
+            if not re.search(r"\d+[msh]", stripped):
+                self.warnings.append(f"Ligne {i+1}: Aucune durée détectée dans '{stripped}'")
 
     def fix_repetition_format(self, workout_text: str) -> str:
         """
@@ -183,7 +177,7 @@ class IntervalsFormatValidator:
         - "Test capacité 3x" → "Main set 3x" (si pas section valide)
         - "- 3x 10m 90%" → Erreur (ne peut pas corriger automatiquement)
         """
-        lines = workout_text.split('\n')
+        lines = workout_text.split("\n")
         corrected = []
         errors_found = []
 
@@ -191,7 +185,7 @@ class IntervalsFormatValidator:
             stripped = line.strip()
 
             # Détecter répétition dans intervalle
-            if stripped.startswith('-') and re.search(r'\b(\d+)x\b', stripped):
+            if stripped.startswith("-") and re.search(r"\b(\d+)x\b", stripped):
                 errors_found.append(
                     f"Ligne {i+1}: Impossible de corriger automatiquement "
                     f"'{stripped}'. Restructurer manuellement."
@@ -206,18 +200,12 @@ class IntervalsFormatValidator:
                 repetition = match.group(2)
 
                 # Si section non standard, remplacer par "Main set"
-                is_valid_section = any(
-                    valid in section_name
-                    for valid in self.VALID_SECTIONS
-                )
+                is_valid_section = any(valid in section_name for valid in self.VALID_SECTIONS)
 
                 if not is_valid_section:
                     corrected_line = f"Main set {repetition}"
                     corrected.append(corrected_line)
-                    print(
-                        f"⚠️  Ligne {i+1} corrigée: "
-                        f"'{stripped}' → '{corrected_line}'"
-                    )
+                    print(f"⚠️  Ligne {i+1} corrigée: " f"'{stripped}' → '{corrected_line}'")
                     continue
 
             # Ligne OK
@@ -228,7 +216,7 @@ class IntervalsFormatValidator:
             for error in errors_found:
                 print(f"   {error}")
 
-        return '\n'.join(corrected)
+        return "\n".join(corrected)
 
     def generate_example_workouts(self) -> dict:
         """
@@ -246,7 +234,6 @@ Main set
 
 Cooldown
 - 10m ramp 65-50% 85rpm""",
-
             "repeated_block": """Warmup
 - 10m ramp 50-75% 85rpm
 
@@ -256,7 +243,6 @@ Main set 3x
 
 Cooldown
 - 10m ramp 75-50% 85rpm""",
-
             "multiple_blocks": """Warmup
 - 15m ramp 50-75% 85-90rpm
 
@@ -354,5 +340,5 @@ Cooldown
         print()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

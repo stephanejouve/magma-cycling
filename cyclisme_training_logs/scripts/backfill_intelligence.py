@@ -25,12 +25,11 @@ Metadata:
 """
 
 import argparse
-import json
 import os
 import sys
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Any
 
 from dotenv import load_dotenv
 
@@ -44,9 +43,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from cyclisme_training_logs.api.intervals_client import IntervalsClient
 from cyclisme_training_logs.intelligence.training_intelligence import (
-    TrainingIntelligence,
     AnalysisLevel,
-    ConfidenceLevel
+    ConfidenceLevel,
+    TrainingIntelligence,
 )
 
 
@@ -77,7 +76,7 @@ class IntervalsICUBackfiller:
         self.client = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
         self.intelligence = TrainingIntelligence()
 
-    def fetch_activities(self, start_date: str, end_date: str) -> List[Dict[str, Any]]:
+    def fetch_activities(self, start_date: str, end_date: str) -> list[dict[str, Any]]:
         """
         Fetch activities from Intervals.icu API.
 
@@ -98,7 +97,7 @@ class IntervalsICUBackfiller:
             print(f"   ❌ Error fetching activities: {e}")
             return []
 
-    def fetch_wellness(self, start_date: str, end_date: str) -> List[Dict[str, Any]]:
+    def fetch_wellness(self, start_date: str, end_date: str) -> list[dict[str, Any]]:
         """
         Fetch wellness data (sleep, HRV, etc.) from Intervals.icu.
 
@@ -119,7 +118,7 @@ class IntervalsICUBackfiller:
             print(f"   ❌ Error fetching wellness: {e}")
             return []
 
-    def classify_workout_type(self, activity: Dict[str, Any]) -> str:
+    def classify_workout_type(self, activity: dict[str, Any]) -> str:
         """
         Classify workout type from activity data.
 
@@ -156,7 +155,7 @@ class IntervalsICUBackfiller:
         else:
             return "endurance"
 
-    def analyze_sweet_spot_sessions(self, activities: List[Dict]) -> None:
+    def analyze_sweet_spot_sessions(self, activities: list[dict]) -> None:
         """
         Extract Sweet-Spot learning from historical sessions.
 
@@ -169,8 +168,7 @@ class IntervalsICUBackfiller:
         print("\n🍭 Analyzing Sweet-Spot sessions...")
 
         sweet_spot_sessions = [
-            a for a in activities
-            if self.classify_workout_type(a) == "sweet-spot"
+            a for a in activities if self.classify_workout_type(a) == "sweet-spot"
         ]
 
         if not sweet_spot_sessions:
@@ -189,14 +187,14 @@ class IntervalsICUBackfiller:
         evidence = [
             f"{len(sweet_spot_sessions)} sessions completed",
             f"Avg IF {avg_intensity:.2f}",
-            f"Intensity range 88-90% FTP sustainable"
+            "Intensity range 88-90% FTP sustainable",
         ]
 
         learning = self.intelligence.add_learning(
             category="sweet-spot",
-            description=f"88-90% FTP sustainable for 2x10min+ intervals",
+            description="88-90% FTP sustainable for 2x10min+ intervals",
             evidence=evidence,
-            level=AnalysisLevel.WEEKLY
+            level=AnalysisLevel.WEEKLY,
         )
 
         # Promote confidence based on session count (not evidence count)
@@ -208,12 +206,12 @@ class IntervalsICUBackfiller:
         elif session_count >= 3:
             learning.confidence = ConfidenceLevel.MEDIUM
 
-        print(f"   ✅ Created learning: {len(sweet_spot_sessions)} sessions, confidence={learning.confidence.value}")
+        print(
+            f"   ✅ Created learning: {len(sweet_spot_sessions)} sessions, confidence={learning.confidence.value}"
+        )
 
     def analyze_vo2_sleep_correlation(
-        self,
-        activities: List[Dict],
-        wellness_data: List[Dict]
+        self, activities: list[dict], wellness_data: list[dict]
     ) -> None:
         """
         Identify VO2/sleep correlation pattern.
@@ -227,10 +225,7 @@ class IntervalsICUBackfiller:
         """
         print("\n😴 Analyzing VO2/sleep correlation...")
 
-        vo2_activities = [
-            a for a in activities
-            if self.classify_workout_type(a) == "vo2"
-        ]
+        vo2_activities = [a for a in activities if self.classify_workout_type(a) == "vo2"]
 
         if not vo2_activities:
             print("   ⚠️  No VO2 sessions found")
@@ -277,7 +272,7 @@ class IntervalsICUBackfiller:
                 name="sleep_debt_vo2_failure",
                 trigger_conditions={"sleep": "<6h", "workout_type": "VO2"},
                 observed_outcome=f"Incapacité finir intervalles, RPE 9+ ({failures} échecs sur {total_analyzed} tentatives)",
-                observation_date=date.today()
+                observation_date=date.today(),
             )
             pattern.frequency = total_analyzed
 
@@ -289,11 +284,13 @@ class IntervalsICUBackfiller:
             elif pattern.frequency >= 3:
                 pattern.confidence = ConfidenceLevel.MEDIUM
 
-            print(f"   ✅ Created pattern: {failures} failures/{total_analyzed} attempts, confidence={pattern.confidence.value}")
+            print(
+                f"   ✅ Created pattern: {failures} failures/{total_analyzed} attempts, confidence={pattern.confidence.value}"
+            )
         else:
             print(f"   ℹ️  Insufficient correlation: {failures} failures/{total_analyzed} attempts")
 
-    def analyze_outdoor_discipline(self, activities: List[Dict]) -> None:
+    def analyze_outdoor_discipline(self, activities: list[dict]) -> None:
         """
         Identify outdoor intensity overshoot pattern.
 
@@ -305,14 +302,10 @@ class IntervalsICUBackfiller:
         """
         print("\n🚴 Analyzing outdoor discipline...")
 
-        outdoor_activities = [
-            a for a in activities
-            if a.get("type") == "Ride"  # Outdoor rides
-        ]
+        outdoor_activities = [a for a in activities if a.get("type") == "Ride"]  # Outdoor rides
 
         indoor_activities = [
-            a for a in activities
-            if a.get("type") == "VirtualRide"  # Indoor rides
+            a for a in activities if a.get("type") == "VirtualRide"  # Indoor rides
         ]
 
         if not outdoor_activities or not indoor_activities:
@@ -345,7 +338,7 @@ class IntervalsICUBackfiller:
                 name="outdoor_intensity_overshoot",
                 trigger_conditions={"workout_location": "outdoor"},
                 observed_outcome=f"IF +{overshoot_pct:.1f}% vs indoor ({outdoor_if:.2f} vs {indoor_if:.2f})",
-                observation_date=date.today()
+                observation_date=date.today(),
             )
             pattern.frequency = len(outdoor_activities)
 
@@ -357,7 +350,9 @@ class IntervalsICUBackfiller:
             elif pattern.frequency >= 3:
                 pattern.confidence = ConfidenceLevel.MEDIUM
 
-            print(f"   ✅ Created pattern: {len(outdoor_activities)} outdoor rides, +{overshoot_pct:.1f}% IF, confidence={pattern.confidence.value}")
+            print(
+                f"   ✅ Created pattern: {len(outdoor_activities)} outdoor rides, +{overshoot_pct:.1f}% IF, confidence={pattern.confidence.value}"
+            )
         else:
             print(f"   ℹ️  No significant overshoot: +{overshoot_pct:.1f}%")
 
@@ -365,8 +360,8 @@ class IntervalsICUBackfiller:
         self,
         start_date: str,
         end_date: str,
-        activities: List[Dict[str, Any]],
-        wellness_data: List[Dict[str, Any]]
+        activities: list[dict[str, Any]],
+        wellness_data: list[dict[str, Any]],
     ) -> None:
         """
         Extract FTP progression learning from real test data.
@@ -412,15 +407,19 @@ class IntervalsICUBackfiller:
                     change_w = current_ftp - prev_ftp
                     change_pct = (change_w / prev_ftp) * 100 if prev_ftp > 0 else 0
 
-                    ftp_tests.append({
-                        "date": entry_date,
-                        "ftp": current_ftp,
-                        "previous_ftp": prev_ftp,
-                        "change_w": change_w,
-                        "change_pct": change_pct,
-                        "source": "wellness_eftp"
-                    })
-                    print(f"      ✓ {entry_date}: {prev_ftp:.0f}W → {current_ftp:.0f}W ({change_w:+.0f}W, {change_pct:+.1f}%)")
+                    ftp_tests.append(
+                        {
+                            "date": entry_date,
+                            "ftp": current_ftp,
+                            "previous_ftp": prev_ftp,
+                            "change_w": change_w,
+                            "change_pct": change_pct,
+                            "source": "wellness_eftp",
+                        }
+                    )
+                    print(
+                        f"      ✓ {entry_date}: {prev_ftp:.0f}W → {current_ftp:.0f}W ({change_w:+.0f}W, {change_pct:+.1f}%)"
+                    )
 
                 prev_ftp = current_ftp
 
@@ -445,22 +444,30 @@ class IntervalsICUBackfiller:
 
                     # Try to extract FTP from power curve (20min * 0.95)
                     max_watts = activity.get("max_avg_watts", {})
-                    ftp_20min = max_watts.get("1200", 0) * 0.95 if max_watts else 0  # 20min power * 0.95
+                    ftp_20min = (
+                        max_watts.get("1200", 0) * 0.95 if max_watts else 0
+                    )  # 20min power * 0.95
 
                     # Use best available FTP estimate
                     estimated_ftp = ftp_20min or icu_rolling_ftp or icu_ftp
 
-                    ftp_tests.append({
-                        "date": activity_date,
-                        "activity_name": activity.get("name", ""),
-                        "avg_watts": avg_watts,
-                        "ftp": estimated_ftp if estimated_ftp > 0 else None,
-                        "ftp_20min": int(ftp_20min) if ftp_20min > 0 else None,
-                        "icu_ftp": icu_ftp,
-                        "source": "activity_executed"
-                    })
-                    ftp_display = f"{estimated_ftp:.0f}W FTP" if estimated_ftp > 0 else "no FTP data"
-                    print(f"      ✓ {activity_date}: '{activity.get('name', '')}' (avg: {avg_watts:.0f}W, {ftp_display})")
+                    ftp_tests.append(
+                        {
+                            "date": activity_date,
+                            "activity_name": activity.get("name", ""),
+                            "avg_watts": avg_watts,
+                            "ftp": estimated_ftp if estimated_ftp > 0 else None,
+                            "ftp_20min": int(ftp_20min) if ftp_20min > 0 else None,
+                            "icu_ftp": icu_ftp,
+                            "source": "activity_executed",
+                        }
+                    )
+                    ftp_display = (
+                        f"{estimated_ftp:.0f}W FTP" if estimated_ftp > 0 else "no FTP data"
+                    )
+                    print(
+                        f"      ✓ {activity_date}: '{activity.get('name', '')}' (avg: {avg_watts:.0f}W, {ftp_display})"
+                    )
 
             # Create learning if tests found
             if not ftp_tests:
@@ -471,18 +478,25 @@ class IntervalsICUBackfiller:
             ftp_tests.sort(key=lambda t: t.get("date", ""))
 
             # Calculate overall progression
-            tests_with_ftp = [t for t in ftp_tests if t.get("ftp") is not None or t.get("ftp_20min") is not None]
+            tests_with_ftp = [
+                t for t in ftp_tests if t.get("ftp") is not None or t.get("ftp_20min") is not None
+            ]
 
             if len(tests_with_ftp) < 2:
-                print(f"   ℹ️  Only {len(ftp_tests)} test(s) found, need at least 2 with FTP values for progression")
+                print(
+                    f"   ℹ️  Only {len(ftp_tests)} test(s) found, need at least 2 with FTP values for progression"
+                )
                 # Still create learning with single test
                 if ftp_tests:
-                    evidence = [f"{t['date']}: {t.get('activity_name', 'FTP change detected')}" for t in ftp_tests[:5]]
+                    evidence = [
+                        f"{t['date']}: {t.get('activity_name', 'FTP change detected')}"
+                        for t in ftp_tests[:5]
+                    ]
                     learning = self.intelligence.add_learning(
                         category="ftp_tests",
                         description=f"{len(ftp_tests)} FTP test(s) detected",
                         evidence=evidence,
-                        level=AnalysisLevel.MONTHLY
+                        level=AnalysisLevel.MONTHLY,
                     )
                     learning.confidence = ConfidenceLevel.LOW
                     print(f"   ✅ Created learning: {len(ftp_tests)} test(s), confidence=LOW")
@@ -516,7 +530,7 @@ class IntervalsICUBackfiller:
                 f"FTP progression: {first_ftp:.0f}W → {last_ftp:.0f}W",
                 f"Change: {progression_w:+.0f}W ({progression_pct:+.1f}%)",
                 f"Rate: {rate_per_month:+.2f}W/month",
-                f"Total tests detected: {len(ftp_tests)}"
+                f"Total tests detected: {len(ftp_tests)}",
             ]
 
             # Add individual test details (max 5)
@@ -530,7 +544,7 @@ class IntervalsICUBackfiller:
                 category="ftp_progression",
                 description=f"FTP progression: {first_ftp:.0f}W → {last_ftp:.0f}W over {len(ftp_tests)} tests",
                 evidence=evidence,
-                level=AnalysisLevel.MONTHLY
+                level=AnalysisLevel.MONTHLY,
             )
 
             # Set confidence based on number of tests and time period
@@ -543,11 +557,14 @@ class IntervalsICUBackfiller:
             else:
                 learning.confidence = ConfidenceLevel.LOW
 
-            print(f"   ✅ Created learning: {len(ftp_tests)} tests, {progression_w:+.0f}W ({progression_pct:+.1f}%), confidence={learning.confidence.value}")
+            print(
+                f"   ✅ Created learning: {len(ftp_tests)} tests, {progression_w:+.0f}W ({progression_pct:+.1f}%), confidence={learning.confidence.value}"
+            )
 
         except Exception as e:
             print(f"   ❌ Error analyzing FTP: {e}")
             import traceback
+
             traceback.print_exc()
 
     def run(self, start_date: str, end_date: str, output_path: Path) -> None:
@@ -595,52 +612,30 @@ def main():
         description="Backfill Training Intelligence from Intervals.icu history"
     )
 
-    parser.add_argument(
-        "--start-date",
-        type=str,
-        required=True,
-        help="Start date (YYYY-MM-DD)"
-    )
+    parser.add_argument("--start-date", type=str, required=True, help="Start date (YYYY-MM-DD)")
 
-    parser.add_argument(
-        "--end-date",
-        type=str,
-        required=True,
-        help="End date (YYYY-MM-DD)"
-    )
+    parser.add_argument("--end-date", type=str, required=True, help="End date (YYYY-MM-DD)")
 
     parser.add_argument(
         "--output",
         type=str,
         default="~/data/intelligence_backfilled.json",
-        help="Output path for intelligence JSON"
+        help="Output path for intelligence JSON",
     )
 
-    parser.add_argument(
-        "--athlete-id",
-        type=str,
-        help="Intervals.icu athlete ID (overrides env)"
-    )
+    parser.add_argument("--athlete-id", type=str, help="Intervals.icu athlete ID (overrides env)")
 
-    parser.add_argument(
-        "--api-key",
-        type=str,
-        help="Intervals.icu API key (overrides env)"
-    )
+    parser.add_argument("--api-key", type=str, help="Intervals.icu API key (overrides env)")
 
     args = parser.parse_args()
 
     # Get credentials (support both standard and VITE_ prefixed)
     athlete_id = (
-        args.athlete_id or
-        os.getenv("INTERVALS_ATHLETE_ID") or
-        os.getenv("VITE_INTERVALS_ATHLETE_ID")
+        args.athlete_id
+        or os.getenv("INTERVALS_ATHLETE_ID")
+        or os.getenv("VITE_INTERVALS_ATHLETE_ID")
     )
-    api_key = (
-        args.api_key or
-        os.getenv("INTERVALS_API_KEY") or
-        os.getenv("VITE_INTERVALS_API_KEY")
-    )
+    api_key = args.api_key or os.getenv("INTERVALS_API_KEY") or os.getenv("VITE_INTERVALS_API_KEY")
 
     if not athlete_id or not api_key:
         print("❌ Missing Intervals.icu credentials")
@@ -661,6 +656,7 @@ def main():
     except Exception as e:
         print(f"\n❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

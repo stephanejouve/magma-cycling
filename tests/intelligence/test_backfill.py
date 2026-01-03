@@ -4,18 +4,12 @@ Tests for backfill_intelligence module.
 Tests backfill extraction of learnings/patterns from Intervals.icu history.
 """
 
-import pytest
-from datetime import date
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
-from cyclisme_training_logs.scripts.backfill_intelligence import (
-    IntervalsICUBackfiller
-)
-from cyclisme_training_logs.intelligence.training_intelligence import (
-    ConfidenceLevel,
-    AnalysisLevel
-)
+import pytest
+
+from cyclisme_training_logs.intelligence.training_intelligence import ConfidenceLevel
+from cyclisme_training_logs.scripts.backfill_intelligence import IntervalsICUBackfiller
 
 
 @pytest.fixture
@@ -61,7 +55,7 @@ def test_backfill_sweet_spot_extraction(backfiller, mock_intervals_client):
             "name": f"Sweet Spot {i}",
             "icu_intensity": 0.89,
             "icu_training_load": 75,
-            "start_date_local": f"2024-{i%12+1:02d}-01"
+            "start_date_local": f"2024-{i%12+1:02d}-01",
         }
         for i in range(90)
     ]
@@ -77,9 +71,7 @@ def test_backfill_sweet_spot_extraction(backfiller, mock_intervals_client):
 
     # Find sweet-spot learning
     sweet_spot_learning = next(
-        (l for l in backfiller.intelligence.learnings.values()
-         if l.category == "sweet-spot"),
-        None
+        (l for l in backfiller.intelligence.learnings.values() if l.category == "sweet-spot"), None
     )
 
     assert sweet_spot_learning is not None
@@ -110,18 +102,17 @@ def test_backfill_vo2_sleep_correlation(backfiller, mock_intervals_client):
             intensity = 1.15  # Completed successfully
             tss = 50
 
-        mock_activities.append({
-            "name": f"VO2 Max {i}",
-            "type": "VirtualRide",
-            "icu_intensity": intensity,
-            "icu_training_load": tss,
-            "start_date_local": f"{activity_date}T08:00:00"
-        })
+        mock_activities.append(
+            {
+                "name": f"VO2 Max {i}",
+                "type": "VirtualRide",
+                "icu_intensity": intensity,
+                "icu_training_load": tss,
+                "start_date_local": f"{activity_date}T08:00:00",
+            }
+        )
 
-        mock_wellness.append({
-            "id": activity_date,
-            "sleepSecs": int(sleep_hours * 3600)
-        })
+        mock_wellness.append({"id": activity_date, "sleepSecs": int(sleep_hours * 3600)})
 
     backfiller.client.get_activities = Mock(return_value=mock_activities)
     backfiller.client.get_wellness = Mock(return_value=mock_wellness)
@@ -134,9 +125,7 @@ def test_backfill_vo2_sleep_correlation(backfiller, mock_intervals_client):
 
     # Find sleep/VO2 pattern
     sleep_pattern = next(
-        (p for p in backfiller.intelligence.patterns.values()
-         if "sleep" in p.name.lower()),
-        None
+        (p for p in backfiller.intelligence.patterns.values() if "sleep" in p.name.lower()), None
     )
 
     assert sleep_pattern is not None
@@ -155,7 +144,7 @@ def test_backfill_outdoor_discipline(backfiller, mock_intervals_client):
             "name": f"Outdoor Ride {i}",
             "type": "Ride",  # Outdoor
             "icu_intensity": 0.92,  # High IF
-            "start_date_local": f"2024-{i%12+1:02d}-01"
+            "start_date_local": f"2024-{i%12+1:02d}-01",
         }
         for i in range(100)
     ]
@@ -166,7 +155,7 @@ def test_backfill_outdoor_discipline(backfiller, mock_intervals_client):
             "name": f"Indoor Ride {i}",
             "type": "VirtualRide",  # Indoor
             "icu_intensity": 0.80,  # Normal IF
-            "start_date_local": f"2024-{i%12+1:02d}-15"
+            "start_date_local": f"2024-{i%12+1:02d}-15",
         }
         for i in range(80)
     ]
@@ -182,9 +171,7 @@ def test_backfill_outdoor_discipline(backfiller, mock_intervals_client):
 
     # Find outdoor pattern
     outdoor_pattern = next(
-        (p for p in backfiller.intelligence.patterns.values()
-         if "outdoor" in p.name.lower()),
-        None
+        (p for p in backfiller.intelligence.patterns.values() if "outdoor" in p.name.lower()), None
     )
 
     assert outdoor_pattern is not None
@@ -206,24 +193,15 @@ def test_backfill_ftp_progression(backfiller, mock_intervals_client):
             "icu_average_watts": 210,
             "icu_ftp": 200,
             "icu_rolling_ftp": 205,
-            "max_avg_watts": {}
+            "max_avg_watts": {},
         }
     ]
 
     # Mock wellness with eFTP changes
     mock_wellness = [
-        {
-            "id": "2024-01-01",
-            "sportInfo": [{"type": "Ride", "eftp": 200.0}]
-        },
-        {
-            "id": "2024-06-15",
-            "sportInfo": [{"type": "Ride", "eftp": 210.0}]
-        },
-        {
-            "id": "2025-12-31",
-            "sportInfo": [{"type": "Ride", "eftp": 220.0}]
-        }
+        {"id": "2024-01-01", "sportInfo": [{"type": "Ride", "eftp": 200.0}]},
+        {"id": "2024-06-15", "sportInfo": [{"type": "Ride", "eftp": 210.0}]},
+        {"id": "2025-12-31", "sportInfo": [{"type": "Ride", "eftp": 220.0}]},
     ]
 
     # Run analysis (24 months)
@@ -234,9 +212,8 @@ def test_backfill_ftp_progression(backfiller, mock_intervals_client):
 
     # Find FTP progression learning
     ftp_learning = next(
-        (l for l in backfiller.intelligence.learnings.values()
-         if l.category == "ftp_progression"),
-        None
+        (l for l in backfiller.intelligence.learnings.values() if l.category == "ftp_progression"),
+        None,
     )
 
     assert ftp_learning is not None
@@ -244,7 +221,11 @@ def test_backfill_ftp_progression(backfiller, mock_intervals_client):
     assert "200W" in ftp_learning.description or "210W" in ftp_learning.description
     assert "220W" in ftp_learning.description
     # Confidence based on number of tests and time period (3 eFTP changes over 24 months)
-    assert ftp_learning.confidence in [ConfidenceLevel.MEDIUM, ConfidenceLevel.HIGH, ConfidenceLevel.VALIDATED]
+    assert ftp_learning.confidence in [
+        ConfidenceLevel.MEDIUM,
+        ConfidenceLevel.HIGH,
+        ConfidenceLevel.VALIDATED,
+    ]
     assert len(ftp_learning.evidence) >= 4  # At least period, progression, rate, total tests
 
 
@@ -256,7 +237,7 @@ def test_backfill_saves_valid_json(backfiller, mock_intervals_client, tmp_path):
             "name": "Sweet Spot",
             "icu_intensity": 0.89,
             "icu_training_load": 75,
-            "start_date_local": "2024-01-01T08:00:00"
+            "start_date_local": "2024-01-01T08:00:00",
         }
     ]
 
@@ -275,7 +256,8 @@ def test_backfill_saves_valid_json(backfiller, mock_intervals_client, tmp_path):
 
     # Verify valid JSON
     import json
-    with open(output_path, "r") as f:
+
+    with open(output_path) as f:
         data = json.load(f)
 
     assert "learnings" in data
@@ -287,19 +269,18 @@ def test_backfill_saves_valid_json(backfiller, mock_intervals_client, tmp_path):
 def test_classify_workout_type_fallback_cases(backfiller):
     """Test workout type classification edge cases."""
     # Tempo by IF
-    assert backfiller.classify_workout_type(
-        {"name": "Unknown", "icu_intensity": 0.80}
-    ) == "tempo"
+    assert backfiller.classify_workout_type({"name": "Unknown", "icu_intensity": 0.80}) == "tempo"
 
     # Recovery by IF
-    assert backfiller.classify_workout_type(
-        {"name": "Easy Spin", "icu_intensity": 0.55}
-    ) == "recovery"
+    assert (
+        backfiller.classify_workout_type({"name": "Easy Spin", "icu_intensity": 0.55}) == "recovery"
+    )
 
     # Endurance fallback
-    assert backfiller.classify_workout_type(
-        {"name": "Long Ride", "icu_intensity": 0.70}
-    ) == "endurance"
+    assert (
+        backfiller.classify_workout_type({"name": "Long Ride", "icu_intensity": 0.70})
+        == "endurance"
+    )
 
 
 def test_analyze_empty_activities(backfiller):

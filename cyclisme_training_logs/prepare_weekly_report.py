@@ -14,10 +14,8 @@ Usage:
 """
 
 import argparse
-import json
-import subprocess
-import sys
 import re
+import subprocess
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -51,7 +49,7 @@ class WeeklyReportGenerator:
         """Charger le contexte athlète"""
         prompt_file = self.references_dir / "project_prompt_v2_1_revised.md"
         if prompt_file.exists():
-            with open(prompt_file, 'r', encoding='utf-8') as f:
+            with open(prompt_file, encoding="utf-8") as f:
                 return f.read()
         return None
 
@@ -61,42 +59,42 @@ class WeeklyReportGenerator:
         if not history_file.exists():
             return None
 
-        with open(history_file, 'r', encoding='utf-8') as f:
+        with open(history_file, encoding="utf-8") as f:
             content = f.read()
 
         # Si date de début fournie, extraire par plage de dates
         if start_date:
-            start = datetime.strptime(start_date, '%Y-%m-%d')
+            start = datetime.strptime(start_date, "%Y-%m-%d")
             end = start + timedelta(days=7)
 
             workouts = []
-            sections = content.split('###')
+            sections = content.split("###")
 
             for section in sections:
-                if 'Date :' not in section:
+                if "Date :" not in section:
                     continue
 
                 # Extraire la date
-                date_match = re.search(r'Date\s*:\s*(\d{2}/\d{2}/\d{4})', section)
+                date_match = re.search(r"Date\s*:\s*(\d{2}/\d{2}/\d{4})", section)
                 if date_match:
                     date_str = date_match.group(1)
-                    workout_date = datetime.strptime(date_str, '%d/%m/%Y')
+                    workout_date = datetime.strptime(date_str, "%d/%m/%Y")
 
                     if start <= workout_date < end:
-                        workouts.append('###' + section)
+                        workouts.append("###" + section)
 
-            return '\n'.join(workouts) if workouts else None
+            return "\n".join(workouts) if workouts else None
 
         # Sinon, extraire par pattern de semaine (S067, etc.)
         week_pattern = f"S{week_number:03d}"
         workouts = []
-        sections = content.split('###')
+        sections = content.split("###")
 
         for section in sections:
-            if week_pattern in section and 'Date :' in section:
-                workouts.append('###' + section)
+            if week_pattern in section and "Date :" in section:
+                workouts.append("###" + section)
 
-        return '\n'.join(workouts) if workouts else None
+        return "\n".join(workouts) if workouts else None
 
     def read_full_log(self, filename):
         """Lire un log complet"""
@@ -104,19 +102,23 @@ class WeeklyReportGenerator:
         if not log_file.exists():
             return f"_Fichier {filename} non trouvé_"
 
-        with open(log_file, 'r', encoding='utf-8') as f:
+        with open(log_file, encoding="utf-8") as f:
             return f.read()
 
-    def generate_prompt(self, week_number, week_workouts, athlete_context, start_date=None, end_date=None):
+    def generate_prompt(
+        self, week_number, week_workouts, athlete_context, start_date=None, end_date=None
+    ):
         """Générer le prompt pour Claude.ai"""
 
         # Calculer dates si non fournies
         if start_date and not end_date:
-            start = datetime.strptime(start_date, '%Y-%m-%d')
+            start = datetime.strptime(start_date, "%Y-%m-%d")
             end = start + timedelta(days=6)
-            end_date = end.strftime('%Y-%m-%d')
+            end_date = end.strftime("%Y-%m-%d")
 
-        date_range = f"{start_date} → {end_date}" if start_date else "À déterminer depuis les séances"
+        date_range = (
+            f"{start_date} → {end_date}" if start_date else "À déterminer depuis les séances"
+        )
 
         prompt = f"""# Bilan Hebdomadaire S{week_number:03d}
 
@@ -268,12 +270,9 @@ Génère maintenant les 6 fichiers de bilan pour la semaine S{week_number:03d}.
         """Copier dans le presse-papier"""
         try:
             process = subprocess.Popen(
-                ['pbcopy'],
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+                ["pbcopy"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
-            process.communicate(text.encode('utf-8'))
+            process.communicate(text.encode("utf-8"))
             return True
         except Exception as e:
             print(f"⚠️  Erreur copie presse-papier : {e}")
@@ -281,24 +280,14 @@ Génère maintenant les 6 fichiers de bilan pour la semaine S{week_number:03d}.
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Préparer le prompt pour bilan hebdomadaire"
-    )
+    parser = argparse.ArgumentParser(description="Préparer le prompt pour bilan hebdomadaire")
 
     parser.add_argument(
-        '--week',
-        type=int,
-        required=True,
-        help="Numéro de semaine (ex: 67 pour S067)"
+        "--week", type=int, required=True, help="Numéro de semaine (ex: 67 pour S067)"
     )
+    parser.add_argument("--start-date", help="Date début semaine (YYYY-MM-DD, ex: 2025-11-11)")
     parser.add_argument(
-        '--start-date',
-        help="Date début semaine (YYYY-MM-DD, ex: 2025-11-11)"
-    )
-    parser.add_argument(
-        '--project-root',
-        default='.',
-        help="Racine du projet (défaut: répertoire courant)"
+        "--project-root", default=".", help="Racine du projet (défaut: répertoire courant)"
     )
 
     args = parser.parse_args()
@@ -325,15 +314,15 @@ def main():
 
     if week_workouts:
         # Compter le nombre de séances
-        workout_count = week_workouts.count('###')
+        workout_count = week_workouts.count("###")
         print(f"   ✅ {workout_count} séance(s) trouvée(s)")
     else:
         print(f"   ⚠️  Aucune séance trouvée pour S{week_number:03d}")
         print()
         print("💡 Suggestions :")
         print(f"   - Vérifier que les séances sont nommées S{week_number:03d}-XX-...")
-        print(f"   - Utiliser --start-date pour extraire par plage de dates")
-        print(f"   - Exemple : --start-date 2025-11-11 (lundi de la semaine)")
+        print("   - Utiliser --start-date pour extraire par plage de dates")
+        print("   - Exemple : --start-date 2025-11-11 (lundi de la semaine)")
 
     print()
     print("✍️  Génération du prompt...")
@@ -343,7 +332,7 @@ def main():
         week_number=week_number,
         week_workouts=week_workouts,
         athlete_context=athlete_context,
-        start_date=args.start_date
+        start_date=args.start_date,
     )
 
     # Copier dans presse-papier
@@ -378,5 +367,5 @@ def main():
     print("=" * 60)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

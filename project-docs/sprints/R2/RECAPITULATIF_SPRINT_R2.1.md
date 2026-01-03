@@ -1,7 +1,7 @@
 # ✅ Sprint R2.1 - COMPLÉTÉ
 
-**Date:** 2026-01-01  
-**Durée:** ~45 minutes  
+**Date:** 2026-01-01
+**Durée:** ~45 minutes
 **Status:** ✅ LIVRÉ ET VALIDÉ
 
 ---

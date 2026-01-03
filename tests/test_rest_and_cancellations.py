@@ -10,21 +10,20 @@ Usage:
 import json
 import tempfile
 from pathlib import Path
-from datetime import datetime
 
 # Import du module à tester
 from cyclisme_training_logs.rest_and_cancellations import (
-    load_week_planning,
-    validate_week_planning,
-    generate_rest_day_entry,
     generate_cancelled_session_entry,
+    generate_rest_day_entry,
+    load_week_planning,
     reconcile_planned_vs_actual,
+    validate_week_planning,
 )
-
 
 # ============================================================================
 # HELPERS
 # ============================================================================
+
 
 def create_test_planning(week_id="S070", with_cancellation=True, with_rest=True):
     """Crée un planning de test"""
@@ -34,48 +33,54 @@ def create_test_planning(week_id="S070", with_cancellation=True, with_rest=True)
         "end_date": "2025-12-08",
         "athlete_id": "i151223",
         "tss_target": 255,
-        "planned_sessions": []
+        "planned_sessions": [],
     }
 
     # Session completed
-    planning['planned_sessions'].append({
-        "session_id": f"{week_id}-01",
-        "date": "2025-12-02",
-        "type": "END",
-        "name": "EnduranceBase",
-        "version": "V001",
-        "duration_min": 60,
-        "tss_planned": 45,
-        "status": "completed"
-    })
+    planning["planned_sessions"].append(
+        {
+            "session_id": f"{week_id}-01",
+            "date": "2025-12-02",
+            "type": "END",
+            "name": "EnduranceBase",
+            "version": "V001",
+            "duration_min": 60,
+            "tss_planned": 45,
+            "status": "completed",
+        }
+    )
 
     # Session cancelled
     if with_cancellation:
-        planning['planned_sessions'].append({
-            "session_id": f"{week_id}-02",
-            "date": "2025-12-03",
-            "type": "END",
-            "name": "EnduranceProgressive",
-            "version": "V001",
-            "duration_min": 65,
-            "tss_planned": 48,
-            "status": "cancelled",
-            "cancellation_reason": "Problème technique matériel"
-        })
+        planning["planned_sessions"].append(
+            {
+                "session_id": f"{week_id}-02",
+                "date": "2025-12-03",
+                "type": "END",
+                "name": "EnduranceProgressive",
+                "version": "V001",
+                "duration_min": 65,
+                "tss_planned": 48,
+                "status": "cancelled",
+                "cancellation_reason": "Problème technique matériel",
+            }
+        )
 
     # Rest day
     if with_rest:
-        planning['planned_sessions'].append({
-            "session_id": f"{week_id}-03",
-            "date": "2025-12-04",
-            "type": "REC",
-            "name": "ReposObligatoire",
-            "version": "V001",
-            "duration_min": 0,
-            "tss_planned": 0,
-            "status": "rest_day",
-            "rest_reason": "Protocole repos dimanche"
-        })
+        planning["planned_sessions"].append(
+            {
+                "session_id": f"{week_id}-03",
+                "date": "2025-12-04",
+                "type": "REC",
+                "name": "ReposObligatoire",
+                "version": "V001",
+                "duration_min": 0,
+                "tss_planned": 0,
+                "status": "rest_day",
+                "rest_reason": "Protocole repos dimanche",
+            }
+        )
 
     return planning
 
@@ -83,6 +88,7 @@ def create_test_planning(week_id="S070", with_cancellation=True, with_rest=True)
 # ============================================================================
 # TESTS CHARGEMENT ET VALIDATION
 # ============================================================================
+
 
 def test_load_valid_planning():
     """Test chargement planning valide"""
@@ -95,14 +101,14 @@ def test_load_valid_planning():
 
         # Écrire le fichier
         planning_file = tmpdir_path / "week_planning_S070.json"
-        with open(planning_file, 'w', encoding='utf-8') as f:
+        with open(planning_file, "w", encoding="utf-8") as f:
             json.dump(planning_data, f, indent=2)
 
         # Charger
         planning = load_week_planning("S070", planning_dir=tmpdir_path)
 
-        assert planning['week_id'] == "S070"
-        assert len(planning['planned_sessions']) == 3
+        assert planning["week_id"] == "S070"
+        assert len(planning["planned_sessions"]) == 3
         print("✓ Planning chargé correctement")
 
 
@@ -135,7 +141,7 @@ def test_validate_planning_missing_field():
     print("\n[TEST] Validation planning avec champ manquant...")
 
     planning = create_test_planning()
-    del planning['week_id']  # Retirer champ obligatoire
+    del planning["week_id"]  # Retirer champ obligatoire
 
     assert validate_week_planning(planning) == False
     print("✓ Planning invalide détecté (champ manquant)")
@@ -146,7 +152,7 @@ def test_validate_planning_invalid_status():
     print("\n[TEST] Validation planning avec statut invalide...")
 
     planning = create_test_planning()
-    planning['planned_sessions'][0]['status'] = 'invalid_status'
+    planning["planned_sessions"][0]["status"] = "invalid_status"
 
     assert validate_week_planning(planning) == False
     print("✓ Statut invalide détecté")
@@ -158,9 +164,9 @@ def test_validate_planning_missing_cancellation_reason():
 
     planning = create_test_planning()
     # Retirer la raison d'annulation
-    for session in planning['planned_sessions']:
-        if session['status'] == 'cancelled':
-            del session['cancellation_reason']
+    for session in planning["planned_sessions"]:
+        if session["status"] == "cancelled":
+            del session["cancellation_reason"]
 
     assert validate_week_planning(planning) == False
     print("✓ Raison manquante détectée")
@@ -172,7 +178,7 @@ def test_validate_planning_duplicate_session_id():
 
     planning = create_test_planning()
     # Dupliquer un ID
-    planning['planned_sessions'].append(planning['planned_sessions'][0].copy())
+    planning["planned_sessions"].append(planning["planned_sessions"][0].copy())
 
     assert validate_week_planning(planning) == False
     print("✓ Doublon détecté")
@@ -181,6 +187,7 @@ def test_validate_planning_duplicate_session_id():
 # ============================================================================
 # TESTS GÉNÉRATION MARKDOWN
 # ============================================================================
+
 
 def test_generate_rest_day_markdown():
     """Test génération markdown repos planifié"""
@@ -192,17 +199,12 @@ def test_generate_rest_day_markdown():
         "type": "REC",
         "name": "ReposObligatoire",
         "rest_reason": "Protocole repos dimanche obligatoire",
-        "physiological_notes": "Récupération complète"
+        "physiological_notes": "Récupération complète",
     }
 
     metrics_pre = {"ctl": 50, "atl": 35, "tsb": 15}
     metrics_post = {"ctl": 50, "atl": 35, "tsb": 15}
-    feedback = {
-        "sleep_duration": "6h12min",
-        "sleep_score": 78,
-        "hrv": 66,
-        "resting_hr": 44
-    }
+    feedback = {"sleep_duration": "6h12min", "sleep_score": 78, "hrv": 66, "resting_hr": 44}
 
     markdown = generate_rest_day_entry(session, metrics_pre, metrics_post, feedback)
 
@@ -232,21 +234,13 @@ def test_generate_cancelled_session_markdown():
         "version": "V001",
         "tss_planned": 48,
         "cancellation_reason": "Problème technique matériel",
-        "impact_notes": "TSS nul, repos involontaire"
+        "impact_notes": "TSS nul, repos involontaire",
     }
 
-    metrics_pre = {
-        "ctl": 51,
-        "atl": 33,
-        "tsb": 17,
-        "sleep_duration": "7h29min",
-        "sleep_score": 65
-    }
+    metrics_pre = {"ctl": 51, "atl": 33, "tsb": 17, "sleep_duration": "7h29min", "sleep_score": 65}
 
     markdown = generate_cancelled_session_entry(
-        session,
-        metrics_pre,
-        reason=session['cancellation_reason']
+        session, metrics_pre, reason=session["cancellation_reason"]
     )
 
     # Vérifications
@@ -266,6 +260,7 @@ def test_generate_cancelled_session_markdown():
 # TESTS RÉCONCILIATION
 # ============================================================================
 
+
 def test_reconcile_planned_actual():
     """Test réconciliation planning vs activités"""
     print("\n[TEST] Réconciliation planning vs activités...")
@@ -277,17 +272,17 @@ def test_reconcile_planned_actual():
         {
             "id": "i123456",
             "start_date_local": "2025-12-02T08:00:00",
-            "name": "S070-01 EnduranceBase"
+            "name": "S070-01 EnduranceBase",
         }
     ]
 
     result = reconcile_planned_vs_actual(planning, activities)
 
     # Vérifications
-    assert len(result['matched']) == 1
-    assert len(result['cancelled']) == 1
-    assert len(result['rest_days']) == 1
-    assert len(result['unplanned']) == 0
+    assert len(result["matched"]) == 1
+    assert len(result["cancelled"]) == 1
+    assert len(result["rest_days"]) == 1
+    assert len(result["unplanned"]) == 0
 
     print("✓ Réconciliation correcte")
     print(f"  Matched: {len(result['matched'])}")
@@ -305,19 +300,19 @@ def test_reconcile_with_unplanned_activity():
         {
             "id": "i123456",
             "start_date_local": "2025-12-02T08:00:00",
-            "name": "S070-01 EnduranceBase"
+            "name": "S070-01 EnduranceBase",
         },
         {
             "id": "i123457",
             "start_date_local": "2025-12-05T10:00:00",
-            "name": "Sortie non planifiée"
-        }
+            "name": "Sortie non planifiée",
+        },
     ]
 
     result = reconcile_planned_vs_actual(planning, activities)
 
-    assert len(result['matched']) == 1
-    assert len(result['unplanned']) == 1
+    assert len(result["matched"]) == 1
+    assert len(result["unplanned"]) == 1
 
     print("✓ Activité non planifiée détectée")
 
@@ -337,28 +332,20 @@ def test_reconcile_multiple_activities_same_day():
                 "type": "END",
                 "name": "Matin",
                 "status": "completed",
-                "tss_planned": 45
+                "tss_planned": 45,
             }
-        ]
+        ],
     }
 
     activities = [
-        {
-            "id": "i123456",
-            "start_date_local": "2025-12-02T08:00:00",
-            "name": "S070-01 Matin"
-        },
-        {
-            "id": "i123457",
-            "start_date_local": "2025-12-02T18:00:00",
-            "name": "Session soir"
-        }
+        {"id": "i123456", "start_date_local": "2025-12-02T08:00:00", "name": "S070-01 Matin"},
+        {"id": "i123457", "start_date_local": "2025-12-02T18:00:00", "name": "Session soir"},
     ]
 
     result = reconcile_planned_vs_actual(planning, activities)
 
-    assert len(result['matched']) == 1
-    assert len(result['unplanned']) == 1
+    assert len(result["matched"]) == 1
+    assert len(result["unplanned"]) == 1
 
     print("✓ Multiples activités même jour gérées")
 
@@ -366,6 +353,7 @@ def test_reconcile_multiple_activities_same_day():
 # ============================================================================
 # TESTS EDGE CASES
 # ============================================================================
+
 
 def test_generate_rest_day_without_feedback():
     """Test génération repos sans feedback athlète"""
@@ -397,16 +385,12 @@ def test_cancelled_session_without_impact_notes():
         "type": "END",
         "name": "EnduranceProgressive",
         "version": "V001",
-        "tss_planned": 48
+        "tss_planned": 48,
     }
 
     metrics_pre = {"ctl": 51, "atl": 33, "tsb": 17}
 
-    markdown = generate_cancelled_session_entry(
-        session,
-        metrics_pre,
-        reason="Test annulation"
-    )
+    markdown = generate_cancelled_session_entry(session, metrics_pre, reason="Test annulation")
 
     assert "Test annulation" in markdown
     print("✓ Annulation sans impact_notes générée")
@@ -415,6 +399,7 @@ def test_cancelled_session_without_impact_notes():
 # ============================================================================
 # RUNNER PRINCIPAL (pour exécution sans pytest)
 # ============================================================================
+
 
 def run_all_tests():
     """Exécute tous les tests"""
@@ -462,7 +447,8 @@ def run_all_tests():
     return failed == 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
+
     success = run_all_tests()
     sys.exit(0 if success else 1)

@@ -16,4 +16,4 @@ Metadata:
     Version: v2
 """
 
-__all__ = ['timeline_injector', 'data_aggregator', 'prompt_generator']
+__all__ = ["timeline_injector", "data_aggregator", "prompt_generator"]

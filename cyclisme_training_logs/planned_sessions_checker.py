@@ -56,15 +56,13 @@ Metadata:
 
 import logging
 from datetime import datetime, timedelta
-from typing import List, Dict, Optional
+from typing import Optional
+
 from cyclisme_training_logs.api.intervals_client import IntervalsClient
 from cyclisme_training_logs.config import get_data_config
 
 # Configuration du logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='[%(levelname)s] %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -83,11 +81,8 @@ class PlannedSessionsChecker:
         self.athlete_id = athlete_id
 
     def get_planned_workouts(
-        self, 
-        start_date: str, 
-        end_date: str,
-        category: str = "WORKOUT"
-    ) -> List[Dict]:
+        self, start_date: str, end_date: str, category: str = "WORKOUT"
+    ) -> list[dict]:
         """
         Récupérer les workouts planifiés depuis l'API events
 
@@ -101,26 +96,20 @@ class PlannedSessionsChecker:
         """
         try:
             events = self.api.get_events(oldest=start_date, newest=end_date)
-            
+
             # Filtrer uniquement les workouts
-            workouts = [
-                e for e in events 
-                if e.get('category') == category
-            ]
-            
+            workouts = [e for e in events if e.get("category") == category]
+
             logger.info(f"Workouts planifiés trouvés : {len(workouts)}")
             return workouts
-            
+
         except Exception as e:
             logger.error(f"Erreur récupération workouts planifiés : {e}")
             return []
 
     def _find_matching_activity(
-        self,
-        workout: Dict,
-        activities: List[Dict],
-        tolerance_hours: int = 6
-    ) -> Optional[Dict]:
+        self, workout: dict, activities: list[dict], tolerance_hours: int = 6
+    ) -> Optional[dict]:
         """
         Chercher une activité correspondant à un workout planifié
 
@@ -137,63 +126,53 @@ class PlannedSessionsChecker:
         Returns:
             Activité correspondante ou None
         """
-        workout_date = datetime.fromisoformat(
-            workout['start_date_local'].replace('Z', '+00:00')
-        )
-        workout_name = workout.get('name', '').upper()
-        
+        workout_date = datetime.fromisoformat(workout["start_date_local"].replace("Z", "+00:00"))
+        workout_name = workout.get("name", "").upper()
+
         # Extraction code séance si présent (ex: S070-01)
         workout_code = None
-        if '-' in workout_name:
-            parts = workout_name.split('-')
+        if "-" in workout_name:
+            parts = workout_name.split("-")
             if len(parts) >= 2:
                 workout_code = f"{parts[0]}-{parts[1]}"  # Ex: "S070-01"
 
         for activity in activities:
             activity_date = datetime.fromisoformat(
-                activity['start_date_local'].replace('Z', '+00:00')
+                activity["start_date_local"].replace("Z", "+00:00")
             )
-            
+
             # Check 1: Tolérance temporelle
             time_diff = abs((activity_date - workout_date).total_seconds() / 3600)
             if time_diff > tolerance_hours:
                 continue
-            
+
             # Check 2: Correspondance nom
-            activity_name = activity.get('name', '').upper()
-            
+            activity_name = activity.get("name", "").upper()
+
             # Méthode 1: Code séance présent dans les deux
             if workout_code and workout_code in activity_name:
-                logger.debug(
-                    f"Match trouvé (code) : {workout_code} → "
-                    f"{activity.get('id')}"
-                )
+                logger.debug(f"Match trouvé (code) : {workout_code} → " f"{activity.get('id')}")
                 return activity
-            
+
             # Méthode 2: Nom workout dans nom activité
             if workout_name and workout_name in activity_name:
                 logger.debug(
-                    f"Match trouvé (nom) : {workout_name[:30]}... → "
-                    f"{activity.get('id')}"
+                    f"Match trouvé (nom) : {workout_name[:30]}... → " f"{activity.get('id')}"
                 )
                 return activity
-            
+
             # Méthode 3: Activité dans nom workout (inversé)
             if activity_name and activity_name in workout_name:
                 logger.debug(
-                    f"Match trouvé (inverse) : {activity_name[:30]}... → "
-                    f"{activity.get('id')}"
+                    f"Match trouvé (inverse) : {activity_name[:30]}... → " f"{activity.get('id')}"
                 )
                 return activity
 
         return None
 
     def detect_skipped_sessions(
-        self,
-        start_date: str,
-        end_date: str,
-        exclude_future: bool = True
-    ) -> List[Dict]:
+        self, start_date: str, end_date: str, exclude_future: bool = True
+    ) -> list[dict]:
         """
         Détecter les séances planifiées mais non exécutées
 
@@ -215,87 +194,78 @@ class PlannedSessionsChecker:
             Liste des séances sautées avec métadonnées
         """
         logger.info(f"\n{'=' * 70}")
-        logger.info(f"DÉTECTION SÉANCES PLANIFIÉES SAUTÉES")
+        logger.info("DÉTECTION SÉANCES PLANIFIÉES SAUTÉES")
         logger.info(f"{'=' * 70}")
         logger.info(f"Période : {start_date} → {end_date}")
-        
+
         # 1. Récupérer workouts planifiés
         planned_workouts = self.get_planned_workouts(start_date, end_date)
-        
+
         if not planned_workouts:
             logger.info("Aucun workout planifié trouvé")
             return []
-        
+
         # 2. Récupérer activités réalisées
         try:
-            activities = self.api.get_activities(
-                oldest=start_date,
-                newest=end_date
-            )
+            activities = self.api.get_activities(oldest=start_date, newest=end_date)
             logger.info(f"Activités réalisées trouvées : {len(activities)}")
         except Exception as e:
             logger.error(f"Erreur récupération activités : {e}")
             return []
-        
+
         # 3. Comparer planifié vs réalisé
         now = datetime.now()
         skipped_sessions = []
-        
+
         for workout in planned_workouts:
             workout_date = datetime.fromisoformat(
-                workout['start_date_local'].replace('Z', '+00:00')
+                workout["start_date_local"].replace("Z", "+00:00")
             )
-            
+
             # Skip si futur et exclude_future activé
             if exclude_future and workout_date > now:
                 logger.debug(
-                    f"Skip (futur) : {workout.get('name', 'N/A')} "
-                    f"[{workout_date.date()}]"
+                    f"Skip (futur) : {workout.get('name', 'N/A')} " f"[{workout_date.date()}]"
                 )
                 continue
-            
+
             # Chercher correspondance
-            matched_activity = self._find_matching_activity(
-                workout,
-                activities,
-                tolerance_hours=24
-            )
-            
+            matched_activity = self._find_matching_activity(workout, activities, tolerance_hours=24)
+
             if not matched_activity:
                 # Séance planifiée mais non exécutée
-                skipped_sessions.append({
-                    'planned_id': workout.get('id'),
-                    'planned_date': workout_date.strftime('%Y-%m-%d'),
-                    'planned_date_iso': workout['start_date_local'],
-                    'planned_name': workout.get('name', 'Séance sans nom'),
-                    'planned_tss': workout.get('load', 0),
-                    'planned_duration': workout.get('duration', 0),
-                    'planned_description': workout.get('description', ''),
-                    'status': 'SKIPPED',
-                    'day_of_week': workout_date.strftime('%A'),
-                    'days_ago': (now - workout_date).days
-                })
-                
-                logger.warning(
-                    f"⏭️  SKIPPED : {workout.get('name', 'N/A')[:40]} "
-                    f"[{workout_date.date()}]"
+                skipped_sessions.append(
+                    {
+                        "planned_id": workout.get("id"),
+                        "planned_date": workout_date.strftime("%Y-%m-%d"),
+                        "planned_date_iso": workout["start_date_local"],
+                        "planned_name": workout.get("name", "Séance sans nom"),
+                        "planned_tss": workout.get("load", 0),
+                        "planned_duration": workout.get("duration", 0),
+                        "planned_description": workout.get("description", ""),
+                        "status": "SKIPPED",
+                        "day_of_week": workout_date.strftime("%A"),
+                        "days_ago": (now - workout_date).days,
+                    }
                 )
-        
+
+                logger.warning(
+                    f"⏭️  SKIPPED : {workout.get('name', 'N/A')[:40]} " f"[{workout_date.date()}]"
+                )
+
         # 4. Rapport final
         logger.info(f"\n{'=' * 70}")
-        logger.info(f"RÉSUMÉ DÉTECTION")
+        logger.info("RÉSUMÉ DÉTECTION")
         logger.info(f"{'=' * 70}")
         logger.info(f"Workouts planifiés : {len(planned_workouts)}")
         logger.info(f"Activités réalisées : {len(activities)}")
         logger.info(f"Séances sautées : {len(skipped_sessions)}")
         logger.info(f"{'=' * 70}\n")
-        
+
         return skipped_sessions
 
     def generate_skipped_session_markdown(
-        self,
-        skipped_session: Dict,
-        metrics_pre: Optional[Dict] = None
+        self, skipped_session: dict, metrics_pre: Optional[dict] = None
     ) -> str:
         """
         Générer bloc markdown pour séance sautée
@@ -308,26 +278,25 @@ class PlannedSessionsChecker:
             Bloc markdown formaté
         """
         # Extraire données
-        session_name = skipped_session['planned_name']
-        date_str = datetime.strptime(
-            skipped_session['planned_date'], 
-            '%Y-%m-%d'
-        ).strftime('%d/%m/%Y')
-        
-        day_of_week = skipped_session['day_of_week']
-        days_ago = skipped_session['days_ago']
-        planned_tss = skipped_session['planned_tss']
-        planned_duration = skipped_session['planned_duration']
-        
+        session_name = skipped_session["planned_name"]
+        date_str = datetime.strptime(skipped_session["planned_date"], "%Y-%m-%d").strftime(
+            "%d/%m/%Y"
+        )
+
+        day_of_week = skipped_session["day_of_week"]
+        days_ago = skipped_session["days_ago"]
+        planned_tss = skipped_session["planned_tss"]
+        planned_duration = skipped_session["planned_duration"]
+
         # Métriques pré-séance
         from cyclisme_training_logs.utils.metrics import extract_wellness_metrics
 
         metrics_pre_values = extract_wellness_metrics(metrics_pre)
         # Display as N/A if metrics are not available
-        ctl_pre = metrics_pre_values['ctl'] if metrics_pre else 'N/A'
-        atl_pre = metrics_pre_values['atl'] if metrics_pre else 'N/A'
-        tsb_pre = metrics_pre_values['tsb'] if metrics_pre else 'N/A'
-        
+        ctl_pre = metrics_pre_values["ctl"] if metrics_pre else "N/A"
+        atl_pre = metrics_pre_values["atl"] if metrics_pre else "N/A"
+        tsb_pre = metrics_pre_values["tsb"] if metrics_pre else "N/A"
+
         # Construire markdown
         markdown = f"""### {session_name} [SAUTÉE]
 Date : {date_str} ({day_of_week})
@@ -362,9 +331,10 @@ def main():
     """
     import json
     from pathlib import Path
+
     from cyclisme_training_logs.rest_and_cancellations import (
         load_week_planning,
-        reconcile_planned_vs_actual
+        reconcile_planned_vs_actual,
     )
 
     # Charger credentials
@@ -373,11 +343,11 @@ def main():
         print("❌ Config API non trouvée")
         return
 
-    with open(config_path, 'r') as f:
+    with open(config_path) as f:
         config = json.load(f)
 
-    athlete_id = config.get('athlete_id')
-    api_key = config.get('api_key')
+    athlete_id = config.get("athlete_id")
+    api_key = config.get("api_key")
 
     if not athlete_id or not api_key:
         print("❌ Credentials invalides")
@@ -387,8 +357,8 @@ def main():
     checker = PlannedSessionsChecker(athlete_id, api_key)
 
     # Période de détection (dernières 3 semaines)
-    end_date = datetime.now().strftime('%Y-%m-%d')
-    start_date = (datetime.now() - timedelta(days=21)).strftime('%Y-%m-%d')
+    end_date = datetime.now().strftime("%Y-%m-%d")
+    start_date = (datetime.now() - timedelta(days=21)).strftime("%Y-%m-%d")
 
     print(f"\n{'=' * 70}")
     print("🔍 DÉTECTION SÉANCES SAUTÉES + RÉCONCILIATION PLANNING")
@@ -415,12 +385,12 @@ def main():
     for session in skipped:
         # Extraire le week_id depuis le nom de la séance planifiée
         # Format attendu: "SXXX-YY-TYPE-Name-VERSION"
-        planned_name = session.get('planned_name', '')
+        planned_name = session.get("planned_name", "")
 
         # Méthode 1: Extraction directe du code SXXX depuis le début du nom
-        if '-' in planned_name:
-            parts = planned_name.split('-')
-            if len(parts) >= 1 and parts[0].startswith('S'):
+        if "-" in planned_name:
+            parts = planned_name.split("-")
+            if len(parts) >= 1 and parts[0].startswith("S"):
                 week_id = parts[0]  # Ex: "S070", "S071", "S072"
                 weeks_to_check.add(week_id)
             else:
@@ -452,8 +422,7 @@ def main():
 
             # Récupérer activités pour cette semaine
             activities = checker.api.get_activities(
-                oldest=planning['start_date'],
-                newest=planning['end_date']
+                oldest=planning["start_date"], newest=planning["end_date"]
             )
 
             # Réconcilier
@@ -479,9 +448,9 @@ def main():
         print("🎯 ACTIONS DISPONIBLES")
         print(f"{'=' * 70}")
 
-        total_skipped = sum(len(r['skipped']) for r in reconciliations.values())
-        total_cancelled = sum(len(r['cancelled']) for r in reconciliations.values())
-        total_rest = sum(len(r['rest_days']) for r in reconciliations.values())
+        total_skipped = sum(len(r["skipped"]) for r in reconciliations.values())
+        total_cancelled = sum(len(r["cancelled"]) for r in reconciliations.values())
+        total_rest = sum(len(r["rest_days"]) for r in reconciliations.values())
 
         if total_skipped > 0:
             print(f"\n📝 {total_skipped} séance(s) sautée(s) détectée(s) dans le planning JSON")
@@ -495,17 +464,17 @@ def main():
             print(f"\n😴 {total_rest} jour(s) de repos planifié(s)")
             print("   → Utiliser workflow-coach avec --week-id pour générer entrées markdown")
 
-        print(f"\n💡 Commandes suggérées :")
+        print("\n💡 Commandes suggérées :")
         for week_id in sorted(reconciliations.keys()):
             print(f"   poetry run workflow-coach --week-id {week_id}")
 
     else:
-        print(f"\n⚠️  Aucune réconciliation disponible")
+        print("\n⚠️  Aucune réconciliation disponible")
         print("   Les fichiers de planning JSON locaux sont absents ou invalides")
         print(f"   Vérifier le dossier : {planning_dir}")
 
     print()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

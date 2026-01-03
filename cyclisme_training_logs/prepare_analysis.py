@@ -59,10 +59,10 @@ import subprocess
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
-from cyclisme_training_logs.workflow_state import WorkflowState
-from cyclisme_training_logs.config import get_ai_config
+
 from cyclisme_training_logs.api.intervals_client import IntervalsClient
+from cyclisme_training_logs.config import get_ai_config
+from cyclisme_training_logs.workflow_state import WorkflowState
 
 # Alias for backwards compatibility
 IntervalsAPI = IntervalsClient
@@ -107,7 +107,7 @@ class PromptGenerator:
         """Charger le contexte athlète depuis project_prompt_v2_1_revised.md"""
         prompt_file = self.references_dir / "project_prompt_v2_1_revised.md"
         if prompt_file.exists():
-            with open(prompt_file, 'r', encoding='utf-8') as f:
+            with open(prompt_file, encoding="utf-8") as f:
                 return f.read()
         return None
 
@@ -117,28 +117,28 @@ class PromptGenerator:
         if not history_file.exists():
             return None
 
-        with open(history_file, 'r', encoding='utf-8') as f:
+        with open(history_file, encoding="utf-8") as f:
             content = f.read()
 
         # Extraire les dernières entrées (simplifié)
         # On cherche les sections ### et prend les N premières après "## Historique"
-        sections = content.split('###')
+        sections = content.split("###")
         recent = []
         count = 0
         for section in sections:
             if count >= limit:
                 break
-            if section.strip() and 'Date :' in section:
-                recent.append('###' + section)
+            if section.strip() and "Date :" in section:
+                recent.append("###" + section)
                 count += 1
 
-        return '\n'.join(recent) if recent else None
+        return "\n".join(recent) if recent else None
 
     def load_cycling_concepts(self):
         """Charger les concepts d'entraînement cyclisme"""
         concepts_file = self.references_dir / "cycling_training_concepts.md"
         if concepts_file.exists():
-            with open(concepts_file, 'r', encoding='utf-8') as f:
+            with open(concepts_file, encoding="utf-8") as f:
                 return f.read()
         return None
 
@@ -148,7 +148,7 @@ class PromptGenerator:
             return None
 
         try:
-            with open(self.feedback_file, 'r', encoding='utf-8') as f:
+            with open(self.feedback_file, encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
             print(f"⚠️  Erreur lecture feedback : {e}")
@@ -161,55 +161,55 @@ class PromptGenerator:
 
         parts = []
 
-        if feedback.get('rpe'):
+        if feedback.get("rpe"):
             parts.append(f"**RPE** : {feedback['rpe']}/10")
 
-        if feedback.get('ressenti_general'):
+        if feedback.get("ressenti_general"):
             parts.append(f"**Ressenti** : {feedback['ressenti_general']}")
 
-        if feedback.get('difficultes'):
+        if feedback.get("difficultes"):
             parts.append(f"**Difficultés** :\n{feedback['difficultes']}")
 
-        if feedback.get('points_positifs'):
+        if feedback.get("points_positifs"):
             parts.append(f"**Points positifs** :\n{feedback['points_positifs']}")
 
-        if feedback.get('contexte'):
+        if feedback.get("contexte"):
             parts.append(f"**Contexte** : {feedback['contexte']}")
 
-        if feedback.get('sensations_physiques'):
-            sensations = ', '.join(feedback['sensations_physiques'])
+        if feedback.get("sensations_physiques"):
+            sensations = ", ".join(feedback["sensations_physiques"])
             parts.append(f"**Sensations physiques** : {sensations}")
 
-        if feedback.get('notes_libres'):
+        if feedback.get("notes_libres"):
             parts.append(f"**Notes libres** :\n{feedback['notes_libres']}")
 
-        return '\n\n'.join(parts) if parts else None
+        return "\n\n".join(parts) if parts else None
 
     def format_activity_data(self, activity):
         """Formater les données d'activité pour le prompt"""
-        date = datetime.fromisoformat(activity['start_date_local'].replace('Z', '+00:00'))
+        date = datetime.fromisoformat(activity["start_date_local"].replace("Z", "+00:00"))
 
         # Vérifier si l'activité vient de Strava
-        is_strava = activity.get('source') == 'STRAVA'
+        is_strava = activity.get("source") == "STRAVA"
 
         data = {
-            'name': activity.get('name', 'Séance'),
-            'type': activity.get('type', 'Cyclisme'),
-            'date': date.strftime('%d/%m/%Y'),
-            'date_iso': date.strftime('%Y-%m-%d'),
-            'duration_min': activity.get('moving_time', 0) // 60,
-            'tss': activity.get('icu_training_load', 0),
-            'intensity': activity.get('icu_intensity', 0) / 100.0,
-            'avg_power': activity.get('icu_average_watts', 0),
-            'np': activity.get('icu_weighted_avg_watts', 0),
-            'avg_cadence': activity.get('average_cadence', 0),
-            'avg_hr': activity.get('average_heartrate', 0),
-            'max_hr': activity.get('max_heartrate', 0),
-            'decoupling': activity.get('decoupling', None),
-            'description': activity.get('description', ''),
-            'tags': activity.get('tags', []),
-            'is_strava': is_strava,
-            'source': activity.get('source', 'Unknown'),
+            "name": activity.get("name", "Séance"),
+            "type": activity.get("type", "Cyclisme"),
+            "date": date.strftime("%d/%m/%Y"),
+            "date_iso": date.strftime("%Y-%m-%d"),
+            "duration_min": activity.get("moving_time", 0) // 60,
+            "tss": activity.get("icu_training_load", 0),
+            "intensity": activity.get("icu_intensity", 0) / 100.0,
+            "avg_power": activity.get("icu_average_watts", 0),
+            "np": activity.get("icu_weighted_avg_watts", 0),
+            "avg_cadence": activity.get("average_cadence", 0),
+            "avg_hr": activity.get("average_heartrate", 0),
+            "max_hr": activity.get("max_heartrate", 0),
+            "decoupling": activity.get("decoupling", None),
+            "description": activity.get("description", ""),
+            "tags": activity.get("tags", []),
+            "is_strava": is_strava,
+            "source": activity.get("source", "Unknown"),
         }
 
         return data
@@ -218,11 +218,11 @@ class PromptGenerator:
         """Formater les données wellness"""
         if not wellness:
             return {
-                'ctl': 0,
-                'atl': 0,
-                'tsb': 0,
-                'weight': 0,
-                'sleep_seconds': 0,
+                "ctl": 0,
+                "atl": 0,
+                "tsb": 0,
+                "weight": 0,
+                "sleep_seconds": 0,
             }
 
         from cyclisme_training_logs.utils.metrics import extract_wellness_metrics
@@ -230,12 +230,12 @@ class PromptGenerator:
         metrics = extract_wellness_metrics(wellness)
 
         return {
-            'ctl': metrics['ctl'],
-            'atl': metrics['atl'],
-            'tsb': metrics['tsb'],
-            'weight': wellness.get('weight', 0),
-            'sleep_seconds': wellness.get('sleepSecs', 0),
-            'sleep_quality': wellness.get('sleepQuality', 0),
+            "ctl": metrics["ctl"],
+            "atl": metrics["atl"],
+            "tsb": metrics["tsb"],
+            "weight": wellness.get("weight", 0),
+            "sleep_seconds": wellness.get("sleepSecs", 0),
+            "sleep_quality": wellness.get("sleepQuality", 0),
         }
 
     def format_planned_workout(self, planned_event):
@@ -247,63 +247,65 @@ class PromptGenerator:
         Returns:
             Dict avec les informations formatées ou None
         """
-        if not planned_event or not planned_event.get('workout_doc'):
+        if not planned_event or not planned_event.get("workout_doc"):
             return None
 
-        workout_doc = planned_event['workout_doc']
+        workout_doc = planned_event["workout_doc"]
 
         # Extraire les données principales
         formatted = {
-            'name': planned_event.get('name', 'Workout planifié'),
-            'description': planned_event.get('description', ''),
-            'duration_min': workout_doc.get('duration', 0) // 60,
-            'tss_planned': planned_event.get('icu_training_load', 0),
-            'avg_watts_planned': workout_doc.get('average_watts', 0),
-            'np_planned': workout_doc.get('normalized_power', 0),
-            'intensity_planned': planned_event.get('icu_intensity', 0) / 100.0 if planned_event.get('icu_intensity') else 0,
-            'joules': workout_doc.get('joules', 0),
+            "name": planned_event.get("name", "Workout planifié"),
+            "description": planned_event.get("description", ""),
+            "duration_min": workout_doc.get("duration", 0) // 60,
+            "tss_planned": planned_event.get("icu_training_load", 0),
+            "avg_watts_planned": workout_doc.get("average_watts", 0),
+            "np_planned": workout_doc.get("normalized_power", 0),
+            "intensity_planned": planned_event.get("icu_intensity", 0) / 100.0
+            if planned_event.get("icu_intensity")
+            else 0,
+            "joules": workout_doc.get("joules", 0),
         }
 
         # Formater la structure des intervalles
-        steps = workout_doc.get('steps', [])
+        steps = workout_doc.get("steps", [])
         intervals = []
 
         for i, step in enumerate(steps):
-            if 'reps' in step:
+            if "reps" in step:
                 # C'est un bloc d'intervalles répétés
-                reps = step['reps']
-                sub_steps = step.get('steps', [])
+                reps = step["reps"]
+                sub_steps = step.get("steps", [])
                 interval_desc = []
                 for sub in sub_steps:
-                    power_info = self._format_power(sub.get('power', {}))
-                    cadence = sub.get('cadence', {}).get('value', 0)
-                    duration_min = sub.get('duration', 0) / 60
+                    power_info = self._format_power(sub.get("power", {}))
+                    cadence = sub.get("cadence", {}).get("value", 0)
+                    duration_min = sub.get("duration", 0) / 60
                     interval_desc.append(f"{duration_min:.0f}min @ {power_info} / {cadence}rpm")
                 intervals.append(f"{reps}x ({' → '.join(interval_desc)})")
             else:
                 # Step simple
-                power_info = self._format_power(step.get('power', {}))
-                cadence = step.get('cadence', {}).get('value', 0)
-                duration_min = step.get('duration', 0) / 60
+                power_info = self._format_power(step.get("power", {}))
+                cadence = step.get("cadence", {}).get("value", 0)
+                duration_min = step.get("duration", 0) / 60
                 step_type = ""
-                if step.get('warmup'):
+                if step.get("warmup"):
                     step_type = "[Warmup] "
-                elif step.get('cooldown'):
+                elif step.get("cooldown"):
                     step_type = "[Cooldown] "
                 intervals.append(f"{step_type}{duration_min:.0f}min @ {power_info} / {cadence}rpm")
 
-        formatted['intervals'] = intervals
+        formatted["intervals"] = intervals
 
         # Répartition des zones (time in zones)
-        zone_times = workout_doc.get('zoneTimes', [])
+        zone_times = workout_doc.get("zoneTimes", [])
         zones_str = []
         for zone in zone_times:
-            if zone.get('secs', 0) > 0 and not zone.get('gap'):  # Ignorer Sweet Spot (gap=true)
-                zone_name = zone.get('name', zone.get('id', 'Z?'))
-                zone_min = zone['secs'] / 60
+            if zone.get("secs", 0) > 0 and not zone.get("gap"):  # Ignorer Sweet Spot (gap=true)
+                zone_name = zone.get("name", zone.get("id", "Z?"))
+                zone_min = zone["secs"] / 60
                 zones_str.append(f"{zone_name}: {zone_min:.0f}min")
 
-        formatted['zone_distribution'] = ', '.join(zones_str) if zones_str else 'N/A'
+        formatted["zone_distribution"] = ", ".join(zones_str) if zones_str else "N/A"
 
         return formatted
 
@@ -312,16 +314,16 @@ class PromptGenerator:
         if not power_dict:
             return "N/A"
 
-        units = power_dict.get('units', '')
+        units = power_dict.get("units", "")
 
-        if units == '%ftp':
-            if 'value' in power_dict:
+        if units == "%ftp":
+            if "value" in power_dict:
                 return f"{power_dict['value']}%FTP"
-            elif 'start' in power_dict and 'end' in power_dict:
+            elif "start" in power_dict and "end" in power_dict:
                 return f"{power_dict['start']}-{power_dict['end']}%FTP"
-        elif units == 'w':
+        elif units == "w":
             return f"{power_dict.get('value', 0)}W"
-        elif units == 'power_zone':
+        elif units == "power_zone":
             return f"Z{power_dict.get('value', '?')}"
 
         return "N/A"
@@ -329,13 +331,13 @@ class PromptGenerator:
     def safe_format_metric(self, value, format_spec=".0f", suffix="", default="N/A"):
         """
         Formatage sécurisé d'une métrique pouvant être None
-        
+
         Args:
             value: Valeur à formater (peut être None)
             format_spec: Spécification de format (ex: '.0f', '.2f')
             suffix: Suffixe à ajouter (ex: 'W', 'bpm')
             default: Valeur par défaut si None
-        
+
         Returns:
             str: Valeur formatée ou default
         """
@@ -345,66 +347,75 @@ class PromptGenerator:
             return f"{value:{format_spec}}{suffix}"
         except (ValueError, TypeError):
             return default
-    
-    def get_power_value(self, activity, metric_type='avg'):
+
+    def get_power_value(self, activity, metric_type="avg"):
         """
         Extraction robuste de la puissance avec fallback multi-champs
-        
+
         Args:
             activity: Dictionnaire activité depuis API
             metric_type: 'avg' (moyenne) ou 'np' (normalisée)
-        
+
         Returns:
             float ou None: Valeur de puissance trouvée
         """
         field_mappings = {
-            'avg': ['avg_power', 'power', 'average_power', 'watts', 'avgWatts'],
-            'np': ['np', 'normalized_power', 'norm_power', 'normalizedPower']
+            "avg": ["avg_power", "power", "average_power", "watts", "avgWatts"],
+            "np": ["np", "normalized_power", "norm_power", "normalizedPower"],
         }
-        
+
         possible_fields = field_mappings.get(metric_type, [])
-        
+
         for field in possible_fields:
             value = activity.get(field)
             if value is not None and value > 0:
                 return value
-        
+
         return None
-    
-    def get_cadence_value(self, activity, metric_type='avg'):
+
+    def get_cadence_value(self, activity, metric_type="avg"):
         """Extraction robuste de la cadence avec fallback"""
         field_mappings = {
-            'avg': ['avg_cadence', 'cadence', 'avgCadence', 'rpm'],
-            'max': ['max_cadence', 'maxCadence', 'maximum_cadence']
+            "avg": ["avg_cadence", "cadence", "avgCadence", "rpm"],
+            "max": ["max_cadence", "maxCadence", "maximum_cadence"],
         }
-        
+
         possible_fields = field_mappings.get(metric_type, [])
-        
+
         for field in possible_fields:
             value = activity.get(field)
             if value is not None and value > 0:
                 return value
-        
+
         return None
-    
-    def get_hr_value(self, activity, metric_type='avg'):
+
+    def get_hr_value(self, activity, metric_type="avg"):
         """Extraction robuste de la fréquence cardiaque avec fallback"""
         field_mappings = {
-            'avg': ['avg_hr', 'hr', 'avgHr', 'heart_rate', 'average_hr'],
-            'max': ['max_hr', 'maxHr', 'max_heart_rate', 'maximum_hr']
+            "avg": ["avg_hr", "hr", "avgHr", "heart_rate", "average_hr"],
+            "max": ["max_hr", "maxHr", "max_heart_rate", "maximum_hr"],
         }
-        
+
         possible_fields = field_mappings.get(metric_type, [])
-        
+
         for field in possible_fields:
             value = activity.get(field)
             if value is not None and value > 0:
                 return value
-        
+
         return None
 
-
-    def generate_prompt(self, activity_data, wellness_pre, wellness_post, athlete_context, recent_workouts, athlete_feedback=None, planned_workout=None, cycling_concepts=None):
+    def generate_prompt(
+        self,
+        activity_data,
+        wellness_pre,
+        wellness_post,
+        athlete_context,
+        recent_workouts,
+        athlete_feedback=None,
+        planned_workout=None,
+        cycling_concepts=None,
+    ):
         """Générer le prompt complet pour analyse IA"""
 
         # Formater les données
@@ -413,25 +424,29 @@ class PromptGenerator:
         w_post = self.format_wellness_data(wellness_post)
         planned = self.format_planned_workout(planned_workout) if planned_workout else None
 
-        decoupling_str = f"{act['decoupling']:.1f}%" if act['decoupling'] else "N/A"
-        
+        decoupling_str = f"{act['decoupling']:.1f}%" if act["decoupling"] else "N/A"
+
         # Extraction robuste des métriques avec fallback
-        avg_power = self.get_power_value(act, 'avg')
-        normalized_power = self.get_power_value(act, 'np')
-        avg_cadence = self.get_cadence_value(act, 'avg')
-        avg_hr = self.get_hr_value(act, 'avg')
-        max_hr = self.get_hr_value(act, 'max')
-        
+        avg_power = self.get_power_value(act, "avg")
+        normalized_power = self.get_power_value(act, "np")
+        avg_cadence = self.get_cadence_value(act, "avg")
+        avg_hr = self.get_hr_value(act, "avg")
+        max_hr = self.get_hr_value(act, "max")
+
         # Warning si données puissance manquantes
         power_warning = ""
         if avg_power is None and normalized_power is None:
             power_warning = "\n⚠️  ATTENTION : Aucune donnée de puissance disponible (fichier .fit incomplet ou séance sans capteur)\n   → Analyse basée sur FC, cadence et RPE uniquement\n\n"
-        sleep_hours = w_pre['sleep_seconds'] / 3600 if w_pre['sleep_seconds'] and w_pre['sleep_seconds'] > 0 else 0
-        weight_kg = w_pre['weight'] if w_pre['weight'] and w_pre['weight'] > 0 else 0
+        sleep_hours = (
+            w_pre["sleep_seconds"] / 3600
+            if w_pre["sleep_seconds"] and w_pre["sleep_seconds"] > 0
+            else 0
+        )
+        weight_kg = w_pre["weight"] if w_pre["weight"] and w_pre["weight"] > 0 else 0
 
         # Avertissement Strava si nécessaire
         strava_warning = ""
-        if act['is_strava']:
+        if act["is_strava"]:
             strava_warning = f"""
 ⚠️  **ATTENTION : Activité Strava**
 Source : {act['source']}
@@ -508,7 +523,7 @@ Certaines métriques (puissance, découplage) peuvent être manquantes ou incomp
 
 ### Structure Planifiée
 """
-            for interval in planned['intervals']:
+            for interval in planned["intervals"]:
                 prompt += f"- {interval}\n"
 
             prompt += f"""
@@ -637,12 +652,9 @@ Génère maintenant l'entrée d'analyse.
         """Copier le texte dans le presse-papier macOS"""
         try:
             process = subprocess.Popen(
-                ['pbcopy'],
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+                ["pbcopy"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
-            process.communicate(text.encode('utf-8'))
+            process.communicate(text.encode("utf-8"))
             return True
         except Exception as e:
             print(f"⚠️  Erreur lors de la copie dans le presse-papier : {e}")
@@ -655,7 +667,7 @@ def load_config(config_file):
     if not config_path.exists():
         return None
 
-    with open(config_path, 'r') as f:
+    with open(config_path) as f:
         return json.load(f)
 
 
@@ -692,9 +704,9 @@ def analyze_batch(api, unanalyzed_activities, generator, state, project_root):
         print(f"📊 SÉANCE {idx}/{total}")
         print("=" * 60)
 
-        activity_id = activity['id']
-        activity_name = activity.get('name', 'Séance')
-        activity_date_str = activity['start_date_local'][:10]
+        activity_id = activity["id"]
+        activity_name = activity.get("name", "Séance")
+        activity_date_str = activity["start_date_local"][:10]
 
         print()
         print(f"🚴 {activity_name}")
@@ -705,7 +717,9 @@ def analyze_batch(api, unanalyzed_activities, generator, state, project_root):
             # Récupérer les détails complets
             print("📥 Récupération des détails...")
             full_activity = api.get_activity(activity_id)
-            activity_date = datetime.fromisoformat(full_activity['start_date_local'].replace('Z', '+00:00'))
+            activity_date = datetime.fromisoformat(
+                full_activity["start_date_local"].replace("Z", "+00:00")
+            )
             date_str = activity_date_str
 
             # Wellness
@@ -722,9 +736,11 @@ def analyze_batch(api, unanalyzed_activities, generator, state, project_root):
 
             # Proposer collecte feedback athlète
             print()
-            collect_feedback = input("💭 Collecter ton ressenti pour cette séance ? (o/n) : ").strip().lower()
+            collect_feedback = (
+                input("💭 Collecter ton ressenti pour cette séance ? (o/n) : ").strip().lower()
+            )
 
-            if collect_feedback == 'o':
+            if collect_feedback == "o":
                 # Choisir le mode
                 print()
                 print("Mode feedback :")
@@ -732,27 +748,40 @@ def analyze_batch(api, unanalyzed_activities, generator, state, project_root):
                 print("  2 - Full (2-3min) : RPE + ressenti + difficultés + contexte + sensations")
                 mode_choice = input("Choix (1/2) : ").strip()
 
-                feedback_mode = '--quick' if mode_choice == '1' else None
+                feedback_mode = "--quick" if mode_choice == "1" else None
 
                 print()
-                print(f"🔄 Lancement de la collecte feedback ({'quick' if feedback_mode else 'full'})...")
+                print(
+                    f"🔄 Lancement de la collecte feedback ({'quick' if feedback_mode else 'full'})..."
+                )
                 print()
 
                 # Extraire les métriques de l'activité
-                duration_min = full_activity.get('moving_time', 0) // 60
-                tss = full_activity.get('icu_training_load', 0)
-                if_value = full_activity.get('icu_intensity', 0) / 100.0 if full_activity.get('icu_intensity') else 0
+                duration_min = full_activity.get("moving_time", 0) // 60
+                tss = full_activity.get("icu_training_load", 0)
+                if_value = (
+                    full_activity.get("icu_intensity", 0) / 100.0
+                    if full_activity.get("icu_intensity")
+                    else 0
+                )
 
                 # Construire la commande avec contexte
                 feedback_script = Path(project_root) / "scripts" / "collect_athlete_feedback.py"
                 feedback_cmd = [
-                    'python3', str(feedback_script),
-                    '--activity-name', activity_name,
-                    '--activity-date', activity_date_str,
-                    '--activity-duration', str(duration_min),
-                    '--activity-tss', str(tss),
-                    '--activity-if', str(if_value),
-                    '--batch-position', f"{idx}/{total}"
+                    "python3",
+                    str(feedback_script),
+                    "--activity-name",
+                    activity_name,
+                    "--activity-date",
+                    activity_date_str,
+                    "--activity-duration",
+                    str(duration_min),
+                    "--activity-tss",
+                    str(tss),
+                    "--activity-if",
+                    str(if_value),
+                    "--batch-position",
+                    f"{idx}/{total}",
                 ]
 
                 # Ajouter --quick si mode 1
@@ -791,7 +820,7 @@ def analyze_batch(api, unanalyzed_activities, generator, state, project_root):
                 recent_workouts=recent_workouts,
                 athlete_feedback=athlete_feedback,
                 planned_workout=planned_workout,
-                cycling_concepts=cycling_concepts
+                cycling_concepts=cycling_concepts,
             )
 
             # Copier dans le presse-papier
@@ -817,17 +846,17 @@ def analyze_batch(api, unanalyzed_activities, generator, state, project_root):
 
             # Proposer insertion automatique
             print()
-            insert_choice = input("Insérer automatiquement dans workouts-history.md ? (o/n) : ").strip().lower()
+            insert_choice = (
+                input("Insérer automatiquement dans workouts-history.md ? (o/n) : ").strip().lower()
+            )
 
-            if insert_choice == 'o':
+            if insert_choice == "o":
                 # Lancer insert_analysis.py
                 print("🔄 Lancement de l'insertion...")
                 insert_script = Path(project_root) / "scripts" / "insert_analysis.py"
 
                 result = subprocess.run(
-                    ['python3', str(insert_script)],
-                    capture_output=False,
-                    text=True
+                    ["python3", str(insert_script)], capture_output=False, text=True
                 )
 
                 if result.returncode == 0:
@@ -836,7 +865,7 @@ def analyze_batch(api, unanalyzed_activities, generator, state, project_root):
                     print("   ⚠️  Erreur lors de l'insertion (vous pourrez réessayer manuellement)")
 
             # Marquer comme analysée
-            state.mark_analyzed(activity_id, activity_date.strftime('%Y-%m-%d'))
+            state.mark_analyzed(activity_id, activity_date.strftime("%Y-%m-%d"))
             print(f"   ✅ Activité {activity_id} marquée comme analysée")
 
             # Effacer feedback si utilisé
@@ -852,7 +881,7 @@ def analyze_batch(api, unanalyzed_activities, generator, state, project_root):
         except Exception as e:
             print(f"❌ Erreur lors du traitement de l'activité {activity_id}: {e}")
             skip = input("Continuer avec les séances suivantes ? (o/n) : ").strip().lower()
-            if skip != 'o':
+            if skip != "o":
                 print("❌ Mode batch interrompu")
                 return
 
@@ -879,21 +908,23 @@ def display_activity_menu(unanalyzed_activities):
     if count == 0:
         print("✅ Aucune activité non analysée !")
         print()
-        return ('cancel', None)
+        return ("cancel", None)
 
     print()
     print("=" * 60)
-    print(f"📊 {count} ACTIVITÉ{'S' if count > 1 else ''} NON ANALYSÉE{'S' if count > 1 else ''} DÉTECTÉE{'S' if count > 1 else ''}")
+    print(
+        f"📊 {count} ACTIVITÉ{'S' if count > 1 else ''} NON ANALYSÉE{'S' if count > 1 else ''} DÉTECTÉE{'S' if count > 1 else ''}"
+    )
     print("=" * 60)
     print()
 
     # Afficher les activités
     for i, activity in enumerate(unanalyzed_activities, 1):
-        date = activity['start_date_local'][:10]
-        name = activity.get('name', 'Séance')
-        activity_id = activity['id']
-        tss = activity.get('icu_training_load', 0)
-        duration_min = activity.get('moving_time', 0) // 60
+        date = activity["start_date_local"][:10]
+        name = activity.get("name", "Séance")
+        activity_id = activity["id"]
+        tss = activity.get("icu_training_load", 0)
+        duration_min = activity.get("moving_time", 0) // 60
         print(f"{i}. [{date}] {name}")
         print(f"   ID: {activity_id} | Durée: {duration_min}min | TSS: {tss:.0f}")
         print()
@@ -909,11 +940,11 @@ def display_activity_menu(unanalyzed_activities):
         print()
         choice = input("Votre choix : ").strip()
 
-        if choice == '1':
-            return ('single', unanalyzed_activities[0]['id'])
+        if choice == "1":
+            return ("single", unanalyzed_activities[0]["id"])
         else:
             print("❌ Analyse annulée")
-            return ('cancel', None)
+            return ("cancel", None)
 
     else:
         # Cas 2+ activités : menu complet
@@ -925,62 +956,51 @@ def display_activity_menu(unanalyzed_activities):
         print()
         choice = input("Votre choix : ").strip()
 
-        if choice == '1':
-            return ('single', unanalyzed_activities[0]['id'])
+        if choice == "1":
+            return ("single", unanalyzed_activities[0]["id"])
 
-        elif choice == '2':
+        elif choice == "2":
             print()
             selection = input(f"Numéro de la séance (1-{count}) : ").strip()
             try:
                 idx = int(selection) - 1
                 if 0 <= idx < count:
-                    return ('single', unanalyzed_activities[idx]['id'])
+                    return ("single", unanalyzed_activities[idx]["id"])
                 else:
                     print("❌ Numéro invalide")
-                    return ('cancel', None)
+                    return ("cancel", None)
             except ValueError:
                 print("❌ Entrée invalide")
-                return ('cancel', None)
+                return ("cancel", None)
 
-        elif choice == '3':
-            return ('batch', None)
+        elif choice == "3":
+            return ("batch", None)
 
         else:
             print("❌ Analyse annulée")
-            return ('cancel', None)
+            return ("cancel", None)
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Préparer le prompt d'analyse pour IA"
-    )
+    parser = argparse.ArgumentParser(description="Préparer le prompt d'analyse pour IA")
 
+    parser.add_argument("--athlete-id", help="ID de l'athlète Intervals.icu (ex: i123456)")
+    parser.add_argument("--api-key", help="Clé API Intervals.icu")
     parser.add_argument(
-        '--athlete-id',
-        help="ID de l'athlète Intervals.icu (ex: i123456)"
+        "--config",
+        default="~/.intervals_config.json",
+        help="Fichier de configuration JSON (défaut: ~/.intervals_config.json)",
     )
     parser.add_argument(
-        '--api-key',
-        help="Clé API Intervals.icu"
+        "--activity-id", help="ID de l'activité spécifique à analyser (sinon prend la dernière)"
     )
     parser.add_argument(
-        '--config',
-        default='~/.intervals_config.json',
-        help="Fichier de configuration JSON (défaut: ~/.intervals_config.json)"
+        "--list",
+        action="store_true",
+        help="Lister les activités non analysées sans lancer l'analyse",
     )
     parser.add_argument(
-        '--activity-id',
-        help="ID de l'activité spécifique à analyser (sinon prend la dernière)"
-    )
-    parser.add_argument(
-        '--list',
-        action='store_true',
-        help="Lister les activités non analysées sans lancer l'analyse"
-    )
-    parser.add_argument(
-        '--project-root',
-        default='.',
-        help="Racine du projet (défaut: répertoire courant)"
+        "--project-root", default=".", help="Racine du projet (défaut: répertoire courant)"
     )
 
     args = parser.parse_args()
@@ -988,8 +1008,8 @@ def main():
     # Charger la config
     config = load_config(args.config)
 
-    athlete_id = args.athlete_id or (config and config.get('athlete_id'))
-    api_key = args.api_key or (config and config.get('api_key'))
+    athlete_id = args.athlete_id or (config and config.get("athlete_id"))
+    api_key = args.api_key or (config and config.get("api_key"))
 
     if not athlete_id or not api_key:
         print("❌ Erreur: athlete_id et api_key requis")
@@ -1032,8 +1052,7 @@ def main():
                 print("   Première utilisation (dernières 7 jours)")
 
             activities = api.get_activities(
-                oldest=oldest_date.strftime('%Y-%m-%d'),
-                newest=newest_date.strftime('%Y-%m-%d')
+                oldest=oldest_date.strftime("%Y-%m-%d"), newest=newest_date.strftime("%Y-%m-%d")
             )
 
             if not activities:
@@ -1041,7 +1060,7 @@ def main():
                 sys.exit(1)
 
             # Trier par date décroissante (plus récente en premier)
-            activities.sort(key=lambda x: x['start_date_local'], reverse=True)
+            activities.sort(key=lambda x: x["start_date_local"], reverse=True)
 
             # Filtrer les activités non analysées
             unanalyzed = state.get_unanalyzed_activities(activities)
@@ -1055,11 +1074,11 @@ def main():
                     print(f"📋 {len(unanalyzed)} activité(s) non analysée(s) :")
                     print()
                     for i, act in enumerate(unanalyzed, 1):
-                        date = act['start_date_local'][:10]
-                        name = act.get('name', 'Séance')
-                        activity_id = act['id']
-                        tss = act.get('icu_training_load', 0)
-                        duration_min = act.get('moving_time', 0) // 60
+                        date = act["start_date_local"][:10]
+                        name = act.get("name", "Séance")
+                        activity_id = act["id"]
+                        tss = act.get("icu_training_load", 0)
+                        duration_min = act.get("moving_time", 0) // 60
                         print(f"{i}. [{date}] {name}")
                         print(f"   ID: {activity_id} | Durée: {duration_min}min | TSS: {tss:.0f}")
                         print()
@@ -1068,16 +1087,16 @@ def main():
             # Afficher le menu interactif
             mode, selected_id = display_activity_menu(unanalyzed)
 
-            if mode == 'cancel':
+            if mode == "cancel":
                 sys.exit(0)
 
-            elif mode == 'batch':
+            elif mode == "batch":
                 # Mode batch : analyser toutes les séances
                 generator = PromptGenerator(args.project_root)
                 analyze_batch(api, unanalyzed, generator, state, args.project_root)
                 sys.exit(0)
 
-            elif mode == 'single':
+            elif mode == "single":
                 # Analyser une seule activité
                 print()
                 print(f"📥 Récupération de l'activité {selected_id}...")
@@ -1085,8 +1104,8 @@ def main():
                 activities = [activity]
 
         # Date de l'activité
-        date = activity['start_date_local'][:10]
-        activity_date = datetime.fromisoformat(activity['start_date_local'].replace('Z', '+00:00'))
+        date = activity["start_date_local"][:10]
+        activity_date = datetime.fromisoformat(activity["start_date_local"].replace("Z", "+00:00"))
 
         # Récupérer wellness
         wellness_data = api.get_wellness(oldest=date, newest=date)
@@ -1097,14 +1116,14 @@ def main():
         print(f"   📅 Date : {date}")
 
         print("🔍 Recherche du workout planifié...")
-        planned_workout = api.get_planned_workout(activity['id'], activity_date)
+        planned_workout = api.get_planned_workout(activity["id"], activity_date)
         if planned_workout:
             print(f"   ✅ Workout planifié trouvé : {planned_workout.get('name', 'N/A')}")
         else:
             print("   ℹ️  Pas de workout planifié associé (séance libre)")
 
         # Vérifier si l'activité vient de Strava
-        if activity.get('source') == 'STRAVA':
+        if activity.get("source") == "STRAVA":
             print()
             print("   ⚠️  ATTENTION : Cette activité vient de Strava")
             print("   Les données API sont limitées (restriction Strava)")
@@ -1125,9 +1144,9 @@ def main():
         athlete_feedback = generator.load_athlete_feedback()
         if athlete_feedback:
             print("   ✅ Feedback athlète trouvé !")
-            if athlete_feedback.get('rpe'):
+            if athlete_feedback.get("rpe"):
                 print(f"      RPE : {athlete_feedback['rpe']}/10")
-            if athlete_feedback.get('ressenti_general'):
+            if athlete_feedback.get("ressenti_general"):
                 print(f"      Ressenti : {athlete_feedback['ressenti_general'][:50]}...")
         else:
             print("   ℹ️  Pas de feedback athlète (optionnel)")
@@ -1142,7 +1161,7 @@ def main():
             recent_workouts=recent_workouts,
             athlete_feedback=athlete_feedback,
             planned_workout=planned_workout,
-            cycling_concepts=cycling_concepts
+            cycling_concepts=cycling_concepts,
         )
 
         # Copier dans le presse-papier
@@ -1170,7 +1189,7 @@ def main():
         provider = ai_config.default_provider
 
         # API providers list (automated workflow)
-        API_PROVIDERS = ['claude_api', 'mistral_api', 'openai', 'ollama']
+        API_PROVIDERS = ["claude_api", "mistral_api", "openai", "ollama"]
 
         if provider in API_PROVIDERS:
             # API providers - automated workflow
@@ -1211,9 +1230,10 @@ def main():
     except Exception as e:
         print(f"❌ Erreur: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

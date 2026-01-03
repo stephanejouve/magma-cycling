@@ -88,17 +88,17 @@ class ServoMode:
     def __init__(self, config, ai_provider=None):
         self.config = config
         self.provider = ai_provider
-    
+
     def get_ai_recommendations(self, planning_data):
         prompt = self._generate_prompt(planning_data)
-        
+
         if self.provider:
             logger.info(f"🤖 Appel API {self.provider.name}")
             return self._call_api_provider(prompt)
         else:
             logger.info("📋 Mode manuel (clipboard)")
             return self._clipboard_workflow(prompt)
-    
+
     def _call_api_provider(self, prompt):
         """Appel API direct."""
         response = self.provider.generate(
@@ -107,7 +107,7 @@ class ServoMode:
             temperature=0.3
         )
         return self._parse_response(response)
-    
+
     def _clipboard_workflow(self, prompt):
         """Workflow clipboard actuel."""
         copy_to_clipboard(prompt)
@@ -146,42 +146,42 @@ poetry run workflow-coach --activity-id <ID> --servo-mode
 def _parse_response(self, response_text):
     """Parse réponse AI - robuste."""
     logger.debug(f"Raw response: {response_text[:200]}...")
-    
+
     if not response_text or not response_text.strip():
         logger.warning("Réponse vide")
         return {"modifications": []}
-    
+
     # Nettoyer markdown
     text = response_text.strip()
     text = re.sub(r'^```json\s*', '', text, flags=re.MULTILINE)
     text = re.sub(r'\s*```$', '', text, flags=re.MULTILINE)
     logger.debug(f"After markdown cleanup: {text[:200]}...")
-    
+
     # Extraire JSON (multi-lignes)
     json_match = re.search(
         r'\{.*?"modifications".*?\}',
         text,
         re.DOTALL | re.MULTILINE
     )
-    
+
     if not json_match:
         logger.error("Pas de JSON trouvé dans réponse")
         return {"modifications": []}
-    
+
     try:
         data = json.loads(json_match.group())
         logger.debug(f"JSON parsed: {data.keys()}")
     except json.JSONDecodeError as e:
         logger.error(f"JSON invalide: {e}")
         return {"modifications": []}
-    
+
     # Vérifier modifications
     mods = data.get("modifications", [])
-    
+
     if not isinstance(mods, list):
         logger.error(f"modifications not a list: {type(mods)}")
         return {"modifications": []}
-    
+
     logger.info(f"✅ {len(mods)} modification(s) parsée(s)")
     return data
 ```
@@ -240,21 +240,21 @@ poetry run workflow-coach --servo-mode
 ```python
 def collect_athlete_feedback():
     """Collecte feedback - ne demande que si pertinent."""
-    
+
     # Check gaps AVANT prompt
     gaps = detect_analysis_gaps()
-    
+
     if not gaps:
         logger.info("✅ Toutes séances analysées, skip feedback")
         return
-    
+
     # Si gaps: ALORS demander
     print(f"📊 {len(gaps)} séance(s) sans analyse détectée(s)")
     response = input("Collecter feedback ? (o/n): ")
-    
+
     if response.lower() != 'o':
         return
-    
+
     mode = input("Mode (1-Quick/2-Full): ")
     collect_feedback_for_gaps(gaps, mode)
 ```
@@ -278,10 +278,10 @@ def collect_athlete_feedback():
 ```python
 def commit_modifications(modifications):
     """Commit avec message multi-lignes propre."""
-    
+
     # AVANT (bug)
     # message = f"feat: Servo adjustments\n\n{details}"
-    
+
     # APRÈS (fix)
     message = f"""feat: Servo mode adjustments S{week_id}
 
@@ -290,7 +290,7 @@ Applied {len(modifications)} modification(s):
 
 Automated by servo mode based on AI recommendations.
 """
-    
+
     subprocess.run(["git", "commit", "-m", message], check=True)
 ```
 

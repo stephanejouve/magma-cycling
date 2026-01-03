@@ -1,6 +1,6 @@
 # Évolution des Métriques
 
-> Suivi longitudinal des indicateurs clés de performance et de forme.  
+> Suivi longitudinal des indicateurs clés de performance et de forme.
 > Mise à jour : Après chaque séance + bilans hebdomadaires/mensuels
 
 ---
@@ -52,7 +52,7 @@
 
 **Plages Optimales Identifiées**
 - VO2 Max : TSB **+5 minimum** (checklist validée)
-- Sweet-Spot : TSB **-5 à +5** 
+- Sweet-Spot : TSB **-5 à +5**
 - Endurance : TSB quelconque
 - Tests : TSB **+5 à +15**
 

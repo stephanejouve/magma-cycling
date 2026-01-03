@@ -479,6 +479,6 @@ Cooldown
 
 ---
 
-**Version** : 2.1 (révision complète)  
-**Dernière mise à jour** : 16 novembre 2025  
+**Version** : 2.1 (révision complète)
+**Dernière mise à jour** : 16 novembre 2025
 **Semaine actuelle** : S067-S068 (transition)

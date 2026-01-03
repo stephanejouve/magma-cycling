@@ -144,4 +144,3 @@ poetry show --tree
 ---
 
 **Référence complète pour intégration système asservissement**
-

@@ -1,7 +1,7 @@
 # FIX P0: Rate Limiting + Retry Logic Pour Enrichissement
 
-**Archive Context:** claude-code-backfill-debug_20251226_180656.tar.gz  
-**Session:** 2025-12-26 18:20  
+**Archive Context:** claude-code-backfill-debug_20251226_180656.tar.gz
+**Session:** 2025-12-26 18:20
 **Priorité:** P0 (Bloque backfill production)
 
 ---
@@ -41,7 +41,7 @@ poetry run backfill-history \
 try:
     detailed = self.api.get_activity(activity_id)  # ❌ Pas de retry
     activities_detailed.append(detailed)
-    
+
 except Exception as e:
     print(f"⚠️  Erreur activité {activity_id}: {e}")
     activities_detailed.append(activity)  # ❌ Fallback = données basiques
@@ -93,7 +93,7 @@ def fetch_activities(
 
     IMPORTANT: Enrichit chaque activité avec détails complets (TSS, IF, NP)
     car get_activities() ne retourne que les champs basiques.
-    
+
     Gère rate limiting avec retry + backoff exponentiel.
 
     Returns list sorted chronologically (oldest first).
@@ -112,7 +112,7 @@ def fetch_activities(
     # Enrichir chaque activité avec retry logic
     activities_detailed = []
     failed_permanent = []
-    
+
     for i, activity in enumerate(activities_basic, 1):
         activity_id = activity.get('id')
         if not activity_id:
@@ -123,20 +123,20 @@ def fetch_activities(
         max_retries = 3
         base_delay = 2  # secondes
         enriched = False
-        
+
         for attempt in range(max_retries):
             try:
                 # Fetch détails complets (inclut TSS, IF, NP)
                 detailed = self.api.get_activity(activity_id)
                 activities_detailed.append(detailed)
                 enriched = True
-                
+
                 # Progress indicator every 50 activities
                 if i % 50 == 0:
                     print(f"   ... {i}/{len(activities_basic)} enrichies")
-                
+
                 break  # Succès, sortir boucle retry
-                
+
             except HTTPError as e:
                 if e.response.status_code == 429:  # Rate limit
                     if attempt < max_retries - 1:
@@ -153,13 +153,13 @@ def fetch_activities(
                     print(f"   ⚠️  HTTP {e.response.status_code} pour {activity_id}")
                     failed_permanent.append(activity_id)
                     break  # Pas de retry pour erreurs non-429
-                    
+
             except Exception as e:
                 # Erreur réseau, timeout, etc.
                 print(f"   ⚠️  Exception {activity_id}: {type(e).__name__}")
                 failed_permanent.append(activity_id)
                 break  # Pas de retry pour exceptions inattendues
-        
+
         # Si échec définitif après retries, utiliser données basiques
         if not enriched:
             activities_detailed.append(activity)
@@ -168,12 +168,12 @@ def fetch_activities(
     activities_detailed.sort(key=lambda a: a.get('start_date_local', ''))
 
     print(f"✅ {len(activities_detailed)} activités enrichies")
-    
+
     if failed_permanent:
         print(f"⚠️  {len(failed_permanent)} activités non enrichies (erreur définitive)")
         print(f"   → Ces activités seront probablement rejetées par is_valid_activity()")
         print(f"   → Conseil: Relancer backfill avec période plus courte")
-    
+
     return activities_detailed
 ```
 
@@ -245,7 +245,7 @@ if acts:
     print(f"📊 AVANT enrichissement:")
     print(f"   TSS: {act.get('icu_training_load', 'ABSENT')}")
     print(f"   Valid: {state.is_valid_activity(act)}")
-    
+
     detailed = api.get_activity(str(act['id']))
     print(f"\n📊 APRÈS enrichissement:")
     print(f"   TSS: {detailed.get('icu_training_load', 'ABSENT')}")
@@ -375,8 +375,8 @@ cat ~/training-logs/.workflow_state.json | jq '.history | length'
 
 ## PRIORITÉ & IMPACT
 
-**Priorité:** P0 - CRITIQUE  
-**Impact:** Bloque backfill production depuis 3 sessions  
+**Priorité:** P0 - CRITIQUE
+**Impact:** Bloque backfill production depuis 3 sessions
 **Urgence:** Haute (seul bug restant avant prod)
 
 **Sans ce fix:**
@@ -412,7 +412,7 @@ poetry run pytest tests/ -v
 
 ---
 
-**Créé:** 2025-12-26 18:30  
-**Dépend de:** Commits af47692, 66d2b30, 5ebe470, 0bb7450  
-**Bloque:** Backfill production 2023-2024 (318 activités)  
+**Créé:** 2025-12-26 18:30
+**Dépend de:** Commits af47692, 66d2b30, 5ebe470, 0bb7450
+**Bloque:** Backfill production 2023-2024 (318 activités)
 **Référence:** BACKFILL_DEBUG_CONTEXT.md section "PROBLÈMES CONNUS"

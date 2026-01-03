@@ -139,10 +139,10 @@ Le prompt doit être mis à jour quand :
 
 ### Exemple 1 : Demander une Séance
 ```
-Utilisateur : "Crée une séance sweet-spot pour demain, 
+Utilisateur : "Crée une séance sweet-spot pour demain,
 TSB actuel +3, sommeil 6h cette nuit"
 
-Claude : 
+Claude :
 - Consulte workout-templates.md
 - Vérifie protocoles (TSB OK, sommeil limite)
 - Adapte intensité si nécessaire
@@ -205,6 +205,6 @@ Pour toute question ou suggestion d'amélioration, documentez-la dans `training-
 
 ---
 
-**Guide créé** : Novembre 2025  
-**Version prompt associée** : 2.0  
+**Guide créé** : Novembre 2025
+**Version prompt associée** : 2.0
 **Prochaine révision** : Selon besoins terrain

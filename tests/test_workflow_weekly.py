@@ -11,14 +11,15 @@ Author: Claude Code
 Created: 2025-12-26
 """
 
+from datetime import date
+from unittest.mock import Mock, patch
+
 import pytest
-from datetime import date, timedelta
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+
 from cyclisme_training_logs.workflows.workflow_weekly import (
     WeeklyWorkflow,
     get_current_week_info,
-    run_weekly_analysis
+    run_weekly_analysis,
 )
 
 
@@ -48,7 +49,7 @@ def test_get_current_week_info():
     """
     week, start_date = get_current_week_info()
 
-    assert week.startswith('S')
+    assert week.startswith("S")
     assert len(week) == 4
     assert week[1:].isdigit()
     assert isinstance(start_date, date)
@@ -146,10 +147,7 @@ def test_weekly_workflow_initialization(mock_data_dir):
             assert workflow.ai_analysis is False
     """
     workflow = WeeklyWorkflow(
-        week="S073",
-        start_date=date(2025, 1, 6),
-        data_dir=mock_data_dir,
-        ai_analysis=False
+        week="S073", start_date=date(2025, 1, 6), data_dir=mock_data_dir, ai_analysis=False
     )
 
     assert workflow.week == "S073"
@@ -158,8 +156,8 @@ def test_weekly_workflow_initialization(mock_data_dir):
     assert workflow.ai_analysis is False
 
 
-@patch('cyclisme_training_logs.workflows.workflow_weekly.WeeklyAggregator')
-@patch('cyclisme_training_logs.workflows.workflow_weekly.WeeklyAnalyzer')
+@patch("cyclisme_training_logs.workflows.workflow_weekly.WeeklyAggregator")
+@patch("cyclisme_training_logs.workflows.workflow_weekly.WeeklyAnalyzer")
 def test_weekly_workflow_run(mock_analyzer_class, mock_aggregator_class, mock_data_dir):
     """Test exécution workflow complet.
 
@@ -199,14 +197,14 @@ def test_weekly_workflow_run(mock_analyzer_class, mock_aggregator_class, mock_da
     mock_result = Mock()
     mock_result.success = True
     mock_result.data = {
-        'processed': {
-            'summary': {},
-            'workouts': [],
-            'metrics_evolution': {},
-            'learnings': [],
-            'protocol_adaptations': [],
-            'transition': {},
-            'compliance': {}
+        "processed": {
+            "summary": {},
+            "workouts": [],
+            "metrics_evolution": {},
+            "learnings": [],
+            "protocol_adaptations": [],
+            "transition": {},
+            "compliance": {},
         }
     }
     mock_aggregator.aggregate.return_value = mock_result
@@ -216,22 +214,19 @@ def test_weekly_workflow_run(mock_analyzer_class, mock_aggregator_class, mock_da
     mock_analyzer_class.return_value = mock_analyzer
 
     mock_reports = {
-        'workout_history': '# Workout History',
-        'metrics_evolution': '# Metrics',
-        'training_learnings': '# Learnings',
-        'protocol_adaptations': '# Adaptations',
-        'transition': '# Transition',
-        'bilan_final': '# Bilan'
+        "workout_history": "# Workout History",
+        "metrics_evolution": "# Metrics",
+        "training_learnings": "# Learnings",
+        "protocol_adaptations": "# Adaptations",
+        "transition": "# Transition",
+        "bilan_final": "# Bilan",
     }
     mock_analyzer.generate_all_reports.return_value = mock_reports
     mock_analyzer.save_reports = Mock()
 
     # Execute workflow
     workflow = WeeklyWorkflow(
-        week="S073",
-        start_date=date(2025, 1, 6),
-        data_dir=mock_data_dir,
-        ai_analysis=False
+        week="S073", start_date=date(2025, 1, 6), data_dir=mock_data_dir, ai_analysis=False
     )
 
     reports = workflow.run()
@@ -247,10 +242,10 @@ def test_weekly_workflow_run(mock_analyzer_class, mock_aggregator_class, mock_da
 
     # Verify reports returned
     assert len(reports) == 6
-    assert 'workout_history' in reports
+    assert "workout_history" in reports
 
 
-@patch('cyclisme_training_logs.workflows.workflow_weekly.WeeklyAggregator')
+@patch("cyclisme_training_logs.workflows.workflow_weekly.WeeklyAggregator")
 def test_weekly_workflow_aggregation_failure(mock_aggregator_class, mock_data_dir):
     """Test gestion échec aggregation.
 
@@ -284,23 +279,21 @@ def test_weekly_workflow_aggregation_failure(mock_aggregator_class, mock_data_di
 
     mock_result = Mock()
     mock_result.success = False
-    mock_result.errors = ['API connection failed']
+    mock_result.errors = ["API connection failed"]
     mock_aggregator.aggregate.return_value = mock_result
 
-    workflow = WeeklyWorkflow(
-        week="S073",
-        start_date=date(2025, 1, 6),
-        data_dir=mock_data_dir
-    )
+    workflow = WeeklyWorkflow(week="S073", start_date=date(2025, 1, 6), data_dir=mock_data_dir)
 
     with pytest.raises(RuntimeError, match="aggregation failed"):
         workflow.run()
 
 
-@patch('subprocess.run')
-@patch('cyclisme_training_logs.workflows.workflow_weekly.WeeklyAggregator')
-@patch('cyclisme_training_logs.workflows.workflow_weekly.WeeklyAnalyzer')
-def test_weekly_workflow_ai_analysis(mock_analyzer_class, mock_aggregator_class, mock_subprocess, mock_data_dir):
+@patch("subprocess.run")
+@patch("cyclisme_training_logs.workflows.workflow_weekly.WeeklyAggregator")
+@patch("cyclisme_training_logs.workflows.workflow_weekly.WeeklyAnalyzer")
+def test_weekly_workflow_ai_analysis(
+    mock_analyzer_class, mock_aggregator_class, mock_subprocess, mock_data_dir
+):
     """Test AI analysis via clipboard.
 
     Examples:
@@ -333,14 +326,14 @@ def test_weekly_workflow_ai_analysis(mock_analyzer_class, mock_aggregator_class,
     mock_result = Mock()
     mock_result.success = True
     mock_result.data = {
-        'processed': {
-            'summary': {},
-            'workouts': [],
-            'metrics_evolution': {},
-            'learnings': [],
-            'protocol_adaptations': [],
-            'transition': {},
-            'compliance': {}
+        "processed": {
+            "summary": {},
+            "workouts": [],
+            "metrics_evolution": {},
+            "learnings": [],
+            "protocol_adaptations": [],
+            "transition": {},
+            "compliance": {},
         }
     }
     mock_aggregator.aggregate.return_value = mock_result
@@ -348,19 +341,13 @@ def test_weekly_workflow_ai_analysis(mock_analyzer_class, mock_aggregator_class,
     mock_analyzer = Mock()
     mock_analyzer_class.return_value = mock_analyzer
 
-    mock_reports = {
-        'workout_history': '# History',
-        'bilan_final': '# Bilan'
-    }
+    mock_reports = {"workout_history": "# History", "bilan_final": "# Bilan"}
     mock_analyzer.generate_all_reports.return_value = mock_reports
     mock_analyzer.save_reports = Mock()
 
     # Execute workflow with AI analysis
     workflow = WeeklyWorkflow(
-        week="S073",
-        start_date=date(2025, 1, 6),
-        data_dir=mock_data_dir,
-        ai_analysis=True
+        week="S073", start_date=date(2025, 1, 6), data_dir=mock_data_dir, ai_analysis=True
     )
 
     reports = workflow.run()
@@ -368,10 +355,10 @@ def test_weekly_workflow_ai_analysis(mock_analyzer_class, mock_aggregator_class,
     # Verify subprocess called for clipboard
     mock_subprocess.assert_called_once()
     call_args = mock_subprocess.call_args
-    assert call_args[0][0] == ['pbcopy']
+    assert call_args[0][0] == ["pbcopy"]
 
 
-@patch('cyclisme_training_logs.workflows.workflow_weekly.WeeklyWorkflow')
+@patch("cyclisme_training_logs.workflows.workflow_weekly.WeeklyWorkflow")
 def test_run_weekly_analysis_utility(mock_workflow_class, mock_data_dir):
     """Test fonction utilitaire run_weekly_analysis.
 
@@ -404,26 +391,17 @@ def test_run_weekly_analysis_utility(mock_workflow_class, mock_data_dir):
     mock_workflow = Mock()
     mock_workflow_class.return_value = mock_workflow
 
-    mock_reports = {
-        'workout_history': '# History',
-        'bilan_final': '# Bilan'
-    }
+    mock_reports = {"workout_history": "# History", "bilan_final": "# Bilan"}
     mock_workflow.run.return_value = mock_reports
 
     # Call utility function
     reports = run_weekly_analysis(
-        week="S073",
-        start_date=date(2025, 1, 6),
-        data_dir=mock_data_dir,
-        ai_analysis=False
+        week="S073", start_date=date(2025, 1, 6), data_dir=mock_data_dir, ai_analysis=False
     )
 
     # Verify workflow created correctly
     mock_workflow_class.assert_called_once_with(
-        week="S073",
-        start_date=date(2025, 1, 6),
-        data_dir=mock_data_dir,
-        ai_analysis=False
+        week="S073", start_date=date(2025, 1, 6), data_dir=mock_data_dir, ai_analysis=False
     )
 
     # Verify run called
@@ -459,7 +437,7 @@ def test_week_number_format():
     week, start_date = get_current_week_info()
 
     # Format verification
-    assert week[0] == 'S'
+    assert week[0] == "S"
     assert len(week) == 4
     assert week[1:].isdigit()
 
@@ -468,7 +446,7 @@ def test_week_number_format():
     assert 1 <= week_num <= 53
 
 
-@patch('cyclisme_training_logs.workflows.workflow_weekly.WeeklyWorkflow')
+@patch("cyclisme_training_logs.workflows.workflow_weekly.WeeklyWorkflow")
 def test_workflow_without_data_dir(mock_workflow_class):
     """Test workflow sans data_dir (auto-detect).
 
@@ -497,11 +475,9 @@ def test_workflow_without_data_dir(mock_workflow_class):
 
     # Call utility without data_dir
     reports = run_weekly_analysis(
-        week="S073",
-        start_date=date(2025, 1, 6),
-        data_dir=None  # Auto-detect
+        week="S073", start_date=date(2025, 1, 6), data_dir=None  # Auto-detect
     )
 
     # Verify workflow created with None (triggers auto-detect)
     call_args = mock_workflow_class.call_args
-    assert call_args[1]['data_dir'] is None
+    assert call_args[1]["data_dir"] is None

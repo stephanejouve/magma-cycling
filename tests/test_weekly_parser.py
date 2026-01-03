@@ -66,7 +66,7 @@ Contenu du fichier 6...
         "training_learnings_S001.md",
         "protocol_adaptations_S001.md",
         "transition_S001_S002.md",
-        "bilan_final_S001.md"
+        "bilan_final_S001.md",
     ]
 
     for expected in expected_files:
@@ -92,6 +92,7 @@ Contenu du fichier 6...
         return 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
+
     sys.exit(test_parser())

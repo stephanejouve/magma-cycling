@@ -58,14 +58,14 @@ def filter_unanalyzed(
     skip_planned: bool = False
 ) -> List[Dict]:
     """Filter activities that need analysis."""
-    
+
     # Si force_reanalyze, ignorer workflow_state
     if self.force_reanalyze:
         print("⚡ Force re-analyze: ignoring workflow state")
         analyzed = set()  # ← Set vide = tout à analyser
     else:
         analyzed = self.get_analyzed_activities()
-    
+
     # ... reste du code identique
 ```
 
@@ -135,7 +135,7 @@ poetry run backfill-history --help
 Devrait afficher:
 ```
 optional arguments:
-  --force-reanalyze     Force re-analyze activities even if already 
+  --force-reanalyze     Force re-analyze activities even if already
                         in workflow state (useful after fixing bugs)
 ```
 

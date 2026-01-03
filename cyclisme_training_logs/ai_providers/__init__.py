@@ -50,7 +50,7 @@ Metadata:
     Version: v2
 """
 
-from .base import AIProvider, AIAnalyzer
+from .base import AIAnalyzer, AIProvider
 from .factory import AIProviderFactory
 
-__all__ = ['AIProvider', 'AIAnalyzer', 'AIProviderFactory']
+__all__ = ["AIProvider", "AIAnalyzer", "AIProviderFactory"]

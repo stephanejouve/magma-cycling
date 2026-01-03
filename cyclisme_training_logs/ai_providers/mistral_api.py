@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Mistral AI provider implementation for workout analysis.
 Implémentation provider Mistral AI pour analyses workouts. Utilise modèle
@@ -52,16 +51,17 @@ Metadata:
 
 import logging
 from typing import Optional
+
 from mistralai.client import MistralClient
 
 from .base import AIAnalyzer, AIProvider
-
 
 logger = logging.getLogger(__name__)
 
 
 class WorkflowError(Exception):
     """Workflow error for AI provider operations."""
+
     pass
 
 
@@ -94,7 +94,7 @@ class MistralAPIAnalyzer(AIAnalyzer):
         "mistral-large-latest": "Large (best performance, $2/1M)",
         "mistral-medium-latest": "Medium (balanced, $1.5/1M)",
         "mistral-small-latest": "Small (fast, $0.5/1M)",
-        "open-mistral-7b": "7B (free tier, basic)"
+        "open-mistral-7b": "7B (free tier, basic)",
     }
 
     def __init__(
@@ -103,7 +103,7 @@ class MistralAPIAnalyzer(AIAnalyzer):
         model: str = "mistral-large-latest",
         temperature: float = 0.7,
         max_tokens: int = 4000,
-        timeout: int = 60
+        timeout: int = 60,
     ):
         """Initialize Mistral API analyzer.
 
@@ -180,11 +180,9 @@ class MistralAPIAnalyzer(AIAnalyzer):
             # Call Mistral API with parameters
             response = self.client.chat(
                 model=self.model,
-                messages=[
-                    {"role": "user", "content": prompt}
-                ],
+                messages=[{"role": "user", "content": prompt}],
                 temperature=self.temperature,
-                max_tokens=self.max_tokens
+                max_tokens=self.max_tokens,
             )
 
             # Extract analysis text
@@ -212,14 +210,14 @@ class MistralAPIAnalyzer(AIAnalyzer):
             '$2.00/1M tokens'
         """
         return {
-            'provider': 'mistral_api',
-            'model': self.model,
-            'status': 'ready',
-            'cost_input': '$2.00/1M tokens',
-            'cost_output': '$6.00/1M tokens',
-            'requires_api_key': True,
-            'context_window': '32k tokens',
-            'note': 'Best price/performance ratio 🎯'
+            "provider": "mistral_api",
+            "model": self.model,
+            "status": "ready",
+            "cost_input": "$2.00/1M tokens",
+            "cost_output": "$6.00/1M tokens",
+            "requires_api_key": True,
+            "context_window": "32k tokens",
+            "note": "Best price/performance ratio 🎯",
         }
 
     def validate_config(self) -> bool:

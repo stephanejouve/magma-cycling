@@ -320,7 +320,7 @@ skipped_sessions_api = checker.detect_skipped_sessions(...)
 if planning_json_exists:
     reconciliation = reconcile_planned_vs_actual(...)
     cancelled_json = reconciliation['cancelled']
-    
+
 # 3. Fusion résultats
 all_gaps = {
     'executed': unanalyzed_activities,

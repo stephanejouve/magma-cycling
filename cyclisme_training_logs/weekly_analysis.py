@@ -49,13 +49,12 @@ Usage (DEPRECATED):
 
 import argparse
 import json
-import os
 import re
 import subprocess
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
 
 # Import du client API unifié
 from cyclisme_training_logs.api.intervals_client import IntervalsClient
@@ -75,7 +74,7 @@ class WeeklyAnalysis:
 
         # Calcul des dates
         if start_date:
-            self.start_date = datetime.strptime(start_date, '%Y-%m-%d')
+            self.start_date = datetime.strptime(start_date, "%Y-%m-%d")
         else:
             self.start_date = self._calculate_week_start()
 
@@ -87,6 +86,7 @@ class WeeklyAnalysis:
 
         # Use data repo config if available
         from cyclisme_training_logs.config import get_data_config
+
         try:
             config = get_data_config()
             self.logs_dir = config.data_repo_path
@@ -101,11 +101,10 @@ class WeeklyAnalysis:
         # API Intervals.icu
         config_path = Path.home() / ".intervals_config.json"
         if config_path.exists():
-            with open(config_path, 'r') as f:
+            with open(config_path) as f:
                 config = json.load(f)
                 self.api = IntervalsClient(
-                    athlete_id=config.get('athlete_id'),
-                    api_key=config.get('api_key')
+                    athlete_id=config.get("athlete_id"), api_key=config.get("api_key")
                 )
         else:
             self.api = None
@@ -128,7 +127,7 @@ class WeeklyAnalysis:
         """Calculer le numéro de la semaine suivante"""
         return f"S{self.week_int + 1:03d}"
 
-    def collect_week_workouts(self) -> List[Dict]:
+    def collect_week_workouts(self) -> list[dict]:
         """Extraire les séances de la semaine depuis workouts-history.md"""
         history_file = self.logs_dir / "workouts-history.md"
 
@@ -138,7 +137,7 @@ class WeeklyAnalysis:
 
         print(f"📖 Lecture de {history_file}...")
 
-        with open(history_file, 'r', encoding='utf-8') as f:
+        with open(history_file, encoding="utf-8") as f:
             content = f.read()
 
         # Parser les séances
@@ -146,7 +145,7 @@ class WeeklyAnalysis:
         seen = set()  # Pour éviter les doublons
 
         # Extraire la section "# Historique" (avec support de # ou ##)
-        historique_match = re.search(r'#+ Historique.*?\n(.*)', content, re.DOTALL)
+        historique_match = re.search(r"#+ Historique.*?\n(.*)", content, re.DOTALL)
         if not historique_match:
             print("   ⚠️  Section 'Historique' non trouvée")
             return []
@@ -155,21 +154,21 @@ class WeeklyAnalysis:
 
         # Extraire toutes les sections ### (séances)
         # Format attendu: ### Nom de la Séance\nDate : JJ/MM/YYYY
-        sections = re.split(r'\n### ', historique_content)
+        sections = re.split(r"\n### ", historique_content)
 
         for section in sections[1:]:  # Skip le premier (avant le premier ###)
             # Extraire la date
-            date_match = re.search(r'Date\s*:\s*(\d{2}/\d{2}/\d{4})', section)
+            date_match = re.search(r"Date\s*:\s*(\d{2}/\d{2}/\d{4})", section)
             if not date_match:
                 continue
 
             date_str = date_match.group(1)
-            date = datetime.strptime(date_str, '%d/%m/%Y')
+            date = datetime.strptime(date_str, "%d/%m/%Y")
 
             # Vérifier si la date est dans la plage de la semaine
             if self.start_date <= date <= self.end_date:
                 # Extraire le nom de la séance (première ligne)
-                name = section.split('\n')[0].strip()
+                name = section.split("\n")[0].strip()
 
                 # Créer une clé unique pour éviter les doublons
                 key = f"{date_str}_{name}"
@@ -179,16 +178,16 @@ class WeeklyAnalysis:
 
                     # Extraire toute la section jusqu'au prochain ### ou fin
                     workout = {
-                        'name': name,
-                        'date': date,
-                        'date_str': date_str,
-                        'content': '### ' + section.strip()
+                        "name": name,
+                        "date": date,
+                        "date_str": date_str,
+                        "content": "### " + section.strip(),
                     }
 
                     workouts.append(workout)
 
         # Trier par date
-        workouts.sort(key=lambda x: x['date'])
+        workouts.sort(key=lambda x: x["date"])
 
         print(f"   ✅ {len(workouts)} séance(s) trouvée(s)")
         for w in workouts:
@@ -196,7 +195,7 @@ class WeeklyAnalysis:
 
         return workouts
 
-    def collect_week_metrics(self) -> Dict:
+    def collect_week_metrics(self) -> dict:
         """Collecter métriques évolution via API"""
         if not self.api:
             print("⚠️  API non disponible, skip métriques")
@@ -206,8 +205,8 @@ class WeeklyAnalysis:
 
         try:
             # Dates au format ISO
-            start_date_str = self.start_date.strftime('%Y-%m-%d')
-            end_date_str = self.end_date.strftime('%Y-%m-%d')
+            start_date_str = self.start_date.strftime("%Y-%m-%d")
+            end_date_str = self.end_date.strftime("%Y-%m-%d")
 
             # Récupérer wellness début et fin
             wellness_data = self.api.get_wellness(oldest=start_date_str, newest=end_date_str)
@@ -217,7 +216,7 @@ class WeeklyAnalysis:
                 return self._mock_metrics()
 
             # Trier par date
-            wellness_data.sort(key=lambda x: x['id'])
+            wellness_data.sort(key=lambda x: x["id"])
             wellness_start = wellness_data[0]
             wellness_end = wellness_data[-1]
 
@@ -229,30 +228,34 @@ class WeeklyAnalysis:
             current_date = self.start_date
 
             while current_date <= self.end_date:
-                date_str = current_date.strftime('%Y-%m-%d')
+                date_str = current_date.strftime("%Y-%m-%d")
 
                 # Trouver wellness pour cette date
-                day_wellness = next((w for w in wellness_data if w['id'] == date_str), None)
+                day_wellness = next((w for w in wellness_data if w["id"] == date_str), None)
 
                 if day_wellness:
                     from cyclisme_training_logs.utils.metrics import extract_wellness_metrics
 
                     day_metrics = extract_wellness_metrics(day_wellness)
-                    daily_metrics.append({
-                        'date': date_str,
-                        'ctl': day_metrics['ctl'],
-                        'atl': day_metrics['atl'],
-                        'tsb': day_metrics['tsb'],
-                        'weight': day_wellness.get('weight'),
-                    })
+                    daily_metrics.append(
+                        {
+                            "date": date_str,
+                            "ctl": day_metrics["ctl"],
+                            "atl": day_metrics["atl"],
+                            "tsb": day_metrics["tsb"],
+                            "weight": day_wellness.get("weight"),
+                        }
+                    )
                 else:
-                    daily_metrics.append({
-                        'date': date_str,
-                        'ctl': None,
-                        'atl': None,
-                        'tsb': None,
-                        'weight': None,
-                    })
+                    daily_metrics.append(
+                        {
+                            "date": date_str,
+                            "ctl": None,
+                            "atl": None,
+                            "tsb": None,
+                            "weight": None,
+                        }
+                    )
 
                 current_date += timedelta(days=1)
 
@@ -262,23 +265,25 @@ class WeeklyAnalysis:
             end_metrics = extract_wellness_metrics(wellness_end)
 
             metrics = {
-                'start': {
-                    'ctl': start_metrics['ctl'],
-                    'atl': start_metrics['atl'],
-                    'tsb': start_metrics['tsb'],
-                    'weight': wellness_start.get('weight', 0) if wellness_start else 0,
+                "start": {
+                    "ctl": start_metrics["ctl"],
+                    "atl": start_metrics["atl"],
+                    "tsb": start_metrics["tsb"],
+                    "weight": wellness_start.get("weight", 0) if wellness_start else 0,
                 },
-                'end': {
-                    'ctl': end_metrics['ctl'],
-                    'atl': end_metrics['atl'],
-                    'tsb': end_metrics['tsb'],
-                    'weight': wellness_end.get('weight', 0) if wellness_end else 0,
+                "end": {
+                    "ctl": end_metrics["ctl"],
+                    "atl": end_metrics["atl"],
+                    "tsb": end_metrics["tsb"],
+                    "weight": wellness_end.get("weight", 0) if wellness_end else 0,
                 },
-                'daily': daily_metrics,
-                'activities_count': len(activities) if activities else 0
+                "daily": daily_metrics,
+                "activities_count": len(activities) if activities else 0,
             }
 
-            print(f"   ✅ Métriques collectées (CTL: {metrics['start']['ctl']:.0f}→{metrics['end']['ctl']:.0f})")
+            print(
+                f"   ✅ Métriques collectées (CTL: {metrics['start']['ctl']:.0f}→{metrics['end']['ctl']:.0f})"
+            )
 
             return metrics
 
@@ -287,31 +292,31 @@ class WeeklyAnalysis:
             print("      Utilisation de données mockées...")
             return self._mock_metrics()
 
-    def _mock_metrics(self) -> Dict:
+    def _mock_metrics(self) -> dict:
         """Retourner des métriques mockées en cas d'erreur API"""
         return {
-            'start': {'ctl': 0, 'atl': 0, 'tsb': 0, 'weight': 0},
-            'end': {'ctl': 0, 'atl': 0, 'tsb': 0, 'weight': 0},
-            'daily': [],
-            'activities_count': len(self.workouts)
+            "start": {"ctl": 0, "atl": 0, "tsb": 0, "weight": 0},
+            "end": {"ctl": 0, "atl": 0, "tsb": 0, "weight": 0},
+            "daily": [],
+            "activities_count": len(self.workouts),
         }
 
-    def collect_context_files(self) -> Dict[str, str]:
+    def collect_context_files(self) -> dict[str, str]:
         """Charger fichiers contexte projet"""
         print("📚 Chargement des fichiers contexte...")
 
         context = {}
 
         files_to_load = {
-            'project_prompt': 'references/project_prompt_v2_1_revised.md',
-            'cycling_concepts': 'references/cycling_training_concepts.md',
+            "project_prompt": "references/project_prompt_v2_1_revised.md",
+            "cycling_concepts": "references/cycling_training_concepts.md",
         }
 
         for key, path in files_to_load.items():
             try:
                 filepath = self.project_root / path
                 if filepath.exists():
-                    context[key] = filepath.read_text(encoding='utf-8')
+                    context[key] = filepath.read_text(encoding="utf-8")
                     print(f"   ✅ Chargé : {path}")
                 else:
                     print(f"   ⚠️  Fichier non trouvé : {filepath}")
@@ -328,14 +333,13 @@ class WeeklyAnalysis:
         next_week = f"S{int(self.week_number[1:]) + 1:03d}"
 
         # Formater les séances
-        workouts_text = "\n\n".join([
-            f"#### {workout['name']}\n{workout['content']}"
-            for workout in self.workouts
-        ])
+        workouts_text = "\n\n".join(
+            [f"#### {workout['name']}\n{workout['content']}" for workout in self.workouts]
+        )
 
         # Formater les dates
-        start_date_str = self.start_date.strftime('%d/%m/%Y')
-        end_date_str = self.end_date.strftime('%d/%m/%Y')
+        start_date_str = self.start_date.strftime("%d/%m/%Y")
+        end_date_str = self.end_date.strftime("%d/%m/%Y")
 
         prompt = f"""# Analyse Hebdomadaire Cyclisme - {self.week_number}
 
@@ -436,7 +440,7 @@ Commence maintenant l'analyse !
 
         return prompt
 
-    def parse_claude_response(self, response: str) -> Dict[str, str]:
+    def parse_claude_response(self, response: str) -> dict[str, str]:
         """Parser la réponse de Claude en 6 fichiers
 
         Args:
@@ -449,19 +453,19 @@ Commence maintenant l'analyse !
         current_file = None
         current_content = []
 
-        lines = response.split('\n')
+        lines = response.split("\n")
 
         for line in lines:
             # Détecter une nouvelle balise FILE
-            if line.strip().startswith('### FILE:'):
+            if line.strip().startswith("### FILE:"):
                 # Sauvegarder le fichier précédent
                 if current_file and current_content:
                     # Nettoyer le contenu
-                    content = '\n'.join(current_content).strip()
+                    content = "\n".join(current_content).strip()
                     files[current_file] = content
 
                 # Extraire le nom du nouveau fichier
-                file_match = re.search(r'### FILE:\s*(.+\.md)', line)
+                file_match = re.search(r"### FILE:\s*(.+\.md)", line)
                 if file_match:
                     current_file = file_match.group(1).strip()
                     current_content = []
@@ -472,23 +476,23 @@ Commence maintenant l'analyse !
 
         # Sauvegarder le dernier fichier
         if current_file and current_content:
-            content = '\n'.join(current_content).strip()
+            content = "\n".join(current_content).strip()
             files[current_file] = content
 
         return files
 
-    def validate_generated_files(self, files: Dict[str, str]) -> bool:
+    def validate_generated_files(self, files: dict[str, str]) -> bool:
         """Valider les fichiers générés"""
 
         next_week = f"S{int(self.week_number[1:]) + 1:03d}"
 
         expected_files = {
-            f'workout_history_{self.week_number}.md': 2000,  # min chars
-            f'metrics_evolution_{self.week_number}.md': 1000,
-            f'training_learnings_{self.week_number}.md': 1500,
-            f'protocol_adaptations_{self.week_number}.md': 500,
-            f'transition_{self.week_number}_{next_week}.md': 800,
-            f'bilan_final_{self.week_number}.md': 1000,
+            f"workout_history_{self.week_number}.md": 2000,  # min chars
+            f"metrics_evolution_{self.week_number}.md": 1000,
+            f"training_learnings_{self.week_number}.md": 1500,
+            f"protocol_adaptations_{self.week_number}.md": 500,
+            f"transition_{self.week_number}_{next_week}.md": 800,
+            f"bilan_final_{self.week_number}.md": 1000,
         }
 
         errors = []
@@ -517,7 +521,7 @@ Commence maintenant l'analyse !
                 print(f"   {warning}")
             print()
             response = input("Continuer quand même ? (O/n) : ")
-            return response.lower() != 'n'
+            return response.lower() != "n"
 
         return True
 
@@ -544,17 +548,11 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
         try:
             # Ajouter le dossier
-            subprocess.run(
-                ['git', 'add', str(self.output_dir)],
-                check=True,
-                cwd=self.project_root
-            )
+            subprocess.run(["git", "add", str(self.output_dir)], check=True, cwd=self.project_root)
 
             # Commiter
             subprocess.run(
-                ['git', 'commit', '-m', commit_message],
-                check=True,
-                cwd=self.project_root
+                ["git", "commit", "-m", commit_message], check=True, cwd=self.project_root
             )
 
             print("✅ Commit git effectué")
@@ -575,7 +573,9 @@ Co-Authored-By: Claude <noreply@anthropic.com>
         print()
         print("Utilisez le nouveau système Weekly Analysis (Phase 2):")
         print()
-        print(f"  poetry run weekly-analysis --week {self.week_number} --start-date {self.start_date.strftime('%Y-%m-%d')}")
+        print(
+            f"  poetry run weekly-analysis --week {self.week_number} --start-date {self.start_date.strftime('%Y-%m-%d')}"
+        )
         print()
         print("Avantages du nouveau système:")
         print("  - Architecture modulaire et testée")
@@ -587,7 +587,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
         print()
 
         response = input("Continuer avec le script obsolète ? (o/n) : ").strip().lower()
-        if response != 'o':
+        if response != "o":
             print("\n✅ Utilisez le nouveau système avec: poetry run weekly-analysis --help")
             return
 
@@ -595,7 +595,9 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
         print("=" * 70)
         print(f"  🎯 ANALYSE HEBDOMADAIRE {self.week_number}")
-        print(f"  Période : {self.start_date.strftime('%d/%m/%Y')} → {self.end_date.strftime('%d/%m/%Y')}")
+        print(
+            f"  Période : {self.start_date.strftime('%d/%m/%Y')} → {self.end_date.strftime('%d/%m/%Y')}"
+        )
         print("=" * 70)
         print()
 
@@ -624,12 +626,9 @@ Co-Authored-By: Claude <noreply@anthropic.com>
         # Copier dans le presse-papier
         try:
             process = subprocess.Popen(
-                ['pbcopy'],
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+                ["pbcopy"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
-            process.communicate(prompt.encode('utf-8'))
+            process.communicate(prompt.encode("utf-8"))
             print("✅ Prompt copié dans le presse-papier !")
         except Exception as e:
             print(f"⚠️  Erreur copie presse-papier : {e}")
@@ -667,12 +666,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
         print("-" * 70)
 
         try:
-            result = subprocess.run(
-                ['pbpaste'],
-                capture_output=True,
-                text=True,
-                check=True
-            )
+            result = subprocess.run(["pbpaste"], capture_output=True, text=True, check=True)
             claude_response = result.stdout
         except Exception as e:
             print(f"❌ Erreur lecture presse-papier : {e}")
@@ -704,7 +698,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
         for filename, content in files.items():
             filepath = self.output_dir / filename
 
-            with open(filepath, 'w', encoding='utf-8') as f:
+            with open(filepath, "w", encoding="utf-8") as f:
                 f.write(content)
 
             # Afficher taille du fichier
@@ -717,7 +711,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
         # Étape 6 : Commit git (optionnel)
         commit = input("💾 Commit git automatique ? (o/n) : ").strip().lower()
-        if commit == 'o':
+        if commit == "o":
             print()
             self.git_commit()
 
@@ -728,7 +722,9 @@ Co-Authored-By: Claude <noreply@anthropic.com>
         print("=" * 70)
         print()
         print(f"✅ Semaine : {self.week_number}")
-        print(f"✅ Période : {self.start_date.strftime('%d/%m/%Y')} → {self.end_date.strftime('%d/%m/%Y')}")
+        print(
+            f"✅ Période : {self.start_date.strftime('%d/%m/%Y')} → {self.end_date.strftime('%d/%m/%Y')}"
+        )
         print(f"✅ Séances analysées : {len(self.workouts)}")
         print(f"✅ Fichiers générés : {len(files)}")
         print()
@@ -747,25 +743,21 @@ Exemples:
 
   # Analyse avec date de début spécifique
   python3 cyclisme_training_logs/weekly_analysis.py --week-id S068 --start-date 2024-11-18
-"""
+""",
     )
 
     parser.add_argument(
-        '--week-id',
-        type=str,
-        required=True,
-        help='Numéro de semaine (format SXXX, ex: S072)'
+        "--week-id", type=str, required=True, help="Numéro de semaine (format SXXX, ex: S072)"
     )
 
     parser.add_argument(
-        '--start-date',
-        help="Date de début de la semaine (format YYYY-MM-DD, optionnel)"
+        "--start-date", help="Date de début de la semaine (format YYYY-MM-DD, optionnel)"
     )
 
     args = parser.parse_args()
 
     # Validation format semaine
-    if not re.match(r'^S\d{3}$', args.week_id):
+    if not re.match(r"^S\d{3}$", args.week_id):
         print("❌ Format semaine invalide")
         print("   Format attendu : SXXX (ex: S068)")
         sys.exit(1)
@@ -773,7 +765,7 @@ Exemples:
     # Validation date si fournie
     if args.start_date:
         try:
-            datetime.strptime(args.start_date, '%Y-%m-%d')
+            datetime.strptime(args.start_date, "%Y-%m-%d")
         except ValueError:
             print("❌ Format date invalide")
             print("   Format attendu : YYYY-MM-DD (ex: 2024-11-18)")
@@ -794,9 +786,10 @@ Exemples:
     except Exception as e:
         print(f"\n\n❌ Erreur inattendue : {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

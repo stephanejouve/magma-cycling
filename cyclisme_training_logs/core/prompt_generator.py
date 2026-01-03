@@ -56,8 +56,7 @@ Created: 2025-12-26 (Migrated from v2)
 """
 
 from pathlib import Path
-from typing import Dict, Any, List, Optional
-from datetime import date, datetime
+from typing import Any, Optional
 
 
 class PromptGenerator:
@@ -94,12 +93,12 @@ class PromptGenerator:
         intros = {
             "daily": "# Analyse Séance Quotidienne",
             "weekly": "# Analyse Hebdomadaire",
-            "cycle": "# Analyse Cycle (4 semaines)"
+            "cycle": "# Analyse Cycle (4 semaines)",
         }
 
         return intros.get(analysis_type, "# Analyse")
 
-    def context_block(self, athlete_data: Dict[str, Any]) -> str:
+    def context_block(self, athlete_data: dict[str, Any]) -> str:
         """
         Bloc contexte athlète et entraînement.
 
@@ -111,21 +110,21 @@ class PromptGenerator:
         """
         context = "## Contexte Athlète\n\n"
 
-        if 'FTP' in athlete_data:
+        if "FTP" in athlete_data:
             context += f"- **FTP actuelle :** {athlete_data['FTP']}W\n"
 
-        if 'weight' in athlete_data:
+        if "weight" in athlete_data:
             context += f"- **Poids :** {athlete_data['weight']}kg\n"
 
-        if 'goals' in athlete_data:
+        if "goals" in athlete_data:
             context += f"- **Objectifs :** {athlete_data['goals']}\n"
 
-        if 'resting_hr' in athlete_data:
+        if "resting_hr" in athlete_data:
             context += f"- **FC repos :** {athlete_data['resting_hr']} bpm\n"
 
         return context
 
-    def data_block(self, workout_data: Dict[str, Any]) -> str:
+    def data_block(self, workout_data: dict[str, Any]) -> str:
         """
         Bloc données workout.
 
@@ -137,20 +136,20 @@ class PromptGenerator:
         """
         data = "## Données Séance\n\n"
 
-        if 'duration' in workout_data:
-            duration_min = workout_data['duration'] // 60
+        if "duration" in workout_data:
+            duration_min = workout_data["duration"] // 60
             data += f"- **Durée :** {duration_min} min\n"
 
-        if 'tss' in workout_data:
+        if "tss" in workout_data:
             data += f"- **TSS :** {workout_data['tss']}\n"
 
-        if 'normalized_power' in workout_data:
+        if "normalized_power" in workout_data:
             data += f"- **Puissance normalisée :** {workout_data['normalized_power']}W\n"
 
-        if 'average_power' in workout_data:
+        if "average_power" in workout_data:
             data += f"- **Puissance moyenne :** {workout_data['average_power']}W\n"
 
-        if 'intensity_factor' in workout_data:
+        if "intensity_factor" in workout_data:
             data += f"- **IF :** {workout_data['intensity_factor']:.2f}\n"
 
         return data
@@ -208,7 +207,7 @@ Répondre en JSON :
   "analysis": "..."
 }
 ```
-"""
+""",
         }
 
         return formats.get(format_type, "")
@@ -216,9 +215,9 @@ Répondre en JSON :
     def generate_daily_analysis_prompt(
         self,
         activity_id: str,
-        workout_data: Dict[str, Any],
-        athlete_data: Optional[Dict[str, Any]] = None,
-        feedback: Optional[str] = None
+        workout_data: dict[str, Any],
+        athlete_data: Optional[dict[str, Any]] = None,
+        feedback: Optional[str] = None,
     ) -> str:
         """
         Générer prompt complet analyse daily.
@@ -232,10 +231,7 @@ Répondre en JSON :
         Returns:
             Prompt markdown complet
         """
-        blocks = [
-            self.intro_block("daily"),
-            ""
-        ]
+        blocks = [self.intro_block("daily"), ""]
 
         # Contexte athlète si fourni
         if athlete_data:
@@ -268,10 +264,7 @@ Répondre en JSON :
         return "\n".join(blocks)
 
     def generate_weekly_analysis_prompt(
-        self,
-        week: str,
-        workouts: List[Dict[str, Any]],
-        metrics: Dict[str, Any]
+        self, week: str, workouts: list[dict[str, Any]], metrics: dict[str, Any]
     ) -> str:
         """
         Générer prompt analyse hebdomadaire (Phase 2).

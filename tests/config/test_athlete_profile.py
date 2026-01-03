@@ -1,7 +1,7 @@
 """Tests for athlete_profile module (Sprint R2)."""
 
-import os
 import pytest
+
 from cyclisme_training_logs.config.athlete_profile import AthleteProfile
 
 
@@ -56,6 +56,7 @@ class TestAthleteProfileFromEnv:
 
     def test_from_env_missing_age(self, monkeypatch):
         """Test error when ATHLETE_AGE is missing."""
+        monkeypatch.delenv("ATHLETE_AGE", raising=False)  # Explicitly remove ATHLETE_AGE
         monkeypatch.setenv("ATHLETE_CATEGORY", "master")
         monkeypatch.setenv("ATHLETE_RECOVERY_CAPACITY", "exceptional")
         monkeypatch.setenv("ATHLETE_SLEEP_DEPENDENT", "true")

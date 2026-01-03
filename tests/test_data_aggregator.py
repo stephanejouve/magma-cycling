@@ -11,12 +11,7 @@ Author: Claude Code
 Created: 2025-12-26
 """
 
-import pytest
-from pathlib import Path
-from cyclisme_training_logs.core.data_aggregator import (
-    DataAggregator,
-    AggregationResult
-)
+from cyclisme_training_logs.core.data_aggregator import DataAggregator
 
 
 class ConcreteAggregator(DataAggregator):
@@ -38,9 +33,9 @@ def test_aggregator_pipeline():
     result = aggregator.aggregate()
 
     assert result.success
-    assert result.data['raw'] == {"test": "data"}
-    assert result.data['processed'] == {"processed": "DATA"}
-    assert result.data['formatted'] == "Result: DATA"
+    assert result.data["raw"] == {"test": "data"}
+    assert result.data["processed"] == {"processed": "DATA"}
+    assert result.data["formatted"] == "Result: DATA"
 
 
 def test_aggregator_with_metadata():
@@ -49,8 +44,8 @@ def test_aggregator_with_metadata():
     data = {"key": "value"}
     enriched = aggregator.add_metadata(data)
 
-    assert '_metadata' in enriched
-    assert enriched['_metadata']['aggregator'] == 'ConcreteAggregator'
+    assert "_metadata" in enriched
+    assert enriched["_metadata"]["aggregator"] == "ConcreteAggregator"
 
 
 def test_aggregator_with_custom_config():

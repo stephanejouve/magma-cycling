@@ -21,9 +21,9 @@ Usage:
 """
 
 import argparse
+import re
 import subprocess
 import sys
-import re
 from pathlib import Path
 
 
@@ -36,7 +36,7 @@ class WeeklyReportOrganizer:
         "training_learnings_s{week}.md",
         "protocol_adaptations_s{week}.md",
         "transition_s{week}_s{next_week}.md",
-        "bilan_final_s{week}.md"
+        "bilan_final_s{week}.md",
     ]
 
     def __init__(self, project_root="."):
@@ -46,12 +46,7 @@ class WeeklyReportOrganizer:
     def read_clipboard(self):
         """Lire le presse-papier"""
         try:
-            result = subprocess.run(
-                ['pbpaste'],
-                capture_output=True,
-                text=True,
-                check=True
-            )
+            result = subprocess.run(["pbpaste"], capture_output=True, text=True, check=True)
             return result.stdout
         except Exception as e:
             print(f"❌ Erreur lecture presse-papier : {e}")
@@ -62,7 +57,7 @@ class WeeklyReportOrganizer:
         files = {}
 
         # Stratégie 1 : Chercher les blocs avec # nom_fichier
-        pattern = r'#\s+([\w_]+\.md)\s*\n(.*?)(?=\n#\s+\w+\.md|\Z)'
+        pattern = r"#\s+([\w_]+\.md)\s*\n(.*?)(?=\n#\s+\w+\.md|\Z)"
         matches = re.findall(pattern, text, re.DOTALL)
 
         if matches:
@@ -71,7 +66,7 @@ class WeeklyReportOrganizer:
             return files
 
         # Stratégie 2 : Séparer par "---" ou "___"
-        sections = re.split(r'\n---+\n|\n___+\n', text)
+        sections = re.split(r"\n---+\n|\n___+\n", text)
 
         for section in sections:
             section = section.strip()
@@ -79,14 +74,18 @@ class WeeklyReportOrganizer:
                 continue
 
             # Chercher le nom du fichier dans les premières lignes
-            lines = section.split('\n')
+            lines = section.split("\n")
             for i, line in enumerate(lines[:5]):
                 # Pattern : # Titre ou **Fichier** : nom.md
-                filename_match = re.search(r'(workout_history|metrics_evolution|training_learnings|protocol_adaptations|transition|bilan_final)_s\d+.*?\.md', line, re.IGNORECASE)
+                filename_match = re.search(
+                    r"(workout_history|metrics_evolution|training_learnings|protocol_adaptations|transition|bilan_final)_s\d+.*?\.md",
+                    line,
+                    re.IGNORECASE,
+                )
                 if filename_match:
                     filename = filename_match.group(0)
                     # Prendre tout le contenu après la ligne du nom
-                    content = '\n'.join(lines[i+1:]).strip()
+                    content = "\n".join(lines[i + 1 :]).strip()
                     files[filename] = content
                     break
 
@@ -102,7 +101,7 @@ class WeeklyReportOrganizer:
             return None
 
         for file_path in dir_path.glob("*.md"):
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 files[file_path.name] = f.read()
 
         return files if files else None
@@ -118,7 +117,7 @@ class WeeklyReportOrganizer:
             f"training_learnings_S{week_str}.md",
             f"protocol_adaptations_S{week_str}.md",
             f"transition_S{week_str}_S{next_week_str}.md",
-            f"bilan_final_S{week_str}.md"
+            f"bilan_final_S{week_str}.md",
         ]
 
         found = []
@@ -128,8 +127,10 @@ class WeeklyReportOrganizer:
             # Chercher avec ou sans la semaine dans le nom
             found_match = False
             for filename in files.keys():
-                if expected_file.lower() in filename.lower() or \
-                   filename.lower() in expected_file.lower():
+                if (
+                    expected_file.lower() in filename.lower()
+                    or filename.lower() in expected_file.lower()
+                ):
                     found.append(expected_file)
                     found_match = True
                     break
@@ -145,7 +146,7 @@ class WeeklyReportOrganizer:
         week_dir = self.bilans_dir / week_str
 
         if dry_run:
-            print(f"🧪 Mode DRY-RUN : Aucun fichier ne sera écrit")
+            print("🧪 Mode DRY-RUN : Aucun fichier ne sera écrit")
             print(f"   Répertoire cible : {week_dir}")
             print()
             return True
@@ -160,7 +161,7 @@ class WeeklyReportOrganizer:
         for filename, content in files.items():
             file_path = week_dir / filename
 
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
 
             print(f"   ✅ {filename} ({len(content)} caractères)")
@@ -177,10 +178,10 @@ class WeeklyReportOrganizer:
 
         try:
             result = subprocess.run(
-                ['git', 'diff', '--stat', str(week_dir)],
+                ["git", "diff", "--stat", str(week_dir)],
                 capture_output=True,
                 text=True,
-                cwd=self.project_root
+                cwd=self.project_root,
             )
 
             if result.stdout:
@@ -196,29 +197,15 @@ class WeeklyReportOrganizer:
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Organiser les fichiers du bilan hebdomadaire"
-    )
+    parser = argparse.ArgumentParser(description="Organiser les fichiers du bilan hebdomadaire")
 
     parser.add_argument(
-        '--week',
-        type=int,
-        required=True,
-        help="Numéro de semaine (ex: 67 pour S067)"
+        "--week", type=int, required=True, help="Numéro de semaine (ex: 67 pour S067)"
     )
+    parser.add_argument("--from-dir", help="Lire depuis un répertoire au lieu du presse-papier")
+    parser.add_argument("--dry-run", action="store_true", help="Mode test : afficher sans écrire")
     parser.add_argument(
-        '--from-dir',
-        help="Lire depuis un répertoire au lieu du presse-papier"
-    )
-    parser.add_argument(
-        '--dry-run',
-        action='store_true',
-        help="Mode test : afficher sans écrire"
-    )
-    parser.add_argument(
-        '--project-root',
-        default='.',
-        help="Racine du projet (défaut: répertoire courant)"
+        "--project-root", default=".", help="Racine du projet (défaut: répertoire courant)"
     )
 
     args = parser.parse_args()
@@ -278,7 +265,7 @@ def main():
         print()
 
         response = input("   Continuer malgré les fichiers manquants ? (y/N) : ")
-        if response.lower() != 'y':
+        if response.lower() != "y":
             print("❌ Organisation annulée")
             sys.exit(1)
 
@@ -287,7 +274,7 @@ def main():
     # Confirmer sauvegarde
     if not args.dry_run:
         response = input(f"💾 Sauvegarder dans bilans_hebdo/s{week_number:03d}/ ? (Y/n) : ")
-        if response.lower() == 'n':
+        if response.lower() == "n":
             print("❌ Organisation annulée")
             sys.exit(0)
 
@@ -325,5 +312,5 @@ def main():
         print("=" * 60)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

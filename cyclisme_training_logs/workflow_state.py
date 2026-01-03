@@ -48,9 +48,9 @@ Metadata:
 """
 
 import json
-from pathlib import Path
 from datetime import datetime
-from typing import List, Optional, Dict
+from pathlib import Path
+from typing import Optional
 
 from cyclisme_training_logs.config import get_data_config
 
@@ -83,34 +83,34 @@ class WorkflowState:
 
         self.state = self._load_state()
 
-    def _load_state(self) -> Dict:
+    def _load_state(self) -> dict:
         """Charger l'état depuis le fichier JSON"""
         if not self.state_file.exists():
             return {
                 "last_analyzed_activity_id": None,
                 "last_analyzed_date": None,
                 "total_analyses": 0,
-                "history": []
+                "history": [],
             }
 
         try:
-            with open(self.state_file, 'r', encoding='utf-8') as f:
+            with open(self.state_file, encoding="utf-8") as f:
                 return json.load(f)
-        except (json.JSONDecodeError, IOError) as e:
+        except (OSError, json.JSONDecodeError) as e:
             print(f"⚠️  Erreur lecture state file: {e}")
             return {
                 "last_analyzed_activity_id": None,
                 "last_analyzed_date": None,
                 "total_analyses": 0,
-                "history": []
+                "history": [],
             }
 
     def _save_state(self):
         """Sauvegarder l'état dans le fichier JSON"""
         try:
-            with open(self.state_file, 'w', encoding='utf-8') as f:
+            with open(self.state_file, "w", encoding="utf-8") as f:
                 json.dump(self.state, f, indent=2, ensure_ascii=False)
-        except IOError as e:
+        except OSError as e:
             print(f"⚠️  Erreur sauvegarde state file: {e}")
 
     def mark_analyzed(self, activity_id: str, activity_date: str = None):
@@ -127,11 +127,13 @@ class WorkflowState:
 
         # Ajouter à l'historique (garder les 50 dernières)
         history = self.state.get("history", [])
-        history.append({
-            "activity_id": activity_id,
-            "activity_date": activity_date,
-            "analyzed_at": datetime.now().isoformat()
-        })
+        history.append(
+            {
+                "activity_id": activity_id,
+                "activity_date": activity_date,
+                "analyzed_at": datetime.now().isoformat(),
+            }
+        )
         self.state["history"] = history[-50:]  # Garder seulement les 50 dernières
 
         self._save_state()
@@ -141,7 +143,7 @@ class WorkflowState:
         return self.state.get("last_analyzed_activity_id")
 
     @staticmethod
-    def is_valid_activity(activity: Dict) -> bool:
+    def is_valid_activity(activity: dict) -> bool:
         """
         Filtre activités valides pour analyse
 
@@ -157,24 +159,24 @@ class WorkflowState:
             True si activité valide pour analyse
         """
         # Ignorer activités trop courtes (< 2 minutes)
-        moving_time = activity.get('moving_time', 0)
+        moving_time = activity.get("moving_time", 0)
         if moving_time < 120:  # 120 secondes = 2 minutes
             return False
 
         # Ignorer activités sans charge d'entraînement (TSS = 0)
-        training_load = activity.get('icu_training_load', 0)
+        training_load = activity.get("icu_training_load", 0)
         if training_load == 0:
             return False
 
         # Ignorer activités sans données de puissance
         # Vérifier icu_average_watts (Intervals.icu) OU average_watts (legacy)
-        average_watts = activity.get('icu_average_watts') or activity.get('average_watts')
+        average_watts = activity.get("icu_average_watts") or activity.get("average_watts")
         if average_watts is None or average_watts == 0:
             return False
 
         return True
 
-    def get_unanalyzed_activities(self, all_activities: List[Dict]) -> List[Dict]:
+    def get_unanalyzed_activities(self, all_activities: list[dict]) -> list[dict]:
         """
         Détecter les activités non analysées
 
@@ -188,15 +190,15 @@ class WorkflowState:
         filtered_count = 0
 
         for activity in all_activities:
-            activity_id = activity.get('id')
+            activity_id = activity.get("id")
 
             # Filtrer activités invalides (fantômes)
             if not self.is_valid_activity(activity):
                 filtered_count += 1
                 # Debug info pour activités filtrées
-                name = activity.get('name', 'N/A')
-                duration_min = activity.get('moving_time', 0) // 60
-                tss = activity.get('icu_training_load', 0)
+                name = activity.get("name", "N/A")
+                duration_min = activity.get("moving_time", 0) // 60
+                tss = activity.get("icu_training_load", 0)
                 # Note: Info silencieuse - pas d'affichage pour ne pas polluer l'output
                 continue
 
@@ -210,13 +212,13 @@ class WorkflowState:
 
         return unanalyzed
 
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> dict:
         """Récupérer les statistiques du workflow"""
         return {
             "total_analyses": self.state.get("total_analyses", 0),
             "last_analyzed_id": self.state.get("last_analyzed_activity_id"),
             "last_analyzed_date": self.state.get("last_analyzed_date"),
-            "history_count": len(self.state.get("history", []))
+            "history_count": len(self.state.get("history", [])),
         }
 
     def is_activity_analyzed(self, activity_id: str) -> bool:
@@ -235,15 +237,15 @@ class WorkflowState:
             session_type: Type ("rest", "cancelled", "skipped")
             date: Date session (YYYY-MM-DD)
         """
-        if 'documented_specials' not in self.state:
-            self.state['documented_specials'] = {}
+        if "documented_specials" not in self.state:
+            self.state["documented_specials"] = {}
 
         key = f"{session_id}_{date}"
-        self.state['documented_specials'][key] = {
-            'session_id': session_id,
-            'type': session_type,
-            'date': date,
-            'documented_at': datetime.now().isoformat()
+        self.state["documented_specials"][key] = {
+            "session_id": session_id,
+            "type": session_type,
+            "date": date,
+            "documented_at": datetime.now().isoformat(),
         }
         self._save_state()
 
@@ -261,35 +263,35 @@ class WorkflowState:
             return False
 
         key = f"{session_id}_{date}"
-        return key in self.state.get('documented_specials', {})
+        return key in self.state.get("documented_specials", {})
 
-    def get_documented_specials(self) -> Dict:
+    def get_documented_specials(self) -> dict:
         """Récupérer toutes les sessions spéciales documentées
 
         Returns:
             Dict avec clés session_id_date et valeurs metadata
         """
-        return self.state.get('documented_specials', {})
+        return self.state.get("documented_specials", {})
 
     # === PERSISTENCE FEEDBACK ATHLÈTE (PHASE 4) ===
 
-    def save_session_feedback(self, activity_id: str, feedback: Dict):
+    def save_session_feedback(self, activity_id: str, feedback: dict):
         """Sauvegarder feedback athlète pour une session
 
         Args:
             activity_id: ID activité Intervals.icu
             feedback: Dict avec keys 'rpe', 'comments', 'sleep_quality', etc.
         """
-        if 'feedbacks' not in self.state:
-            self.state['feedbacks'] = {}
+        if "feedbacks" not in self.state:
+            self.state["feedbacks"] = {}
 
-        self.state['feedbacks'][activity_id] = {
-            'feedback': feedback,
-            'timestamp': datetime.now().isoformat()
+        self.state["feedbacks"][activity_id] = {
+            "feedback": feedback,
+            "timestamp": datetime.now().isoformat(),
         }
         self._save_state()
 
-    def get_session_feedback(self, activity_id: str) -> Optional[Dict]:
+    def get_session_feedback(self, activity_id: str) -> Optional[dict]:
         """Récupérer feedback existant pour une session
 
         Args:
@@ -298,7 +300,7 @@ class WorkflowState:
         Returns:
             Dict avec 'feedback' et 'timestamp' ou None si absent
         """
-        feedbacks = self.state.get('feedbacks', {})
+        feedbacks = self.state.get("feedbacks", {})
         return feedbacks.get(activity_id)
 
     def has_session_feedback(self, activity_id: str) -> bool:
@@ -310,7 +312,7 @@ class WorkflowState:
         Returns:
             True si feedback existe, False sinon
         """
-        return activity_id in self.state.get('feedbacks', {})
+        return activity_id in self.state.get("feedbacks", {})
 
     def reset(self):
         """Réinitialiser l'état (debug/test)"""
@@ -318,7 +320,7 @@ class WorkflowState:
             "last_analyzed_activity_id": None,
             "last_analyzed_date": None,
             "total_analyses": 0,
-            "history": []
+            "history": [],
         }
         self._save_state()
 
@@ -337,7 +339,7 @@ def main():
     print()
 
     # Test: marquer une activité
-    if input("Marquer une activité test ? (o/n) : ").lower() == 'o':
+    if input("Marquer une activité test ? (o/n) : ").lower() == "o":
         activity_id = input("ID activité : ")
         state.mark_analyzed(activity_id, datetime.now().isoformat())
         print("✅ Activité marquée comme analysée")
@@ -346,5 +348,5 @@ def main():
         print(json.dumps(state.state, indent=2, ensure_ascii=False))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

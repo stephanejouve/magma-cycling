@@ -25,44 +25,33 @@ def load_config(config_file):
     if not config_path.exists():
         return None
 
-    with open(config_path, 'r') as f:
+    with open(config_path) as f:
         return json.load(f)
 
 
 def format_source_icon(source):
     """Retourner un icône selon la source"""
     icons = {
-        'STRAVA': '⚠️  ',
-        'MANUAL': '✍️  ',
-        'FILE_UPLOAD': '📤 ',
-        'INTERVALS': '✅ ',
+        "STRAVA": "⚠️  ",
+        "MANUAL": "✍️  ",
+        "FILE_UPLOAD": "📤 ",
+        "INTERVALS": "✅ ",
     }
-    return icons.get(source, '❓ ')
+    return icons.get(source, "❓ ")
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Vérifier les sources des activités récentes"
-    )
+    parser = argparse.ArgumentParser(description="Vérifier les sources des activités récentes")
 
+    parser.add_argument("--athlete-id", help="ID de l'athlète Intervals.icu (ex: i123456)")
+    parser.add_argument("--api-key", help="Clé API Intervals.icu")
     parser.add_argument(
-        '--athlete-id',
-        help="ID de l'athlète Intervals.icu (ex: i123456)"
+        "--config",
+        default="~/.intervals_config.json",
+        help="Fichier de configuration JSON (défaut: ~/.intervals_config.json)",
     )
     parser.add_argument(
-        '--api-key',
-        help="Clé API Intervals.icu"
-    )
-    parser.add_argument(
-        '--config',
-        default='~/.intervals_config.json',
-        help="Fichier de configuration JSON (défaut: ~/.intervals_config.json)"
-    )
-    parser.add_argument(
-        '--last-days',
-        type=int,
-        default=7,
-        help="Nombre de jours à vérifier (défaut: 7)"
+        "--last-days", type=int, default=7, help="Nombre de jours à vérifier (défaut: 7)"
     )
 
     args = parser.parse_args()
@@ -70,8 +59,8 @@ def main():
     # Charger la config
     config = load_config(args.config)
 
-    athlete_id = args.athlete_id or (config and config.get('athlete_id'))
-    api_key = args.api_key or (config and config.get('api_key'))
+    athlete_id = args.athlete_id or (config and config.get("athlete_id"))
+    api_key = args.api_key or (config and config.get("api_key"))
 
     if not athlete_id or not api_key:
         print("❌ Erreur: athlete_id et api_key requis")
@@ -83,10 +72,10 @@ def main():
     newest = datetime.now()
     oldest = newest - timedelta(days=args.last_days)
 
-    oldest_str = oldest.strftime('%Y-%m-%d')
-    newest_str = newest.strftime('%Y-%m-%d')
+    oldest_str = oldest.strftime("%Y-%m-%d")
+    newest_str = newest.strftime("%Y-%m-%d")
 
-    print(f"🔍 Vérification des sources d'activités")
+    print("🔍 Vérification des sources d'activités")
     print(f"   Période: {oldest_str} → {newest_str}")
     print()
 
@@ -108,7 +97,7 @@ def main():
         # Compter par source
         sources_count = {}
         for activity in activities:
-            source = activity.get('source', 'Unknown')
+            source = activity.get("source", "Unknown")
             sources_count[source] = sources_count.get(source, 0) + 1
 
         # Afficher le résumé
@@ -126,30 +115,32 @@ def main():
 
         strava_count = 0
         for activity in reversed(activities):  # Plus récente en premier
-            date_str = activity['start_date_local'][:10]
+            date_str = activity["start_date_local"][:10]
             date = datetime.fromisoformat(date_str)
-            date_formatted = date.strftime('%d/%m/%Y')
+            date_formatted = date.strftime("%d/%m/%Y")
 
-            name = activity.get('name', 'Séance')
-            source = activity.get('source', 'Unknown')
-            activity_type = activity.get('type', 'Cyclisme')
-            activity_id = activity.get('id', 'N/A')
+            name = activity.get("name", "Séance")
+            source = activity.get("source", "Unknown")
+            activity_type = activity.get("type", "Cyclisme")
+            activity_id = activity.get("id", "N/A")
 
             icon = format_source_icon(source)
 
             # Métriques
-            tss = activity.get('icu_training_load', 0)
-            duration_min = activity.get('moving_time', 0) // 60
-            avg_power = activity.get('icu_average_watts', 0)
+            tss = activity.get("icu_training_load", 0)
+            duration_min = activity.get("moving_time", 0) // 60
+            avg_power = activity.get("icu_average_watts", 0)
 
             # Warning pour Strava
             warning = ""
-            if source == 'STRAVA':
+            if source == "STRAVA":
                 strava_count += 1
                 warning = " ⚠️  DONNÉES LIMITÉES"
 
             print(f"{icon}{date_formatted} | {name[:35]:35s} | {source:10s}")
-            print(f"   Type: {activity_type:15s} | TSS: {tss:3.0f} | Durée: {duration_min:3d}min | Power: {avg_power:3.0f}W")
+            print(
+                f"   Type: {activity_type:15s} | TSS: {tss:3.0f} | Durée: {duration_min:3d}min | Power: {avg_power:3.0f}W"
+            )
             print(f"   ID: {activity_id}{warning}")
             print("-" * 80)
 
@@ -175,9 +166,10 @@ def main():
     except Exception as e:
         print(f"❌ Erreur: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -57,11 +57,9 @@ Metadata:
 
 import argparse
 import sys
-from pathlib import Path
 from datetime import datetime
 
 from cyclisme_training_logs.workflow_state import WorkflowState
-from cyclisme_training_logs.config import get_data_config
 
 
 def show_state(state: WorkflowState):
@@ -106,15 +104,15 @@ def list_activities(state: WorkflowState, count: int = 10):
     recent = history[-count:]
 
     for i, entry in enumerate(reversed(recent), 1):
-        activity_id = entry.get('activity_id', 'N/A')
-        activity_date = entry.get('activity_date', 'N/A')
-        analyzed_at = entry.get('analyzed_at', 'N/A')
+        activity_id = entry.get("activity_id", "N/A")
+        activity_date = entry.get("activity_date", "N/A")
+        analyzed_at = entry.get("analyzed_at", "N/A")
 
         # Formater analyzed_at
-        if analyzed_at != 'N/A':
+        if analyzed_at != "N/A":
             try:
                 dt = datetime.fromisoformat(analyzed_at)
-                analyzed_at = dt.strftime('%Y-%m-%d %H:%M:%S')
+                analyzed_at = dt.strftime("%Y-%m-%d %H:%M:%S")
             except:
                 pass
 
@@ -129,7 +127,7 @@ def remove_activity(state: WorkflowState, activity_id: str):
     print(f"🔍 Recherche de l'activité {activity_id}...")
 
     history = state.state.get("history", [])
-    matching = [h for h in history if h['activity_id'] == activity_id]
+    matching = [h for h in history if h["activity_id"] == activity_id]
 
     if not matching:
         print(f"❌ Activité {activity_id} non trouvée dans l'historique")
@@ -146,28 +144,28 @@ def remove_activity(state: WorkflowState, activity_id: str):
     print()
     confirm = input("⚠️  Confirmer la suppression ? (o/n) : ").strip().lower()
 
-    if confirm != 'o':
+    if confirm != "o":
         print("❌ Suppression annulée")
         return False
 
     # Supprimer toutes les occurrences
-    state.state['history'] = [h for h in history if h['activity_id'] != activity_id]
+    state.state["history"] = [h for h in history if h["activity_id"] != activity_id]
 
     # Mettre à jour last_analyzed si c'était la dernière
-    if state.state.get('last_analyzed_activity_id') == activity_id:
-        if state.state['history']:
-            last = state.state['history'][-1]
-            state.state['last_analyzed_activity_id'] = last['activity_id']
-            state.state['last_analyzed_date'] = last['analyzed_at']
+    if state.state.get("last_analyzed_activity_id") == activity_id:
+        if state.state["history"]:
+            last = state.state["history"][-1]
+            state.state["last_analyzed_activity_id"] = last["activity_id"]
+            state.state["last_analyzed_date"] = last["analyzed_at"]
         else:
-            state.state['last_analyzed_activity_id'] = None
-            state.state['last_analyzed_date'] = None
+            state.state["last_analyzed_activity_id"] = None
+            state.state["last_analyzed_date"] = None
 
     state._save_state()
 
     print()
     print(f"✅ Activité {activity_id} supprimée avec succès")
-    print(f"   L'activité sera de nouveau détectée comme non analysée")
+    print("   L'activité sera de nouveau détectée comme non analysée")
     print()
 
     return True
@@ -186,7 +184,7 @@ def reset_state(state: WorkflowState):
 
     confirm = input("⚠️  Confirmer le reset COMPLET ? (o/n) : ").strip().lower()
 
-    if confirm != 'o':
+    if confirm != "o":
         print("❌ Reset annulé")
         return False
 
@@ -219,35 +217,26 @@ Exemples:
 
   # Combinaisons
   poetry run manage-state --remove i113782165 --show
-        """
+        """,
     )
 
-    parser.add_argument(
-        '--show',
-        action='store_true',
-        help="Afficher l'état actuel du workflow"
-    )
+    parser.add_argument("--show", action="store_true", help="Afficher l'état actuel du workflow")
 
     parser.add_argument(
-        '--list',
+        "--list",
         type=int,
-        metavar='N',
-        nargs='?',
+        metavar="N",
+        nargs="?",
         const=10,
-        help="Lister les N dernières activités (défaut: 10)"
+        help="Lister les N dernières activités (défaut: 10)",
     )
 
     parser.add_argument(
-        '--remove',
-        type=str,
-        metavar='ACTIVITY_ID',
-        help="Supprimer une activité de l'historique"
+        "--remove", type=str, metavar="ACTIVITY_ID", help="Supprimer une activité de l'historique"
     )
 
     parser.add_argument(
-        '--reset',
-        action='store_true',
-        help="Reset complet du workflow state (DANGER!)"
+        "--reset", action="store_true", help="Reset complet du workflow state (DANGER!)"
     )
 
     args = parser.parse_args()
@@ -286,5 +275,5 @@ Exemples:
     sys.exit(0 if success else 1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -25,7 +25,7 @@ Examples:
 
 import argparse
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -67,8 +67,12 @@ def print_current_week_stats(week: str) -> None:
     sessions_completed = 4
     sessions_total = 5
 
-    print(f"║   TSS: {tss_completed} / {tss_target} ({tss_pct}%)    CTL: {ctl}    ATL: {atl}       ║")
-    print(f"║   Sessions: {sessions_completed}/{sessions_total} completed                                ║")
+    print(
+        f"║   TSS: {tss_completed} / {tss_target} ({tss_pct}%)    CTL: {ctl}    ATL: {atl}       ║"
+    )
+    print(
+        f"║   Sessions: {sessions_completed}/{sessions_total} completed                                ║"
+    )
     print("║                                                          ║")
 
 
@@ -92,7 +96,7 @@ def print_ftp_progression(intelligence_path: Optional[Path]) -> None:
             result = intelligence.get_pid_correction(
                 current_ftp=220,  # TODO: Get from athlete profile or latest test
                 target_ftp=260,  # TODO: Get from goals
-                dt=1.0
+                dt=1.0,
             )
 
             current_ftp = 220
@@ -101,7 +105,9 @@ def print_ftp_progression(intelligence_path: Optional[Path]) -> None:
             tss_adj = result["correction"]["tss_adjustment"]
             recommendation = result["recommendation"]
 
-            print(f"║   Current: {current_ftp}W    Target: {target_ftp}W    Gap: {gap}W             ║")
+            print(
+                f"║   Current: {current_ftp}W    Target: {target_ftp}W    Gap: {gap}W             ║"
+            )
             print(f"║   PID Recommendation: {tss_adj:+.0f} TSS/week                      ║")
             print(f"║   {recommendation[:54]:<54} ║")
         except Exception as e:
@@ -132,10 +138,7 @@ def print_recent_learnings(intelligence_path: Optional[Path]) -> None:
 
     if intelligence_path and intelligence_path.exists():
         try:
-            from cyclisme_training_logs.intelligence import (
-                TrainingIntelligence,
-                ConfidenceLevel,
-            )
+            from cyclisme_training_logs.intelligence import ConfidenceLevel, TrainingIntelligence
 
             intelligence = TrainingIntelligence.load_from_file(intelligence_path)
 
@@ -145,9 +148,9 @@ def print_recent_learnings(intelligence_path: Optional[Path]) -> None:
                 key=lambda l: (
                     l.confidence == ConfidenceLevel.VALIDATED,
                     l.confidence.value,
-                    len(l.evidence)
+                    len(l.evidence),
                 ),
-                reverse=True
+                reverse=True,
             )[:3]
 
             for learning in learnings:
@@ -203,22 +206,17 @@ def print_dashboard_footer() -> None:
 
 def main() -> int:
     """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Dashboard - Vue d'ensemble rapide entraînement"
-    )
+    parser = argparse.ArgumentParser(description="Dashboard - Vue d'ensemble rapide entraînement")
 
     parser.add_argument(
-        "--week",
-        type=str,
-        default=None,
-        help="ISO week (YYYY-WXX). Default: current week"
+        "--week", type=str, default=None, help="ISO week (YYYY-WXX). Default: current week"
     )
 
     parser.add_argument(
         "--intelligence",
         type=Path,
         default=None,
-        help="Path to intelligence JSON file (for learnings, PID)"
+        help="Path to intelligence JSON file (for learnings, PID)",
     )
 
     args = parser.parse_args()

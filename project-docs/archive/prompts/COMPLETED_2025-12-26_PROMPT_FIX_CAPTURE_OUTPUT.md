@@ -34,15 +34,15 @@ Afficher stdout ET stderr:
 ```python
 def analyze_activity(self, activity: Dict) -> bool:
     """Analyze single activity using workflow-coach."""
-    
+
     activity_id = str(activity.get('id', ''))
-    
+
     if not activity_id:
         print(f"⚠️  Activité sans ID, skip")
         return False
-    
+
     print(f"🚀 Lancement analyse automatique...")
-    
+
     cmd = [
         sys.executable,
         '-m', 'cyclisme_training_logs.workflow_coach',
@@ -52,7 +52,7 @@ def analyze_activity(self, activity: Dict) -> bool:
         '--skip-feedback',
         '--skip-git'
     ]
-    
+
     try:
         result = subprocess.run(
             cmd,
@@ -61,32 +61,32 @@ def analyze_activity(self, activity: Dict) -> bool:
             text=True,
             timeout=300
         )
-        
+
         if result.returncode == 0:
             print(f"✅ Succès: {activity_id}")
             return True
         else:
             print(f"❌ Échec analyse: {activity_id}")
             print(f"   Return code: {result.returncode}")
-            
+
             # ✅ Afficher stdout ET stderr
             if result.stdout:
                 print(f"   Output:\n{result.stdout[:1000]}")
             if result.stderr:
                 print(f"   Error:\n{result.stderr[:1000]}")
-            
+
             # Si les deux vides, debug info
             if not result.stdout and not result.stderr:
                 print(f"   ⚠️  Aucune sortie capturée!")
                 print(f"   Command: {' '.join(cmd)}")
                 print(f"   CWD: {self.data_config.data_repo_path}")
-            
+
             return False
-            
+
     except subprocess.TimeoutExpired:
         print(f"⏱️  Timeout (300s) pour {activity_id}")
         return False
-        
+
     except Exception as e:
         print(f"❌ Exception: {type(e).__name__}: {e}")
         return False
@@ -108,7 +108,7 @@ def add_arguments(self, parser):
 
 def analyze_activity(self, activity: Dict) -> bool:
     # ... setup cmd
-    
+
     result = subprocess.run(
         cmd,
         cwd=str(self.data_config.data_repo_path),
@@ -116,7 +116,7 @@ def analyze_activity(self, activity: Dict) -> bool:
         text=True,
         timeout=300
     )
-    
+
     if self.verbose:
         # Sortie déjà affichée en live
         print(f"\n{'='*70}")
@@ -197,6 +197,6 @@ Avec fix:
 
 ---
 
-**Créé:** 2025-12-26 20:00  
-**Bloque:** Debug backfill failures  
+**Créé:** 2025-12-26 20:00
+**Bloque:** Debug backfill failures
 **Solution:** Capture stdout en plus de stderr

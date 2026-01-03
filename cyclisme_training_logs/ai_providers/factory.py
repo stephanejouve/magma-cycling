@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 AI Analyzer Factory for provider selection.
 
@@ -30,20 +29,20 @@ Author: Claude Code
 Created: 2025-12-09
 """
 
-from typing import Dict, Any
+import logging
+from typing import Any
 
 from .base import AIAnalyzer, AIProvider
-from .clipboard import ClipboardAnalyzer
 from .claude_api import ClaudeAPIAnalyzer
+from .clipboard import ClipboardAnalyzer
 from .mistral_api import MistralAPIAnalyzer
-from .openai_api import OpenAIAnalyzer
 from .ollama import OllamaAnalyzer
-
-import logging
+from .openai_api import OpenAIAnalyzer
 
 
 class ConfigError(Exception):
     """Configuration error for AI providers."""
+
     pass
 
 
@@ -77,7 +76,7 @@ class AIProviderFactory:
     """
 
     @staticmethod
-    def create(provider: str, config: Dict[str, Any]) -> AIAnalyzer:
+    def create(provider: str, config: dict[str, Any]) -> AIAnalyzer:
         """Create AI analyzer instance from provider name and config.
 
         Args:
@@ -144,36 +143,30 @@ class AIProviderFactory:
 
         # === CLAUDE API ===
         elif provider_enum == AIProvider.CLAUDE:
-            api_key = config.get('claude_api_key')
+            api_key = config.get("claude_api_key")
             if not api_key:
                 raise ConfigError(
-                    "Claude API key required. "
-                    "Set CLAUDE_API_KEY in .env or pass in config."
+                    "Claude API key required. " "Set CLAUDE_API_KEY in .env or pass in config."
                 )
 
-            model = config.get('claude_model', 'claude-sonnet-4-20250514')
-            max_tokens = config.get('claude_max_tokens', 4000)
+            model = config.get("claude_model", "claude-sonnet-4-20250514")
+            max_tokens = config.get("claude_max_tokens", 4000)
 
             logger.info(f"Creating ClaudeAPIAnalyzer (model: {model})")
-            return ClaudeAPIAnalyzer(
-                api_key=api_key,
-                model=model,
-                max_tokens=max_tokens
-            )
+            return ClaudeAPIAnalyzer(api_key=api_key, model=model, max_tokens=max_tokens)
 
         # === MISTRAL API (Recommended Value) ===
         elif provider_enum == AIProvider.MISTRAL:
-            api_key = config.get('mistral_api_key')
+            api_key = config.get("mistral_api_key")
             if not api_key:
                 raise ConfigError(
-                    "Mistral API key required. "
-                    "Set MISTRAL_API_KEY in .env or pass in config."
+                    "Mistral API key required. " "Set MISTRAL_API_KEY in .env or pass in config."
                 )
 
-            model = config.get('mistral_model', 'mistral-large-latest')
-            temperature = config.get('mistral_temperature', 0.7)
-            max_tokens = config.get('mistral_max_tokens', 4000)
-            timeout = config.get('mistral_timeout', 60)
+            model = config.get("mistral_model", "mistral-large-latest")
+            temperature = config.get("mistral_temperature", 0.7)
+            max_tokens = config.get("mistral_max_tokens", 4000)
+            timeout = config.get("mistral_timeout", 60)
 
             logger.info(f"Creating MistralAPIAnalyzer (model: {model}, temperature: {temperature})")
             return MistralAPIAnalyzer(
@@ -181,43 +174,36 @@ class AIProviderFactory:
                 model=model,
                 temperature=temperature,
                 max_tokens=max_tokens,
-                timeout=timeout
+                timeout=timeout,
             )
 
         # === OPENAI ===
         elif provider_enum == AIProvider.OPENAI:
-            api_key = config.get('openai_api_key')
+            api_key = config.get("openai_api_key")
             if not api_key:
                 raise ConfigError(
-                    "OpenAI API key required. "
-                    "Set OPENAI_API_KEY in .env or pass in config."
+                    "OpenAI API key required. " "Set OPENAI_API_KEY in .env or pass in config."
                 )
 
-            model = config.get('openai_model', 'gpt-4-turbo')
+            model = config.get("openai_model", "gpt-4-turbo")
 
             logger.info(f"Creating OpenAIAnalyzer (model: {model})")
-            return OpenAIAnalyzer(
-                api_key=api_key,
-                model=model
-            )
+            return OpenAIAnalyzer(api_key=api_key, model=model)
 
         # === OLLAMA (Local) ===
         elif provider_enum == AIProvider.OLLAMA:
-            host = config.get('ollama_host', 'http://localhost:11434')
-            model = config.get('ollama_model', 'mistral:7b')
+            host = config.get("ollama_host", "http://localhost:11434")
+            model = config.get("ollama_model", "mistral:7b")
 
             logger.info(f"Creating OllamaAnalyzer (model: {model}, host: {host})")
-            return OllamaAnalyzer(
-                host=host,
-                model=model
-            )
+            return OllamaAnalyzer(host=host, model=model)
 
         else:
             # Should never reach here due to enum validation above
             raise ConfigError(f"Provider not implemented: {provider}")
 
     @staticmethod
-    def get_available_providers() -> Dict[str, str]:
+    def get_available_providers() -> dict[str, str]:
         """Get dict of available providers with descriptions.
 
         Returns:
@@ -229,15 +215,15 @@ class AIProviderFactory:
             'Manual copy/paste (free, no API)'
         """
         return {
-            'clipboard': 'Manual copy/paste (free, no API) - Default',
-            'claude_api': 'Claude Sonnet 4 ($3/1M in, $15/1M out)',
-            'mistral_api': 'Mistral Large ($2/1M in, $6/1M out) - Best value 🎯',
-            'openai': 'OpenAI GPT-4 Turbo ($10/1M in, $30/1M out)',
-            'ollama': 'Local LLMs (free, unlimited, private) 🔒'
+            "clipboard": "Manual copy/paste (free, no API) - Default",
+            "claude_api": "Claude Sonnet 4 ($3/1M in, $15/1M out)",
+            "mistral_api": "Mistral Large ($2/1M in, $6/1M out) - Best value 🎯",
+            "openai": "OpenAI GPT-4 Turbo ($10/1M in, $30/1M out)",
+            "ollama": "Local LLMs (free, unlimited, private) 🔒",
         }
 
     @staticmethod
-    def validate_provider_config(provider: str, config: Dict[str, Any]) -> tuple[bool, str]:
+    def validate_provider_config(provider: str, config: dict[str, Any]) -> tuple[bool, str]:
         """Validate config for specific provider.
 
         Args:
@@ -258,29 +244,29 @@ class AIProviderFactory:
         provider = provider.lower().strip()
 
         # Clipboard always valid
-        if provider == 'clipboard':
+        if provider == "clipboard":
             return True, "Clipboard ready (no config needed)"
 
         # Claude API
-        if provider == 'claude_api':
-            if not config.get('claude_api_key'):
+        if provider == "claude_api":
+            if not config.get("claude_api_key"):
                 return False, "CLAUDE_API_KEY missing in config"
             return True, "Claude API config valid"
 
         # Mistral API
-        if provider == 'mistral_api':
-            if not config.get('mistral_api_key'):
+        if provider == "mistral_api":
+            if not config.get("mistral_api_key"):
                 return False, "MISTRAL_API_KEY missing in config"
             return True, "Mistral API config valid"
 
         # OpenAI
-        if provider == 'openai':
-            if not config.get('openai_api_key'):
+        if provider == "openai":
+            if not config.get("openai_api_key"):
                 return False, "OPENAI_API_KEY missing in config"
             return True, "OpenAI API config valid"
 
         # Ollama
-        if provider == 'ollama':
+        if provider == "ollama":
             # Ollama needs no API key, just server running
             return True, "Ollama config valid (check server running)"
 

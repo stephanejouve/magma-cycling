@@ -40,7 +40,7 @@
 ## Découvertes Majeures
 
 ### 1. Dissociation Performance Ponctuelle vs État Systémique
-Découplages exceptionnels (0.2%, 0.6%, 2.0%, 4.9% — moyenne 1.9%) maintenus en dette sommeil chronique ne reflètent pas capacité récupération réelle. **VFC révèle surcharge système nerveux autonome invisible dans métriques immédiates** (chute 81ms→51ms, -37% en 48h précède symptômes +24h). 
+Découplages exceptionnels (0.2%, 0.6%, 2.0%, 4.9% — moyenne 1.9%) maintenus en dette sommeil chronique ne reflètent pas capacité récupération réelle. **VFC révèle surcharge système nerveux autonome invisible dans métriques immédiates** (chute 81ms→51ms, -37% en 48h précède symptômes +24h).
 
 **Implication** : Monitoring VFC quotidien obligatoire âge 54, performance séance isolée ≠ validation état général. Seuils décisionnels VFC formalisés (<50ms repos, 50-55ms Z1 max, >60ms intensité modérée).
 
@@ -49,7 +49,7 @@ Découplages exceptionnels (0.2%, 0.6%, 2.0%, 4.9% — moyenne 1.9%) maintenus e
 ### 2. Sommeil = Facteur Limitant Progression Intensité
 Dette sommeil 3 nuits <6h (4.8h-5.4h-6.5h) compatible exécution Z2 qualitative (découplages bons) mais **empêche progression sweet-spot authentique** (88-90% FTP). Séance S069-02 étiquetée "sweet-spot" réellement tempo modéré (IF 0.73).
 
-**Seuils établis** : 
+**Seuils établis** :
 - 5-6h sommeil : Z2 max (75% FTP)
 - 6h30-7h : Sweet-spot possible (88% FTP)
 - 7h+ : VO2 max autorisée (>106% FTP)
@@ -124,7 +124,7 @@ Structure formalisée 35min Z1 (50-60% FTP) avec 5 critères validation (FC <100
 ---
 
 ### 3. Sommeil Efficace (Nouvelle Métrique)
-Calcul : Durée Totale (h) × (% Profond / 15%)  
+Calcul : Durée Totale (h) × (% Profond / 15%)
 Exemples : 7h avec 20% profond = 9.3h efficaces (excellent), 7h avec 10% profond = 4.7h efficaces (insuffisant).
 
 **Seuils décisionnels** : >7h efficaces = VO2 possible, 6-7h = sweet-spot OK, 5-6h = Z2 max, <5h = Z1 max ou repos.

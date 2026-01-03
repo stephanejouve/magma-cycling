@@ -155,7 +155,7 @@ Fichier : S001-01-END-EchauffementBase-V001.zwo
 
 **Plages Optimales Identifiées**
 - VO2 Max : TSB +5 minimum (checklist validée)
-- Sweet-Spot : TSB -5 à +5 
+- Sweet-Spot : TSB -5 à +5
 - Endurance : TSB quelconque
 - Tests : TSB +5 à +15
 
@@ -309,7 +309,7 @@ Fichier : S001-01-END-EchauffementBase-V001.zwo
 - Terrain : Capacité significativement supérieure
   - Exemple : 54km outdoor RPE 4/10 = 163 TSS
   - Tolérance volume/intensité augmentée
-  
+
 - Indoor : Perception effort différente
   - Zwift : [caractéristiques]
   - TrainingPeaks Virtual : [caractéristiques]
@@ -853,6 +853,6 @@ Nouveau template validé ? → Mise à jour workout-templates.md
 
 ---
 
-**Templates créés** : Novembre 2025  
-**Version** : 1.0  
+**Templates créés** : Novembre 2025
+**Version** : 1.0
 **Usage** : Initialisation logs ou reset complet documentation

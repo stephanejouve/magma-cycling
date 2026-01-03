@@ -26,7 +26,7 @@
 
 **Graphique Mental TSB** :
 ```
-    +5 |                                    
+    +5 |
      0 |___________________________________|← Repos dim
     -5 |                              /
    -10 |                    _____----/
@@ -195,8 +195,8 @@
 
 ## Position Macro S067-S074
 
-**Semaine** : 1/4 Phase 1 (Consolidation Base)  
-**CTL** : 58/59 cible (écart -1, acceptable)  
+**Semaine** : 1/4 Phase 1 (Consolidation Base)
+**CTL** : 58/59 cible (écart -1, acceptable)
 **Capacités validées** :
 - ✅ VO2 4×4 @251W
 - ✅ Sweet-Spot 77-88%
@@ -204,7 +204,7 @@
 
 **Progression FTP** : 220W stable (test S071 prévu dans 4 semaines)
 
-**On Track** : ✅ OUI malgré écart TSS (+35%)  
+**On Track** : ✅ OUI malgré écart TSS (+35%)
 **Ajustement S068** : Réduction charge -30% pour retour nominal
 
 ---

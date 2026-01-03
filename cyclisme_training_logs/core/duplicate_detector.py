@@ -56,10 +56,9 @@ Metadata:
     Version: v2
 """
 
-from pathlib import Path
-import re
-from typing import List, Dict, Optional
 import logging
+import re
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -67,9 +66,9 @@ logger = logging.getLogger(__name__)
 class DuplicateDetectedError(Exception):
     """Exception levée quand des doublons sont détectés."""
 
-    def __init__(self, duplicates: List[Dict]):
+    def __init__(self, duplicates: list[dict]):
         self.duplicates = duplicates
-        ids = [d['id'] for d in duplicates]
+        ids = [d["id"] for d in duplicates]
         super().__init__(f"Doublons détectés: {', '.join(ids)}")
 
 
@@ -84,9 +83,9 @@ class DuplicateDetector:
         """
         self.history_file = history_file
         self.check_window = check_window
-        self.pattern = re.compile(r'^### (S\d{3}-\d{2}(?:-\w+)*(?:-V\d{3})?)\s*$')
+        self.pattern = re.compile(r"^### (S\d{3}-\d{2}(?:-\w+)*(?:-V\d{3})?)\s*$")
 
-    def quick_scan(self) -> List[Dict]:
+    def quick_scan(self) -> list[dict]:
         """
         Scan rapide des N dernières entrées pour détecter doublons.
 
@@ -96,42 +95,40 @@ class DuplicateDetector:
         if not self.history_file.exists():
             return []
 
-        content = self.history_file.read_text(encoding='utf-8')
-        lines = content.split('\n')
+        content = self.history_file.read_text(encoding="utf-8")
+        lines = content.split("\n")
 
         # Trouver toutes les entrées
         entries = []
         for i, line in enumerate(lines):
             match = self.pattern.match(line)
             if match:
-                entries.append({
-                    'id': match.group(1),
-                    'line': i + 1,
-                    'line_index': i
-                })
+                entries.append({"id": match.group(1), "line": i + 1, "line_index": i})
 
         # Limiter au window si spécifié
         if self.check_window > 0:
-            entries = entries[:self.check_window]
+            entries = entries[: self.check_window]
 
         # Détecter doublons
         seen = {}
         duplicates = []
 
         for entry in entries:
-            entry_id = entry['id']
+            entry_id = entry["id"]
             if entry_id in seen:
-                duplicates.append({
-                    'id': entry_id,
-                    'first_line': seen[entry_id]['line'],
-                    'duplicate_line': entry['line']
-                })
+                duplicates.append(
+                    {
+                        "id": entry_id,
+                        "first_line": seen[entry_id]["line"],
+                        "duplicate_line": entry["line"],
+                    }
+                )
             else:
                 seen[entry_id] = entry
 
         return duplicates
 
-    def find_entry_bounds(self, line_index: int, lines: List[str]) -> tuple:
+    def find_entry_bounds(self, line_index: int, lines: list[str]) -> tuple:
         """
         Trouve les bornes (début, fin) d'une entrée à partir d'une ligne.
 
@@ -153,7 +150,7 @@ class DuplicateDetector:
 
         return (start, end)
 
-    def remove_duplicates(self, duplicates: List[Dict]) -> int:
+    def remove_duplicates(self, duplicates: list[dict]) -> int:
         """
         Supprime les doublons du fichier.
 
@@ -166,15 +163,15 @@ class DuplicateDetector:
         if not duplicates:
             return 0
 
-        content = self.history_file.read_text(encoding='utf-8')
-        lines = content.split('\n')
+        content = self.history_file.read_text(encoding="utf-8")
+        lines = content.split("\n")
 
         # Identifier toutes les lignes à supprimer
         lines_to_remove = set()
 
         for dup in duplicates:
             # Trouver l'index 0-based de la ligne dupliquée
-            dup_line_index = dup['duplicate_line'] - 1
+            dup_line_index = dup["duplicate_line"] - 1
 
             # Trouver les bornes complètes de l'entrée
             start, end = self.find_entry_bounds(dup_line_index, lines)
@@ -184,13 +181,10 @@ class DuplicateDetector:
                 lines_to_remove.add(i)
 
         # Construire nouveau contenu sans les doublons
-        cleaned_lines = [
-            line for i, line in enumerate(lines)
-            if i not in lines_to_remove
-        ]
+        cleaned_lines = [line for i, line in enumerate(lines) if i not in lines_to_remove]
 
         # Écrire le fichier nettoyé
-        self.history_file.write_text('\n'.join(cleaned_lines), encoding='utf-8')
+        self.history_file.write_text("\n".join(cleaned_lines), encoding="utf-8")
 
         logger.info(f"Supprimé {len(lines_to_remove)} lignes ({len(duplicates)} doublons)")
 
@@ -198,9 +192,7 @@ class DuplicateDetector:
 
 
 def check_and_handle_duplicates(
-    history_file: Path,
-    auto_fix: bool = False,
-    check_window: int = 50
+    history_file: Path, auto_fix: bool = False, check_window: int = 50
 ) -> None:
     """
     Vérifie et gère les doublons selon la config.
@@ -220,23 +212,15 @@ def check_and_handle_duplicates(
         return
 
     # Doublons détectés
-    dup_ids = [d['id'] for d in duplicates]
+    dup_ids = [d["id"] for d in duplicates]
 
     if auto_fix:
         # Suppression automatique
-        logger.warning(
-            f"⚠️  {len(duplicates)} doublon(s) détecté(s): {', '.join(dup_ids)}"
-        )
+        logger.warning(f"⚠️  {len(duplicates)} doublon(s) détecté(s): {', '.join(dup_ids)}")
         lines_removed = detector.remove_duplicates(duplicates)
-        logger.warning(
-            f"✅ Doublons auto-supprimés ({lines_removed} lignes)"
-        )
+        logger.warning(f"✅ Doublons auto-supprimés ({lines_removed} lignes)")
     else:
         # Erreur - fail fast
-        logger.error(
-            f"❌ {len(duplicates)} doublon(s) détecté(s): {', '.join(dup_ids)}"
-        )
-        logger.error(
-            "Lancer: python3 scripts/maintenance/clean_duplicates_multi.py"
-        )
+        logger.error(f"❌ {len(duplicates)} doublon(s) détecté(s): {', '.join(dup_ids)}")
+        logger.error("Lancer: python3 scripts/maintenance/clean_duplicates_multi.py")
         raise DuplicateDetectedError(duplicates)

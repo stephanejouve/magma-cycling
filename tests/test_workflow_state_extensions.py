@@ -7,12 +7,12 @@ Tests:
 - Persistence feedback athlète
 """
 
-import pytest
 import json
-from pathlib import Path
-from datetime import datetime
-import tempfile
 import shutil
+import tempfile
+from pathlib import Path
+
+import pytest
 
 from cyclisme_training_logs.workflow_state import WorkflowState
 
@@ -38,16 +38,16 @@ class TestSpecialSessionsTracking:
         state.mark_special_session_documented("S072-07", "rest", "2025-12-21")
 
         # Vérifier présence dans state
-        assert 'documented_specials' in state.state
+        assert "documented_specials" in state.state
         key = "S072-07_2025-12-21"
-        assert key in state.state['documented_specials']
+        assert key in state.state["documented_specials"]
 
         # Vérifier métadonnées
-        entry = state.state['documented_specials'][key]
-        assert entry['session_id'] == "S072-07"
-        assert entry['type'] == "rest"
-        assert entry['date'] == "2025-12-21"
-        assert 'documented_at' in entry
+        entry = state.state["documented_specials"][key]
+        assert entry["session_id"] == "S072-07"
+        assert entry["type"] == "rest"
+        assert entry["date"] == "2025-12-21"
+        assert "documented_at" in entry
 
     def test_is_special_session_documented(self, state):
         """Test checking if session is documented"""
@@ -72,7 +72,7 @@ class TestSpecialSessionsTracking:
         sessions = [
             ("S072-07", "rest", "2025-12-21"),
             ("S072-05", "skipped", "2025-12-19"),
-            ("S072-03", "cancelled", "2025-12-17")
+            ("S072-03", "cancelled", "2025-12-17"),
         ]
 
         for session_id, session_type, date in sessions:
@@ -124,28 +124,23 @@ class TestFeedbackPersistence:
 
     def test_save_session_feedback(self, state):
         """Test saving feedback"""
-        feedback = {
-            'rpe': 7,
-            'comments': 'Felt strong',
-            'sleep_quality': 8,
-            'sleep_hours': 7.5
-        }
+        feedback = {"rpe": 7, "comments": "Felt strong", "sleep_quality": 8, "sleep_hours": 7.5}
 
         state.save_session_feedback("i123456", feedback)
 
         # Vérifier présence dans state
-        assert 'feedbacks' in state.state
-        assert 'i123456' in state.state['feedbacks']
+        assert "feedbacks" in state.state
+        assert "i123456" in state.state["feedbacks"]
 
         # Vérifier structure
-        entry = state.state['feedbacks']['i123456']
-        assert 'feedback' in entry
-        assert 'timestamp' in entry
-        assert entry['feedback'] == feedback
+        entry = state.state["feedbacks"]["i123456"]
+        assert "feedback" in entry
+        assert "timestamp" in entry
+        assert entry["feedback"] == feedback
 
     def test_get_session_feedback(self, state):
         """Test retrieving feedback"""
-        feedback = {'rpe': 8, 'comments': 'Excellent session'}
+        feedback = {"rpe": 8, "comments": "Excellent session"}
 
         # Avant save
         assert state.get_session_feedback("i123456") is None
@@ -155,9 +150,9 @@ class TestFeedbackPersistence:
         retrieved = state.get_session_feedback("i123456")
 
         assert retrieved is not None
-        assert retrieved['feedback']['rpe'] == 8
-        assert retrieved['feedback']['comments'] == 'Excellent session'
-        assert 'timestamp' in retrieved
+        assert retrieved["feedback"]["rpe"] == 8
+        assert retrieved["feedback"]["comments"] == "Excellent session"
+        assert "timestamp" in retrieved
 
     def test_has_session_feedback(self, state):
         """Test checking feedback existence"""
@@ -165,7 +160,7 @@ class TestFeedbackPersistence:
         assert not state.has_session_feedback("i123456")
 
         # Après save
-        state.save_session_feedback("i123456", {'rpe': 7})
+        state.save_session_feedback("i123456", {"rpe": 7})
         assert state.has_session_feedback("i123456")
 
         # Autre activité
@@ -174,9 +169,9 @@ class TestFeedbackPersistence:
     def test_save_multiple_feedbacks(self, state):
         """Test saving multiple feedbacks"""
         feedbacks = {
-            "i123456": {'rpe': 7, 'comments': 'Good'},
-            "i123457": {'rpe': 8, 'comments': 'Great'},
-            "i123458": {'rpe': 6, 'comments': 'Tired'}
+            "i123456": {"rpe": 7, "comments": "Good"},
+            "i123457": {"rpe": 8, "comments": "Great"},
+            "i123458": {"rpe": 6, "comments": "Tired"},
         }
 
         for activity_id, feedback in feedbacks.items():
@@ -188,7 +183,7 @@ class TestFeedbackPersistence:
 
     def test_feedback_persistence(self, state, temp_dir):
         """Test persistence to JSON file"""
-        feedback = {'rpe': 9, 'comments': 'Amazing workout'}
+        feedback = {"rpe": 9, "comments": "Amazing workout"}
 
         # Sauvegarder feedback
         state.save_session_feedback("i123456", feedback)
@@ -198,20 +193,20 @@ class TestFeedbackPersistence:
         retrieved = state2.get_session_feedback("i123456")
 
         assert retrieved is not None
-        assert retrieved['feedback']['rpe'] == 9
+        assert retrieved["feedback"]["rpe"] == 9
 
     def test_update_existing_feedback(self, state):
         """Test updating feedback for same activity"""
         # Save initial
-        state.save_session_feedback("i123456", {'rpe': 7, 'comments': 'OK'})
+        state.save_session_feedback("i123456", {"rpe": 7, "comments": "OK"})
 
         # Update
-        state.save_session_feedback("i123456", {'rpe': 8, 'comments': 'Better'})
+        state.save_session_feedback("i123456", {"rpe": 8, "comments": "Better"})
 
         # Vérifier updated
         retrieved = state.get_session_feedback("i123456")
-        assert retrieved['feedback']['rpe'] == 8
-        assert retrieved['feedback']['comments'] == 'Better'
+        assert retrieved["feedback"]["rpe"] == 8
+        assert retrieved["feedback"]["comments"] == "Better"
 
 
 class TestBackwardCompatibility:
@@ -231,13 +226,11 @@ class TestBackwardCompatibility:
             "last_analyzed_activity_id": "i123456",
             "last_analyzed_date": "2025-12-20T10:00:00",
             "total_analyses": 5,
-            "history": [
-                {"activity_id": "i123456", "analyzed_at": "2025-12-20T10:00:00"}
-            ]
+            "history": [{"activity_id": "i123456", "analyzed_at": "2025-12-20T10:00:00"}],
         }
 
         state_file = temp_dir / ".workflow_state.json"
-        with open(state_file, 'w') as f:
+        with open(state_file, "w") as f:
             json.dump(old_state, f)
 
         # Charger avec nouveau code
@@ -255,5 +248,5 @@ class TestBackwardCompatibility:
         assert state.is_special_session_documented("S072-07", "2025-12-21")
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])
