@@ -14,7 +14,7 @@ Functions:
 """
 
 from statistics import mean, stdev
-from typing import Any
+from typing import Any, cast
 
 
 def calculate_ramp_rate(ctl_current: float, ctl_previous: float, days: int = 7) -> float:
@@ -277,12 +277,12 @@ def get_recovery_recommendation(
 
     # Adjust for master athletes
     if is_master and priority in ["high", "critical"]:
-        result["duration_limit"] = min(result["duration_limit"], 45)
-        result["rest_days"] += 1
+        result["duration_limit"] = min(cast(int, result["duration_limit"]), 45)
+        result["rest_days"] = cast(int, result["rest_days"]) + 1
 
     # Adjust for exceptional recovery
     if recovery_capacity == "exceptional" and priority == "medium":
-        result["intensity_limit"] = min(95, result["intensity_limit"])
+        result["intensity_limit"] = min(95, cast(int, result["intensity_limit"]))
 
     return result
 

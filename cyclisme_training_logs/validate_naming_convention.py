@@ -29,7 +29,7 @@ import json
 import re
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 
 class NamingValidator:
@@ -50,43 +50,48 @@ class NamingValidator:
 
     def validate_directory_name(self, dir_name: str) -> dict[str, Any]:
         """Valider nom de répertoire."""
-        result = {"type": "directory", "name": dir_name, "valid": True, "issues": []}
+        result: dict[str, Any] = {
+            "type": "directory",
+            "name": dir_name,
+            "valid": True,
+            "issues": [],
+        }
+        issues = cast(list[str], result["issues"])
 
         # Vérifier minuscule
         if self.LOWERCASE_DIR.match(dir_name):
             result["valid"] = False
-            result["issues"].append(
-                f"Minuscule détecté : {dir_name} → devrait être {dir_name.upper()}"
-            )
+            issues.append(f"Minuscule détecté : {dir_name} → devrait être {dir_name.upper()}")
 
         # Vérifier format
         elif not self.DIR_PATTERN.match(dir_name):
             result["valid"] = False
-            result["issues"].append(f"Format invalide : {dir_name} (attendu: SXXX)")
+            issues.append(f"Format invalide : {dir_name} (attendu: SXXX)")
 
         return result
 
     def validate_file_name(self, file_name: str, parent_dir: str) -> dict[str, Any]:
         """Valider nom de fichier."""
-        result = {
+        result: dict[str, Any] = {
             "type": "file",
             "name": file_name,
             "parent": parent_dir,
             "valid": True,
             "issues": [],
         }
+        issues = cast(list[str], result["issues"])
 
         # Vérifier minuscule dans numéro semaine
         if self.LOWERCASE_FILE.search(file_name):
             # Proposer correction
             corrected = re.sub(r"_s(\d{3})", r"_S\1", file_name)
             result["valid"] = False
-            result["issues"].append(f"Minuscule détecté : {file_name} → devrait être {corrected}")
+            issues.append(f"Minuscule détecté : {file_name} → devrait être {corrected}")
 
         # Vérifier format global
         elif not self.FILE_PATTERN.match(file_name):
             result["valid"] = False
-            result["issues"].append(f"Format invalide : {file_name} (attendu: nom_SXXX.md)")
+            issues.append(f"Format invalide : {file_name} (attendu: nom_SXXX.md)")
 
         return result
 
