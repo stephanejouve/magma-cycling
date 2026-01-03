@@ -53,8 +53,8 @@ if env_file.exists():
 # Add parent to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from api.intervals_client import IntervalsClient  # noqa: E402
-from weekly_planner import WeeklyPlanner  # noqa: E402
+from cyclisme_training_logs.api.intervals_client import IntervalsClient  # noqa: E402
+from cyclisme_training_logs.weekly_planner import WeeklyPlanner  # noqa: E402
 
 # Statuses that should remove the event from Intervals.icu
 STATUSES_TO_DELETE = ["cancelled", "skipped"]
@@ -165,7 +165,10 @@ def sync_with_intervals(
             }
 
             print(f"   Action: Converting to NOTE with [{status_text}] tag...")
-            updated = client.update_event(event_id, update_data)
+            if event_id is None:
+                print("   ❌ Error: Event ID is None")
+                return False
+            updated = client.update_event(int(event_id), update_data)
 
             if updated:
                 print("   ✅ Event converted to NOTE on Intervals.icu")
@@ -232,7 +235,10 @@ def sync_with_intervals(
             + f"\n\n⚠️ MODIFIED: {reason or 'See local planning'}"
         }
 
-        updated = client.update_event(event_id, update_data)
+        if event_id is None:
+            print("   ❌ Error: Event ID is None")
+            return False
+        updated = client.update_event(int(event_id), update_data)
 
         if updated:
             print("   ✅ Event updated on Intervals.icu")

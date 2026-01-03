@@ -1080,8 +1080,8 @@ class WorkflowCoach:
         Returns:
             Tuple of (rest_days, cancelled_sessions).
         """
-        rest_days = []
-        cancelled_sessions = []
+        rest_days: list[dict] = []
+        cancelled_sessions: list[dict] = []
 
         if not self.week_id:
             return rest_days, cancelled_sessions
