@@ -1,0 +1,39 @@
+name: Lint
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        version: latest
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+
+    - name: Install dependencies
+      run: |
+        poetry install --no-interaction
+        poetry add --group dev ruff --no-interaction
+
+    - name: Run Ruff linter
+      run: poetry run ruff check cyclisme_training_logs/
+      continue-on-error: true
+
+    - name: Run Ruff formatter check
+      run: poetry run ruff format --check cyclisme_training_logs/
+      continue-on-error: true
