@@ -156,8 +156,10 @@ class CasingNormalizer:
 
         print()
 
-    def run(self):
-        """Exécuter la normalisation complète."""
+    # === HELPER METHODS FOR RUN (Refactored from C-15 complexity) ===
+
+    def _display_header(self):
+        """Display run mode header and settings."""
         print("\n" + "=" * 70)
         print("🔧 NORMALISATION CASSE - Weekly Reports")
         print("=" * 70)
@@ -170,70 +172,111 @@ class CasingNormalizer:
 
         print()
 
-        # Étape 1: Scanner
+    def _validate_and_get_directories(self) -> tuple[list[dict] | None, list[dict] | None]:
+        """Scan directories and validate result.
+
+        Returns:
+            Tuple of (all_directories, to_change_directories) or (None, None) if scan failed
+        """
         print("🔍 Analyse des répertoires...")
         directories = self.scan_directories()
 
         if not directories:
             print("❌ Aucun répertoire de semaine trouvé")
-            return False
+            return None, None
 
         print(f"   ✅ {len(directories)} répertoire(s) trouvé(s)")
 
-        # Étape 2: Afficher résumé
+        # Display summary
         self.print_summary(directories)
 
-        # Filtrer uniquement ceux qui nécessitent des changements
+        # Filter directories that need changes
         to_change = [d for d in directories if d["needs_change"]]
 
         if not to_change:
             print("✨ Tous les répertoires sont déjà normalisés")
+            return directories, []
+
+        return directories, to_change
+
+    def _get_user_confirmation(self) -> bool:
+        """Get user confirmation for normalization if needed.
+
+        Returns:
+            True if should proceed, False if cancelled
+        """
+        if self.dry_run or self.force:
             return True
 
-        # Étape 3: Confirmation (si pas dry-run ni force)
-        if not self.dry_run and not self.force:
-            print("⚠️  ATTENTION : Les répertoires vont être renommés")
-            print("   Un backup sera créé automatiquement")
-            print()
-            response = input("Continuer ? (o/n) : ").strip().lower()
-            if response not in ["o", "oui", "y", "yes"]:
-                print("❌ Annulé par l'utilisateur")
-                return False
+        print("⚠️  ATTENTION : Les répertoires vont être renommés")
+        print("   Un backup sera créé automatiquement")
+        print()
+        response = input("Continuer ? (o/n) : ").strip().lower()
 
-        # Étape 4: Backup
+        if response not in ["o", "oui", "y", "yes"]:
+            print("❌ Annulé par l'utilisateur")
+            return False
+
+        return True
+
+    def _display_recommendations(self):
+        """Display post-normalization recommendations."""
+        if not self.changes or self.dry_run:
+            return
+
+        print("💡 PROCHAINES ÉTAPES :")
+        print("   1. Vérifier que tout fonctionne correctement")
+        print("   2. Tester vos scripts sur les nouveaux chemins")
+        print("   3. Si OK, commit les changements:")
+        print("      git add logs/weekly_reports/")
+        print('      git commit -m "fix: Normalisation casse répertoires weekly_reports"')
+        print("      git push")
+        print()
+        print("   En cas de problème, restaurer le backup:")
+
+        backup_dirs = list((self.weekly_reports_dir.parent).glob("weekly_reports.backup.casing_*"))
+        if backup_dirs:
+            latest_backup = max(backup_dirs, key=lambda p: p.name)
+            print("      rm -rf logs/weekly_reports")
+            print(f"      cp -r logs/{latest_backup.name} logs/weekly_reports")
+        print()
+
+    def run(self):
+        """Exécuter la normalisation complète.
+
+        Refactored from C-15 complexity using 4 helper methods for better separation of concerns.
+        """
+        # Step 1: Display header
+        self._display_header()
+
+        # Step 2: Scan and validate directories
+        directories, to_change = self._validate_and_get_directories()
+        if directories is None:
+            return False
+        if not to_change:
+            return True
+
+        # Step 3: Get user confirmation
+        if not self._get_user_confirmation():
+            return False
+
+        # Step 4: Create backup
         print()
         if not self.create_backup():
             print("❌ Échec backup, abandon")
             return False
 
-        # Étape 5: Normalisation
+        # Step 5: Normalize directories
         print()
         print("🔧 Normalisation en cours...")
         for d in to_change:
             self.normalize_directory(d)
 
-        # Étape 6: Rapport final
+        # Step 6: Display final report
         self.print_report()
 
-        # Étape 7: Recommandations
-        if self.changes and not self.dry_run:
-            print("💡 PROCHAINES ÉTAPES :")
-            print("   1. Vérifier que tout fonctionne correctement")
-            print("   2. Tester vos scripts sur les nouveaux chemins")
-            print("   3. Si OK, commit les changements:")
-            print("      git add logs/weekly_reports/")
-            print('      git commit -m "fix: Normalisation casse répertoires weekly_reports"')
-            print("      git push")
-            print()
-            print("   En cas de problème, restaurer le backup:")
-            backup_dirs = list(
-                (self.weekly_reports_dir.parent).glob("weekly_reports.backup.casing_*")
-            )
-            if backup_dirs:
-                latest_backup = max(backup_dirs, key=lambda p: p.name)
-                print("      rm -rf logs/weekly_reports")
-                print(f"      cp -r logs/{latest_backup.name} logs/weekly_reports")
-            print()
+        # Step 7: Display recommendations
+        self._display_recommendations()
 
         return len(self.errors) == 0
 
