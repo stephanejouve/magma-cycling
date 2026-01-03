@@ -449,9 +449,9 @@ class WeeklyAggregator(DataAggregator):
                 if data:
                     wellness[date_str] = {
                         "sleep_quality": data.get("sleepQuality", 0),
-                        "sleep_hours": data.get("sleepSecs", 0) / 3600
-                        if data.get("sleepSecs")
-                        else 0,
+                        "sleep_hours": (
+                            data.get("sleepSecs", 0) / 3600 if data.get("sleepSecs") else 0
+                        ),
                         "weight": data.get("weight", 0),
                         "hrv": data.get("hrvSDNN", 0),
                         "resting_hr": data.get("restingHR", 0),
