@@ -28,7 +28,6 @@ Created: 2025-12-09
 import logging
 import platform
 import subprocess
-from typing import Optional
 
 from .base import AIAnalyzer, AIProvider
 
@@ -169,7 +168,7 @@ class ClipboardAnalyzer(AIAnalyzer):
         self.model = "manual"
         logger.info("ClipboardAnalyzer initialized (manual workflow)")
 
-    def analyze_session(self, prompt: str, dataset: Optional[dict] = None) -> str:
+    def analyze_session(self, prompt: str, dataset: dict | None = None) -> str:
         """Copy prompt to clipboard for manual AI analysis.
 
         Args:

@@ -27,7 +27,6 @@ import argparse
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 from cyclisme_training_logs.config import get_logger
 
@@ -76,7 +75,7 @@ def print_current_week_stats(week: str) -> None:
     print("║                                                          ║")
 
 
-def print_ftp_progression(intelligence_path: Optional[Path]) -> None:
+def print_ftp_progression(intelligence_path: Path | None) -> None:
     """Print FTP progression and PID recommendation.
 
     TODO: Integrate with:
@@ -129,7 +128,7 @@ def print_ftp_mock_data() -> None:
     print("║   (Load intelligence file for PID recommendations)       ║")
 
 
-def print_recent_learnings(intelligence_path: Optional[Path]) -> None:
+def print_recent_learnings(intelligence_path: Path | None) -> None:
     """Print recent learnings.
 
     TODO: Integrate with cyclisme_training_logs.intelligence.training_intelligence
@@ -145,10 +144,10 @@ def print_recent_learnings(intelligence_path: Optional[Path]) -> None:
             # Get top 3 learnings (validated first)
             learnings = sorted(
                 intelligence.learnings.values(),
-                key=lambda l: (
-                    l.confidence == ConfidenceLevel.VALIDATED,
-                    l.confidence.value,
-                    len(l.evidence),
+                key=lambda lrn: (
+                    lrn.confidence == ConfidenceLevel.VALIDATED,
+                    lrn.confidence.value,
+                    len(lrn.evidence),
                 ),
                 reverse=True,
             )[:3]

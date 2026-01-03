@@ -70,7 +70,7 @@ import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +95,7 @@ class DataAggregator(ABC):
     3. format_output() - Formatage sortie (markdown, JSON, etc.)
     """
 
-    def __init__(self, data_dir: Optional[Path] = None, config: Optional[dict[str, Any]] = None):
+    def __init__(self, data_dir: Path | None = None, config: dict[str, Any] | None = None):
         """
         Initialiser l'agrégateur.
 
@@ -235,7 +235,7 @@ class DailyDataAggregator(DataAggregator):
     - Métriques pré/post séance
     """
 
-    def __init__(self, activity_id: str, data_dir: Optional[Path] = None):
+    def __init__(self, activity_id: str, data_dir: Path | None = None):
         """
         Initialiser agrégateur daily.
 
@@ -273,7 +273,7 @@ class WeeklyDataAggregator(DataAggregator):
     - bilan_final_sXXX.md
     """
 
-    def __init__(self, week: str, start_date: str, data_dir: Optional[Path] = None):
+    def __init__(self, week: str, start_date: str, data_dir: Path | None = None):
         """
         Initialiser agrégateur weekly.
 

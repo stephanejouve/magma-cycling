@@ -56,7 +56,7 @@ Created: 2025-12-26 (Migrated from v2)
 """
 
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 
 class PromptGenerator:
@@ -71,7 +71,7 @@ class PromptGenerator:
     - output_format_block : Format sortie attendu
     """
 
-    def __init__(self, templates_dir: Optional[Path] = None):
+    def __init__(self, templates_dir: Path | None = None):
         """
         Initialiser générateur.
 
@@ -216,8 +216,8 @@ Répondre en JSON :
         self,
         activity_id: str,
         workout_data: dict[str, Any],
-        athlete_data: Optional[dict[str, Any]] = None,
-        feedback: Optional[str] = None,
+        athlete_data: dict[str, Any] | None = None,
+        feedback: str | None = None,
     ) -> str:
         """
         Générer prompt complet analyse daily.

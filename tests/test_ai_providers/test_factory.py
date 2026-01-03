@@ -156,7 +156,7 @@ class TestAIProviderFactory:
         """Test that each provider has a description."""
         providers = AIProviderFactory.get_available_providers()
 
-        for provider, description in providers.items():
+        for _provider, description in providers.items():
             assert isinstance(description, str)
             assert len(description) > 0
 

@@ -78,7 +78,6 @@ import re
 from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass
@@ -86,8 +85,8 @@ class InjectionResult:
     """Résultat d'une injection chronologique."""
 
     success: bool
-    line_number: Optional[int] = None
-    error: Optional[str] = None
+    line_number: int | None = None
+    error: str | None = None
     duplicate_found: bool = False
 
 
@@ -117,7 +116,7 @@ class TimelineInjector:
         if not self.history_file.exists():
             raise FileNotFoundError(f"History file not found: {self.history_file}")
 
-    def extract_date_from_entry(self, entry: str) -> Optional[date]:
+    def extract_date_from_entry(self, entry: str) -> date | None:
         """
         Extraire la date d'une entrée workout.
 
@@ -170,7 +169,7 @@ class TimelineInjector:
         )
 
         # Trouver position d'insertion selon l'ordre
-        for i, (existing_date, line_idx) in enumerate(zip(dates_found, date_indices, strict=False)):
+        for _, (existing_date, line_idx) in enumerate(zip(dates_found, date_indices, strict=False)):
             if is_chronological:
                 # Ordre chronologique (ancien → récent)
                 if target_date < existing_date:
@@ -208,7 +207,7 @@ class TimelineInjector:
         return entry_id in content
 
     def inject_chronologically(
-        self, workout_entry: str, workout_date: Optional[date] = None
+        self, workout_entry: str, workout_date: date | None = None
     ) -> InjectionResult:
         """
         Injecter une entrée workout dans l'ordre chronologique.
@@ -295,7 +294,7 @@ class TimelineInjector:
 
 # Fonction utilitaire pour migration facile
 def inject_workout_chronologically(
-    workout_entry: str, history_file: Path, workout_date: Optional[date] = None
+    workout_entry: str, history_file: Path, workout_date: date | None = None
 ) -> InjectionResult:
     """
     Fonction utilitaire pour injection rapide.

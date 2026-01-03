@@ -19,7 +19,7 @@ def inspect_existing_workout():
     with open(config_path) as f:
         config = json.load(f)
 
-    api = IntervalsAPI(athlete_id=config.get("athlete_id"), api_key=config.get("api_key"))
+    IntervalsAPI(athlete_id=config.get("athlete_id"), api_key=config.get("api_key"))
 
     # Récupérer événements du mois
     print("📥 Récupération des événements existants...")

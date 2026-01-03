@@ -32,7 +32,6 @@ import sys
 from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
 
 from cyclisme_training_logs.ai_providers.factory import AIProviderFactory
 from cyclisme_training_logs.config import get_ai_config, get_data_config
@@ -206,7 +205,7 @@ class MonthlyAnalyzer:
 
         return stats
 
-    def generate_report(self, stats: dict, ai_analysis: Optional[str] = None) -> str:
+    def generate_report(self, stats: dict, ai_analysis: str | None = None) -> str:
         """Generate markdown report."""
         month_name = self.month_date.strftime("%B %Y")
 

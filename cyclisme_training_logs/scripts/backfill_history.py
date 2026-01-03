@@ -117,7 +117,7 @@ class HistoryBackfiller:
     def get_analyzed_activities(self) -> set[str]:
         """Get set of already analyzed activity IDs."""
         history = self.state.state.get("history", [])
-        return set(h["activity_id"] for h in history)
+        return {h["activity_id"] for h in history}
 
     def fetch_activities(self, start_date: str, end_date: str) -> list[dict]:
         """

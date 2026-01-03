@@ -120,8 +120,8 @@ def test_extract_training_learnings():
 
     learnings = aggregator._extract_training_learnings(activities, feedback)
 
-    assert any("haute charge" in l for l in learnings)
-    assert any("RPE faible" in l for l in learnings)
+    assert any("haute charge" in lrn for lrn in learnings)
+    assert any("RPE faible" in lrn for lrn in learnings)
 
 
 def test_identify_protocol_changes():

@@ -81,7 +81,7 @@ def show_state(state: WorkflowState):
     specials = state.get_documented_specials()
     if specials:
         print("📋 Sessions spéciales documentées :")
-        for key, data in specials.items():
+        for _key, data in specials.items():
             print(f"  • {data['session_id']} [{data['date']}] - Type: {data['type']}")
         print()
 

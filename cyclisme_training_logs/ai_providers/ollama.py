@@ -21,7 +21,6 @@ Created: 2025-12-09
 """
 
 import logging
-from typing import Optional
 
 import requests
 
@@ -87,7 +86,7 @@ class OllamaAnalyzer(AIAnalyzer):
 
         logger.info(f"OllamaAnalyzer initialized with model {model} at {host}")
 
-    def analyze_session(self, prompt: str, dataset: Optional[dict] = None) -> str:
+    def analyze_session(self, prompt: str, dataset: dict | None = None) -> str:
         """Analyze session using Ollama local LLM.
 
         Args:

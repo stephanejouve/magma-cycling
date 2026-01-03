@@ -270,7 +270,7 @@ class PromptGenerator:
         steps = workout_doc.get("steps", [])
         intervals = []
 
-        for i, step in enumerate(steps):
+        for _i, step in enumerate(steps):
             if "reps" in step:
                 # C'est un bloc d'intervalles répétés
                 reps = step["reps"]

@@ -41,7 +41,6 @@ import logging
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -147,7 +146,7 @@ class DocstringMigrator:
         description = "\n".join(description_lines).strip()
         return description
 
-    def parse_old_docstring(self, content: str) -> Optional[DocstringMetadata]:
+    def parse_old_docstring(self, content: str) -> DocstringMetadata | None:
         """
         Parse old GARTNER_TIME format docstring.
 

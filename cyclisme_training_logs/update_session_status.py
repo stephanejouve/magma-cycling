@@ -42,7 +42,6 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 from dotenv import load_dotenv
 
@@ -61,7 +60,7 @@ from weekly_planner import WeeklyPlanner
 STATUSES_TO_DELETE = ["cancelled", "skipped"]
 
 
-def load_intervals_credentials() -> tuple[Optional[str], Optional[str]]:
+def load_intervals_credentials() -> tuple[str | None, str | None]:
     """Load Intervals.icu credentials from environment.
 
     Returns:
@@ -78,7 +77,7 @@ def load_intervals_credentials() -> tuple[Optional[str], Optional[str]]:
 
 def find_event_by_session(
     client: IntervalsClient, session_id: str, session_date: str
-) -> Optional[dict]:
+) -> dict | None:
     """Find Intervals.icu event matching a session.
 
     Args:
@@ -111,8 +110,8 @@ def sync_with_intervals(
     session_id: str,
     session_date: str,
     new_status: str,
-    reason: Optional[str] = None,
-    session_info: Optional[dict] = None,
+    reason: str | None = None,
+    session_info: dict | None = None,
 ) -> bool:
     """Synchronize session status change with Intervals.icu.
 

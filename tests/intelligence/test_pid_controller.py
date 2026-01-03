@@ -67,7 +67,7 @@ def test_pid_derivative_term():
     pid = PIDController(kp=0.01, ki=0.002, kd=0.15, setpoint=260)
 
     # First measurement: error = 40W
-    correction1 = pid.compute(measured_value=220, dt=1.0)
+    pid.compute(measured_value=220, dt=1.0)
 
     # Second measurement: error increased to 50W (FTP decreased)
     correction2 = pid.compute(measured_value=210, dt=1.0)
@@ -268,8 +268,8 @@ def test_pid_multiple_iterations():
 
     # Simulate improving FTP over 20 weeks
     current_ftp = 220
-    for week in range(20):
-        correction = pid.compute(measured_value=current_ftp, dt=1.0)
+    for _week in range(20):
+        pid.compute(measured_value=current_ftp, dt=1.0)
 
         # Simulate improvement (+1W per week from training)
         current_ftp += 1.0

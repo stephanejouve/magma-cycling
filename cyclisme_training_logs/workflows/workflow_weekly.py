@@ -55,7 +55,6 @@ import logging
 import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Optional
 
 from cyclisme_training_logs.analyzers.weekly_aggregator import WeeklyAggregator
 from cyclisme_training_logs.analyzers.weekly_analyzer import WeeklyAnalyzer
@@ -78,7 +77,7 @@ class WeeklyWorkflow:
         self,
         week: str,
         start_date: date,
-        data_dir: Optional[Path] = None,
+        data_dir: Path | None = None,
         ai_analysis: bool = False,
     ):
         """
@@ -165,7 +164,7 @@ class WeeklyWorkflow:
 
 
 def run_weekly_analysis(
-    week: str, start_date: date, data_dir: Optional[Path] = None, ai_analysis: bool = False
+    week: str, start_date: date, data_dir: Path | None = None, ai_analysis: bool = False
 ) -> dict[str, str]:
     """
     Fonction utilitaire pour workflow weekly.

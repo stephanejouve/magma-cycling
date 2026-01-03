@@ -141,7 +141,7 @@ class WorkoutUploader:
                 workout_date = self.start_date + timedelta(days=day_num - 1)
 
             # FIX: Extraire le nom descriptif (première ligne du contenu)
-            first_line = workout_content.strip().split("\n")[0]
+            workout_content.strip().split("\n")[0]
 
             # FIX: Utiliser workout_name (depuis délimiteur) comme nom principal
             # Et first_line comme description courte
@@ -201,7 +201,7 @@ class WorkoutUploader:
                 workout_date = self.start_date + timedelta(days=day_num - 1)
 
             # FIX: Extraire le nom descriptif (première ligne du contenu)
-            first_line = workout_content.strip().split("\n")[0]
+            workout_content.strip().split("\n")[0]
 
             # FIX: Utiliser workout_name (depuis délimiteur) comme nom principal
             workout_display_name = workout_name.strip()

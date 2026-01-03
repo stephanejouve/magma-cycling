@@ -120,8 +120,8 @@ class WeeklyReportsFixing:
         print(f"\n🔧 Correction doublon : {lower_dir} / {upper_dir}")
 
         # Comparer contenus
-        lower_files = set((lower_path / f).name for f in lower_path.glob("*.md"))
-        upper_files = set((upper_path / f).name for f in upper_path.glob("*.md"))
+        lower_files = {(lower_path / f).name for f in lower_path.glob("*.md")}
+        upper_files = {(upper_path / f).name for f in upper_path.glob("*.md")}
 
         print(f"   {lower_dir} : {len(lower_files)} fichiers")
         print(f"   {upper_dir} : {len(upper_files)} fichiers")

@@ -10,7 +10,6 @@ Created: 2025-12-09
 """
 
 import logging
-from typing import Optional
 
 from openai import OpenAI
 
@@ -60,7 +59,7 @@ class OpenAIAnalyzer(AIAnalyzer):
         except Exception as e:
             raise WorkflowError(f"Failed to initialize OpenAI client: {e}") from e
 
-    def analyze_session(self, prompt: str, dataset: Optional[dict] = None) -> str:
+    def analyze_session(self, prompt: str, dataset: dict | None = None) -> str:
         """Analyze session using OpenAI API."""
         logger.info(f"Sending prompt to OpenAI API ({len(prompt)} chars)")
 
