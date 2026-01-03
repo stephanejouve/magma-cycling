@@ -6,7 +6,6 @@ Récupération des données de sommeil et de poids
 import json
 import os
 from datetime import datetime, timedelta
-from typing import Optional
 
 from withings_api import AuthScope, WithingsApi, WithingsAuth
 from withings_api.common import MeasureType, SleepGetSummaryField
@@ -146,7 +145,7 @@ class WithingsIntegration:
         weight_data.sort(key=lambda x: x["timestamp"])
         return weight_data
 
-    def get_latest_weight(self) -> Optional[dict]:
+    def get_latest_weight(self) -> dict | None:
         """
         Récupère la dernière mesure de poids
 
@@ -221,7 +220,7 @@ class WithingsIntegration:
 
         return sleep_data
 
-    def get_last_night_sleep(self) -> Optional[dict]:
+    def get_last_night_sleep(self) -> dict | None:
         """
         Récupère les données de sommeil de la dernière nuit
 

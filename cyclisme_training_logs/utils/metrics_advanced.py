@@ -14,7 +14,7 @@ Functions:
 """
 
 from statistics import mean, stdev
-from typing import Any, Optional
+from typing import Any
 
 
 def calculate_ramp_rate(ctl_current: float, ctl_previous: float, days: int = 7) -> float:
@@ -188,7 +188,7 @@ def detect_training_peaks(
 
 
 def get_recovery_recommendation(
-    tsb: float, atl_ctl_ratio: float, profile: Optional[dict[str, Any]] = None
+    tsb: float, atl_ctl_ratio: float, profile: dict[str, Any] | None = None
 ) -> dict[str, Any]:
     """Generate recovery recommendation based on training metrics.
 
@@ -288,7 +288,7 @@ def get_recovery_recommendation(
 
 
 def format_metrics_comparison(
-    period1: dict[str, float], period2: dict[str, float], labels: Optional[dict[str, str]] = None
+    period1: dict[str, float], period2: dict[str, float], labels: dict[str, str] | None = None
 ) -> str:
     """Format comparison between two time periods.
 
@@ -357,9 +357,9 @@ def detect_overtraining_risk(
     ctl: float,
     atl: float,
     tsb: float,
-    sleep_hours: Optional[float] = None,
-    profile: Optional[dict[str, Any]] = None,
-    thresholds: Optional[dict[str, float]] = None,
+    sleep_hours: float | None = None,
+    profile: dict[str, Any] | None = None,
+    thresholds: dict[str, float] | None = None,
 ) -> dict[str, Any]:
     """Detect overtraining risk for master athletes (CRITICAL FUNCTION).
 

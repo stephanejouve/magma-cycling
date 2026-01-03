@@ -350,7 +350,7 @@ def test_weekly_workflow_ai_analysis(
         week="S073", start_date=date(2025, 1, 6), data_dir=mock_data_dir, ai_analysis=True
     )
 
-    reports = workflow.run()
+    workflow.run()
 
     # Verify subprocess called for clipboard
     mock_subprocess.assert_called_once()
@@ -474,7 +474,7 @@ def test_workflow_without_data_dir(mock_workflow_class):
     mock_workflow_class.return_value = mock_workflow
 
     # Call utility without data_dir
-    reports = run_weekly_analysis(
+    run_weekly_analysis(
         week="S073", start_date=date(2025, 1, 6), data_dir=None  # Auto-detect
     )
 

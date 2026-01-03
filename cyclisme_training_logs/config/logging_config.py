@@ -33,7 +33,6 @@ Examples:
 import logging
 import os
 import sys
-from typing import Optional
 
 # Log level mapping
 LOG_LEVELS = {
@@ -53,7 +52,7 @@ LOG_FORMATS = {
 
 
 def setup_logging(
-    level: Optional[str] = None, format_name: Optional[str] = None, force: bool = False
+    level: str | None = None, format_name: str | None = None, force: bool = False
 ) -> None:
     """Setup logging configuration.
 

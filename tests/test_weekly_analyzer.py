@@ -212,6 +212,6 @@ def test_empty_workouts_data():
     reports = analyzer.generate_all_reports()
 
     assert len(reports) == 6
-    for name, content in reports.items():
+    for _name, content in reports.items():
         assert "# " in content  # Has header
         assert "S073" in content

@@ -21,7 +21,6 @@ Created: 2025-12-09
 
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Optional
 
 
 class AIProvider(Enum):
@@ -65,11 +64,11 @@ class AIAnalyzer(ABC):
 
     def __init__(self):
         """Initialize AI analyzer base."""
-        self.provider: Optional[AIProvider] = None
-        self.model: Optional[str] = None
+        self.provider: AIProvider | None = None
+        self.model: str | None = None
 
     @abstractmethod
-    def analyze_session(self, prompt: str, dataset: Optional[dict] = None) -> str:
+    def analyze_session(self, prompt: str, dataset: dict | None = None) -> str:
         """Analyze session with AI provider.
 
         Args:

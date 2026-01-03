@@ -60,7 +60,7 @@ Metadata:
 
 import logging
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from cyclisme_training_logs.core.prompt_generator import PromptGenerator
 
@@ -84,7 +84,7 @@ class WeeklyAnalyzer:
         self,
         week: str,
         weekly_data: dict[str, Any],
-        prompt_generator: Optional[PromptGenerator] = None,
+        prompt_generator: PromptGenerator | None = None,
     ):
         """
         Initialiser analyzer.

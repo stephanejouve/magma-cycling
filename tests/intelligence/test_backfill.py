@@ -71,7 +71,12 @@ def test_backfill_sweet_spot_extraction(backfiller, mock_intervals_client):
 
     # Find sweet-spot learning
     sweet_spot_learning = next(
-        (l for l in backfiller.intelligence.learnings.values() if l.category == "sweet-spot"), None
+        (
+            lrn
+            for lrn in backfiller.intelligence.learnings.values()
+            if lrn.category == "sweet-spot"
+        ),
+        None,
     )
 
     assert sweet_spot_learning is not None
@@ -212,7 +217,11 @@ def test_backfill_ftp_progression(backfiller, mock_intervals_client):
 
     # Find FTP progression learning
     ftp_learning = next(
-        (l for l in backfiller.intelligence.learnings.values() if l.category == "ftp_progression"),
+        (
+            lrn
+            for lrn in backfiller.intelligence.learnings.values()
+            if lrn.category == "ftp_progression"
+        ),
         None,
     )
 

@@ -56,7 +56,6 @@ Metadata:
 
 import logging
 from datetime import datetime, timedelta
-from typing import Optional
 
 from cyclisme_training_logs.api.intervals_client import IntervalsClient
 from cyclisme_training_logs.config import get_data_config
@@ -109,7 +108,7 @@ class PlannedSessionsChecker:
 
     def _find_matching_activity(
         self, workout: dict, activities: list[dict], tolerance_hours: int = 6
-    ) -> Optional[dict]:
+    ) -> dict | None:
         """
         Chercher une activité correspondant à un workout planifié
 
@@ -265,7 +264,7 @@ class PlannedSessionsChecker:
         return skipped_sessions
 
     def generate_skipped_session_markdown(
-        self, skipped_session: dict, metrics_pre: Optional[dict] = None
+        self, skipped_session: dict, metrics_pre: dict | None = None
     ) -> str:
         """
         Générer bloc markdown pour séance sautée

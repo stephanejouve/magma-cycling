@@ -22,7 +22,7 @@ from dataclasses import asdict, dataclass
 from datetime import date, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 
 class AnalysisLevel(Enum):
@@ -189,11 +189,11 @@ class Pattern:
             if isinstance(condition, str):
                 if condition.startswith("<"):
                     threshold = float(condition[1:].replace("h", ""))
-                    if not (isinstance(value, (int, float)) and value < threshold):
+                    if not (isinstance(value, int | float) and value < threshold):
                         return False
                 elif condition.startswith(">"):
                     threshold = float(condition[1:].replace("h", ""))
-                    if not (isinstance(value, (int, float)) and value > threshold):
+                    if not (isinstance(value, int | float) and value > threshold):
                         return False
                 elif condition.startswith("="):
                     expected = condition[1:]
@@ -316,7 +316,7 @@ class TrainingIntelligence:
         evidence: list[str],
         level: AnalysisLevel,
         impact: str = "MEDIUM",
-        confidence: Optional[ConfidenceLevel] = None,
+        confidence: ConfidenceLevel | None = None,
     ) -> TrainingLearning:
         """Add new learning or update existing one.
 
@@ -713,7 +713,7 @@ class TrainingIntelligence:
 
         def serialize_obj(obj: Any) -> Any:
             """Serialize dataclass objects to dict."""
-            if isinstance(obj, (TrainingLearning, Pattern, ProtocolAdaptation)):
+            if isinstance(obj, TrainingLearning | Pattern | ProtocolAdaptation):
                 data = asdict(obj)
                 # Convert enums to strings
                 if "level" in data and isinstance(data["level"], AnalysisLevel):
@@ -731,7 +731,7 @@ class TrainingIntelligence:
             return obj
 
         state = {
-            "learnings": {lid: serialize_obj(l) for lid, l in self.learnings.items()},
+            "learnings": {lid: serialize_obj(lrn) for lid, lrn in self.learnings.items()},
             "patterns": {pid: serialize_obj(p) for pid, p in self.patterns.items()},
             "adaptations": {aid: serialize_obj(a) for aid, a in self.adaptations.items()},
         }

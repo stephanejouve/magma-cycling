@@ -77,7 +77,7 @@ import json
 import logging
 from datetime import date, timedelta
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from cyclisme_training_logs.api.intervals_client import IntervalsClient
 from cyclisme_training_logs.config import get_intervals_config
@@ -126,8 +126,8 @@ class WeeklyAggregator(DataAggregator):
         self,
         week: str,
         start_date: date,
-        data_dir: Optional[Path] = None,
-        config: Optional[dict[str, Any]] = None,
+        data_dir: Path | None = None,
+        config: dict[str, Any] | None = None,
     ):
         """
         Initialiser agrégateur weekly.

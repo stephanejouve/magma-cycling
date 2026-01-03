@@ -188,7 +188,7 @@ Analyse cette séance."""
 
     def test_workflow_error_handling(self):
         """Test workflow error handling when provider fails."""
-        config = get_ai_config()
+        get_ai_config()
 
         # Try to create provider with invalid config
         try:

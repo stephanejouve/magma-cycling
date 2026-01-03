@@ -51,7 +51,6 @@ Metadata:
 """
 
 import logging
-from typing import Optional
 
 from anthropic import Anthropic
 
@@ -130,7 +129,7 @@ class ClaudeAPIAnalyzer(AIAnalyzer):
         except Exception as e:
             raise WorkflowError(f"Failed to initialize Claude API client: {e}") from e
 
-    def analyze_session(self, prompt: str, dataset: Optional[dict] = None) -> str:
+    def analyze_session(self, prompt: str, dataset: dict | None = None) -> str:
         """Analyze session using Claude API.
 
         Args:

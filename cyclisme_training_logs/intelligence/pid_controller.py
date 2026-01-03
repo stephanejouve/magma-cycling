@@ -24,7 +24,7 @@ Version: 1.0.0
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from cyclisme_training_logs.intelligence.training_intelligence import TrainingIntelligence
@@ -46,7 +46,7 @@ class PIDState:
 
     integral: float = 0.0
     prev_error: float = 0.0
-    last_update: Optional[datetime] = None
+    last_update: datetime | None = None
 
 
 class PIDController:
@@ -253,7 +253,9 @@ def compute_pid_gains_from_intelligence(intelligence: "TrainingIntelligence") ->
 
     # Kp: Based on confidence average from validated learnings
     validated_learnings = [
-        l for l in intelligence.learnings.values() if l.confidence.value in ["high", "validated"]
+        lrn
+        for lrn in intelligence.learnings.values()
+        if lrn.confidence.value in ["high", "validated"]
     ]
 
     if validated_learnings:
@@ -264,7 +266,7 @@ def compute_pid_gains_from_intelligence(intelligence: "TrainingIntelligence") ->
         kp = 0.005  # Conservative default
 
     # Ki: Based on cumulative evidence
-    total_evidence = sum(len(l.evidence) for l in intelligence.learnings.values())
+    total_evidence = sum(len(lrn.evidence) for lrn in intelligence.learnings.values())
 
     if total_evidence > 50:
         ki = 0.003

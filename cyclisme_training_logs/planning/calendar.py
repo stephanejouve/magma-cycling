@@ -9,7 +9,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from cyclisme_training_logs.config.athlete_profile import AthleteProfile
 
@@ -60,7 +60,7 @@ class TrainingSession:
     duration_min: int = 60
     intensity_pct: float = 70.0
     completed: bool = False
-    actual_tss: Optional[float] = None
+    actual_tss: float | None = None
     notes: str = ""
 
     def get_effective_tss(self) -> float:
@@ -193,7 +193,7 @@ class TrainingCalendar:
         self,
         year: int,
         start_week: int = 1,
-        athlete_profile: Optional[AthleteProfile] = None,
+        athlete_profile: AthleteProfile | None = None,
     ):
         """
         Initialize training calendar.
@@ -276,7 +276,7 @@ class TrainingCalendar:
 
         return week_dates
 
-    def mark_rest_days(self, days: Optional[list[int]] = None) -> None:
+    def mark_rest_days(self, days: list[int] | None = None) -> None:
         """
         Configure rest days for calendar.
 
@@ -309,7 +309,7 @@ class TrainingCalendar:
                     f"Invalid weekday number: {day} (must be 0-6, " f"0=Monday, 6=Sunday)"
                 )
 
-        self.rest_days = sorted(list(set(days)))  # Remove duplicates, sort
+        self.rest_days = sorted(set(days))  # Remove duplicates, sort
 
         logger.info(
             f"Rest days configured: {self.rest_days} "

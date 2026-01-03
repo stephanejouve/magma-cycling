@@ -121,7 +121,7 @@ def test_load_missing_planning():
 
         try:
             load_week_planning("S999", planning_dir=tmpdir_path)
-            assert False, "Devrait lever FileNotFoundError"
+            raise AssertionError("Devrait lever FileNotFoundError")
         except FileNotFoundError as e:
             assert "Planning non trouvé" in str(e)
             print("✓ FileNotFoundError levée correctement")
@@ -132,7 +132,7 @@ def test_validate_planning_valid():
     print("\n[TEST] Validation planning valide...")
 
     planning = create_test_planning()
-    assert validate_week_planning(planning) == True
+    assert validate_week_planning(planning) is True
     print("✓ Planning validé")
 
 
@@ -143,7 +143,7 @@ def test_validate_planning_missing_field():
     planning = create_test_planning()
     del planning["week_id"]  # Retirer champ obligatoire
 
-    assert validate_week_planning(planning) == False
+    assert validate_week_planning(planning) is False
     print("✓ Planning invalide détecté (champ manquant)")
 
 
@@ -154,7 +154,7 @@ def test_validate_planning_invalid_status():
     planning = create_test_planning()
     planning["planned_sessions"][0]["status"] = "invalid_status"
 
-    assert validate_week_planning(planning) == False
+    assert validate_week_planning(planning) is False
     print("✓ Statut invalide détecté")
 
 
@@ -168,7 +168,7 @@ def test_validate_planning_missing_cancellation_reason():
         if session["status"] == "cancelled":
             del session["cancellation_reason"]
 
-    assert validate_week_planning(planning) == False
+    assert validate_week_planning(planning) is False
     print("✓ Raison manquante détectée")
 
 
@@ -180,7 +180,7 @@ def test_validate_planning_duplicate_session_id():
     # Dupliquer un ID
     planning["planned_sessions"].append(planning["planned_sessions"][0].copy())
 
-    assert validate_week_planning(planning) == False
+    assert validate_week_planning(planning) is False
     print("✓ Doublon détecté")
 
 

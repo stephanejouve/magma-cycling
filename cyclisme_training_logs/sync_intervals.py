@@ -111,7 +111,7 @@ class WorkoutLogger:
         np = activity.get("icu_weighted_avg_watts", 0)  # Corrigé: icu_weighted_avg_watts (= NP)
         avg_cadence = activity.get("average_cadence", 0)
         avg_hr = activity.get("average_heartrate", 0)
-        max_hr = activity.get("max_heartrate", 0)
+        activity.get("max_heartrate", 0)
 
         # Découplage (si disponible)
         decoupling = activity.get("decoupling", None)

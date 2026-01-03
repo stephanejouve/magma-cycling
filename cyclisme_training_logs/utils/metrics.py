@@ -25,10 +25,10 @@ Author: Claude Code
 Created: 2026-01-01
 """
 
-from typing import Any, Optional
+from typing import Any
 
 
-def extract_wellness_metrics(wellness_data: Optional[dict[str, Any]]) -> dict[str, float]:
+def extract_wellness_metrics(wellness_data: dict[str, Any] | None) -> dict[str, float]:
     """
     Extract CTL/ATL/TSB metrics from wellness data with proper None handling.
 
@@ -187,7 +187,7 @@ def is_metrics_complete(metrics: dict[str, Any]) -> bool:
 
 def calculate_metrics_change(
     metrics_start: dict[str, float], metrics_end: dict[str, float]
-) -> dict[str, Optional[float]]:
+) -> dict[str, float | None]:
     """
     Calculate change in metrics between two timepoints.
 
@@ -236,7 +236,7 @@ def calculate_metrics_change(
 
 
 def get_metrics_safely(
-    wellness_list: Optional[list[dict[str, Any]]], index: int = 0
+    wellness_list: list[dict[str, Any]] | None, index: int = 0
 ) -> dict[str, float]:
     """
     Safely extract metrics from wellness list with fallback.

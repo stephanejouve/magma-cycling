@@ -50,7 +50,6 @@ Metadata:
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 from cyclisme_training_logs.config import get_data_config
 
@@ -138,7 +137,7 @@ class WorkflowState:
 
         self._save_state()
 
-    def get_last_analyzed_id(self) -> Optional[str]:
+    def get_last_analyzed_id(self) -> str | None:
         """Récupérer l'ID de la dernière activité analysée"""
         return self.state.get("last_analyzed_activity_id")
 
@@ -196,9 +195,9 @@ class WorkflowState:
             if not self.is_valid_activity(activity):
                 filtered_count += 1
                 # Debug info pour activités filtrées
-                name = activity.get("name", "N/A")
-                duration_min = activity.get("moving_time", 0) // 60
-                tss = activity.get("icu_training_load", 0)
+                activity.get("name", "N/A")
+                activity.get("moving_time", 0) // 60
+                activity.get("icu_training_load", 0)
                 # Note: Info silencieuse - pas d'affichage pour ne pas polluer l'output
                 continue
 
@@ -291,7 +290,7 @@ class WorkflowState:
         }
         self._save_state()
 
-    def get_session_feedback(self, activity_id: str) -> Optional[dict]:
+    def get_session_feedback(self, activity_id: str) -> dict | None:
         """Récupérer feedback existant pour une session
 
         Args:

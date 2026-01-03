@@ -64,7 +64,6 @@ import subprocess
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
 
 import requests
 
@@ -1335,7 +1334,7 @@ class WorkflowCoach:
                 print("   → Feedback sans contexte")
                 raise ValueError("No credentials")
 
-            api = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
+            IntervalsClient(athlete_id=athlete_id, api_key=api_key)
 
             # Utiliser les gaps détectés par step_1b au lieu de requêter last 24h
             activity = None
@@ -1766,7 +1765,7 @@ class WorkflowCoach:
                 f.write(f"Généré le : {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
                 f.write("---\n\n")
 
-                for date, markdown in markdowns:
+                for _date, markdown in markdowns:
                     f.write(markdown)
                     f.write("\n\n")
 
@@ -1778,7 +1777,7 @@ class WorkflowCoach:
             print(f"\n❌ Erreur export : {e}")
             return False
 
-    def _detect_session_type_from_markdown(self, markdown: str) -> Optional[str]:
+    def _detect_session_type_from_markdown(self, markdown: str) -> str | None:
         """Détecter type de session depuis markdown
 
         Args:
@@ -2058,7 +2057,6 @@ class WorkflowCoach:
                 session_id = f"{parts[0]}-{parts[1]}" if len(parts) >= 2 else planned_name
 
             date = skipped.get("planned_date", "")
-            name = planned_name
 
             print(f"\n   → {session_id} [{date}]")
 

@@ -10,7 +10,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from cyclisme_training_logs.config.athlete_profile import AthleteProfile
 from cyclisme_training_logs.utils.metrics_advanced import calculate_ramp_rate
@@ -68,11 +68,11 @@ class TrainingObjective:
     target_date: date
     objective_type: ObjectiveType
     priority: PriorityLevel
-    target_value: Optional[float] = None
-    current_value: Optional[float] = None
+    target_value: float | None = None
+    current_value: float | None = None
     notes: str = ""
 
-    def progress_percent(self) -> Optional[float]:
+    def progress_percent(self) -> float | None:
         """
         Calculate progress toward objective as percentage.
 
@@ -96,7 +96,7 @@ class TrainingObjective:
 
         return (self.current_value / self.target_value) * 100.0
 
-    def days_remaining(self, from_date: Optional[date] = None) -> int:
+    def days_remaining(self, from_date: date | None = None) -> int:
         """
         Calculate days remaining until target date.
 
@@ -152,7 +152,7 @@ class TrainingPlan:
     start_date: date
     end_date: date
     objectives: list[TrainingObjective] = field(default_factory=list)
-    athlete_profile: Optional[AthleteProfile] = None
+    athlete_profile: AthleteProfile | None = None
     weekly_tss_targets: list[float] = field(default_factory=list)
     notes: str = ""
 
@@ -259,7 +259,7 @@ class PlanningManager:
         Plan created: Spring Build
     """
 
-    def __init__(self, athlete_profile: Optional[AthleteProfile] = None):
+    def __init__(self, athlete_profile: AthleteProfile | None = None):
         """
         Initialize planning manager.
 
@@ -279,7 +279,7 @@ class PlanningManager:
         start_date: date,
         end_date: date,
         objectives: list[TrainingObjective],
-        weekly_tss_targets: Optional[list[float]] = None,
+        weekly_tss_targets: list[float] | None = None,
         notes: str = "",
     ) -> TrainingPlan:
         """
@@ -349,7 +349,7 @@ class PlanningManager:
         event_name: str,
         priority: PriorityLevel,
         objective_type: ObjectiveType = ObjectiveType.EVENT,
-        target_value: Optional[float] = None,
+        target_value: float | None = None,
         notes: str = "",
     ) -> TrainingObjective:
         """

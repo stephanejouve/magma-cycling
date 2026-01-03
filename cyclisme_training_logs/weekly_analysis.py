@@ -54,7 +54,6 @@ import subprocess
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
 
 # Import du client API unifié
 from cyclisme_training_logs.api.intervals_client import IntervalsClient
@@ -63,7 +62,7 @@ from cyclisme_training_logs.api.intervals_client import IntervalsClient
 class WeeklyAnalysis:
     """Orchestrateur de l'analyse hebdomadaire"""
 
-    def __init__(self, week_number: str, start_date: Optional[str] = None):
+    def __init__(self, week_number: str, start_date: str | None = None):
         """
         Args:
             week_number: Format SXXX (ex: S068)

@@ -227,7 +227,7 @@ class TestTrainingCalendar:
         )
 
         # Overwrite with second session
-        session2 = calendar.add_session(
+        calendar.add_session(
             session_date=date(2026, 1, 12),
             workout_type=WorkoutType.THRESHOLD,
             planned_tss=85.0,

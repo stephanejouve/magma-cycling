@@ -508,21 +508,21 @@ def test_save_and_load_json(tmp_path):
     intelligence = TrainingIntelligence()
 
     # Add data
-    learning = intelligence.add_learning(
+    intelligence.add_learning(
         category="test",
         description="Test learning",
         evidence=["E1", "E2"],
         level=AnalysisLevel.DAILY,
     )
 
-    pattern = intelligence.identify_pattern(
+    intelligence.identify_pattern(
         name="test_pattern",
         trigger_conditions={"test": "value"},
         observed_outcome="Outcome",
         observation_date=date.today(),
     )
 
-    adaptation = intelligence.propose_adaptation(
+    intelligence.propose_adaptation(
         protocol_name="test_protocol",
         adaptation_type="MODIFY",
         current_rule="Old",

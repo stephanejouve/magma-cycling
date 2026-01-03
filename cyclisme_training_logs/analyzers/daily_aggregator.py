@@ -74,7 +74,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from ..core.data_aggregator import DataAggregator
 
@@ -101,9 +101,9 @@ class DailyAggregator(DataAggregator):
     def __init__(
         self,
         activity_id: str,
-        data_dir: Optional[Path] = None,
-        intervals_api_key: Optional[str] = None,
-        athlete_id: Optional[str] = None,
+        data_dir: Path | None = None,
+        intervals_api_key: str | None = None,
+        athlete_id: str | None = None,
     ):
         """
         Initialiser agrégateur daily.

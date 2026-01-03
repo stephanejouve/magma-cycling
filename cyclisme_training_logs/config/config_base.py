@@ -48,7 +48,6 @@ Metadata:
 
 import os
 from pathlib import Path
-from typing import Optional
 
 from dotenv import load_dotenv
 
@@ -59,7 +58,7 @@ load_dotenv()
 class DataRepoConfig:
     """Configuration for external data repository paths."""
 
-    def __init__(self, data_repo_path: Optional[Path] = None):
+    def __init__(self, data_repo_path: Path | None = None):
         """
         Initialize data repository configuration.
 
@@ -155,7 +154,7 @@ class DataRepoConfig:
 
 
 # Global config instance
-_global_config: Optional[DataRepoConfig] = None
+_global_config: DataRepoConfig | None = None
 
 
 def get_data_config() -> DataRepoConfig:
@@ -177,7 +176,7 @@ def get_data_config() -> DataRepoConfig:
     return _global_config
 
 
-def set_data_config(config: Optional[DataRepoConfig]):
+def set_data_config(config: DataRepoConfig | None):
     """
     Set global data repository configuration.
 
@@ -345,7 +344,7 @@ class AIProvidersConfig:
 
 
 # Global AI config instance
-_ai_config_instance: Optional[AIProvidersConfig] = None
+_ai_config_instance: AIProvidersConfig | None = None
 
 
 def get_ai_config() -> AIProvidersConfig:
@@ -451,7 +450,7 @@ class IntervalsConfig:
 
 
 # Global Intervals config instance
-_intervals_config_instance: Optional[IntervalsConfig] = None
+_intervals_config_instance: IntervalsConfig | None = None
 
 
 def get_intervals_config() -> IntervalsConfig:

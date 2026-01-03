@@ -8,7 +8,7 @@ replacing multiple duplicated implementations across the codebase.
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
 import requests
 
@@ -75,7 +75,7 @@ class IntervalsClient:
         return response.json()
 
     def get_activities(
-        self, oldest: Optional[str] = None, newest: Optional[str] = None
+        self, oldest: str | None = None, newest: str | None = None
     ) -> list[dict[str, Any]]:
         """
         Get activities (workouts) for a date range.
@@ -133,7 +133,7 @@ class IntervalsClient:
         return response.json()
 
     def get_wellness(
-        self, oldest: Optional[str] = None, newest: Optional[str] = None
+        self, oldest: str | None = None, newest: str | None = None
     ) -> list[dict[str, Any]]:
         """
         Get wellness data (CTL, ATL, TSB, weight, sleep, etc.).
@@ -173,7 +173,7 @@ class IntervalsClient:
         return response.json()
 
     def get_events(
-        self, oldest: Optional[str] = None, newest: Optional[str] = None
+        self, oldest: str | None = None, newest: str | None = None
     ) -> list[dict[str, Any]]:
         """
         Get calendar events (planned workouts, notes, etc.).
@@ -209,7 +209,7 @@ class IntervalsClient:
 
     def get_planned_workout(
         self, activity_id: str, activity_date: datetime
-    ) -> Optional[dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """
         Find the planned workout associated with a completed activity.
         Trouver le workout planifié associé à une activité réalisée.
@@ -244,7 +244,7 @@ class IntervalsClient:
 
         return None
 
-    def create_event(self, event_data: dict[str, Any]) -> Optional[dict[str, Any]]:
+    def create_event(self, event_data: dict[str, Any]) -> dict[str, Any] | None:
         """
         Create a calendar event (planned workout, note, etc.).
         Créer un événement du calendrier (workout planifié, note, etc.).
@@ -289,7 +289,7 @@ class IntervalsClient:
                 try:
                     error_detail = e.response.json()
                     logger.error(f"Error detail: {error_detail}")
-                except:
+                except Exception:
                     logger.error(f"Response: {e.response.text}")
             logger.error(f"Event data: {event_data}")
             return None
@@ -330,7 +330,7 @@ class IntervalsClient:
             logger.error(f"Error deleting event {event_id}: {e}")
             return False
 
-    def update_event(self, event_id: int, event_data: dict[str, Any]) -> Optional[dict[str, Any]]:
+    def update_event(self, event_id: int, event_data: dict[str, Any]) -> dict[str, Any] | None:
         """Update an existing calendar event.
 
         Args:
@@ -361,7 +361,7 @@ class IntervalsClient:
                 try:
                     error_detail = e.response.json()
                     logger.error(f"Error detail: {error_detail}")
-                except:
+                except Exception:
                     logger.error(f"Response: {e.response.text}")
             return None
 

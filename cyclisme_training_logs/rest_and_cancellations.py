@@ -55,7 +55,6 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 # Configuration du logging
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
@@ -84,7 +83,7 @@ VALID_TYPES = ["END", "INT", "FTP", "SPR", "CLM", "REC", "FOR", "CAD", "TEC", "M
 
 
 def check_pre_session_veto(
-    wellness_data: dict, athlete_profile: dict, session_intensity: Optional[float] = None
+    wellness_data: dict, athlete_profile: dict, session_intensity: float | None = None
 ) -> dict:
     """Check if session should be vetoed due to overtraining risk (CRITICAL safety).
 
@@ -200,7 +199,7 @@ def check_pre_session_veto(
 # ============================================================================
 
 
-def load_week_planning(week_id: str, planning_dir: Optional[Path] = None) -> dict:
+def load_week_planning(week_id: str, planning_dir: Path | None = None) -> dict:
     """
     Charge la configuration hebdomadaire depuis week_planning.json
 
@@ -345,7 +344,7 @@ def generate_rest_day_entry(
     session_data: dict,
     metrics_pre: dict,
     metrics_post: dict,
-    athlete_feedback: Optional[dict] = None,
+    athlete_feedback: dict | None = None,
 ) -> str:
     """
     Génère bloc markdown pour jour de repos planifié
@@ -459,7 +458,7 @@ Le repos planifié permet une récupération complète sans impact négatif sur 
 
 
 def generate_skipped_session_entry(
-    session_data: dict, metrics_pre: dict, reason: Optional[str] = None
+    session_data: dict, metrics_pre: dict, reason: str | None = None
 ) -> str:
     """
     Génère bloc markdown pour séance planifiée mais sautée
@@ -552,7 +551,7 @@ Séance planifiée non exécutée. Impact sur progression hebdomadaire à évalu
 
 
 def generate_cancelled_session_entry(
-    session_data: dict, metrics_pre: dict, reason: str, impact_notes: Optional[str] = None
+    session_data: dict, metrics_pre: dict, reason: str, impact_notes: str | None = None
 ) -> str:
     """
     Génère bloc markdown pour séance annulée/reportée
@@ -727,7 +726,7 @@ def reconcile_planned_vs_actual(
                 result["skipped"].append(session)
 
     # Activités restantes = non planifiées
-    for date, activities in activities_by_date.items():
+    for _, activities in activities_by_date.items():
         for activity in activities:
             # Toute activité restante est non planifiée
             result["unplanned"].append(activity)
@@ -758,8 +757,8 @@ def process_week_with_rest_handling(
     end_date: str,
     athlete_id: str,
     api_key: str,
-    planning_dir: Optional[Path] = None,
-    output_file: Optional[Path] = None,
+    planning_dir: Path | None = None,
+    output_file: Path | None = None,
 ) -> dict:
     """
     Workflow complet avec gestion repos/annulations
