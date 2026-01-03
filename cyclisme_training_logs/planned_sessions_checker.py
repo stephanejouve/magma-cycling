@@ -298,6 +298,7 @@ class PlannedSessionsChecker:
 
         # Construire markdown
         markdown = f"""### {session_name} [SAUTÉE].
+
 Date : {date_str} ({day_of_week})
 
 #### Métriques Pré-séance
