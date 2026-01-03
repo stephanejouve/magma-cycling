@@ -201,8 +201,12 @@ class WorkflowState:
                 # Note: Info silencieuse - pas d'affichage pour ne pas polluer l'output
                 continue
 
+            # Skip if activity_id is None
+            if activity_id is None:
+                continue
+
             # Vérifier dans l'historique si cette activité a déjà été analysée
-            if not self.is_activity_analyzed(activity_id):
+            if not self.is_activity_analyzed(str(activity_id)):
                 unanalyzed.append(activity)
 
         # Info si des activités ont été filtrées (optionnel)
