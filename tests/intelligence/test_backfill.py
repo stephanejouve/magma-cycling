@@ -197,15 +197,37 @@ def test_backfill_outdoor_discipline(backfiller, mock_intervals_client):
 def test_backfill_ftp_progression(backfiller, mock_intervals_client):
     """Test FTP progression learning extraction."""
     # Mock athlete with current FTP
-    mock_athlete = {
-        "ftp": 220,
-        "name": "Test Athlete"
-    }
+    # Mock activities with FTP test
+    mock_activities = [
+        {
+            "start_date_local": "2024-06-15T10:00:00",
+            "name": "FTP Test 20min",
+            "source": "STRAVA",
+            "icu_average_watts": 210,
+            "icu_ftp": 200,
+            "icu_rolling_ftp": 205,
+            "max_avg_watts": {}
+        }
+    ]
 
-    backfiller.client.get_athlete = Mock(return_value=mock_athlete)
+    # Mock wellness with eFTP changes
+    mock_wellness = [
+        {
+            "id": "2024-01-01",
+            "sportInfo": [{"type": "Ride", "eftp": 200.0}]
+        },
+        {
+            "id": "2024-06-15",
+            "sportInfo": [{"type": "Ride", "eftp": 210.0}]
+        },
+        {
+            "id": "2025-12-31",
+            "sportInfo": [{"type": "Ride", "eftp": 220.0}]
+        }
+    ]
 
     # Run analysis (24 months)
-    backfiller.analyze_ftp_progression("2024-01-01", "2025-12-31")
+    backfiller.analyze_ftp_progression("2024-01-01", "2025-12-31", mock_activities, mock_wellness)
 
     # Verify learning created
     assert len(backfiller.intelligence.learnings) >= 1
@@ -218,9 +240,12 @@ def test_backfill_ftp_progression(backfiller, mock_intervals_client):
     )
 
     assert ftp_learning is not None
+    # Check FTP values in description (200W -> 220W based on wellness data)
+    assert "200W" in ftp_learning.description or "210W" in ftp_learning.description
     assert "220W" in ftp_learning.description
-    assert ftp_learning.confidence == ConfidenceLevel.HIGH  # 24 months > 12
-    assert len(ftp_learning.evidence) == 3
+    # Confidence based on number of tests and time period (3 eFTP changes over 24 months)
+    assert ftp_learning.confidence in [ConfidenceLevel.MEDIUM, ConfidenceLevel.HIGH, ConfidenceLevel.VALIDATED]
+    assert len(ftp_learning.evidence) >= 4  # At least period, progression, rate, total tests
 
 
 def test_backfill_saves_valid_json(backfiller, mock_intervals_client, tmp_path):

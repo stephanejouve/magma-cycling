@@ -34,6 +34,9 @@ sphinx-rtd-theme = "^3.0.2"
 poethepoet = "^0.39.0"
 
 [tool.poetry.scripts]
+# === Dashboard & Overview ===
+dashboard = "cyclisme_training_logs.dashboard:main"
+
 # === Scripts Principaux (Usage Quotidien) ===
 weekly-analysis = "cyclisme_training_logs.workflows.workflow_weekly:main"
 weekly-analysis-legacy = "cyclisme_training_logs.weekly_analysis:main"  # DEPRECATED - Gartner E

@@ -1,10 +1,11 @@
 """
-Configuration modules for athlete profile and training thresholds.
+Configuration modules for athlete profile, training thresholds, and logging.
 
 This package consolidates:
 - Original config_base.py: Data repository and AI providers configuration
 - athlete_profile.py: Athlete characteristics (Sprint R2)
 - thresholds.py: Training load thresholds (Sprint R2)
+- logging_config.py: Logging configuration (Quick Wins)
 """
 
 # Original config functions and classes (from config_base.py)
@@ -25,6 +26,13 @@ from cyclisme_training_logs.config.config_base import (
 from cyclisme_training_logs.config.athlete_profile import AthleteProfile
 from cyclisme_training_logs.config.thresholds import TrainingThresholds
 
+# Logging configuration (Quick Wins)
+from cyclisme_training_logs.config.logging_config import (
+    setup_logging,
+    get_logger,
+    set_log_level,
+)
+
 __all__ = [
     # Original config
     'DataRepoConfig',
@@ -40,4 +48,8 @@ __all__ = [
     # Sprint R2 additions
     'AthleteProfile',
     'TrainingThresholds',
+    # Logging
+    'setup_logging',
+    'get_logger',
+    'set_log_level',
 ]
