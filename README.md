@@ -198,8 +198,11 @@ poetry run --help
 ### Run Tests
 
 ```bash
-# All tests
+# All tests (497 tests including integration tests)
 poetry run pytest tests/ -v
+
+# Unit tests only (326 tests - what CI runs)
+poetry run pytest tests/config/ tests/intelligence/ tests/planning/ tests/test_ai_providers/ tests/utils/ -v
 
 # Specific module
 poetry run pytest tests/intelligence/ -v
@@ -209,6 +212,8 @@ poetry run pytest tests/planning/ -v
 poetry run pytest tests/ -v --cov=cyclisme_training_logs --cov-report=html
 # Open htmlcov/index.html in browser
 ```
+
+**Note**: CI/CD runs unit tests only (326 tests). Full test suite (497 tests) includes integration tests requiring local data files and API access.
 
 ### Code Quality
 
