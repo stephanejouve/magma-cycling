@@ -148,7 +148,7 @@ class OllamaAnalyzer(AIAnalyzer):
         Examples:
             >>> info = analyzer.get_provider_info()
             >>> print(info['cost_input'])
-            '$0.00 (local)'
+            '$0.00 (local)'.
         """
         return {
             "provider": "ollama",
@@ -175,7 +175,7 @@ class OllamaAnalyzer(AIAnalyzer):
 
         Notes:
             - Test connexion serveur
-            - Timeout 5s
+            - Timeout 5s.
         """
         try:
             response = requests.get(f"{self.host}/api/tags", timeout=5)

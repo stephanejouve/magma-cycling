@@ -112,7 +112,7 @@ class WorkoutUploader:
             sys.exit(1)
 
     def parse_workouts_file(self, filepath: Path) -> list[dict]:
-        """Parser un fichier contenant les workouts"""
+        """Parser un fichier contenant les workouts."""
         print(f"\n📄 Lecture fichier : {filepath}")
 
         if not filepath.exists():
@@ -169,7 +169,7 @@ class WorkoutUploader:
         return workouts
 
     def parse_clipboard(self) -> list[dict]:
-        """Parser les workouts depuis le presse-papier"""
+        """Parser les workouts depuis le presse-papier."""
         import subprocess
 
         print("\n📋 Lecture presse-papier...")
@@ -228,7 +228,7 @@ class WorkoutUploader:
         return workouts
 
     def upload_workout(self, workout: dict) -> bool:
-        """Uploader un workout sur Intervals.icu"""
+        """Uploader un workout sur Intervals.icu."""
         try:
             # Déterminer l'heure de début selon le jour de la semaine
             workout_date = datetime.strptime(workout["date"], "%Y-%m-%d")
@@ -259,7 +259,7 @@ class WorkoutUploader:
             return False
 
     def upload_all(self, workouts: list[dict], dry_run: bool = False) -> dict:
-        """Uploader tous les workouts"""
+        """Uploader tous les workouts."""
         print("\n" + "=" * 70)
         print("📤 UPLOAD WORKOUTS VERS INTERVALS.ICU")
         print(f"Semaine : {self.week_number}")
@@ -302,7 +302,7 @@ class WorkoutUploader:
 
 
 def main():
-    """Point d'entrée du script"""
+    """Point d'entrée du script."""
     parser = argparse.ArgumentParser(description="Uploader des workouts sur Intervals.icu")
     parser.add_argument(
         "--week-id", type=str, required=True, help="Numéro de semaine (format SXXX, ex: S072)"

@@ -55,6 +55,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 # Configuration du logging
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
@@ -262,7 +263,7 @@ def validate_week_planning(planning: dict) -> bool:
         planning: Dict du planning à valider
 
     Returns:
-        True si valide, False sinon
+        True si valide, False sinon.
     """
     # Champs obligatoires
     required_fields = ["week_id", "start_date", "end_date", "planned_sessions"]
@@ -356,7 +357,7 @@ def generate_rest_day_entry(
         athlete_feedback: Sommeil, VFC, FC repos, ressenti (optionnel)
 
     Returns:
-        Bloc markdown formaté selon template repos
+        Bloc markdown formaté selon template repos.
     """
     # Extraire données session
     session_id = session_data["session_id"]
@@ -393,7 +394,7 @@ def generate_rest_day_entry(
         resting_hr = athlete_feedback.get("resting_hr", "N/A")
 
     # Construire markdown
-    markdown = f"""### {session_id}-{session_type}-{session_name}
+    markdown = f"""### {session_id}-{session_type}-{session_name}.
 Date : {date_str}
 
 #### Métriques Pré-séance
@@ -451,7 +452,7 @@ Le repos planifié permet une récupération complète sans impact négatif sur 
 - ATL : {atl_post} (stable)
 - TSB : {int(tsb_post):+d} (stable)
 
----
+---.
 """
 
     return markdown
@@ -469,7 +470,7 @@ def generate_skipped_session_entry(
         reason: Raison du saut (optionnel)
 
     Returns:
-        Bloc markdown formaté selon template séance sautée
+        Bloc markdown formaté selon template séance sautée.
     """
     # Extraire données session
     session_id = session_data.get("session_id", "N/A")
@@ -506,7 +507,7 @@ def generate_skipped_session_entry(
     days_ago = session_data.get("days_ago", 0)
 
     # Construire markdown
-    markdown = f"""### {session_id} - {session_name} [SAUTÉE]
+    markdown = f"""### {session_id} - {session_name} [SAUTÉE].
 Date : {formatted_date} ({day_of_week})
 
 #### Métriques Pré-séance
@@ -540,7 +541,7 @@ Date : {formatted_date} ({day_of_week})
 #### Notes
 Séance planifiée non exécutée. Impact sur progression hebdomadaire à évaluer.
 
----
+---.
 """
     return markdown
 
@@ -563,7 +564,7 @@ def generate_cancelled_session_entry(
         impact_notes: Notes sur l'impact planning (optionnel)
 
     Returns:
-        Bloc markdown formaté selon template annulation
+        Bloc markdown formaté selon template annulation.
     """
     # Extraire données session
     session_id = session_data["session_id"]
@@ -593,7 +594,7 @@ def generate_cancelled_session_entry(
         impact_notes = session_data.get("impact_notes", "Impact à évaluer")
 
     # Construire markdown
-    markdown = f"""### {session_id}-{session_type}-{session_name}-{version}
+    markdown = f"""### {session_id}-{session_type}-{session_name}-{version}.
 Date : {date_str}
 
 #### Métriques Pré-séance
@@ -635,7 +636,7 @@ Date : {date_str}
 - ATL : {atl_pre} (inchangé)
 - TSB : {int(tsb_pre):+d} (inchangé)
 
----
+---.
 """
 
     return markdown
@@ -661,12 +662,18 @@ def reconcile_planned_vs_actual(
         - 'matched': Sessions planifiées + exécutées
         - 'rest_days': Repos planifiés
         - 'cancelled': Séances annulées
-        - 'unplanned': Activités non planifiées
+        - 'unplanned': Activités non planifiées.
     """
-    result = {"matched": [], "rest_days": [], "cancelled": [], "skipped": [], "unplanned": []}
+    result: dict[str, list[Any]] = {
+        "matched": [],
+        "rest_days": [],
+        "cancelled": [],
+        "skipped": [],
+        "unplanned": [],
+    }
 
     # Index activités par date
-    activities_by_date = {}
+    activities_by_date: dict[str, list[dict[str, Any]]] = {}
     for activity in intervals_activities:
         date = activity["start_date_local"][:10]  # YYYY-MM-DD
         if date not in activities_by_date:

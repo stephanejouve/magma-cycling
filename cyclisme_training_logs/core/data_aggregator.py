@@ -105,8 +105,8 @@ class DataAggregator(ABC):
         """
         self.data_dir = data_dir or Path.home() / "training-logs"
         self.config = config or {}
-        self.errors = []
-        self.warnings = []
+        self.errors: list[str] = []
+        self.warnings: list[str] = []
 
     @abstractmethod
     def collect_raw_data(self) -> dict[str, Any]:
@@ -114,7 +114,7 @@ class DataAggregator(ABC):
         Collecter les données brutes nécessaires.
 
         Returns:
-            Dict avec données brutes collectées
+            Dict avec données brutes collectées.
         """
         pass
 
@@ -127,7 +127,7 @@ class DataAggregator(ABC):
             raw_data: Données brutes collectées
 
         Returns:
-            Dict avec données traitées
+            Dict avec données traitées.
         """
         pass
 
@@ -140,7 +140,7 @@ class DataAggregator(ABC):
             processed_data: Données traitées
 
         Returns:
-            Sortie formatée (généralement markdown)
+            Sortie formatée (généralement markdown).
         """
         pass
 
@@ -154,7 +154,7 @@ class DataAggregator(ABC):
         3. Formatage sortie
 
         Returns:
-            AggregationResult avec données et statut
+            AggregationResult avec données et statut.
         """
         try:
             # Étape 1 : Collecte
@@ -199,7 +199,7 @@ class DataAggregator(ABC):
             data: Données à valider
 
         Returns:
-            True si données valides
+            True si données valides.
         """
         return True
 
@@ -211,7 +211,7 @@ class DataAggregator(ABC):
             data: Données à enrichir
 
         Returns:
-            Données avec metadata
+            Données avec metadata.
         """
         from datetime import datetime
 
@@ -232,7 +232,7 @@ class DailyDataAggregator(DataAggregator):
     - Données activité Intervals.icu
     - Feedback athlète
     - État workflow
-    - Métriques pré/post séance
+    - Métriques pré/post séance.
     """
 
     def __init__(self, activity_id: str, data_dir: Path | None = None):
@@ -241,7 +241,7 @@ class DailyDataAggregator(DataAggregator):
 
         Args:
             activity_id: ID activité Intervals.icu (ex: i123456)
-            data_dir: Répertoire données
+            data_dir: Répertoire données.
         """
         super().__init__(data_dir=data_dir)
         self.activity_id = activity_id
@@ -270,7 +270,7 @@ class WeeklyDataAggregator(DataAggregator):
     - training_learnings_sXXX.md
     - protocol_adaptations_sXXX.md
     - transition_sXXX_sXXX.md
-    - bilan_final_sXXX.md
+    - bilan_final_sXXX.md.
     """
 
     def __init__(self, week: str, start_date: str, data_dir: Path | None = None):
@@ -280,7 +280,7 @@ class WeeklyDataAggregator(DataAggregator):
         Args:
             week: Numéro semaine (ex: S073)
             start_date: Date début (YYYY-MM-DD)
-            data_dir: Répertoire données
+            data_dir: Répertoire données.
         """
         super().__init__(data_dir=data_dir)
         self.week = week

@@ -16,7 +16,7 @@ Examples:
                 return analysis_result
 
 Author: Claude Code
-Created: 2025-12-09
+Created: 2025-12-09.
 """
 
 from abc import ABC, abstractmethod
@@ -36,7 +36,7 @@ class AIProvider(Enum):
     Examples:
         >>> provider = AIProvider.CLIPBOARD
         >>> provider.value
-        'clipboard'
+        'clipboard'.
     """
 
     CLIPBOARD = "clipboard"
@@ -59,7 +59,7 @@ class AIAnalyzer(ABC):
     Examples:
         >>> analyzer = ClipboardAnalyzer()
         >>> result = analyzer.analyze_session(prompt)
-        'Analysis copied to clipboard'
+        'Analysis copied to clipboard'.
     """
 
     def __init__(self):
@@ -102,7 +102,7 @@ class AIAnalyzer(ABC):
         Examples:
             >>> info = analyzer.get_provider_info()
             >>> print(info['provider'])
-            'clipboard'
+            'clipboard'.
         """
         return {
             "provider": self.provider.value if self.provider else "unknown",
@@ -123,6 +123,6 @@ class AIAnalyzer(ABC):
 
         Notes:
             - Clipboard: toujours valide (pas de config)
-            - API providers: vérifient api_key présente
+            - API providers: vérifient api_key présente.
         """
         return True  # Override in subclasses if needed

@@ -97,7 +97,7 @@ def calculate_tsb(ctl: float, atl: float) -> float:
         >>> calculate_tsb(45.6, 37.7)
         7.9
         >>> calculate_tsb(40.0, 50.0)
-        -10.0
+        -10.0.
     """
     return ctl - atl
 
@@ -166,7 +166,7 @@ def is_metrics_complete(metrics: dict[str, Any]) -> bool:
 
         >>> metrics = {'ctl': 0, 'atl': 0, 'tsb': 0}
         >>> is_metrics_complete(metrics)
-        True
+        True.
     """
     if not metrics:
         return False
@@ -211,7 +211,7 @@ def calculate_metrics_change(
         >>> start = {'ctl': None, 'atl': 35.0, 'tsb': None}
         >>> end = {'ctl': 45.6, 'atl': 37.7, 'tsb': 7.9}
         >>> calculate_metrics_change(start, end)
-        {'ctl_change': None, 'atl_change': 2.7, 'tsb_change': None}
+        {'ctl_change': None, 'atl_change': 2.7, 'tsb_change': None}.
     """
     # Calculate CTL change
     ctl_start = metrics_start.get("ctl")
@@ -267,7 +267,7 @@ def get_metrics_safely(
 
         >>> wellness_list = [{'id': '2025-12-01'}]
         >>> get_metrics_safely(wellness_list, index=5)
-        {'ctl': 0.0, 'atl': 0.0, 'tsb': 0.0}
+        {'ctl': 0.0, 'atl': 0.0, 'tsb': 0.0}.
     """
     # Handle None or empty list
     if not wellness_list:

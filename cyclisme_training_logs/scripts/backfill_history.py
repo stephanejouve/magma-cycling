@@ -218,7 +218,7 @@ class HistoryBackfiller:
             skip_planned: If True, skip activities with planned workouts
 
         Returns:
-            List of activities needing analysis
+            List of activities needing analysis.
         """
         # If force_reanalyze, ignore workflow state (empty set = analyze all)
         if self.force_reanalyze:
@@ -257,7 +257,7 @@ class HistoryBackfiller:
         pyproject.toml lookup in wrong directory (data repo vs code repo).
 
         Returns:
-            True if analysis succeeded, False otherwise
+            True if analysis succeeded, False otherwise.
         """
         activity_id = str(activity.get("id", ""))
         activity_name = activity.get("name", "Unknown")
@@ -339,7 +339,7 @@ class HistoryBackfiller:
 
         Args:
             batch_num: Batch number for commit message
-            activities: Activities in this batch
+            activities: Activities in this batch.
         """
         if self.dry_run:
             print(f"\n🔍 DRY RUN - Would commit batch {batch_num}")
@@ -381,7 +381,7 @@ class HistoryBackfiller:
         Estimate time and cost for analyzing N activities.
 
         Returns:
-            Dict with 'time_minutes' and 'cost_usd' estimates
+            Dict with 'time_minutes' and 'cost_usd' estimates.
         """
         # Time estimates per provider (minutes per activity)
         time_per_activity = {
@@ -406,7 +406,9 @@ class HistoryBackfiller:
 
         return {"time_minutes": time_minutes, "time_hours": time_minutes / 60, "cost_usd": cost_usd}
 
-    def run(self, start_date: str, end_date: str, skip_planned: bool = False, limit: int = None):
+    def run(
+        self, start_date: str, end_date: str, skip_planned: bool = False, limit: int | None = None
+    ):
         """
         Run complete backfill process.
 
@@ -414,7 +416,7 @@ class HistoryBackfiller:
             start_date: Start date (YYYY-MM-DD)
             end_date: End date (YYYY-MM-DD)
             skip_planned: Skip activities with planned workouts
-            limit: Max activities to analyze (for testing)
+            limit: Max activities to analyze (for testing).
         """
         self.start_time = time.time()
 
@@ -583,7 +585,7 @@ Examples:
   poetry run backfill-history --start-date 2024-01-01 --provider claude_api
 
   # Backfill with Ollama (free but slow)
-  poetry run backfill-history --start-date 2024-01-01 --provider ollama
+  poetry run backfill-history --start-date 2024-01-01 --provider ollama.
         """,
     )
 

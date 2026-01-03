@@ -23,7 +23,7 @@ Metadata:
     Status: Production
     Priority: P1
     Version: 2.1.0
-    Sprint: R4
+    Sprint: R4.
 """
 
 from cyclisme_training_logs.intelligence.pid_controller import (

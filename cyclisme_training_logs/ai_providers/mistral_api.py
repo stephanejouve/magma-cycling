@@ -206,7 +206,7 @@ class MistralAPIAnalyzer(AIAnalyzer):
         Examples:
             >>> info = analyzer.get_provider_info()
             >>> print(info['cost_input'])
-            '$2.00/1M tokens'
+            '$2.00/1M tokens'.
         """
         return {
             "provider": "mistral_api",
@@ -228,6 +228,6 @@ class MistralAPIAnalyzer(AIAnalyzer):
         Examples:
             >>> is_valid = analyzer.validate_config()
             >>> print(is_valid)
-            True
+            True.
         """
         return self.client is not None

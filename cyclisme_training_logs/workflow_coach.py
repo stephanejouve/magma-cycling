@@ -177,7 +177,7 @@ class WorkflowCoach:
         logger.info(f"AI Analyzer initialized: {self.ai_analyzer.__class__.__name__}")
 
     def load_credentials(self):
-        """Charger credentials Intervals.icu de manière robuste"""
+        """Charger credentials Intervals.icu de manière robuste."""
         import json
         import os
         from pathlib import Path
@@ -202,7 +202,7 @@ class WorkflowCoach:
         return None, None
 
     def load_workout_templates(self):
-        """Charge catalogue templates au démarrage
+        """Charge catalogue templates au démarrage.
 
         Returns:
             dict: Templates indexés par ID (ex: {"recovery_active_30tss": {...}})
@@ -232,7 +232,7 @@ class WorkflowCoach:
         return templates
 
     def load_remaining_sessions(self, week_id: str) -> list:
-        """Charge séances planifiées futures de la semaine
+        """Charge séances planifiées futures de la semaine.
 
         Args:
             week_id: ID semaine (ex: "S072")
@@ -266,13 +266,13 @@ class WorkflowCoach:
             return []
 
     def format_remaining_sessions_compact(self, remaining_sessions: list) -> str:
-        """Format compact planning pour prompt AI (cible ~150 tokens)
+        """Format compact planning pour prompt AI (cible ~150 tokens).
 
         Args:
             remaining_sessions: Liste de sessions futures
 
         Returns:
-            str: Planning formaté pour inclusion dans prompt
+            str: Planning formaté pour inclusion dans prompt.
         """
         if not remaining_sessions:
             return ""
@@ -297,7 +297,7 @@ class WorkflowCoach:
         return "\n".join(lines)
 
     def parse_ai_modifications(self, ai_response: str) -> list:
-        """Parse modifications planning depuis réponse AI (fix Issue #3)
+        """Parse modifications planning depuis réponse AI (fix Issue #3).
 
         Gère plusieurs formats:
         - JSON plain: {"modifications": [...]}
@@ -370,7 +370,7 @@ class WorkflowCoach:
         return modifications
 
     def _extract_day_number(self, date_str: str, week_id: str) -> int:
-        """Extrait numéro jour (1-7) depuis date
+        """Extrait numéro jour (1-7) depuis date.
 
         Args:
             date_str: "2025-12-18"
@@ -397,13 +397,13 @@ class WorkflowCoach:
             return 1  # Fallback
 
     def _get_workout_id_intervals(self, date: str):
-        """Récupère ID workout Intervals.icu pour une date
+        """Récupère ID workout Intervals.icu pour une date.
 
         Args:
             date: Date YYYY-MM-DD
 
         Returns:
-            str: ID workout ou None
+            str: ID workout ou None.
         """
         try:
             # Import IntervalsAPI from prepare_analysis
@@ -433,13 +433,13 @@ class WorkflowCoach:
             return None
 
     def _delete_workout_intervals(self, workout_id: str) -> bool:
-        """Supprime workout Intervals.icu
+        """Supprime workout Intervals.icu.
 
         Args:
             workout_id: ID workout à supprimer
 
         Returns:
-            bool: True si succès
+            bool: True si succès.
         """
         try:
             # Import IntervalsAPI
@@ -465,7 +465,7 @@ class WorkflowCoach:
             return False
 
     def _upload_workout_intervals(self, date: str, code: str, structure: str) -> bool:
-        """Upload nouveau workout Intervals.icu
+        """Upload nouveau workout Intervals.icu.
 
         Args:
             date: Date YYYY-MM-DD
@@ -473,7 +473,7 @@ class WorkflowCoach:
             structure: Format texte Intervals.icu
 
         Returns:
-            bool: True si succès
+            bool: True si succès.
         """
         try:
             # Import IntervalsAPI
@@ -508,7 +508,7 @@ class WorkflowCoach:
     def _update_planning_json(
         self, week_id: str, date: str, new_workout: dict, old_workout: str, reason: str
     ) -> bool:
-        """Met à jour week_planning_SXXX.json avec historique
+        """Met à jour week_planning_SXXX.json avec historique.
 
         Args:
             week_id: ID semaine
@@ -518,7 +518,7 @@ class WorkflowCoach:
             reason: Raison modification
 
         Returns:
-            bool: True si succès
+            bool: True si succès.
         """
         config = get_data_config()
         planning_file = config.week_planning_dir / f"week_planning_{week_id}.json"
@@ -577,11 +577,11 @@ class WorkflowCoach:
             return False
 
     def _apply_lighten(self, mod: dict, week_id: str):
-        """Applique allégement séance via template
+        """Applique allégement séance via template.
 
         Args:
             mod: Modification dict avec template_id
-            week_id: ID semaine
+            week_id: ID semaine.
         """
         template_id = mod["template_id"]
 
@@ -642,11 +642,11 @@ class WorkflowCoach:
             print("   ⚠️  Échec mise à jour planning JSON")
 
     def apply_planning_modifications(self, modifications: list, week_id: str):
-        """Applique modifications planning
+        """Applique modifications planning.
 
         Args:
             modifications: Liste modifications AI
-            week_id: ID semaine
+            week_id: ID semaine.
         """
         if not modifications:
             print("\n✅ Planning maintenu tel quel")
@@ -669,7 +669,7 @@ class WorkflowCoach:
                 print(f"⚠️  Action inconnue: {action}")
 
     def reconcile_week(self, week_id: str):
-        """Mode réconciliation batch pour séances sautées/annulées
+        """Mode réconciliation batch pour séances sautées/annulées.
 
         Workflow:
         1. Charge planning JSON local
@@ -681,7 +681,7 @@ class WorkflowCoach:
         7. Sauvegarde planning
 
         Args:
-            week_id: ID semaine (ex: S070)
+            week_id: ID semaine (ex: S070).
         """
         self.clear_screen()
         self.print_header("🤖 WORKFLOW COACH AI - Réconciliation Batch", f"Semaine {week_id}")
@@ -882,11 +882,11 @@ class WorkflowCoach:
             print(f"   git commit -m 'fix: Réconciliation {week_id}'")
 
     def clear_screen(self):
-        """Nettoyer l'écran"""
+        """Nettoyer l'écran."""
         os.system("clear" if os.name == "posix" else "cls")
 
     def print_header(self, title, subtitle=None):
-        """Afficher un header stylisé"""
+        """Afficher un header stylisé."""
         print("\n" + "=" * 70)
         print(f"  {title}")
         if subtitle:
@@ -894,18 +894,18 @@ class WorkflowCoach:
         print("=" * 70 + "\n")
 
     def print_separator(self):
-        """Afficher un séparateur"""
+        """Afficher un séparateur."""
         print("\n" + "-" * 70 + "\n")
 
     def wait_user(self, message="Appuyer sur ENTRÉE pour continuer..."):
-        """Attendre l'utilisateur"""
+        """Attendre l'utilisateur."""
         if self.auto_mode:
             print(f"\n[AUTO MODE] Skipping: {message}")
             return
         input(f"\n{message}")
 
     def step_1_welcome(self):
-        """Étape 1 : Message de bienvenue"""
+        """Étape 1 : Message de bienvenue."""
         self.clear_screen()
         self.print_header(
             "🎯 WORKFLOW COACH - Analyse de Séance",
@@ -939,7 +939,7 @@ class WorkflowCoach:
         self.wait_user("Appuyer sur ENTRÉE pour démarrer...")
 
     def step_1b_detect_all_gaps(self):
-        """Étape 1b : Détection unifiée de tous les gaps (exécutées + repos + annulations)
+        """Étape 1b : Détection unifiée de tous les gaps (exécutées + repos + annulations).
 
         Returns:
             tuple: (choice: str, gaps_data: dict)
@@ -1277,7 +1277,7 @@ class WorkflowCoach:
                 print("❌ Choix invalide, réessaye.")
 
     def step_2_collect_feedback(self):
-        """Étape 2 : Collecter le feedback athlète"""
+        """Étape 2 : Collecter le feedback athlète."""
         if self.skip_feedback:
             self.clear_screen()
             self.print_header(
@@ -1424,7 +1424,7 @@ class WorkflowCoach:
             error_msg: Error message from the failed provider
 
         Returns:
-            User choice: 'F' (Fallback), 'C' (Clipboard), 'Q' (Quit)
+            User choice: 'F' (Fallback), 'C' (Clipboard), 'Q' (Quit).
         """
         print()
         print("=" * 70)
@@ -1448,7 +1448,7 @@ class WorkflowCoach:
             print()
 
     def step_3_prepare_analysis(self):
-        """Étape 3 : Préparer le prompt d'analyse"""
+        """Étape 3 : Préparer le prompt d'analyse."""
         self.clear_screen()
         self.print_header("📝 Préparation Prompt d'Analyse", "Étape 3/7 : Génération du prompt")
 
@@ -1592,7 +1592,7 @@ class WorkflowCoach:
     # ========================================================================
 
     def _detect_week_id(self) -> str:
-        """Détecte ou demande le week_id
+        """Détecte ou demande le week_id.
 
         Returns:
             Week ID (ex: "S070")
@@ -1611,10 +1611,10 @@ class WorkflowCoach:
         return week_id
 
     def _check_planning_available(self) -> bool:
-        """Vérifie si un planning hebdomadaire est disponible
+        """Vérifie si un planning hebdomadaire est disponible.
 
         Returns:
-            True si planning trouvé, False sinon
+            True si planning trouvé, False sinon.
         """
         if not self.week_id:
             week_id = self._detect_week_id()
@@ -1628,10 +1628,10 @@ class WorkflowCoach:
         return planning_file.exists()
 
     def _display_reconciliation_report(self, result: dict):
-        """Affiche le rapport de réconciliation
+        """Affiche le rapport de réconciliation.
 
         Args:
-            result: Résultat de reconcile_planned_vs_actual()
+            result: Résultat de reconcile_planned_vs_actual().
         """
         print("\n" + "=" * 70)
         print("📊 RAPPORT RÉCONCILIATION")
@@ -1674,13 +1674,13 @@ class WorkflowCoach:
         print("=" * 70)
 
     def _collect_rest_feedback(self, session_data: dict) -> dict:
-        """Collecte feedback athlète pour jour de repos
+        """Collecte feedback athlète pour jour de repos.
 
         Args:
             session_data: Session info
 
         Returns:
-            Dict avec sleep_duration, sleep_score, hrv, resting_hr
+            Dict avec sleep_duration, sleep_score, hrv, resting_hr.
         """
         print(f"\n📝 Feedback pour {session_data['session_id']} (repos planifié)")
         print("   (Laisser vide pour ignorer)")
@@ -1698,10 +1698,10 @@ class WorkflowCoach:
         }
 
     def _preview_markdowns(self, markdowns: list):
-        """Affiche preview des markdowns générés
+        """Affiche preview des markdowns générés.
 
         Args:
-            markdowns: Liste de tuples (date, markdown_text)
+            markdowns: Liste de tuples (date, markdown_text).
         """
         print("\n" + "=" * 70)
         print("👁️  PREVIEW MARKDOWNS GÉNÉRÉS")
@@ -1726,13 +1726,13 @@ class WorkflowCoach:
         print("\n" + "=" * 70)
 
     def _copy_to_clipboard(self, markdowns: list) -> bool:
-        """Copie markdowns dans clipboard macOS
+        """Copie markdowns dans clipboard macOS.
 
         Args:
             markdowns: Liste de tuples (date, markdown_text)
 
         Returns:
-            True si succès, False sinon
+            True si succès, False sinon.
         """
         # Combiner tous les markdowns
         combined = "\n\n".join(markdown for _, markdown in markdowns)
@@ -1757,14 +1757,14 @@ class WorkflowCoach:
             return False
 
     def _export_markdowns(self, markdowns: list, week_id: str) -> bool:
-        """Export markdowns vers fichier
+        """Export markdowns vers fichier.
 
         Args:
             markdowns: Liste de tuples (date, markdown_text)
             week_id: ID semaine (ex: S070)
 
         Returns:
-            True si succès, False sinon
+            True si succès, False sinon.
         """
         config = get_data_config()
         output_dir = config.week_planning_dir
@@ -1789,7 +1789,7 @@ class WorkflowCoach:
             return False
 
     def _detect_session_type_from_markdown(self, markdown: str) -> str | None:
-        """Détecter type de session depuis markdown
+        """Détecter type de session depuis markdown.
 
         Args:
             markdown: Texte markdown de la session
@@ -1814,13 +1814,13 @@ class WorkflowCoach:
         return None
 
     def _insert_to_history(self, markdowns: list) -> bool:
-        """Insère markdowns dans workouts-history.md
+        """Insère markdowns dans workouts-history.md.
 
         Args:
             markdowns: Liste de tuples (date, markdown_text)
 
         Returns:
-            True si succès, False sinon
+            True si succès, False sinon.
         """
         # Always use data repo config (never fallback to code repo)
         if self.config:
@@ -1895,7 +1895,7 @@ class WorkflowCoach:
             return False
 
     def _show_special_sessions(self):
-        """Génère et affiche les sessions spéciales (repos/annulations)"""
+        """Génère et affiche les sessions spéciales (repos/annulations)."""
         if not self.reconciliation:
             return
 
@@ -2016,7 +2016,7 @@ class WorkflowCoach:
             return "exit_workflow"
 
     def _handle_rest_cancellations(self):
-        """Handler pour traiter repos/annulations en batch
+        """Handler pour traiter repos/annulations en batch.
 
         Returns:
             str: Action à effectuer ("exit" ou "continue")
@@ -2036,7 +2036,7 @@ class WorkflowCoach:
             return "exit"
 
     def _handle_skipped_sessions(self, skipped_sessions: list) -> str:
-        """Handler dédié pour traiter séances sautées en batch (P2 FIX)
+        """Handler dédié pour traiter séances sautées en batch (P2 FIX).
 
         Args:
             skipped_sessions: Liste sessions sautées détectées
@@ -2149,14 +2149,14 @@ class WorkflowCoach:
             return "exit"
 
     def _generate_skipped_markdown(self, skipped: dict, reason: str) -> str:
-        """Générer markdown pour séance sautée (P2 FIX)
+        """Générer markdown pour séance sautée (P2 FIX).
 
         Args:
             skipped: Dict session sautée (planned_name, planned_date, etc.)
             reason: Raison saut fournie par user
 
         Returns:
-            str: Markdown formaté
+            str: Markdown formaté.
         """
         # Extraire session_id (SXXX-XX)
         planned_name = skipped.get("planned_name", "")
@@ -2170,7 +2170,7 @@ class WorkflowCoach:
         date_formatted = date_obj.strftime("%d/%m/%Y")
         name = planned_name
 
-        markdown = f"""### {session_id}
+        markdown = f"""### {session_id}.
 Date : {date_formatted}
 
 #### Statut
@@ -2189,7 +2189,7 @@ Session planifiée non réalisée. Aucune donnée d'exécution disponible.
         return markdown
 
     def _handle_batch_all(self):
-        """Handler pour traiter TOUT en batch (exécutées + repos + annulations)
+        """Handler pour traiter TOUT en batch (exécutées + repos + annulations).
 
         TODO: Implémenter traitement batch complet
         - Générer markdowns repos/annulations
@@ -2218,13 +2218,13 @@ Session planifiée non réalisée. Aucune donnée d'exécution disponible.
         return "exit"
 
     def _generate_coach_prompt(self, markdowns: list) -> bool:
-        """Génère prompt d'enrichissement Coach IA pour repos/annulations
+        """Génère prompt d'enrichissement Coach IA pour repos/annulations.
 
         Args:
             markdowns: Liste de tuples (date, markdown_text)
 
         Returns:
-            True si succès, False sinon
+            True si succès, False sinon.
         """
         try:
             # 1. Charger prompt projet
@@ -2267,7 +2267,7 @@ Session planifiée non réalisée. Aucune donnée d'exécution disponible.
             combined_markdowns = "\n\n---\n\n".join(markdown for _, markdown in markdowns)
 
             # 4. Construire prompt enrichissement
-            enrichment_prompt = f"""# Mission Coach IA : Enrichissement Sessions Spéciales
+            enrichment_prompt = f"""# Mission Coach IA : Enrichissement Sessions Spéciales.
 
 Tu es un coach cyclisme expert. J'ai généré des analyses automatiques pour des sessions spéciales (repos planifiés et séances annulées).
 
@@ -2351,7 +2351,7 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
             return False
 
     def step_4_paste_prompt(self):
-        """Étape 4 : Instructions pour coller le prompt dans Claude"""
+        """Étape 4 : Instructions pour coller le prompt dans Claude."""
         self.clear_screen()
 
         # Afficher le nom de la séance dans le header
@@ -2389,7 +2389,7 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
         self.wait_user("Appuyer sur ENTRÉE une fois la réponse copiée...")
 
     def step_5_validate_analysis(self):
-        """Étape 5 : Valider la réponse de Claude"""
+        """Étape 5 : Valider la réponse de Claude."""
         self.clear_screen()
 
         # Afficher le nom de la séance dans le header
@@ -2445,7 +2445,7 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
         self.wait_user()
 
     def step_6_insert_analysis(self):
-        """Étape 6 : Insérer l'analyse dans les logs"""
+        """Étape 6 : Insérer l'analyse dans les logs."""
         self.clear_screen()
 
         # Afficher le nom de la séance dans le header
@@ -2506,12 +2506,12 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
         self.wait_user()
 
     def step_6b_servo_control(self):
-        """Étape 6b : Asservissement planning (si --servo-mode activé)
+        """Étape 6b : Asservissement planning (si --servo-mode activé).
 
         Cette étape:
         1. Charge le planning restant de la semaine
         2. Parse la réponse AI pour détecter modifications recommandées
-        3. Applique les modifications après confirmation utilisateur
+        3. Applique les modifications après confirmation utilisateur.
         """
         self.clear_screen()
 
@@ -2574,7 +2574,7 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
         # Generate supplementary prompt for AI
         planning_context = self.format_remaining_sessions_compact(remaining_sessions)
 
-        supplementary_prompt = f"""# ASSERVISSEMENT PLANNING - Demande Coach AI
+        supplementary_prompt = f"""# ASSERVISSEMENT PLANNING - Demande Coach AI.
 
 Contexte : Tu viens d'analyser la séance du jour.
 {planning_context}
@@ -2694,7 +2694,7 @@ Réponds maintenant."""
         self.wait_user()
 
     def step_7_git_commit(self):
-        """Étape 7 : Commit git optionnel"""
+        """Étape 7 : Commit git optionnel."""
         if self.skip_git:
             self.clear_screen()
             self.print_header("⏭️  Git Commit (Skip)", "Étape 7/7 : Sauvegarde (optionnel)")
@@ -2791,7 +2791,7 @@ Réponds maintenant."""
         self.wait_user()
 
     def show_summary(self):
-        """Afficher le résumé final"""
+        """Afficher le résumé final."""
         self.clear_screen()
         self.print_header("🎉 Workflow Terminé !", "Analyse de séance complète")
 
@@ -2822,10 +2822,10 @@ Réponds maintenant."""
         print()
 
     def _optional_git_commit(self, default_message):
-        """Proposer commit git optionnel (version simplifiée sans clear_screen)
+        """Proposer commit git optionnel (version simplifiée sans clear_screen).
 
         Args:
-            default_message: Message de commit par défaut
+            default_message: Message de commit par défaut.
         """
         print()
         print("─" * 70)
@@ -2873,13 +2873,13 @@ Réponds maintenant."""
         print("─" * 70)
 
     def _compute_gaps_signature(self, gaps_data: dict) -> str:
-        """Calculer signature unique des gaps actuels pour détecter changements
+        """Calculer signature unique des gaps actuels pour détecter changements.
 
         Args:
             gaps_data: Dict avec listes unanalyzed, skipped, rest_days, cancelled
 
         Returns:
-            str: Hash MD5 des IDs de toutes sessions détectées
+            str: Hash MD5 des IDs de toutes sessions détectées.
         """
         import hashlib
 
@@ -2910,7 +2910,7 @@ Réponds maintenant."""
         return signature
 
     def run(self):
-        """Orchestrer le workflow complet avec détection unifiée des gaps (mode boucle)"""
+        """Orchestrer le workflow complet avec détection unifiée des gaps (mode boucle)."""
         try:
             # Étape 1 : Accueil (une seule fois)
             self.step_1_welcome()
@@ -3080,7 +3080,7 @@ Exemples:
   python3 cyclisme_training_logs/workflow_coach.py --skip-feedback --skip-git
 
   # Mode réconciliation + rapide
-  python3 cyclisme_training_logs/workflow_coach.py --week-id S070 --skip-feedback --skip-git
+  python3 cyclisme_training_logs/workflow_coach.py --week-id S070 --skip-feedback --skip-git.
         """,
     )
 

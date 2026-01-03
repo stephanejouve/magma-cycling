@@ -11,7 +11,7 @@ Ce script :
 Usage:
     python3 cyclisme_training_logs/collect_athlete_feedback.py
     python3 cyclisme_training_logs/collect_athlete_feedback.py --quick  # Mode rapide (RPE + ressenti uniquement)
-    python3 cyclisme_training_logs/collect_athlete_feedback.py --clear  # Effacer le feedback en attente
+    python3 cyclisme_training_logs/collect_athlete_feedback.py --clear  # Effacer le feedback en attente.
 """
 
 import argparse
@@ -22,7 +22,7 @@ from pathlib import Path
 
 
 class AthleteFeedbackCollector:
-    """Collecteur de feedback athlète"""
+    """Collecteur de feedback athlète."""
 
     def __init__(self, temp_dir=".athlete_feedback", activity_context=None, batch_position=None):
         self.temp_dir = Path(temp_dir)
@@ -32,7 +32,7 @@ class AthleteFeedbackCollector:
         self.batch_position = batch_position  # Tuple (current, total) ex: (1, 3)
 
     def display_activity_context(self):
-        """Afficher le contexte de l'activité en cours d'analyse"""
+        """Afficher le contexte de l'activité en cours d'analyse."""
         if not self.activity_context and not self.batch_position:
             return
 
@@ -69,7 +69,7 @@ class AthleteFeedbackCollector:
         print()
 
     def prompt_rpe(self):
-        """Demander le RPE (1-10)"""
+        """Demander le RPE (1-10)."""
         while True:
             try:
                 print("\n📊 RPE (Rate of Perceived Exertion)")
@@ -96,7 +96,7 @@ class AthleteFeedbackCollector:
                 sys.exit(0)
 
     def prompt_text(self, question, optional=True):
-        """Poser une question texte"""
+        """Poser une question texte."""
         try:
             suffix = " (Entrée pour passer)" if optional else ""
             response = input(f"\n{question}{suffix}\n→ ").strip()
@@ -106,7 +106,7 @@ class AthleteFeedbackCollector:
             sys.exit(0)
 
     def prompt_multiline(self, question, optional=True):
-        """Poser une question avec réponse multi-lignes"""
+        """Poser une question avec réponse multi-lignes."""
         try:
             print(f"\n{question}")
             if optional:
@@ -126,7 +126,7 @@ class AthleteFeedbackCollector:
             sys.exit(0)
 
     def prompt_yes_no(self, question, default=True):
-        """Poser une question oui/non"""
+        """Poser une question oui/non."""
         try:
             default_str = "O/n" if default else "o/N"
             response = input(f"\n{question} ({default_str}) : ").strip().lower()
@@ -140,7 +140,7 @@ class AthleteFeedbackCollector:
             sys.exit(0)
 
     def collect_quick_feedback(self):
-        """Mode rapide : RPE + ressenti uniquement"""
+        """Mode rapide : RPE + ressenti uniquement."""
         print("🚴 Collecte Retour Athlète - Mode Rapide")
         print("=" * 60)
 
@@ -157,7 +157,7 @@ class AthleteFeedbackCollector:
         return feedback
 
     def collect_full_feedback(self):
-        """Mode complet : toutes les questions"""
+        """Mode complet : toutes les questions."""
         print("🚴 Collecte Retour Athlète - Mode Complet")
         print("=" * 60)
 
@@ -227,7 +227,7 @@ class AthleteFeedbackCollector:
         return feedback
 
     def save_feedback(self, feedback):
-        """Sauvegarder le feedback"""
+        """Sauvegarder le feedback."""
         with open(self.feedback_file, "w", encoding="utf-8") as f:
             json.dump(feedback, f, ensure_ascii=False, indent=2)
 
@@ -235,7 +235,7 @@ class AthleteFeedbackCollector:
         print(f"   Fichier : {self.feedback_file}")
 
     def load_feedback(self):
-        """Charger le dernier feedback"""
+        """Charger le dernier feedback."""
         if not self.feedback_file.exists():
             return None
 
@@ -243,7 +243,7 @@ class AthleteFeedbackCollector:
             return json.load(f)
 
     def clear_feedback(self):
-        """Effacer le feedback en attente"""
+        """Effacer le feedback en attente."""
         if self.feedback_file.exists():
             self.feedback_file.unlink()
             print("✅ Feedback effacé")
@@ -251,7 +251,7 @@ class AthleteFeedbackCollector:
             print("ℹ️  Aucun feedback en attente")
 
     def display_feedback(self, feedback):
-        """Afficher le résumé du feedback"""
+        """Afficher le résumé du feedback."""
         print("\n" + "=" * 60)
         print("📋 RÉSUMÉ DU FEEDBACK")
         print("=" * 60)

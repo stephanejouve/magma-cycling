@@ -192,7 +192,7 @@ class WeeklyAnalyzer:
         # Évolution Métriques SXXX
 
         ## CTL/ATL/TSB Quotidien
-        | Date | CTL | ATL | TSB |
+        | Date | CTL | ATL | TSB |.
         """
         metrics_evolution = self.data.get("metrics_evolution", {})
         daily = metrics_evolution.get("daily", [])
@@ -242,7 +242,7 @@ class WeeklyAnalyzer:
 
         ## Découvertes Majeures
         - Point 1
-        - Point 2
+        - Point 2.
         """
         learnings = self.data.get("learnings", [])
 
@@ -272,7 +272,7 @@ class WeeklyAnalyzer:
         ## Ajustements Identifiés
         - Type: recovery
           Raison: TSB dropped
-          Recommandation: Add recovery day
+          Recommandation: Add recovery day.
         """
         adaptations = self.data.get("protocol_adaptations", [])
 
@@ -301,7 +301,7 @@ class WeeklyAnalyzer:
 
         ## Recommandations SYYY
         - Focus 1
-        - Focus 2
+        - Focus 2.
         """
         transition = self.data.get("transition", {})
         current_state = transition.get("current_state", {})
@@ -348,7 +348,7 @@ class WeeklyAnalyzer:
 
         ## Objectifs vs Réalisé
         ## Métriques Clés
-        ## Conclusion
+        ## Conclusion.
         """
         summary = self.data.get("summary", {})
         compliance = self.data.get("compliance", {})
@@ -380,7 +380,7 @@ class WeeklyAnalyzer:
 
         Args:
             reports: Dict reports générés
-            output_dir: Répertoire destination
+            output_dir: Répertoire destination.
         """
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)

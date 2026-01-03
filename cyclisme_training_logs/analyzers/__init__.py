@@ -12,7 +12,7 @@ Metadata:
     Category: I
     Status: Production
     Priority: P0
-    Version: v2
+    Version: v2.
 """
 
 from .daily_aggregator import DailyAggregator

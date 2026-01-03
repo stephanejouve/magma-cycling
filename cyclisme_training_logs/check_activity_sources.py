@@ -7,7 +7,7 @@ pour identifier rapidement celles qui viennent de Strava (données limitées)
 
 Usage:
     python3 cyclisme_training_logs/check_activity_sources.py
-    python3 cyclisme_training_logs/check_activity_sources.py --last-days 14
+    python3 cyclisme_training_logs/check_activity_sources.py --last-days 14.
 """
 
 import argparse
@@ -22,7 +22,7 @@ from cyclisme_training_logs.api.intervals_client import IntervalsClient
 
 
 def load_config(config_file):
-    """Charger la configuration depuis un fichier JSON"""
+    """Charger la configuration depuis un fichier JSON."""
     config_path = Path(config_file).expanduser()
     if not config_path.exists():
         return None
@@ -32,7 +32,7 @@ def load_config(config_file):
 
 
 def format_source_icon(source):
-    """Retourner un icône selon la source"""
+    """Retourner un icône selon la source."""
     icons = {
         "STRAVA": "⚠️  ",
         "MANUAL": "✍️  ",

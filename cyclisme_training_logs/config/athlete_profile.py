@@ -119,7 +119,7 @@ class AthleteProfile(BaseModel):
         Check if athlete is in master category.
 
         Returns:
-            bool: True if master category
+            bool: True if master category.
         """
         return self.category == "master"
 
@@ -128,7 +128,7 @@ class AthleteProfile(BaseModel):
         Check if athlete has exceptional recovery capacity.
 
         Returns:
-            bool: True if exceptional recovery
+            bool: True if exceptional recovery.
         """
         return self.recovery_capacity == "exceptional"
 

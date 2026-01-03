@@ -21,7 +21,7 @@ Usage:
 Exit codes:
     0 : Tous conforme
     1 : Problèmes détectés
-    2 : Erreur exécution
+    2 : Erreur exécution.
 """
 
 import argparse
@@ -33,7 +33,7 @@ from typing import Any
 
 
 class NamingValidator:
-    """Validateur de conventions de nommage weekly_reports"""
+    """Validateur de conventions de nommage weekly_reports."""
 
     # Convention stricte : SXXX (S majuscule + 3 chiffres)
     DIR_PATTERN = re.compile(r"^S\d{3}$")
@@ -49,7 +49,7 @@ class NamingValidator:
         self.issues: list[dict[str, Any]] = []
 
     def validate_directory_name(self, dir_name: str) -> dict[str, Any]:
-        """Valider nom de répertoire"""
+        """Valider nom de répertoire."""
         result = {"type": "directory", "name": dir_name, "valid": True, "issues": []}
 
         # Vérifier minuscule
@@ -67,7 +67,7 @@ class NamingValidator:
         return result
 
     def validate_file_name(self, file_name: str, parent_dir: str) -> dict[str, Any]:
-        """Valider nom de fichier"""
+        """Valider nom de fichier."""
         result = {
             "type": "file",
             "name": file_name,
@@ -91,7 +91,7 @@ class NamingValidator:
         return result
 
     def validate_structure(self) -> bool:
-        """Valider toute la structure"""
+        """Valider toute la structure."""
         if not self.weekly_dir.exists():
             print(f"❌ Répertoire non trouvé : {self.weekly_dir}")
             return False
@@ -119,7 +119,7 @@ class NamingValidator:
         return all_valid
 
     def print_report(self, verbose: bool = False):
-        """Afficher rapport de validation"""
+        """Afficher rapport de validation."""
         print("\n" + "=" * 70)
         print("🔍 VALIDATION CONVENTIONS NOMMAGE WEEKLY REPORTS")
         print("=" * 70)
@@ -182,7 +182,7 @@ class NamingValidator:
         print("=" * 70)
 
     def get_json_report(self) -> str:
-        """Générer rapport JSON"""
+        """Générer rapport JSON."""
         dirs = (
             [d.name for d in self.weekly_dir.iterdir() if d.is_dir()]
             if self.weekly_dir.exists()

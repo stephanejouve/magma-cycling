@@ -110,7 +110,7 @@ class WeeklyWorkflow:
         Exécuter workflow complet.
 
         Returns:
-            Dict avec 6 reports générés
+            Dict avec 6 reports générés.
         """
         logger.info(f"Starting weekly workflow for {self.week}")
 
@@ -176,7 +176,7 @@ def run_weekly_analysis(
         ai_analysis: Activer AI analysis
 
     Returns:
-        Dict avec 6 reports générés
+        Dict avec 6 reports générés.
     """
     workflow = WeeklyWorkflow(
         week=week, start_date=start_date, data_dir=data_dir, ai_analysis=ai_analysis
@@ -190,7 +190,7 @@ def get_current_week_info() -> tuple:
     Calculer numéro semaine courante et date début.
 
     Returns:
-        (week, start_date) tuple
+        (week, start_date) tuple.
     """
     today = date.today()
 
@@ -219,7 +219,7 @@ Examples:
   %(prog)s --week S073 --start-date 2025-01-06
 
   # With AI analysis
-  %(prog)s --week S073 --start-date 2025-01-06 --ai-analysis
+  %(prog)s --week S073 --start-date 2025-01-06 --ai-analysis.
         """,
     )
 

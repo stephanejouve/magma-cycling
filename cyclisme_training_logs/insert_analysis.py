@@ -88,12 +88,11 @@ class ClipboardReader:
 
 
 class AnalysisParser:
-    """Parser pour l'analyse de Claude.ai"""
+    """Parser pour l'analyse de Claude.ai."""
 
     @staticmethod
     def extract_markdown_block(text):
-        """Extraire le bloc markdown de l'analyse"""
-
+        """Extraire le bloc markdown de l'analyse."""
         # Nettoyer le texte
         text = text.strip()
 
@@ -127,7 +126,7 @@ class AnalysisParser:
 
     @staticmethod
     def detect_session_type(text):
-        """Détecter le type de session (exécutée, repos, annulation)
+        """Détecter le type de session (exécutée, repos, annulation).
 
         Returns:
             str: "executed", "rest", "cancelled", ou "unknown"
@@ -152,10 +151,10 @@ class AnalysisParser:
 
     @staticmethod
     def count_sessions(text):
-        """Compter le nombre de sessions dans le markdown
+        """Compter le nombre de sessions dans le markdown.
 
         Returns:
-            int: Nombre de sessions détectées
+            int: Nombre de sessions détectées.
         """
         # Compter les lignes commençant par ### (titres de session)
         import re
@@ -165,8 +164,7 @@ class AnalysisParser:
 
     @staticmethod
     def validate_analysis(text):
-        """Valider que le texte est bien une analyse formatée (supporte batch et types multiples)"""
-
+        """Valider que le texte est bien une analyse formatée (supporte batch et types multiples)."""
         # Détecter nombre de sessions
         num_sessions = AnalysisParser.count_sessions(text)
 
@@ -232,7 +230,7 @@ class AnalysisParser:
 
     @staticmethod
     def extract_date_from_analysis(text):
-        """Extraire la date de l'analyse pour détecter les doublons"""
+        """Extraire la date de l'analyse pour détecter les doublons."""
         match = re.search(r"Date\s*:\s*(\d{2}/\d{2}/\d{4})", text)
         if match:
             return match.group(1)
@@ -240,7 +238,7 @@ class AnalysisParser:
 
 
 class WorkoutHistoryManager:
-    """Gestionnaire de workouts-history.md"""
+    """Gestionnaire de workouts-history.md."""
 
     def __init__(self, logs_dir=None, yes_confirm=False):
         """
@@ -248,7 +246,7 @@ class WorkoutHistoryManager:
 
         Args:
             logs_dir: Legacy parameter, use data repo config instead
-            yes_confirm: Auto-confirm all prompts (for non-interactive mode)
+            yes_confirm: Auto-confirm all prompts (for non-interactive mode).
         """
         from cyclisme_training_logs.config import get_data_config
 
@@ -270,7 +268,7 @@ class WorkoutHistoryManager:
             self.history_file = self.logs_dir / "workouts-history.md"
 
     def read_history(self):
-        """Lire le fichier d'historique"""
+        """Lire le fichier d'historique."""
         if not self.history_file.exists():
             print(f"❌ Fichier non trouvé : {self.history_file}")
             return None
@@ -279,8 +277,7 @@ class WorkoutHistoryManager:
             return f.read()
 
     def check_duplicate(self, content, analysis_text):
-        """Vérifier si une entrée similaire existe déjà"""
-
+        """Vérifier si une entrée similaire existe déjà."""
         # Extraire le nom de la séance depuis l'analyse
         match = re.search(r"###\s*(.+?)\s*\n", analysis_text)
         if not match:
@@ -303,8 +300,7 @@ class WorkoutHistoryManager:
         return False
 
     def insert_analysis(self, analysis_text):
-        """Insérer l'analyse dans workouts-history.md via TimelineInjector"""
-
+        """Insérer l'analyse dans workouts-history.md via TimelineInjector."""
         # Lire le fichier existant
         content = self.read_history()
         if content is None:

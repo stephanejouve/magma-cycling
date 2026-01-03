@@ -10,7 +10,7 @@ Ce script :
 
 Usage:
     python3 cyclisme_training_logs/prepare_weekly_report.py --week 067
-    python3 cyclisme_training_logs/prepare_weekly_report.py --week 067 --start-date 2025-11-11
+    python3 cyclisme_training_logs/prepare_weekly_report.py --week 067 --start-date 2025-11-11.
 """
 
 import argparse
@@ -21,14 +21,14 @@ from pathlib import Path
 
 
 class WeeklyReportGenerator:
-    """Générateur de prompt pour bilan hebdomadaire"""
+    """Générateur de prompt pour bilan hebdomadaire."""
 
     def __init__(self, project_root="."):
         """
         Initialize WeeklyReportGenerator.
 
         Args:
-            project_root: Legacy parameter, use data repo config instead
+            project_root: Legacy parameter, use data repo config instead.
         """
         from cyclisme_training_logs.config import get_data_config
 
@@ -46,7 +46,7 @@ class WeeklyReportGenerator:
             self.bilans_dir = self.project_root / "logs" / "weekly_reports"
 
     def load_athlete_context(self):
-        """Charger le contexte athlète"""
+        """Charger le contexte athlète."""
         prompt_file = self.references_dir / "project_prompt_v2_1_revised.md"
         if prompt_file.exists():
             with open(prompt_file, encoding="utf-8") as f:
@@ -54,7 +54,7 @@ class WeeklyReportGenerator:
         return None
 
     def extract_week_workouts(self, week_number, start_date=None):
-        """Extraire les séances d'une semaine spécifique"""
+        """Extraire les séances d'une semaine spécifique."""
         history_file = self.logs_dir / "workouts-history.md"
         if not history_file.exists():
             return None
@@ -97,7 +97,7 @@ class WeeklyReportGenerator:
         return "\n".join(workouts) if workouts else None
 
     def read_full_log(self, filename):
-        """Lire un log complet"""
+        """Lire un log complet."""
         log_file = self.logs_dir / filename
         if not log_file.exists():
             return f"_Fichier {filename} non trouvé_"
@@ -108,8 +108,7 @@ class WeeklyReportGenerator:
     def generate_prompt(
         self, week_number, week_workouts, athlete_context, start_date=None, end_date=None
     ):
-        """Générer le prompt pour Claude.ai"""
-
+        """Générer le prompt pour Claude.ai."""
         # Calculer dates si non fournies
         if start_date and not end_date:
             start = datetime.strptime(start_date, "%Y-%m-%d")
@@ -120,7 +119,7 @@ class WeeklyReportGenerator:
             f"{start_date} → {end_date}" if start_date else "À déterminer depuis les séances"
         )
 
-        prompt = f"""# Bilan Hebdomadaire S{week_number:03d}
+        prompt = f"""# Bilan Hebdomadaire S{week_number:03d}.
 
 ## Contexte Athlète
 

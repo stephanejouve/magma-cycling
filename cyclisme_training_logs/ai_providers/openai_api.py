@@ -6,7 +6,7 @@ OpenAI GPT-4 provider pour analyse séance.
 Plus cher mais excellent qualité.
 
 Author: Claude Code
-Created: 2025-12-09
+Created: 2025-12-09.
 """
 
 import logging

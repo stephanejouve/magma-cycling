@@ -181,7 +181,7 @@ class ClaudeAPIAnalyzer(AIAnalyzer):
         Examples:
             >>> info = analyzer.get_provider_info()
             >>> print(info['provider'])
-            'claude_api'
+            'claude_api'.
         """
         return {
             "provider": "claude_api",
@@ -206,6 +206,6 @@ class ClaudeAPIAnalyzer(AIAnalyzer):
 
         Notes:
             - Vérifie que client initialisé
-            - Test simple API call possible mais coûteux
+            - Test simple API call possible mais coûteux.
         """
         return self.client is not None

@@ -87,7 +87,7 @@ def show_state(state: WorkflowState):
 
 
 def list_activities(state: WorkflowState, count: int = 10):
-    """Lister les dernières activités analysées"""
+    """Lister les dernières activités analysées."""
     history = state.state.get("history", [])
 
     print()
@@ -122,7 +122,7 @@ def list_activities(state: WorkflowState, count: int = 10):
 
 
 def remove_activity(state: WorkflowState, activity_id: str):
-    """Supprimer une activité de l'historique"""
+    """Supprimer une activité de l'historique."""
     print()
     print(f"🔍 Recherche de l'activité {activity_id}...")
 
@@ -172,7 +172,7 @@ def remove_activity(state: WorkflowState, activity_id: str):
 
 
 def reset_state(state: WorkflowState):
-    """Reset complet du workflow state"""
+    """Reset complet du workflow state."""
     print()
     print("⚠️  ATTENTION : Reset complet du workflow state")
     print()
@@ -216,7 +216,7 @@ Exemples:
   poetry run manage-state --reset
 
   # Combinaisons
-  poetry run manage-state --remove i113782165 --show
+  poetry run manage-state --remove i113782165 --show.
         """,
     )
 

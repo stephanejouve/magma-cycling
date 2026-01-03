@@ -134,7 +134,7 @@ class DailyAggregator(DataAggregator):
                 - feedback: Feedback athlète
                 - workflow_state: État workflow
                 - fitness_metrics: CTL/ATL/TSB
-                - power_zones: Zones puissance
+                - power_zones: Zones puissance.
         """
         raw_data = {}
 
@@ -177,7 +177,7 @@ class DailyAggregator(DataAggregator):
                 - workout: Métriques séance
                 - athlete: Contexte athlète
                 - feedback: Feedback formaté
-                - analysis_context: Contexte pour prompt IA
+                - analysis_context: Contexte pour prompt IA.
         """
         processed = {}
 
@@ -239,7 +239,7 @@ class DailyAggregator(DataAggregator):
             processed_data: Données traitées
 
         Returns:
-            Markdown formaté pour workouts-history.md
+            Markdown formaté pour workouts-history.md.
         """
         workout = processed_data["workout"]
         athlete = processed_data["athlete"]
@@ -277,7 +277,7 @@ class DailyAggregator(DataAggregator):
         Récupérer données activité depuis Intervals.icu.
 
         Returns:
-            Dict avec données activité
+            Dict avec données activité.
         """
         # TODO: Implémenter appel API Intervals.icu
         # Pour l'instant, retourner données mock
@@ -301,7 +301,7 @@ class DailyAggregator(DataAggregator):
         Charger feedback athlète depuis fichier.
 
         Returns:
-            Dict avec feedback
+            Dict avec feedback.
         """
         if not self.feedback_file.exists():
             logger.info("No feedback file found")
@@ -328,7 +328,7 @@ class DailyAggregator(DataAggregator):
         Charger état workflow depuis fichier.
 
         Returns:
-            Dict avec état workflow
+            Dict avec état workflow.
         """
         if not self.workflow_state_file.exists():
             logger.info("No workflow state file found")
@@ -347,7 +347,7 @@ class DailyAggregator(DataAggregator):
         Récupérer métriques fitness depuis Intervals.icu.
 
         Returns:
-            Dict avec CTL/ATL/TSB
+            Dict avec CTL/ATL/TSB.
         """
         # TODO: Implémenter appel API Intervals.icu
         logger.warning("Using mock fitness metrics (API not implemented)")
@@ -358,7 +358,7 @@ class DailyAggregator(DataAggregator):
         Charger zones puissance depuis fichier.
 
         Returns:
-            Dict avec zones et FTP
+            Dict avec zones et FTP.
         """
         if not self.power_zones_file.exists():
             logger.warning("No power zones file found")
@@ -383,7 +383,7 @@ class DailyAggregator(DataAggregator):
             athlete: Données athlète
 
         Returns:
-            Dict avec métriques calculées
+            Dict avec métriques calculées.
         """
         derived = {}
 
@@ -416,7 +416,7 @@ class DailyAggregator(DataAggregator):
             athlete: Données athlète avec CTL/ATL/TSB
 
         Returns:
-            État: 'fresh', 'optimal', 'fatigued', 'overreached'
+            État: 'fresh', 'optimal', 'fatigued', 'overreached'.
         """
         tsb = athlete.get("tsb", 0)
 
@@ -437,7 +437,7 @@ class DailyAggregator(DataAggregator):
             workout: Données workout
 
         Returns:
-            Intensité: 'recovery', 'endurance', 'tempo', 'threshold', 'vo2max'
+            Intensité: 'recovery', 'endurance', 'tempo', 'threshold', 'vo2max'.
         """
         intensity_factor = workout.get("intensity_factor", 0.0)
 

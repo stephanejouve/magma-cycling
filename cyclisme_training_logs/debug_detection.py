@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Script de debug détection multi-séances - VERSION DEBUG AVANCÉE"""
-
+"""Script de debug détection multi-séances - VERSION DEBUG AVANCÉE."""
 import os
 import sys
 from datetime import datetime, timedelta

@@ -10,7 +10,7 @@ Functions:
     detect_training_peaks: Detect significant training load peaks
     get_recovery_recommendation: Generate recovery recommendations based on metrics
     format_metrics_comparison: Format comparison between two time periods
-    detect_overtraining_risk: Detect overtraining risk for master athletes (CRITICAL)
+    detect_overtraining_risk: Detect overtraining risk for master athletes (CRITICAL).
 """
 
 from statistics import mean, stdev
@@ -43,7 +43,7 @@ def calculate_ramp_rate(ctl_current: float, ctl_previous: float, days: int = 7) 
     Notes:
         - Recommended max ramp rate for master athletes: 5-7 points/week
         - Rates >10 points/week indicate high injury/overtraining risk
-        - Negative rates indicate detraining or recovery phase
+        - Negative rates indicate detraining or recovery phase.
     """
     if days <= 0:
         raise ValueError("days must be positive")
@@ -89,7 +89,7 @@ def get_weekly_metrics_trend(
     Notes:
         - 'rising': slope > 1.0 points/week
         - 'stable': slope between -1.0 and +1.0 points/week
-        - 'declining': slope < -1.0 points/week
+        - 'declining': slope < -1.0 points/week.
     """
     if not weekly_data:
         return {"trend": "unknown", "slope": 0.0, "volatility": 0.0, "weeks_analyzed": 0}
@@ -158,7 +158,7 @@ def detect_training_peaks(
     Notes:
         - Uses 3-week rolling average as baseline
         - Master athletes: Consider threshold_percent=8-10% (more sensitive)
-        - Senior athletes: Can use threshold_percent=12-15%
+        - Senior athletes: Can use threshold_percent=12-15%.
     """
     if len(ctl_history) < 4:
         return []
@@ -225,7 +225,7 @@ def get_recovery_recommendation(
     Notes:
         - TSB <-20 → Critical recovery needed
         - ATL/CTL >1.5 → High fatigue
-        - Master athletes: More conservative limits
+        - Master athletes: More conservative limits.
     """
     # Default profile
     if profile is None:
@@ -313,7 +313,7 @@ def format_metrics_comparison(
     Notes:
         - ↑ indicates increase
         - ↓ indicates decrease
-        - → indicates no change (<0.5 difference)
+        - → indicates no change (<0.5 difference).
     """
     if labels is None:
         labels = {"period1": "Period 1", "period2": "Period 2"}
@@ -424,7 +424,7 @@ def detect_overtraining_risk(
         - Sleep <5.5h → HIGH risk (cancel >85% FTP)
         - Sleep <6h + TSB <-15 → CRITICAL
 
-        VETO means: Cancel ALL intensity, rest day or Z1 only (max 45min)
+        VETO means: Cancel ALL intensity, rest day or Z1 only (max 45min).
     """
     # Default thresholds (master athlete calibrated)
     if thresholds is None:

@@ -142,7 +142,7 @@ class TrainingThresholds(BaseModel):
             >>> thresholds.get_tsb_state(-8)
             'fatigued'
             >>> thresholds.get_tsb_state(-30)
-            'overreached'
+            'overreached'.
         """
         if tsb > self.tsb_fresh_min:
             return "fresh"
@@ -168,7 +168,7 @@ class TrainingThresholds(BaseModel):
             >>> thresholds.is_tsb_optimal(5)
             True
             >>> thresholds.is_tsb_optimal(-30)
-            False
+            False.
         """
         return self.tsb_optimal_min < tsb <= self.tsb_fresh_min
 
@@ -189,7 +189,7 @@ class TrainingThresholds(BaseModel):
             >>> thresholds.get_atl_ctl_ratio_state(1.5)
             'warning'
             >>> thresholds.get_atl_ctl_ratio_state(2.0)
-            'critical'
+            'critical'.
         """
         if ratio < self.atl_ctl_ratio_optimal:
             return "optimal"
@@ -216,7 +216,7 @@ class TrainingThresholds(BaseModel):
             >>> thresholds.is_overtraining_risk(tsb=-30, atl_ctl_ratio=2.0)
             True
             >>> thresholds.is_overtraining_risk(tsb=5, atl_ctl_ratio=0.9)
-            False
+            False.
         """
         critical_tsb = tsb <= self.tsb_critical
         critical_ratio = atl_ctl_ratio >= self.atl_ctl_ratio_critical

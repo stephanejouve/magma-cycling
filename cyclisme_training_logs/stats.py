@@ -85,7 +85,7 @@ def extract_tss_from_workouts(file_path):
 
 
 def calculate_weekly_tss(sessions):
-    """Calcule TSS par semaine"""
+    """Calcule TSS par semaine."""
     weekly = defaultdict(int)
     for session in sessions:
         # Numéro de semaine ISO
@@ -98,7 +98,7 @@ def calculate_weekly_tss(sessions):
 
 
 def extract_ftp_evolution(file_path):
-    """Extrait l'évolution FTP depuis metrics-evolution.md"""
+    """Extrait l'évolution FTP depuis metrics-evolution.md."""
     if not file_path.exists():
         return []
 

@@ -18,7 +18,7 @@ Usage:
     python3 cyclisme_training_logs/fix_weekly_reports_casing.py --force
 
     # Rollback (restaurer backup)
-    python3 cyclisme_training_logs/fix_weekly_reports_casing.py --rollback
+    python3 cyclisme_training_logs/fix_weekly_reports_casing.py --rollback.
 """
 
 import argparse
@@ -29,7 +29,7 @@ from pathlib import Path
 
 
 class WeeklyReportsFixing:
-    """Correcteur de casse pour weekly_reports"""
+    """Correcteur de casse pour weekly_reports."""
 
     def __init__(self, project_root="."):
         self.project_root = Path(project_root)
@@ -39,14 +39,14 @@ class WeeklyReportsFixing:
         self.changes = []
 
     def log(self, message):
-        """Logger message console + fichier"""
+        """Logger message console + fichier."""
         print(message)
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         with open(self.log_file, "a", encoding="utf-8") as f:
             f.write(f"[{timestamp}] {message}\n")
 
     def backup_weekly_reports(self):
-        """Créer backup complet avant modifications"""
+        """Créer backup complet avant modifications."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_name = f"weekly_reports.backup.{timestamp}"
         self.backup_dir = self.weekly_dir.parent / backup_name
@@ -80,7 +80,7 @@ class WeeklyReportsFixing:
             return False
 
     def audit_structure(self):
-        """Auditer structure actuelle et retourner problèmes"""
+        """Auditer structure actuelle et retourner problèmes."""
         print("\n" + "=" * 70)
         print("🔍 AUDIT STRUCTURE")
         print("=" * 70)
@@ -113,7 +113,7 @@ class WeeklyReportsFixing:
         return problems
 
     def fix_duplicate(self, lower_dir, upper_dir, dry_run=False):
-        """Corriger doublon (supprimer version minuscule)"""
+        """Corriger doublon (supprimer version minuscule)."""
         lower_path = self.weekly_dir / lower_dir
         upper_path = self.weekly_dir / upper_dir
 
@@ -155,7 +155,7 @@ class WeeklyReportsFixing:
             return False
 
     def fix_lowercase(self, lower_dir, dry_run=False):
-        """Renommer répertoire minuscule → majuscule"""
+        """Renommer répertoire minuscule → majuscule."""
         lower_path = self.weekly_dir / lower_dir
         upper_name = lower_dir.upper()
         upper_path = self.weekly_dir / upper_name
@@ -187,7 +187,7 @@ class WeeklyReportsFixing:
             return False
 
     def validate_final_structure(self):
-        """Valider structure finale après corrections"""
+        """Valider structure finale après corrections."""
         print("\n" + "=" * 70)
         print("✓  VALIDATION FINALE")
         print("=" * 70)
@@ -218,7 +218,7 @@ class WeeklyReportsFixing:
         return True
 
     def run_fixes(self, dry_run=False):
-        """Exécuter toutes les corrections"""
+        """Exécuter toutes les corrections."""
         print("\n" + "=" * 70)
         print("🔧 CORRECTIONS" + (" (DRY-RUN)" if dry_run else ""))
         print("=" * 70)
@@ -251,7 +251,7 @@ class WeeklyReportsFixing:
         return success_count == total_fixes
 
     def rollback(self):
-        """Restaurer depuis backup le plus récent"""
+        """Restaurer depuis backup le plus récent."""
         print("\n" + "=" * 70)
         print("⏮️  ROLLBACK")
         print("=" * 70)
