@@ -1372,29 +1372,124 @@ class WorkflowCoach:
 
         return action, gaps_data
 
-    def step_2_collect_feedback(self):
-        """Étape 2 : Collecter le feedback athlète."""
+    # === HELPER METHODS FOR STEP_2 (Refactored from C-17 complexity) ===
+
+    def _validate_feedback_collection(self) -> tuple[bool, str | None]:
+        """Validate if feedback collection should proceed.
+
+        Returns:
+            Tuple of (should_collect, skip_reason)
+                - should_collect: True if feedback should be collected
+                - skip_reason: Reason for skipping (if should_collect is False)
+        """
+        # Check skip flag
         if self.skip_feedback:
-            self.clear_screen()
-            self.print_header(
-                "⏭️  Feedback Athlète (Skip)", "Étape 2/7 : Collecte feedback (optionnel)"
-            )
-            print("Le feedback athlète a été skippé (--skip-feedback).")
-            print("L'analyse sera basée uniquement sur les métriques objectives.")
-            self.wait_user()
-            return
+            return False, "skipped_by_flag"
 
-        # Check gaps BEFORE prompting user (fix Issue #4)
+        # Check if gaps detected
         if not self.unanalyzed_activities or len(self.unanalyzed_activities) == 0:
-            # No gaps detected - skip silently without prompting
+            return False, "no_gaps"
+
+        return True, None
+
+    def _prepare_feedback_context(self) -> tuple[dict | None, str, str]:
+        """Prepare context for feedback collection (credentials + activity).
+
+        Returns:
+            Tuple of (activity, athlete_id, api_key)
+                - activity: Activity dict or None if not available
+                - athlete_id: Athlete ID from credentials
+                - api_key: API key from credentials
+        """
+        try:
+            # Load credentials
+            athlete_id, api_key = self.load_credentials()
+
+            if not athlete_id or not api_key:
+                return None, "", ""
+
+            # Get first unanalyzed activity for context
+            activity = None
+            if self.unanalyzed_activities and len(self.unanalyzed_activities) > 0:
+                activity = self.unanalyzed_activities[0]
+
+            return activity, athlete_id, api_key
+
+        except Exception as e:
+            print(f"⚠️  Erreur lors de la récupération du contexte : {e}")
+            return None, "", ""
+
+    def _execute_feedback_collection(self, activity: dict | None, mode: str) -> int:
+        """Execute feedback collection subprocess.
+
+        Args:
+            activity: Activity dict with context (or None for no context)
+            mode: Collection mode ("quick" or "full")
+
+        Returns:
+            Return code from subprocess (0 = success)
+        """
+        cmd = [sys.executable, "-m", "cyclisme_training_logs.collect_athlete_feedback"]
+
+        # Add activity context if available
+        if activity:
+            print()
+            print(
+                f"✓ Contexte : {activity.get('name', 'Séance')} du {activity.get('start_date_local', '')[:10]}"
+            )
+
+            cmd.extend(
+                [
+                    "--activity-name",
+                    activity.get("name", "Séance"),
+                    "--activity-date",
+                    activity.get("start_date_local", ""),
+                    "--activity-duration",
+                    str(activity.get("moving_time", 0) // 60),
+                    "--activity-tss",
+                    str(int(activity.get("icu_training_load", 0))),
+                ]
+            )
+
+            # Add IF if available
+            if activity.get("icu_intensity"):
+                if_value = activity.get("icu_intensity", 0) / 100.0
+                cmd.extend(["--activity-if", f"{if_value:.2f}"])
+
+        # Add mode flag
+        if mode == "quick":
+            cmd.append("--quick")
+
+        # Execute subprocess
+        result = subprocess.run(cmd)
+        return result.returncode
+
+    def step_2_collect_feedback(self):
+        """Étape 2 : Collecter le feedback athlète.
+
+        Refactored from C-17 complexity using 3 helper methods for better separation of concerns.
+        """
+        # 1. Validate if feedback collection should proceed
+        should_collect, skip_reason = self._validate_feedback_collection()
+
+        if not should_collect:
+            if skip_reason == "skipped_by_flag":
+                self.clear_screen()
+                self.print_header(
+                    "⏭️  Feedback Athlète (Skip)", "Étape 2/7 : Collecte feedback (optionnel)"
+                )
+                print("Le feedback athlète a été skippé (--skip-feedback).")
+                print("L'analyse sera basée uniquement sur les métriques objectives.")
+                self.wait_user()
+            # For "no_gaps", skip silently
             return
 
+        # 2. Display header and prompt user
         self.clear_screen()
         self.print_header(
             "💭 Collecte Feedback Athlète", "Étape 2/7 : Ressenti subjectif (optionnel)"
         )
 
-        # Show gap count to user
         gap_count = len(self.unanalyzed_activities)
         print(f"📊 {gap_count} séance(s) non analysée(s) détectée(s)")
         print()
@@ -1416,90 +1511,30 @@ class WorkflowCoach:
             self.wait_user()
             return
 
-        # Choisir le mode
+        # 3. Get collection mode
         print()
         print("Mode feedback :")
         print("  1 - Quick (30s) : RPE + ressenti général")
         print("  2 - Full (2-3min) : RPE + ressenti + difficultés + contexte + sensations")
         mode_choice = input("Choix (1/2) : ").strip()
 
+        mode = "quick" if mode_choice == "1" else "full"
         print()
-        mode_str = "quick" if mode_choice == "1" else "full"
-        print(f"Lancement de collect_athlete_feedback.py (mode {mode_str})...")
+        print(f"Lancement de collect_athlete_feedback.py (mode {mode})...")
         self.print_separator()
 
-        # Lancer le script de collecte AVEC contexte
-        try:
-            from cyclisme_training_logs.api.intervals_client import IntervalsClient
+        # 4. Prepare context
+        activity, athlete_id, api_key = self._prepare_feedback_context()
 
-            # FIX: Charger credentials
-            athlete_id, api_key = self.load_credentials()
-
-            if not athlete_id or not api_key:
-                print()
-                print("ℹ️  Credentials non trouvés")
-                print("   → Feedback sans contexte")
-                raise ValueError("No credentials")
-
-            IntervalsClient(athlete_id=athlete_id, api_key=api_key)
-
-            # Utiliser les gaps détectés par step_1b au lieu de requêter last 24h
-            activity = None
-            if self.unanalyzed_activities and len(self.unanalyzed_activities) > 0:
-                # Prendre la première activité non analysée détectée
-                activity = self.unanalyzed_activities[0]
-                print()
-                print(
-                    f"✓ Contexte : {activity.get('name', 'Séance')} du {activity.get('start_date_local', '')[:10]}"
-                )
-
-            if activity:
-                # Commande avec contexte - Module import au lieu de path absolu
-                cmd = [
-                    sys.executable,
-                    "-m",
-                    "cyclisme_training_logs.collect_athlete_feedback",
-                    "--activity-name",
-                    activity.get("name", "Séance"),
-                    "--activity-date",
-                    activity.get("start_date_local", ""),
-                    "--activity-duration",
-                    str(activity.get("moving_time", 0) // 60),
-                    "--activity-tss",
-                    str(int(activity.get("icu_training_load", 0))),
-                ]
-
-                # Ajouter IF si disponible
-                if activity.get("icu_intensity"):
-                    if_value = activity.get("icu_intensity", 0) / 100.0
-                    cmd.extend(["--activity-if", f"{if_value:.2f}"])
-
-                # Mode quick
-                if mode_choice == "1":
-                    cmd.append("--quick")
-
-                result = subprocess.run(cmd)
-            else:
-                # Fallback sans contexte
-                print()
-                print("⚠️  Impossible de récupérer le contexte de la séance")
-                cmd = [sys.executable, "-m", "cyclisme_training_logs.collect_athlete_feedback"]
-                if mode_choice == "1":
-                    cmd.append("--quick")
-                result = subprocess.run(cmd)
-
-        except Exception as e:
+        if not activity:
             print()
-            print(f"⚠️  Erreur lors de la récupération du contexte : {e}")
-            print("   → Collecte feedback sans contexte activité")
-            # Fallback sans contexte
-            cmd = [sys.executable, "-m", "cyclisme_training_logs.collect_athlete_feedback"]
-            if mode_choice == "1":
-                cmd.append("--quick")
-            result = subprocess.run(cmd)
+            print("⚠️  Contexte activité non disponible → Feedback sans contexte")
 
-        # Résultat
-        if result.returncode != 0:
+        # 5. Execute feedback collection
+        returncode = self._execute_feedback_collection(activity, mode)
+
+        # 6. Display result
+        if returncode != 0:
             print()
             print("⚠️  Erreur lors de la collecte du feedback.")
             print("    L'analyse continuera sans feedback.")
