@@ -22,6 +22,7 @@ def find_workout_entries(content: str) -> list[dict]:
     lines = content.split("\n")
     current_entry = None
     current_lines = []
+    start_line = 0  # Initialize to avoid undefined name error
 
     for i, line in enumerate(lines):
         match = re.match(pattern, line)

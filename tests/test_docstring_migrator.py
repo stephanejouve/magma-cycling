@@ -18,7 +18,7 @@ import pytest
 # Add scripts to path for import
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts" / "maintenance"))
 
-from migrate_docstrings import DocstringMetadata, DocstringMigrator
+from migrate_docstrings import DocstringMetadata, DocstringMigrator  # noqa: E402
 
 
 @pytest.fixture

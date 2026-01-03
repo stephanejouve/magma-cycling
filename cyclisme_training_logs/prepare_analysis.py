@@ -60,6 +60,8 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import requests
+
 from cyclisme_training_logs.api.intervals_client import IntervalsClient
 from cyclisme_training_logs.config import get_ai_config
 from cyclisme_training_logs.workflow_state import WorkflowState

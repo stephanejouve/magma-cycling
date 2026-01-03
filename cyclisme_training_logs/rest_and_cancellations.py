@@ -237,7 +237,7 @@ def load_week_planning(week_id: str, planning_dir: Path | None = None) -> dict:
         with open(planning_file, encoding="utf-8") as f:
             planning = json.load(f)
     except json.JSONDecodeError as e:
-        raise ValueError(f"Format JSON invalide: {e}")
+        raise ValueError(f"Format JSON invalide: {e}") from e
 
     # Validation basique
     if not validate_week_planning(planning):
@@ -481,7 +481,7 @@ def generate_skipped_session_entry(
         date_obj = datetime.strptime(date_str, "%Y-%m-%d")
         formatted_date = date_obj.strftime("%d/%m/%Y")
         day_of_week = date_obj.strftime("%A")
-    except:
+    except Exception:
         formatted_date = date_str
         day_of_week = "N/A"
 

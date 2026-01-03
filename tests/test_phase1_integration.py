@@ -21,9 +21,9 @@ from pathlib import Path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from cyclisme_training_logs.analyzers.daily_aggregator import DailyAggregator
-from cyclisme_training_logs.core.prompt_generator import PromptGenerator
-from cyclisme_training_logs.core.timeline_injector import TimelineInjector
+from cyclisme_training_logs.analyzers.daily_aggregator import DailyAggregator  # noqa: E402
+from cyclisme_training_logs.core.prompt_generator import PromptGenerator  # noqa: E402
+from cyclisme_training_logs.core.timeline_injector import TimelineInjector  # noqa: E402
 
 
 def print_section(title):

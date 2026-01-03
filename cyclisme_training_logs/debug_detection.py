@@ -9,8 +9,8 @@ from pathlib import Path
 # Ajouter cyclisme_training_logs/ au path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from cyclisme_training_logs.api.intervals_client import IntervalsClient
-from cyclisme_training_logs.workflow_state import WorkflowState
+from cyclisme_training_logs.api.intervals_client import IntervalsClient  # noqa: E402
+from cyclisme_training_logs.workflow_state import WorkflowState  # noqa: E402
 
 
 def main():

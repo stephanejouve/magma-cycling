@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from prepare_analysis import IntervalsAPI
+from prepare_analysis import IntervalsAPI  # noqa: E402
 
 
 def inspect_existing_workout():

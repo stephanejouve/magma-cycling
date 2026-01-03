@@ -46,30 +46,30 @@ class CallbackHandler(BaseHTTPRequestHandler):
                 self.send_header("Content-type", "text/html")
                 self.end_headers()
 
-                success_html = """
+                success_html = f"""
                 <!DOCTYPE html>
                 <html>
                 <head>
                     <title>Withings Authorization Successful</title>
                     <style>
-                        body {
+                        body {{
                             font-family: Arial, sans-serif;
                             max-width: 600px;
                             margin: 100px auto;
                             text-align: center;
-                        }
-                        .success {
+                        }}
+                        .success {{
                             color: #28a745;
                             font-size: 24px;
                             margin-bottom: 20px;
-                        }
-                        .code {
+                        }}
+                        .code {{
                             background: #f4f4f4;
                             padding: 10px;
                             border-radius: 5px;
                             font-family: monospace;
                             word-break: break-all;
-                        }
+                        }}
                     </style>
                 </head>
                 <body>
@@ -77,13 +77,11 @@ class CallbackHandler(BaseHTTPRequestHandler):
                     <p>Vous pouvez fermer cette fenêtre.</p>
                     <p>Le script continue automatiquement...</p>
                     <div class="code">
-                        <small>Code: {}</small>
+                        <small>Code: {authorization_code}</small>
                     </div>
                 </body>
                 </html>
-                """.format(
-                    authorization_code
-                )
+                """
 
                 self.wfile.write(success_html.encode())
 

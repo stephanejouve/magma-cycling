@@ -134,7 +134,7 @@ class AIProviderFactory:
             raise ConfigError(
                 f"Unknown AI provider: {provider}. "
                 f"Valid providers: {', '.join(valid_providers)}"
-            )
+            ) from None
 
         # === CLIPBOARD (Priority - No API) ===
         if provider_enum == AIProvider.CLIPBOARD:
