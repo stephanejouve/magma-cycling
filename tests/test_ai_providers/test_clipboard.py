@@ -96,16 +96,20 @@ Line 3"""
         info_str = str(info).lower()
         assert "$0" in info_str or "free" in info_str or "gratuit" in info_str
 
-    def test_validate_config_always_returns_true(self):
+    @patch("cyclisme_training_logs.ai_providers.clipboard.copy_to_clipboard")
+    def test_validate_config_always_returns_true(self, mock_copy):
         """Test that validate_config always returns True (no config needed)."""
+        mock_copy.return_value = True  # Mock clipboard availability
         analyzer = ClipboardAnalyzer()
 
         is_valid = analyzer.validate_config()
 
         assert is_valid is True
 
-    def test_clipboard_analyzer_is_always_available(self):
+    @patch("cyclisme_training_logs.ai_providers.clipboard.copy_to_clipboard")
+    def test_clipboard_analyzer_is_always_available(self, mock_copy):
         """Test that clipboard analyzer doesn't require any configuration."""
+        mock_copy.return_value = True  # Mock clipboard availability
         # Should not raise any errors
         analyzer = ClipboardAnalyzer()
 
