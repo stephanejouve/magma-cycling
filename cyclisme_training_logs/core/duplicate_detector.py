@@ -115,7 +115,7 @@ class DuplicateDetector:
         duplicates = []
 
         for entry in entries:
-            entry_id = entry["id"]
+            entry_id = str(entry["id"])
             if entry_id in seen:
                 duplicates.append(
                     {
