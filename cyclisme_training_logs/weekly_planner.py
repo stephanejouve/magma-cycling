@@ -18,9 +18,16 @@ from cyclisme_training_logs.api.intervals_client import IntervalsClient  # noqa:
 
 
 class WeeklyPlanner:
-    """Générateur de prompt pour planification hebdomadaire"""
+    """Générateur de prompt pour planification hebdomadaire."""
 
     def __init__(self, week_number: str, start_date: datetime, project_root: Path):
+        """Initialize the weekly planner.
+
+        Args:
+            week_number: Week identifier (e.g., "S074")
+            start_date: Start date of the week (Monday)
+            project_root: Root directory of the project
+        """
         self.week_number = week_number
         self.start_date = start_date
         self.end_date = start_date + timedelta(days=6)

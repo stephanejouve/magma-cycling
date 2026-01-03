@@ -71,9 +71,15 @@ from cyclisme_training_logs.api.intervals_client import IntervalsClient  # noqa:
 
 
 class WorkoutUploader:
-    """Upload des workouts vers Intervals.icu"""
+    """Upload des workouts vers Intervals.icu."""
 
     def __init__(self, week_number: str, start_date: datetime):
+        """Initialize the workout uploader.
+
+        Args:
+            week_number: Week identifier (e.g., "S074")
+            start_date: Start date of the week (Monday)
+        """
         self.week_number = week_number
         self.start_date = start_date
         self.api = None
