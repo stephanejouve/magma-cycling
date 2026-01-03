@@ -262,9 +262,11 @@ class PromptGenerator:
             "tss_planned": planned_event.get("icu_training_load", 0),
             "avg_watts_planned": workout_doc.get("average_watts", 0),
             "np_planned": workout_doc.get("normalized_power", 0),
-            "intensity_planned": planned_event.get("icu_intensity", 0) / 100.0
-            if planned_event.get("icu_intensity")
-            else 0,
+            "intensity_planned": (
+                planned_event.get("icu_intensity", 0) / 100.0
+                if planned_event.get("icu_intensity")
+                else 0
+            ),
             "joules": workout_doc.get("joules", 0),
         }
 
