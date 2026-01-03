@@ -90,8 +90,16 @@ jobs:
         VITE_INTERVALS_API_KEY: test_key
         TRAINING_DATA_REPO: ${{ github.workspace }}/test-data
         DATA_REPO_PATH: ${{ github.workspace }}/test-data
+        CI: "true"
       run: |
-        poetry run pytest tests/ -v --cov=cyclisme_training_logs --cov-report=xml --cov-report=term
+        # Run unit tests only (exclude integration tests and tests requiring external data)
+        poetry run pytest \
+          tests/config/ \
+          tests/intelligence/ \
+          tests/planning/ \
+          tests/test_ai_providers/ \
+          tests/utils/ \
+          -v --cov=cyclisme_training_logs --cov-report=xml --cov-report=term
       continue-on-error: false
 
     - name: Upload coverage to Codecov
