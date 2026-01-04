@@ -70,7 +70,7 @@ class PlannedSessionsChecker:
 
     def __init__(self, athlete_id: str, api_key: str):
         """
-        Initialize le checker avec credentials API
+        Initialize le checker avec credentials API.
 
         Args:
             athlete_id: ID athlète Intervals.icu
@@ -84,7 +84,7 @@ class PlannedSessionsChecker:
         self, start_date: str, end_date: str, category: str = "WORKOUT"
     ) -> list[dict]:
         """
-        Retrieve les workouts planifiés depuis l'API events
+        Retrieve les workouts planifiés depuis l'API events.
 
         Args:
             start_date: Date début (format YYYY-MM-DD)
@@ -111,7 +111,7 @@ class PlannedSessionsChecker:
         self, workout: dict, activities: list[dict], tolerance_hours: int = 6
     ) -> dict | None:
         """
-        Chercher une activité correspondant à un workout planifié
+        Chercher une activité correspondant à un workout planifié.
 
         Critères de correspondance :
         1. Date dans tolérance (défaut ±6h)
@@ -175,7 +175,7 @@ class PlannedSessionsChecker:
         self, start_date: str, end_date: str, exclude_future: bool = True
     ) -> list[dict]:
         """
-        Détecter les séances planifiées mais non exécutées
+        Détecter les séances planifiées mais non exécutées.
 
         Algorithme :
         1. Récupérer workouts planifiés (API events)
@@ -270,7 +270,7 @@ class PlannedSessionsChecker:
         self, skipped_session: dict, metrics_pre: dict | None = None
     ) -> str:
         """
-        Generate bloc markdown pour séance sautée
+        Generate bloc markdown pour séance sautée.
 
         Args:
             skipped_session: Données séance sautée

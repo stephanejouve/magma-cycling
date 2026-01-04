@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Backfill automatisé de l'historique d'entraînement
+Backfill automatisé de l'historique d'entraînement.
 
 Analyse en masse des activités historiques depuis Intervals.icu avec génération
 automatisée d'analyses IA. Utilise TimelineInjector via insert-analysis pour

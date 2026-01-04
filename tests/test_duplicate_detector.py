@@ -1,5 +1,5 @@
 """
-Tests pour DuplicateDetector
+Tests pour DuplicateDetector.
 
 GARTNER_TIME: T
 STATUS: Testing
@@ -27,7 +27,7 @@ from cyclisme_training_logs.core.duplicate_detector import (
 
 @pytest.fixture
 def sample_history_with_duplicates(tmp_path):
-    """Crée un fichier test avec doublons"""
+    """Crée un fichier test avec doublons."""
     history = tmp_path / "workouts-history.md"
 
     content = """### S073-01-END-Test
@@ -61,7 +61,7 @@ Test 1 DOUBLON
 
 @pytest.fixture
 def sample_history_no_duplicates(tmp_path):
-    """Crée un fichier test sans doublons"""
+    """Crée un fichier test sans doublons."""
     history = tmp_path / "workouts-history.md"
 
     content = """### S073-01-END-Test
@@ -86,7 +86,7 @@ Test 2
 
 
 def test_detect_duplicates(sample_history_with_duplicates):
-    """Test détection basique"""
+    """Test détection basique."""
     detector = DuplicateDetector(sample_history_with_duplicates)
 
     duplicates = detector.quick_scan()
@@ -98,7 +98,7 @@ def test_detect_duplicates(sample_history_with_duplicates):
 
 
 def test_no_duplicates_found(sample_history_no_duplicates):
-    """Test avec fichier sans doublons"""
+    """Test avec fichier sans doublons."""
     detector = DuplicateDetector(sample_history_no_duplicates)
 
     duplicates = detector.quick_scan()
@@ -107,7 +107,7 @@ def test_no_duplicates_found(sample_history_no_duplicates):
 
 
 def test_check_window_limitation(sample_history_with_duplicates):
-    """Test limitation du window"""
+    """Test limitation du window."""
     # Window=1 ne devrait voir que la première entrée
 
     detector = DuplicateDetector(sample_history_with_duplicates, check_window=1)
@@ -117,7 +117,7 @@ def test_check_window_limitation(sample_history_with_duplicates):
 
 
 def test_auto_fix(sample_history_with_duplicates):
-    """Test suppression automatique"""
+    """Test suppression automatique."""
     check_and_handle_duplicates(sample_history_with_duplicates, auto_fix=True)
 
     # Vérifier que doublon supprimé
@@ -133,7 +133,7 @@ def test_auto_fix(sample_history_with_duplicates):
 
 
 def test_fail_fast_mode(sample_history_with_duplicates):
-    """Test mode fail-fast"""
+    """Test mode fail-fast."""
     with pytest.raises(DuplicateDetectedError) as exc_info:
         check_and_handle_duplicates(sample_history_with_duplicates, auto_fix=False)
 
@@ -143,7 +143,7 @@ def test_fail_fast_mode(sample_history_with_duplicates):
 
 
 def test_no_action_when_no_duplicates(sample_history_no_duplicates):
-    """Test qu'aucune action n'est prise si pas de doublons"""
+    """Test qu'aucune action n'est prise si pas de doublons."""
     original_content = sample_history_no_duplicates.read_text()
 
     # Mode fail-fast - ne devrait pas lever d'exception
@@ -154,7 +154,7 @@ def test_no_action_when_no_duplicates(sample_history_no_duplicates):
 
 
 def test_nonexistent_file():
-    """Test avec fichier qui n'existe pas"""
+    """Test avec fichier qui n'existe pas."""
     detector = DuplicateDetector(Path("/nonexistent/file.md"))
 
     duplicates = detector.quick_scan()
@@ -163,7 +163,7 @@ def test_nonexistent_file():
 
 
 def test_find_entry_bounds(sample_history_with_duplicates):
-    """Test recherche des bornes d'une entrée"""
+    """Test recherche des bornes d'une entrée."""
     detector = DuplicateDetector(sample_history_with_duplicates)
 
     lines = sample_history_with_duplicates.read_text().split("\n")
@@ -185,7 +185,7 @@ def test_find_entry_bounds(sample_history_with_duplicates):
 
 
 def test_remove_multiple_duplicates(tmp_path):
-    """Test suppression de plusieurs doublons"""
+    """Test suppression de plusieurs doublons."""
     history = tmp_path / "workouts-history.md"
 
     content = """### S073-01

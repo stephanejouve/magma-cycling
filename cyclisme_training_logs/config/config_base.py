@@ -1,5 +1,5 @@
 """
-Configuration centrale pour séparation code/données
+Configuration centrale pour séparation code/données.
 
 Module de configuration gérant la séparation entre code (cyclisme-training-logs)
 et données athlète (training-logs externe). Configure les chemins vers le dépôt

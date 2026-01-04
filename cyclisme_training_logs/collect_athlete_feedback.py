@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-collect_athlete_feedback.py - Collecte le retour de l'athlète après séance
+collect_athlete_feedback.py - Collecte le retour de l'athlète après séance.
 
 Ce script :
 1. Pose des questions structurées à l'athlète

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-tests/test_asservissement.py - Tests pour fonctionnalités asservissement
+tests/test_asservissement.py - Tests pour fonctionnalités asservissement.
 """
 import pytest
 
@@ -8,7 +8,7 @@ from cyclisme_training_logs.workflow_coach import WorkflowCoach
 
 
 def test_load_workout_templates():
-    """Test chargement catalogue templates"""
+    """Test chargement catalogue templates."""
     coach = WorkflowCoach(servo_mode=True)
 
     templates = coach.workout_templates
@@ -19,7 +19,7 @@ def test_load_workout_templates():
 
 
 def test_load_remaining_sessions():
-    """Test chargement planning restant"""
+    """Test chargement planning restant."""
     coach = WorkflowCoach()
 
     # Test with existing week planning
@@ -30,7 +30,7 @@ def test_load_remaining_sessions():
 
 
 def test_format_remaining_sessions_compact():
-    """Test format compact planning"""
+    """Test format compact planning."""
     coach = WorkflowCoach()
 
     remaining = [
@@ -62,7 +62,7 @@ def test_format_remaining_sessions_compact():
 
 
 def test_parse_modifications_empty():
-    """Test parsing sans modification"""
+    """Test parsing sans modification."""
     coach = WorkflowCoach()
 
     ai_response = "# Analyse\n\nTout va bien, planning maintenu."
@@ -73,7 +73,7 @@ def test_parse_modifications_empty():
 
 
 def test_parse_modifications_valid():
-    """Test parsing avec modification valide"""
+    """Test parsing avec modification valide."""
     coach = WorkflowCoach()
 
     ai_response = """
@@ -98,7 +98,7 @@ def test_parse_modifications_valid():
 
 
 def test_extract_day_number():
-    """Test extraction numéro jour"""
+    """Test extraction numéro jour."""
     coach = WorkflowCoach()
 
     # Test with known week (S072 starts 2025-12-15, Monday)
@@ -108,7 +108,7 @@ def test_extract_day_number():
 
 
 def test_templates_have_required_fields():
-    """Test que tous les templates ont les champs requis"""
+    """Test que tous les templates ont les champs requis."""
     coach = WorkflowCoach(servo_mode=True)
 
     required_fields = [
@@ -128,7 +128,7 @@ def test_templates_have_required_fields():
 
 
 def test_apply_planning_modifications_empty():
-    """Test application modifications vide"""
+    """Test application modifications vide."""
     coach = WorkflowCoach()
 
     # Should not raise exception with empty list

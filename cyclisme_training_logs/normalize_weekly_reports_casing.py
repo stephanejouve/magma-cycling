@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-normalize_weekly_reports_casing.py - Normaliser la casse des répertoires de semaine
+normalize_weekly_reports_casing.py - Normaliser la casse des répertoires de semaine.
 
 Ce script :
 1. Scanne logs/weekly_reports/

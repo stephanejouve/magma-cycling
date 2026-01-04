@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-weekly_analysis.py - Génération analyse hebdomadaire cyclisme (DEPRECATED)
+weekly_analysis.py - Génération analyse hebdomadaire cyclisme (DEPRECATED).
 
 ⚠️  DEPRECATED - Ce script est obsolète et sera supprimé dans une version future.
 
@@ -64,7 +64,7 @@ class WeeklyAnalysis:
 
     def __init__(self, week_number: str, start_date: str | None = None):
         """
-        Args:
+        Args:.
 
             week_number: Format SXXX (ex: S068)
             start_date: Format YYYY-MM-DD (optionnel, auto si None).
@@ -560,7 +560,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>.
             print(f"⚠️  Erreur git : {e}")
 
     def run(self):
-        """Workflow complet interactif"""
+        """Workflow complet interactif."""
         # DEPRECATION WARNING
 
         print("\n" + "=" * 70)

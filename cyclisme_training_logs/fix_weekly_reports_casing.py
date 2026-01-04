@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-fix_weekly_reports_casing.py - Correction automatique casse weekly_reports
+fix_weekly_reports_casing.py - Correction automatique casse weekly_reports.
 
 Ce script corrige les problèmes de casse dans logs/weekly_reports/ :
 - Supprime doublon s067 (identique à S067)

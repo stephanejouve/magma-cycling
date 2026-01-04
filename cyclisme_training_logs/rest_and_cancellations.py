@@ -202,7 +202,7 @@ def check_pre_session_veto(
 
 def load_week_planning(week_id: str, planning_dir: Path | None = None) -> dict:
     """
-    Charge la configuration hebdomadaire depuis week_planning.json
+    Charge la configuration hebdomadaire depuis week_planning.json.
 
     Args:
         week_id: Identifiant semaine (ex: "S070")
@@ -250,7 +250,7 @@ def load_week_planning(week_id: str, planning_dir: Path | None = None) -> dict:
 
 def validate_week_planning(planning: dict) -> bool:
     """
-    Validate structure et cohérence planning hebdomadaire
+    Validate structure et cohérence planning hebdomadaire.
 
     Checks:
     - Champs obligatoires présents
@@ -349,7 +349,7 @@ def generate_rest_day_entry(
     athlete_feedback: dict | None = None,
 ) -> str:
     """
-    Génère bloc markdown pour jour de repos planifié
+    Génère bloc markdown pour jour de repos planifié.
 
     Args:
         session_data: Config session (id, date, raison)
@@ -464,7 +464,7 @@ def generate_skipped_session_entry(
     session_data: dict, metrics_pre: dict, reason: str | None = None
 ) -> str:
     """
-    Génère bloc markdown pour séance planifiée mais sautée
+    Génère bloc markdown pour séance planifiée mais sautée.
 
     Args:
         session_data: Config session (id, date, nom, TSS prévu, etc.)
@@ -559,7 +559,7 @@ def generate_cancelled_session_entry(
     session_data: dict, metrics_pre: dict, reason: str, impact_notes: str | None = None
 ) -> str:
     """
-    Génère bloc markdown pour séance annulée/reportée
+    Génère bloc markdown pour séance annulée/reportée.
 
     Args:
         session_data: Config session (id, date, TSS prévu)
@@ -656,7 +656,7 @@ def reconcile_planned_vs_actual(
     week_planning: dict, intervals_activities: list[dict]
 ) -> dict[str, list]:
     """
-    Compare planning hebdomadaire vs activités réelles Intervals.icu
+    Compare planning hebdomadaire vs activités réelles Intervals.icu.
 
     Args:
         week_planning: Planning semaine depuis JSON
@@ -773,7 +773,7 @@ def process_week_with_rest_handling(
     output_file: Path | None = None,
 ) -> dict:
     """
-    Workflow complet avec gestion repos/annulations
+    Workflow complet avec gestion repos/annulations.
 
     Process:
     1. Charger planning semaine (week_planning.json)

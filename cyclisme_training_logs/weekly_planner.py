@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script de Planification Hebdomadaire
+Script de Planification Hebdomadaire.
 
 Génère un prompt pour Claude.ai afin de créer les entraînements de la semaine.
 """
@@ -630,7 +630,7 @@ Le but est que je puisse **copier-coller directement** chaque bloc dans Interval
         return prompt
 
     def copy_to_clipboard(self, text: str) -> bool:
-        """Copy le texte dans le presse-papier (macOS)"""
+        """Copy le texte dans le presse-papier (macOS)."""
         try:
             subprocess.run(["pbcopy"], input=text.encode("utf-8"), check=True)
             return True

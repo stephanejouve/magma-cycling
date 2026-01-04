@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Génération du prompt d'analyse pour IA Coach
+Génération du prompt d'analyse pour IA Coach.
 
 Prépare le prompt d'analyse de séance cyclisme pour traitement par IA.
 Récupère les données depuis Intervals.icu, agrège le contexte athlète,
@@ -71,7 +71,7 @@ IntervalsAPI = IntervalsClient
 
 
 class PromptGenerator:
-    """Générateur de prompt pour analyse IA"""
+    """Générateur de prompt pour analyse IA."""
 
     def __init__(self, project_root=None):
         """
@@ -337,7 +337,7 @@ class PromptGenerator:
 
     def safe_format_metric(self, value, format_spec=".0f", suffix="", default="N/A"):
         """
-        Formatage sécurisé d'une métrique pouvant être None
+        Formatage sécurisé d'une métrique pouvant être None.
 
         Args:
             value: Valeur à formater (peut être None)
@@ -357,7 +357,7 @@ class PromptGenerator:
 
     def get_power_value(self, activity, metric_type="avg"):
         """
-        Extract robuste de la puissance avec fallback multi-champs
+        Extract robuste de la puissance avec fallback multi-champs.
 
         Args:
             activity: Dictionnaire activité depuis API
@@ -656,7 +656,7 @@ Génère maintenant l'entrée d'analyse.
         return prompt
 
     def copy_to_clipboard(self, text):
-        """Copy le texte dans le presse-papier macOS"""
+        """Copy le texte dans le presse-papier macOS."""
         try:
             process = subprocess.Popen(
                 ["pbcopy"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE

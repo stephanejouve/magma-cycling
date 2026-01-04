@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-organize_weekly_report.py - Organise les fichiers du bilan hebdomadaire
+organize_weekly_report.py - Organise les fichiers du bilan hebdomadaire.
 
 Ce script :
 1. Lit les 6 fichiers depuis le presse-papier OU depuis des fichiers
@@ -180,7 +180,7 @@ class WeeklyReportOrganizer:
         return True
 
     def show_git_diff(self, week_number):
-        """Display le git diff"""
+        """Display le git diff."""
         week_str = f"s{week_number:03d}"
 
         week_dir = self.bilans_dir / week_str

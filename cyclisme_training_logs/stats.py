@@ -60,7 +60,7 @@ from pathlib import Path
 
 
 def extract_tss_from_workouts(file_path):
-    """Extrait les TSS depuis workouts-history.md"""
+    """Extrait les TSS depuis workouts-history.md."""
     if not file_path.exists():
         return []
 

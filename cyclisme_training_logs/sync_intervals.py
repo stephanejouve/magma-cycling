@@ -65,7 +65,7 @@ IntervalsAPI = IntervalsClient
 
 
 class WorkoutLogger:
-    """Gestionnaire de mise à jour des logs"""
+    """Gestionnaire de mise à jour des logs."""
 
     def __init__(self, logs_dir=None):
         """

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test des 5 correctifs appliqués à weekly_analysis.py
+Test des 5 correctifs appliqués à weekly_analysis.py.
 """
 import sys
 from pathlib import Path
@@ -12,7 +12,7 @@ from cyclisme_training_logs.weekly_analysis import WeeklyAnalysis  # noqa: E402
 
 
 def test_correctifs():
-    """Tester les 5 correctifs"""
+    """Tester les 5 correctifs."""
     print("🧪 Test des Correctifs weekly_analysis.py")
 
     print("=" * 70)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-test_rest_and_cancellations.py - Tests unitaires pour le module rest_and_cancellations
+test_rest_and_cancellations.py - Tests unitaires pour le module rest_and_cancellations.
 
 Usage:
     python3 -m pytest cyclisme_training_logs/test_rest_and_cancellations.py -v
@@ -25,7 +25,7 @@ from cyclisme_training_logs.rest_and_cancellations import (
 
 
 def create_test_planning(week_id="S070", with_cancellation=True, with_rest=True):
-    """Crée un planning de test"""
+    """Crée un planning de test."""
     planning = {
         "week_id": week_id,
         "start_date": "2025-12-02",
@@ -90,7 +90,7 @@ def create_test_planning(week_id="S070", with_cancellation=True, with_rest=True)
 
 
 def test_load_valid_planning():
-    """Test chargement planning valide"""
+    """Test chargement planning valide."""
     print("\n[TEST] Chargement planning valide...")
 
     # Créer un planning temporaire
@@ -112,7 +112,7 @@ def test_load_valid_planning():
 
 
 def test_load_missing_planning():
-    """Test gestion planning absent"""
+    """Test gestion planning absent."""
     print("\n[TEST] Gestion planning absent...")
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -127,7 +127,7 @@ def test_load_missing_planning():
 
 
 def test_validate_planning_valid():
-    """Test validation planning valide"""
+    """Test validation planning valide."""
     print("\n[TEST] Validation planning valide...")
 
     planning = create_test_planning()
@@ -136,7 +136,7 @@ def test_validate_planning_valid():
 
 
 def test_validate_planning_missing_field():
-    """Test validation planning avec champ manquant"""
+    """Test validation planning avec champ manquant."""
     print("\n[TEST] Validation planning avec champ manquant...")
 
     planning = create_test_planning()
@@ -147,7 +147,7 @@ def test_validate_planning_missing_field():
 
 
 def test_validate_planning_invalid_status():
-    """Test validation planning avec statut invalide"""
+    """Test validation planning avec statut invalide."""
     print("\n[TEST] Validation planning avec statut invalide...")
 
     planning = create_test_planning()
@@ -158,7 +158,7 @@ def test_validate_planning_invalid_status():
 
 
 def test_validate_planning_missing_cancellation_reason():
-    """Test validation raison manquante séance annulée"""
+    """Test validation raison manquante séance annulée."""
     print("\n[TEST] Validation raison manquante séance annulée...")
 
     planning = create_test_planning()
@@ -172,7 +172,7 @@ def test_validate_planning_missing_cancellation_reason():
 
 
 def test_validate_planning_duplicate_session_id():
-    """Test validation doublons session_id"""
+    """Test validation doublons session_id."""
     print("\n[TEST] Validation doublons session_id...")
 
     planning = create_test_planning()
@@ -189,7 +189,7 @@ def test_validate_planning_duplicate_session_id():
 
 
 def test_generate_rest_day_markdown():
-    """Test génération markdown repos planifié"""
+    """Test génération markdown repos planifié."""
     print("\n[TEST] Génération markdown repos planifié...")
 
     session = {
@@ -222,7 +222,7 @@ def test_generate_rest_day_markdown():
 
 
 def test_generate_cancelled_session_markdown():
-    """Test génération markdown séance annulée"""
+    """Test génération markdown séance annulée."""
     print("\n[TEST] Génération markdown séance annulée...")
 
     session = {
@@ -261,7 +261,7 @@ def test_generate_cancelled_session_markdown():
 
 
 def test_reconcile_planned_actual():
-    """Test réconciliation planning vs activités"""
+    """Test réconciliation planning vs activités."""
     print("\n[TEST] Réconciliation planning vs activités...")
 
     planning = create_test_planning()
@@ -290,7 +290,7 @@ def test_reconcile_planned_actual():
 
 
 def test_reconcile_with_unplanned_activity():
-    """Test réconciliation avec activité non planifiée"""
+    """Test réconciliation avec activité non planifiée."""
     print("\n[TEST] Réconciliation avec activité non planifiée...")
 
     planning = create_test_planning(with_cancellation=False, with_rest=False)
@@ -317,7 +317,7 @@ def test_reconcile_with_unplanned_activity():
 
 
 def test_reconcile_multiple_activities_same_day():
-    """Test réconciliation plusieurs activités même jour"""
+    """Test réconciliation plusieurs activités même jour."""
     print("\n[TEST] Réconciliation plusieurs activités même jour...")
 
     planning = {
@@ -355,7 +355,7 @@ def test_reconcile_multiple_activities_same_day():
 
 
 def test_generate_rest_day_without_feedback():
-    """Test génération repos sans feedback athlète"""
+    """Test génération repos sans feedback athlète."""
     print("\n[TEST] Génération repos sans feedback athlète...")
 
     session = {
@@ -375,7 +375,7 @@ def test_generate_rest_day_without_feedback():
 
 
 def test_cancelled_session_without_impact_notes():
-    """Test génération annulation sans impact_notes"""
+    """Test génération annulation sans impact_notes."""
     print("\n[TEST] Génération annulation sans impact_notes...")
 
     session = {
@@ -401,7 +401,7 @@ def test_cancelled_session_without_impact_notes():
 
 
 def run_all_tests():
-    """Exécute tous les tests"""
+    """Exécute tous les tests."""
     print("\n" + "=" * 70)
 
     print("TESTS REST AND CANCELLATIONS MODULE")

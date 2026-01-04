@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Insertion de l'analyse IA dans workouts-history.md
+Insertion de l'analyse IA dans workouts-history.md.
 
 Insère l'analyse générée par IA dans le fichier workouts-history.md en
 respectant l'ordre chronologique via TimelineInjector. Remplace le système
@@ -74,11 +74,11 @@ logger = logging.getLogger(__name__)
 
 
 class ClipboardReader:
-    """Lecteur du presse-papier macOS"""
+    """Lecteur du presse-papier macOS."""
 
     @staticmethod
     def read_clipboard():
-        """Read le contenu du presse-papier"""
+        """Read le contenu du presse-papier."""
         try:
             result = subprocess.run(["pbpaste"], capture_output=True, text=True, check=True)
             return result.stdout
@@ -387,7 +387,7 @@ class WorkoutHistoryManager:
             return False
 
     def show_diff(self):
-        """Display le git diff"""
+        """Display le git diff."""
         try:
             result = subprocess.run(
                 ["git", "diff", str(self.history_file)],

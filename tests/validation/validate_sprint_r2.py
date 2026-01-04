@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Sprint R2 Validation Script - S074 Week Validation
+Sprint R2 Validation Script - S074 Week Validation.
 
 Tests Sprint R2 utilities on real S074 data (2025-12-29 to 2026-01-04).
 """

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-prepare_weekly_report.py - Prépare le prompt pour le bilan hebdomadaire
+prepare_weekly_report.py - Prépare le prompt pour le bilan hebdomadaire.
 
 Ce script :
 1. Extrait les séances de la semaine depuis workouts-history.md
@@ -268,7 +268,7 @@ Génère maintenant les 6 fichiers de bilan pour la semaine S{week_number:03d}.
         return prompt
 
     def copy_to_clipboard(self, text):
-        """Copy dans le presse-papier"""
+        """Copy dans le presse-papier."""
         try:
             process = subprocess.Popen(
                 ["pbcopy"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE

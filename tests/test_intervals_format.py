@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-test_intervals_format.py - Tests validation format Intervals.icu
+test_intervals_format.py - Tests validation format Intervals.icu.
 """
 import pytest
 
@@ -9,12 +9,12 @@ from cyclisme_training_logs.intervals_format_validator import IntervalsFormatVal
 
 @pytest.fixture
 def validator():
-    """Fixture validateur"""
+    """Fixture validateur."""
     return IntervalsFormatValidator()
 
 
 def test_valid_simple_workout(validator):
-    """Test workout simple valide"""
+    """Test workout simple valide."""
     workout = """Warmup
 
 - 10m ramp 50-65% 85rpm
@@ -31,7 +31,7 @@ Cooldown
 
 
 def test_valid_repeated_block(validator):
-    """Test bloc répété valide"""
+    """Test bloc répété valide."""
     workout = """Warmup
 
 - 10m ramp 50-75% 85rpm
@@ -49,7 +49,7 @@ Cooldown
 
 
 def test_invalid_repetition_in_interval(validator):
-    """Test répétition dans intervalle (INVALIDE)"""
+    """Test répétition dans intervalle (INVALIDE)."""
     workout = """Warmup
 
 - 10m ramp 50-65%
@@ -68,7 +68,7 @@ Cooldown
 
 
 def test_invalid_repetition_alone(validator):
-    """Test répétition seule sur ligne (INVALIDE)"""
+    """Test répétition seule sur ligne (INVALIDE)."""
     workout = """Warmup
 
 - 10m ramp 50-65%
@@ -87,7 +87,7 @@ Cooldown
 
 
 def test_warning_non_standard_section(validator):
-    """Test section non standard avec répétition (WARNING)"""
+    """Test section non standard avec répétition (WARNING)."""
     workout = """Warmup
 
 - 10m ramp 50-65%
@@ -107,7 +107,7 @@ Cooldown
 
 
 def test_invalid_markdown(validator):
-    """Test contenu markdown (INVALIDE)"""
+    """Test contenu markdown (INVALIDE)."""
     workout = """Warmup
 
 - 10m ramp 50-65%
@@ -124,7 +124,7 @@ Cooldown
 
 
 def test_fix_non_standard_section(validator):
-    """Test correction automatique section non standard"""
+    """Test correction automatique section non standard."""
     workout = """Warmup
 
 - 10m ramp 50-65%
@@ -142,7 +142,7 @@ Cooldown
 
 
 def test_multiple_repeated_blocks(validator):
-    """Test plusieurs blocs répétés valides"""
+    """Test plusieurs blocs répétés valides."""
     workout = """Warmup
 
 - 15m ramp 50-75% 85-90rpm
@@ -164,7 +164,7 @@ Cooldown
 
 
 def test_generate_examples(validator):
-    """Test génération exemples"""
+    """Test génération exemples."""
     examples = validator.generate_example_workouts()
 
     assert "simple" in examples
@@ -178,7 +178,7 @@ def test_generate_examples(validator):
 
 
 def test_empty_workout(validator):
-    """Test workout vide"""
+    """Test workout vide."""
     workout = ""
 
     is_valid, errors, warnings = validator.validate_workout(workout)
@@ -187,7 +187,7 @@ def test_empty_workout(validator):
 
 
 def test_workout_without_sections(validator):
-    """Test workout sans sections (juste intervalles)"""
+    """Test workout sans sections (juste intervalles)."""
     workout = """- 10m 50%
 
 - 20m 70%
