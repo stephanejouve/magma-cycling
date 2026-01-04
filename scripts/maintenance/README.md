@@ -2,6 +2,90 @@
 
 Scripts pour maintenir la qualité et l'organisation du projet.
 
+## 📦 Code Review Package Generator
+
+Script automatisé de génération de package de revue architecturale complet.
+
+### Fonctionnalités
+
+Génère un package professionnel pour revue de code externe contenant :
+
+1. **Métriques qualité complètes**
+   - Tests (497 passing, 100%)
+   - PEP 8/257 compliance (0 violations)
+   - MyPy type safety (0 errors)
+   - Ruff linting (0 warnings)
+   - Pre-commit hooks status
+
+2. **Structure et analyse**
+   - Arborescence complète du projet
+   - Statistiques lignes de code (cloc)
+   - Taille de chaque module
+   - Graphe de dépendances (optionnel)
+
+3. **Documentation complète**
+   - CODING_STANDARDS.md
+   - LIVRAISON_MOA documents
+   - Sessions de développement
+   - Explications warnings
+
+4. **Code source**
+   - Tous les fichiers Python (~87 fichiers)
+   - Tests complets (~54 fichiers)
+   - Configurations (pyproject.toml, hooks, CI/CD)
+
+5. **Guides de revue**
+   - README avec instructions claires
+   - Guide de revue approfondi
+   - Template de rapport
+   - FAQ et explications
+
+### Utilisation
+
+```bash
+# Depuis n'importe où
+bash ~/cyclisme-training-logs/scripts/maintenance/generate_code_review_package.sh
+
+# Ou depuis le projet
+cd ~/cyclisme-training-logs
+bash scripts/maintenance/generate_code_review_package.sh
+```
+
+### Résultat
+
+**Fichiers générés dans `~/Downloads/` :**
+- `review_package_v2.2.0_[TIMESTAMP]/` - Dossier complet
+- `review_package_v2.2.0_[TIMESTAMP].zip` - Archive (~2-5 MB)
+- `review_package_v2.2.0_[TIMESTAMP].zip.sha256` - Checksum
+
+**Contenu du package :**
+- Métriques à jour (tests exécutés lors génération)
+- Documentation complète
+- Code source pour consultation
+- Guide de revue (express 15min ou approfondi 1h30)
+- Template de rapport
+
+### Quand l'utiliser
+
+- **Fin de sprint** : Créer livrable MOA
+- **Revue externe** : Package prêt à envoyer
+- **Audit qualité** : Métriques complètes
+- **Documentation** : Snapshot complet du projet
+
+### Alias Recommandé
+
+Ajouter à `~/.zshrc` :
+```bash
+alias review-package='bash ~/cyclisme-training-logs/scripts/maintenance/generate_code_review_package.sh'
+```
+
+Usage :
+```bash
+review-package  # Génère le package instantanément
+```
+
+---
+
 ## 🧹 Project Cleaner Bot
 
 Bot automatisé de nettoyage et d'archivage du projet.
