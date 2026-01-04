@@ -198,6 +198,43 @@ class WorkoutFormatter:
                     "chaque ligne doit avoir sa puissance explicite"
                 )
 
+        # Validate warmup ramps (should be ascending)
+        warmup_ramp = re.search(r"(?i)warmup.*?ramp\s+(\d+)%\s*→\s*(\d+)%", content, re.DOTALL)
+        if warmup_ramp:
+            start_pct = int(warmup_ramp.group(1))
+            end_pct = int(warmup_ramp.group(2))
+            if start_pct >= end_pct:
+                warnings.append(
+                    f"⚠️  {workout['id']}: Warmup ramp devrait être ascendant "
+                    f"({start_pct}% → {end_pct}% devrait être {start_pct}% → {end_pct if end_pct > start_pct else start_pct + 10}%)"
+                )
+
+        # Validate cooldown ramps (should be descending)
+        cooldown_ramp = re.search(r"(?i)cooldown.*?ramp\s+(\d+)%\s*→\s*(\d+)%", content, re.DOTALL)
+        if cooldown_ramp:
+            start_pct = int(cooldown_ramp.group(1))
+            end_pct = int(cooldown_ramp.group(2))
+            if start_pct <= end_pct:
+                warnings.append(
+                    f"⚠️  {workout['id']}: Cooldown ramp devrait être descendant "
+                    f"({start_pct}% → {end_pct}% devrait être {start_pct if start_pct > end_pct else end_pct + 10}% → {end_pct}%)"
+                )
+
+        # Check ramp format (should include watts)
+        # Format: "10min ramp 50%→65% (110W→143W) 85rpm"
+        ramps = re.findall(r"ramp\s+\d+%\s*→\s*\d+%", content)
+        for ramp in ramps:
+            # Check if watts are included
+            ramp_line_match = re.search(rf"{re.escape(ramp)}[^\n]*", content)
+            if ramp_line_match:
+                ramp_line = ramp_line_match.group(0)
+                if not re.search(r"\(\d+W\s*→\s*\d+W\)", ramp_line):
+                    warnings.append(
+                        f"⚠️  {workout['id']}: Rampe sans watts explicites - "
+                        f"devrait inclure (XXW→YYW)"
+                    )
+                    break  # Only warn once per workout
+
         return warnings
 
     def format_for_upload(self, workouts: list[dict]) -> str:
