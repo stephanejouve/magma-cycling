@@ -297,37 +297,213 @@ trains --week-id S074                       # Servo-mode ajustements
 
 ## 🚀 Roadmap Future
 
-### Sprint R6 - Planned (Q1 2026)
+### Sprint R6 : PID Baseline & Calibration (6 semaines)
 
-**Focus :** Performance & Extension
+**Dates :** 6 janvier - 16 février 2026
+**Semaines :** S075 → S080
+**Status :** 🔄 EN COURS (Phase 1 - Observation)
 
-#### Features Envisagées
+#### Objectif Principal
 
-**1. Performance Optimization (P0)**
-- [ ] Cache layer pour requêtes API Intervals.icu
-- [ ] Batch processing pour backfill massif
-- [ ] Optimisation algorithmes détection gaps
-- [ ] Profiling et benchmarking
+Établir baseline empirique pour valider projections PID Controller avant activation production complète Training Intelligence.
 
-**2. Extended Analytics (P1)**
-- [ ] Dashboard web interactif (Streamlit/Dash)
-- [ ] Visualisations graphiques (CTL/ATL/TSB curves)
-- [ ] Correlation analysis (sommeil vs performance)
-- [ ] Trend detection (long-term patterns)
+#### Problématique
 
-**3. Refactoring Utilities (P1)**
-- [ ] R2: Create Metrics Utilities (`utils/metrics.py`)
-- [ ] R4: Create Date Utilities (`utils/dates.py`)
-- [ ] R5: Create Data Fetching Facade (`data/fetcher.py`)
-- [ ] Voir `REFACTORING_TODO.md` pour détails
+**Challenge identifié :**
+- Training Intelligence architecture complète (validation 10/10)
+- PID Controller implémenté mais **non calibré sur données réelles**
+- Projections théoriques nécessitent validation terrain (6 semaines minimum)
+- Risque erreurs >10% si activation sans calibration empirique
 
-**4. Documentation (P2)**
-- [ ] User guide complet
-- [ ] API documentation (Sphinx)
-- [ ] Video tutorials
-- [ ] FAQ utilisateur
+**Solution adoptée :**
+Phase progressive validation empirique sur 6 semaines avec 3 phases distinctes.
 
-**Durée estimée :** 2-3 semaines
+#### Architecture Sprint R6
+
+**Phase 1 : Baseline Collection (Semaines S075-S076)**
+
+**Dates :** 6-19 janvier 2026
+
+**Objectif :** Collecter données terrain en mode observation passive
+
+**Modifications code :**
+
+1. **PID Controller - Mode Observation**
+```python
+# cyclisme_training_logs/intelligence/pid_controller.py
+class PIDController:
+    """PID Controller with observation/hybrid/active modes."""
+
+    def __init__(self, mode: str = 'observation'):
+        self.mode = mode  # 'observation', 'hybrid', 'active'
+        self.observations: List[Dict] = []
+
+        # Theoretical coefficients (to calibrate)
+        self.kp = 0.5  # Proportional
+        self.ki = 0.1  # Integral
+        self.kd = 0.2  # Derivative
+```
+
+2. **Baseline Collector - Data Collection**
+```python
+# cyclisme_training_logs/intelligence/baseline_collector.py
+@dataclass
+class BaselineObservation:
+    """Single week observation for calibration."""
+    week_id: str  # S075, S076, etc.
+    ftp_current: int
+    ftp_target: int
+    ctl: float
+    atl: float
+    tsb: float
+    pid_suggestion: Optional[int]
+    actual_ftp_change: Optional[int]  # Filled end-of-week
+```
+
+**Résultats attendus Phase 1 :**
+- 2 semaines données collectées (S075-S076)
+- ~14 observations quotidiennes
+- Projections PID loggées (non appliquées)
+- Dataset baseline initialisé
+
+**Phase 2 : Calibration Parameters (Semaines S077-S078)**
+
+**Dates :** 20 janvier - 2 février 2026
+
+**Objectif :** Analyser écarts et calibrer coefficients PID
+
+**Nouveau module :**
+```python
+# cyclisme_training_logs/intelligence/pid_calibrator.py
+class PIDCalibrator:
+    """Optimize PID coefficients from empirical data."""
+
+    def calibrate(self, observations: List[BaselineObservation]):
+        """Return optimized (kp, ki, kd) coefficients."""
+        # Scipy optimization
+        # Target: <5% Mean Absolute Error
+```
+
+**Dépendances ajoutées :**
+- scipy >= 1.11.0
+- numpy >= 1.24.0
+
+**Résultats attendus Phase 2 :**
+- Coefficients PID calibrés (kp, ki, kd optimisés)
+- Accuracy <5% MAE validée
+- Documentation calibration complète
+
+**Phase 3 : Progressive Activation (Semaines S079-S080)**
+
+**Dates :** 3-16 février 2026
+
+**Objectif :** Mode hybride avec validation MOA
+
+**Dashboard PID :**
+```python
+# cyclisme_training_logs/intelligence/pid_dashboard.py
+class PIDDashboard:
+    """Generate MOA approval dashboard."""
+
+    def generate(self, suggestion: Dict) -> str:
+        """Return markdown dashboard for approval."""
+```
+
+**Intégration workflow :**
+- `workflow_coach.py` appelle PID mode 'hybrid'
+- Dashboard généré automatiquement
+- Décisions MOA loggées pour feedback loop
+
+**Résultats attendus Phase 3 :**
+- 2 semaines mode hybride validées
+- Décisions MOA vs PID analysées
+- Feedback loop opérationnel
+
+#### Timeline Sprint R6
+
+```
+Semaine S075 (6-12 Jan 2026)   : Phase 1 - Observation (1/2)
+Semaine S076 (13-19 Jan 2026)  : Phase 1 - Observation (2/2)
+Semaine S077 (20-26 Jan 2026)  : Phase 2 - Calibration (1/2)
+Semaine S078 (27 Jan-2 Fév 2026): Phase 2 - Calibration (2/2)
+Semaine S079 (3-9 Fév 2026)    : Phase 3 - Hybrid mode (1/2)
+Semaine S080 (10-16 Fév 2026)  : Phase 3 - Hybrid mode (2/2)
+
+Sprint R7 Start: 17 février 2026 (Semaine S081)
+```
+
+#### Livrables Sprint R6
+
+**Code (10 fichiers) :**
+- ✅ `pid_controller.py` (mode observation/hybrid/active)
+- ✅ `baseline_collector.py` (data collection + persistence)
+- ✅ `pid_calibrator.py` (coefficient optimization)
+- ✅ `pid_dashboard.py` (MOA approval interface)
+- ✅ 30+ tests nouveaux (coverage Intelligence >90%)
+
+**Données :**
+- ✅ Dataset 6 semaines (~42 observations)
+- ✅ Coefficients PID calibrés
+- ✅ Accuracy <5% MAE
+- ✅ Décisions MOA historisées
+
+**Documentation (créée progressivement) :**
+- ✅ SPRINT_R6_BRIEF.md (objectifs, architecture)
+- ✅ PID_CALIBRATION_PROTOCOL.md (méthodologie)
+- ✅ BASELINE_DATASET_SCHEMA.md (structure données)
+- ✅ PID_ACCURACY_REPORT.md (résultats fin sprint)
+
+#### Métriques Succès
+
+- ✅ PID accuracy <5% MAE (Mean Absolute Error)
+- ✅ Confidence MEDIUM+ sur 70% projections
+- ✅ 6 semaines données complètes
+- ✅ Validation MOA protocole hybride
+
+#### Risques & Mitigation
+
+**Risque 1 : Données insuffisantes**
+- Mitigation : Prolonger Phase 1 si <4 semaines exploitables
+- Critère go/no-go : Minimum 28 observations valides
+
+**Risque 2 : Accuracy PID >10%**
+- Mitigation : Ajustements manuels coefficients
+- Fallback : Mode manuel prolongé Sprint R7
+
+**Risque 3 : Variabilité terrain excessive**
+- Mitigation : Filtrage outliers (robust statistics)
+- Critère : Médiane vs moyenne pour stabilité
+
+#### Transition Sprint R7
+
+**Prérequis activation Sprint R7 :**
+- ✅ Sprint R6 complété (6 semaines S075-S080)
+- ✅ PID accuracy <5% MAE
+- ✅ Confidence MEDIUM+ sur 70% projections
+- ✅ Validation MOA protocole
+
+**Sprint R7 Preview :**
+- Intelligence Progressive activation (Pattern learning)
+- Confidence LOW → MEDIUM → HIGH automatique
+- Mode hybride étendu à toute l'Intelligence
+
+#### Métriques Sprint R6
+
+**Tests :**
+- Début : 543 tests
+- Target fin : 573+ tests (+30 Intelligence)
+
+**Coverage :**
+- Intelligence modules : >90%
+- Global : Maintien >85%
+
+**Documentation :**
+- ROADMAP.md : Section R6 détaillée
+- Docs progressifs : 4 fichiers créés au fil du sprint
+
+**Qualité :**
+- 0 violations maintenues (ruff, mypy, pydocstyle)
+- Complexité max : B-7 maintenue
 
 ---
 
