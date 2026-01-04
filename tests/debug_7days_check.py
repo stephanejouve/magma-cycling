@@ -1,3 +1,5 @@
+"""Debug script for checking 7-day data retrieval."""
+
 #!/usr/bin/env python3
 import os
 import sys

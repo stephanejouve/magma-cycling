@@ -1,4 +1,4 @@
-"""
+r"""
 Composable prompt generation system for AI analysis.
 
 Système de génération de prompts composables pour analyses IA.

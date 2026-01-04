@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-Script de diagnostic pour comprendre pourquoi le matching échoue.
-"""
+"""Script de diagnostic pour comprendre pourquoi le matching échoue."""
 import json
 import sys
 from datetime import datetime, timedelta

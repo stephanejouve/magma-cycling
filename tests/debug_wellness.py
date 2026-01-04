@@ -1,3 +1,5 @@
+"""Debug script for wellness data testing."""
+
 import json
 
 import requests

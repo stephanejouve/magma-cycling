@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-Script pour récupérer un workout existant et voir sa structure
-"""
+"""Script pour récupérer un workout existant et voir sa structure."""
 import json
 import sys
 from pathlib import Path

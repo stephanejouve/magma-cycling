@@ -1,3 +1,5 @@
+"""Debug script for activity details inspection."""
+
 import requests
 
 athlete_id = "i151223"

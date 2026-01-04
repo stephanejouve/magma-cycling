@@ -210,6 +210,7 @@ def clean_file(file_path: Path, auto_confirm: bool = False) -> bool:
 
 
 def main():
+    """Clean duplicate entries from workouts-history.md files."""
     print("🔍 Recherche des fichiers workouts-history.md...\n")
 
     files = find_workouts_history_files()
