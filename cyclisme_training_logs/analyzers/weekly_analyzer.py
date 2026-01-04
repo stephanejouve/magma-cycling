@@ -58,6 +58,7 @@ Metadata:
     Priority: P1
     Version: v2
 """
+
 import logging
 from pathlib import Path
 from typing import Any

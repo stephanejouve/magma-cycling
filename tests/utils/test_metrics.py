@@ -1,4 +1,5 @@
 """Tests for metrics utilities (Sprint R2)."""
+
 import pytest
 
 from cyclisme_training_logs.utils.metrics import (

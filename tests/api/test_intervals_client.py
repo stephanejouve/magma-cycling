@@ -3,6 +3,7 @@ Tests for IntervalsClient unified API client.
 
 Tests pour le client API unifié IntervalsClient.
 """
+
 from datetime import datetime
 from unittest.mock import MagicMock, Mock, patch
 

@@ -50,6 +50,25 @@ repos:
               .*patches/.*
           )$
 
+  # pycodestyle - PEP 8 style checker (modern standards)
+  - repo: local
+    hooks:
+      - id: pycodestyle
+        name: pycodestyle (PEP 8)
+        entry: poetry run pycodestyle
+        args: ['--ignore=E203,E501,W503', '--max-line-length=100']
+        language: system
+        types: [python]
+        exclude: |
+          (?x)^(
+              tests/.*|
+              scripts/debug/.*|
+              scripts/fix_.*|
+              withings_integration/.*|
+              backups/.*|
+              .*patches/.*
+          )$
+
   # Trailing whitespace & EOF
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0

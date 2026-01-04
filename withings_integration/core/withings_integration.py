@@ -194,26 +194,38 @@ class WithingsIntegration:
                 "date": series.date.strftime("%Y-%m-%d"),
                 "startdate": series.startdate.isoformat(),
                 "enddate": series.enddate.isoformat(),
-                "total_sleep_hours": round(series.data.total_sleep_time / 3600, 2)
-                if series.data.total_sleep_time
-                else None,
-                "deep_sleep_minutes": round(series.data.deepsleepduration / 60, 1)
-                if series.data.deepsleepduration
-                else None,
-                "light_sleep_minutes": round(series.data.lightsleepduration / 60, 1)
-                if series.data.lightsleepduration
-                else None,
-                "rem_sleep_minutes": round(series.data.remsleepduration / 60, 1)
-                if series.data.remsleepduration
-                else None,
+                "total_sleep_hours": (
+                    round(series.data.total_sleep_time / 3600, 2)
+                    if series.data.total_sleep_time
+                    else None
+                ),
+                "deep_sleep_minutes": (
+                    round(series.data.deepsleepduration / 60, 1)
+                    if series.data.deepsleepduration
+                    else None
+                ),
+                "light_sleep_minutes": (
+                    round(series.data.lightsleepduration / 60, 1)
+                    if series.data.lightsleepduration
+                    else None
+                ),
+                "rem_sleep_minutes": (
+                    round(series.data.remsleepduration / 60, 1)
+                    if series.data.remsleepduration
+                    else None
+                ),
                 "wakeup_count": series.data.wakeupcount if series.data.wakeupcount else 0,
-                "wakeup_minutes": round(series.data.wakeupduration / 60, 1)
-                if series.data.wakeupduration
-                else None,
+                "wakeup_minutes": (
+                    round(series.data.wakeupduration / 60, 1)
+                    if series.data.wakeupduration
+                    else None
+                ),
                 "sleep_score": series.data.sleep_score if series.data.sleep_score else None,
-                "breathing_disturbances": series.data.breathing_disturbances_intensity
-                if series.data.breathing_disturbances_intensity
-                else None,
+                "breathing_disturbances": (
+                    series.data.breathing_disturbances_intensity
+                    if series.data.breathing_disturbances_intensity
+                    else None
+                ),
             }
 
             sleep_data.append(sleep_entry)

@@ -14,6 +14,7 @@ Author: Claude Code
 Created: 2025-12-27
 Updated: 2025-12-27 (Initial test suite)
 """
+
 from pathlib import Path
 
 import pytest

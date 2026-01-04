@@ -10,6 +10,7 @@ DOCSTRING: v2
 Author: Claude Code
 Created: 2025-12-26
 """
+
 import pytest
 
 from cyclisme_training_logs.analyzers.weekly_analyzer import WeeklyAnalyzer

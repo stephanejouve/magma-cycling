@@ -3,6 +3,7 @@ Tests for PID Controller module.
 
 Tests PID control logic, gain calculation, and integration with TrainingIntelligence.
 """
+
 import pytest
 
 from cyclisme_training_logs.intelligence.pid_controller import (

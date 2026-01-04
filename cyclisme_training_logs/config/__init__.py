@@ -7,6 +7,7 @@ This package consolidates:
 - thresholds.py: Training load thresholds (Sprint R2)
 - logging_config.py: Logging configuration (Quick Wins).
 """
+
 # Original config functions and classes (from config_base.py)
 
 # New Sprint R2 modules

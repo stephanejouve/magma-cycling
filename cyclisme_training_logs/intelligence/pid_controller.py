@@ -21,6 +21,7 @@ Author: Claude Code
 Created: 2026-01-02
 Version: 1.0.0
 """
+
 from dataclasses import dataclass
 from datetime import datetime
 from typing import TYPE_CHECKING
