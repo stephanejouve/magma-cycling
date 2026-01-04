@@ -145,7 +145,94 @@ poetry run python scripts/monitoring/check_workout_adherence.py --dry-run
 
 ---
 
-## ⏰ Configuration Cron
+## ⏰ Configuration Automatique
+
+### macOS: launchd (Recommandé)
+
+**Note:** Sur macOS, Apple recommande d'utiliser `launchd` plutôt que `cron` (deprecated).
+
+#### Installation launchd Job
+
+```bash
+cd ~/cyclisme-training-logs
+bash scripts/monitoring/setup_launchd.sh
+```
+
+**Output:**
+
+```
+==========================================
+🔧 Setting up Workout Adherence Monitoring (launchd)
+==========================================
+
+📍 Project root: /Users/stephanejouve/cyclisme-training-logs
+🐍 Python: /Users/stephanejouve/.pyenv/versions/3.11.0/bin/python
+📦 Poetry: /usr/local/bin/poetry
+
+📝 Generating launchd configuration...
+✅ Configuration generated
+
+📋 Installing launchd configuration...
+🚀 Loading launchd job...
+✅ launchd job loaded successfully!
+
+✅ Setup complete!
+
+📋 Schedule:
+   - Runs daily at 22:00 (10:00 PM)
+   - Checks if today's workouts were completed
+   - Logs results to ~/data/monitoring/workout_adherence.jsonl
+   - Sends notifications if workouts were skipped
+
+📝 Logs:
+   - Main output: ~/data/monitoring/launchd.log
+   - Stdout: ~/data/monitoring/launchd.stdout.log
+   - Stderr: ~/data/monitoring/launchd.stderr.log
+```
+
+#### Vérifier Installation (macOS)
+
+```bash
+# Check if job is loaded
+launchctl list | grep workout_adherence
+
+# Check job status
+launchctl print gui/$(id -u)/com.cyclisme.workout_adherence
+
+# View logs
+tail -f ~/data/monitoring/launchd.log
+```
+
+#### Tester Manuellement (macOS)
+
+```bash
+# Force run immediately (without waiting for 22:00)
+launchctl start com.cyclisme.workout_adherence
+
+# Check results
+tail ~/data/monitoring/launchd.log
+```
+
+#### Désinstaller (macOS)
+
+```bash
+bash scripts/monitoring/remove_launchd.sh
+```
+
+#### Avantages launchd
+
+- ✅ **Natif macOS** : Recommandé par Apple
+- ✅ **Gestion énergie** : Ne réveille pas Mac inutilement
+- ✅ **Retry automatique** : Relance si échec
+- ✅ **Logs intégrés** : Compatible `log show`
+- ✅ **Permissions** : Cohérentes avec sécurité macOS
+- ✅ **Environment** : Variables mieux gérées
+
+---
+
+## ⏰ Configuration Cron (Linux/Legacy)
+
+**Note:** Pour macOS, utilisez `launchd` (voir section précédente). Cron est fourni pour compatibilité Linux ou legacy.
 
 ### Installation Cron Job
 

@@ -8,19 +8,39 @@ Automated monitoring system to detect skipped/missed workouts.
 # Test manually (dry-run)
 poetry run python scripts/monitoring/check_workout_adherence.py --dry-run
 
-# Install cron job (runs daily at 22:00)
+# Install automated monitoring
+# macOS (recommended - uses launchd)
+bash scripts/monitoring/setup_launchd.sh
+
+# Linux (uses cron)
 bash scripts/monitoring/setup_cron.sh
 
-# Remove cron job
-bash scripts/monitoring/remove_cron.sh
+# Remove
+bash scripts/monitoring/remove_launchd.sh  # macOS
+bash scripts/monitoring/remove_cron.sh     # Linux
 ```
 
 ## Files
 
 - `check_workout_adherence.py` - Main monitoring script
-- `setup_cron.sh` - Install cron job
-- `remove_cron.sh` - Remove cron job
+- `setup_launchd.sh` - Install launchd job (macOS, recommended)
+- `remove_launchd.sh` - Remove launchd job (macOS)
+- `com.cyclisme.workout_adherence.plist` - launchd configuration
+- `setup_cron.sh` - Install cron job (Linux/legacy)
+- `remove_cron.sh` - Remove cron job (Linux/legacy)
 - `__init__.py` - Module initialization
+
+## macOS vs Linux
+
+**macOS (recommended):** Use `launchd` - native macOS scheduler
+- Better power management
+- Automatic retry on failure
+- Integrated logging
+- Recommended by Apple (cron is deprecated)
+
+**Linux:** Use `cron` - standard Unix scheduler
+- Universal Linux support
+- Simple configuration
 
 ## Documentation
 
