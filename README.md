@@ -4,8 +4,12 @@
 [![Lint](https://github.com/stephanejouve/cyclisme-training-logs/actions/workflows/lint.yml/badge.svg)](https://github.com/stephanejouve/cyclisme-training-logs/actions/workflows/lint.yml)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Poetry](https://img.shields.io/badge/poetry-managed-blue)](https://python-poetry.org/)
+[![Architecture Review](https://img.shields.io/badge/Architecture%20Review-10%2F10-brightgreen)](project-docs/ARCHITECTURE_REVIEW_20260104.md)
+[![Quality](https://img.shields.io/badge/Quality-Production%20Ready-brightgreen)](CODING_STANDARDS.md)
 
 **Système automatisé d'analyse et planification d'entraînements cyclisme avec intelligence artificielle.**
+
+> ⭐ **Architecture de Référence** - Validation externe 10/10 (tous axes) - [Voir rapport complet](project-docs/ARCHITECTURE_REVIEW_20260104.md)
 
 ---
 
