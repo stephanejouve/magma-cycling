@@ -216,33 +216,35 @@ def main():
 Examples:
 
   # Analyze current week
-  %(prog)s --week current
+  %(prog)s --week-id current
 
-  # Analyze specific week
-  %(prog)s --week S073 --start-date 2025-01-06
+  # Analyze specific week (date required)
+  %(prog)s --week-id S073 --start-date 2025-01-06
 
-  # With AI analysis
-  %(prog)s --week S073 --start-date 2025-01-06 --ai-analysis.
+  # With verbose logging
+  %(prog)s --week-id S073 --start-date 2025-01-06 --verbose
         """,
     )
 
     parser.add_argument(
-        "--week", type=str, help='Week number (S073) or "current"', default="current"
+        "--week-id",
+        type=str,
+        help='Week number (S073) or "current"',
+        default="current",
     )
 
     parser.add_argument(
-        "--start-date", type=str, help="Start date YYYY-MM-DD (Monday)", default=None
+        "--start-date",
+        type=str,
+        help="Start date YYYY-MM-DD (Monday, required for specific week)",
+        default=None,
     )
 
     parser.add_argument(
-        "--data-dir", type=str, help="Data directory (default: auto-detect)", default=None
+        "--verbose",
+        action="store_true",
+        help="Enable verbose logging",
     )
-
-    parser.add_argument(
-        "--ai-analysis", action="store_true", help="Enable AI analysis via clipboard"
-    )
-
-    parser.add_argument("--verbose", action="store_true", help="Verbose logging")
 
     args = parser.parse_args()
 
@@ -252,11 +254,11 @@ Examples:
     )
 
     # Déterminer semaine et date
-    if args.week == "current":
+    if args.week_id == "current":
         week, start_date = get_current_week_info()
         logger.info(f"Current week detected: {week} (starting {start_date})")
     else:
-        week = args.week
+        week = args.week_id
 
         if args.start_date:
             start_date = datetime.strptime(args.start_date, "%Y-%m-%d").date()
@@ -264,15 +266,15 @@ Examples:
             logger.error("--start-date required when using custom week")
             return 1
 
-    # Data directory
-    data_dir = Path(args.data_dir) if args.data_dir else None
-
-    # Exécuter workflow
+    # Exécuter workflow (always auto-detect data_dir, no AI analysis from CLI)
     try:
         print(f"\n🏃 Starting weekly analysis for {week}...\n")
 
         reports = run_weekly_analysis(
-            week=week, start_date=start_date, data_dir=data_dir, ai_analysis=args.ai_analysis
+            week=week,
+            start_date=start_date,
+            data_dir=None,  # Always auto-detect
+            ai_analysis=False,  # Internal feature only
         )
 
         print(f"\n✅ Weekly analysis completed for {week}")
@@ -280,17 +282,14 @@ Examples:
         for name in reports.keys():
             print(f"   - {name}")
 
-        # Show output location
-        if data_dir:
-            output_dir = data_dir / "weekly-reports" / week
-        else:
-            try:
-                from cyclisme_training_logs.config import get_data_config
+        # Show output location (always auto-detect)
+        try:
+            from cyclisme_training_logs.config import get_data_config
 
-                config = get_data_config()
-                output_dir = config.data_repo_path / "weekly-reports" / week
-            except Exception:
-                output_dir = Path.home() / "training-logs" / "weekly-reports" / week
+            config = get_data_config()
+            output_dir = config.data_repo_path / "weekly-reports" / week
+        except Exception:
+            output_dir = Path.home() / "training-logs" / "weekly-reports" / week
 
         print(f"\n📁 Reports saved to: {output_dir}")
 
