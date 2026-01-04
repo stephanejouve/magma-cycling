@@ -128,6 +128,7 @@ def extract_ftp_evolution(file_path):
 
 
 def main():
+    """Command-line entry point for displaying training statistics."""
     # Use data repo config if available
     from cyclisme_training_logs.config import get_data_config
 

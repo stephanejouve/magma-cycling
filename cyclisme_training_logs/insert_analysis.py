@@ -401,6 +401,7 @@ class WorkoutHistoryManager:
 
 
 def main():
+    """Command-line entry point for inserting analysis into weekly reports."""
     parser = argparse.ArgumentParser(
         description="Insérer l'analyse Claude.ai dans workouts-history.md"
     )

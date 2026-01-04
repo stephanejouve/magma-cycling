@@ -25,6 +25,13 @@ class AthleteFeedbackCollector:
     """Collecteur de feedback athlète."""
 
     def __init__(self, temp_dir=".athlete_feedback", activity_context=None, batch_position=None):
+        """Initialize athlete feedback collector.
+
+        Args:
+            temp_dir: Temporary directory for storing feedback (default: .athlete_feedback)
+            activity_context: Optional activity context dict
+            batch_position: Optional tuple (current, total) for batch processing
+        """
         self.temp_dir = Path(temp_dir)
         self.temp_dir.mkdir(exist_ok=True)
         self.feedback_file = self.temp_dir / "last_feedback.json"
@@ -287,6 +294,7 @@ class AthleteFeedbackCollector:
 
 
 def main():
+    """Command-line entry point for collecting athlete feedback."""
     parser = argparse.ArgumentParser(description="Collecter le retour athlète après séance")
 
     parser.add_argument(

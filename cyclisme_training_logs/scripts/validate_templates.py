@@ -12,6 +12,7 @@ from cyclisme_training_logs.intervals_format_validator import IntervalsFormatVal
 
 
 def main():
+    """Command-line entry point for validating workout templates."""
     templates_dir = Path("data/workout_templates")
     validator = IntervalsFormatValidator()
 

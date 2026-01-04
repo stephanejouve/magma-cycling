@@ -3188,6 +3188,7 @@ Réponds maintenant."""
 
 
 def main():
+    """Command-line entry point for workout analysis workflow coach."""
     parser = argparse.ArgumentParser(
         description="Orchestrateur du workflow d'analyse de séance",
         formatter_class=argparse.RawDescriptionHelpFormatter,

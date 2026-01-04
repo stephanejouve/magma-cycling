@@ -24,6 +24,13 @@ class CasingNormalizer:
     """Normalisateur de casse pour répertoires weekly_reports."""
 
     def __init__(self, project_root, dry_run=False, force=False):
+        """Initialize casing normalizer.
+
+        Args:
+            project_root: Project root directory path
+            dry_run: If True, only simulate changes without applying
+            force: If True, skip confirmation prompts
+        """
         self.project_root = Path(project_root)
         self.weekly_reports_dir = self.project_root / "logs" / "weekly_reports"
         self.dry_run = dry_run
@@ -282,6 +289,7 @@ class CasingNormalizer:
 
 
 def main():
+    """Command-line entry point for normalizing weekly reports directory casing."""
     parser = argparse.ArgumentParser(
         description="Normaliser la casse des répertoires weekly_reports"
     )

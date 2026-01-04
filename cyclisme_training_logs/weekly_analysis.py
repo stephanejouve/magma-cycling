@@ -730,6 +730,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>.
 
 
 def main():
+    """Command-line entry point for weekly training analysis."""
     parser = argparse.ArgumentParser(
         description="Génération analyse hebdomadaire cyclisme",
         formatter_class=argparse.RawDescriptionHelpFormatter,

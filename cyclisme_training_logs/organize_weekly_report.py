@@ -40,6 +40,11 @@ class WeeklyReportOrganizer:
     ]
 
     def __init__(self, project_root="."):
+        """Initialize weekly report organizer.
+
+        Args:
+            project_root: Project root directory path (default: current directory)
+        """
         self.project_root = Path(project_root)
         self.bilans_dir = self.project_root / "logs" / "weekly_reports"
 
@@ -197,6 +202,7 @@ class WeeklyReportOrganizer:
 
 
 def main():
+    """Command-line entry point for organizing weekly report files."""
     parser = argparse.ArgumentParser(description="Organiser les fichiers du bilan hebdomadaire")
 
     parser.add_argument(
