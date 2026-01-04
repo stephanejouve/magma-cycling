@@ -25,6 +25,7 @@ Metadata:
     Version: 2.1.0
     Sprint: R4.
 """
+
 from cyclisme_training_logs.intelligence.pid_controller import (
     PIDController,
     PIDState,

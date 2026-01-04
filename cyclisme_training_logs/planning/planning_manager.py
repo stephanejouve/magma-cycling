@@ -5,6 +5,7 @@ This module provides core functionality for creating and managing training plans
 including deadline tracking, objective setting, and automatic validation against
 athlete capabilities (TSS limits, CTL progression rates).
 """
+
 import logging
 from dataclasses import dataclass, field
 from datetime import date, timedelta

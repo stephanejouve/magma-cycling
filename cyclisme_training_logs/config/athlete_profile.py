@@ -20,6 +20,7 @@ Examples:
 Author: Claude Code
 Created: 2026-01-01
 """
+
 import os
 from typing import Literal
 

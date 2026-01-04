@@ -73,6 +73,7 @@ Metadata:
     Priority: P1
     Version: v2
 """
+
 import json
 import logging
 from datetime import date, timedelta

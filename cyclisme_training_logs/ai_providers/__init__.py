@@ -50,6 +50,7 @@ Metadata:
     Priority: P2
     Version: v2
 """
+
 from .base import AIAnalyzer, AIProvider
 from .factory import AIProviderFactory
 

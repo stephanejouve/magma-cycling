@@ -16,6 +16,7 @@ Metadata:
     Version: 2.1.0
     Sprint: R4.
 """
+
 import json
 from dataclasses import asdict, dataclass
 from datetime import date, datetime

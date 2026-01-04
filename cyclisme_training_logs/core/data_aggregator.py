@@ -65,6 +65,7 @@ Examples:
 Author: Claude Code
 Created: 2025-12-26 (Migrated from v2)
 """
+
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass

@@ -1,4 +1,5 @@
 """Tests for athlete_profile module (Sprint R2)."""
+
 import pytest
 
 from cyclisme_training_logs.config.athlete_profile import AthleteProfile

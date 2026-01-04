@@ -8,6 +8,7 @@ Test coverage for Sprint R2.1 advanced functions:
 - format_metrics_comparison
 - detect_overtraining_risk (CRITICAL)
 """
+
 import pytest
 
 from cyclisme_training_logs.utils.metrics_advanced import (

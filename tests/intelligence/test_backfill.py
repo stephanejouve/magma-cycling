@@ -3,6 +3,7 @@ Tests for backfill_intelligence module.
 
 Tests backfill extraction of learnings/patterns from Intervals.icu history.
 """
+
 from unittest.mock import Mock, patch
 
 import pytest
