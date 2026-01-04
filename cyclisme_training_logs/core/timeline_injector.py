@@ -117,7 +117,7 @@ class TimelineInjector:
 
     def extract_date_from_entry(self, entry: str) -> date | None:
         """
-        Extraire la date d'une entrée workout.
+        Extract la date d'une entrée workout.
 
         Args:
             entry: Contenu de l'entrée workout (markdown)

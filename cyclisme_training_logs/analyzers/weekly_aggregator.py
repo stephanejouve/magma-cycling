@@ -593,7 +593,7 @@ class WeeklyAggregator(DataAggregator):
     def _extract_training_learnings(
         self, activities: list[dict[str, Any]], feedback: dict[str, Any]
     ) -> list[str]:
-        """Extraire enseignements training (pour AI analysis)."""
+        """Extract enseignements training (pour AI analysis)."""
         learnings = []
 
         # Patterns répétés - Defensive: handle None values
@@ -630,7 +630,7 @@ class WeeklyAggregator(DataAggregator):
     def _identify_protocol_changes(
         self, learnings: list[str], metrics_evolution: dict[str, Any]
     ) -> list[dict[str, Any]]:
-        """Identifier changements protocoles nécessaires."""
+        """Identify changements protocoles nécessaires."""
         adaptations = []
 
         # Check TSB trends - Defensive: handle None

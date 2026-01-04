@@ -609,7 +609,7 @@ class IntervalsICUBackfiller:
 
 
 def main():
-    """Main entry point."""
+    """Run entry point."""
     parser = argparse.ArgumentParser(
         description="Backfill Training Intelligence from Intervals.icu history"
     )

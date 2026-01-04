@@ -53,7 +53,7 @@ LOG_FORMATS = {
 def setup_logging(
     level: str | None = None, format_name: str | None = None, force: bool = False
 ) -> None:
-    """Setup logging configuration.
+    """Set up logging configuration.
 
     Args:
         level: Log level (DEBUG, INFO, WARNING, ERROR).

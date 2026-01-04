@@ -400,7 +400,7 @@ class WeeklyAnalyzer:
             logger.info(f"Saved {filename}")
 
     def _get_period(self) -> str:
-        """Helper pour obtenir période formatée."""
+        """Help pour obtenir période formatée."""
         workouts = self.data.get("workouts", [])
 
         if not workouts:

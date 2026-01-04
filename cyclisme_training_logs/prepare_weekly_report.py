@@ -54,7 +54,7 @@ class WeeklyReportGenerator:
         return None
 
     def extract_week_workouts(self, week_number, start_date=None):
-        """Extraire les séances d'une semaine spécifique."""
+        """Extract les séances d'une semaine spécifique."""
         history_file = self.logs_dir / "workouts-history.md"
 
         if not history_file.exists():

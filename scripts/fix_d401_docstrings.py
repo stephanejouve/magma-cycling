@@ -86,6 +86,20 @@ VERB_MAPPING = {
     "Hasher": "Hash",
     "Serialiser": "Serialize",
     "Deserialiser": "Deserialize",
+    # Conjugated/noun forms
+    "Calcule": "Calculate",
+    "Collecte": "Collect",
+    "Copie": "Copy",
+    "Valide": "Validate",
+    "Extraction": "Extract",
+    "Extraire": "Extract",
+    "Identifier": "Identify",
+    # English words misused (not imperative)
+    "Handler": "Handle",
+    "Main": "Run",
+    "Helper": "Help",
+    "Setup": "Set up",
+    "Standard": "Provide standard",
 }
 
 
