@@ -282,6 +282,7 @@ def load_config(config_file):
 
 
 def main():
+    """Command-line entry point for syncing with Intervals.icu."""
     parser = argparse.ArgumentParser(
         description="Synchroniser les logs d'entraînement avec Intervals.icu"
     )

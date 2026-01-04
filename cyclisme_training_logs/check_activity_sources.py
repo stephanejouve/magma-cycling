@@ -43,6 +43,7 @@ def format_source_icon(source):
 
 
 def main():
+    """Command-line entry point for checking activity sources."""
     parser = argparse.ArgumentParser(description="Vérifier les sources des activités récentes")
 
     parser.add_argument("--athlete-id", help="ID de l'athlète Intervals.icu (ex: i123456)")

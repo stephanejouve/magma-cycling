@@ -279,6 +279,7 @@ Génère maintenant les 6 fichiers de bilan pour la semaine S{week_number:03d}.
 
 
 def main():
+    """Command-line entry point for preparing weekly reports."""
     parser = argparse.ArgumentParser(description="Préparer le prompt pour bilan hebdomadaire")
 
     parser.add_argument(

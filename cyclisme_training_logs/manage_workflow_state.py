@@ -198,6 +198,7 @@ def reset_state(state: WorkflowState):
 
 
 def main():
+    """Command-line entry point for managing workflow state."""
     parser = argparse.ArgumentParser(
         description="Outil de gestion du workflow state",
         formatter_class=argparse.RawDescriptionHelpFormatter,

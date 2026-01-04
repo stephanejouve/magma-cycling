@@ -75,6 +75,7 @@ class IntervalsFormatValidator:
     VALID_SECTIONS = ["Warmup", "Main set", "Cooldown", "Block"]
 
     def __init__(self):
+        """Initialize intervals format validator."""
         self.errors = []
         self.warnings = []
 

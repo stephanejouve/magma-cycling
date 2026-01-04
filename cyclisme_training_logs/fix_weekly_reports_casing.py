@@ -32,6 +32,11 @@ class WeeklyReportsFixing:
     """Correcteur de casse pour weekly_reports."""
 
     def __init__(self, project_root="."):
+        """Initialize weekly reports casing fixer.
+
+        Args:
+            project_root: Project root directory path (default: current directory)
+        """
         self.project_root = Path(project_root)
         self.weekly_dir = self.project_root / "logs" / "weekly_reports"
         self.backup_dir = None
@@ -291,6 +296,7 @@ class WeeklyReportsFixing:
 
 
 def main():
+    """Command-line entry point for fixing weekly reports casing."""
     parser = argparse.ArgumentParser(
         description="Corriger casse weekly_reports avec backup/rollback",
         formatter_class=argparse.RawDescriptionHelpFormatter,

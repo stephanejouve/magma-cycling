@@ -44,6 +44,11 @@ class NamingValidator:
     LOWERCASE_FILE = re.compile(r"_s\d{3}")
 
     def __init__(self, project_root: str = "."):
+        """Initialize naming convention validator.
+
+        Args:
+            project_root: Project root directory path (default: current directory)
+        """
         self.project_root = Path(project_root)
         self.weekly_dir = self.project_root / "logs" / "weekly_reports"
         self.issues: list[dict[str, Any]] = []
@@ -210,6 +215,7 @@ class NamingValidator:
 
 
 def main():
+    """Command-line entry point for validating naming conventions."""
     parser = argparse.ArgumentParser(
         description="Valider conventions nommage weekly_reports (SXXX strict)",
         formatter_class=argparse.RawDescriptionHelpFormatter,

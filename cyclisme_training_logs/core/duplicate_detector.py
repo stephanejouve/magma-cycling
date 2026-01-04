@@ -68,6 +68,11 @@ class DuplicateDetectedError(Exception):
     """Exception levée quand des doublons sont détectés."""
 
     def __init__(self, duplicates: list[dict]):
+        """Initialize duplicate detected error.
+
+        Args:
+            duplicates: List of duplicate entry dicts
+        """
         self.duplicates = duplicates
         ids = [d["id"] for d in duplicates]
         super().__init__(f"Doublons détectés: {', '.join(ids)}")

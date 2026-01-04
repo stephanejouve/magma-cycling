@@ -83,6 +83,15 @@ class HistoryBackfiller:
         yes_confirm: bool = False,
         force_reanalyze: bool = False,
     ):
+        """Initialize history backfiller.
+
+        Args:
+            provider: AI provider name (default: mistral_api)
+            batch_size: Number of activities per batch (default: 10)
+            dry_run: If True, simulate without writing (default: False)
+            yes_confirm: If True, skip confirmation prompts (default: False)
+            force_reanalyze: If True, reanalyze existing entries (default: False)
+        """
         self.provider = provider
         self.batch_size = batch_size
         self.dry_run = dry_run

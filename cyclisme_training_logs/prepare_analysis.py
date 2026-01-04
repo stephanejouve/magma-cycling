@@ -985,6 +985,7 @@ def display_activity_menu(unanalyzed_activities):
 
 
 def main():
+    """Command-line entry point for preparing workout analysis."""
     parser = argparse.ArgumentParser(description="Préparer le prompt d'analyse pour IA")
 
     parser.add_argument("--athlete-id", help="ID de l'athlète Intervals.icu (ex: i123456)")
