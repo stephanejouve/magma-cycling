@@ -190,6 +190,7 @@ def test_weekly_workflow_run(mock_analyzer_class, mock_aggregator_class, mock_da
             assert len(reports) == 6
     """
     # Setup mock aggregator
+
     mock_aggregator = Mock()
     mock_aggregator_class.return_value = mock_aggregator
 
@@ -273,6 +274,7 @@ def test_weekly_workflow_aggregation_failure(mock_aggregator_class, mock_data_di
                 assert "aggregation" in str(e).lower()
     """
     # Setup mock aggregator with failure
+
     mock_aggregator = Mock()
     mock_aggregator_class.return_value = mock_aggregator
 
@@ -319,6 +321,7 @@ def test_weekly_workflow_ai_analysis(
             assert call_args[0][0] == ['pbcopy']
     """
     # Setup mocks
+
     mock_aggregator = Mock()
     mock_aggregator_class.return_value = mock_aggregator
 
@@ -387,6 +390,7 @@ def test_run_weekly_analysis_utility(mock_workflow_class, mock_data_dir):
             assert reports is not None
     """
     # Setup mock workflow
+
     mock_workflow = Mock()
     mock_workflow_class.return_value = mock_workflow
 
@@ -470,6 +474,7 @@ def test_workflow_without_data_dir(mock_workflow_class):
             # Workflow should handle gracefully
     """
     mock_workflow = Mock()
+
     mock_workflow_class.return_value = mock_workflow
 
     # Call utility without data_dir

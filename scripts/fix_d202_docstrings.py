@@ -36,6 +36,7 @@ def fix_d202_blank_lines(content: str) -> tuple[str, int]:
         Tuple of (fixed_content, number_of_fixes)
     """
     lines = content.split("\n")
+
     fixes = 0
     i = 0
 
@@ -66,6 +67,7 @@ def fix_d202_blank_lines(content: str) -> tuple[str, int]:
 def main():
     """Command-line entry point for fixing D202 docstring errors."""
     # Find all Python files
+
     python_files = []
     for directory in ["cyclisme_training_logs", "tests", "scripts"]:
         path = Path(directory)

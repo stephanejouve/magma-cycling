@@ -12,6 +12,7 @@ class TestTrainingThresholdsFromEnv:
     def test_from_env_with_all_fields(self, monkeypatch):
         """Test loading thresholds with all environment variables set."""
         monkeypatch.setenv("TSB_FRESH_MIN", "10")
+
         monkeypatch.setenv("TSB_OPTIMAL_MIN", "-5")
         monkeypatch.setenv("TSB_FATIGUED_MIN", "-15")
         monkeypatch.setenv("TSB_CRITICAL", "-25")
@@ -38,6 +39,7 @@ class TestTrainingThresholdsFromEnv:
     def test_from_env_with_defaults(self, monkeypatch):
         """Test loading thresholds with default values when env vars not set."""
         # Clear all relevant env vars
+
         for key in os.environ.copy():
             if key.startswith("TSB_") or key.startswith("ATL_") or key.startswith("RECOVERY_"):
                 monkeypatch.delenv(key, raising=False)
@@ -73,6 +75,7 @@ class TestTrainingThresholdsMethods:
     def test_get_tsb_state(self, thresholds):
         """Test TSB state classification."""
         assert thresholds.get_tsb_state(12) == "fresh"
+
         assert thresholds.get_tsb_state(5) == "optimal"
         assert thresholds.get_tsb_state(-8) == "fatigued"
         assert thresholds.get_tsb_state(-30) == "overreached"
@@ -85,6 +88,7 @@ class TestTrainingThresholdsMethods:
     def test_is_tsb_optimal(self, thresholds):
         """Test TSB optimal range check."""
         assert thresholds.is_tsb_optimal(5) is True
+
         assert thresholds.is_tsb_optimal(0) is True
         assert thresholds.is_tsb_optimal(-4) is True
 
@@ -95,6 +99,7 @@ class TestTrainingThresholdsMethods:
     def test_get_atl_ctl_ratio_state(self, thresholds):
         """Test ATL/CTL ratio state classification."""
         assert thresholds.get_atl_ctl_ratio_state(0.9) == "optimal"
+
         assert thresholds.get_atl_ctl_ratio_state(1.0) == "warning"
         assert thresholds.get_atl_ctl_ratio_state(1.5) == "warning"
         assert thresholds.get_atl_ctl_ratio_state(2.0) == "critical"
@@ -106,6 +111,7 @@ class TestTrainingThresholdsMethods:
     def test_is_overtraining_risk(self, thresholds):
         """Test overtraining risk detection."""
         # No risk scenarios
+
         assert thresholds.is_overtraining_risk(tsb=5, atl_ctl_ratio=0.9) is False
         assert thresholds.is_overtraining_risk(tsb=0, atl_ctl_ratio=1.0) is False
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Validate planned workouts vs executed activities compliance.
+
 Vérifie conformité entre workouts planifiés (Intervals.icu) et activités
 réalisées. Détecte écarts, sessions manquées, et génère rapports de
 compliance hebdomadaire.
@@ -76,6 +77,7 @@ class PlannedSessionsChecker:
             api_key: Clé API Intervals.icu.
         """
         self.api = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
+
         self.athlete_id = athlete_id
 
     def get_planned_workouts(
@@ -125,6 +127,7 @@ class PlannedSessionsChecker:
             Activité correspondante ou None.
         """
         workout_date = datetime.fromisoformat(workout["start_date_local"].replace("Z", "+00:00"))
+
         workout_name = workout.get("name", "").upper()
 
         # Extraction code séance si présent (ex: S070-01)
@@ -192,6 +195,7 @@ class PlannedSessionsChecker:
             Liste des séances sautées avec métadonnées.
         """
         logger.info(f"\n{'=' * 70}")
+
         logger.info("DÉTECTION SÉANCES PLANIFIÉES SAUTÉES")
         logger.info(f"{'=' * 70}")
         logger.info(f"Période : {start_date} → {end_date}")
@@ -276,6 +280,7 @@ class PlannedSessionsChecker:
             Bloc markdown formaté.
         """
         # Extraire données
+
         session_name = skipped_session["planned_name"]
         date_str = datetime.strptime(skipped_session["planned_date"], "%Y-%m-%d").strftime(
             "%d/%m/%Y"

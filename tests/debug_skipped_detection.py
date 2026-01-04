@@ -55,6 +55,7 @@ def load_credentials():
 def print_header(title):
     """Display header stylisé"""
     print("\n" + "=" * 70)
+
     print(f"  {title}")
     print("=" * 70 + "\n")
 
@@ -178,6 +179,7 @@ def calculate_impact(skipped_sessions):
 def main():
     """Point d'entrée principal"""
     parser = argparse.ArgumentParser(description="Test détection séances planifiées sautées")
+
     parser.add_argument(
         "--days", type=int, default=7, help="Nombre de jours à analyser (défaut: 7)"
     )

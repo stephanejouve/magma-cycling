@@ -253,6 +253,7 @@ def test_training_intelligence_get_pid_correction():
 def test_pid_controller_invalid_inputs():
     """Test PIDController raises on invalid inputs."""
     # Negative gains should raise
+
     with pytest.raises(ValueError):
         PIDController(kp=-0.01, ki=0.002, kd=0.15, setpoint=260)
 

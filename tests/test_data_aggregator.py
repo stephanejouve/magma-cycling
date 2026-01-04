@@ -29,6 +29,7 @@ class ConcreteAggregator(DataAggregator):
 def test_aggregator_pipeline():
     """Test pipeline complet agrégation."""
     aggregator = ConcreteAggregator()
+
     result = aggregator.aggregate()
 
     assert result.success
@@ -40,6 +41,7 @@ def test_aggregator_pipeline():
 def test_aggregator_with_metadata():
     """Test ajout metadata."""
     aggregator = ConcreteAggregator()
+
     data = {"key": "value"}
     enriched = aggregator.add_metadata(data)
 
@@ -50,6 +52,7 @@ def test_aggregator_with_metadata():
 def test_aggregator_with_custom_config():
     """Test agrégateur avec configuration personnalisée."""
     config = {"option": "value"}
+
     aggregator = ConcreteAggregator(config=config)
 
     assert aggregator.config == config

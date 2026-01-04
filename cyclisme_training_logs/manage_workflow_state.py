@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Outil de gestion de l'état du workflow
+
 Utilitaire CLI pour inspecter et manipuler le fichier .workflow_state.json
 qui track les activités analysées. Permet d'afficher l'état, lister l'historique,
 supprimer des entrées spécifiques ou réinitialiser complètement le state.
@@ -123,6 +124,7 @@ def list_activities(state: WorkflowState, count: int = 10):
 def remove_activity(state: WorkflowState, activity_id: str):
     """Delete une activité de l'historique."""
     print()
+
     print(f"🔍 Recherche de l'activité {activity_id}...")
 
     history = state.state.get("history", [])
@@ -173,6 +175,7 @@ def remove_activity(state: WorkflowState, activity_id: str):
 def reset_state(state: WorkflowState):
     """Reset complet du workflow state."""
     print()
+
     print("⚠️  ATTENTION : Reset complet du workflow state")
     print()
     print("Cela va :")
@@ -203,6 +206,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Exemples:
+
   # Afficher l'état actuel
   poetry run manage-state --show
 

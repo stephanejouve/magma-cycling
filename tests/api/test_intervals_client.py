@@ -1,5 +1,6 @@
 """
 Tests for IntervalsClient unified API client.
+
 Tests pour le client API unifié IntervalsClient.
 """
 from datetime import datetime
@@ -56,6 +57,7 @@ class TestGetAthlete:
     def test_get_athlete_success(self, client, mock_session):
         """Test successful athlete profile fetch."""
         mock_response = Mock()
+
         mock_response.json.return_value = {
             "id": "i151223",
             "name": "Test Athlete",
@@ -78,6 +80,7 @@ class TestGetActivities:
     def test_get_activities_no_params(self, client, mock_session):
         """Test get_activities without date filters."""
         mock_response = Mock()
+
         mock_response.json.return_value = [
             {"id": "i107424849", "type": "Ride", "icu_training_load": 65}
         ]
@@ -94,6 +97,7 @@ class TestGetActivities:
     def test_get_activities_with_dates(self, client, mock_session):
         """Test get_activities with oldest/newest parameters."""
         mock_response = Mock()
+
         mock_response.json.return_value = []
         mock_session.get.return_value = mock_response
 
@@ -111,6 +115,7 @@ class TestGetActivity:
     def test_get_activity_success(self, client, mock_session):
         """Test successful single activity fetch."""
         mock_response = Mock()
+
         mock_response.json.return_value = {
             "id": "i107424849",
             "icu_training_load": 65,
@@ -131,6 +136,7 @@ class TestGetWellness:
     def test_get_wellness_success(self, client, mock_session):
         """Test successful wellness data fetch."""
         mock_response = Mock()
+
         mock_response.json.return_value = [
             {"id": "2025-12-22", "ctl": 45.6, "atl": 37.7, "weight": 75.0}
         ]
@@ -148,6 +154,7 @@ class TestGetWellness:
     def test_get_wellness_returns_list(self, client, mock_session):
         """Test that get_wellness returns a list, not a dict."""
         mock_response = Mock()
+
         mock_response.json.return_value = [
             {"id": "2025-12-22", "ctl": 45.6},
             {"id": "2025-12-23", "ctl": 45.8},
@@ -166,6 +173,7 @@ class TestGetEvents:
     def test_get_events_success(self, client, mock_session):
         """Test successful events fetch."""
         mock_response = Mock()
+
         mock_response.json.return_value = [
             {"id": 86044984, "category": "WORKOUT", "name": "S074-01-END-EnduranceBase"}
         ]
@@ -187,6 +195,7 @@ class TestGetPlannedWorkout:
     def test_get_planned_workout_found(self, client, mock_session):
         """Test finding a planned workout."""
         mock_response = Mock()
+
         mock_response.json.return_value = [
             {"id": 86044984, "category": "WORKOUT", "paired_activity_id": "i107424849"}
         ]
@@ -201,6 +210,7 @@ class TestGetPlannedWorkout:
     def test_get_planned_workout_not_found(self, client, mock_session):
         """Test when no planned workout is found."""
         mock_response = Mock()
+
         mock_response.json.return_value = [
             {"id": 86044984, "category": "WORKOUT", "paired_activity_id": "i999999"}  # Different ID
         ]
@@ -218,6 +228,7 @@ class TestCreateEvent:
     def test_create_event_success(self, client, mock_session):
         """Test successful event creation."""
         mock_response = Mock()
+
         mock_response.json.return_value = {"id": 86044984, "name": "S074-01-END-EnduranceBase"}
         mock_session.post.return_value = mock_response
 

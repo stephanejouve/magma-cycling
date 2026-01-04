@@ -210,6 +210,7 @@ class TrainingCalendar:
             2026
         """
         self.year = year
+
         self.start_week = start_week
         self.athlete_profile = athlete_profile or AthleteProfile.from_env()
 
@@ -357,6 +358,7 @@ class TrainingCalendar:
             85.0
         """
         # Check if date is configured rest day
+
         weekday = session_date.weekday()
         if weekday in self.rest_days:
             raise ValueError(
@@ -413,6 +415,7 @@ class TrainingCalendar:
             2
         """
         # Generate week dates
+
         week_dates = self.generate_weekly_calendar(week_num)
         start_date = week_dates[0]
         end_date = week_dates[6]

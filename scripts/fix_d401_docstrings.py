@@ -100,6 +100,7 @@ def fix_docstring_imperative(content: str) -> tuple[str, int]:
         Tuple of (fixed_content, number_of_fixes)
     """
     lines = content.split("\n")
+
     fixes = 0
     i = 0
 
@@ -162,6 +163,7 @@ def fix_first_word(text: str) -> str:
         Fixed text with English imperative
     """
     # Try each French verb pattern
+
     for french, english in VERB_MAPPING.items():
         # Match the French verb at the start of the string (case-insensitive)
         pattern = re.compile(rf"^{re.escape(french)}\b", re.IGNORECASE)
@@ -176,6 +178,7 @@ def fix_first_word(text: str) -> str:
 def main():
     """Command-line entry point for fixing D401 docstring errors."""
     # Find all Python files
+
     python_files = []
     for directory in ["cyclisme_training_logs", "tests", "scripts"]:
         path = Path(directory)

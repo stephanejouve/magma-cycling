@@ -22,6 +22,7 @@ from cyclisme_training_logs.core.timeline_injector import TimelineInjector
 def sample_history_file(tmp_path):
     """Create fichier history temporaire pour tests."""
     history = tmp_path / "workouts-history.md"
+
     content = """# Historique Entraînements
 
 ### S073-01 (2025-01-06)
@@ -34,12 +35,14 @@ def sample_history_file(tmp_path):
 **Durée:** 60min | **TSS:** 50
 """
     history.write_text(content)
+
     return history
 
 
 def test_extract_date_from_entry(tmp_path):
     """Test extraction date depuis entrée workout."""
     # Créer un fichier temporaire pour initialiser l'injecteur
+
     temp_file = tmp_path / "temp.md"
     temp_file.write_text("# Test")
 
@@ -86,6 +89,7 @@ def test_injection_without_date_extraction(sample_history_file):
     new_entry = """### S073-04 (2025-01-09)
 **Durée:** 65min | **TSS:** 48"""
     # Date automatiquement extraite
+
     result = injector.inject_chronologically(new_entry)
 
     assert result.success

@@ -109,6 +109,7 @@ class TimelineInjector:
             check_duplicates: Vérifier duplicates avant injection.
         """
         self.history_file = Path(history_file).expanduser()
+
         self.check_duplicates = check_duplicates
 
         if not self.history_file.exists():
@@ -125,6 +126,7 @@ class TimelineInjector:
             Date extraite ou None si non trouvée.
         """
         match = self.DATE_PATTERN.search(entry)
+
         if match:
             date_str = match.group(1)
             return datetime.strptime(date_str, "%Y-%m-%d").date()
@@ -144,6 +146,7 @@ class TimelineInjector:
             Index de ligne où insérer (0 = début, len = fin).
         """
         # Déterminer ordre existant (chronologique ou reverse)
+
         dates_found = []
         date_indices = []
 
@@ -194,6 +197,7 @@ class TimelineInjector:
             True si duplicate détecté.
         """
         # Extraire identifiant unique de l'entrée (ex: S073-01)
+
         entry_id_match = re.search(r"###\s+(S\d+-\d+)", entry)
         if not entry_id_match:
             return False
@@ -218,6 +222,7 @@ class TimelineInjector:
             InjectionResult avec succès/erreur.
         """
         # Extraire date si non fournie
+
         if workout_date is None:
             workout_date = self.extract_date_from_entry(workout_entry)
 
@@ -306,4 +311,5 @@ def inject_workout_chronologically(
         InjectionResult.
     """
     injector = TimelineInjector(history_file)
+
     return injector.inject_chronologically(workout_entry, workout_date)

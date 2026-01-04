@@ -10,6 +10,7 @@ from cyclisme_training_logs.workflow_coach import WorkflowCoach
 def test_load_workout_templates():
     """Test chargement catalogue templates"""
     coach = WorkflowCoach(servo_mode=True)
+
     templates = coach.workout_templates
 
     assert len(templates) == 6
@@ -31,6 +32,7 @@ def test_load_remaining_sessions():
 def test_format_remaining_sessions_compact():
     """Test format compact planning"""
     coach = WorkflowCoach()
+
     remaining = [
         {
             "session_id": "S072-03",
@@ -62,6 +64,7 @@ def test_format_remaining_sessions_compact():
 def test_parse_modifications_empty():
     """Test parsing sans modification"""
     coach = WorkflowCoach()
+
     ai_response = "# Analyse\n\nTout va bien, planning maintenu."
 
     mods = coach.parse_ai_modifications(ai_response)
@@ -72,6 +75,7 @@ def test_parse_modifications_empty():
 def test_parse_modifications_valid():
     """Test parsing avec modification valide"""
     coach = WorkflowCoach()
+
     ai_response = """
 # Analyse
 

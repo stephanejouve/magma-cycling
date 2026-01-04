@@ -126,6 +126,7 @@ class PIDController:
             True.
         """
         # Error calculation
+
         error = self.setpoint - measured_value
 
         # Proportional term (immediate reaction)
@@ -196,6 +197,7 @@ class PIDController:
             True
         """
         tss_adj = correction["tss_adjustment"]
+
         error = correction["error"]
 
         # FTP proche cible
@@ -250,6 +252,7 @@ def compute_pid_gains_from_intelligence(intelligence: "TrainingIntelligence") ->
         True
     """
     # Kp: Based on confidence average from validated learnings
+
     validated_learnings = [
         lrn
         for lrn in intelligence.learnings.values()

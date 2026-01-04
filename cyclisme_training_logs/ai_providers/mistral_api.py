@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Mistral AI provider implementation for workout analysis.
+
 Implémentation provider Mistral AI pour analyses workouts. Utilise modèle
 mistral-large avec support streaming et retry automatique. Fallback
 principal après Claude.
@@ -128,6 +129,7 @@ class MistralAPIAnalyzer(AIAnalyzer):
             - Temperature: 0.7 optimal pour analyse cyclisme
         """
         super().__init__()
+
         self.provider = AIProvider.MISTRAL
         self.model = model
         self.temperature = temperature

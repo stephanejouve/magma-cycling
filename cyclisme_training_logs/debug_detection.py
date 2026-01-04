@@ -15,6 +15,7 @@ from cyclisme_training_logs.workflow_state import WorkflowState  # noqa: E402
 def main():
     """Command-line entry point for debugging gap detection."""
     # Vérifier credentials
+
     athlete_id = os.getenv("VITE_INTERVALS_ATHLETE_ID")
     api_key = os.getenv("VITE_INTERVALS_API_KEY")
 

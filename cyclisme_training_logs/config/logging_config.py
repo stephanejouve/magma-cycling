@@ -68,6 +68,7 @@ def setup_logging(
         >>> setup_logging(level="DEBUG", format_name="simple")
     """
     # Get configuration
+
     log_level_name = level or os.getenv("LOG_LEVEL", "INFO").upper()
     log_format_name = format_name or os.getenv("LOG_FORMAT", "detailed").lower()
 
@@ -126,6 +127,7 @@ def set_log_level(level: str) -> None:
         >>> set_log_level("WARNING")  # Quiet mode
     """
     level_name = level.upper()
+
     if level_name not in LOG_LEVELS:
         raise ValueError(f"Invalid log level: {level}. Must be one of {list(LOG_LEVELS.keys())}")
 

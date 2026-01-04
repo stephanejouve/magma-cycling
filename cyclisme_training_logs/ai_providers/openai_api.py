@@ -46,6 +46,7 @@ class OpenAIAnalyzer(AIAnalyzer):
     def __init__(self, api_key: str, model: str = "gpt-4-turbo"):
         """Initialize OpenAI analyzer."""
         super().__init__()
+
         self.provider = AIProvider.OPENAI
         self.model: str = model
 

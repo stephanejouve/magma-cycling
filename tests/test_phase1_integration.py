@@ -28,6 +28,7 @@ from cyclisme_training_logs.core.timeline_injector import TimelineInjector  # no
 def print_section(title):
     """Print section header."""
     print(f"\n{'='*80}")
+
     print(f"{title:^80}")
     print(f"{'='*80}\n")
 
@@ -71,6 +72,7 @@ def test_timeline_injector():
 - Découplage: 2.1%
 """
         # Inject chronologically
+
         print("\nInjecting workout entry for 2025-01-07...")
         result = injector.inject_chronologically(
             workout_entry=new_entry, workout_date=date(2025, 1, 7)
@@ -395,6 +397,7 @@ def main():
     print(
         """
 Testing modules:
+
   1. TimelineInjector - Chronological workout injection
   2. DailyAggregator - Multi-source data aggregation
   3. PromptGenerator - Composable AI prompt building

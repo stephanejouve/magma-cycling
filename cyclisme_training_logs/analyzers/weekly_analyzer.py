@@ -1,5 +1,6 @@
 """
 Weekly analyzer orchestrating 6 automated markdown reports.
+
 Orchestrateur principal pour génération automatisée des 6 reports
 hebdomadaires standards : workout_history, metrics_evolution,
 training_learnings, protocol_adaptations, transition, bilan_final.
@@ -94,6 +95,7 @@ class WeeklyAnalyzer:
             prompt_generator: Generator prompts (créé si None)
         """
         self.week = week
+
         self.data = weekly_data
         self.prompt_generator = prompt_generator or PromptGenerator()
 
@@ -194,6 +196,7 @@ class WeeklyAnalyzer:
         | Date | CTL | ATL | TSB |.
         """
         metrics_evolution = self.data.get("metrics_evolution", {})
+
         daily = metrics_evolution.get("daily", [])
         trends = metrics_evolution.get("trends", {})
 
@@ -303,6 +306,7 @@ class WeeklyAnalyzer:
         - Focus 2.
         """
         transition = self.data.get("transition", {})
+
         current_state = transition.get("current_state", {})
         recommendations = transition.get("recommendations", [])
         focus_areas = transition.get("focus_areas", [])
@@ -350,6 +354,7 @@ class WeeklyAnalyzer:
         ## Conclusion.
         """
         summary = self.data.get("summary", {})
+
         compliance = self.data.get("compliance", {})
 
         lines = [f"# Bilan Final {self.week}\n", "## Objectifs vs Réalisé\n"]
@@ -382,6 +387,7 @@ class WeeklyAnalyzer:
             output_dir: Répertoire destination.
         """
         output_dir = Path(output_dir)
+
         output_dir.mkdir(parents=True, exist_ok=True)
 
         for report_name, content in reports.items():
@@ -396,6 +402,7 @@ class WeeklyAnalyzer:
     def _get_period(self) -> str:
         """Helper pour obtenir période formatée."""
         workouts = self.data.get("workouts", [])
+
         if not workouts:
             return "N/A"
 

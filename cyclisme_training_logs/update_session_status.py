@@ -66,6 +66,7 @@ def load_intervals_credentials() -> tuple[str | None, str | None]:
         Tuple of (athlete_id, api_key) or (None, None) if not configured.
     """
     athlete_id = os.getenv("INTERVALS_ATHLETE_ID")
+
     api_key = os.getenv("INTERVALS_API_KEY")
 
     if not athlete_id or not api_key:
@@ -264,6 +265,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
+
   # Cancel session (local only)
   %(prog)s --week S074 --session S074-05 --status cancelled --reason "Fatigue"
 

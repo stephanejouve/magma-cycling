@@ -35,6 +35,7 @@ logger = get_logger(__name__)
 def get_current_week() -> str:
     """Get current ISO week (YYYY-WXX format)."""
     now = datetime.now()
+
     iso_calendar = now.isocalendar()
     return f"{iso_calendar[0]}-W{iso_calendar[1]:02d}"
 
@@ -42,6 +43,7 @@ def get_current_week() -> str:
 def print_dashboard_header(week: str) -> None:
     """Print dashboard header."""
     print()
+
     print("╔══════════════════════════════════════════════════════════╗")
     print(f"║    Cyclisme Training Dashboard - {week:^18} ║")
     print("╠══════════════════════════════════════════════════════════╣")
@@ -120,6 +122,7 @@ def print_ftp_progression(intelligence_path: Path | None) -> None:
 def print_ftp_mock_data() -> None:
     """Print mock FTP data when intelligence not available."""
     current_ftp = 220
+
     target_ftp = 260
     gap = 40
 
@@ -194,6 +197,7 @@ def print_next_week_plan() -> None:
 def print_dashboard_footer() -> None:
     """Print dashboard footer."""
     print("╚══════════════════════════════════════════════════════════╝")
+
     print()
     print("💡 Tips:")
     print("   - Load intelligence: --intelligence ~/data/intelligence.json")

@@ -98,6 +98,7 @@ Line 3"""
     def test_validate_config_always_returns_true(self, mock_copy):
         """Test that validate_config always returns True (no config needed)."""
         mock_copy.return_value = True  # Mock clipboard availability
+
         analyzer = ClipboardAnalyzer()
 
         is_valid = analyzer.validate_config()
@@ -108,6 +109,7 @@ Line 3"""
     def test_clipboard_analyzer_is_always_available(self, mock_copy):
         """Test that clipboard analyzer doesn't require any configuration."""
         mock_copy.return_value = True  # Mock clipboard availability
+
         # Should not raise any errors
         analyzer = ClipboardAnalyzer()
 
@@ -168,6 +170,7 @@ Line 3"""
     def test_multiple_analyzers_independent(self):
         """Test that multiple clipboard analyzers are independent."""
         analyzer1 = ClipboardAnalyzer()
+
         analyzer2 = ClipboardAnalyzer()
 
         assert analyzer1 is not analyzer2

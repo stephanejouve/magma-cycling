@@ -1,5 +1,6 @@
 """
 AI providers factory for multi-provider analysis support.
+
 Factory pattern pour support multi-providers IA (Claude, Mistral, OpenAI,
 Gemini, Ollama). Fournit interface unifiée pour analyses workouts avec
 fallback automatique entre providers.

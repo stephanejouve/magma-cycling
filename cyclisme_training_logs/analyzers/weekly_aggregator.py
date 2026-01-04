@@ -1,5 +1,6 @@
 """
 Weekly workout data aggregator with full TSS/IF enrichment.
+
 Agrégateur hebdomadaire implémentant DataAggregator pour collecter
 et traiter données complètes d'une semaine d'entraînement. Enrichit
 automatiquement chaque activité avec détails complets (TSS, IF, NP)
@@ -138,6 +139,7 @@ class WeeklyAggregator(DataAggregator):
             config: Configuration optionnelle
         """
         super().__init__(data_dir=data_dir, config=config)
+
         self.week = week
         self.start_date = start_date
         self.end_date = start_date + timedelta(days=6)
@@ -410,6 +412,7 @@ class WeeklyAggregator(DataAggregator):
     def _load_weekly_feedback(self) -> dict[str, Any]:
         """Load feedback athlète pour la semaine."""
         feedback_dir = self.data_dir / "feedback"
+
         if not feedback_dir.exists():
             return {}
 
@@ -490,6 +493,7 @@ class WeeklyAggregator(DataAggregator):
         - icu_intensity (IF en %, nécessite normalisation).
         """
         # Defensive: filter out None values before summing
+
         summary = {
             "total_sessions": len(activities),
             "total_tss": sum((a.get("icu_training_load") or 0) for a in activities),

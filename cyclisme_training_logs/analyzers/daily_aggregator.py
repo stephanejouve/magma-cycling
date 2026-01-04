@@ -114,6 +114,7 @@ class DailyAggregator(DataAggregator):
             athlete_id: ID athlète (optionnel, lu depuis config)
         """
         super().__init__(data_dir=data_dir)
+
         self.activity_id = activity_id
         self.intervals_api_key = intervals_api_key
         self.athlete_id = athlete_id
@@ -241,6 +242,7 @@ class DailyAggregator(DataAggregator):
             Markdown formaté pour workouts-history.md.
         """
         workout = processed_data["workout"]
+
         athlete = processed_data["athlete"]
         feedback = processed_data["feedback"]
         derived = processed_data["derived_metrics"]
@@ -279,6 +281,7 @@ class DailyAggregator(DataAggregator):
             Dict avec données activité.
         """
         # TODO: Implémenter appel API Intervals.icu
+
         # Pour l'instant, retourner données mock
         logger.warning("Using mock activity data (API not implemented)")
         return {
@@ -349,6 +352,7 @@ class DailyAggregator(DataAggregator):
             Dict avec CTL/ATL/TSB.
         """
         # TODO: Implémenter appel API Intervals.icu
+
         logger.warning("Using mock fitness metrics (API not implemented)")
         return {"ctl": 45.2, "atl": 38.5, "tsb": 6.7}
 

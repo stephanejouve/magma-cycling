@@ -50,6 +50,7 @@ class MonthlyAnalyzer:
             no_ai: Skip AI analysis, only generate statistics
         """
         self.month = month
+
         self.provider = provider
         self.no_ai = no_ai
 
@@ -338,6 +339,7 @@ Sois concret, direct et orienté action. Utilise des emojis pour la lisibilité.
     def run(self) -> str:
         """Execute monthly analysis and return report."""
         print(f"\n{'='*70}")
+
         print(f"  📊 ANALYSE MENSUELLE - {self.month_date.strftime('%B %Y')}")
         print(f"{'='*70}\n")
 

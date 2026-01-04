@@ -1,5 +1,6 @@
 """
 Configuration centrale pour séparation code/données
+
 Module de configuration gérant la séparation entre code (cyclisme-training-logs)
 et données athlète (training-logs externe). Configure les chemins vers le dépôt
 de données externe via variable d'environnement TRAINING_DATA_REPO, avec fallback
@@ -126,6 +127,7 @@ class DataRepoConfig:
     def ensure_directories(self):
         """Create required directories if they don't exist."""
         self.bilans_dir.mkdir(parents=True, exist_ok=True)
+
         self.week_planning_dir.mkdir(parents=True, exist_ok=True)
         self.workout_templates_dir.mkdir(parents=True, exist_ok=True)
 
@@ -140,6 +142,7 @@ class DataRepoConfig:
             FileNotFoundError: If critical files missing
         """
         # Check workouts-history.md exists
+
         if not self.workouts_history_path.exists():
             raise FileNotFoundError(
                 f"workouts-history.md not found in data repo: {self.data_repo_path}\n"
@@ -185,12 +188,14 @@ def set_data_config(config: DataRepoConfig | None):
         config: DataRepoConfig instance or None to reset.
     """
     global _global_config
+
     _global_config = config
 
 
 def reset_data_config():
     """Reset global configuration (mainly for testing)."""
     global _global_config
+
     _global_config = None
 
 
@@ -220,6 +225,7 @@ class AIProvidersConfig:
     def __init__(self):
         """Initialize AI providers configuration from environment variables."""
         # General settings
+
         self.default_provider = os.getenv("DEFAULT_AI_PROVIDER", "clipboard")
         self.enable_fallback = os.getenv("ENABLE_AI_FALLBACK", "true").lower() == "true"
         self.fallback_priority = ["claude_api", "mistral_api", "openai", "ollama", "clipboard"]
@@ -304,6 +310,7 @@ class AIProvidersConfig:
             ['claude_api', 'mistral_api', 'clipboard'].
         """
         available = []
+
         for provider in self.fallback_priority:
             if self.is_provider_configured(provider):
                 available.append(provider)
@@ -358,6 +365,7 @@ def get_ai_config() -> AIProvidersConfig:
         'clipboard'.
     """
     global _ai_config_instance
+
     if _ai_config_instance is None:
         _ai_config_instance = AIProvidersConfig()
     return _ai_config_instance
@@ -371,6 +379,7 @@ def reset_ai_config():
         >>> config = get_ai_config()  # Creates new instance.
     """
     global _ai_config_instance
+
     _ai_config_instance = None
 
 
@@ -401,6 +410,7 @@ class IntervalsConfig:
     def __init__(self):
         """Initialize Intervals.icu configuration from environment variables."""
         # Read from VITE_ prefixed variables (React compatibility)
+
         self.athlete_id = os.getenv("VITE_INTERVALS_ATHLETE_ID")
         self.api_key = os.getenv("VITE_INTERVALS_API_KEY")
         self.base_url = os.getenv("VITE_INTERVALS_BASE_URL", "https://intervals.icu/api/v1")
@@ -464,6 +474,7 @@ def get_intervals_config() -> IntervalsConfig:
         'i151223'.
     """
     global _intervals_config_instance
+
     if _intervals_config_instance is None:
         _intervals_config_instance = IntervalsConfig()
     return _intervals_config_instance
@@ -477,6 +488,7 @@ def reset_intervals_config():
         >>> config = get_intervals_config()  # Creates new instance.
     """
     global _intervals_config_instance
+
     _intervals_config_instance = None
 
 

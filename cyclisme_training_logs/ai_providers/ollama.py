@@ -78,6 +78,7 @@ class OllamaAnalyzer(AIAnalyzer):
             >>> analyzer = OllamaAnalyzer(model="mistral:7b")
         """
         super().__init__()
+
         self.provider = AIProvider.OLLAMA
         self.model = model
         self.host = host

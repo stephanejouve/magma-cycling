@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Claude AI provider implementation (Anthropic API).
+
 Implémentation provider Claude AI (Anthropic) pour analyses workouts.
 Utilise claude-sonnet-4-20250514 comme provider principal avec support
 thinking blocks et artifacts.
@@ -115,6 +116,7 @@ class ClaudeAPIAnalyzer(AIAnalyzer):
             ... )
         """
         super().__init__()
+
         self.provider = AIProvider.CLAUDE
         self.model: str = model
         self.max_tokens: int = max_tokens

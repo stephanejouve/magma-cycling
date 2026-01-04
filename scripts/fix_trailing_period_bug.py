@@ -14,6 +14,7 @@ def fix_trailing_periods(file_path: Path) -> bool:
         True if file was modified
     """
     content = file_path.read_text(encoding="utf-8")
+
     original_content = content
 
     # Pattern 1: """. at end of line (period after closing quotes)
@@ -31,6 +32,7 @@ def fix_trailing_periods(file_path: Path) -> bool:
 
     # Pattern 4: +=. """ or -=. """ should be += """ or -= """
     # Assignment operators with period and optional space before quotes
+
     content = re.sub(r'([+\-*/]|//|%|&|\||\^|<<|>>)?=\.\s+\"""', r'\1= """', content)
     content = re.sub(r"([+\-*/]|//|%|&|\||\^|<<|>>)?=\.\s+'", r"\1= '", content)
 

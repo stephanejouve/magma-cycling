@@ -16,6 +16,7 @@ from cyclisme_training_logs.planned_sessions_checker import PlannedSessionsCheck
 def load_credentials():
     """Load credentials depuis .intervals_config.json."""
     config_path = Path.home() / ".intervals_config.json"
+
     with open(config_path) as f:
         config = json.load(f)
     return config["athlete_id"], config["api_key"]
@@ -24,6 +25,7 @@ def load_credentials():
 def diagnose():
     """Diagnostic détaillé du matching."""
     print("\n" + "=" * 70)
+
     print("  DIAGNOSTIC DÉTAILLÉ MATCHING WORKOUTS ↔ ACTIVITÉS")
     print("=" * 70)
 

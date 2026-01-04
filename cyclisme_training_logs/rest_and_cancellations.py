@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Track rest days and canceled sessions with impact analysis.
+
 Suivi jours de repos et séances annulées avec analyse impact sur métriques
 forme (CTL/ATL/TSB). Documentation raisons cancellation et recommandations
 adaptations planning.
@@ -265,6 +266,7 @@ def validate_week_planning(planning: dict) -> bool:
         True si valide, False sinon.
     """
     # Champs obligatoires
+
     required_fields = ["week_id", "start_date", "end_date", "planned_sessions"]
     for field in required_fields:
         if field not in planning:
@@ -359,6 +361,7 @@ def generate_rest_day_entry(
         Bloc markdown formaté selon template repos.
     """
     # Extraire données session
+
     session_id = session_data["session_id"]
     session_type = session_data["type"]
     session_name = session_data["name"]
@@ -472,6 +475,7 @@ def generate_skipped_session_entry(
         Bloc markdown formaté selon template séance sautée.
     """
     # Extraire données session
+
     session_id = session_data.get("session_id", "N/A")
     session_name = session_data.get("name", session_data.get("planned_name", "Séance"))
     date_str = session_data.get("date", session_data.get("planned_date", ""))
@@ -567,6 +571,7 @@ def generate_cancelled_session_entry(
         Bloc markdown formaté selon template annulation.
     """
     # Extraire données session
+
     session_id = session_data["session_id"]
     session_type = session_data["type"]
     session_name = session_data["name"]

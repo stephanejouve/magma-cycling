@@ -254,6 +254,7 @@ Répondre en JSON :
 3. **Recommandations** : Adaptations séance suivante
 4. **Points vigilance** : Fatigue, récupération nécessaire."""
         blocks.append(self.instructions_block(instructions))
+
         blocks.append("")
 
         # Format sortie
@@ -276,4 +277,5 @@ Répondre en JSON :
             Prompt markdown complet.
         """
         # Implémentation Phase 2
+
         raise NotImplementedError("Weekly prompt generation (Phase 2)")

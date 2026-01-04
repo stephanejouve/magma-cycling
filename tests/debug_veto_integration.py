@@ -119,6 +119,7 @@ class TestVetoIntegration:
     def test_master_vs_senior_thresholds(self, master_profile, senior_profile):
         """Test that master athlete has stricter thresholds than senior."""
         # Borderline wellness for master
+
         wellness = {"ctl": 65.0, "atl": 85.0, "tsb": -20.0, "sleep_hours": 6.5}
 
         master_result = check_pre_session_veto(wellness, master_profile)

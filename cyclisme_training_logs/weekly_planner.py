@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Script de Planification Hebdomadaire
+
 Génère un prompt pour Claude.ai afin de créer les entraînements de la semaine.
 """
 import argparse
@@ -29,6 +30,7 @@ class WeeklyPlanner:
             project_root: Root directory of the project
         """
         self.week_number = week_number
+
         self.start_date = start_date
         self.end_date = start_date + timedelta(days=6)
         self.project_root = project_root
@@ -78,11 +80,13 @@ class WeeklyPlanner:
     def _previous_week_number(self) -> str:
         """Calculate le numéro de la semaine précédente."""
         current_num = int(self.week_number[1:])
+
         return f"S{current_num - 1:03d}"
 
     def _next_week_number(self) -> str:
         """Calculate le numéro de la semaine suivante."""
         current_num = int(self.week_number[1:])
+
         return f"S{current_num + 1:03d}"
 
     def collect_current_metrics(self) -> dict:
@@ -733,6 +737,7 @@ Le but est que je puisse **copier-coller directement** chaque bloc dans Interval
     def run(self):
         """Execute le workflow complet."""
         print("=" * 70)
+
         print(f"📅 PLANIFICATION HEBDOMADAIRE {self.week_number}")
         print(
             f"Période : {self.start_date.strftime('%d/%m/%Y')} → {self.end_date.strftime('%d/%m/%Y')}"

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Orchestrateur du workflow d'analyse de séance
+
 Guide l'utilisateur à travers le processus complet d'analyse de séance cyclisme :
 détection du type de session, collecte du feedback athlète, préparation du prompt IA,
 exécution de l'analyse (multi-provider support), validation, insertion dans l'historique,
@@ -207,6 +208,7 @@ class WorkflowCoach:
             dict: Templates indexés par ID (ex: {"recovery_active_30tss": {...}})
         """
         templates = {}
+
         templates_dir = self.project_root / "data" / "workout_templates"
 
         if not templates_dir.exists():
@@ -240,6 +242,7 @@ class WorkflowCoach:
             list: Séances futures (date >= aujourd'hui)
         """
         config = get_data_config()
+
         planning_file = config.week_planning_dir / f"week_planning_{week_id}.json"
 
         if not planning_file.exists():
@@ -379,6 +382,7 @@ class WorkflowCoach:
             int: Numéro jour 1-7
         """
         config = get_data_config()
+
         planning_file = config.week_planning_dir / f"week_planning_{week_id}.json"
 
         try:
@@ -520,6 +524,7 @@ class WorkflowCoach:
             bool: True si succès.
         """
         config = get_data_config()
+
         planning_file = config.week_planning_dir / f"week_planning_{week_id}.json"
 
         try:
@@ -683,6 +688,7 @@ class WorkflowCoach:
             week_id: ID semaine (ex: S070).
         """
         self.clear_screen()
+
         self.print_header("🤖 WORKFLOW COACH AI - Réconciliation Batch", f"Semaine {week_id}")
 
         # 0. Initialiser API
@@ -887,6 +893,7 @@ class WorkflowCoach:
     def print_header(self, title, subtitle=None):
         """Display un header stylisé."""
         print("\n" + "=" * 70)
+
         print(f"  {title}")
         if subtitle:
             print(f"  {subtitle}")
@@ -906,6 +913,7 @@ class WorkflowCoach:
     def step_1_welcome(self):
         """Étape 1 : Message de bienvenue."""
         self.clear_screen()
+
         self.print_header(
             "🎯 WORKFLOW COACH - Analyse de Séance",
             "Orchestrateur intelligent pour l'analyse cyclisme",
@@ -953,6 +961,7 @@ class WorkflowCoach:
             List of unanalyzed activities or None if error/not found.
         """
         config_path = Path.home() / ".intervals_config.json"
+
         if not config_path.exists():
             return None
 
@@ -1080,6 +1089,7 @@ class WorkflowCoach:
             Tuple of (rest_days, cancelled_sessions).
         """
         rest_days: list[dict] = []
+
         cancelled_sessions: list[dict] = []
 
         if not self.week_id:
@@ -1128,6 +1138,7 @@ class WorkflowCoach:
             Total number of gaps detected.
         """
         print("\n" + "=" * 70)
+
         print("📊 RÉSUMÉ GAPS DÉTECTÉS")
         print("=" * 70)
 
@@ -1205,6 +1216,7 @@ class WorkflowCoach:
             Action choice string (e.g., "single_executed", "batch_all", "exit")
         """
         unanalyzed = gaps_data.get("unanalyzed", [])
+
         skipped = gaps_data.get("skipped", [])
         rest_days = gaps_data.get("rest_days", [])
         cancelled = gaps_data.get("cancelled", [])
@@ -1287,6 +1299,7 @@ class WorkflowCoach:
                 - gaps_data: Dict avec listes unanalyzed, skipped, rest_days, cancelled
         """
         # Skip si activity_id fourni (bypass détection gaps)
+
         if self.activity_id:
             gaps_data = {"unanalyzed": [], "skipped": [], "rest_days": [], "cancelled": []}
             return "single_executed", gaps_data
@@ -1382,6 +1395,7 @@ class WorkflowCoach:
                 - skip_reason: Reason for skipping (if should_collect is False).
         """
         # Check skip flag
+
         if self.skip_feedback:
             return False, "skipped_by_flag"
 
@@ -1469,6 +1483,7 @@ class WorkflowCoach:
         Refactored from C-17 complexity using 3 helper methods for better separation of concerns.
         """
         # 1. Validate if feedback collection should proceed
+
         should_collect, skip_reason = self._validate_feedback_collection()
 
         if not should_collect:
@@ -1557,6 +1572,7 @@ class WorkflowCoach:
             User choice: 'F' (Fallback), 'C' (Clipboard), 'Q' (Quit).
         """
         print()
+
         print("=" * 70)
         print(f"⚠️  ÉCHEC DU PROVIDER : {failed_provider}")
         print("=" * 70)
@@ -1580,6 +1596,7 @@ class WorkflowCoach:
     def step_3_prepare_analysis(self):
         """Étape 3 : Préparer le prompt d'analyse."""
         self.clear_screen()
+
         self.print_header("📝 Préparation Prompt d'Analyse", "Étape 3/7 : Génération du prompt")
 
         print("Récupération de la séance depuis Intervals.icu...")
@@ -1728,6 +1745,7 @@ class WorkflowCoach:
             Week ID (ex: "S070")
         """
         # Si week_id fourni en argument CLI
+
         if self.week_id:
             return self.week_id
 
@@ -1764,6 +1782,7 @@ class WorkflowCoach:
             result: Résultat de reconcile_planned_vs_actual().
         """
         print("\n" + "=" * 70)
+
         print("📊 RAPPORT RÉCONCILIATION")
         print("=" * 70)
 
@@ -1813,6 +1832,7 @@ class WorkflowCoach:
             Dict avec sleep_duration, sleep_score, hrv, resting_hr.
         """
         print(f"\n📝 Feedback pour {session_data['session_id']} (repos planifié)")
+
         print("   (Laisser vide pour ignorer)")
 
         sleep = input("   Sommeil (format 7h30) : ").strip() or "N/A"
@@ -1834,6 +1854,7 @@ class WorkflowCoach:
             markdowns: Liste de tuples (date, markdown_text).
         """
         print("\n" + "=" * 70)
+
         print("👁️  PREVIEW MARKDOWNS GÉNÉRÉS")
         print("=" * 70)
 
@@ -1865,6 +1886,7 @@ class WorkflowCoach:
             True si succès, False sinon.
         """
         # Combiner tous les markdowns
+
         combined = "\n\n".join(markdown for _, markdown in markdowns)
 
         try:
@@ -1897,6 +1919,7 @@ class WorkflowCoach:
             True si succès, False sinon.
         """
         config = get_data_config()
+
         output_dir = config.week_planning_dir
         output_file = output_dir / f"special_sessions_{week_id}.md"
 
@@ -1953,6 +1976,7 @@ class WorkflowCoach:
             True si succès, False sinon.
         """
         # Always use data repo config (never fallback to code repo)
+
         if self.config:
             history_file = self.config.workouts_history_path
         else:
@@ -2289,6 +2313,7 @@ class WorkflowCoach:
             str: Markdown formaté.
         """
         # Extraire session_id (SXXX-XX)
+
         planned_name = skipped.get("planned_name", "")
         if " - " in planned_name:
             session_id = planned_name.split(" - ")[0]
@@ -2332,6 +2357,7 @@ Session planifiée non réalisée. Aucune donnée d'exécution disponible.
             str: Action à effectuer
         """
         print("\n" + "=" * 70)
+
         print("⚠️  MODE BATCH COMPLET")
         print("=" * 70)
         print("\n🚧 Fonctionnalité en développement")
@@ -2463,6 +2489,7 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
 **IMPORTANT :** Retourne UNIQUEMENT les markdowns enrichis, pas de texte explicatif autour.
 """
             # 5. Copier dans clipboard
+
             process = subprocess.Popen(
                 ["pbcopy"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
@@ -2750,6 +2777,7 @@ Critères de décision:
 
 Réponds maintenant."""
         # Get AI response - Use provider directly if available (fix Issue #2)
+
         ai_response = None
 
         if self.current_provider != "clipboard":
@@ -2922,6 +2950,7 @@ Réponds maintenant."""
     def show_summary(self):
         """Display le résumé final."""
         self.clear_screen()
+
         self.print_header("🎉 Workflow Terminé !", "Analyse de séance complète")
 
         print("✅ RÉCAPITULATIF :")
@@ -2957,6 +2986,7 @@ Réponds maintenant."""
             default_message: Message de commit par défaut.
         """
         print()
+
         print("─" * 70)
         print("💾 Commit Git")
         print("─" * 70)
@@ -3191,6 +3221,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Exemples:
+
   # Workflow complet interactif
   python3 cyclisme_training_logs/workflow_coach.py
 

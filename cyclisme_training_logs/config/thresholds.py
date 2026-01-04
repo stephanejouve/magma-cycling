@@ -218,6 +218,7 @@ class TrainingThresholds(BaseModel):
             False.
         """
         critical_tsb = tsb <= self.tsb_critical
+
         critical_ratio = atl_ctl_ratio >= self.atl_ctl_ratio_critical
 
         return critical_tsb or critical_ratio

@@ -1,5 +1,6 @@
 """
 Unified Intervals.icu API client.
+
 Client API unifié pour Intervals.icu.
 
 This module provides a single, canonical implementation of the Intervals.icu API client,
@@ -17,6 +18,7 @@ logger = logging.getLogger(__name__)
 class IntervalsClient:
     """
     Unified client for Intervals.icu API.
+
     Client unifié pour l'API Intervals.icu.
 
     This class provides methods to interact with the Intervals.icu REST API,
@@ -56,6 +58,7 @@ class IntervalsClient:
     def get_athlete(self) -> dict[str, Any]:
         """
         Get athlete profile information.
+
         Récupérer les informations du profil athlète.
 
         Returns:
@@ -69,6 +72,7 @@ class IntervalsClient:
             >>> print(f"FTP: {athlete.get('ftp')}")
         """
         url = f"{self.BASE_URL}/athlete/{self.athlete_id}"
+
         response = self.session.get(url)
         response.raise_for_status()
         return response.json()
@@ -78,6 +82,7 @@ class IntervalsClient:
     ) -> list[dict[str, Any]]:
         """
         Get activities (workouts) for a date range.
+
         Récupérer les activités (séances) pour une période.
 
         Args:
@@ -98,6 +103,7 @@ class IntervalsClient:
             >>> print(f"Found {len(activities)} activities")
         """
         url = f"{self.BASE_URL}/athlete/{self.athlete_id}/activities"
+
         params = {}
         if oldest:
             params["oldest"] = oldest
@@ -111,6 +117,7 @@ class IntervalsClient:
     def get_activity(self, activity_id: str) -> dict[str, Any]:
         """
         Get complete details for a single activity.
+
         Récupérer les détails complets d'une activité.
 
         Args:
@@ -127,6 +134,7 @@ class IntervalsClient:
             >>> print(f"TSS: {activity.get('icu_training_load')}")
         """
         url = f"{self.BASE_URL}/activity/{activity_id}"
+
         response = self.session.get(url)
         response.raise_for_status()
         return response.json()
@@ -136,6 +144,7 @@ class IntervalsClient:
     ) -> list[dict[str, Any]]:
         """
         Get wellness data (CTL, ATL, TSB, weight, sleep, etc.).
+
         Récupérer les données wellness (CTL, ATL, TSB, poids, sommeil, etc.).
 
         Args:
@@ -161,6 +170,7 @@ class IntervalsClient:
             ...     print(f"{day['id']}: CTL={day.get('ctl')}")
         """
         url = f"{self.BASE_URL}/athlete/{self.athlete_id}/wellness"
+
         params = {}
         if oldest:
             params["oldest"] = oldest
@@ -176,6 +186,7 @@ class IntervalsClient:
     ) -> list[dict[str, Any]]:
         """
         Get calendar events (planned workouts, notes, etc.).
+
         Récupérer les événements du calendrier (workouts planifiés, notes, etc.).
 
         Args:
@@ -196,6 +207,7 @@ class IntervalsClient:
             >>> workouts = [e for e in events if e.get('category') == 'WORKOUT']
         """
         url = f"{self.BASE_URL}/athlete/{self.athlete_id}/events"
+
         params = {}
         if oldest:
             params["oldest"] = oldest
@@ -211,6 +223,7 @@ class IntervalsClient:
     ) -> dict[str, Any] | None:
         """
         Find the planned workout associated with a completed activity.
+
         Trouver le workout planifié associé à une activité réalisée.
 
         Searches for events in a ±2 day window around the activity date,
@@ -231,6 +244,7 @@ class IntervalsClient:
             ...     print(f"Planned workout: {planned.get('name')}")
         """
         # Search in a ±2 day window around the activity
+
         oldest = (activity_date - timedelta(days=2)).strftime("%Y-%m-%d")
         newest = (activity_date + timedelta(days=2)).strftime("%Y-%m-%d")
 
@@ -246,6 +260,7 @@ class IntervalsClient:
     def create_event(self, event_data: dict[str, Any]) -> dict[str, Any] | None:
         """
         Create a calendar event (planned workout, note, etc.).
+
         Créer un événement du calendrier (workout planifié, note, etc.).
 
         Args:

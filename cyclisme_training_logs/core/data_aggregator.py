@@ -103,6 +103,7 @@ class DataAggregator(ABC):
             config: Configuration optionnelle
         """
         self.data_dir = data_dir or Path.home() / "training-logs"
+
         self.config = config or {}
         self.errors: list[str] = []
         self.warnings: list[str] = []
@@ -243,11 +244,13 @@ class DailyDataAggregator(DataAggregator):
             data_dir: Répertoire données.
         """
         super().__init__(data_dir=data_dir)
+
         self.activity_id = activity_id
 
     def collect_raw_data(self) -> dict[str, Any]:
         """Collect données séance quotidienne."""
         # Implémentation dans daily_aggregator.py (Étape 4)
+
         raise NotImplementedError("Use DailyAggregator from analyzers/")
 
     def process_data(self, raw_data: dict[str, Any]) -> dict[str, Any]:
@@ -282,12 +285,14 @@ class WeeklyDataAggregator(DataAggregator):
             data_dir: Répertoire données.
         """
         super().__init__(data_dir=data_dir)
+
         self.week = week
         self.start_date = start_date
 
     def collect_raw_data(self) -> dict[str, Any]:
         """Collect données hebdomadaires."""
         # Implémentation dans weekly_aggregator.py (Phase 2)
+
         raise NotImplementedError("Weekly aggregation not yet implemented (Phase 2)")
 
     def process_data(self, raw_data: dict[str, Any]) -> dict[str, Any]:

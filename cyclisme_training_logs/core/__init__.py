@@ -1,5 +1,6 @@
 """
 Core infrastructure modules for cyclisme-training-logs.
+
 Modules core : timeline_injector, data_aggregator, prompt_generator.
 Fournit les composants de base pour injection chronologique, agrégation
 de données multi-niveaux, et génération de prompts composables.

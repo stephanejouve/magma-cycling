@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Validate Intervals.icu workout format syntax and structure.
+
 Valide syntaxe et structure workouts format Intervals.icu avant upload.
 Vérifie cohérence durées, pourcentages FTP, format répétitions, et
 génère warnings si problèmes détectés.
@@ -76,6 +77,7 @@ class IntervalsFormatValidator:
     def __init__(self):
         """Initialize intervals format validator."""
         self.errors = []
+
         self.warnings = []
 
     def validate_workout(self, workout_text: str) -> tuple[bool, list[str], list[str]]:
@@ -89,6 +91,7 @@ class IntervalsFormatValidator:
             Tuple (is_valid, errors, warnings).
         """
         self.errors = []
+
         self.warnings = []
 
         lines = workout_text.split("\n")
@@ -178,6 +181,7 @@ class IntervalsFormatValidator:
         - "- 3x 10m 90%" → Erreur (ne peut pas corriger automatiquement)
         """
         lines = workout_text.split("\n")
+
         corrected = []
         errors_found = []
 
@@ -282,6 +286,7 @@ Main set
 Cooldown
 - 10m ramp 65-50%."""
     is_valid, errors, warnings = validator.validate_workout(invalid1)
+
     print(f"Valid: {is_valid}")
     print(f"Errors: {errors}")
     print(f"Warnings: {warnings}")
@@ -303,6 +308,7 @@ Test capacité 3x
 Cooldown
 - 10m ramp 65-50%."""
     is_valid, errors, warnings = validator.validate_workout(invalid2)
+
     print(f"Valid: {is_valid}")
     print(f"Warnings: {warnings}")
 
@@ -327,6 +333,7 @@ Main set 3x
 Cooldown
 - 10m ramp 75-50% 85rpm."""
     is_valid, errors, warnings = validator.validate_workout(valid)
+
     print(f"Valid: {is_valid}")
     print(f"Errors: {errors}")
     print(f"Warnings: {warnings}")

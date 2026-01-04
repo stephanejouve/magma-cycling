@@ -24,6 +24,7 @@ from migrate_docstrings import DocstringMetadata, DocstringMigrator  # noqa: E40
 def sample_old_docstring():
     """Sample file with old GARTNER_TIME format."""
     return '''"""
+
 Configuration centrale pour séparation code/données
 
 GARTNER_TIME: I
@@ -35,6 +36,7 @@ DOCSTRING: v2
 Module de configuration gérant la séparation entre code et données.
 """
 from pathlib import Path
+
 '''
 
 
@@ -42,6 +44,7 @@ from pathlib import Path
 def temp_python_file(tmp_path, sample_old_docstring):
     """Create temporary Python file with old format."""
     test_file = tmp_path / "test_module.py"
+
     test_file.write_text(sample_old_docstring)
     return test_file
 
@@ -49,6 +52,7 @@ def temp_python_file(tmp_path, sample_old_docstring):
 def test_parse_old_docstring(sample_old_docstring):
     """Test parsing of old GARTNER_TIME format."""
     migrator = DocstringMigrator(project_root=Path.cwd())
+
     metadata = migrator.parse_old_docstring(sample_old_docstring)
 
     assert metadata is not None
@@ -112,6 +116,7 @@ def test_dry_run_mode(temp_python_file):
 def test_no_old_format(tmp_path):
     """Test file without old format is skipped."""
     test_file = tmp_path / "test_module.py"
+
     test_file.write_text('"""Already Google Style."""\n\nimport os')
 
     migrator = DocstringMigrator(project_root=tmp_path, backup=False, dry_run=False)

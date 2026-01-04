@@ -292,6 +292,7 @@ class TestConfigSingleton:
     def test_get_ai_config_singleton(self):
         """Test that get_ai_config returns same instance."""
         config1 = get_ai_config()
+
         config2 = get_ai_config()
 
         assert config1 is config2
@@ -299,6 +300,7 @@ class TestConfigSingleton:
     def test_reset_ai_config_creates_new_instance(self):
         """Test that reset_ai_config creates new instance on next call."""
         config1 = get_ai_config()
+
         reset_ai_config()
         config2 = get_ai_config()
 
@@ -307,6 +309,7 @@ class TestConfigSingleton:
     def test_reset_ai_config_multiple_times(self):
         """Test that reset can be called multiple times."""
         reset_ai_config()
+
         reset_ai_config()
         config = get_ai_config()
 

@@ -1,5 +1,6 @@
 """
 Weekly analysis workflow CLI and orchestration.
+
 Workflow complet analyse hebdomadaire automatisée. Orchestre :
 WeeklyAggregator → WeeklyAnalyzer → 6 reports markdown.
 Remplace weekly_analysis.py legacy.
@@ -89,6 +90,7 @@ class WeeklyWorkflow:
             ai_analysis: Activer AI analysis via clipboard
         """
         self.week = week
+
         self.start_date = start_date
         self.ai_analysis = ai_analysis
 
@@ -211,6 +213,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
+
   # Analyze current week
   %(prog)s --week current
 

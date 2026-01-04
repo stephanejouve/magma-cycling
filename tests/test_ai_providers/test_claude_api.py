@@ -85,6 +85,7 @@ class TestClaudeAPIAnalyzer:
     def test_analyze_session_success(self, valid_api_key, mock_anthropic):
         """Test successful analysis."""
         # Mock successful response
+
         mock_message = MagicMock()
         mock_content = MagicMock()
         mock_content.text = "Analyse complète de la séance cyclisme."
@@ -100,6 +101,7 @@ class TestClaudeAPIAnalyzer:
     def test_analyze_with_dataset(self, valid_api_key, mock_anthropic):
         """Test analysis with dataset parameter."""
         mock_message = MagicMock()
+
         mock_content = MagicMock()
         mock_content.text = "Analyse avec données."
         mock_message.content = [mock_content]
@@ -114,6 +116,7 @@ class TestClaudeAPIAnalyzer:
     def test_analyze_empty_prompt(self, valid_api_key, mock_anthropic):
         """Test analysis with empty prompt."""
         mock_message = MagicMock()
+
         mock_content = MagicMock()
         mock_content.text = ""
         mock_message.content = [mock_content]
@@ -128,6 +131,7 @@ class TestClaudeAPIAnalyzer:
     def test_analyze_large_prompt(self, valid_api_key, mock_anthropic):
         """Test analysis with very large prompt."""
         mock_message = MagicMock()
+
         mock_content = MagicMock()
         mock_content.text = "Réponse à prompt large"
         mock_message.content = [mock_content]
@@ -146,6 +150,7 @@ class TestClaudeAPIAnalyzer:
     def test_analyze_special_characters(self, valid_api_key, mock_anthropic):
         """Test analysis with special characters."""
         mock_message = MagicMock()
+
         mock_content = MagicMock()
         mock_content.text = "Réponse avec émojis 🚴‍♂️"
         mock_message.content = [mock_content]
@@ -163,6 +168,7 @@ class TestClaudeAPIAnalyzer:
     def test_analyze_authentication_error(self, valid_api_key, mock_anthropic):
         """Test handling of authentication error."""
         # Mock authentication error
+
         mock_anthropic.messages.create.side_effect = Exception("Invalid API key")
 
         analyzer = ClaudeAPIAnalyzer(api_key=valid_api_key)
@@ -260,6 +266,7 @@ class TestClaudeAPIAnalyzer:
     def test_multiple_analyzers_independent(self, valid_api_key):
         """Test multiple analyzer instances are independent."""
         analyzer1 = ClaudeAPIAnalyzer(api_key=valid_api_key, model="claude-3-opus")
+
         analyzer2 = ClaudeAPIAnalyzer(api_key=valid_api_key, model="claude-3-sonnet")
 
         assert analyzer1 is not analyzer2
@@ -268,6 +275,7 @@ class TestClaudeAPIAnalyzer:
     def test_model_parameter_preserved(self, valid_api_key):
         """Test that model parameter is preserved."""
         custom_model = "claude-3-haiku"
+
         analyzer = ClaudeAPIAnalyzer(api_key=valid_api_key, model=custom_model)
 
         assert analyzer.model == custom_model

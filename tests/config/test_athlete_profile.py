@@ -10,6 +10,7 @@ class TestAthleteProfileFromEnv:
     def test_from_env_with_all_fields(self, monkeypatch):
         """Test loading profile with all environment variables set."""
         monkeypatch.setenv("ATHLETE_AGE", "54")
+
         monkeypatch.setenv("ATHLETE_CATEGORY", "master")
         monkeypatch.setenv("ATHLETE_RECOVERY_CAPACITY", "exceptional")
         monkeypatch.setenv("ATHLETE_SLEEP_DEPENDENT", "true")
@@ -56,6 +57,7 @@ class TestAthleteProfileFromEnv:
     def test_from_env_missing_age(self, monkeypatch):
         """Test error when ATHLETE_AGE is missing."""
         monkeypatch.delenv("ATHLETE_AGE", raising=False)  # Explicitly remove ATHLETE_AGE
+
         monkeypatch.setenv("ATHLETE_CATEGORY", "master")
         monkeypatch.setenv("ATHLETE_RECOVERY_CAPACITY", "exceptional")
         monkeypatch.setenv("ATHLETE_SLEEP_DEPENDENT", "true")
@@ -68,6 +70,7 @@ class TestAthleteProfileFromEnv:
     def test_from_env_invalid_category(self, monkeypatch):
         """Test error when category is invalid."""
         monkeypatch.setenv("ATHLETE_AGE", "54")
+
         monkeypatch.setenv("ATHLETE_CATEGORY", "invalid")
         monkeypatch.setenv("ATHLETE_RECOVERY_CAPACITY", "exceptional")
         monkeypatch.setenv("ATHLETE_SLEEP_DEPENDENT", "true")
@@ -80,6 +83,7 @@ class TestAthleteProfileFromEnv:
     def test_from_env_invalid_age(self, monkeypatch):
         """Test error when age is invalid."""
         monkeypatch.setenv("ATHLETE_AGE", "150")  # Too old
+
         monkeypatch.setenv("ATHLETE_CATEGORY", "master")
         monkeypatch.setenv("ATHLETE_RECOVERY_CAPACITY", "exceptional")
         monkeypatch.setenv("ATHLETE_SLEEP_DEPENDENT", "true")
@@ -154,6 +158,7 @@ class TestAthleteProfileMethods:
     def test_create_with_pydantic_validation(self):
         """Test Pydantic validation on direct creation."""
         # Valid creation
+
         profile = AthleteProfile(
             age=54,
             category="master",

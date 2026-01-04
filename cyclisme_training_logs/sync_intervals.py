@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Intervals.icu API integration for activity sync and metrics fetching.
+
 Intègre l'API Intervals.icu pour synchronisation activités, fetch métriques
 forme (CTL/ATL/TSB), et wellness data. Utilisé quotidiennement par le
 workflow principal.
@@ -96,6 +97,7 @@ class WorkoutLogger:
     def format_workout_entry(self, activity, wellness_pre, wellness_post):
         """Format une entrée de séance pour workouts-history.md."""
         # Extraire les données
+
         date = datetime.fromisoformat(activity["start_date_local"].replace("Z", "+00:00"))
         date_str = date.strftime("%d/%m/%Y")
 
@@ -134,6 +136,7 @@ class WorkoutLogger:
         # Template markdown
         entry = f"""
 ### {name}
+
 Date : {date_str}
 
 #### Métriques Pré-séance
@@ -260,6 +263,7 @@ _Le reste du fichier metrics-evolution.md reste inchangé._
 _Pour une mise à jour complète des tableaux, voir le fichier original._.
 """
         # Pour l'instant, on crée un fichier séparé
+
         summary_file = self.logs_dir / "metrics_sync_summary.md"
         with open(summary_file, "w", encoding="utf-8") as f:
             f.write(summary)
@@ -272,6 +276,7 @@ _Pour une mise à jour complète des tableaux, voir le fichier original._.
 def load_config(config_file):
     """Load la configuration depuis un fichier JSON."""
     config_path = Path(config_file).expanduser()
+
     if not config_path.exists():
         return None
 

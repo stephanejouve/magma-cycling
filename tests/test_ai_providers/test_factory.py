@@ -29,6 +29,7 @@ class TestAIProviderFactory:
     def test_create_clipboard_case_insensitive(self):
         """Test that provider name is case-insensitive."""
         analyzer1 = AIProviderFactory.create("CLIPBOARD", {})
+
         analyzer2 = AIProviderFactory.create("ClipBoard", {})
         analyzer3 = AIProviderFactory.create("clipboard", {})
 

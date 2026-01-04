@@ -31,6 +31,7 @@ class CasingNormalizer:
             force: If True, skip confirmation prompts
         """
         self.project_root = Path(project_root)
+
         self.weekly_reports_dir = self.project_root / "logs" / "weekly_reports"
         self.dry_run = dry_run
         self.force = force
@@ -85,6 +86,7 @@ class CasingNormalizer:
     def normalize_directory(self, dir_info):
         """Renommer un répertoire selon le standard."""
         current_path = dir_info["path"]
+
         new_name = dir_info["expected"]
         new_path = current_path.parent / new_name
 
@@ -119,6 +121,7 @@ class CasingNormalizer:
     def print_summary(self, directories):
         """Display le résumé de l'analyse."""
         print("\n" + "=" * 70)
+
         print("📊 RÉSUMÉ ANALYSE")
         print("=" * 70)
 
@@ -142,6 +145,7 @@ class CasingNormalizer:
     def print_report(self):
         """Display le rapport final."""
         print("\n" + "=" * 70)
+
         print("📋 RAPPORT FINAL")
         print("=" * 70)
 
@@ -167,6 +171,7 @@ class CasingNormalizer:
     def _display_header(self):
         """Display run mode header and settings."""
         print("\n" + "=" * 70)
+
         print("🔧 NORMALISATION CASSE - Weekly Reports")
         print("=" * 70)
 
@@ -185,6 +190,7 @@ class CasingNormalizer:
             Tuple of (all_directories, to_change_directories) or (None, None) if scan failed.
         """
         print("🔍 Analyse des répertoires...")
+
         directories = self.scan_directories()
 
         if not directories:
@@ -253,6 +259,7 @@ class CasingNormalizer:
         Refactored from C-15 complexity using 4 helper methods for better separation of concerns.
         """
         # Step 1: Display header
+
         self._display_header()
 
         # Step 2: Scan and validate directories

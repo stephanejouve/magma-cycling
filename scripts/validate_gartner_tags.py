@@ -76,6 +76,7 @@ class GartnerTagValidator:
             ValidationResult avec détails de validation
         """
         errors = []
+
         warnings = []
 
         # Lire le fichier
@@ -213,6 +214,7 @@ class GartnerTagValidator:
             results: Résultats de validation à afficher
         """
         print("\n" + "=" * 80)
+
         print("📊 GARTNER TIME TAGS VALIDATION REPORT")
         print("=" * 80 + "\n")
 
@@ -277,6 +279,7 @@ class GartnerTagValidator:
             output_path: Chemin du fichier HTML à générer
         """
         html = """<!DOCTYPE html>
+
 <html>
 <head>
     <meta charset="UTF-8">
@@ -311,6 +314,7 @@ class GartnerTagValidator:
         <h1>📊 Gartner TIME Tags Validation Report</h1>
 """
         # Stats
+
         total_files = len(results)
         valid_files = sum(1 for r in results.values() if r.valid)
         invalid_files = total_files - valid_files
@@ -318,6 +322,7 @@ class GartnerTagValidator:
 
         html += f"""
         <div class="stats">
+
             <div class="stat-box total">
                 <h2>{total_files}</h2>
                 <p>Total Files</p>
@@ -333,6 +338,7 @@ class GartnerTagValidator:
         </div>
 """
         # Distribution
+
         gartner_counts = {"I": 0, "T": 0, "M": 0, "E": 0, "None": 0}
         for result in results.values():
             tag = result.gartner_tag if result.gartner_tag else "None"
@@ -356,6 +362,7 @@ class GartnerTagValidator:
         # Table détails
         html += """
         <h2>📄 Detailed Results</h2>
+
         <table>
             <tr>
                 <th>File</th>
@@ -373,6 +380,7 @@ class GartnerTagValidator:
 
             html += f"""
             <tr>
+
                 <td>{relative_path}</td>
                 <td>{result.gartner_tag or '-'}</td>
                 <td>{result.status or '-'}</td>
@@ -382,18 +390,21 @@ class GartnerTagValidator:
             </tr>
 """
         html += """
+
         </table>
     </div>
 </body>
 </html>
 """
         output_path.write_text(html, encoding="utf-8")
+
         print(f"✅ HTML report generated: {output_path}")
 
 
 def main():
     """Point d'entrée du script."""
     parser = argparse.ArgumentParser(description="Validate Gartner TIME tags in Python docstrings")
+
     parser.add_argument("--file", type=str, help="Validate specific file instead of all project")
     parser.add_argument("--html", type=str, help="Generate HTML report at specified path")
     parser.add_argument(

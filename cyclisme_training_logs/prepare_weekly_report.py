@@ -47,6 +47,7 @@ class WeeklyReportGenerator:
     def load_athlete_context(self):
         """Load le contexte athlète."""
         prompt_file = self.references_dir / "project_prompt_v2_1_revised.md"
+
         if prompt_file.exists():
             with open(prompt_file, encoding="utf-8") as f:
                 return f.read()
@@ -55,6 +56,7 @@ class WeeklyReportGenerator:
     def extract_week_workouts(self, week_number, start_date=None):
         """Extraire les séances d'une semaine spécifique."""
         history_file = self.logs_dir / "workouts-history.md"
+
         if not history_file.exists():
             return None
 
@@ -98,6 +100,7 @@ class WeeklyReportGenerator:
     def read_full_log(self, filename):
         """Read un log complet."""
         log_file = self.logs_dir / filename
+
         if not log_file.exists():
             return f"_Fichier {filename} non trouvé_"
 
@@ -109,6 +112,7 @@ class WeeklyReportGenerator:
     ):
         """Generate le prompt pour Claude.ai."""
         # Calculer dates si non fournies
+
         if start_date and not end_date:
             start = datetime.strptime(start_date, "%Y-%m-%d")
             end = start + timedelta(days=6)

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Insertion de l'analyse IA dans workouts-history.md
+
 Insère l'analyse générée par IA dans le fichier workouts-history.md en
 respectant l'ordre chronologique via TimelineInjector. Remplace le système
 append-only par une injection intelligente basée sur les dates de workout.
@@ -93,6 +94,7 @@ class AnalysisParser:
     def extract_markdown_block(text):
         """Extraire le bloc markdown de l'analyse."""
         # Nettoyer le texte
+
         text = text.strip()
 
         # Cas 1 : Le texte est déjà un bloc markdown propre (commence par ###)
@@ -156,6 +158,7 @@ class AnalysisParser:
             int: Nombre de sessions détectées.
         """
         # Compter les lignes commençant par ### (titres de session)
+
         import re
 
         sessions = re.findall(r"^###\s+", text, re.MULTILINE)
@@ -165,6 +168,7 @@ class AnalysisParser:
     def validate_analysis(text):
         """Validate que le texte est bien une analyse formatée (supporte batch et types multiples)."""
         # Détecter nombre de sessions
+
         num_sessions = AnalysisParser.count_sessions(text)
 
         if num_sessions == 0:
@@ -231,6 +235,7 @@ class AnalysisParser:
     def extract_date_from_analysis(text):
         """Extraire la date de l'analyse pour détecter les doublons."""
         match = re.search(r"Date\s*:\s*(\d{2}/\d{2}/\d{4})", text)
+
         if match:
             return match.group(1)
         return None
@@ -278,6 +283,7 @@ class WorkoutHistoryManager:
     def check_duplicate(self, content, analysis_text):
         """Verify si une entrée similaire existe déjà."""
         # Extraire le nom de la séance depuis l'analyse
+
         match = re.search(r"###\s*(.+?)\s*\n", analysis_text)
         if not match:
             return False
@@ -301,6 +307,7 @@ class WorkoutHistoryManager:
     def insert_analysis(self, analysis_text):
         """Insérer l'analyse dans workouts-history.md via TimelineInjector."""
         # Lire le fichier existant
+
         content = self.read_history()
         if content is None:
             return False

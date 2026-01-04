@@ -13,6 +13,7 @@ from prepare_analysis import IntervalsAPI  # noqa: E402
 def inspect_existing_workout():
     """Retrieve un workout existant pour voir la structure"""
     # Charger credentials
+
     config_path = Path.home() / ".intervals_config.json"
     with open(config_path) as f:
         config = json.load(f)
