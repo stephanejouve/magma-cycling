@@ -13,7 +13,6 @@ Usage:
     python3 cyclisme_training_logs/collect_athlete_feedback.py --quick  # Mode rapide (RPE + ressenti uniquement)
     python3 cyclisme_training_logs/collect_athlete_feedback.py --clear  # Effacer le feedback en attente.
 """
-
 import argparse
 import json
 import sys
@@ -30,7 +29,7 @@ class AthleteFeedbackCollector:
         Args:
             temp_dir: Temporary directory for storing feedback (default: .athlete_feedback)
             activity_context: Optional activity context dict
-            batch_position: Optional tuple (current, total) for batch processing
+            batch_position: Optional tuple (current, total) for batch processing.
         """
         self.temp_dir = Path(temp_dir)
         self.temp_dir.mkdir(exist_ok=True)
@@ -39,7 +38,7 @@ class AthleteFeedbackCollector:
         self.batch_position = batch_position  # Tuple (current, total) ex: (1, 3)
 
     def display_activity_context(self):
-        """Afficher le contexte de l'activité en cours d'analyse."""
+        """Display le contexte de l'activité en cours d'analyse."""
         if not self.activity_context and not self.batch_position:
             return
 
@@ -234,7 +233,7 @@ class AthleteFeedbackCollector:
         return feedback
 
     def save_feedback(self, feedback):
-        """Sauvegarder le feedback."""
+        """Backup le feedback."""
         with open(self.feedback_file, "w", encoding="utf-8") as f:
             json.dump(feedback, f, ensure_ascii=False, indent=2)
 
@@ -242,7 +241,7 @@ class AthleteFeedbackCollector:
         print(f"   Fichier : {self.feedback_file}")
 
     def load_feedback(self):
-        """Charger le dernier feedback."""
+        """Load le dernier feedback."""
         if not self.feedback_file.exists():
             return None
 
@@ -258,7 +257,7 @@ class AthleteFeedbackCollector:
             print("ℹ️  Aucun feedback en attente")
 
     def display_feedback(self, feedback):
-        """Afficher le résumé du feedback."""
+        """Display le résumé du feedback."""
         print("\n" + "=" * 60)
         print("📋 RÉSUMÉ DU FEEDBACK")
         print("=" * 60)

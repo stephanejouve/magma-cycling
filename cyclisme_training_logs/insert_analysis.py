@@ -54,7 +54,6 @@ Metadata:
     Priority: P1
     Version: v2
 """
-
 import argparse
 import logging
 import re
@@ -78,7 +77,7 @@ class ClipboardReader:
 
     @staticmethod
     def read_clipboard():
-        """Lire le contenu du presse-papier"""
+        """Read le contenu du presse-papier"""
         try:
             result = subprocess.run(["pbpaste"], capture_output=True, text=True, check=True)
             return result.stdout
@@ -88,7 +87,7 @@ class ClipboardReader:
 
 
 class AnalysisParser:
-    """Parser pour l'analyse de Claude.ai."""
+    """Parse pour l'analyse de Claude.ai."""
 
     @staticmethod
     def extract_markdown_block(text):
@@ -164,7 +163,7 @@ class AnalysisParser:
 
     @staticmethod
     def validate_analysis(text):
-        """Valider que le texte est bien une analyse formatée (supporte batch et types multiples)."""
+        """Validate que le texte est bien une analyse formatée (supporte batch et types multiples)."""
         # Détecter nombre de sessions
         num_sessions = AnalysisParser.count_sessions(text)
 
@@ -268,7 +267,7 @@ class WorkoutHistoryManager:
             self.history_file = self.logs_dir / "workouts-history.md"
 
     def read_history(self):
-        """Lire le fichier d'historique."""
+        """Read le fichier d'historique."""
         if not self.history_file.exists():
             print(f"❌ Fichier non trouvé : {self.history_file}")
             return None
@@ -277,7 +276,7 @@ class WorkoutHistoryManager:
             return f.read()
 
     def check_duplicate(self, content, analysis_text):
-        """Vérifier si une entrée similaire existe déjà."""
+        """Verify si une entrée similaire existe déjà."""
         # Extraire le nom de la séance depuis l'analyse
         match = re.search(r"###\s*(.+?)\s*\n", analysis_text)
         if not match:
@@ -381,7 +380,7 @@ class WorkoutHistoryManager:
             return False
 
     def show_diff(self):
-        """Afficher le git diff"""
+        """Display le git diff"""
         try:
             result = subprocess.run(
                 ["git", "diff", str(self.history_file)],

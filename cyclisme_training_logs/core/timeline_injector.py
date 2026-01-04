@@ -31,7 +31,6 @@ Examples:
         ### S073-01 (2025-01-06)
         **Durée:** 60min | **TSS:** 45 | **IF:** 1.2
         '''
-
         injector.inject_chronologically(workout_entry, workout_date="2025-01-06")
 
     Advanced usage with validation::
@@ -73,7 +72,6 @@ Examples:
 Author: Claude Code
 Created: 2025-12-26 (Migrated from v2)
 """
-
 import re
 from dataclasses import dataclass
 from datetime import date, datetime
@@ -104,7 +102,7 @@ class TimelineInjector:
 
     def __init__(self, history_file: Path, check_duplicates: bool = True):
         """
-        Initialiser l'injecteur.
+        Initialize l'injecteur.
 
         Args:
             history_file: Chemin vers workouts-history.md
@@ -134,7 +132,7 @@ class TimelineInjector:
 
     def find_insertion_point(self, content_lines: list[str], target_date: date) -> int:
         """
-        Trouver le point d'insertion chronologique.
+        Find le point d'insertion chronologique.
 
         Maintient l'ordre chronologique (ancien → récent) dans le fichier.
 
@@ -186,7 +184,7 @@ class TimelineInjector:
 
     def check_duplicate(self, content_lines: list[str], entry: str) -> bool:
         """
-        Vérifier si l'entrée existe déjà (duplicate).
+        Verify si l'entrée existe déjà (duplicate).
 
         Args:
             content_lines: Lignes du fichier history

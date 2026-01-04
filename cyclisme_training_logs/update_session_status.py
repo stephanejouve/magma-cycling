@@ -35,7 +35,6 @@ Metadata:
     Priority: P1
     Version: 2.1.0
 """
-
 import argparse
 import json
 import os

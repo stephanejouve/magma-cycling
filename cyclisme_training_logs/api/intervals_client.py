@@ -5,7 +5,6 @@ Client API unifié pour Intervals.icu.
 This module provides a single, canonical implementation of the Intervals.icu API client,
 replacing multiple duplicated implementations across the codebase.
 """
-
 import logging
 from datetime import datetime, timedelta
 from typing import Any

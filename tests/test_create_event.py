@@ -2,7 +2,6 @@
 """
 Script de test pour la méthode create_event()
 """
-
 import json
 import sys
 from pathlib import Path
@@ -15,7 +14,6 @@ from cyclisme_training_logs.api.intervals_client import IntervalsClient  # noqa:
 
 def test_create_event():
     """Tester create_event avec différents formats"""
-
     print("🧪 Test de la méthode create_event()")
     print("=" * 70)
     print()

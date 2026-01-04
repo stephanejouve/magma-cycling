@@ -25,7 +25,6 @@ Examples:
 Author: Claude Code
 Created: 2026-01-01.
 """
-
 import argparse
 import json
 import sys
@@ -236,7 +235,6 @@ class MonthlyAnalyzer:
 | Semaine | Dates | TSS Cible | TSS Réalisé | % Réalisation |
 |---------|-------|-----------|-------------|---------------|.
 """
-
         for week in stats["tss_by_week"]:
             achievement = (
                 (week["tss_actual"] / week["tss_target"] * 100) if week["tss_target"] > 0 else 0
@@ -286,6 +284,7 @@ class MonthlyAnalyzer:
         month_name = self.month_date.strftime("%B %Y")
 
         prompt = f"""Analyse ce mois d'entraînement cyclisme ({month_name}) et fournis des insights :
+
 📊 DONNÉES MENSUELLES :
 - {stats['total_weeks']} semaines analysées
 - TSS Cible : {stats['tss_target_total']}
@@ -312,7 +311,6 @@ class MonthlyAnalyzer:
             prompt += f"- {session_type} : {count} sessions ({percentage:.0f}%)\n"
 
         prompt += """
-
 ANALYSE DEMANDÉE (format markdown) :
 
 1. **Évaluation Globale** (2-3 phrases)
@@ -335,7 +333,6 @@ ANALYSE DEMANDÉE (format markdown) :
 
 Sois concret, direct et orienté action. Utilise des emojis pour la lisibilité.
 """
-
         return prompt
 
     def run(self) -> str:

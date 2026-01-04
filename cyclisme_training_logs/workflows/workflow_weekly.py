@@ -49,7 +49,6 @@ Metadata:
     Priority: P1
     Version: v2
 """
-
 import argparse
 import logging
 import sys
@@ -81,7 +80,7 @@ class WeeklyWorkflow:
         ai_analysis: bool = False,
     ):
         """
-        Initialiser workflow.
+        Initialize workflow.
 
         Args:
             week: Numéro semaine (S073)
@@ -107,7 +106,7 @@ class WeeklyWorkflow:
 
     def run(self) -> dict[str, str]:
         """
-        Exécuter workflow complet.
+        Execute workflow complet.
 
         Returns:
             Dict avec 6 reports générés.
@@ -187,7 +186,7 @@ def run_weekly_analysis(
 
 def get_current_week_info() -> tuple:
     """
-    Calculer numéro semaine courante et date début.
+    Calculate numéro semaine courante et date début.
 
     Returns:
         (week, start_date) tuple.

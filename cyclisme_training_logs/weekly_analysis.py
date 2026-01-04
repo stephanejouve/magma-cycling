@@ -46,7 +46,6 @@ Usage (DEPRECATED):
     python3 cyclisme_training_logs/weekly_analysis.py --week-id S068
     python3 cyclisme_training_logs/weekly_analysis.py --week-id S068 --start-date 2024-11-18.
 """
-
 import argparse
 import json
 import re
@@ -117,7 +116,7 @@ class WeeklyAnalysis:
         self.context_files: dict[str, str] = {}
 
     def _calculate_week_start(self) -> datetime:
-        """Calculer la date de début de la semaine basé sur le numéro."""
+        """Calculate la date de début de la semaine basé sur le numéro."""
         # Pour l'instant, utiliser une date de référence (à ajuster)
         # Exemple: S001 = 2024-01-01 (lundi)
         reference_date = datetime(2024, 1, 1)  # S001 commence le 1er janvier 2024
@@ -125,7 +124,7 @@ class WeeklyAnalysis:
         return reference_date + timedelta(weeks=weeks_offset)
 
     def _next_week(self) -> str:
-        """Calculer le numéro de la semaine suivante."""
+        """Calculate le numéro de la semaine suivante."""
         return f"S{self.week_int + 1:03d}"
 
     def collect_week_workouts(self) -> list[dict]:
@@ -197,7 +196,7 @@ class WeeklyAnalysis:
         return workouts
 
     def collect_week_metrics(self) -> dict:
-        """Collecter métriques évolution via API."""
+        """Collect métriques évolution via API."""
         if not self.api:
             print("⚠️  API non disponible, skip métriques")
             return {}
@@ -294,7 +293,7 @@ class WeeklyAnalysis:
             return self._mock_metrics()
 
     def _mock_metrics(self) -> dict:
-        """Retourner des métriques mockées en cas d'erreur API."""
+        """Return des métriques mockées en cas d'erreur API."""
         return {
             "start": {"ctl": 0, "atl": 0, "tsb": 0, "weight": 0},
             "end": {"ctl": 0, "atl": 0, "tsb": 0, "weight": 0},
@@ -303,7 +302,7 @@ class WeeklyAnalysis:
         }
 
     def collect_context_files(self) -> dict[str, str]:
-        """Charger fichiers contexte projet."""
+        """Load fichiers contexte projet."""
         print("📚 Chargement des fichiers contexte...")
 
         context = {}
@@ -329,7 +328,7 @@ class WeeklyAnalysis:
         return context
 
     def generate_weekly_prompt(self) -> str:
-        """Générer le prompt complet pour Claude."""
+        """Generate le prompt complet pour Claude."""
         next_week = f"S{int(self.week_number[1:]) + 1:03d}"
 
         # Formater les séances
@@ -437,11 +436,10 @@ Tu DOIS structurer ta réponse avec ces délimiteurs exacts :
 
 Commence maintenant l'analyse !
 """
-
         return prompt
 
     def parse_claude_response(self, response: str) -> dict[str, str]:
-        """Parser la réponse de Claude en 6 fichiers.
+        """Parse la réponse de Claude en 6 fichiers.
 
         Args:
             response: La réponse complète de Claude
@@ -482,7 +480,7 @@ Commence maintenant l'analyse !
         return files
 
     def validate_generated_files(self, files: dict[str, str]) -> bool:
-        """Valider les fichiers générés."""
+        """Validate les fichiers générés."""
         next_week = f"S{int(self.week_number[1:]) + 1:03d}"
 
         expected_files = {
@@ -543,7 +541,6 @@ Fichiers générés :
 
 Co-Authored-By: Claude <noreply@anthropic.com>.
 """
-
         try:
             # Ajouter le dossier
             subprocess.run(["git", "add", str(self.output_dir)], check=True, cwd=self.project_root)

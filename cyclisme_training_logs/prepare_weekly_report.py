@@ -12,7 +12,6 @@ Usage:
     python3 cyclisme_training_logs/prepare_weekly_report.py --week 067
     python3 cyclisme_training_logs/prepare_weekly_report.py --week 067 --start-date 2025-11-11.
 """
-
 import argparse
 import re
 import subprocess
@@ -46,7 +45,7 @@ class WeeklyReportGenerator:
             self.bilans_dir = self.project_root / "logs" / "weekly_reports"
 
     def load_athlete_context(self):
-        """Charger le contexte athlète."""
+        """Load le contexte athlète."""
         prompt_file = self.references_dir / "project_prompt_v2_1_revised.md"
         if prompt_file.exists():
             with open(prompt_file, encoding="utf-8") as f:
@@ -97,7 +96,7 @@ class WeeklyReportGenerator:
         return "\n".join(workouts) if workouts else None
 
     def read_full_log(self, filename):
-        """Lire un log complet."""
+        """Read un log complet."""
         log_file = self.logs_dir / filename
         if not log_file.exists():
             return f"_Fichier {filename} non trouvé_"
@@ -108,7 +107,7 @@ class WeeklyReportGenerator:
     def generate_prompt(
         self, week_number, week_workouts, athlete_context, start_date=None, end_date=None
     ):
-        """Générer le prompt pour Claude.ai."""
+        """Generate le prompt pour Claude.ai."""
         # Calculer dates si non fournies
         if start_date and not end_date:
             start = datetime.strptime(start_date, "%Y-%m-%d")
@@ -262,11 +261,10 @@ Pour chaque fichier, générer :
 
 Génère maintenant les 6 fichiers de bilan pour la semaine S{week_number:03d}.
 """
-
         return prompt
 
     def copy_to_clipboard(self, text):
-        """Copier dans le presse-papier"""
+        """Copy dans le presse-papier"""
         try:
             process = subprocess.Popen(
                 ["pbcopy"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE

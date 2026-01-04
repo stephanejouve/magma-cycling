@@ -27,7 +27,6 @@ Examples:
 Author: Claude Code
 Created: 2025-12-26
 """
-
 import argparse
 import ast
 import re
@@ -59,7 +58,7 @@ class GartnerTagValidator:
 
     def __init__(self, project_root: Path):
         """
-        Initialiser le validateur.
+        Initialize le validateur.
 
         Args:
             project_root: Racine du projet Python à valider
@@ -68,7 +67,7 @@ class GartnerTagValidator:
 
     def validate_file(self, file_path: Path) -> ValidationResult:
         """
-        Valider un fichier Python.
+        Validate un fichier Python.
 
         Args:
             file_path: Chemin du fichier à valider
@@ -187,7 +186,7 @@ class GartnerTagValidator:
 
     def validate_all_files(self, pattern: str = "*.py") -> dict[Path, ValidationResult]:
         """
-        Valider tous les fichiers Python du projet.
+        Validate tous les fichiers Python du projet.
 
         Args:
             pattern: Pattern de fichiers à valider (défaut: "*.py")
@@ -208,7 +207,7 @@ class GartnerTagValidator:
 
     def print_report(self, results: dict[Path, ValidationResult]):
         """
-        Afficher rapport de validation dans le terminal.
+        Display rapport de validation dans le terminal.
 
         Args:
             results: Résultats de validation à afficher
@@ -271,7 +270,7 @@ class GartnerTagValidator:
 
     def generate_html_report(self, results: dict[Path, ValidationResult], output_path: Path):
         """
-        Générer rapport HTML de validation.
+        Generate rapport HTML de validation.
 
         Args:
             results: Résultats de validation
@@ -311,7 +310,6 @@ class GartnerTagValidator:
     <div class="container">
         <h1>📊 Gartner TIME Tags Validation Report</h1>
 """
-
         # Stats
         total_files = len(results)
         valid_files = sum(1 for r in results.values() if r.valid)
@@ -334,7 +332,6 @@ class GartnerTagValidator:
             </div>
         </div>
 """
-
         # Distribution
         gartner_counts = {"I": 0, "T": 0, "M": 0, "E": 0, "None": 0}
         for result in results.values():
@@ -369,7 +366,6 @@ class GartnerTagValidator:
                 <th>Issues</th>
             </tr>
 """
-
         for file_path, result in sorted(results.items()):
             relative_path = file_path.relative_to(self.project_root)
             status_class = "valid" if result.valid else "error"
@@ -385,14 +381,12 @@ class GartnerTagValidator:
                 <td class="{status_class}">{issues_count} issue(s)</td>
             </tr>
 """
-
         html += """
         </table>
     </div>
 </body>
 </html>
 """
-
         output_path.write_text(html, encoding="utf-8")
         print(f"✅ HTML report generated: {output_path}")
 

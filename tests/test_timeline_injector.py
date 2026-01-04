@@ -10,7 +10,6 @@ DOCSTRING: v2
 Author: Claude Code
 Created: 2025-12-26
 """
-
 from datetime import date
 from pathlib import Path
 
@@ -21,7 +20,7 @@ from cyclisme_training_logs.core.timeline_injector import TimelineInjector
 
 @pytest.fixture
 def sample_history_file(tmp_path):
-    """Créer fichier history temporaire pour tests."""
+    """Create fichier history temporaire pour tests."""
     history = tmp_path / "workouts-history.md"
     content = """# Historique Entraînements
 
@@ -58,7 +57,6 @@ def test_chronological_injection_middle(sample_history_file):
 
     new_entry = """### S073-02 (2025-01-07)
 **Durée:** 50min | **TSS:** 42"""
-
     result = injector.inject_chronologically(new_entry, date(2025, 1, 7))
 
     assert result.success
@@ -75,7 +73,6 @@ def test_duplicate_detection(sample_history_file):
 
     duplicate_entry = """### S073-01 (2025-01-06)
 **Durée:** 55min | **TSS:** 40"""
-
     result = injector.inject_chronologically(duplicate_entry, date(2025, 1, 6))
 
     assert not result.success
@@ -88,7 +85,6 @@ def test_injection_without_date_extraction(sample_history_file):
 
     new_entry = """### S073-04 (2025-01-09)
 **Durée:** 65min | **TSS:** 48"""
-
     # Date automatiquement extraite
     result = injector.inject_chronologically(new_entry)
 

@@ -18,7 +18,6 @@ Examples:
 Author: Claude Code
 Created: 2025-12-09.
 """
-
 from abc import ABC, abstractmethod
 from enum import Enum
 

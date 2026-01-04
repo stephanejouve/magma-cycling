@@ -4,7 +4,6 @@ Tests for AI Providers base classes.
 
 Tests AIProvider enum and AIAnalyzer abstract base class.
 """
-
 import pytest
 
 from cyclisme_training_logs.ai_providers.base import AIAnalyzer, AIProvider

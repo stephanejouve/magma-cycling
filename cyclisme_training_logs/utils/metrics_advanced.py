@@ -12,7 +12,6 @@ Functions:
     format_metrics_comparison: Format comparison between two time periods
     detect_overtraining_risk: Detect overtraining risk for master athletes (CRITICAL).
 """
-
 from statistics import mean, stdev
 from typing import Any, cast
 

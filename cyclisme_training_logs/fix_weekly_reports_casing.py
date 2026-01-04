@@ -20,7 +20,6 @@ Usage:
     # Rollback (restaurer backup)
     python3 cyclisme_training_logs/fix_weekly_reports_casing.py --rollback.
 """
-
 import argparse
 import shutil
 import sys
@@ -35,7 +34,7 @@ class WeeklyReportsFixing:
         """Initialize weekly reports casing fixer.
 
         Args:
-            project_root: Project root directory path (default: current directory)
+            project_root: Project root directory path (default: current directory).
         """
         self.project_root = Path(project_root)
         self.weekly_dir = self.project_root / "logs" / "weekly_reports"
@@ -51,7 +50,7 @@ class WeeklyReportsFixing:
             f.write(f"[{timestamp}] {message}\n")
 
     def backup_weekly_reports(self):
-        """Créer backup complet avant modifications."""
+        """Create backup complet avant modifications."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         backup_name = f"weekly_reports.backup.{timestamp}"
         self.backup_dir = self.weekly_dir.parent / backup_name
@@ -192,7 +191,7 @@ class WeeklyReportsFixing:
             return False
 
     def validate_final_structure(self):
-        """Valider structure finale après corrections."""
+        """Validate structure finale après corrections."""
         print("\n" + "=" * 70)
         print("✓  VALIDATION FINALE")
         print("=" * 70)
@@ -223,7 +222,7 @@ class WeeklyReportsFixing:
         return True
 
     def run_fixes(self, dry_run=False):
-        """Exécuter toutes les corrections."""
+        """Execute toutes les corrections."""
         print("\n" + "=" * 70)
         print("🔧 CORRECTIONS" + (" (DRY-RUN)" if dry_run else ""))
         print("=" * 70)
@@ -256,7 +255,7 @@ class WeeklyReportsFixing:
         return success_count == total_fixes
 
     def rollback(self):
-        """Restaurer depuis backup le plus récent."""
+        """Restore depuis backup le plus récent."""
         print("\n" + "=" * 70)
         print("⏮️  ROLLBACK")
         print("=" * 70)

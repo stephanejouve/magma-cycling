@@ -35,7 +35,6 @@ Todo:
     * Add support for class/function docstrings
     * Implement rollback mechanism
 """
-
 import argparse
 import logging
 import re
@@ -205,7 +204,6 @@ class DocstringMigrator:
         # Metadata section
         parts.append(
             f"""
-
 Metadata:
     Created: {metadata.last_review}
     Author: Cyclisme Training Logs Team

@@ -1,5 +1,4 @@
 """Tests for thresholds module (Sprint R2)."""
-
 import os
 
 import pytest

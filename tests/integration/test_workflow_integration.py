@@ -4,7 +4,6 @@ Integration tests for AI Providers with WorkflowCoach.
 
 Tests integration of AI provider system with main workflow.
 """
-
 import os
 from unittest.mock import patch
 
@@ -120,7 +119,6 @@ class TestWorkflowAIIntegration:
 - Puissance: 210W
 
 Analyse cette séance."""
-
         # Mock clipboard operation
         with patch("cyclisme_training_logs.ai_providers.clipboard.copy_to_clipboard") as mock_copy:
             mock_copy.return_value = True

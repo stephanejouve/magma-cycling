@@ -2,7 +2,6 @@
 """
 Script de diagnostic pour comprendre pourquoi le matching échoue.
 """
-
 import json
 import sys
 from datetime import datetime, timedelta
@@ -15,7 +14,7 @@ from cyclisme_training_logs.planned_sessions_checker import PlannedSessionsCheck
 
 
 def load_credentials():
-    """Charger credentials depuis .intervals_config.json."""
+    """Load credentials depuis .intervals_config.json."""
     config_path = Path.home() / ".intervals_config.json"
     with open(config_path) as f:
         config = json.load(f)

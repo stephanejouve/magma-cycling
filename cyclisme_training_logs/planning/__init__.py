@@ -9,7 +9,6 @@ Modules:
     calendar: Training calendar with session management and TSS tracking
     intervals_sync: Bidirectional sync with Intervals.icu API.
 """
-
 from cyclisme_training_logs.planning.calendar import (
     TrainingCalendar,
     TrainingSession,

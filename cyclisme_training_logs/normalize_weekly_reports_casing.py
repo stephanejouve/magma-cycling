@@ -12,7 +12,6 @@ Ce script :
 Usage:
     python3 cyclisme_training_logs/normalize_weekly_reports_casing.py [--dry-run] [--force].
 """
-
 import argparse
 import shutil
 import sys
@@ -65,7 +64,7 @@ class CasingNormalizer:
         return sorted(directories, key=lambda x: x["current"])
 
     def create_backup(self):
-        """Créer un backup du répertoire weekly_reports."""
+        """Create un backup du répertoire weekly_reports."""
         if self.dry_run:
             print("🔍 Mode dry-run: backup simulé")
             return True
@@ -118,7 +117,7 @@ class CasingNormalizer:
             return False
 
     def print_summary(self, directories):
-        """Afficher le résumé de l'analyse."""
+        """Display le résumé de l'analyse."""
         print("\n" + "=" * 70)
         print("📊 RÉSUMÉ ANALYSE")
         print("=" * 70)
@@ -141,7 +140,7 @@ class CasingNormalizer:
         print()
 
     def print_report(self):
-        """Afficher le rapport final."""
+        """Display le rapport final."""
         print("\n" + "=" * 70)
         print("📋 RAPPORT FINAL")
         print("=" * 70)
@@ -249,7 +248,7 @@ class CasingNormalizer:
         print()
 
     def run(self):
-        """Exécuter la normalisation complète.
+        """Execute la normalisation complète.
 
         Refactored from C-15 complexity using 4 helper methods for better separation of concerns.
         """

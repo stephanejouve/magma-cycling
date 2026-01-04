@@ -1,7 +1,6 @@
 """
 Tests for data repository configuration module.
 """
-
 from pathlib import Path
 
 import pytest

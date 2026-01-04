@@ -5,7 +5,6 @@ Script de nettoyage des doublons dans workouts-history.md
 Supprime les entrées dupliquées en gardant seulement les premières occurrences.
 Supporte plusieurs emplacements de fichier.
 """
-
 import re
 import sys
 from datetime import datetime

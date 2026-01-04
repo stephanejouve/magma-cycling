@@ -2,7 +2,6 @@
 """
 test_intervals_format.py - Tests validation format Intervals.icu
 """
-
 import pytest
 
 from cyclisme_training_logs.intervals_format_validator import IntervalsFormatValidator
@@ -24,7 +23,6 @@ Main set
 
 Cooldown
 - 10m ramp 65-50% 85rpm"""
-
     is_valid, errors, warnings = validator.validate_workout(workout)
     assert is_valid is True
     assert len(errors) == 0
@@ -41,7 +39,6 @@ Main set 3x
 
 Cooldown
 - 10m ramp 75-50% 85rpm"""
-
     is_valid, errors, warnings = validator.validate_workout(workout)
     assert is_valid is True
     assert len(errors) == 0
@@ -58,7 +55,6 @@ Main set
 
 Cooldown
 - 10m ramp 65-50%"""
-
     is_valid, errors, warnings = validator.validate_workout(workout)
     assert is_valid is False
     assert len(errors) > 0
@@ -76,7 +72,6 @@ def test_invalid_repetition_alone(validator):
 
 Cooldown
 - 10m ramp 65-50%"""
-
     is_valid, errors, warnings = validator.validate_workout(workout)
     assert is_valid is False
     assert len(errors) > 0
@@ -94,7 +89,6 @@ Test capacité 3x
 
 Cooldown
 - 10m ramp 65-50%"""
-
     is_valid, errors, warnings = validator.validate_workout(workout)
     # Valide techniquement, mais warning
     assert is_valid is True
@@ -112,7 +106,6 @@ def test_invalid_markdown(validator):
 
 Cooldown
 - 10m ramp 65-50%"""
-
     is_valid, errors, warnings = validator.validate_workout(workout)
     assert is_valid is False
     assert any("markdown" in error.lower() for error in errors)
@@ -129,7 +122,6 @@ Test capacité 3x
 
 Cooldown
 - 10m ramp 65-50%"""
-
     corrected = validator.fix_repetition_format(workout)
     assert "Main set 3x" in corrected
     assert "Test capacité 3x" not in corrected
@@ -150,7 +142,6 @@ Block 3x
 
 Cooldown
 - 12m ramp 75-50% 85rpm"""
-
     is_valid, errors, warnings = validator.validate_workout(workout)
     assert is_valid is True
     assert len(errors) == 0
@@ -182,7 +173,6 @@ def test_workout_without_sections(validator):
     workout = """- 10m 50%
 - 20m 70%
 - 10m 50%"""
-
     is_valid, errors, warnings = validator.validate_workout(workout)
     # Valide mais peut avoir warnings sur durées
     assert is_valid is True

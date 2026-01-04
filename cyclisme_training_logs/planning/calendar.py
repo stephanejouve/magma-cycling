@@ -4,7 +4,6 @@ Training calendar with weekly structure and session management.
 This module provides tools for generating weekly training calendars,
 managing rest days, adding sessions, and calculating weekly TSS summaries.
 """
-
 import logging
 from dataclasses import dataclass, field
 from datetime import date, timedelta

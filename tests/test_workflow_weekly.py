@@ -10,7 +10,6 @@ DOCSTRING: v2
 Author: Claude Code
 Created: 2025-12-26
 """
-
 from datetime import date
 from unittest.mock import Mock, patch
 
@@ -474,9 +473,7 @@ def test_workflow_without_data_dir(mock_workflow_class):
     mock_workflow_class.return_value = mock_workflow
 
     # Call utility without data_dir
-    run_weekly_analysis(
-        week="S073", start_date=date(2025, 1, 6), data_dir=None  # Auto-detect
-    )
+    run_weekly_analysis(week="S073", start_date=date(2025, 1, 6), data_dir=None)  # Auto-detect
 
     # Verify workflow created with None (triggers auto-detect)
     call_args = mock_workflow_class.call_args

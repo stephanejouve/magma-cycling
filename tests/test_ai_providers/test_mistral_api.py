@@ -4,7 +4,6 @@ Tests for Mistral API Provider.
 
 Tests MistralAPIAnalyzer with realistic Mistral SDK mocks.
 """
-
 from unittest.mock import MagicMock, patch
 
 import pytest

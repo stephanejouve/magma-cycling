@@ -4,7 +4,6 @@ Tests for OpenAI API Provider.
 
 Tests OpenAIAnalyzer with realistic OpenAI SDK mocks.
 """
-
 from unittest.mock import MagicMock, patch
 
 import pytest

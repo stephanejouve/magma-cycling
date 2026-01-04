@@ -8,7 +8,6 @@ Plus cher mais excellent qualité.
 Author: Claude Code
 Created: 2025-12-09.
 """
-
 import logging
 
 from openai import OpenAI

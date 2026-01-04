@@ -53,7 +53,6 @@ Metadata:
     Priority: P2
     Version: v2
 """
-
 import logging
 from datetime import datetime, timedelta
 
@@ -70,7 +69,7 @@ class PlannedSessionsChecker:
 
     def __init__(self, athlete_id: str, api_key: str):
         """
-        Initialiser le checker avec credentials API
+        Initialize le checker avec credentials API
 
         Args:
             athlete_id: ID athlète Intervals.icu
@@ -83,7 +82,7 @@ class PlannedSessionsChecker:
         self, start_date: str, end_date: str, category: str = "WORKOUT"
     ) -> list[dict]:
         """
-        Récupérer les workouts planifiés depuis l'API events
+        Retrieve les workouts planifiés depuis l'API events
 
         Args:
             start_date: Date début (format YYYY-MM-DD)
@@ -267,7 +266,7 @@ class PlannedSessionsChecker:
         self, skipped_session: dict, metrics_pre: dict | None = None
     ) -> str:
         """
-        Générer bloc markdown pour séance sautée
+        Generate bloc markdown pour séance sautée
 
         Args:
             skipped_session: Données séance sautée

@@ -65,7 +65,6 @@ Examples:
 Author: Claude Code
 Created: 2025-12-26 (Migrated from v2)
 """
-
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -97,7 +96,7 @@ class DataAggregator(ABC):
 
     def __init__(self, data_dir: Path | None = None, config: dict[str, Any] | None = None):
         """
-        Initialiser l'agrégateur.
+        Initialize l'agrégateur.
 
         Args:
             data_dir: Répertoire données (défaut: ~/training-logs)
@@ -111,7 +110,7 @@ class DataAggregator(ABC):
     @abstractmethod
     def collect_raw_data(self) -> dict[str, Any]:
         """
-        Collecter les données brutes nécessaires.
+        Collect les données brutes nécessaires.
 
         Returns:
             Dict avec données brutes collectées.
@@ -121,7 +120,7 @@ class DataAggregator(ABC):
     @abstractmethod
     def process_data(self, raw_data: dict[str, Any]) -> dict[str, Any]:
         """
-        Traiter et analyser les données brutes.
+        Process et analyser les données brutes.
 
         Args:
             raw_data: Données brutes collectées
@@ -134,7 +133,7 @@ class DataAggregator(ABC):
     @abstractmethod
     def format_output(self, processed_data: dict[str, Any]) -> str:
         """
-        Formater la sortie (markdown, JSON, etc.).
+        Format la sortie (markdown, JSON, etc.).
 
         Args:
             processed_data: Données traitées
@@ -146,7 +145,7 @@ class DataAggregator(ABC):
 
     def aggregate(self) -> AggregationResult:
         """
-        Exécuter le pipeline d'agrégation complet.
+        Execute le pipeline d'agrégation complet.
 
         Template Method orchestrant les 3 étapes :
         1. Collecte données brutes
@@ -193,7 +192,7 @@ class DataAggregator(ABC):
 
     def validate_data(self, data: dict[str, Any]) -> bool:
         """
-        Valider les données (hook optionnel).
+        Validate les données (hook optionnel).
 
         Args:
             data: Données à valider
@@ -205,7 +204,7 @@ class DataAggregator(ABC):
 
     def add_metadata(self, data: dict[str, Any]) -> dict[str, Any]:
         """
-        Ajouter metadata aux données (hook optionnel).
+        Add metadata aux données (hook optionnel).
 
         Args:
             data: Données à enrichir
@@ -237,7 +236,7 @@ class DailyDataAggregator(DataAggregator):
 
     def __init__(self, activity_id: str, data_dir: Path | None = None):
         """
-        Initialiser agrégateur daily.
+        Initialize agrégateur daily.
 
         Args:
             activity_id: ID activité Intervals.icu (ex: i123456)
@@ -247,16 +246,16 @@ class DailyDataAggregator(DataAggregator):
         self.activity_id = activity_id
 
     def collect_raw_data(self) -> dict[str, Any]:
-        """Collecter données séance quotidienne."""
+        """Collect données séance quotidienne."""
         # Implémentation dans daily_aggregator.py (Étape 4)
         raise NotImplementedError("Use DailyAggregator from analyzers/")
 
     def process_data(self, raw_data: dict[str, Any]) -> dict[str, Any]:
-        """Traiter données daily."""
+        """Process données daily."""
         raise NotImplementedError("Use DailyAggregator from analyzers/")
 
     def format_output(self, processed_data: dict[str, Any]) -> str:
-        """Formater sortie daily."""
+        """Format sortie daily."""
         raise NotImplementedError("Use DailyAggregator from analyzers/")
 
 
@@ -275,7 +274,7 @@ class WeeklyDataAggregator(DataAggregator):
 
     def __init__(self, week: str, start_date: str, data_dir: Path | None = None):
         """
-        Initialiser agrégateur weekly.
+        Initialize agrégateur weekly.
 
         Args:
             week: Numéro semaine (ex: S073)
@@ -287,14 +286,14 @@ class WeeklyDataAggregator(DataAggregator):
         self.start_date = start_date
 
     def collect_raw_data(self) -> dict[str, Any]:
-        """Collecter données hebdomadaires."""
+        """Collect données hebdomadaires."""
         # Implémentation dans weekly_aggregator.py (Phase 2)
         raise NotImplementedError("Weekly aggregation not yet implemented (Phase 2)")
 
     def process_data(self, raw_data: dict[str, Any]) -> dict[str, Any]:
-        """Traiter données weekly."""
+        """Process données weekly."""
         raise NotImplementedError("Weekly aggregation not yet implemented (Phase 2)")
 
     def format_output(self, processed_data: dict[str, Any]) -> str:
-        """Formater sortie weekly."""
+        """Format sortie weekly."""
         raise NotImplementedError("Weekly aggregation not yet implemented (Phase 2)")

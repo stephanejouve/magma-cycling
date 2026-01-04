@@ -4,7 +4,6 @@ Tests for Ollama Local LLM Provider.
 
 Tests OllamaAnalyzer with mocked requests to local server.
 """
-
 from unittest.mock import MagicMock, patch
 
 import pytest

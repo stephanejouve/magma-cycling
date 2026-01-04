@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Fix trailing period bug from D400 fixer."""
-
 import re
 from pathlib import Path
 
@@ -25,7 +24,7 @@ def fix_trailing_periods(file_path: Path) -> bool:
     # def foo() -> str:. should be def foo() -> str:
     content = re.sub(r":\.\s*$", ":", content, flags=re.MULTILINE)
 
-    # Pattern 3: f.""" or f.''' should be f""" or f'''
+    # Pattern 3: f""" or f''' should be f""" or f'''
     # f-strings with period before quotes
     content = re.sub(r'f\.\"""', 'f"""', content)
     content = re.sub(r"f\.'", "f'", content)

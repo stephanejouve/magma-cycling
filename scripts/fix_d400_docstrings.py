@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Fix D400 docstring errors by adding periods to first lines."""
-
 import re
 import sys
 from pathlib import Path

@@ -23,7 +23,6 @@ Metadata:
     Priority: P1
     Version: 1.0.0.
 """
-
 import argparse
 import os
 import sys

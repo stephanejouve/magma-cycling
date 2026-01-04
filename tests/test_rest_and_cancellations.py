@@ -6,7 +6,6 @@ Usage:
     python3 -m pytest cyclisme_training_logs/test_rest_and_cancellations.py -v
     python3 cyclisme_training_logs/test_rest_and_cancellations.py  # Run sans pytest
 """
-
 import json
 import tempfile
 from pathlib import Path

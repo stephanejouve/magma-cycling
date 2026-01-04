@@ -52,7 +52,6 @@ Author: Stéphane Jouve
 Created: 2024-08-XX
 Updated: 2025-12-26 (Standardization Prompt 3 Priority 2 - Marked as Legacy)
 """
-
 import re
 import sys
 from collections import defaultdict

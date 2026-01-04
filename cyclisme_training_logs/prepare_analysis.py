@@ -52,7 +52,6 @@ Metadata:
     Priority: P0
     Version: v2
 """
-
 import argparse
 import json
 import subprocess
@@ -106,7 +105,7 @@ class PromptGenerator:
         self.feedback_file = self.feedback_dir / "last_feedback.json"
 
     def load_athlete_context(self):
-        """Charger le contexte athlète depuis project_prompt_v2_1_revised.md."""
+        """Load le contexte athlète depuis project_prompt_v2_1_revised.md."""
         prompt_file = self.references_dir / "project_prompt_v2_1_revised.md"
         if prompt_file.exists():
             with open(prompt_file, encoding="utf-8") as f:
@@ -114,7 +113,7 @@ class PromptGenerator:
         return None
 
     def load_recent_workouts(self, limit=5):
-        """Charger les N dernières séances depuis workouts-history.md."""
+        """Load les N dernières séances depuis workouts-history.md."""
         history_file = self.logs_dir / "workouts-history.md"
         if not history_file.exists():
             return None
@@ -137,7 +136,7 @@ class PromptGenerator:
         return "\n".join(recent) if recent else None
 
     def load_cycling_concepts(self):
-        """Charger les concepts d'entraînement cyclisme."""
+        """Load les concepts d'entraînement cyclisme."""
         concepts_file = self.references_dir / "cycling_training_concepts.md"
         if concepts_file.exists():
             with open(concepts_file, encoding="utf-8") as f:
@@ -145,7 +144,7 @@ class PromptGenerator:
         return None
 
     def load_athlete_feedback(self):
-        """Charger le feedback athlète s'il existe."""
+        """Load le feedback athlète s'il existe."""
         if not self.feedback_file.exists():
             return None
 
@@ -157,7 +156,7 @@ class PromptGenerator:
             return None
 
     def format_athlete_feedback(self, feedback):
-        """Formater le feedback pour inclusion dans le prompt."""
+        """Format le feedback pour inclusion dans le prompt."""
         if not feedback:
             return None
 
@@ -188,7 +187,7 @@ class PromptGenerator:
         return "\n\n".join(parts) if parts else None
 
     def format_activity_data(self, activity):
-        """Formater les données d'activité pour le prompt."""
+        """Format les données d'activité pour le prompt."""
         date = datetime.fromisoformat(activity["start_date_local"].replace("Z", "+00:00"))
 
         # Vérifier si l'activité vient de Strava
@@ -217,7 +216,7 @@ class PromptGenerator:
         return data
 
     def format_wellness_data(self, wellness):
-        """Formater les données wellness."""
+        """Format les données wellness."""
         if not wellness:
             return {
                 "ctl": 0,
@@ -241,7 +240,7 @@ class PromptGenerator:
         }
 
     def format_planned_workout(self, planned_event):
-        """Formater le workout planifié pour le prompt.
+        """Format le workout planifié pour le prompt.
 
         Args:
             planned_event: L'événement contenant le workout planifié
@@ -314,7 +313,7 @@ class PromptGenerator:
         return formatted
 
     def _format_power(self, power_dict):
-        """Formater une valeur de puissance (gère %, watts absolus, rampes)."""
+        """Format une valeur de puissance (gère %, watts absolus, rampes)."""
         if not power_dict:
             return "N/A"
 
@@ -420,7 +419,7 @@ class PromptGenerator:
         planned_workout=None,
         cycling_concepts=None,
     ):
-        """Générer le prompt complet pour analyse IA."""
+        """Generate le prompt complet pour analyse IA."""
         # Formater les données
         act = activity_data
         w_pre = self.format_wellness_data(wellness_pre)
@@ -458,7 +457,6 @@ Certaines métriques (puissance, découplage) peuvent être manquantes ou incomp
 → Vérifier les données sur l'interface web Intervals.icu si nécessaire.
 
 """
-
         prompt = f"""# Analyse d'Entraînement Cyclisme.
 
 ## Contexte Athlète
@@ -510,7 +508,6 @@ Certaines métriques (puissance, découplage) peuvent être manquantes ou incomp
 
 ---
 """
-
         # Ajouter section workout planifié si disponible
         if planned:
             prompt += f"""
@@ -547,7 +544,6 @@ Certaines métriques (puissance, découplage) peuvent être manquantes ou incomp
 
 ---.
 """
-
         prompt += f"""
 ## Séances Récentes (Contexte)
 
@@ -555,7 +551,6 @@ Certaines métriques (puissance, découplage) peuvent être manquantes ou incomp
 
 ---
 """
-
         # Ajouter feedback athlète si disponible
         if athlete_feedback:
             feedback_text = self.format_athlete_feedback(athlete_feedback)
@@ -569,7 +564,6 @@ Certaines métriques (puissance, découplage) peuvent être manquantes ou incomp
 
 ---
 """
-
         prompt += """
 ## Demande d'Analyse
 
@@ -648,11 +642,10 @@ Date : {act['date']}
 
 Génère maintenant l'entrée d'analyse.
 """
-
         return prompt
 
     def copy_to_clipboard(self, text):
-        """Copier le texte dans le presse-papier macOS"""
+        """Copy le texte dans le presse-papier macOS"""
         try:
             process = subprocess.Popen(
                 ["pbcopy"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
@@ -665,7 +658,7 @@ Génère maintenant l'entrée d'analyse.
 
 
 def load_config(config_file):
-    """Charger la configuration depuis un fichier JSON."""
+    """Load la configuration depuis un fichier JSON."""
     config_path = Path(config_file).expanduser()
     if not config_path.exists():
         return None
@@ -675,7 +668,7 @@ def load_config(config_file):
 
 
 def analyze_batch(api, unanalyzed_activities, generator, state, project_root):
-    """Analyser plusieurs activités en mode batch.
+    """Analyze plusieurs activités en mode batch.
 
     Args:
         api: Instance IntervalsAPI
@@ -895,7 +888,7 @@ def analyze_batch(api, unanalyzed_activities, generator, state, project_root):
 
 
 def display_activity_menu(unanalyzed_activities):
-    """Afficher le menu interactif pour sélectionner une activité.
+    """Display le menu interactif pour sélectionner une activité.
 
     Args:
         unanalyzed_activities: Liste des activités non analysées

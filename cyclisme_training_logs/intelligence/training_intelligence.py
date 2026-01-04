@@ -16,7 +16,6 @@ Metadata:
     Version: 2.1.0
     Sprint: R4.
 """
-
 import json
 from dataclasses import asdict, dataclass
 from datetime import date, datetime
@@ -656,7 +655,7 @@ class TrainingIntelligence:
         self, current_ftp: float, target_ftp: float, dt: float = 1.0
     ) -> dict[str, Any]:
         """
-        Obtenir correction PID automatique pour progression FTP.
+        Get correction PID automatique pour progression FTP.
 
         Calcule gains PID adaptatifs depuis intelligence accumulée,
         puis compute correction TSS recommandée.
