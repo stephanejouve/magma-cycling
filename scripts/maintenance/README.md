@@ -426,14 +426,300 @@ git push
 
 ---
 
+## 🗑️ Clear Week Planning
+
+Script de maintenance pour supprimer les workouts planifiés erronés d'une semaine sur Intervals.icu.
+
+### Fonctionnalités
+
+- **Suppression sécurisée** : Ne supprime QUE les événements WORKOUT (workouts planifiés)
+- **Préservation** : Ne touche PAS aux activités réalisées ni aux notes de calendrier
+- **Mode dry-run** : Simulation pour voir ce qui serait supprimé sans rien toucher
+- **Mode interactif** : Demande confirmation avant suppression réelle
+- **Mode automatique** : Option `--yes` pour scripting sans confirmation
+- **Verbose** : Option `--verbose` pour afficher détails et erreurs
+
+### Cas d'Usage
+
+Utilisez ce script quand vous avez besoin de :
+- Effacer un planning de semaine complètement erroné
+- Régénérer une semaine avec nouveaux paramètres
+- Nettoyer les workouts planifiés avant réupload
+- Corriger une erreur de planification
+
+### Utilisation
+
+#### 1. Mode Dry-Run (Simulation)
+
+**Recommandé en premier** pour vérifier ce qui serait supprimé :
+
+```bash
+python scripts/maintenance/clear_week_planning.py \
+  --week-id S075 \
+  --start-date 2026-01-05 \
+  --dry-run
+```
+
+**Exemple de sortie :**
+```
+======================================================================
+🗑️  CLEAR WEEK PLANNING - S075
+======================================================================
+
+📅 Période: 05/01/2026 → 11/01/2026
+🔍 Mode: DRY-RUN (simulation)
+
+✅ Connecté à Intervals.icu (athlete: i151223)
+
+📥 Récupération des événements de la semaine...
+   ✅ 7 événements trouvés
+
+🎯 7 workouts planifiés trouvés:
+
+  1. [05/01/2026] S075-01-END-EnduranceBase-V001
+  2. [06/01/2026] S075-02-INT-SweetSpotProgressif-V001
+  3. [07/01/2026] S075-03-TEC-CadenceVariable-V001
+  4. [08/01/2026] S075-04-FOR-ForceEndurance-V001
+  5. [09/01/2026] S075-05-INT-ActivationSweetSpot-V001
+  6. [10/01/2026] S075-06-END-EnduranceLongue-V001
+  7. [11/01/2026] S075-07-REC-Recuperation-V001
+
+======================================================================
+
+🔍 DRY-RUN: Les événements ci-dessus SERAIENT supprimés
+   Relancez sans --dry-run pour suppression réelle
+```
+
+#### 2. Mode Interactif (Avec Confirmation)
+
+Demande confirmation avant de supprimer :
+
+```bash
+python scripts/maintenance/clear_week_planning.py \
+  --week-id S075 \
+  --start-date 2026-01-05
+```
+
+**Exemple de sortie :**
+```
+🎯 7 workouts planifiés trouvés:
+  ...
+
+======================================================================
+
+⚠️  Vous allez supprimer 7 workouts planifiés
+   Cette action est IRRÉVERSIBLE
+
+Confirmer la suppression ? (oui/non): oui
+
+🗑️  Suppression en cours...
+
+  ✅ [1/7] Supprimé: S075-01-END-EnduranceBase-V001
+  ✅ [2/7] Supprimé: S075-02-INT-SweetSpotProgressif-V001
+  ...
+
+======================================================================
+📊 RÉSUMÉ
+======================================================================
+
+✅ Supprimés : 7/7
+
+✅ Planning S075 complètement effacé !
+
+💡 Prochaines étapes:
+   1. Générer nouveau planning: wp --week-id S075 --start-date 2026-01-05
+   2. Uploader workouts: wu --week-id S075 --start-date 2026-01-05
+```
+
+#### 3. Mode Automatique (Sans Confirmation)
+
+Pour scripting ou usage en ligne de commande sans interaction :
+
+```bash
+python scripts/maintenance/clear_week_planning.py \
+  --week-id S075 \
+  --start-date 2026-01-05 \
+  --yes
+```
+
+Supprime directement sans demander confirmation.
+
+#### 4. Mode Verbose
+
+Affiche détails supplémentaires (IDs, descriptions, erreurs) :
+
+```bash
+python scripts/maintenance/clear_week_planning.py \
+  --week-id S075 \
+  --start-date 2026-01-05 \
+  --verbose
+```
+
+### Workflow Complet : Régénération de Semaine
+
+Quand vous avez besoin de régénérer complètement une semaine :
+
+```bash
+# 1. Voir ce qui serait supprimé (dry-run)
+python scripts/maintenance/clear_week_planning.py \
+  --week-id S075 --start-date 2026-01-05 --dry-run
+
+# 2. Si OK, supprimer les workouts
+python scripts/maintenance/clear_week_planning.py \
+  --week-id S075 --start-date 2026-01-05 --yes
+
+# 3. Régénérer le planning
+wp --week-id S075 --start-date 2026-01-05
+
+# 4. Uploader les nouveaux workouts
+wu --week-id S075 --start-date 2026-01-05
+```
+
+### Options Complètes
+
+```
+usage: clear_week_planning.py [-h] --week-id WEEK_ID --start-date START_DATE
+                              [--dry-run] [--yes] [--verbose]
+
+options:
+  --week-id WEEK_ID     ID de la semaine (format SXXX, ex: S075)
+  --start-date START_DATE
+                        Date de début de semaine (format YYYY-MM-DD)
+  --dry-run             Mode simulation (affiche ce qui serait supprimé sans supprimer)
+  --yes, -y             Mode automatique (pas de confirmation)
+  --verbose, -v         Mode verbose (affiche détails)
+```
+
+### Sécurité
+
+Le script implémente plusieurs mesures de sécurité :
+
+- ✅ **Filtre strict** : Supprime UNIQUEMENT les événements de catégorie "WORKOUT"
+- ✅ **Préservation activités** : Ne touche JAMAIS aux activités réalisées (catégorie "ACTIVITY")
+- ✅ **Préservation notes** : Ne touche JAMAIS aux notes de calendrier (catégorie "NOTE")
+- ✅ **Dry-run par défaut** : Recommandation explicite de tester avant suppression
+- ✅ **Confirmation requise** : Mode interactif demande validation explicite
+- ✅ **Scope limité** : Opère uniquement sur la semaine spécifiée (7 jours)
+
+### API Intervals.icu
+
+Le script utilise l'API Intervals.icu via `IntervalsClient` :
+
+- **Endpoint** : `DELETE /api/v1/athlete/{id}/events/{event_id}`
+- **Authentification** : API key configurée dans `.env` ou config
+- **Rate limiting** : Respecte les limites Intervals.icu
+- **Gestion erreurs** : Affiche échecs et continue avec les autres événements
+
+### Configuration
+
+Le script utilise automatiquement la configuration Intervals.icu du projet :
+
+```python
+from cyclisme_training_logs.config import get_intervals_config
+
+config = get_intervals_config()
+# Lit INTERVALS_ATHLETE_ID et INTERVALS_API_KEY depuis .env
+```
+
+Assurez-vous que votre fichier `.env` contient :
+```bash
+INTERVALS_ATHLETE_ID=i151223
+INTERVALS_API_KEY=your_api_key_here
+```
+
+### Alias Recommandé
+
+Ajouter à `~/.zshrc` :
+```bash
+alias clear-week='python ~/cyclisme-training-logs/scripts/maintenance/clear_week_planning.py'
+```
+
+Usage :
+```bash
+clear-week --week-id S075 --start-date 2026-01-05 --dry-run
+clear-week --week-id S075 --start-date 2026-01-05 --yes
+```
+
+### Logs et Debug
+
+Le script utilise le logger standard du projet :
+
+```python
+from cyclisme_training_logs.api.intervals_client import IntervalsClient
+# Logs dans stdout + fichiers selon configuration logging
+```
+
+Mode verbose pour debug :
+```bash
+python scripts/maintenance/clear_week_planning.py \
+  --week-id S075 --start-date 2026-01-05 --verbose
+```
+
+### Exemples d'Erreurs
+
+#### Aucun workout trouvé
+```
+✅ Aucun workout planifié trouvé pour cette semaine
+   La semaine est déjà vide ou n'a jamais été planifiée
+```
+
+#### Échec de suppression
+```
+🗑️  Suppression en cours...
+
+  ✅ [1/7] Supprimé: S075-01-END-EnduranceBase-V001
+  ❌ [2/7] Échec: S075-02-INT-SweetSpotProgressif-V001
+  ...
+
+⚠️  Certaines suppressions ont échoué
+   Relancez le script pour nettoyer les événements restants
+```
+
+#### Configuration manquante
+```
+❌ Erreur configuration Intervals.icu: INTERVALS_API_KEY not found
+```
+
+### Dépannage
+
+#### Le script ne trouve aucun événement
+
+Vérifiez :
+1. La date de début est-elle correcte ? (format YYYY-MM-DD)
+2. Les workouts ont-ils été uploadés sur Intervals.icu ?
+3. L'API key est-elle valide ?
+
+```bash
+# Vérifier les événements manuellement
+curl -u "API_i151223:your_api_key" \
+  "https://intervals.icu/api/v1/athlete/i151223/events?oldest=2026-01-05&newest=2026-01-11"
+```
+
+#### Erreur d'authentification
+
+```bash
+# Vérifier config
+python -c "from cyclisme_training_logs.config import get_intervals_config; print(get_intervals_config())"
+```
+
+#### Import errors
+
+```bash
+# Réinstaller le projet
+poetry install
+```
+
+---
+
 ## 📚 Références
 
 - **PEP 8** : https://peps.python.org/pep-0008/
 - **PEP 257** : https://peps.python.org/pep-0257/
 - **Pre-commit Hooks** : https://pre-commit.com/
+- **Intervals.icu API** : https://intervals.icu/api
 
 ---
 
 **Auteur :** Claude Code (Anthropic)
 **Date :** 2026-01-04
-**Version :** 1.0.0
+**Version :** 1.1.0
