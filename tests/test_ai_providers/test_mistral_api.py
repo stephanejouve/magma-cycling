@@ -33,10 +33,11 @@ def mistral_config(valid_api_key):
 @pytest.fixture
 def mock_mistral_client():
     """Mock Mistral client."""
-    with patch("cyclisme_training_logs.ai_providers.mistral_api.MistralClient") as mock_class:
+    with patch("cyclisme_training_logs.ai_providers.mistral_api.Mistral") as mock_class:
         mock_client = MagicMock()
-        # Mock the chat method directly (not chat.complete)
+        # Mock the chat.complete method (new API)
         mock_client.chat = MagicMock()
+        mock_client.chat.complete = MagicMock()
         mock_class.return_value = mock_client
         yield mock_client
 
@@ -103,13 +104,13 @@ class TestMistralAPIAnalyzer:
         mock_message.content = "Analyse complète de la séance cyclisme."
         mock_choice.message = mock_message
         mock_response.choices = [mock_choice]
-        mock_mistral_client.chat.return_value = mock_response
+        mock_mistral_client.chat.complete.return_value = mock_response
 
         analyzer = MistralAPIAnalyzer(api_key=valid_api_key)
         result = analyzer.analyze_session("Analyser cette séance")
 
         assert "Analyse complète" in result
-        mock_mistral_client.chat.assert_called_once()
+        mock_mistral_client.chat.complete.assert_called_once()
 
     def test_analyze_with_dataset(self, valid_api_key, mock_mistral_client):
         """Test analysis with dataset parameter."""
@@ -119,7 +120,7 @@ class TestMistralAPIAnalyzer:
         mock_message.content = "Analyse avec données."
         mock_choice.message = mock_message
         mock_response.choices = [mock_choice]
-        mock_mistral_client.chat.return_value = mock_response
+        mock_mistral_client.chat.complete.return_value = mock_response
 
         analyzer = MistralAPIAnalyzer(api_key=valid_api_key)
         dataset = {"tss": 65, "if": 0.85}
@@ -135,7 +136,7 @@ class TestMistralAPIAnalyzer:
         mock_message.content = ""
         mock_choice.message = mock_message
         mock_response.choices = [mock_choice]
-        mock_mistral_client.chat.return_value = mock_response
+        mock_mistral_client.chat.complete.return_value = mock_response
 
         analyzer = MistralAPIAnalyzer(api_key=valid_api_key)
         result = analyzer.analyze_session("")
@@ -151,7 +152,7 @@ class TestMistralAPIAnalyzer:
         mock_message.content = "Réponse à prompt large"
         mock_choice.message = mock_message
         mock_response.choices = [mock_choice]
-        mock_mistral_client.chat.return_value = mock_response
+        mock_mistral_client.chat.complete.return_value = mock_response
 
         analyzer = MistralAPIAnalyzer(api_key=valid_api_key)
         large_prompt = "A" * 30000  # 30KB prompt
@@ -160,7 +161,7 @@ class TestMistralAPIAnalyzer:
 
         assert "Réponse" in result
         # Verify prompt was passed
-        call_args = mock_mistral_client.chat.call_args
+        call_args = mock_mistral_client.chat.complete.call_args
         assert call_args is not None
 
     def test_analyze_special_characters(self, valid_api_key, mock_mistral_client):
@@ -171,7 +172,7 @@ class TestMistralAPIAnalyzer:
         mock_message.content = "Réponse avec émojis 🚴‍♂️"
         mock_choice.message = mock_message
         mock_response.choices = [mock_choice]
-        mock_mistral_client.chat.return_value = mock_response
+        mock_mistral_client.chat.complete.return_value = mock_response
 
         analyzer = MistralAPIAnalyzer(api_key=valid_api_key)
         prompt = "Test émojis 🚴‍♂️ and spéciål çhars: €$£"
@@ -184,7 +185,7 @@ class TestMistralAPIAnalyzer:
 
     def test_analyze_authentication_error(self, valid_api_key, mock_mistral_client):
         """Test handling of authentication error."""
-        mock_mistral_client.chat.side_effect = Exception("Invalid API key")
+        mock_mistral_client.chat.complete.side_effect = Exception("Invalid API key")
 
         analyzer = MistralAPIAnalyzer(api_key=valid_api_key)
 
@@ -195,7 +196,7 @@ class TestMistralAPIAnalyzer:
 
     def test_analyze_rate_limit_error(self, valid_api_key, mock_mistral_client):
         """Test handling of rate limit error."""
-        mock_mistral_client.chat.side_effect = Exception("Rate limit exceeded")
+        mock_mistral_client.chat.complete.side_effect = Exception("Rate limit exceeded")
 
         analyzer = MistralAPIAnalyzer(api_key=valid_api_key)
 
@@ -206,7 +207,7 @@ class TestMistralAPIAnalyzer:
 
     def test_analyze_server_error(self, valid_api_key, mock_mistral_client):
         """Test handling of server error."""
-        mock_mistral_client.chat.side_effect = Exception("Internal server error")
+        mock_mistral_client.chat.complete.side_effect = Exception("Internal server error")
 
         analyzer = MistralAPIAnalyzer(api_key=valid_api_key)
 
@@ -219,7 +220,7 @@ class TestMistralAPIAnalyzer:
         """Test handling of timeout."""
         import requests
 
-        mock_mistral_client.chat.side_effect = requests.Timeout("Request timeout")
+        mock_mistral_client.chat.complete.side_effect = requests.Timeout("Request timeout")
 
         analyzer = MistralAPIAnalyzer(api_key=valid_api_key)
 
@@ -232,7 +233,7 @@ class TestMistralAPIAnalyzer:
         """Test handling of connection error."""
         import requests
 
-        mock_mistral_client.chat.side_effect = requests.ConnectionError("Cannot connect")
+        mock_mistral_client.chat.complete.side_effect = requests.ConnectionError("Cannot connect")
 
         analyzer = MistralAPIAnalyzer(api_key=valid_api_key)
 

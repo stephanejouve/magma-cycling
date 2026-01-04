@@ -51,7 +51,7 @@ Metadata:
 
 import logging
 
-from mistralai.client import MistralClient
+from mistralai import Mistral
 
 from .base import AIAnalyzer, AIProvider
 
@@ -139,7 +139,7 @@ class MistralAPIAnalyzer(AIAnalyzer):
             raise WorkflowError("Mistral API key required")
 
         try:
-            self.client = MistralClient(api_key=api_key)
+            self.client = Mistral(api_key=api_key)
             logger.info(
                 f"MistralAPIAnalyzer initialized: model={model}, "
                 f"temperature={temperature}, max_tokens={max_tokens}"
@@ -176,8 +176,8 @@ class MistralAPIAnalyzer(AIAnalyzer):
         )
 
         try:
-            # Call Mistral API with parameters
-            response = self.client.chat(
+            # Call Mistral API with parameters (new API: chat.complete)
+            response = self.client.chat.complete(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=self.temperature,
