@@ -179,11 +179,13 @@ class WorkoutFormatter:
         content = workout["content"]
 
         # Check for repetition notation
-        # Should be: "Main set: 5x" not "5x [...]"
-        if re.search(r"\d+x\s*\[", content):
+        # Should be: "Main set: Nx" not "Nx [...]"
+        bad_rep = re.search(r"(\d+)x\s*\[", content)
+        if bad_rep:
+            rep_count = bad_rep.group(1)
             warnings.append(
-                f"⚠️  {workout['id']}: Notation '5x [...]' détectée - "
-                "devrait être 'Main set: 5x' puis éléments en dessous"
+                f"⚠️  {workout['id']}: Notation '{rep_count}x [...]' détectée - "
+                f"devrait être 'Main set: {rep_count}x' puis éléments en dessous"
             )
 
         # Check for factorized power (should be explicit on each line)
