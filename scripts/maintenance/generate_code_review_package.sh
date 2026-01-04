@@ -14,6 +14,124 @@ TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 OUTPUT_DIR="$HOME/Downloads/review_package_v2.2.0_${TIMESTAMP}"
 SOURCE_DIR="$OUTPUT_DIR/source_code"
 
+# Fonction: Génération du fichier SOURCE_CODE_COMPLETE.md
+generate_source_code_complete() {
+    local SOURCE_DIR="$1"
+    local OUTPUT_FILE="$2"
+
+    echo "📝 Génération de SOURCE_CODE_COMPLETE.md..."
+
+    # 1. Header
+    cat > "$OUTPUT_FILE" << 'HEADER_EOF'
+# Code Source Complet - Cyclisme Training Logs v2.2.0
+
+**Généré le:** $(date +"%Y-%m-%d %H:%M:%S")
+**Sprint:** R5 - Quality & Organization
+**Version:** 2.2.0
+
+---
+
+## 📖 À Propos de ce Document
+
+Ce fichier contient **l'intégralité du code source Python** du projet dans un seul document Markdown pour faciliter la navigation et la revue.
+
+### 🎯 Objectif
+
+Résoudre la confusion causée par les **noms de fichiers identiques** dans différents répertoires.
+
+**Exemple de confusion :**
+- `cyclisme_training_logs/core/__init__.py`
+- `tests/core/__init__.py`
+
+→ Ce document affiche le **chemin complet** de chaque fichier avant son contenu.
+
+### 📚 Structure
+
+1. **Index complet** - Liste de tous les fichiers avec chemins complets
+2. **Code source** - Organisé par répertoire (ordre alphabétique)
+3. **Headers clairs** - Chaque fichier a un header avec son chemin absolu
+
+### 💡 Usage
+
+- **Navigation rapide** : Utilisez Ctrl+F / Cmd+F pour chercher un fichier
+- **Contexte garanti** : Le chemin complet élimine toute ambiguïté
+- **Code complet** : Chaque fichier inclut son contenu intégral
+
+---
+
+HEADER_EOF
+
+    # Remplacer $(date) par la valeur réelle
+    sed -i '' "s/\$(date +\"%Y-%m-%d %H:%M:%S\")/$(date +"%Y-%m-%d %H:%M:%S")/g" "$OUTPUT_FILE"
+
+    # 2. Générer l'index
+    echo "" >> "$OUTPUT_FILE"
+    echo "## 📍 Index des Fichiers" >> "$OUTPUT_FILE"
+    echo "" >> "$OUTPUT_FILE"
+
+    # Lister tous les fichiers Python avec leur chemin relatif
+    find "$SOURCE_DIR" -name "*.py" | sort | while read -r filepath; do
+        local relative_path="${filepath#$SOURCE_DIR/}"
+        echo "- \`$relative_path\`" >> "$OUTPUT_FILE"
+    done
+
+    local total_files=$(find "$SOURCE_DIR" -name "*.py" | wc -l | tr -d ' ')
+    echo "" >> "$OUTPUT_FILE"
+    echo "**Total :** $total_files fichiers Python" >> "$OUTPUT_FILE"
+    echo "" >> "$OUTPUT_FILE"
+    echo "---" >> "$OUTPUT_FILE"
+    echo "" >> "$OUTPUT_FILE"
+
+    # 3. Parcourir les répertoires dans l'ordre alphabétique
+    find "$SOURCE_DIR" -type d | sort | while read -r dirpath; do
+        # Ignorer le répertoire racine source_code lui-même
+        if [ "$dirpath" = "$SOURCE_DIR" ]; then
+            continue
+        fi
+
+        # Vérifier s'il y a des fichiers .py dans ce répertoire (pas les sous-répertoires)
+        local py_files=$(find "$dirpath" -maxdepth 1 -name "*.py" 2>/dev/null)
+
+        if [ -n "$py_files" ]; then
+            local relative_dir="${dirpath#$SOURCE_DIR/}"
+
+            # Header du répertoire
+            echo "## 📂 RÉPERTOIRE: $relative_dir/" >> "$OUTPUT_FILE"
+            echo "" >> "$OUTPUT_FILE"
+
+            # Parcourir les fichiers .py dans ce répertoire
+            find "$dirpath" -maxdepth 1 -name "*.py" | sort | while read -r filepath; do
+                local filename=$(basename "$filepath")
+                local relative_path="${filepath#$SOURCE_DIR/}"
+
+                # Header du fichier avec chemin complet
+                echo "### Fichier: $relative_path" >> "$OUTPUT_FILE"
+                echo "" >> "$OUTPUT_FILE"
+                echo "\`\`\`python" >> "$OUTPUT_FILE"
+
+                # Contenu du fichier
+                cat "$filepath" >> "$OUTPUT_FILE"
+
+                echo "" >> "$OUTPUT_FILE"
+                echo "\`\`\`" >> "$OUTPUT_FILE"
+                echo "" >> "$OUTPUT_FILE"
+                echo "---" >> "$OUTPUT_FILE"
+                echo "" >> "$OUTPUT_FILE"
+            done
+        fi
+    done
+
+    # Footer
+    echo "## ✅ Fin du Document" >> "$OUTPUT_FILE"
+    echo "" >> "$OUTPUT_FILE"
+    echo "**Fichiers inclus :** $total_files fichiers Python" >> "$OUTPUT_FILE"
+    echo "**Généré par :** \`generate_code_review_package.sh\`" >> "$OUTPUT_FILE"
+    echo "**Version :** v2.2.0" >> "$OUTPUT_FILE"
+
+    local file_size=$(du -h "$OUTPUT_FILE" | cut -f1)
+    echo "✅ SOURCE_CODE_COMPLETE.md créé ($file_size)"
+}
+
 # Vérifier que le projet existe
 if [ ! -d "$PROJECT_DIR" ]; then
     echo "❌ Erreur: Le répertoire $PROJECT_DIR n'existe pas"
@@ -62,6 +180,9 @@ rsync -av --include='*/' --include='*.py' --exclude='*' tests/ "$SOURCE_DIR/test
 
 PYTHON_FILES=$(find "$SOURCE_DIR" -name "*.py" 2>/dev/null | wc -l | tr -d ' ')
 echo "✅ $PYTHON_FILES fichiers Python copiés"
+
+# Génération du fichier de code source unifié
+generate_source_code_complete "$SOURCE_DIR" "$OUTPUT_DIR/SOURCE_CODE_COMPLETE.md"
 
 echo "🗺️  Génération du graphe de dépendances (optionnel)..."
 if poetry run pydeps cyclisme_training_logs --max-bacon=2 -o "$OUTPUT_DIR/architecture_graph.svg" 2>/dev/null; then
@@ -334,11 +455,15 @@ Le projet utilise le **standard Python moderne (PEP 518/621)** avec configuratio
 15. **`sessions/SESSION_20260104_PEP8_LIVRABLE.md`** - Session complète
 
 ### 💾 Code Source (Consultation)
-16. **`source_code/`** - Tous les fichiers Python (~87 fichiers)
+16. **`SOURCE_CODE_COMPLETE.md`** - ⭐ Code source unifié (~120 fichiers dans un seul document)
+    - Index complet avec chemins absolus
+    - Résout ambiguïté des noms de fichiers identiques
+    - Navigation rapide avec Ctrl+F / Cmd+F
+17. **`source_code/`** - Code source en fichiers séparés (~87 fichiers)
     - `cyclisme_training_logs/` - Code source principal
     - `tests/` - Suite de tests complète
 
-**Note :** Le code source est fourni pour consultation rapide (spot-checks, validation patterns). Pas nécessaire de revue ligne par ligne - les métriques et tests couvrent la qualité.
+**Note :** Le code source est fourni pour consultation rapide (spot-checks, validation patterns). Utilisez `SOURCE_CODE_COMPLETE.md` pour navigation unifiée ou `source_code/` pour fichiers individuels. Pas nécessaire de revue ligne par ligne - les métriques et tests couvrent la qualité.
 
 ---
 
@@ -694,7 +819,9 @@ review_package_v2.2.0_[TIMESTAMP]/
 ├── sessions/                           (Documentation développement)
 │   └── SESSION_20260104_PEP8_LIVRABLE.md
 │
-└── source_code/                        (Code source complet)
+├── SOURCE_CODE_COMPLETE.md ⭐⭐         (Code source unifié - 1 fichier)
+│
+└── source_code/                        (Code source en fichiers séparés)
     ├── cyclisme_training_logs/         (~87 fichiers .py)
     └── tests/                          (~54 fichiers .py)
 ```
@@ -856,6 +983,10 @@ review_package_v2.2.0_[TIMESTAMP]/
 
 **R:** Non, c'est optionnel et non bloquant. La structure et les métriques suffisent.
 
+### Q: Qu'est-ce que SOURCE_CODE_COMPLETE.md ?
+
+**R:** Un fichier unique contenant tous les fichiers Python (~120 fichiers) avec chemins complets. Résout la confusion des noms de fichiers identiques (`__init__.py`, `models.py`, etc.). Utilisez Ctrl+F / Cmd+F pour navigation rapide.
+
 ### Q: Dois-je installer Python pour faire la revue ?
 
 **R:** Non, tous les fichiers sont lisibles (texte, markdown, TOML).
@@ -891,6 +1022,7 @@ review_package_v2.2.0_[TIMESTAMP]/
 
 **Liens rapides :**
 - 📊 Métriques → `metrics_summary.txt`
+- 💾 Code unifié → `SOURCE_CODE_COMPLETE.md` (navigation rapide)
 - 📖 Guide → `REVIEW_GUIDE.md`
 - ⚠️ Warnings → `REVIEW_WARNINGS_EXPLAINED.md`
 - 📝 Template → Dans `REVIEW_GUIDE.md`
