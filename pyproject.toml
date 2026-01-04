@@ -92,6 +92,21 @@ ignore = ["E501", "B008", "C901"]
 testpaths = ["tests"]
 addopts = ["-v"]
 
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = false
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+exclude = [
+    "tests/",
+    "scripts/debug/",
+    "scripts/fix_",
+    "withings_integration/",
+    "backups/",
+    "patches/",
+]
+
 [tool.poe.tasks]
 # Tests
 test = "pytest tests/ -v"
