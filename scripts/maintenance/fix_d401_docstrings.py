@@ -3,6 +3,7 @@
 Fix D401 docstring errors - convert French infinitives to English imperatives.
 
 Converts docstring first lines from French infinitive form to English imperative mood.
+
 Examples:
     - "Initialiser le client" → "Initialize the client"
     - "Calculer le total" → "Calculate the total"
