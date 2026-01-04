@@ -142,6 +142,7 @@ class WeeklyAggregator(DataAggregator):
         self.week = week
         self.start_date = start_date
         self.end_date = start_date + timedelta(days=6)
+        self.api: IntervalsClient | None
 
         # Initialize Intervals.icu API with configuration
         try:
@@ -174,7 +175,7 @@ class WeeklyAggregator(DataAggregator):
             - wellness: Données wellness quotidiennes
             - planned: Workouts planifiés.
         """
-        raw_data = {}
+        raw_data: dict[str, Any] = {}
 
         # 1. Activités hebdomadaires
         try:
@@ -236,7 +237,7 @@ class WeeklyAggregator(DataAggregator):
         Returns:
             Données structurées pour 6 reports.
         """
-        processed = {}
+        processed: dict[str, Any] = {}
 
         # 1. Summary général
         processed["summary"] = self._compute_weekly_summary(raw_data["activities"])
@@ -506,7 +507,7 @@ class WeeklyAggregator(DataAggregator):
             ifs = [
                 (a.get("icu_intensity") or 0) / 100
                 for a in activities
-                if a.get("icu_intensity") and a.get("icu_intensity") > 0
+                if a.get("icu_intensity") and a.get("icu_intensity") > 0  # type: ignore[operator]  # Safe: checked for None in first condition
             ]
             if ifs:
                 summary["avg_if"] = sum(ifs) / len(ifs)
@@ -582,7 +583,7 @@ class WeeklyAggregator(DataAggregator):
             # Calculate metrics change using centralized utility
             from cyclisme_training_logs.utils.metrics import calculate_metrics_change
 
-            evolution["trends"] = calculate_metrics_change(first, last)
+            evolution["trends"] = calculate_metrics_change(first, last)  # type: ignore[assignment]  # Complex nested dict type inference
 
         return evolution
 
@@ -669,7 +670,7 @@ class WeeklyAggregator(DataAggregator):
         self, summary: dict[str, Any], metrics_evolution: dict[str, Any], learnings: list[str]
     ) -> dict[str, Any]:
         """Préparer données transition semaine suivante."""
-        transition = {
+        transition: dict[str, Any] = {
             "current_state": {
                 "total_tss": summary.get("total_tss", 0),
                 "avg_tss": summary.get("avg_tss", 0),
