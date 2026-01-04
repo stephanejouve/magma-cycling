@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-test_skipped_detection.py - Test du système de détection des séances sautées
+test_skipped_detection.py - Test du système de détection des séances sautées.
 
 Ce script permet de :
 1. Tester la détection des workouts planifiés
@@ -22,7 +22,7 @@ from cyclisme_training_logs.planned_sessions_checker import PlannedSessionsCheck
 
 
 def load_credentials():
-    """Load credentials depuis config"""
+    """Load credentials depuis config."""
     config_path = Path.home() / ".intervals_config.json"
 
     if not config_path.exists():
@@ -53,7 +53,7 @@ def load_credentials():
 
 
 def print_header(title):
-    """Display header stylisé"""
+    """Display header stylisé."""
     print("\n" + "=" * 70)
 
     print(f"  {title}")
@@ -61,7 +61,7 @@ def print_header(title):
 
 
 def print_skipped_details(skipped_sessions):
-    """Display détails des séances sautées"""
+    """Display détails des séances sautées."""
     if not skipped_sessions:
         print("✅ Aucune séance sautée détectée !\n")
         return
@@ -102,7 +102,7 @@ def print_skipped_details(skipped_sessions):
 
 
 def generate_markdown_examples(skipped_sessions):
-    """Generate exemples de markdown pour séances sautées"""
+    """Generate exemples de markdown pour séances sautées."""
     if not skipped_sessions:
         print("Aucune séance sautée → Pas de markdown à générer\n")
         return
@@ -129,7 +129,7 @@ def generate_markdown_examples(skipped_sessions):
 
 
 def calculate_impact(skipped_sessions):
-    """Calculate impact des séances sautées"""
+    """Calculate impact des séances sautées."""
     if not skipped_sessions:
         return
 
@@ -177,7 +177,7 @@ def calculate_impact(skipped_sessions):
 
 
 def main():
-    """Point d'entrée principal"""
+    """Point d'entrée principal."""
     parser = argparse.ArgumentParser(description="Test détection séances planifiées sautées")
 
     parser.add_argument(

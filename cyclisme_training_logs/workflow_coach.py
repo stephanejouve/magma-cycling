@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Orchestrateur du workflow d'analyse de séance
+Orchestrateur du workflow d'analyse de séance.
 
 Guide l'utilisateur à travers le processus complet d'analyse de séance cyclisme :
 détection du type de session, collecte du feedback athlète, préparation du prompt IA,

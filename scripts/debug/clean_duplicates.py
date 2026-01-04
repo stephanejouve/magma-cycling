@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script de nettoyage des doublons dans workouts-history.md
+Script de nettoyage des doublons dans workouts-history.md.
 
 Supprime les entrées dupliquées en gardant seulement les premières occurrences.
 Supporte plusieurs emplacements de fichier.

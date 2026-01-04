@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Tests unitaires pour les extensions WorkflowState Phase 4
+Tests unitaires pour les extensions WorkflowState Phase 4.
 
 Tests:
 - Tracking sessions spéciales documentées (repos/annulations/sautées)
@@ -17,11 +17,11 @@ from cyclisme_training_logs.workflow_state import WorkflowState
 
 
 class TestSpecialSessionsTracking:
-    """Tests tracking sessions spéciales"""
+    """Tests tracking sessions spéciales."""
 
     @pytest.fixture
     def temp_dir(self):
-        """Create répertoire temporaire pour tests"""
+        """Create répertoire temporaire pour tests."""
         temp = tempfile.mkdtemp()
 
         yield Path(temp)
@@ -29,11 +29,11 @@ class TestSpecialSessionsTracking:
 
     @pytest.fixture
     def state(self, temp_dir):
-        """Create instance WorkflowState pour tests"""
+        """Create instance WorkflowState pour tests."""
         return WorkflowState(project_root=temp_dir)
 
     def test_mark_special_session_documented(self, state):
-        """Test marking special session as documented"""
+        """Test marking special session as documented."""
         # Marquer repos planifié
 
         state.mark_special_session_documented("S072-07", "rest", "2025-12-21")
@@ -51,7 +51,7 @@ class TestSpecialSessionsTracking:
         assert "documented_at" in entry
 
     def test_is_special_session_documented(self, state):
-        """Test checking if session is documented"""
+        """Test checking if session is documented."""
         # Avant marking
 
         assert not state.is_special_session_documented("S072-07", "2025-12-21")
@@ -64,14 +64,14 @@ class TestSpecialSessionsTracking:
         assert not state.is_special_session_documented("S072-05", "2025-12-19")
 
     def test_is_special_session_documented_empty_params(self, state):
-        """Test with empty parameters"""
+        """Test with empty parameters."""
         assert not state.is_special_session_documented("", "2025-12-21")
 
         assert not state.is_special_session_documented("S072-07", "")
         assert not state.is_special_session_documented("", "")
 
     def test_mark_multiple_special_sessions(self, state):
-        """Test marking multiple sessions"""
+        """Test marking multiple sessions."""
         sessions = [
             ("S072-07", "rest", "2025-12-21"),
             ("S072-05", "skipped", "2025-12-19"),
@@ -86,7 +86,7 @@ class TestSpecialSessionsTracking:
             assert state.is_special_session_documented(session_id, date)
 
     def test_get_documented_specials(self, state):
-        """Test retrieving all documented specials"""
+        """Test retrieving all documented specials."""
         # Avant marking
 
         assert state.get_documented_specials() == {}
@@ -102,7 +102,7 @@ class TestSpecialSessionsTracking:
         assert "S072-05_2025-12-19" in specials
 
     def test_special_sessions_persistence(self, state, temp_dir):
-        """Test persistence to JSON file"""
+        """Test persistence to JSON file."""
         # Marquer session
 
         state.mark_special_session_documented("S072-07", "rest", "2025-12-21")
@@ -113,11 +113,11 @@ class TestSpecialSessionsTracking:
 
 
 class TestFeedbackPersistence:
-    """Tests persistence feedback athlète"""
+    """Tests persistence feedback athlète."""
 
     @pytest.fixture
     def temp_dir(self):
-        """Create répertoire temporaire pour tests"""
+        """Create répertoire temporaire pour tests."""
         temp = tempfile.mkdtemp()
 
         yield Path(temp)
@@ -125,11 +125,11 @@ class TestFeedbackPersistence:
 
     @pytest.fixture
     def state(self, temp_dir):
-        """Create instance WorkflowState pour tests"""
+        """Create instance WorkflowState pour tests."""
         return WorkflowState(project_root=temp_dir)
 
     def test_save_session_feedback(self, state):
-        """Test saving feedback"""
+        """Test saving feedback."""
         feedback = {"rpe": 7, "comments": "Felt strong", "sleep_quality": 8, "sleep_hours": 7.5}
 
         state.save_session_feedback("i123456", feedback)
@@ -145,7 +145,7 @@ class TestFeedbackPersistence:
         assert entry["feedback"] == feedback
 
     def test_get_session_feedback(self, state):
-        """Test retrieving feedback"""
+        """Test retrieving feedback."""
         feedback = {"rpe": 8, "comments": "Excellent session"}
 
         # Avant save
@@ -161,7 +161,7 @@ class TestFeedbackPersistence:
         assert "timestamp" in retrieved
 
     def test_has_session_feedback(self, state):
-        """Test checking feedback existence"""
+        """Test checking feedback existence."""
         # Avant save
 
         assert not state.has_session_feedback("i123456")
@@ -174,7 +174,7 @@ class TestFeedbackPersistence:
         assert not state.has_session_feedback("i999999")
 
     def test_save_multiple_feedbacks(self, state):
-        """Test saving multiple feedbacks"""
+        """Test saving multiple feedbacks."""
         feedbacks = {
             "i123456": {"rpe": 7, "comments": "Good"},
             "i123457": {"rpe": 8, "comments": "Great"},
@@ -189,7 +189,7 @@ class TestFeedbackPersistence:
             assert state.has_session_feedback(activity_id)
 
     def test_feedback_persistence(self, state, temp_dir):
-        """Test persistence to JSON file"""
+        """Test persistence to JSON file."""
         feedback = {"rpe": 9, "comments": "Amazing workout"}
 
         # Sauvegarder feedback
@@ -203,7 +203,7 @@ class TestFeedbackPersistence:
         assert retrieved["feedback"]["rpe"] == 9
 
     def test_update_existing_feedback(self, state):
-        """Test updating feedback for same activity"""
+        """Test updating feedback for same activity."""
         # Save initial
 
         state.save_session_feedback("i123456", {"rpe": 7, "comments": "OK"})
@@ -218,18 +218,18 @@ class TestFeedbackPersistence:
 
 
 class TestBackwardCompatibility:
-    """Tests compatibilité avec state files existants"""
+    """Tests compatibilité avec state files existants."""
 
     @pytest.fixture
     def temp_dir(self):
-        """Create répertoire temporaire pour tests"""
+        """Create répertoire temporaire pour tests."""
         temp = tempfile.mkdtemp()
 
         yield Path(temp)
         shutil.rmtree(temp)
 
     def test_load_old_state_file(self, temp_dir):
-        """Test loading old state file without new fields"""
+        """Test loading old state file without new fields."""
         # Créer ancien state file (sans documented_specials ni feedbacks)
 
         old_state = {

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-validate_naming_convention.py - Validation stricte conventions nommage weekly_reports
+validate_naming_convention.py - Validation stricte conventions nommage weekly_reports.
 
 Ce script valide :
 1. Répertoires : format SXXX (S majuscule + 3 chiffres)

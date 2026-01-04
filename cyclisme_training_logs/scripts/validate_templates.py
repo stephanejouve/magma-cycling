@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-validate_templates.py - Valider tous les templates workout
+validate_templates.py - Valider tous les templates workout.
 
 Vérifie que les templates respectent le format Intervals.icu.
 """

@@ -1,5 +1,5 @@
 """
-Détection et suppression des doublons dans workouts-history.md
+Détection et suppression des doublons dans workouts-history.md.
 
 Utilisé en mode paranoid pour valider les insertions TimelineInjector.
 Détecte les doublons après insertion et peut les supprimer automatiquement
@@ -84,7 +84,7 @@ class DuplicateDetector:
 
     def __init__(self, history_file: Path, check_window: int = 50):
         """
-        Args:
+        Args:.
 
             history_file: Chemin vers workouts-history.md
             check_window: Nombre d'entrées à scanner (0 = tout le fichier).

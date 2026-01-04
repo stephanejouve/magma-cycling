@@ -87,7 +87,7 @@ class WorkoutUploader:
         self._init_api()
 
     def _init_api(self):
-        """Initialize l'API Intervals.icu"""
+        """Initialize l'API Intervals.icu."""
         import os
 
         try:

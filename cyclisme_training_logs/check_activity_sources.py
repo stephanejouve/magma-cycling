@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-check_activity_sources.py - Vérifier les sources des activités récentes
+check_activity_sources.py - Vérifier les sources des activités récentes.
 
 Ce script affiche la liste des activités récentes avec leur source
 pour identifier rapidement celles qui viennent de Strava (données limitées)

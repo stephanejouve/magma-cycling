@@ -63,7 +63,7 @@ import re
 
 
 class IntervalsFormatValidator:
-    """Validateur format Intervals.icu"""
+    """Validateur format Intervals.icu."""
 
     # Patterns validation
     REPETITION_PATTERN = r"^\s*(\d+)x\s*$"  # "3x" seul sur ligne
@@ -82,7 +82,7 @@ class IntervalsFormatValidator:
 
     def validate_workout(self, workout_text: str) -> tuple[bool, list[str], list[str]]:
         """
-        Validate un workout complet
+        Validate un workout complet.
 
         Args:
             workout_text: Texte workout à valider
@@ -110,7 +110,7 @@ class IntervalsFormatValidator:
 
     def _check_repetition_format(self, lines: list[str]):
         """
-        Verify format blocs répétés
+        Verify format blocs répétés.
 
         Format attendu:
             Main set 3x
@@ -156,7 +156,7 @@ class IntervalsFormatValidator:
 
     def _check_interval_format(self, lines: list[str]):
         """
-        Verify format lignes intervalles
+        Verify format lignes intervalles.
 
         Format attendu: "- [durée] [intensité] [cadence]"
         Exemples: "- 10m 90% 85rpm", "- 5m ramp 50-65%"
@@ -174,7 +174,7 @@ class IntervalsFormatValidator:
 
     def fix_repetition_format(self, workout_text: str) -> str:
         """
-        Corriger automatiquement format répétitions
+        Corriger automatiquement format répétitions.
 
         Transformations:
         - "Test capacité 3x" → "Main set 3x" (si pas section valide)
@@ -224,7 +224,7 @@ class IntervalsFormatValidator:
 
     def generate_example_workouts(self) -> dict:
         """
-        Generate exemples workouts corrects
+        Generate exemples workouts corrects.
 
         Returns:
             Dict avec exemples valides.

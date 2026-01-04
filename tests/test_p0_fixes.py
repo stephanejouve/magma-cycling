@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-test_p0_fixes.py - Tests de validation des corrections P0 critiques
+test_p0_fixes.py - Tests de validation des corrections P0 critiques.
 """
 import pytest
 
@@ -11,7 +11,7 @@ from cyclisme_training_logs.rest_and_cancellations import (
 
 
 def test_p0_fix1_modified_status_valid():
-    """P0 Fix #1: Vérifier que 'modified' est dans VALID_STATUSES"""
+    """P0 Fix #1: Vérifier que 'modified' est dans VALID_STATUSES."""
     assert "modified" in VALID_STATUSES, "'modified' devrait être un statut valide"
 
     assert "completed" in VALID_STATUSES
@@ -22,7 +22,7 @@ def test_p0_fix1_modified_status_valid():
 
 
 def test_p0_fix3_auto_reclassification_persistence():
-    """P0 Fix #3: Vérifier que l'auto-reclassification modifie l'original"""
+    """P0 Fix #3: Vérifier que l'auto-reclassification modifie l'original."""
     # Créer planning avec session marquée completed mais sans activité
 
     week_planning = {
@@ -62,7 +62,7 @@ def test_p0_fix3_auto_reclassification_persistence():
 
 
 def test_validation_with_modified_status():
-    """Verify que validate_week_planning accepte status='modified'"""
+    """Verify que validate_week_planning accepte status='modified'."""
     from cyclisme_training_logs.rest_and_cancellations import validate_week_planning
 
     planning_with_modified = {

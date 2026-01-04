@@ -55,13 +55,13 @@ from cyclisme_training_logs.config import get_data_config
 
 
 class WorkflowState:
-    """Gestion de l'état du workflow d'analyse"""
+    """Gestion de l'état du workflow d'analyse."""
 
     STATE_FILE = Path(".workflow_state.json")
 
     def __init__(self, project_root: Path | None = None):
         """
-        Initialize le gestionnaire d'état
+        Initialize le gestionnaire d'état.
 
         Args:
             project_root: Racine du projet (legacy, use data repo config instead).
@@ -115,7 +115,7 @@ class WorkflowState:
 
     def mark_analyzed(self, activity_id: str, activity_date: str | None = None):
         """
-        Marquer une activité comme analysée
+        Marquer une activité comme analysée.
 
         Args:
             activity_id: ID de l'activité analysée
@@ -146,7 +146,7 @@ class WorkflowState:
     @staticmethod
     def is_valid_activity(activity: dict) -> bool:
         """
-        Filtre activités valides pour analyse
+        Filtre activités valides pour analyse.
 
         Ignore les activités "fantômes" :
         - Durée < 2 minutes
@@ -180,7 +180,7 @@ class WorkflowState:
 
     def get_unanalyzed_activities(self, all_activities: list[dict]) -> list[dict]:
         """
-        Détecter les activités non analysées
+        Détecter les activités non analysées.
 
         Args:
             all_activities: Liste de toutes les activités récentes (triées par date décroissante)

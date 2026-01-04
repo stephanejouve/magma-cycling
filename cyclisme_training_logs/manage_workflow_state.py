@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Outil de gestion de l'état du workflow
+Outil de gestion de l'état du workflow.
 
 Utilitaire CLI pour inspecter et manipuler le fichier .workflow_state.json
 qui track les activités analysées. Permet d'afficher l'état, lister l'historique,
@@ -63,7 +63,7 @@ from cyclisme_training_logs.workflow_state import WorkflowState
 
 
 def show_state(state: WorkflowState):
-    """Display l'état du workflow"""
+    """Display l'état du workflow."""
     stats = state.get_stats()
 
     print()
