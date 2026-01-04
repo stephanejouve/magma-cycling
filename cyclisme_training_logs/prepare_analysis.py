@@ -357,7 +357,7 @@ class PromptGenerator:
 
     def get_power_value(self, activity, metric_type="avg"):
         """
-        Extraction robuste de la puissance avec fallback multi-champs
+        Extract robuste de la puissance avec fallback multi-champs
 
         Args:
             activity: Dictionnaire activité depuis API
@@ -381,7 +381,7 @@ class PromptGenerator:
         return None
 
     def get_cadence_value(self, activity, metric_type="avg"):
-        """Extraction robuste de la cadence avec fallback."""
+        """Extract robuste de la cadence avec fallback."""
         field_mappings = {
             "avg": ["avg_cadence", "cadence", "avgCadence", "rpm"],
             "max": ["max_cadence", "maxCadence", "maximum_cadence"],
@@ -397,7 +397,7 @@ class PromptGenerator:
         return None
 
     def get_hr_value(self, activity, metric_type="avg"):
-        """Extraction robuste de la fréquence cardiaque avec fallback."""
+        """Extract robuste de la fréquence cardiaque avec fallback."""
         field_mappings = {
             "avg": ["avg_hr", "hr", "avgHr", "heart_rate", "average_hr"],
             "max": ["max_hr", "maxHr", "max_heart_rate", "maximum_hr"],

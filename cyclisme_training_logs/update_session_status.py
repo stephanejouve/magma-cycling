@@ -259,7 +259,7 @@ def sync_with_intervals(
 
 
 def main():
-    """Main entry point."""
+    """Run entry point."""
     parser = argparse.ArgumentParser(
         description="Update session status in planning JSON and optionally sync with Intervals.icu",
         formatter_class=argparse.RawDescriptionHelpFormatter,

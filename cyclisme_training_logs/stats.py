@@ -84,7 +84,7 @@ def extract_tss_from_workouts(file_path):
 
 
 def calculate_weekly_tss(sessions):
-    """Calcule TSS par semaine."""
+    """Calculate TSS par semaine."""
     weekly = defaultdict(int)
 
     for session in sessions:

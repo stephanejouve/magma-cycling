@@ -580,7 +580,7 @@ class HistoryBackfiller:
 
 
 def main():
-    """Main entry point."""
+    """Run entry point."""
     parser = argparse.ArgumentParser(
         description="Backfill complete training history from Intervals.icu",
         formatter_class=argparse.RawDescriptionHelpFormatter,

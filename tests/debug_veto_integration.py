@@ -9,12 +9,12 @@ class TestVetoIntegration:
 
     @pytest.fixture
     def master_profile(self):
-        """Standard master athlete profile (54 years)."""
+        """Provide standard master athlete profile (54 years)."""
         return {"age": 54, "category": "master", "sleep_dependent": True}
 
     @pytest.fixture
     def senior_profile(self):
-        """Standard senior athlete profile."""
+        """Provide standard senior athlete profile."""
         return {"age": 35, "category": "senior", "sleep_dependent": False}
 
     def test_veto_critical_tsb(self, master_profile):

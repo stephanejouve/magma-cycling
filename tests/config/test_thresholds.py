@@ -58,7 +58,7 @@ class TestTrainingThresholdsMethods:
 
     @pytest.fixture
     def thresholds(self):
-        """Standard thresholds fixture."""
+        """Provide standard thresholds fixture."""
         return TrainingThresholds(
             tsb_fresh_min=10,
             tsb_optimal_min=-5,

@@ -131,7 +131,7 @@ class WeeklyAnalysis:
         return f"S{self.week_int + 1:03d}"
 
     def collect_week_workouts(self) -> list[dict]:
-        """Extraire les séances de la semaine depuis workouts-history.md."""
+        """Extract les séances de la semaine depuis workouts-history.md."""
         history_file = self.logs_dir / "workouts-history.md"
 
         if not history_file.exists():

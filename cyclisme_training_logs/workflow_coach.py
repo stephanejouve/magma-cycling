@@ -1823,7 +1823,7 @@ class WorkflowCoach:
         print("=" * 70)
 
     def _collect_rest_feedback(self, session_data: dict) -> dict:
-        """Collecte feedback athlète pour jour de repos.
+        """Collect feedback athlète pour jour de repos.
 
         Args:
             session_data: Session info
@@ -1877,7 +1877,7 @@ class WorkflowCoach:
         print("\n" + "=" * 70)
 
     def _copy_to_clipboard(self, markdowns: list) -> bool:
-        """Copie markdowns dans clipboard macOS.
+        """Copy markdowns dans clipboard macOS.
 
         Args:
             markdowns: Liste de tuples (date, markdown_text)
@@ -2170,7 +2170,7 @@ class WorkflowCoach:
             return "exit_workflow"
 
     def _handle_rest_cancellations(self):
-        """Handler pour traiter repos/annulations en batch.
+        """Handle pour traiter repos/annulations en batch.
 
         Returns:
             str: Action à effectuer ("exit" ou "continue")
@@ -2190,7 +2190,7 @@ class WorkflowCoach:
             return "exit"
 
     def _handle_skipped_sessions(self, skipped_sessions: list) -> str:
-        """Handler dédié pour traiter séances sautées en batch (P2 FIX).
+        """Handle dédié pour traiter séances sautées en batch (P2 FIX).
 
         Args:
             skipped_sessions: Liste sessions sautées détectées
@@ -2345,7 +2345,7 @@ Session planifiée non réalisée. Aucune donnée d'exécution disponible.
         return markdown
 
     def _handle_batch_all(self):
-        """Handler pour traiter TOUT en batch (exécutées + repos + annulations).
+        """Handle pour traiter TOUT en batch (exécutées + repos + annulations).
 
         TODO: Implémenter traitement batch complet
         - Générer markdowns repos/annulations

@@ -207,7 +207,7 @@ def print_dashboard_footer() -> None:
 
 
 def main() -> int:
-    """Main entry point."""
+    """Run entry point."""
     parser = argparse.ArgumentParser(description="Dashboard - Vue d'ensemble rapide entraînement")
 
     parser.add_argument(

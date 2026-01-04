@@ -250,7 +250,7 @@ def load_week_planning(week_id: str, planning_dir: Path | None = None) -> dict:
 
 def validate_week_planning(planning: dict) -> bool:
     """
-    Valide structure et cohérence planning hebdomadaire
+    Validate structure et cohérence planning hebdomadaire
 
     Checks:
     - Champs obligatoires présents

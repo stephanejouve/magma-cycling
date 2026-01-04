@@ -92,7 +92,7 @@ class AnalysisParser:
 
     @staticmethod
     def extract_markdown_block(text):
-        """Extraire le bloc markdown de l'analyse."""
+        """Extract le bloc markdown de l'analyse."""
         # Nettoyer le texte
 
         text = text.strip()
@@ -233,7 +233,7 @@ class AnalysisParser:
 
     @staticmethod
     def extract_date_from_analysis(text):
-        """Extraire la date de l'analyse pour détecter les doublons."""
+        """Extract la date de l'analyse pour détecter les doublons."""
         match = re.search(r"Date\s*:\s*(\d{2}/\d{2}/\d{4})", text)
 
         if match:
