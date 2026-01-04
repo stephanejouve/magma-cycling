@@ -2,8 +2,6 @@
 """
 tests/test_asservissement.py - Tests pour fonctionnalités asservissement
 """
-
-
 import pytest
 
 from cyclisme_training_logs.workflow_coach import WorkflowCoach
@@ -88,7 +86,6 @@ def test_parse_modifications_valid():
 }]}
 ```
 """
-
     mods = coach.parse_ai_modifications(ai_response)
 
     assert len(mods) == 1

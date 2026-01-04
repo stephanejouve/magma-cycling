@@ -69,7 +69,6 @@ Examples:
 Author: Claude Code
 Created: 2025-12-26 (Migrated from v2)
 """
-
 import json
 import logging
 from datetime import datetime
@@ -106,7 +105,7 @@ class DailyAggregator(DataAggregator):
         athlete_id: str | None = None,
     ):
         """
-        Initialiser agrégateur daily.
+        Initialize agrégateur daily.
 
         Args:
             activity_id: ID activité Intervals.icu (ex: i123456789)
@@ -126,7 +125,7 @@ class DailyAggregator(DataAggregator):
 
     def collect_raw_data(self) -> dict[str, Any]:
         """
-        Collecter données séance quotidienne.
+        Collect données séance quotidienne.
 
         Returns:
             Dict avec clés:
@@ -167,7 +166,7 @@ class DailyAggregator(DataAggregator):
 
     def process_data(self, raw_data: dict[str, Any]) -> dict[str, Any]:
         """
-        Traiter données daily.
+        Process données daily.
 
         Args:
             raw_data: Données brutes collectées
@@ -233,7 +232,7 @@ class DailyAggregator(DataAggregator):
 
     def format_output(self, processed_data: dict[str, Any]) -> str:
         """
-        Formater sortie daily en markdown.
+        Format sortie daily en markdown.
 
         Args:
             processed_data: Données traitées
@@ -274,7 +273,7 @@ class DailyAggregator(DataAggregator):
 
     def _fetch_intervals_activity(self) -> dict[str, Any]:
         """
-        Récupérer données activité depuis Intervals.icu.
+        Retrieve données activité depuis Intervals.icu.
 
         Returns:
             Dict avec données activité.
@@ -298,7 +297,7 @@ class DailyAggregator(DataAggregator):
 
     def _load_feedback(self) -> dict[str, Any]:
         """
-        Charger feedback athlète depuis fichier.
+        Load feedback athlète depuis fichier.
 
         Returns:
             Dict avec feedback.
@@ -325,7 +324,7 @@ class DailyAggregator(DataAggregator):
 
     def _load_workflow_state(self) -> dict[str, Any]:
         """
-        Charger état workflow depuis fichier.
+        Load état workflow depuis fichier.
 
         Returns:
             Dict avec état workflow.
@@ -344,7 +343,7 @@ class DailyAggregator(DataAggregator):
 
     def _fetch_fitness_metrics(self) -> dict[str, Any]:
         """
-        Récupérer métriques fitness depuis Intervals.icu.
+        Retrieve métriques fitness depuis Intervals.icu.
 
         Returns:
             Dict avec CTL/ATL/TSB.
@@ -355,7 +354,7 @@ class DailyAggregator(DataAggregator):
 
     def _load_power_zones(self) -> dict[str, Any]:
         """
-        Charger zones puissance depuis fichier.
+        Load zones puissance depuis fichier.
 
         Returns:
             Dict avec zones et FTP.
@@ -376,7 +375,7 @@ class DailyAggregator(DataAggregator):
         self, workout: dict[str, Any], athlete: dict[str, Any]
     ) -> dict[str, Any]:
         """
-        Calculer métriques dérivées.
+        Calculate métriques dérivées.
 
         Args:
             workout: Données workout

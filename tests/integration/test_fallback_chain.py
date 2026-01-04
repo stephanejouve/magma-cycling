@@ -4,7 +4,6 @@ Integration tests for AI Provider fallback chain.
 
 Tests automatic fallback between providers when failures occur.
 """
-
 import os
 from unittest.mock import patch
 

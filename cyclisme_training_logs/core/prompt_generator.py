@@ -54,7 +54,6 @@ Examples:
 Author: Claude Code
 Created: 2025-12-26 (Migrated from v2)
 """
-
 from pathlib import Path
 from typing import Any
 
@@ -73,7 +72,7 @@ class PromptGenerator:
 
     def __init__(self, templates_dir: Path | None = None):
         """
-        Initialiser générateur.
+        Initialize générateur.
 
         Args:
             templates_dir: Répertoire templates custom (optionnel)
@@ -220,7 +219,7 @@ Répondre en JSON :
         feedback: str | None = None,
     ) -> str:
         """
-        Générer prompt complet analyse daily.
+        Generate prompt complet analyse daily.
 
         Args:
             activity_id: ID activité Intervals.icu
@@ -249,11 +248,11 @@ Répondre en JSON :
 
         # Instructions
         instructions = """Analyser cette séance en détail :
+
 1. **Métriques clés** : TSS, IF, découplage cardiovasculaire
 2. **Qualité exécution** : Respect zones, pattern technique
 3. **Recommandations** : Adaptations séance suivante
 4. **Points vigilance** : Fatigue, récupération nécessaire."""
-
         blocks.append(self.instructions_block(instructions))
         blocks.append("")
 
@@ -266,7 +265,7 @@ Répondre en JSON :
         self, week: str, workouts: list[dict[str, Any]], metrics: dict[str, Any]
     ) -> str:
         """
-        Générer prompt analyse hebdomadaire (Phase 2).
+        Generate prompt analyse hebdomadaire (Phase 2).
 
         Args:
             week: Numéro semaine (S073)

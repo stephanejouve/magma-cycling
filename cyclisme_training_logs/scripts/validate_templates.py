@@ -4,7 +4,6 @@ validate_templates.py - Valider tous les templates workout
 
 Vérifie que les templates respectent le format Intervals.icu.
 """
-
 import json
 from pathlib import Path
 

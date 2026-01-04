@@ -24,7 +24,6 @@ Examples:
 Author: Claude Code
 Created: 2026-01-01
 """
-
 from typing import Any
 
 

@@ -14,7 +14,6 @@ Metadata:
     Priority: P0
     Version: v2.
 """
-
 from .daily_aggregator import DailyAggregator
 
 __all__ = ["DailyAggregator"]

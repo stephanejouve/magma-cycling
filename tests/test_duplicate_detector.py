@@ -14,7 +14,6 @@ Author: Claude Code
 Created: 2025-12-27
 Updated: 2025-12-27 (Initial test suite)
 """
-
 from pathlib import Path
 
 import pytest
@@ -55,7 +54,6 @@ Test 1 DOUBLON
 
 ---
 """
-
     history.write_text(content)
     return history
 
@@ -81,7 +79,6 @@ Test 2
 
 ---
 """
-
     history.write_text(content)
     return history
 
@@ -204,7 +201,6 @@ Test 2 DUP
 
 ---
 """
-
     history.write_text(content)
 
     # Auto-fix

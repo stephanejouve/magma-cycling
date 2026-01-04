@@ -10,7 +10,6 @@ DOCSTRING: v2
 Author: Claude Code
 Created: 2025-12-26
 """
-
 import json
 
 import pytest
@@ -20,7 +19,7 @@ from cyclisme_training_logs.analyzers.daily_aggregator import DailyAggregator
 
 @pytest.fixture
 def temp_training_dir(tmp_path):
-    """Créer structure training-logs temporaire pour tests."""
+    """Create structure training-logs temporaire pour tests."""
     training_dir = tmp_path / "training-logs"
     training_dir.mkdir()
 

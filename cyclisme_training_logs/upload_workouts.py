@@ -56,7 +56,6 @@ Metadata:
     Priority: P1
     Version: v2
 """
-
 import argparse
 import json
 import re
@@ -86,7 +85,7 @@ class WorkoutUploader:
         self._init_api()
 
     def _init_api(self):
-        """Initialiser l'API Intervals.icu"""
+        """Initialize l'API Intervals.icu"""
         import os
 
         try:
@@ -112,7 +111,7 @@ class WorkoutUploader:
             sys.exit(1)
 
     def parse_workouts_file(self, filepath: Path) -> list[dict]:
-        """Parser un fichier contenant les workouts."""
+        """Parse un fichier contenant les workouts."""
         print(f"\n📄 Lecture fichier : {filepath}")
 
         if not filepath.exists():
@@ -169,7 +168,7 @@ class WorkoutUploader:
         return workouts
 
     def parse_clipboard(self) -> list[dict]:
-        """Parser les workouts depuis le presse-papier."""
+        """Parse les workouts depuis le presse-papier."""
         import subprocess
 
         print("\n📋 Lecture presse-papier...")
@@ -228,7 +227,7 @@ class WorkoutUploader:
         return workouts
 
     def upload_workout(self, workout: dict) -> bool:
-        """Uploader un workout sur Intervals.icu."""
+        """Upload un workout sur Intervals.icu."""
         try:
             # Déterminer l'heure de début selon le jour de la semaine
             workout_date = datetime.strptime(workout["date"], "%Y-%m-%d")
@@ -263,7 +262,7 @@ class WorkoutUploader:
             return False
 
     def upload_all(self, workouts: list[dict], dry_run: bool = False) -> dict:
-        """Uploader tous les workouts."""
+        """Upload tous les workouts."""
         print("\n" + "=" * 70)
         print("📤 UPLOAD WORKOUTS VERS INTERVALS.ICU")
         print(f"Semaine : {self.week_number}")

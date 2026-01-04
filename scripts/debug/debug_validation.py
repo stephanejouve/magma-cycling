@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Debug is_valid_activity rejection"""
-
 import os
 import sys
 from pathlib import Path

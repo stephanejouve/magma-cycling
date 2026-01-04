@@ -23,7 +23,6 @@ Exit codes:
     1 : Problèmes détectés
     2 : Erreur exécution.
 """
-
 import argparse
 import json
 import re
@@ -47,14 +46,14 @@ class NamingValidator:
         """Initialize naming convention validator.
 
         Args:
-            project_root: Project root directory path (default: current directory)
+            project_root: Project root directory path (default: current directory).
         """
         self.project_root = Path(project_root)
         self.weekly_dir = self.project_root / "logs" / "weekly_reports"
         self.issues: list[dict[str, Any]] = []
 
     def validate_directory_name(self, dir_name: str) -> dict[str, Any]:
-        """Valider nom de répertoire."""
+        """Validate nom de répertoire."""
         result: dict[str, Any] = {
             "type": "directory",
             "name": dir_name,
@@ -76,7 +75,7 @@ class NamingValidator:
         return result
 
     def validate_file_name(self, file_name: str, parent_dir: str) -> dict[str, Any]:
-        """Valider nom de fichier."""
+        """Validate nom de fichier."""
         result: dict[str, Any] = {
             "type": "file",
             "name": file_name,
@@ -101,7 +100,7 @@ class NamingValidator:
         return result
 
     def validate_structure(self) -> bool:
-        """Valider toute la structure."""
+        """Validate toute la structure."""
         if not self.weekly_dir.exists():
             print(f"❌ Répertoire non trouvé : {self.weekly_dir}")
             return False
@@ -129,7 +128,7 @@ class NamingValidator:
         return all_valid
 
     def print_report(self, verbose: bool = False):
-        """Afficher rapport de validation."""
+        """Display rapport de validation."""
         print("\n" + "=" * 70)
         print("🔍 VALIDATION CONVENTIONS NOMMAGE WEEKLY REPORTS")
         print("=" * 70)
@@ -192,7 +191,7 @@ class NamingValidator:
         print("=" * 70)
 
     def get_json_report(self) -> str:
-        """Générer rapport JSON."""
+        """Generate rapport JSON."""
         dirs = (
             [d.name for d in self.weekly_dir.iterdir() if d.is_dir()]
             if self.weekly_dir.exists()

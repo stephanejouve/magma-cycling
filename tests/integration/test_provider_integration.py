@@ -4,7 +4,6 @@ Integration tests for AI Provider system.
 
 Tests real integration between providers, factory, and config.
 """
-
 import os
 from unittest.mock import patch
 

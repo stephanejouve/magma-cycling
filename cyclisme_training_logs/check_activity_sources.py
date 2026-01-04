@@ -9,7 +9,6 @@ Usage:
     python3 cyclisme_training_logs/check_activity_sources.py
     python3 cyclisme_training_logs/check_activity_sources.py --last-days 14.
 """
-
 import argparse
 import json
 import sys
@@ -22,7 +21,7 @@ from cyclisme_training_logs.api.intervals_client import IntervalsClient
 
 
 def load_config(config_file):
-    """Charger la configuration depuis un fichier JSON."""
+    """Load la configuration depuis un fichier JSON."""
     config_path = Path(config_file).expanduser()
     if not config_path.exists():
         return None
@@ -32,7 +31,7 @@ def load_config(config_file):
 
 
 def format_source_icon(source):
-    """Retourner un icône selon la source."""
+    """Return un icône selon la source."""
     icons = {
         "STRAVA": "⚠️  ",
         "MANUAL": "✍️  ",

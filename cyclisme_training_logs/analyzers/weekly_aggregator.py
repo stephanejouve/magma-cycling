@@ -72,7 +72,6 @@ Metadata:
     Priority: P1
     Version: v2
 """
-
 import json
 import logging
 from datetime import date, timedelta
@@ -130,7 +129,7 @@ class WeeklyAggregator(DataAggregator):
         config: dict[str, Any] | None = None,
     ):
         """
-        Initialiser agrégateur weekly.
+        Initialize agrégateur weekly.
 
         Args:
             week: Numéro semaine (ex: S073)
@@ -165,7 +164,7 @@ class WeeklyAggregator(DataAggregator):
 
     def collect_raw_data(self) -> dict[str, Any]:
         """
-        Collecter données brutes hebdomadaires.
+        Collect données brutes hebdomadaires.
 
         Returns:
             Dict avec :
@@ -229,7 +228,7 @@ class WeeklyAggregator(DataAggregator):
 
     def process_data(self, raw_data: dict[str, Any]) -> dict[str, Any]:
         """
-        Traiter données brutes hebdomadaires.
+        Process données brutes hebdomadaires.
 
         Args:
             raw_data: Données collectées
@@ -281,7 +280,7 @@ class WeeklyAggregator(DataAggregator):
 
     def format_output(self, processed_data: dict[str, Any]) -> str:
         """
-        Formater sortie markdown (summary).
+        Format sortie markdown (summary).
 
         Args:
             processed_data: Données traitées
@@ -409,7 +408,7 @@ class WeeklyAggregator(DataAggregator):
         return metrics
 
     def _load_weekly_feedback(self) -> dict[str, Any]:
-        """Charger feedback athlète pour la semaine."""
+        """Load feedback athlète pour la semaine."""
         feedback_dir = self.data_dir / "feedback"
         if not feedback_dir.exists():
             return {}
@@ -484,7 +483,7 @@ class WeeklyAggregator(DataAggregator):
 
     def _compute_weekly_summary(self, activities: list[dict[str, Any]]) -> dict[str, Any]:
         """
-        Calculer summary hebdomadaire.
+        Calculate summary hebdomadaire.
 
         Note: Utilise champs Intervals.icu avec préfixe 'icu_':
         - icu_training_load (TSS)
@@ -528,7 +527,7 @@ class WeeklyAggregator(DataAggregator):
         self, activities: list[dict[str, Any]], feedback: dict[str, Any]
     ) -> list[dict[str, Any]]:
         """
-        Traiter workouts avec détails pour workout_history.
+        Process workouts avec détails pour workout_history.
 
         Map champs Intervals.icu (icu_ prefix) vers format interne:
         - icu_training_load → tss
@@ -569,7 +568,7 @@ class WeeklyAggregator(DataAggregator):
         return workouts
 
     def _process_metrics_evolution(self, metrics_daily: list[dict[str, Any]]) -> dict[str, Any]:
-        """Traiter évolution métriques."""
+        """Process évolution métriques."""
         if not metrics_daily:
             return {}
 
@@ -648,7 +647,7 @@ class WeeklyAggregator(DataAggregator):
     def _compute_compliance(
         self, activities: list[dict[str, Any]], planned: list[dict[str, Any]]
     ) -> dict[str, Any]:
-        """Calculer compliance planifié vs exécuté."""
+        """Calculate compliance planifié vs exécuté."""
         compliance = {
             "planned_count": len(planned),
             "executed_count": len(activities),
@@ -693,7 +692,7 @@ class WeeklyAggregator(DataAggregator):
         return transition
 
     def _analyze_wellness(self, wellness: dict[str, Any]) -> dict[str, Any]:
-        """Analyser données wellness."""
+        """Analyze données wellness."""
         insights = {"sleep_quality_avg": 0, "sleep_hours_avg": 0, "weight_trend": 0, "hrv_avg": 0}
 
         if not wellness:

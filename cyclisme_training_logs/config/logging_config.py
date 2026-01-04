@@ -29,7 +29,6 @@ Examples:
     # JSON logs (for log aggregation)
     LOG_FORMAT=json LOG_LEVEL=INFO poetry run weekly-analysis
 """
-
 import logging
 import os
 import sys

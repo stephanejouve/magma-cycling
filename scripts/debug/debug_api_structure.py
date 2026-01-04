@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Debug structure réponse API Intervals.icu"""
-
 import json
 import os
 import sys

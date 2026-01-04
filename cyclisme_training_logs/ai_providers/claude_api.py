@@ -49,7 +49,6 @@ Metadata:
     Priority: P2
     Version: v2
 """
-
 import logging
 
 from anthropic import Anthropic

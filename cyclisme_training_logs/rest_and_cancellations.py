@@ -50,7 +50,6 @@ Metadata:
     Priority: P2
     Version: v2
 """
-
 import json
 import logging
 from datetime import datetime
@@ -455,7 +454,6 @@ Le repos planifié permet une récupération complète sans impact négatif sur 
 
 ---.
 """
-
     return markdown
 
 
@@ -641,7 +639,6 @@ Date : {date_str}
 
 ---.
 """
-
     return markdown
 
 

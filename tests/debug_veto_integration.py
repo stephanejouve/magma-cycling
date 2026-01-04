@@ -1,5 +1,4 @@
 """Tests for VETO logic integration in rest_and_cancellations.py (Sprint R2.1 P0)."""
-
 import pytest
 
 from cyclisme_training_logs.rest_and_cancellations import check_pre_session_veto

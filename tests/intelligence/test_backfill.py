@@ -3,7 +3,6 @@ Tests for backfill_intelligence module.
 
 Tests backfill extraction of learnings/patterns from Intervals.icu history.
 """
-
 from unittest.mock import Mock, patch
 
 import pytest
@@ -71,11 +70,7 @@ def test_backfill_sweet_spot_extraction(backfiller, mock_intervals_client):
 
     # Find sweet-spot learning
     sweet_spot_learning = next(
-        (
-            lrn
-            for lrn in backfiller.intelligence.learnings.values()
-            if lrn.category == "sweet-spot"
-        ),
+        (lrn for lrn in backfiller.intelligence.learnings.values() if lrn.category == "sweet-spot"),
         None,
     )
 

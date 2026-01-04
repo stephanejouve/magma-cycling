@@ -10,7 +10,6 @@ Tests the complete pipeline:
 
 Run with: poetry run python test_phase1_integration.py
 """
-
 import shutil
 import sys
 import tempfile
@@ -71,7 +70,6 @@ def test_timeline_injector():
 - Puissance moyenne: 180W
 - Découplage: 2.1%
 """
-
         # Inject chronologically
         print("\nInjecting workout entry for 2025-01-07...")
         result = injector.inject_chronologically(

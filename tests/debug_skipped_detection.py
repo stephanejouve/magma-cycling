@@ -13,7 +13,6 @@ Usage:
     python3 cyclisme_training_logs/test_skipped_detection.py --days 14
     python3 cyclisme_training_logs/test_skipped_detection.py --generate-markdown
 """
-
 import argparse
 import json
 from datetime import datetime, timedelta
@@ -23,7 +22,7 @@ from cyclisme_training_logs.planned_sessions_checker import PlannedSessionsCheck
 
 
 def load_credentials():
-    """Charger credentials depuis config"""
+    """Load credentials depuis config"""
     config_path = Path.home() / ".intervals_config.json"
 
     if not config_path.exists():
@@ -54,14 +53,14 @@ def load_credentials():
 
 
 def print_header(title):
-    """Afficher header stylisé"""
+    """Display header stylisé"""
     print("\n" + "=" * 70)
     print(f"  {title}")
     print("=" * 70 + "\n")
 
 
 def print_skipped_details(skipped_sessions):
-    """Afficher détails des séances sautées"""
+    """Display détails des séances sautées"""
     if not skipped_sessions:
         print("✅ Aucune séance sautée détectée !\n")
         return
@@ -102,7 +101,7 @@ def print_skipped_details(skipped_sessions):
 
 
 def generate_markdown_examples(skipped_sessions):
-    """Générer exemples de markdown pour séances sautées"""
+    """Generate exemples de markdown pour séances sautées"""
     if not skipped_sessions:
         print("Aucune séance sautée → Pas de markdown à générer\n")
         return
@@ -129,7 +128,7 @@ def generate_markdown_examples(skipped_sessions):
 
 
 def calculate_impact(skipped_sessions):
-    """Calculer impact des séances sautées"""
+    """Calculate impact des séances sautées"""
     if not skipped_sessions:
         return
 

@@ -4,7 +4,6 @@ Tests for Claude API Provider.
 
 Tests ClaudeAPIAnalyzer with realistic Anthropic SDK mocks.
 """
-
 from unittest.mock import MagicMock, patch
 
 import pytest

@@ -48,7 +48,6 @@ Metadata:
     Priority: P2
     Version: v2
 """
-
 import logging
 
 from mistralai import Mistral

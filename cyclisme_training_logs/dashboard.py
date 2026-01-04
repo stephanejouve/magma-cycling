@@ -22,7 +22,6 @@ Examples:
     # Avec intelligence chargée
     poetry run dashboard --intelligence ~/cyclisme-training-logs-data/intelligence/backfilled_2024-2025.json.
 """
-
 import argparse
 import sys
 from datetime import datetime

@@ -4,7 +4,6 @@ Tests for AI Provider Factory.
 
 Tests AIProviderFactory for dynamic provider creation.
 """
-
 import pytest
 
 from cyclisme_training_logs.ai_providers.base import AIAnalyzer, AIProvider

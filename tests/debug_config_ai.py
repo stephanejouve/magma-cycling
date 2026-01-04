@@ -4,7 +4,6 @@ Tests for AI Providers Configuration.
 
 Tests AIProvidersConfig singleton and configuration management.
 """
-
 import os
 from unittest.mock import patch
 

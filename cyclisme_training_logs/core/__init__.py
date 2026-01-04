@@ -15,5 +15,4 @@ Metadata:
     Priority: P0
     Version: v2.
 """
-
 __all__ = ["timeline_injector", "data_aggregator", "prompt_generator"]

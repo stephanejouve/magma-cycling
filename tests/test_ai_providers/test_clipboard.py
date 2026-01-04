@@ -4,7 +4,6 @@ Tests for Clipboard AI Provider.
 
 Tests ClipboardAnalyzer for manual copy/paste workflow with realistic mocks.
 """
-
 from unittest.mock import patch
 
 from cyclisme_training_logs.ai_providers.base import AIProvider
@@ -68,7 +67,6 @@ class TestClipboardAnalyzer:
         prompt = """Line 1
 Line 2
 Line 3"""
-
         result = analyzer.analyze_session(prompt)
 
         # Should handle multiline prompt

@@ -6,7 +6,6 @@ Tests:
 - Tracking sessions spéciales documentées (repos/annulations/sautées)
 - Persistence feedback athlète
 """
-
 import json
 import shutil
 import tempfile
@@ -22,14 +21,14 @@ class TestSpecialSessionsTracking:
 
     @pytest.fixture
     def temp_dir(self):
-        """Créer répertoire temporaire pour tests"""
+        """Create répertoire temporaire pour tests"""
         temp = tempfile.mkdtemp()
         yield Path(temp)
         shutil.rmtree(temp)
 
     @pytest.fixture
     def state(self, temp_dir):
-        """Créer instance WorkflowState pour tests"""
+        """Create instance WorkflowState pour tests"""
         return WorkflowState(project_root=temp_dir)
 
     def test_mark_special_session_documented(self, state):
@@ -112,14 +111,14 @@ class TestFeedbackPersistence:
 
     @pytest.fixture
     def temp_dir(self):
-        """Créer répertoire temporaire pour tests"""
+        """Create répertoire temporaire pour tests"""
         temp = tempfile.mkdtemp()
         yield Path(temp)
         shutil.rmtree(temp)
 
     @pytest.fixture
     def state(self, temp_dir):
-        """Créer instance WorkflowState pour tests"""
+        """Create instance WorkflowState pour tests"""
         return WorkflowState(project_root=temp_dir)
 
     def test_save_session_feedback(self, state):
@@ -214,7 +213,7 @@ class TestBackwardCompatibility:
 
     @pytest.fixture
     def temp_dir(self):
-        """Créer répertoire temporaire pour tests"""
+        """Create répertoire temporaire pour tests"""
         temp = tempfile.mkdtemp()
         yield Path(temp)
         shutil.rmtree(temp)

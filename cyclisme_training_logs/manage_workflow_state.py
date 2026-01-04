@@ -54,7 +54,6 @@ Metadata:
     Priority: P1
     Version: v2
 """
-
 import argparse
 import sys
 from datetime import datetime
@@ -63,7 +62,7 @@ from cyclisme_training_logs.workflow_state import WorkflowState
 
 
 def show_state(state: WorkflowState):
-    """Afficher l'état du workflow"""
+    """Display l'état du workflow"""
     stats = state.get_stats()
 
     print()
@@ -122,7 +121,7 @@ def list_activities(state: WorkflowState, count: int = 10):
 
 
 def remove_activity(state: WorkflowState, activity_id: str):
-    """Supprimer une activité de l'historique."""
+    """Delete une activité de l'historique."""
     print()
     print(f"🔍 Recherche de l'activité {activity_id}...")
 

@@ -21,7 +21,6 @@ Author: Claude Code
 Created: 2026-01-02
 Version: 1.0.0
 """
-
 from dataclasses import dataclass
 from datetime import datetime
 from typing import TYPE_CHECKING
@@ -103,7 +102,7 @@ class PIDController:
 
     def compute(self, measured_value: float, dt: float = 1.0) -> dict[str, float]:
         """
-        Calculer correction PID.
+        Calculate correction PID.
 
         Args:
             measured_value: FTP actuelle (W)
@@ -222,7 +221,7 @@ class PIDController:
 
 def compute_pid_gains_from_intelligence(intelligence: "TrainingIntelligence") -> dict[str, float]:
     """
-    Calculer gains PID optimaux depuis Training Intelligence.
+    Calculate gains PID optimaux depuis Training Intelligence.
 
     Analyse learnings/patterns validés pour dériver Kp, Ki, Kd.
 
@@ -250,7 +249,6 @@ def compute_pid_gains_from_intelligence(intelligence: "TrainingIntelligence") ->
         >>> 0.005 <= gains["kp"] <= 0.015
         True
     """
-
     # Kp: Based on confidence average from validated learnings
     validated_learnings = [
         lrn

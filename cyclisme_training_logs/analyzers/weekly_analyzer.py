@@ -57,7 +57,6 @@ Metadata:
     Priority: P1
     Version: v2
 """
-
 import logging
 from pathlib import Path
 from typing import Any
@@ -87,7 +86,7 @@ class WeeklyAnalyzer:
         prompt_generator: PromptGenerator | None = None,
     ):
         """
-        Initialiser analyzer.
+        Initialize analyzer.
 
         Args:
             week: Numéro semaine (S073)
@@ -100,7 +99,7 @@ class WeeklyAnalyzer:
 
     def generate_all_reports(self) -> dict[str, str]:
         """
-        Générer les 6 reports complets.
+        Generate les 6 reports complets.
 
         Returns:
             Dict avec clés : workout_history, metrics_evolution,
@@ -122,7 +121,7 @@ class WeeklyAnalyzer:
 
     def generate_workout_history(self) -> str:
         """
-        Générer workout_history_sXXX.md.
+        Generate workout_history_sXXX.md.
 
         Format :
         # Historique Entraînements SXXX
@@ -186,7 +185,7 @@ class WeeklyAnalyzer:
 
     def generate_metrics_evolution(self) -> str:
         """
-        Générer metrics_evolution_sXXX.md.
+        Generate metrics_evolution_sXXX.md.
 
         Format :
         # Évolution Métriques SXXX
@@ -235,7 +234,7 @@ class WeeklyAnalyzer:
 
     def generate_training_learnings(self) -> str:
         """
-        Générer training_learnings_sXXX.md.
+        Generate training_learnings_sXXX.md.
 
         Format :
         # Enseignements d'Entraînement SXXX
@@ -264,7 +263,7 @@ class WeeklyAnalyzer:
 
     def generate_protocol_adaptations(self) -> str:
         """
-        Générer protocol_adaptations_sXXX.md.
+        Generate protocol_adaptations_sXXX.md.
 
         Format :
         # Adaptations Protocoles SXXX
@@ -290,7 +289,7 @@ class WeeklyAnalyzer:
 
     def generate_transition(self) -> str:
         """
-        Générer transition_sXXX_sYYY.md.
+        Generate transition_sXXX_sYYY.md.
 
         Format :
         # Transition SXXX → SYYY
@@ -341,7 +340,7 @@ class WeeklyAnalyzer:
 
     def generate_bilan_final(self) -> str:
         """
-        Générer bilan_final_sXXX.md.
+        Generate bilan_final_sXXX.md.
 
         Format :
         # Bilan Final SXXX
@@ -376,7 +375,7 @@ class WeeklyAnalyzer:
 
     def save_reports(self, reports: dict[str, str], output_dir: Path) -> None:
         """
-        Sauvegarder reports sur disque.
+        Backup reports sur disque.
 
         Args:
             reports: Dict reports générés

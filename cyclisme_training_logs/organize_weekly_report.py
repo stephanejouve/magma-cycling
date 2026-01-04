@@ -19,7 +19,6 @@ Usage:
     # Mode dry-run (test sans écriture)
     python3 cyclisme_training_logs/organize_weekly_report.py --week 067 --dry-run.
 """
-
 import argparse
 import re
 import subprocess
@@ -43,13 +42,13 @@ class WeeklyReportOrganizer:
         """Initialize weekly report organizer.
 
         Args:
-            project_root: Project root directory path (default: current directory)
+            project_root: Project root directory path (default: current directory).
         """
         self.project_root = Path(project_root)
         self.bilans_dir = self.project_root / "logs" / "weekly_reports"
 
     def read_clipboard(self):
-        """Lire le presse-papier."""
+        """Read le presse-papier."""
         try:
             result = subprocess.run(["pbpaste"], capture_output=True, text=True, check=True)
             return result.stdout
@@ -58,7 +57,7 @@ class WeeklyReportOrganizer:
             return None
 
     def parse_files_from_text(self, text):
-        """Parser les fichiers depuis le texte (séparés par ---)."""
+        """Parse les fichiers depuis le texte (séparés par ---)."""
         files = {}
 
         # Stratégie 1 : Chercher les blocs avec # nom_fichier
@@ -97,7 +96,7 @@ class WeeklyReportOrganizer:
         return files if files else None
 
     def read_files_from_dir(self, directory):
-        """Lire les fichiers depuis un répertoire."""
+        """Read les fichiers depuis un répertoire."""
         files = {}
         dir_path = Path(directory)
 
@@ -112,7 +111,7 @@ class WeeklyReportOrganizer:
         return files if files else None
 
     def validate_files(self, files, week_number):
-        """Valider la présence des 6 fichiers obligatoires."""
+        """Validate la présence des 6 fichiers obligatoires."""
         week_str = f"{week_number:03d}"
         next_week_str = f"{week_number+1:03d}"
 
@@ -146,7 +145,7 @@ class WeeklyReportOrganizer:
         return found, missing
 
     def save_files(self, files, week_number, dry_run=False):
-        """Sauvegarder les fichiers dans bilans_hebdo/SXXX/."""
+        """Backup les fichiers dans bilans_hebdo/SXXX/."""
         week_str = f"S{week_number:03d}"  # ✅ MAJUSCULE (convention SXXX)
         week_dir = self.bilans_dir / week_str
 
@@ -177,7 +176,7 @@ class WeeklyReportOrganizer:
         return True
 
     def show_git_diff(self, week_number):
-        """Afficher le git diff"""
+        """Display le git diff"""
         week_str = f"s{week_number:03d}"
         week_dir = self.bilans_dir / week_str
 

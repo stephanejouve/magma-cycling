@@ -3,7 +3,6 @@
 Script de Planification Hebdomadaire
 Génère un prompt pour Claude.ai afin de créer les entraînements de la semaine.
 """
-
 import argparse
 import json
 import subprocess
@@ -61,7 +60,7 @@ class WeeklyPlanner:
         self._init_api()
 
     def _init_api(self):
-        """Initialiser l'API Intervals.icu."""
+        """Initialize l'API Intervals.icu."""
         try:
             # Load credentials from .env or config file
             from cyclisme_training_logs.config import get_intervals_config
@@ -77,17 +76,17 @@ class WeeklyPlanner:
             print("   Les métriques seront approximatives")
 
     def _previous_week_number(self) -> str:
-        """Calculer le numéro de la semaine précédente."""
+        """Calculate le numéro de la semaine précédente."""
         current_num = int(self.week_number[1:])
         return f"S{current_num - 1:03d}"
 
     def _next_week_number(self) -> str:
-        """Calculer le numéro de la semaine suivante."""
+        """Calculate le numéro de la semaine suivante."""
         current_num = int(self.week_number[1:])
         return f"S{current_num + 1:03d}"
 
     def collect_current_metrics(self) -> dict:
-        """Collecter les métriques actuelles depuis API."""
+        """Collect les métriques actuelles depuis API."""
         print("\n📊 Collecte des métriques actuelles...")
 
         if not self.api:
@@ -143,7 +142,7 @@ class WeeklyPlanner:
         }
 
     def load_previous_week_bilan(self) -> str:
-        """Charger le bilan de la semaine précédente."""
+        """Load le bilan de la semaine précédente."""
         print("\n📄 Chargement bilan semaine précédente...")
 
         prev_week = self._previous_week_number()
@@ -158,7 +157,7 @@ class WeeklyPlanner:
             return f"[Bilan {prev_week} non disponible]"
 
     def load_context_files(self) -> dict[str, str]:
-        """Charger les fichiers de contexte."""
+        """Load les fichiers de contexte."""
         print("\n📚 Chargement fichiers contexte...")
 
         context = {}
@@ -198,7 +197,7 @@ class WeeklyPlanner:
         return context
 
     def generate_planning_prompt(self) -> str:
-        """Générer le prompt complet pour Claude.ai."""
+        """Generate le prompt complet pour Claude.ai."""
         print("\n✍️ Génération du prompt de planification...")
 
         next_week = self._next_week_number()
@@ -624,11 +623,10 @@ Main set 4x
 
 Le but est que je puisse **copier-coller directement** chaque bloc dans Intervals.icu Workout Builder sans modification.
 """
-
         return prompt
 
     def copy_to_clipboard(self, text: str) -> bool:
-        """Copier le texte dans le presse-papier (macOS)"""
+        """Copy le texte dans le presse-papier (macOS)"""
         try:
             subprocess.run(["pbcopy"], input=text.encode("utf-8"), check=True)
             return True
@@ -638,7 +636,7 @@ Le but est que je puisse **copier-coller directement** chaque bloc dans Interval
 
     def update_session_status(self, session_id: str, status: str, reason: str | None = None):
         """
-        Mettre à jour le statut d'une séance dans le JSON.
+        Update le statut d'une séance dans le JSON.
 
         Args:
             session_id: ID de la séance (ex: S074-01)
@@ -687,7 +685,7 @@ Le but est que je puisse **copier-coller directement** chaque bloc dans Interval
 
     def save_planning_json(self, workouts_data: list | None = None):
         """
-        Sauvegarder le planning au format JSON.
+        Backup le planning au format JSON.
 
         Args:
             workouts_data: Liste des workouts générés (optionnel, créera template si None).
@@ -733,7 +731,7 @@ Le but est que je puisse **copier-coller directement** chaque bloc dans Interval
         return json_file
 
     def run(self):
-        """Exécuter le workflow complet."""
+        """Execute le workflow complet."""
         print("=" * 70)
         print(f"📅 PLANIFICATION HEBDOMADAIRE {self.week_number}")
         print(

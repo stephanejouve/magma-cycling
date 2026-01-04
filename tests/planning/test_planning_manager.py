@@ -1,5 +1,4 @@
 """Tests for planning_manager module (Sprint R3)."""
-
 from datetime import date
 
 import pytest

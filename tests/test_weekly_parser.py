@@ -4,13 +4,11 @@ Test du parser de réponse Claude pour weekly_analysis.py
 
 Ce script teste le parsing d'une réponse Claude simulée.
 """
-
 from cyclisme_training_logs.weekly_analysis import WeeklyAnalysis
 
 
 def test_parser():
     """Tester le parser avec une réponse simulée"""
-
     # Créer une instance (les dates n'ont pas d'importance pour ce test)
     analysis = WeeklyAnalysis("S001", "2024-01-01")
 
@@ -48,7 +46,6 @@ Contenu du fichier 5...
 
 Contenu du fichier 6...
 """
-
     print("🧪 Test du parser de réponse Claude")
     print("=" * 70)
     print()

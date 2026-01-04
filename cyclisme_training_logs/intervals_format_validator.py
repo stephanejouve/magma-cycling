@@ -58,7 +58,6 @@ Metadata:
     Priority: P2
     Version: v2
 """
-
 import re
 
 
@@ -81,7 +80,7 @@ class IntervalsFormatValidator:
 
     def validate_workout(self, workout_text: str) -> tuple[bool, list[str], list[str]]:
         """
-        Valider un workout complet
+        Validate un workout complet
 
         Args:
             workout_text: Texte workout à valider
@@ -108,7 +107,7 @@ class IntervalsFormatValidator:
 
     def _check_repetition_format(self, lines: list[str]):
         """
-        Vérifier format blocs répétés
+        Verify format blocs répétés
 
         Format attendu:
             Main set 3x
@@ -154,7 +153,7 @@ class IntervalsFormatValidator:
 
     def _check_interval_format(self, lines: list[str]):
         """
-        Vérifier format lignes intervalles
+        Verify format lignes intervalles
 
         Format attendu: "- [durée] [intensité] [cadence]"
         Exemples: "- 10m 90% 85rpm", "- 5m ramp 50-65%"
@@ -221,7 +220,7 @@ class IntervalsFormatValidator:
 
     def generate_example_workouts(self) -> dict:
         """
-        Générer exemples workouts corrects
+        Generate exemples workouts corrects
 
         Returns:
             Dict avec exemples valides.
@@ -282,7 +281,6 @@ Main set
 
 Cooldown
 - 10m ramp 65-50%."""
-
     is_valid, errors, warnings = validator.validate_workout(invalid1)
     print(f"Valid: {is_valid}")
     print(f"Errors: {errors}")
@@ -304,7 +302,6 @@ Test capacité 3x
 
 Cooldown
 - 10m ramp 65-50%."""
-
     is_valid, errors, warnings = validator.validate_workout(invalid2)
     print(f"Valid: {is_valid}")
     print(f"Warnings: {warnings}")
@@ -329,7 +326,6 @@ Main set 3x
 
 Cooldown
 - 10m ramp 75-50% 85rpm."""
-
     is_valid, errors, warnings = validator.validate_workout(valid)
     print(f"Valid: {is_valid}")
     print(f"Errors: {errors}")

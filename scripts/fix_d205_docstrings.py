@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Fix D205 docstring errors by adding blank lines."""
-
 import re
 import sys
 from pathlib import Path
@@ -29,7 +28,6 @@ def fix_d205_in_file(file_path: Path) -> tuple[bool, int]:
     #
     # Second line
     # """
-
     # Match: opening quotes, first line ending with period, newline, text (not closing quotes)
     pattern = r'(""")([^\n]+\.)(\n)([ \t]*)([^\n"]+)'
 

@@ -55,7 +55,6 @@ Metadata:
     Priority: P0
     Version: v2
 """
-
 import argparse
 import json
 import logging
@@ -177,7 +176,7 @@ class WorkflowCoach:
         logger.info(f"AI Analyzer initialized: {self.ai_analyzer.__class__.__name__}")
 
     def load_credentials(self):
-        """Charger credentials Intervals.icu de manière robuste."""
+        """Load credentials Intervals.icu de manière robuste."""
         import json
         import os
         from pathlib import Path
@@ -882,11 +881,11 @@ class WorkflowCoach:
             print(f"   git commit -m 'fix: Réconciliation {week_id}'")
 
     def clear_screen(self):
-        """Nettoyer l'écran."""
+        """Clean l'écran."""
         os.system("clear" if os.name == "posix" else "cls")
 
     def print_header(self, title, subtitle=None):
-        """Afficher un header stylisé."""
+        """Display un header stylisé."""
         print("\n" + "=" * 70)
         print(f"  {title}")
         if subtitle:
@@ -894,7 +893,7 @@ class WorkflowCoach:
         print("=" * 70 + "\n")
 
     def print_separator(self):
-        """Afficher un séparateur."""
+        """Display un séparateur."""
         print("\n" + "-" * 70 + "\n")
 
     def wait_user(self, message="Appuyer sur ENTRÉE pour continuer..."):
@@ -2280,7 +2279,7 @@ class WorkflowCoach:
             return "exit"
 
     def _generate_skipped_markdown(self, skipped: dict, reason: str) -> str:
-        """Générer markdown pour séance sautée (P2 FIX).
+        """Generate markdown pour séance sautée (P2 FIX).
 
         Args:
             skipped: Dict session sautée (planned_name, planned_date, etc.)
@@ -2463,7 +2462,6 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
 
 **IMPORTANT :** Retourne UNIQUEMENT les markdowns enrichis, pas de texte explicatif autour.
 """
-
             # 5. Copier dans clipboard
             process = subprocess.Popen(
                 ["pbcopy"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
@@ -2751,7 +2749,6 @@ Critères de décision:
 **Si aucune modification nécessaire** : Ne rien ajouter (pas de JSON).
 
 Réponds maintenant."""
-
         # Get AI response - Use provider directly if available (fix Issue #2)
         ai_response = None
 
@@ -2923,7 +2920,7 @@ Réponds maintenant."""
         self.wait_user()
 
     def show_summary(self):
-        """Afficher le résumé final."""
+        """Display le résumé final."""
         self.clear_screen()
         self.print_header("🎉 Workflow Terminé !", "Analyse de séance complète")
 
@@ -3005,7 +3002,7 @@ Réponds maintenant."""
         print("─" * 70)
 
     def _compute_gaps_signature(self, gaps_data: dict) -> str:
-        """Calculer signature unique des gaps actuels pour détecter changements.
+        """Calculate signature unique des gaps actuels pour détecter changements.
 
         Args:
             gaps_data: Dict avec listes unanalyzed, skipped, rest_days, cancelled
