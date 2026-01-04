@@ -426,6 +426,239 @@ git push
 
 ---
 
+## 🔧 Format Planning
+
+Script de reformatage automatique des workouts générés par l'AI coach vers le format standard Intervals.icu.
+
+### Problème Résolu
+
+Dans le workflow actuel, il y a un gap entre la sortie de l'AI coach (format libre) et l'upload sur Intervals.icu (format strict):
+
+```
+wp → AI coach → ⚠️ REFORMATAGE MANUEL → wu
+```
+
+Ce script automatise le reformatage et la validation.
+
+### Fonctionnalités
+
+- **Parsing intelligent** : Détecte workouts même avec variations de format
+- **Reformatage automatique** : Génère format avec délimiteurs `=== WORKOUT ... ===`
+- **Validation notation** : Vérifie répétitions (Nx:), puissances explicites
+- **Multiple sources** : Clipboard (pbpaste) ou fichier
+- **Modes flexibles** : dry-run, validation-only, verbose
+
+### Utilisation
+
+#### Workflow Complet Automatisé
+
+```bash
+# 1. Générer prompt planning
+wp --week-id S075 --start-date 2026-01-05
+
+# 2. Coller dans AI coach (Claude, Mistral, OpenAI, Ollama)
+#    → Copier sortie AI dans clipboard
+
+# 3. Reformater automatiquement
+python scripts/maintenance/format_planning.py --week-id S075
+
+# 4. Upload sur Intervals.icu
+wu --week-id S075 --start-date 2026-01-05 --file /tmp/S075_workouts_formatted.txt
+```
+
+#### Modes d'Utilisation
+
+**1. Depuis Clipboard (défaut)**
+```bash
+# Copier sortie AI coach, puis:
+python scripts/maintenance/format_planning.py --week-id S075
+```
+
+**2. Depuis Fichier**
+```bash
+python scripts/maintenance/format_planning.py --week-id S075 --input planning.md
+```
+
+**3. Dry-Run (aperçu)**
+```bash
+python scripts/maintenance/format_planning.py --week-id S075 --dry-run
+```
+
+**4. Validation Seulement**
+```bash
+python scripts/maintenance/format_planning.py --week-id S075 --validate-only
+```
+
+**Exemple de sortie:**
+```
+======================================================================
+🔧 FORMAT PLANNING - S075
+======================================================================
+
+📋 Lecture depuis clipboard...
+   ✅ 5842 caractères lus
+
+🔍 Parsing workouts...
+   ✅ 7 workout(s) détecté(s)
+
+  1. S075-01-REC-ReposActifZ1-V001
+  2. S075-02-INT-SweetSpotProgressif-V001
+  3. S075-03-TEC-CadenceVariation-V001
+  4. S075-04-END-EnduranceZ2Soutenue-V001
+  5. S075-05-INT-VO2MaxControle-V001
+  6. S075-06-INT-SweetSpotLong-V001
+  7. S075-07-REC-ReposComplet
+
+✓ Validation notation...
+   ✅ Notation conforme
+
+📝 Formatage pour upload...
+   ✅ Formatage terminé
+
+✅ Sauvegardé: /tmp/S075_workouts_formatted.txt
+
+======================================================================
+📊 RÉSUMÉ
+======================================================================
+
+✅ Workouts formatés : 7
+📄 Fichier généré   : /tmp/S075_workouts_formatted.txt
+
+💡 Prochaines étapes:
+   wu --week-id S075 --start-date 2026-01-05 --file /tmp/S075_workouts_formatted.txt
+```
+
+### Validation Automatique
+
+Le script vérifie automatiquement:
+
+**1. Notation Répétitions**
+```markdown
+❌ Incorrect: 5x [3min @ 60rpm + 3min @ 100rpm]
+✅ Correct:   Main set: 5x
+              - 3min 60rpm 65% (143W)
+              - 3min 100rpm 65% (143W)
+```
+
+**2. Puissances Explicites**
+```markdown
+❌ Incorrect: Main set @ 65% FTP:
+              - 3min 60rpm
+              - 3min 100rpm
+
+✅ Correct:   Main set: 5x
+              - 3min 60rpm 65% (143W)
+              - 3min 100rpm 65% (143W)
+```
+
+### Format de Sortie
+
+Le script génère le format attendu par `wu`:
+
+```
+=== WORKOUT S075-01-REC-ReposActifZ1-V001 ===
+Récupération Active Z1
+
+Structure:
+- 10min échauffement 45% → 50% FTP
+- 25min 50% FTP (110W)
+- 10min retour au calme 50% → 45% FTP
+
+TSS: 25 | Durée: 45min | RPE: 2-3/10
+=== FIN WORKOUT ===
+
+=== WORKOUT S075-02-INT-SweetSpotProgressif-V001 ===
+...
+=== FIN WORKOUT ===
+```
+
+### Patterns Détectés
+
+Le script reconnaît plusieurs formats AI:
+
+**Pattern 1: Markdown Headers**
+```markdown
+## S075-01 - Lundi 05/01/2026
+**Type**: REC - Récupération Active
+**Nom**: ReposActifZ1-V001
+### Structure
+...
+```
+
+**Pattern 2: Délimiteurs Existants**
+```
+=== WORKOUT S075-01-... ===
+...
+=== FIN WORKOUT ===
+```
+
+### Options Complètes
+
+```
+usage: format_planning.py [-h] --week-id WEEK_ID [--input INPUT]
+                         [--output OUTPUT] [--dry-run] [--validate-only]
+                         [--verbose]
+
+options:
+  --week-id WEEK_ID     ID de la semaine (SXXX)
+  --input INPUT         Fichier d'entrée (sinon clipboard)
+  --output OUTPUT       Fichier de sortie (défaut: /tmp/{week_id}_workouts_formatted.txt)
+  --dry-run             Simulation sans sauvegarde
+  --validate-only       Validation uniquement
+  --verbose, -v         Mode verbose
+```
+
+### Alias Recommandé
+
+Ajouter à `~/.zshrc`:
+```bash
+alias format-planning='python ~/cyclisme-training-logs/scripts/maintenance/format_planning.py'
+```
+
+Usage:
+```bash
+format-planning --week-id S075
+format-planning --week-id S075 --dry-run
+```
+
+### Intégration CI/CD
+
+Validation automatique dans workflow:
+
+```yaml
+- name: Validate Planning Format
+  run: |
+    python scripts/maintenance/format_planning.py \
+      --week-id S075 \
+      --input planning.md \
+      --validate-only
+```
+
+### Dépannage
+
+#### Aucun workout détecté
+
+```bash
+❌ Aucun workout détecté dans le contenu
+
+💡 Format attendu:
+   ## S075-01 - Lundi 05/01/2026
+   **Type**: REC - Récupération Active
+```
+
+Vérifier que la sortie AI contient les headers markdown avec le bon format.
+
+#### Avertissements notation
+
+```bash
+⚠️  S075-03: Notation '5x [...]' détectée
+⚠️  S075-05: Puissance factorisée détectée
+```
+
+Ces avertissements n'empêchent pas le formatage mais signalent des non-conformités avec les standards.
+
+---
+
 ## 🗑️ Clear Week Planning
 
 Script de maintenance pour supprimer les workouts planifiés erronés d'une semaine sur Intervals.icu.
