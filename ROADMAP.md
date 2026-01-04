@@ -299,7 +299,7 @@ trains --week-id S074                       # Servo-mode ajustements
 
 ### Sprint R6 : PID Baseline & Calibration (6 semaines)
 
-**Dates :** 6 janvier - 16 février 2026
+**Dates :** 5 janvier - 15 février 2026
 **Semaines :** S075 → S080
 **Status :** 🔄 EN COURS (Phase 1 - Observation)
 
@@ -322,7 +322,7 @@ Phase progressive validation empirique sur 6 semaines avec 3 phases distinctes.
 
 **Phase 1 : Baseline Collection (Semaines S075-S076)**
 
-**Dates :** 6-19 janvier 2026
+**Dates :** 5-18 janvier 2026
 
 **Objectif :** Collecter données terrain en mode observation passive
 
@@ -368,7 +368,7 @@ class BaselineObservation:
 
 **Phase 2 : Calibration Parameters (Semaines S077-S078)**
 
-**Dates :** 20 janvier - 2 février 2026
+**Dates :** 19 janvier - 1 février 2026
 
 **Objectif :** Analyser écarts et calibrer coefficients PID
 
@@ -395,7 +395,7 @@ class PIDCalibrator:
 
 **Phase 3 : Progressive Activation (Semaines S079-S080)**
 
-**Dates :** 3-16 février 2026
+**Dates :** 2-15 février 2026
 
 **Objectif :** Mode hybride avec validation MOA
 
@@ -422,14 +422,14 @@ class PIDDashboard:
 #### Timeline Sprint R6
 
 ```
-Semaine S075 (6-12 Jan 2026)   : Phase 1 - Observation (1/2)
-Semaine S076 (13-19 Jan 2026)  : Phase 1 - Observation (2/2)
-Semaine S077 (20-26 Jan 2026)  : Phase 2 - Calibration (1/2)
-Semaine S078 (27 Jan-2 Fév 2026): Phase 2 - Calibration (2/2)
-Semaine S079 (3-9 Fév 2026)    : Phase 3 - Hybrid mode (1/2)
-Semaine S080 (10-16 Fév 2026)  : Phase 3 - Hybrid mode (2/2)
+Semaine S075 (5-11 Jan 2026)   : Phase 1 - Observation (1/2)
+Semaine S076 (12-18 Jan 2026)  : Phase 1 - Observation (2/2)
+Semaine S077 (19-25 Jan 2026)  : Phase 2 - Calibration (1/2)
+Semaine S078 (26 Jan-1 Fév 2026): Phase 2 - Calibration (2/2)
+Semaine S079 (2-8 Fév 2026)    : Phase 3 - Hybrid mode (1/2)
+Semaine S080 (9-15 Fév 2026)   : Phase 3 - Hybrid mode (2/2)
 
-Sprint R7 Start: 17 février 2026 (Semaine S081)
+Sprint R7 Start: 16 février 2026 (Semaine S081)
 ```
 
 #### Livrables Sprint R6

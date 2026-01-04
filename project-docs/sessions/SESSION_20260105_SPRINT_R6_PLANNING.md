@@ -24,7 +24,7 @@
 
 ✅ **ROADMAP.md mis à jour**
 - Section Sprint R6 complètement réécrite
-- Timeline corrigée : S075-S080 (6 Jan - 16 Fév 2026)
+- Timeline corrigée : S075-S080 (5 Jan - 15 Fév 2026)
 - Architecture 3 phases détaillée
 - Livrables spécifiés
 - Commit : `618634c`
@@ -48,7 +48,7 @@
 ❌ INCORRECT
 Semaine S067 (6-12 Jan)   : Phase 1 - Observation (1/2)
 Semaine S068 (13-19 Jan)  : Phase 1 - Observation (2/2)
-Semaine S069 (20-26 Jan)  : Phase 2 - Calibration (1/2)
+Semaine S069 (19-25 Jan)  : Phase 2 - Calibration (1/2)
 Semaine S070 (27 Jan-2 Fév): Phase 2 - Calibration (2/2)
 Semaine S071 (3-9 Fév)    : Phase 3 - Hybrid mode (1/2)
 Semaine S072 (10-16 Fév)  : Phase 3 - Hybrid mode (2/2)
@@ -61,14 +61,14 @@ Sprint R7 Start: S073
 
 ```
 ✅ CORRECT
-Semaine S075 (6-12 Jan 2026)   : Phase 1 - Observation (1/2)
-Semaine S076 (13-19 Jan 2026)  : Phase 1 - Observation (2/2)
-Semaine S077 (20-26 Jan 2026)  : Phase 2 - Calibration (1/2)
-Semaine S078 (27 Jan-2 Fév 2026): Phase 2 - Calibration (2/2)
-Semaine S079 (3-9 Fév 2026)    : Phase 3 - Hybrid mode (1/2)
-Semaine S080 (10-16 Fév 2026)  : Phase 3 - Hybrid mode (2/2)
+Semaine S075 (5-11 Jan 2026)   : Phase 1 - Observation (1/2)
+Semaine S076 (12-18 Jan 2026)  : Phase 1 - Observation (2/2)
+Semaine S077 (19-25 Jan 2026)  : Phase 2 - Calibration (1/2)
+Semaine S078 (26 Jan-1 Fév 2026): Phase 2 - Calibration (2/2)
+Semaine S079 (2-8 Fév 2026)    : Phase 3 - Hybrid mode (1/2)
+Semaine S080 (9-15 Fév 2026)  : Phase 3 - Hybrid mode (2/2)
 
-Sprint R7 Start: 17 février 2026 (Semaine S081)
+Sprint R7 Start: 16 février 2026 (Semaine S081)
 ```
 
 ### Corrections Appliquées
@@ -145,7 +145,7 @@ Phase progressive validation empirique sur 6 semaines avec 3 phases distinctes.
 
 #### Phase 1 : Baseline Collection (S075-S076)
 
-**Dates :** 6-19 janvier 2026
+**Dates :** 5-18 janvier 2026
 
 **Objectif :** Collecter données terrain en mode observation passive
 
@@ -226,7 +226,7 @@ class BaselineCollector:
 
 #### Phase 2 : Calibration Parameters (S077-S078)
 
-**Dates :** 20 janvier - 2 février 2026
+**Dates :** 19 janvier - 1 février 2026
 
 **Objectif :** Analyser écarts et calibrer coefficients PID
 
@@ -296,7 +296,7 @@ numpy = "^1.24.0"
 
 #### Phase 3 : Progressive Activation (S079-S080)
 
-**Dates :** 3-16 février 2026
+**Dates :** 2-15 février 2026
 
 **Objectif :** Mode hybride avec validation MOA
 
@@ -401,7 +401,7 @@ def step_3_suggest_adjustments():
 
 ### Jour par Jour (6-12 Janvier 2026)
 
-#### Mardi 6 Janvier (Jour 1)
+#### Lundi 5 Janvier (Jour 1)
 
 **Documentation :**
 ```bash
@@ -409,7 +409,7 @@ def step_3_suggest_adjustments():
 cat > project-docs/sprints/SPRINT_R6_BRIEF.md << 'EOF'
 # Sprint R6 : PID Baseline & Calibration
 
-**Dates :** 6 janvier - 16 février 2026
+**Dates :** 5 janvier - 15 février 2026
 **Semaines :** S075-S080
 **Status :** 🔄 Phase 1 - Observation (Jour 1/14)
 
@@ -429,7 +429,7 @@ git push
 - Review architecture PID Controller actuel
 - Planifier modifications mode observation
 
-#### Mercredi 7 Janvier (Jour 2)
+#### Mardi 6 Janvier (Jour 2)
 
 **Documentation :**
 ```bash
@@ -457,7 +457,7 @@ touch cyclisme_training_logs/intelligence/baseline_collector.py
 touch tests/intelligence/test_baseline_collector.py
 ```
 
-#### Jeudi 8 Janvier (Jour 3)
+#### Mercredi 7 Janvier (Jour 3)
 
 **Documentation :**
 ```bash
@@ -494,7 +494,7 @@ Add data collection module for Phase 1 observation:
 git push
 ```
 
-#### Vendredi 9 Janvier (Jour 4)
+#### Jeudi 8 Janvier (Jour 4)
 
 **Code :** Modifier PID Controller (mode observation)
 ```bash
@@ -517,7 +517,7 @@ Implement passive observation mode for Phase 1:
 git push
 ```
 
-#### Samedi 10 Janvier (Jour 5)
+#### Vendredi 9 Janvier (Jour 5)
 
 **Premier run observation :**
 ```bash
@@ -531,7 +531,7 @@ cat ~/training-logs/pid_observations/S075_observations.json
 python scripts/intelligence/review_baseline_data.py --week S075
 ```
 
-#### Dimanche 11 Janvier (Jour 6)
+#### Samedi 10 Janvier (Jour 6)
 
 **Analyse intermédiaire :**
 ```bash
@@ -543,7 +543,7 @@ poetry run python -m cyclisme_training_logs.intelligence.baseline_collector \
 # Ajustements si nécessaire
 ```
 
-#### Lundi 12 Janvier (Jour 7)
+#### Dimanche 11 Janvier (Jour 7)
 
 **Review semaine :**
 ```bash
@@ -805,7 +805,7 @@ git push
 
 **Timeline estimée :**
 - Semaines S081-S086 (6 semaines)
-- 17 février - 30 mars 2026
+- 16 février - 29 mars 2026
 
 ---
 
@@ -842,7 +842,7 @@ Status: ✅ Pushed to GitHub
 
 ## 🎯 Prochaines Étapes Immédiates
 
-### Demain Mardi 6 Janvier 2026 (Jour 1 Sprint R6)
+### Demain Lundi 5 Janvier 2026 (Jour 1 Sprint R6)
 
 **Matin :**
 1. ✅ Créer `SPRINT_R6_BRIEF.md`
