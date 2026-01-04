@@ -38,18 +38,19 @@ class WeeklyPlanner:
 
         # Chemins importants
         self.references_dir = project_root / "references"
-        self.logs_dir = project_root / "logs"
-        self.weekly_reports_dir = self.logs_dir / "weekly_reports"
 
-        # Get planning directory from config
+        # Get directories from data config
         from cyclisme_training_logs.config import get_data_config
 
         try:
             config = get_data_config()
             self.planning_dir = config.week_planning_dir
+            self.weekly_reports_dir = config.data_repo_path / "weekly-reports"
         except FileNotFoundError:
-            # Fallback to legacy path
+            # Fallback to legacy paths
+            self.logs_dir = project_root / "logs"
             self.planning_dir = self.logs_dir / "data" / "week_planning"
+            self.weekly_reports_dir = self.logs_dir / "weekly_reports"
 
         self.planning_dir.mkdir(parents=True, exist_ok=True)
 
@@ -151,7 +152,8 @@ class WeeklyPlanner:
         print("\n📄 Chargement bilan semaine précédente...")
 
         prev_week = self._previous_week_number()
-        bilan_file = self.weekly_reports_dir / prev_week / f"bilan_final_{prev_week}.md"
+        # Use lowercase week ID for filename (standard depuis workflow_weekly)
+        bilan_file = self.weekly_reports_dir / prev_week / f"bilan_final_{prev_week.lower()}.md"
 
         if bilan_file.exists():
             content = bilan_file.read_text(encoding="utf-8")
