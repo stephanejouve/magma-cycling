@@ -116,7 +116,7 @@ class CallbackHandler(BaseHTTPRequestHandler):
 
 
 def start_callback_server():
-    """Démarre un serveur HTTP pour recevoir le callback"""
+    """Démarre un serveur HTTP pour recevoir le callback."""
     # Extraire le port de l'URL de callback
     parsed_callback = urlparse(CALLBACK_URI)
     port = parsed_callback.port or 80
@@ -130,7 +130,7 @@ def start_callback_server():
 
 
 def main():
-    """Processus complet d'authentification"""
+    """Processus complet d'authentification."""
     print("\n" + "=" * 60)
     print("CONFIGURATION WITHINGS - AUTHENTIFICATION INITIALE")
     print("=" * 60 + "\n")
