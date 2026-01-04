@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""
+r"""
 Fix D202 docstring errors - remove blank lines after function docstrings.
 
 Removes blank lines that appear immediately after a function/method/class docstring.

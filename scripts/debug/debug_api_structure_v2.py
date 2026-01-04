@@ -29,6 +29,7 @@ from cyclisme_training_logs.sync_intervals import IntervalsAPI  # noqa: E402
 
 
 def main():
+    """Debug API structure version 2 - enhanced inspection."""
     # Init API
     athlete_id = os.getenv("VITE_INTERVALS_ATHLETE_ID")
     api_key = os.getenv("VITE_INTERVALS_API_KEY")

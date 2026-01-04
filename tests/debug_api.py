@@ -1,3 +1,5 @@
+"""Debug script for testing Intervals.icu API integration."""
+
 import json
 
 import requests

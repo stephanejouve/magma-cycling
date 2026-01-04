@@ -1,3 +1,5 @@
+"""Debug script for checking November 14th data."""
+
 import requests
 
 athlete_id = "i151223"

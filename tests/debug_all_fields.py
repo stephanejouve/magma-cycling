@@ -1,3 +1,5 @@
+"""Debug script for inspecting all API fields."""
+
 import json
 
 import requests

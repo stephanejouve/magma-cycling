@@ -330,9 +330,7 @@ Séance planifiée non exécutée. Raison à documenter.
 
 
 def main():
-    """
-    Mode interactif : détection des séances sautées + réconciliation avec planning JSON local.
-    """
+    """Mode interactif : détection des séances sautées + réconciliation avec planning JSON local."""
     import json
     from pathlib import Path
 

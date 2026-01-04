@@ -258,7 +258,7 @@ class IntervalsClient:
         return None
 
     def create_event(self, event_data: dict[str, Any]) -> dict[str, Any] | None:
-        """
+        r"""
         Create a calendar event (planned workout, note, etc.).
 
         Créer un événement du calendrier (workout planifié, note, etc.).

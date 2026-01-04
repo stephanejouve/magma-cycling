@@ -1,4 +1,4 @@
-"""
+r"""
 Abstract data aggregation framework for multi-level analysis.
 
 Framework d'agrégation abstrait supportant analyses multi-niveaux :

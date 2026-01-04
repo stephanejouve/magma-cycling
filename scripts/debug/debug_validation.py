@@ -12,6 +12,7 @@ from cyclisme_training_logs.workflow_state import WorkflowState  # noqa: E402
 
 
 def main():
+    """Debug validation of workout data and API integration."""
     # Init API
     athlete_id = os.getenv("VITE_INTERVALS_ATHLETE_ID")
     api_key = os.getenv("VITE_INTERVALS_API_KEY")

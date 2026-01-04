@@ -1,3 +1,5 @@
+"""Debug script for testing data filters."""
+
 import requests
 
 athlete_id = "i151223"
