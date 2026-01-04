@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Génération du prompt d'analyse pour IA Coach
+
 Prépare le prompt d'analyse de séance cyclisme pour traitement par IA.
 Récupère les données depuis Intervals.icu, agrège le contexte athlète,
 les zones de puissance, les logs récents, et génère un prompt structuré
@@ -107,6 +108,7 @@ class PromptGenerator:
     def load_athlete_context(self):
         """Load le contexte athlète depuis project_prompt_v2_1_revised.md."""
         prompt_file = self.references_dir / "project_prompt_v2_1_revised.md"
+
         if prompt_file.exists():
             with open(prompt_file, encoding="utf-8") as f:
                 return f.read()
@@ -115,6 +117,7 @@ class PromptGenerator:
     def load_recent_workouts(self, limit=5):
         """Load les N dernières séances depuis workouts-history.md."""
         history_file = self.logs_dir / "workouts-history.md"
+
         if not history_file.exists():
             return None
 
@@ -138,6 +141,7 @@ class PromptGenerator:
     def load_cycling_concepts(self):
         """Load les concepts d'entraînement cyclisme."""
         concepts_file = self.references_dir / "cycling_training_concepts.md"
+
         if concepts_file.exists():
             with open(concepts_file, encoding="utf-8") as f:
                 return f.read()
@@ -421,6 +425,7 @@ class PromptGenerator:
     ):
         """Generate le prompt complet pour analyse IA."""
         # Formater les données
+
         act = activity_data
         w_pre = self.format_wellness_data(wellness_pre)
         w_post = self.format_wellness_data(wellness_post)
@@ -451,6 +456,7 @@ class PromptGenerator:
         if act["is_strava"]:
             strava_warning = f"""
 ⚠️  **ATTENTION : Activité Strava**
+
 Source : {act['source']}
 Les données API peuvent être limitées par les restrictions Strava.
 Certaines métriques (puissance, découplage) peuvent être manquantes ou incomplètes.
@@ -509,6 +515,7 @@ Certaines métriques (puissance, découplage) peuvent être manquantes ou incomp
 ---
 """
         # Ajouter section workout planifié si disponible
+
         if planned:
             prompt += f"""
 ## 📋 Workout Planifié vs Réalisé
@@ -528,6 +535,7 @@ Certaines métriques (puissance, découplage) peuvent être manquantes ou incomp
 
             prompt += f"""
 ### Répartition Zones Planifiée
+
 {planned['zone_distribution']}
 
 ### Description Workout
@@ -545,6 +553,7 @@ Certaines métriques (puissance, découplage) peuvent être manquantes ou incomp
 ---.
 """
         prompt += f"""
+
 ## Séances Récentes (Contexte)
 
 {recent_workouts if recent_workouts else "_Historique non disponible_"}
@@ -552,6 +561,7 @@ Certaines métriques (puissance, découplage) peuvent être manquantes ou incomp
 ---
 """
         # Ajouter feedback athlète si disponible
+
         if athlete_feedback:
             feedback_text = self.format_athlete_feedback(athlete_feedback)
             if feedback_text:
@@ -565,6 +575,7 @@ Certaines métriques (puissance, découplage) peuvent être manquantes ou incomp
 ---
 """
         prompt += """
+
 ## Demande d'Analyse
 
 En tant qu'assistant coach, analyse cette séance avec un regard factuel et technique.
@@ -660,6 +671,7 @@ Génère maintenant l'entrée d'analyse.
 def load_config(config_file):
     """Load la configuration depuis un fichier JSON."""
     config_path = Path(config_file).expanduser()
+
     if not config_path.exists():
         return None
 
@@ -681,6 +693,7 @@ def analyze_batch(api, unanalyzed_activities, generator, state, project_root):
         None.
     """
     total = len(unanalyzed_activities)
+
     print()
     print("=" * 60)
     print(f"🔄 MODE BATCH : {total} SÉANCES À ANALYSER")

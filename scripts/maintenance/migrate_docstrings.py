@@ -112,6 +112,7 @@ class DocstringMigrator:
             dry_run: If True, preview changes without writing files.
         """
         self.project_root = project_root
+
         self.backup = backup
         self.dry_run = dry_run
         self.stats = {"scanned": 0, "migrated": 0, "skipped": 0, "errors": 0}
@@ -127,6 +128,7 @@ class DocstringMigrator:
             Cleaned description text without metadata lines.
         """
         # Enlever les lignes de métadonnées
+
         lines = docstring.split("\n")
         description_lines = []
 
@@ -156,6 +158,7 @@ class DocstringMigrator:
             DocstringMetadata if found, None otherwise.
         """
         match = self.GARTNER_PATTERN.search(content)
+
         if not match:
             return None
 
@@ -189,6 +192,7 @@ class DocstringMigrator:
             Formatted Google Style docstring string.
         """
         # Séparer première ligne du reste
+
         lines = metadata.description.split("\n")
         brief = lines[0].strip() if lines else "Module description."
 
@@ -205,6 +209,7 @@ class DocstringMigrator:
         parts.append(
             f"""
 Metadata:
+
     Created: {metadata.last_review}
     Author: Cyclisme Training Logs Team
     Category: {metadata.category}
@@ -287,6 +292,7 @@ Metadata:
             Statistics dictionary with counts of scanned/migrated/skipped/errors.
         """
         # Trouver tous les fichiers Python
+
         python_files = list(self.project_root.rglob("*.py"))
 
         # Exclure patterns
@@ -331,6 +337,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
+
   # Migrate entire project with backup
   python migrate_docstrings.py --backup
 

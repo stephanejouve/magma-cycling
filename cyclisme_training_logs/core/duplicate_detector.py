@@ -1,5 +1,6 @@
 """
 Détection et suppression des doublons dans workouts-history.md
+
 Utilisé en mode paranoid pour valider les insertions TimelineInjector.
 Détecte les doublons après insertion et peut les supprimer automatiquement
 ou lever une erreur (fail-fast).
@@ -73,6 +74,7 @@ class DuplicateDetectedError(Exception):
             duplicates: List of duplicate entry dicts
         """
         self.duplicates = duplicates
+
         ids = [d["id"] for d in duplicates]
         super().__init__(f"Doublons détectés: {', '.join(ids)}")
 
@@ -83,10 +85,12 @@ class DuplicateDetector:
     def __init__(self, history_file: Path, check_window: int = 50):
         """
         Args:
+
             history_file: Chemin vers workouts-history.md
             check_window: Nombre d'entrées à scanner (0 = tout le fichier).
         """
         self.history_file = history_file
+
         self.check_window = check_window
         self.pattern = re.compile(r"^### (S\d{3}-\d{2}(?:-\w+)*(?:-V\d{3})?)\s*$")
 
@@ -211,6 +215,7 @@ def check_and_handle_duplicates(
         DuplicateDetectedError: Si doublons détectés et auto_fix=False.
     """
     detector = DuplicateDetector(history_file, check_window)
+
     duplicates = detector.quick_scan()
 
     if not duplicates:

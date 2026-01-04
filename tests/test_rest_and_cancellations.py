@@ -403,6 +403,7 @@ def test_cancelled_session_without_impact_notes():
 def run_all_tests():
     """Exécute tous les tests"""
     print("\n" + "=" * 70)
+
     print("TESTS REST AND CANCELLATIONS MODULE")
     print("=" * 70)
 

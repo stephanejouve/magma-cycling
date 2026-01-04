@@ -27,18 +27,21 @@ from cyclisme_training_logs.utils.metrics_advanced import (
 def test_calculate_ramp_rate_weekly_increase():
     """Test CTL increasing 5 points over 1 week."""
     result = calculate_ramp_rate(65.0, 60.0, days=7)
+
     assert result == 5.0
 
 
 def test_calculate_ramp_rate_biweekly():
     """Test CTL increasing 5 points over 2 weeks = 2.5 points/week."""
     result = calculate_ramp_rate(65.0, 60.0, days=14)
+
     assert result == 2.5
 
 
 def test_calculate_ramp_rate_declining():
     """Test CTL declining (negative ramp rate)."""
     result = calculate_ramp_rate(60.0, 65.0, days=7)
+
     assert result == -5.0
 
 
@@ -116,6 +119,7 @@ def test_weekly_trend_empty_data():
 def test_weekly_trend_insufficient_data():
     """Test handling single week data."""
     data = [{"ctl": 60.0, "week": 1}]
+
     result = get_weekly_metrics_trend(data, "ctl")
 
     assert result["trend"] == "insufficient_data"
@@ -130,6 +134,7 @@ def test_weekly_trend_insufficient_data():
 def test_detect_peaks_single_peak():
     """Test detecting single significant peak."""
     history = [50, 52, 51, 58, 60, 55, 53]
+
     peaks = detect_training_peaks(history, threshold_percent=10.0)
 
     assert len(peaks) >= 1
@@ -140,6 +145,7 @@ def test_detect_peaks_single_peak():
 def test_detect_peaks_no_peaks():
     """Test no peaks detected in stable progression."""
     history = [50, 51, 52, 53, 54, 55]
+
     peaks = detect_training_peaks(history, threshold_percent=10.0)
 
     # Small gradual increases shouldn't trigger peaks
@@ -149,6 +155,7 @@ def test_detect_peaks_no_peaks():
 def test_detect_peaks_multiple_peaks():
     """Test detecting multiple peaks."""
     history = [50, 52, 58, 55, 52, 62, 60, 55]
+
     peaks = detect_training_peaks(history, threshold_percent=10.0)
 
     # Should detect at least one peak (index 5: 62, with 12.7% increase from baseline 55)
@@ -161,6 +168,7 @@ def test_detect_peaks_multiple_peaks():
 def test_detect_peaks_insufficient_history():
     """Test handling insufficient history."""
     history = [50, 52, 51]
+
     peaks = detect_training_peaks(history, threshold_percent=10.0)
 
     assert len(peaks) == 0
@@ -238,6 +246,7 @@ def test_recovery_recommendation_master_adjustments():
 def test_format_comparison_basic():
     """Test basic metrics comparison formatting."""
     p1 = {"ctl": 60.0, "atl": 55.0, "tsb": 5.0}
+
     p2 = {"ctl": 65.0, "atl": 58.0, "tsb": 7.0}
 
     result = format_metrics_comparison(p1, p2)
@@ -251,6 +260,7 @@ def test_format_comparison_basic():
 def test_format_comparison_with_labels():
     """Test comparison with custom labels."""
     p1 = {"ctl": 60.0}
+
     p2 = {"ctl": 65.0}
     labels = {"period1": "Last Week", "period2": "This Week"}
 
@@ -263,6 +273,7 @@ def test_format_comparison_with_labels():
 def test_format_comparison_declining():
     """Test comparison with declining metrics."""
     p1 = {"ctl": 65.0, "atl": 60.0}
+
     p2 = {"ctl": 60.0, "atl": 55.0}
 
     result = format_metrics_comparison(p1, p2)
@@ -273,6 +284,7 @@ def test_format_comparison_declining():
 def test_format_comparison_stable():
     """Test comparison with stable metrics."""
     p1 = {"ctl": 60.0, "atl": 55.0}
+
     p2 = {"ctl": 60.2, "atl": 55.1}  # Within 0.5 threshold
 
     result = format_metrics_comparison(p1, p2)
@@ -375,6 +387,7 @@ def test_overtraining_risk_low():
 def test_overtraining_risk_master_vs_senior():
     """Test that master athletes get more conservative veto recommendations."""
     # Same conditions, different age categories
+
     result_master = detect_overtraining_risk(
         ctl=65.0, atl=95.0, tsb=-27.0, profile={"age": 54, "category": "master"}
     )

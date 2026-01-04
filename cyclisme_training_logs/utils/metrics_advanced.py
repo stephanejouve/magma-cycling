@@ -227,6 +227,7 @@ def get_recovery_recommendation(
         - Master athletes: More conservative limits.
     """
     # Default profile
+
     if profile is None:
         profile = {"age": 35, "recovery_capacity": "normal", "category": "senior"}
 
@@ -426,6 +427,7 @@ def detect_overtraining_risk(
         VETO means: Cancel ALL intensity, rest day or Z1 only (max 45min).
     """
     # Default thresholds (master athlete calibrated)
+
     if thresholds is None:
         thresholds = {
             "tsb_critical": -25.0,

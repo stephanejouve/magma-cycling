@@ -15,6 +15,7 @@ class TestAIProviderEnum:
     def test_enum_has_all_providers(self):
         """Test that enum contains all 5 expected providers."""
         expected_providers = ["clipboard", "claude_api", "mistral_api", "openai", "ollama"]
+
         actual_providers = [p.value for p in AIProvider]
 
         assert len(actual_providers) == 5, f"Expected 5 providers, got {len(actual_providers)}"
@@ -49,6 +50,7 @@ class TestAIProviderEnum:
     def test_enum_from_string(self):
         """Test that enum can be created from string value."""
         provider = AIProvider("clipboard")
+
         assert provider == AIProvider.CLIPBOARD
 
     def test_enum_invalid_value_raises_error(self):

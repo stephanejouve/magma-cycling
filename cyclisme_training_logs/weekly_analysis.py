@@ -65,10 +65,12 @@ class WeeklyAnalysis:
     def __init__(self, week_number: str, start_date: str | None = None):
         """
         Args:
+
             week_number: Format SXXX (ex: S068)
             start_date: Format YYYY-MM-DD (optionnel, auto si None).
         """
         self.week_number = week_number
+
         self.week_int = int(week_number[1:])  # Ex: S068 -> 68
 
         # Calcul des dates
@@ -118,6 +120,7 @@ class WeeklyAnalysis:
     def _calculate_week_start(self) -> datetime:
         """Calculate la date de début de la semaine basé sur le numéro."""
         # Pour l'instant, utiliser une date de référence (à ajuster)
+
         # Exemple: S001 = 2024-01-01 (lundi)
         reference_date = datetime(2024, 1, 1)  # S001 commence le 1er janvier 2024
         weeks_offset = self.week_int - 1
@@ -448,6 +451,7 @@ Commence maintenant l'analyse !
             Dict avec {filename: content}
         """
         files = {}
+
         current_file = None
         current_content: list[str] = []
 
@@ -558,6 +562,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>.
     def run(self):
         """Workflow complet interactif"""
         # DEPRECATION WARNING
+
         print("\n" + "=" * 70)
         print("⚠️  DEPRECATION WARNING")
         print("=" * 70)
@@ -733,6 +738,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Exemples:
+
   # Analyse de la semaine S068
   python3 cyclisme_training_logs/weekly_analysis.py --week-id S068
 

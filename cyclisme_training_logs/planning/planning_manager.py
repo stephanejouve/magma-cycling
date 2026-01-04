@@ -171,6 +171,7 @@ class TrainingPlan:
             5
         """
         days = (self.end_date - self.start_date).days + 1
+
         return (days + 6) // 7  # Round up to full weeks
 
     def get_objectives_by_priority(self, priority: PriorityLevel) -> list[TrainingObjective]:
@@ -266,6 +267,7 @@ class PlanningManager:
             athlete_profile: Athlete characteristics (optional, can load from env)
         """
         self.athlete_profile = athlete_profile or AthleteProfile.from_env()
+
         self.plans: dict[str, TrainingPlan] = {}
         logger.info(
             f"PlanningManager initialized for {self.athlete_profile.category} "
@@ -312,6 +314,7 @@ class PlanningManager:
             13
         """
         # Validate dates
+
         if end_date <= start_date:
             raise ValueError("end_date must be after start_date")
 

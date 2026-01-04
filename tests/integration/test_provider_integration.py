@@ -26,6 +26,7 @@ class TestProviderIntegration:
     def test_full_provider_lifecycle_clipboard(self):
         """Test complete lifecycle: config → factory → provider → analysis."""
         # Get config
+
         config = get_ai_config()
 
         # Clipboard should always be available
@@ -152,6 +153,7 @@ class TestProviderIntegration:
     def test_provider_creation_from_available_list(self):
         """Test that all available providers can be created."""
         config = get_ai_config()
+
         available = config.get_available_providers()
 
         for provider_name in available:
@@ -166,6 +168,7 @@ class TestProviderIntegration:
     def test_multiple_provider_instances_independent(self):
         """Test that multiple provider instances are independent."""
         config = get_ai_config()
+
         provider_config = config.get_provider_config("clipboard")
 
         analyzer1 = AIProviderFactory.create("clipboard", provider_config)

@@ -45,6 +45,7 @@ class WeeklyReportOrganizer:
             project_root: Project root directory path (default: current directory).
         """
         self.project_root = Path(project_root)
+
         self.bilans_dir = self.project_root / "logs" / "weekly_reports"
 
     def read_clipboard(self):
@@ -98,6 +99,7 @@ class WeeklyReportOrganizer:
     def read_files_from_dir(self, directory):
         """Read les fichiers depuis un répertoire."""
         files = {}
+
         dir_path = Path(directory)
 
         if not dir_path.exists():
@@ -113,6 +115,7 @@ class WeeklyReportOrganizer:
     def validate_files(self, files, week_number):
         """Validate la présence des 6 fichiers obligatoires."""
         week_str = f"{week_number:03d}"
+
         next_week_str = f"{week_number+1:03d}"
 
         expected = [
@@ -147,6 +150,7 @@ class WeeklyReportOrganizer:
     def save_files(self, files, week_number, dry_run=False):
         """Backup les fichiers dans bilans_hebdo/SXXX/."""
         week_str = f"S{week_number:03d}"  # ✅ MAJUSCULE (convention SXXX)
+
         week_dir = self.bilans_dir / week_str
 
         if dry_run:
@@ -178,6 +182,7 @@ class WeeklyReportOrganizer:
     def show_git_diff(self, week_number):
         """Display le git diff"""
         week_str = f"s{week_number:03d}"
+
         week_dir = self.bilans_dir / week_str
 
         try:

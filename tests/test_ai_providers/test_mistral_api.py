@@ -97,6 +97,7 @@ class TestMistralAPIAnalyzer:
     def test_analyze_session_success(self, valid_api_key, mock_mistral_client):
         """Test successful analysis."""
         # Mock successful response
+
         mock_response = MagicMock()
         mock_choice = MagicMock()
         mock_message = MagicMock()
@@ -114,6 +115,7 @@ class TestMistralAPIAnalyzer:
     def test_analyze_with_dataset(self, valid_api_key, mock_mistral_client):
         """Test analysis with dataset parameter."""
         mock_response = MagicMock()
+
         mock_choice = MagicMock()
         mock_message = MagicMock()
         mock_message.content = "Analyse avec données."
@@ -130,6 +132,7 @@ class TestMistralAPIAnalyzer:
     def test_analyze_empty_prompt(self, valid_api_key, mock_mistral_client):
         """Test analysis with empty prompt."""
         mock_response = MagicMock()
+
         mock_choice = MagicMock()
         mock_message = MagicMock()
         mock_message.content = ""
@@ -146,6 +149,7 @@ class TestMistralAPIAnalyzer:
     def test_analyze_large_prompt(self, valid_api_key, mock_mistral_client):
         """Test analysis with very large prompt."""
         mock_response = MagicMock()
+
         mock_choice = MagicMock()
         mock_message = MagicMock()
         mock_message.content = "Réponse à prompt large"
@@ -166,6 +170,7 @@ class TestMistralAPIAnalyzer:
     def test_analyze_special_characters(self, valid_api_key, mock_mistral_client):
         """Test analysis with special characters."""
         mock_response = MagicMock()
+
         mock_choice = MagicMock()
         mock_message = MagicMock()
         mock_message.content = "Réponse avec émojis 🚴‍♂️"
@@ -278,6 +283,7 @@ class TestMistralAPIAnalyzer:
     def test_multiple_analyzers_independent(self, valid_api_key):
         """Test multiple analyzer instances are independent."""
         analyzer1 = MistralAPIAnalyzer(api_key=valid_api_key, model="mistral-large-latest")
+
         analyzer2 = MistralAPIAnalyzer(api_key=valid_api_key, model="mistral-medium-latest")
 
         assert analyzer1 is not analyzer2
@@ -286,6 +292,7 @@ class TestMistralAPIAnalyzer:
     def test_model_parameter_preserved(self, valid_api_key):
         """Test that model parameter is preserved."""
         custom_model = "mistral-small-latest"
+
         analyzer = MistralAPIAnalyzer(api_key=valid_api_key, model=custom_model)
 
         assert analyzer.model == custom_model

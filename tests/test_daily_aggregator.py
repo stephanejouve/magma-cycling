@@ -21,6 +21,7 @@ from cyclisme_training_logs.analyzers.daily_aggregator import DailyAggregator
 def temp_training_dir(tmp_path):
     """Create structure training-logs temporaire pour tests."""
     training_dir = tmp_path / "training-logs"
+
     training_dir.mkdir()
 
     # Créer fichier feedback

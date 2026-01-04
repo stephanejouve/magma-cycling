@@ -121,6 +121,7 @@ class AIProviderFactory:
             - Default models si non spécifiés
         """
         # Normalize provider name
+
         provider = provider.lower().strip()
 
         logger.info(f"Creating AI analyzer for provider: {provider}")

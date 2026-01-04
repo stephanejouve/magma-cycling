@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Workflow state management and persistence.
+
 Gestion état workflow persistant entre exécutions. Tracking étapes
 complétées, prévention duplicates, et validation cohérence pipeline
 d'analyse quotidien.
@@ -66,6 +67,7 @@ class WorkflowState:
             project_root: Racine du projet (legacy, use data repo config instead).
         """
         # Use data repo config if available, fallback to project_root
+
         if project_root is None:
             try:
                 config = get_data_config()
@@ -120,6 +122,7 @@ class WorkflowState:
             activity_date: Date de l'activité (ISO format).
         """
         self.state["last_analyzed_activity_id"] = activity_id
+
         self.state["last_analyzed_date"] = datetime.now().isoformat()
         self.state["total_analyses"] = self.state.get("total_analyses", 0) + 1
 
@@ -157,6 +160,7 @@ class WorkflowState:
             True si activité valide pour analyse
         """
         # Ignorer activités trop courtes (< 2 minutes)
+
         moving_time = activity.get("moving_time", 0)
         if moving_time < 120:  # 120 secondes = 2 minutes
             return False
@@ -185,6 +189,7 @@ class WorkflowState:
             Liste des activités non analysées (filtrées pour exclure activités invalides).
         """
         unanalyzed = []
+
         filtered_count = 0
 
         for activity in all_activities:
@@ -226,6 +231,7 @@ class WorkflowState:
     def is_activity_analyzed(self, activity_id: str) -> bool:
         """Verify si une activité a déjà été analysée."""
         # Vérifier dans l'historique
+
         history = self.state.get("history", [])
         return any(h["activity_id"] == activity_id for h in history)
 
@@ -303,6 +309,7 @@ class WorkflowState:
             Dict avec 'feedback' et 'timestamp' ou None si absent.
         """
         feedbacks = self.state.get("feedbacks", {})
+
         return feedbacks.get(activity_id)
 
     def has_session_feedback(self, activity_id: str) -> bool:

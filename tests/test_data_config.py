@@ -17,6 +17,7 @@ from cyclisme_training_logs.config import (
 def temp_data_repo(tmp_path):
     """Create temporary data repository for tests."""
     test_repo = tmp_path / "training-logs"
+
     test_repo.mkdir()
 
     # Create required structure
@@ -31,6 +32,7 @@ def temp_data_repo(tmp_path):
 def reset_config():
     """Reset global config before/after each test."""
     reset_data_config()
+
     yield
     reset_data_config()
 
@@ -69,6 +71,7 @@ def test_config_nonexistent_path():
 def test_config_missing_workouts_history(temp_data_repo):
     """Test validate() raises error if workouts-history.md missing."""
     # Remove workouts-history.md
+
     (temp_data_repo / "workouts-history.md").unlink()
 
     config = DataRepoConfig(data_repo_path=temp_data_repo)
@@ -109,6 +112,7 @@ def test_get_data_config_singleton(temp_data_repo):
 def test_set_and_reset_config(temp_data_repo):
     """Test set_data_config and reset_data_config."""
     config = DataRepoConfig(data_repo_path=temp_data_repo)
+
     set_data_config(config)
 
     retrieved = get_data_config()

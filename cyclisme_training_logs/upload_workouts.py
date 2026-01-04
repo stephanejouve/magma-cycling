@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Upload Zwift workout files (.zwo) to Intervals.icu calendar.
+
 Upload fichiers workouts Zwift (.zwo) vers calendrier Intervals.icu.
 Convertit format Zwift en format Intervals.icu et planifie séances
 automatiquement.
@@ -80,6 +81,7 @@ class WorkoutUploader:
             start_date: Start date of the week (Monday)
         """
         self.week_number = week_number
+
         self.start_date = start_date
         self.api = None
         self._init_api()
@@ -264,6 +266,7 @@ class WorkoutUploader:
     def upload_all(self, workouts: list[dict], dry_run: bool = False) -> dict:
         """Upload tous les workouts."""
         print("\n" + "=" * 70)
+
         print("📤 UPLOAD WORKOUTS VERS INTERVALS.ICU")
         print(f"Semaine : {self.week_number}")
         print(
@@ -307,6 +310,7 @@ class WorkoutUploader:
 def main():
     """Point d'entrée du script."""
     parser = argparse.ArgumentParser(description="Uploader des workouts sur Intervals.icu")
+
     parser.add_argument(
         "--week-id", type=str, required=True, help="Numéro de semaine (format SXXX, ex: S072)"
     )

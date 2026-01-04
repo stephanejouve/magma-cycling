@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Backfill automatisé de l'historique d'entraînement
+
 Analyse en masse des activités historiques depuis Intervals.icu avec génération
 automatisée d'analyses IA. Utilise TimelineInjector via insert-analysis pour
 injection chronologique dans workouts-history.md.
@@ -92,6 +93,7 @@ class HistoryBackfiller:
             force_reanalyze: If True, reanalyze existing entries (default: False).
         """
         self.provider = provider
+
         self.batch_size = batch_size
         self.dry_run = dry_run
         self.yes_confirm = yes_confirm
@@ -125,6 +127,7 @@ class HistoryBackfiller:
     def get_analyzed_activities(self) -> set[str]:
         """Get set of already analyzed activity IDs."""
         history = self.state.state.get("history", [])
+
         return {h["activity_id"] for h in history}
 
     def fetch_activities(self, start_date: str, end_date: str) -> list[dict]:
@@ -229,6 +232,7 @@ class HistoryBackfiller:
             List of activities needing analysis.
         """
         # If force_reanalyze, ignore workflow state (empty set = analyze all)
+
         if self.force_reanalyze:
             print("⚡ Force re-analyze: ignoring workflow state")
             analyzed = set()
@@ -268,6 +272,7 @@ class HistoryBackfiller:
             True if analysis succeeded, False otherwise.
         """
         activity_id = str(activity.get("id", ""))
+
         activity_name = activity.get("name", "Unknown")
         activity_date = activity.get("start_date_local", "")[:10]
 
@@ -392,6 +397,7 @@ class HistoryBackfiller:
             Dict with 'time_minutes' and 'cost_usd' estimates.
         """
         # Time estimates per provider (minutes per activity)
+
         time_per_activity = {
             "mistral_api": 1.0,
             "claude_api": 0.7,
@@ -580,6 +586,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
+
   # Dry run to see what would be analyzed
   poetry run backfill-history --dry-run --limit 10
 

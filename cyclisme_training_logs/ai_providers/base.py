@@ -64,6 +64,7 @@ class AIAnalyzer(ABC):
     def __init__(self):
         """Initialize AI analyzer base."""
         self.provider: AIProvider | None = None
+
         self.model: str | None = None
 
     @abstractmethod

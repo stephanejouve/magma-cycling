@@ -86,6 +86,7 @@ def extract_tss_from_workouts(file_path):
 def calculate_weekly_tss(sessions):
     """Calcule TSS par semaine."""
     weekly = defaultdict(int)
+
     for session in sessions:
         # Numéro de semaine ISO
         week = session["date"].isocalendar()[1]
@@ -129,6 +130,7 @@ def extract_ftp_evolution(file_path):
 def main():
     """Command-line entry point for displaying training statistics."""
     # Use data repo config if available
+
     from cyclisme_training_logs.config import get_data_config
 
     try:

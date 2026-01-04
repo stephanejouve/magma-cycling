@@ -219,6 +219,7 @@ class TestTrainingCalendar:
     def test_add_session_overwrites_existing(self, calendar):
         """Test adding session on same date overwrites existing."""
         # Add first session
+
         calendar.add_session(
             session_date=date(2026, 1, 12),
             workout_type=WorkoutType.ENDURANCE,
@@ -269,6 +270,7 @@ class TestTrainingCalendar:
     def test_get_week_summary_completed_sessions(self, calendar):
         """Test summary uses actual TSS for completed sessions."""
         # Add session
+
         calendar.add_session(date(2026, 1, 12), WorkoutType.ENDURANCE, 60.0, 90, 70.0)
 
         # Mark as completed with different actual TSS

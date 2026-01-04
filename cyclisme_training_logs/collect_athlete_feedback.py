@@ -32,6 +32,7 @@ class AthleteFeedbackCollector:
             batch_position: Optional tuple (current, total) for batch processing.
         """
         self.temp_dir = Path(temp_dir)
+
         self.temp_dir.mkdir(exist_ok=True)
         self.feedback_file = self.temp_dir / "last_feedback.json"
         self.activity_context = activity_context or {}
@@ -148,6 +149,7 @@ class AthleteFeedbackCollector:
     def collect_quick_feedback(self):
         """Mode rapide : RPE + ressenti uniquement."""
         print("🚴 Collecte Retour Athlète - Mode Rapide")
+
         print("=" * 60)
 
         # Afficher le contexte de la séance si disponible
@@ -165,6 +167,7 @@ class AthleteFeedbackCollector:
     def collect_full_feedback(self):
         """Mode complet : toutes les questions."""
         print("🚴 Collecte Retour Athlète - Mode Complet")
+
         print("=" * 60)
 
         # Afficher le contexte de la séance si disponible
@@ -259,6 +262,7 @@ class AthleteFeedbackCollector:
     def display_feedback(self, feedback):
         """Display le résumé du feedback."""
         print("\n" + "=" * 60)
+
         print("📋 RÉSUMÉ DU FEEDBACK")
         print("=" * 60)
 

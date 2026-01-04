@@ -49,6 +49,7 @@ class NamingValidator:
             project_root: Project root directory path (default: current directory).
         """
         self.project_root = Path(project_root)
+
         self.weekly_dir = self.project_root / "logs" / "weekly_reports"
         self.issues: list[dict[str, Any]] = []
 
@@ -130,6 +131,7 @@ class NamingValidator:
     def print_report(self, verbose: bool = False):
         """Display rapport de validation."""
         print("\n" + "=" * 70)
+
         print("🔍 VALIDATION CONVENTIONS NOMMAGE WEEKLY REPORTS")
         print("=" * 70)
         print()

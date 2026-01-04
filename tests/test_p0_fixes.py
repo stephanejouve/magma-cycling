@@ -13,6 +13,7 @@ from cyclisme_training_logs.rest_and_cancellations import (
 def test_p0_fix1_modified_status_valid():
     """P0 Fix #1: Vérifier que 'modified' est dans VALID_STATUSES"""
     assert "modified" in VALID_STATUSES, "'modified' devrait être un statut valide"
+
     assert "completed" in VALID_STATUSES
     assert "cancelled" in VALID_STATUSES
     assert "rest_day" in VALID_STATUSES
@@ -23,6 +24,7 @@ def test_p0_fix1_modified_status_valid():
 def test_p0_fix3_auto_reclassification_persistence():
     """P0 Fix #3: Vérifier que l'auto-reclassification modifie l'original"""
     # Créer planning avec session marquée completed mais sans activité
+
     week_planning = {
         "week_id": "S999",
         "start_date": "2025-12-01",

@@ -72,6 +72,7 @@ class IntervalsICUBackfiller:
             api_key: Intervals.icu API key
         """
         self.athlete_id = athlete_id
+
         self.client = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
         self.intelligence = TrainingIntelligence()
 
@@ -130,6 +131,7 @@ class IntervalsICUBackfiller:
             Workout type: "sweet-spot", "vo2", "tempo", "endurance", "recovery"
         """
         name = activity.get("name", "").lower()
+
         intensity = activity.get("icu_intensity") or 0
 
         # Name-based classification (most reliable)
@@ -576,6 +578,7 @@ class IntervalsICUBackfiller:
             output_path: Path to save intelligence JSON.
         """
         print(f"\n🚀 Starting backfill: {start_date} → {end_date}")
+
         print(f"📁 Output: {output_path}")
         print("=" * 60)
 

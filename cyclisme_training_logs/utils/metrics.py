@@ -128,6 +128,7 @@ def format_metrics_display(metrics: dict[str, float]) -> str:
         'CTL: 0.0 | ATL: 0.0 | TSB: +0.0'
     """
     ctl = metrics.get("ctl", 0)
+
     atl = metrics.get("atl", 0)
     tsb = metrics.get("tsb", 0)
 
@@ -213,6 +214,7 @@ def calculate_metrics_change(
         {'ctl_change': None, 'atl_change': 2.7, 'tsb_change': None}.
     """
     # Calculate CTL change
+
     ctl_start = metrics_start.get("ctl")
     ctl_end = metrics_end.get("ctl")
     ctl_change = (ctl_end - ctl_start) if (ctl_start is not None and ctl_end is not None) else None
@@ -269,6 +271,7 @@ def get_metrics_safely(
         {'ctl': 0.0, 'atl': 0.0, 'tsb': 0.0}.
     """
     # Handle None or empty list
+
     if not wellness_list:
         return {"ctl": 0.0, "atl": 0.0, "tsb": 0.0}
 

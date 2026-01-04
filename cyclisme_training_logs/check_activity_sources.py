@@ -23,6 +23,7 @@ from cyclisme_training_logs.api.intervals_client import IntervalsClient
 def load_config(config_file):
     """Load la configuration depuis un fichier JSON."""
     config_path = Path(config_file).expanduser()
+
     if not config_path.exists():
         return None
 

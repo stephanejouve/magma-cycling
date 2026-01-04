@@ -123,6 +123,7 @@ def copy_to_clipboard(text: str) -> bool:
         - Returns False if all methods fail.
     """
     # Try native first (more reliable on macOS)
+
     if _copy_to_clipboard_native(text):
         logger.debug("Copied to clipboard using native commands")
         return True
@@ -163,6 +164,7 @@ class ClipboardAnalyzer(AIAnalyzer):
     def __init__(self):
         """Initialize clipboard analyzer."""
         super().__init__()
+
         self.provider = AIProvider.CLIPBOARD
         self.model = "manual"
         logger.info("ClipboardAnalyzer initialized (manual workflow)")
@@ -237,6 +239,7 @@ Then paste it into your preferred AI service.
             '# 📋 Prompt Copié dans Clipboard...'
         """
         return f"""
+
 # 📋 Prompt Copié dans Clipboard ✅
 
 **Taille**: {prompt_length:,} caractères
@@ -317,4 +320,5 @@ Le prompt inclut:
             - Returns False if all methods fail.
         """
         # Test clipboard with short text
+
         return copy_to_clipboard("test")

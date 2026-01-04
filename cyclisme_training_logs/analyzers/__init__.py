@@ -1,5 +1,6 @@
 """
 Analyzers for daily, weekly, and cycle-level analysis.
+
 Modules d'analyse : daily_aggregator (Phase 1), weekly_aggregator (Phase 2).
 Implémentations concrètes des agrégateurs pour analyses IA multi-niveaux.
 

@@ -15,6 +15,7 @@ def fix_d400_in_file(file_path: Path) -> tuple[bool, int]:
         Tuple of (changed, count) where changed is True if file was modified
     """
     content = file_path.read_text(encoding="utf-8")
+
     original_content = content
     fixes_count = 0
 

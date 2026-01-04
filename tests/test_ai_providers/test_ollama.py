@@ -49,6 +49,7 @@ class TestOllamaAnalyzer:
     def test_init_with_custom_host(self):
         """Test initialization with custom host."""
         custom_host = "http://192.168.1.100:11434"
+
         analyzer = OllamaAnalyzer(host=custom_host)
 
         assert analyzer.host == custom_host
@@ -74,6 +75,7 @@ class TestOllamaAnalyzer:
     def test_analyze_session_success(self, mock_post):
         """Test successful analysis."""
         # Mock successful response
+
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {"response": "Analyse complète de la séance cyclisme."}
@@ -94,6 +96,7 @@ class TestOllamaAnalyzer:
     def test_analyze_with_dataset(self, mock_post):
         """Test analysis with dataset parameter."""
         mock_response = MagicMock()
+
         mock_response.json.return_value = {"response": "Analyse avec données."}
         mock_post.return_value = mock_response
 
@@ -107,6 +110,7 @@ class TestOllamaAnalyzer:
     def test_analyze_empty_prompt(self, mock_post):
         """Test analysis with empty prompt."""
         mock_response = MagicMock()
+
         mock_response.json.return_value = {"response": ""}
         mock_post.return_value = mock_response
 
@@ -119,6 +123,7 @@ class TestOllamaAnalyzer:
     def test_analyze_large_prompt(self, mock_post):
         """Test analysis with very large prompt."""
         mock_response = MagicMock()
+
         mock_response.json.return_value = {"response": "Réponse à prompt large"}
         mock_post.return_value = mock_response
 
@@ -134,6 +139,7 @@ class TestOllamaAnalyzer:
     def test_analyze_special_characters(self, mock_post):
         """Test analysis with special characters."""
         mock_response = MagicMock()
+
         mock_response.json.return_value = {"response": "Réponse avec émojis 🚴‍♂️"}
         mock_post.return_value = mock_response
 
@@ -148,6 +154,7 @@ class TestOllamaAnalyzer:
     def test_timeout_parameter(self, mock_post):
         """Test that timeout is set to 600s (10min)."""
         mock_response = MagicMock()
+
         mock_response.json.return_value = {"response": "Test"}
         mock_post.return_value = mock_response
 
@@ -189,6 +196,7 @@ class TestOllamaAnalyzer:
     def test_analyze_http_error(self, mock_post):
         """Test handling of HTTP error."""
         mock_response = MagicMock()
+
         mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
             "500 Server Error"
         )
@@ -205,6 +213,7 @@ class TestOllamaAnalyzer:
     def test_analyze_invalid_json_response(self, mock_post):
         """Test handling of invalid JSON response."""
         mock_response = MagicMock()
+
         mock_response.json.side_effect = ValueError("Invalid JSON")
         mock_post.return_value = mock_response
 
@@ -219,6 +228,7 @@ class TestOllamaAnalyzer:
     def test_analyze_missing_response_field(self, mock_post):
         """Test handling when response field is missing."""
         mock_response = MagicMock()
+
         mock_response.json.return_value = {}  # Missing 'response' field
         mock_post.return_value = mock_response
 
@@ -234,6 +244,7 @@ class TestOllamaAnalyzer:
     def test_get_provider_info(self, mock_get):
         """Test get_provider_info returns correct information."""
         mock_response = MagicMock()
+
         mock_response.status_code = 200
         mock_get.return_value = mock_response
 
@@ -249,6 +260,7 @@ class TestOllamaAnalyzer:
     def test_get_provider_info_structure(self, mock_get):
         """Test provider info has expected structure."""
         mock_response = MagicMock()
+
         mock_response.status_code = 200
         mock_get.return_value = mock_response
 
@@ -265,6 +277,7 @@ class TestOllamaAnalyzer:
     def test_validate_config_success(self, mock_get):
         """Test config validation returns True when server accessible."""
         mock_response = MagicMock()
+
         mock_response.status_code = 200
         mock_get.return_value = mock_response
 
@@ -299,6 +312,7 @@ class TestOllamaAnalyzer:
     def test_validate_config_http_error(self, mock_get):
         """Test config validation returns False on HTTP error."""
         mock_response = MagicMock()
+
         mock_response.status_code = 500
         mock_get.return_value = mock_response
 
@@ -313,6 +327,7 @@ class TestOllamaAnalyzer:
     def test_multiple_analyzers_independent(self):
         """Test multiple analyzer instances are independent."""
         analyzer1 = OllamaAnalyzer(model="llama3.1:70b")
+
         analyzer2 = OllamaAnalyzer(model="mistral:7b")
 
         assert analyzer1 is not analyzer2
@@ -321,6 +336,7 @@ class TestOllamaAnalyzer:
     def test_model_parameter_preserved(self):
         """Test that model parameter is preserved."""
         custom_model = "codellama:13b"
+
         analyzer = OllamaAnalyzer(model=custom_model)
 
         assert analyzer.model == custom_model
@@ -328,6 +344,7 @@ class TestOllamaAnalyzer:
     def test_host_parameter_preserved(self):
         """Test that host parameter is preserved."""
         custom_host = "http://192.168.1.50:11434"
+
         analyzer = OllamaAnalyzer(host=custom_host)
 
         assert analyzer.host == custom_host
@@ -342,6 +359,7 @@ class TestOllamaAnalyzer:
     def test_no_api_key_required(self):
         """Test that Ollama doesn't require API key."""
         # Should not raise any errors
+
         analyzer = OllamaAnalyzer()
 
         assert analyzer is not None
@@ -351,6 +369,7 @@ class TestOllamaAnalyzer:
     def test_provider_info_status_ready_when_online(self, mock_get):
         """Test that status is 'ready' when server is online."""
         mock_response = MagicMock()
+
         mock_response.status_code = 200
         mock_get.return_value = mock_response
 

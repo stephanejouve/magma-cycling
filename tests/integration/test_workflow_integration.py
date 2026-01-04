@@ -107,6 +107,7 @@ class TestWorkflowAIIntegration:
     def test_workflow_analysis_pipeline_clipboard(self):
         """Test complete analysis pipeline with clipboard provider."""
         config = get_ai_config()
+
         provider_config = config.get_provider_config("clipboard")
         analyzer = AIProviderFactory.create("clipboard", provider_config)
 
@@ -120,6 +121,7 @@ class TestWorkflowAIIntegration:
 
 Analyse cette séance."""
         # Mock clipboard operation
+
         with patch("cyclisme_training_logs.ai_providers.clipboard.copy_to_clipboard") as mock_copy:
             mock_copy.return_value = True
 
@@ -230,6 +232,7 @@ class TestWorkflowEdgeCases:
     def test_empty_prompt_handling(self):
         """Test workflow handling of empty prompt."""
         config = get_ai_config()
+
         provider_config = config.get_provider_config("clipboard")
         analyzer = AIProviderFactory.create("clipboard", provider_config)
 
@@ -245,6 +248,7 @@ class TestWorkflowEdgeCases:
     def test_very_large_prompt_handling(self):
         """Test workflow handling of very large prompt."""
         config = get_ai_config()
+
         provider_config = config.get_provider_config("clipboard")
         analyzer = AIProviderFactory.create("clipboard", provider_config)
 
@@ -264,6 +268,7 @@ class TestWorkflowEdgeCases:
     def test_special_characters_in_prompt(self):
         """Test workflow handling of special characters."""
         config = get_ai_config()
+
         provider_config = config.get_provider_config("clipboard")
         analyzer = AIProviderFactory.create("clipboard", provider_config)
 

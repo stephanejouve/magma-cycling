@@ -27,6 +27,7 @@ def backfiller(mock_intervals_client):
 def test_classify_workout_type_sweet_spot(backfiller):
     """Test classification of Sweet-Spot workouts."""
     # Name-based classification
+
     activity = {"name": "Sweet Spot 3x10", "icu_intensity": 0.89}
     assert backfiller.classify_workout_type(activity) == "sweet-spot"
 
@@ -38,6 +39,7 @@ def test_classify_workout_type_sweet_spot(backfiller):
 def test_classify_workout_type_vo2(backfiller):
     """Test classification of VO2 max workouts."""
     # Name-based
+
     activity = {"name": "VO2 Max 5x3min", "icu_intensity": 1.15}
     assert backfiller.classify_workout_type(activity) == "vo2"
 
@@ -49,6 +51,7 @@ def test_classify_workout_type_vo2(backfiller):
 def test_backfill_sweet_spot_extraction(backfiller, mock_intervals_client):
     """Test extraction of Sweet-Spot learning from API data."""
     # Mock 90 sweet-spot sessions
+
     mock_activities = [
         {
             "name": f"Sweet Spot {i}",
@@ -83,6 +86,7 @@ def test_backfill_sweet_spot_extraction(backfiller, mock_intervals_client):
 def test_backfill_vo2_sleep_correlation(backfiller, mock_intervals_client):
     """Test VO2/sleep correlation pattern extraction."""
     # Mock 40 VO2 sessions
+
     mock_activities = []
     mock_wellness = []
 
@@ -139,6 +143,7 @@ def test_backfill_vo2_sleep_correlation(backfiller, mock_intervals_client):
 def test_backfill_outdoor_discipline(backfiller, mock_intervals_client):
     """Test outdoor intensity overshoot pattern extraction."""
     # Mock 100 outdoor rides with +15% IF overshoot
+
     outdoor_activities = [
         {
             "name": f"Outdoor Ride {i}",
@@ -184,6 +189,7 @@ def test_backfill_outdoor_discipline(backfiller, mock_intervals_client):
 def test_backfill_ftp_progression(backfiller, mock_intervals_client):
     """Test FTP progression learning extraction."""
     # Mock athlete with current FTP
+
     # Mock activities with FTP test
     mock_activities = [
         {
@@ -236,6 +242,7 @@ def test_backfill_ftp_progression(backfiller, mock_intervals_client):
 def test_backfill_saves_valid_json(backfiller, mock_intervals_client, tmp_path):
     """Test backfill saves valid intelligence JSON."""
     # Mock minimal data
+
     mock_activities = [
         {
             "name": "Sweet Spot",
@@ -273,6 +280,7 @@ def test_backfill_saves_valid_json(backfiller, mock_intervals_client, tmp_path):
 def test_classify_workout_type_fallback_cases(backfiller):
     """Test workout type classification edge cases."""
     # Tempo by IF
+
     assert backfiller.classify_workout_type({"name": "Unknown", "icu_intensity": 0.80}) == "tempo"
 
     # Recovery by IF

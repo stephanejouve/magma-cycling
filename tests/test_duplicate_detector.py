@@ -55,6 +55,7 @@ Test 1 DOUBLON
 ---
 """
     history.write_text(content)
+
     return history
 
 
@@ -80,12 +81,14 @@ Test 2
 ---
 """
     history.write_text(content)
+
     return history
 
 
 def test_detect_duplicates(sample_history_with_duplicates):
     """Test détection basique"""
     detector = DuplicateDetector(sample_history_with_duplicates)
+
     duplicates = detector.quick_scan()
 
     assert len(duplicates) == 1
@@ -97,6 +100,7 @@ def test_detect_duplicates(sample_history_with_duplicates):
 def test_no_duplicates_found(sample_history_no_duplicates):
     """Test avec fichier sans doublons"""
     detector = DuplicateDetector(sample_history_no_duplicates)
+
     duplicates = detector.quick_scan()
 
     assert len(duplicates) == 0
@@ -105,6 +109,7 @@ def test_no_duplicates_found(sample_history_no_duplicates):
 def test_check_window_limitation(sample_history_with_duplicates):
     """Test limitation du window"""
     # Window=1 ne devrait voir que la première entrée
+
     detector = DuplicateDetector(sample_history_with_duplicates, check_window=1)
     duplicates = detector.quick_scan()
 
@@ -151,6 +156,7 @@ def test_no_action_when_no_duplicates(sample_history_no_duplicates):
 def test_nonexistent_file():
     """Test avec fichier qui n'existe pas"""
     detector = DuplicateDetector(Path("/nonexistent/file.md"))
+
     duplicates = detector.quick_scan()
 
     assert len(duplicates) == 0
@@ -159,6 +165,7 @@ def test_nonexistent_file():
 def test_find_entry_bounds(sample_history_with_duplicates):
     """Test recherche des bornes d'une entrée"""
     detector = DuplicateDetector(sample_history_with_duplicates)
+
     lines = sample_history_with_duplicates.read_text().split("\n")
 
     # Première entrée (ligne 0)

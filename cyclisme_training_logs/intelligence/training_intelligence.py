@@ -305,6 +305,7 @@ class TrainingIntelligence:
     def __init__(self) -> None:
         """Initialize TrainingIntelligence with empty memory stores."""
         self.learnings: dict[str, TrainingLearning] = {}
+
         self.patterns: dict[str, Pattern] = {}
         self.adaptations: dict[str, ProtocolAdaptation] = {}
 
@@ -341,6 +342,7 @@ class TrainingIntelligence:
             >>> assert learning.confidence == ConfidenceLevel.LOW
         """
         # Check if learning already exists for this category
+
         existing_id = None
         for learning_id, learning in self.learnings.items():
             if learning.category == category and learning.description == description:
@@ -426,6 +428,7 @@ class TrainingIntelligence:
             >>> assert pattern.frequency == 1
         """
         # Check if pattern already exists
+
         existing_id = None
         for pattern_id, pattern in self.patterns.items():
             if pattern.name == name:
@@ -492,6 +495,7 @@ class TrainingIntelligence:
             ... )
         """
         timestamp = int(datetime.now().timestamp())
+
         adaptation_id = f"{protocol_name}_{adaptation_type}_{timestamp}"
 
         # Determine confidence from evidence count
@@ -540,6 +544,7 @@ class TrainingIntelligence:
             ... })
         """
         relevant_learnings = []
+
         active_patterns = []
         recommendations = []
 

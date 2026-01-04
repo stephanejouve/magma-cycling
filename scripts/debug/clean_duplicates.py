@@ -62,6 +62,7 @@ def find_workout_entries(content: str) -> list[dict]:
 def analyze_duplicates(entries: list[dict]) -> dict:
     """Analyse les doublons."""
     seen = {}
+
     duplicates = []
 
     for entry in entries:
@@ -132,6 +133,7 @@ def select_file(files: list[Path]) -> Path:
 def clean_file(file_path: Path, auto_confirm: bool = False) -> bool:
     """Nettoie un fichier de ses doublons."""
     print(f"\n{'='*70}")
+
     print(f"📁 Traitement: {file_path}")
     print(f"{'='*70}\n")
 
