@@ -32,6 +32,7 @@ import sys
 from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 from cyclisme_training_logs.ai_providers.factory import AIProviderFactory
 from cyclisme_training_logs.config import get_ai_config, get_data_config
@@ -129,7 +130,7 @@ class MonthlyAnalyzer:
         Returns:
             Dictionary with monthly metrics.
         """
-        stats = {
+        stats: dict[str, Any] = {
             "total_weeks": len(weekly_data),
             "total_sessions": 0,
             "completed": 0,
