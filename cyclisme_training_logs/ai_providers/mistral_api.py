@@ -186,6 +186,11 @@ class MistralAPIAnalyzer(AIAnalyzer):
 
             # Extract analysis text
             analysis = response.choices[0].message.content
+
+            # Handle Mistral API returning list[str] or str
+            if isinstance(analysis, list):
+                analysis = " ".join(analysis)
+
             logger.info(
                 f"Received analysis from Mistral ({len(analysis)} chars, "
                 f"tokens: ~{len(analysis)//4})"

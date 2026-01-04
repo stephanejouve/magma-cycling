@@ -48,7 +48,7 @@ class OpenAIAnalyzer(AIAnalyzer):
         """Initialize OpenAI analyzer."""
         super().__init__()
         self.provider = AIProvider.OPENAI
-        self.model = model
+        self.model: str = model
 
         if not api_key:
             raise WorkflowError("OpenAI API key required")
@@ -69,8 +69,10 @@ class OpenAIAnalyzer(AIAnalyzer):
             )
 
             analysis = response.choices[0].message.content
-            logger.info(f"Received analysis from OpenAI ({len(analysis)} chars)")
+            if analysis is None:
+                raise WorkflowError("OpenAI returned empty response")
 
+            logger.info(f"Received analysis from OpenAI ({len(analysis)} chars)")
             return analysis
 
         except Exception as e:

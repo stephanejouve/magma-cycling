@@ -117,8 +117,8 @@ class ClaudeAPIAnalyzer(AIAnalyzer):
         """
         super().__init__()
         self.provider = AIProvider.CLAUDE
-        self.model = model
-        self.max_tokens = max_tokens
+        self.model: str = model
+        self.max_tokens: int = max_tokens
 
         if not api_key or not api_key.startswith("sk-ant-"):
             raise WorkflowError("Invalid Claude API key format (must start with 'sk-ant-')")
@@ -163,9 +163,12 @@ class ClaudeAPIAnalyzer(AIAnalyzer):
             )
 
             # Extract analysis text
-            analysis = response.content[0].text
-            logger.info(f"Received analysis from Claude ({len(analysis)} chars)")
+            content = response.content[0]
+            if not hasattr(content, "text"):
+                raise WorkflowError("Unexpected response format: content has no text attribute")
 
+            analysis = content.text
+            logger.info(f"Received analysis from Claude ({len(analysis)} chars)")
             return analysis
 
         except Exception as e:
