@@ -301,7 +301,7 @@ Le bot suggère automatiquement où déplacer les fichiers :
 ```
 ⚠️  Found 3 misplaced files at root:
   → ANALYSE_MOA.md → project-docs/archives/
-  → sprint-r21.tar.gz → releases/
+  → sprint-r5.tar.gz → releases/
   → fix_something.py → scripts/maintenance/
 
 Run 'git mv <file> <destination>' to organize these files

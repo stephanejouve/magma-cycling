@@ -1,7 +1,7 @@
 #!/bin/bash
 # Script de génération du package de revue architecturale
 # Projet: Cyclisme Training Logs
-# Version: 2.2.0 - Sprint R21
+# Version: 2.2.0 - Sprint R5
 
 set -e
 
@@ -80,7 +80,7 @@ cat > "$OUTPUT_DIR/metrics_summary.txt" << METRICS_EOF
 # Métriques Qualité - Cyclisme Training Logs v2.2.0
 
 **Généré le:** $(date +"%Y-%m-%d %H:%M:%S")
-**Sprint:** R21 - Quality & Organization
+**Sprint:** R5 - Quality & Organization
 **Version:** 2.2.0
 
 ---
@@ -210,7 +210,7 @@ cat > "$OUTPUT_DIR/metrics_summary.txt" << METRICS_EOF
 
 ---
 
-## 📈 Évolution (Sprint R21)
+## 📈 Évolution (Sprint R5)
 
 ### Améliorations Qualité
 - ✅ PEP 8: 1137 violations → 0 violations
@@ -296,7 +296,7 @@ fi
 
 echo "📖 Création du guide de revue..."
 cat > "$OUTPUT_DIR/REVIEW_GUIDE.md" << 'GUIDE_EOF'
-# Guide de Revue Architecturale - v2.2.0 Sprint R21
+# Guide de Revue Architecturale - v2.2.0 Sprint R5
 
 ## ⚠️ Note Importante sur les Warnings
 
@@ -624,7 +624,7 @@ cat > "$OUTPUT_DIR/README.md" << 'README_EOF'
 # Package de Revue Architecturale - Cyclisme Training Logs v2.2.0
 
 **Généré le:** $(date +"%Y-%m-%d %H:%M:%S")
-**Sprint:** R21 - Quality & Organization
+**Sprint:** R5 - Quality & Organization
 **Version:** 2.2.0
 
 ---
@@ -703,7 +703,7 @@ review_package_v2.2.0_[TIMESTAMP]/
 
 ## 🎯 Objectif de cette Revue
 
-**Validation architecturale indépendante** du projet après Sprint R21 (Quality & Organization).
+**Validation architecturale indépendante** du projet après Sprint R5 (Quality & Organization).
 
 ### Ce qui est demandé ✅
 
@@ -929,7 +929,7 @@ echo "   • Tests exécutés : ${TEST_PASSED} tests passed"
 echo "   • Documentation complète incluse"
 echo "   • Métriques à jour ($(date +"%Y-%m-%d"))"
 echo ""
-echo "✅ Qualité Sprint R21 :"
+echo "✅ Qualité Sprint R5 :"
 echo "   • PEP 8: 0 violations"
 echo "   • PEP 257: 0 violations"
 echo "   • MyPy: 0 errors"
