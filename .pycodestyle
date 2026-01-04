@@ -1,0 +1,30 @@
+[pycodestyle]
+# PEP 8 moderne (compatible Black + communauté Python 2024+)
+max_line_length = 100
+
+# E203: whitespace before ':' (conflit avec Black pour slicing)
+# E501: line too long (acceptons 100 chars, standard moderne)
+# W503: line break before binary operator (PEP 8 mise à jour recommande AVANT, pas APRÈS)
+# Références:
+# - https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html#slices
+# - https://www.python.org/dev/peps/pep-0008/#should-a-line-break-before-or-after-a-binary-operator
+ignore = E203,E501,W503
+
+# Exclure fichiers temporaires/patches
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    build,
+    dist,
+    *.egg-info,
+    .pytest_cache,
+    .mypy_cache,
+    .ruff_cache,
+    patches,
+    backups
+
+# Statistiques détaillées
+statistics = True
+count = True
