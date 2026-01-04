@@ -2,7 +2,8 @@
 """
 Script de Planification Hebdomadaire.
 
-Génère un prompt pour Claude.ai afin de créer les entraînements de la semaine.
+Génère un prompt pour votre assistant IA afin de créer les entraînements de la semaine.
+Supporte tous les providers: Claude API, Mistral API, OpenAI, Ollama, Clipboard.
 """
 import argparse
 import json
@@ -201,7 +202,7 @@ class WeeklyPlanner:
         return context
 
     def generate_planning_prompt(self) -> str:
-        """Generate le prompt complet pour Claude.ai."""
+        """Generate le prompt complet pour l'assistant IA."""
         print("\n✍️ Génération du prompt de planification...")
 
         next_week = self._next_week_number()
@@ -774,12 +775,14 @@ Le but est que je puisse **copier-coller directement** chaque bloc dans Interval
         print("📝 PROCHAINES ÉTAPES :")
         print("=" * 70)
         print()
-        print("1. Ouvrir Claude.ai dans ton navigateur")
+        print("1. Choisir votre assistant IA (Claude, Mistral, OpenAI, Ollama)")
         print("2. Coller le prompt (Cmd+V)")
-        print("3. Attendre que Claude génère les 7 entraînements")
+        print("3. Attendre que l'IA génère les 7 entraînements")
         print("4. Copier chaque section WORKOUT générée")
         print(f"5. Créer les fichiers .zwo dans workouts/{self.week_number}-Semaine/")
-        print("6. Uploader sur Intervals.icu")
+        print("6. Uploader sur Intervals.icu avec: wu --week-id {self.week_number}")
+        print()
+        print("💡 Tip: Utilisez 'workflow-coach' pour automatisation complète")
         print()
         print("=" * 70)
         print(f"✅ Planification {self.week_number} prête !")
@@ -789,7 +792,7 @@ Le but est que je puisse **copier-coller directement** chaque bloc dans Interval
 def main():
     """Point d'entrée du script."""
     parser = argparse.ArgumentParser(
-        description="Générer prompt de planification hebdomadaire pour Claude.ai"
+        description="Générer prompt de planification hebdomadaire pour assistant IA"
     )
     parser.add_argument(
         "--week-id", type=str, required=True, help="Numéro de semaine (format SXXX, ex: S072)"
