@@ -71,7 +71,7 @@ else
 fi
 
 echo "🧪 Exécution de la suite de tests..."
-TEST_OUTPUT=$(poetry run pytest 2>&1 | tee /dev/tty)
+TEST_OUTPUT=$(poetry run pytest 2>&1)
 TEST_PASSED=$(echo "$TEST_OUTPUT" | grep -o '[0-9]* passed' | grep -o '[0-9]*' || echo "N/A")
 TEST_DURATION=$(echo "$TEST_OUTPUT" | grep -o 'in [0-9.]*s' | grep -o '[0-9.]*' || echo "N/A")
 
