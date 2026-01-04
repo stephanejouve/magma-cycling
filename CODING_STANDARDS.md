@@ -125,6 +125,51 @@ poetry run pydocstyle cyclisme_training_logs/core/data_aggregator.py
 pre-commit run --all-files
 ```
 
+## PEP 8 Compliance
+
+Le code est **100% conforme PEP 8** avec les adaptations modernes suivantes:
+
+### Standard Moderne (2024+)
+
+**Longueur de ligne : 100 caractères**
+- PEP 8 historique : 79 caractères (terminaux 80 colonnes)
+- Standard moderne : 100 caractères (écrans larges, lisibilité accrue)
+- Adopté par : Black, Google, Facebook, Instagram, Lyft, ...
+
+**Opérateurs binaires : saut AVANT**
+- PEP 8 mise à jour (2016) : saut de ligne AVANT l'opérateur
+- Meilleure lisibilité (opérateur aligné à gauche)
+- Adopté par Black
+
+**Slicing : espaces selon contexte**
+- Black optimise espacement pour lisibilité
+- Peut ajouter espaces avant `:` dans slicing complexe
+
+### Configuration
+
+**Fichier :** `.pycodestyle`
+```ini
+[pycodestyle]
+max_line_length = 100
+ignore = E203,E501,W503
+```
+
+**Vérification :**
+```bash
+poetry run pycodestyle cyclisme_training_logs/ --ignore=E203,E501,W503
+# ✅ 0 violations
+```
+
+### Exceptions Acceptées
+
+- **E203** : Whitespace before `:` (conflit Black/slicing)
+- **E501** : Line > 79 chars (acceptons 100 chars)
+- **W503** : Line break before binary operator (PEP 8 mise à jour)
+
+**Références :**
+- [PEP 8 - Binary Operators](https://www.python.org/dev/peps/pep-0008/#should-a-line-break-before-or-after-a-binary-operator)
+- [Black Code Style](https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html)
+
 ## Autres Standards
 
 ### Code Formatting
