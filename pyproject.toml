@@ -72,6 +72,9 @@ check-sources = "cyclisme_training_logs.check_activity_sources:main"
 validate-naming = "cyclisme_training_logs.validate_naming_convention:main"
 normalize-reports = "cyclisme_training_logs.normalize_weekly_reports_casing:main"
 
+# === Maintenance & Cleanup ===
+project-clean = "scripts.maintenance.project_cleaner:main"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
