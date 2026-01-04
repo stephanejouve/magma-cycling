@@ -35,6 +35,7 @@ poethepoet = "^0.39.0"
 types-requests = "^2.32.4.20250913"
 types-pyperclip = "^1.9.0.20250801"
 pycodestyle = "^2.14.0"
+pydeps = "^3.0.1"
 
 [tool.poetry.scripts]
 # === Dashboard & Overview ===
