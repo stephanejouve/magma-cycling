@@ -177,10 +177,21 @@ class MistralAPIAnalyzer(AIAnalyzer):
         )
 
         try:
+            # System message to enforce strict format compliance
+            system_message = (
+                "Tu es un assistant d'analyse d'entraînement cyclisme. "
+                "Tu DOIS respecter EXACTEMENT le format markdown demandé dans le prompt. "
+                "N'omets AUCUNE section demandée (Date, Métriques, Analyse, etc.). "
+                "Suis STRICTEMENT le template fourni."
+            )
+
             # Call Mistral API with parameters (new API: chat.complete)
             response = self.client.chat.complete(
                 model=self.model,
-                messages=[{"role": "user", "content": prompt}],
+                messages=[
+                    {"role": "system", "content": system_message},
+                    {"role": "user", "content": prompt},
+                ],
                 temperature=self.temperature,
                 max_tokens=self.max_tokens,
             )
@@ -192,6 +203,9 @@ class MistralAPIAnalyzer(AIAnalyzer):
             if isinstance(analysis, list):
                 analysis = " ".join(analysis)
 
+            # Post-process: Inject Date if missing (Mistral v1.10 regression workaround)
+            analysis = self._ensure_date_field(analysis, prompt)
+
             logger.info(
                 f"Received analysis from Mistral ({len(analysis)} chars, "
                 f"tokens: ~{len(analysis)//4})"
@@ -202,6 +216,54 @@ class MistralAPIAnalyzer(AIAnalyzer):
         except Exception as e:
             logger.error(f"Mistral API call failed: {e}")
             raise WorkflowError(f"Failed to analyze session with Mistral API: {e}") from e
+
+    def _ensure_date_field(self, analysis: str, prompt: str) -> str:
+        r"""Ensure Date field is present in analysis (Mistral v1.10 workaround).
+
+        Mistral API v1.10 sometimes omits the Date field despite it being in the
+        prompt template. This method extracts the date from the prompt and injects
+        it if missing.
+
+        Args:
+            analysis: AI-generated analysis markdown
+            prompt: Original prompt containing date
+
+        Returns:
+            Analysis with Date field guaranteed present
+
+        Examples:
+            >>> analysis = "### S075-01\\n\\n#### Métriques"
+            >>> prompt = "Date : 5 janvier 2026"
+            >>> result = self._ensure_date_field(analysis, prompt)
+            >>> "Date : 5 janvier 2026" in result
+            True
+        """
+        import re
+
+        # Check if Date field already present
+        if "Date :" in analysis or "Date:" in analysis:
+            return analysis
+
+        # Extract date from prompt (format: "Date : 5 janvier 2026")
+        date_match = re.search(r"Date\s*:\s*([^\n]+)", prompt)
+        if not date_match:
+            logger.warning("Could not extract date from prompt, skipping injection")
+            return analysis
+
+        date_value = date_match.group(1).strip()
+
+        # Inject Date after first header (### or ####)
+        lines = analysis.split("\n")
+        for i, line in enumerate(lines):
+            if line.startswith("###") or line.startswith("####"):
+                # Insert blank line + Date after header
+                lines.insert(i + 1, "")
+                lines.insert(i + 2, f"Date : {date_value}")
+                lines.insert(i + 3, "")
+                logger.info(f"Injected missing Date field: {date_value}")
+                break
+
+        return "\n".join(lines)
 
     def get_provider_info(self) -> dict:
         """Get Mistral API provider info.
