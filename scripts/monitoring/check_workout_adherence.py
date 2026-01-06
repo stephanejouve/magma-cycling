@@ -75,11 +75,19 @@ class WorkoutAdherenceChecker:
         # Fetch planned workouts (events)
         events = self.client.get_events(oldest=date_str, newest=date_str)
 
-        # Filter WORKOUT events only
+        # Filter WORKOUT events only, excluding rest/recovery days
+        # Exclude:
+        # - Events starting with "[" (cancelled/notes)
+        # - Events containing "REC" or "Repos" (recovery/rest days)
         planned_workouts = [
             e
             for e in events
-            if e.get("category") == "WORKOUT" and not e.get("name", "").startswith("[")
+            if e.get("category") == "WORKOUT"
+            and not e.get("name", "").startswith("[")
+            and "REC" not in e.get("name", "").upper()
+            and "REPOS" not in e.get("name", "").upper()
+            and "RECOVERY" not in e.get("name", "").upper()
+            and "REST" not in e.get("name", "").upper()
         ]
 
         # Fetch completed activities
