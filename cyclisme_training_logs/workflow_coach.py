@@ -2905,12 +2905,9 @@ Réponds maintenant."""
         # Construire le message de commit
         commit_msg = f"Analyse: {short_name}\n\n🤖 Generated with Claude Code\n\nCo-Authored-By: Claude <noreply@anthropic.com>"
 
-        print()
-        print("Commit en cours...")
-
         # Ajouter et commiter
         try:
-            # Check if there's something to commit
+            # Check if there's something to commit FIRST
             status_check = subprocess.run(
                 ["git", "status", "--short", "logs/workouts-history.md"],
                 capture_output=True,
@@ -2923,6 +2920,10 @@ Réponds maintenant."""
                 print("✅ Fichier déjà à jour (rien à commiter)")
                 self.wait_user()
                 return
+
+            # Only show "Commit en cours..." if there's actually something to commit
+            print()
+            print("Commit en cours...")
 
             # Stage changes
             subprocess.run(["git", "add", "logs/workouts-history.md"], check=True)
