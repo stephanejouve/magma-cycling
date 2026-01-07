@@ -60,7 +60,7 @@ Un **jour de repos** a été créé comme **WORKOUT** dans Intervals.icu:
   "category": "NOTE",
   "name": "Repos complet",
   "description": "Journée de récupération complète",
-  "start_date_local": "2026-01-12T00:00:00"
+  "start_date_local": "2026-01-11T00:00:00"
 }
 ```
 
@@ -81,7 +81,7 @@ note_data = {
     "category": "NOTE",
     "name": "Repos complet",
     "description": "Journée de récupération complète - Sprint R6 Phase 1",
-    "start_date_local": "2026-01-12T00:00:00",
+    "start_date_local": "2026-01-11T00:00:00",
 }
 
 client.create_event(note_data)
@@ -117,7 +117,7 @@ client.create_event(note_data)
   "type": "Rest",
   "name": "Repos actif - Stretching",
   "description": "30min stretching + mobilité",
-  "start_date_local": "2026-01-12T00:00:00"
+  "start_date_local": "2026-01-11T00:00:00"
 }
 ```
 
@@ -159,6 +159,10 @@ S075-07-REPOS-Dimanche    ❌ Contient "REPOS" mais reste WORKOUT
 
 ## 📊 Exemples
 
+**Note:** Les semaines commencent le **LUNDI**
+- S075 = Lundi 5 jan → Dimanche 11 jan
+- S076 = Lundi 12 jan → Dimanche 18 jan
+
 ### Exemple 1: Semaine Normale avec Repos Dimanche
 
 ```python
@@ -174,7 +178,7 @@ repos = {
     "category": "NOTE",
     "name": "Repos complet",
     "description": "Récupération post-semaine intensive",
-    "date": "2026-01-12"
+    "date": "2026-01-11"
 }
 ```
 
@@ -210,7 +214,7 @@ repos = {
     "category": "NOTE",
     "name": "Repos complet",
     "description": "Récupération post-sortie longue 120 TSS",
-    "date": "2026-01-12"
+    "date": "2026-01-11"
 }
 ```
 
