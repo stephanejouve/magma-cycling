@@ -2545,6 +2545,135 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
 
         self.wait_user("Appuyer sur ENTRÉE une fois la réponse copiée...")
 
+    def step_4b_display_analysis(self):
+        """Étape 4b : Afficher l'analyse générée à l'athlète."""
+        self.clear_screen()
+
+        # Afficher le nom de la séance dans le header
+        subtitle = "Étape 4b/7 : Présentation de l'analyse"
+        if self.activity_name:
+            subtitle += f"\n🚴 {self.activity_name}"
+
+        self.print_header("📊 Analyse Générée", subtitle)
+
+        # Get analysis from clipboard or self.analysis_result
+        analysis_text = None
+
+        if hasattr(self, "analysis_result") and self.analysis_result:
+            # API provider: use stored result
+            analysis_text = self.analysis_result
+        else:
+            # Clipboard provider: read from clipboard
+            try:
+                result = subprocess.run(["pbpaste"], capture_output=True, text=True, check=True)
+                analysis_text = result.stdout
+            except Exception as e:
+                logger.error(f"Failed to read from clipboard: {e}")
+                print("⚠️  Impossible de lire l'analyse depuis le presse-papier")
+                print("   L'affichage sera sauté")
+                print()
+                self.wait_user()
+                return
+
+        if not analysis_text or len(analysis_text.strip()) < 50:
+            print("⚠️  Aucune analyse trouvée ou trop courte")
+            print("   L'affichage sera sauté")
+            print()
+            self.wait_user()
+            return
+
+        # Display analysis with formatting
+        print("Voici l'analyse générée par l'IA pour votre séance :")
+        print()
+        self.print_separator()
+        print()
+
+        # Display analysis (with word wrap for better readability)
+        lines = analysis_text.split("\n")
+        for line in lines:
+            print(line)
+
+        print()
+        self.print_separator()
+        print()
+
+        # Show stats
+        word_count = len(analysis_text.split())
+        char_count = len(analysis_text)
+        print(f"📊 Statistiques : {word_count} mots, {char_count} caractères")
+        print()
+
+        self.wait_user("Appuyer sur ENTRÉE pour continuer vers la validation...")
+
+    def _post_analysis_to_intervals(self):
+        """Poste l'analyse comme note dans Intervals.icu.
+
+        Returns:
+            bool: True si succès, False sinon
+        """
+        if not self.activity_id:
+            logger.warning("No activity_id available, skipping Intervals.icu note posting")
+            return False
+
+        # Get analysis text
+        analysis_text = None
+        if hasattr(self, "analysis_result") and self.analysis_result:
+            analysis_text = self.analysis_result
+        else:
+            try:
+                result = subprocess.run(["pbpaste"], capture_output=True, text=True, check=True)
+                analysis_text = result.stdout
+            except Exception as e:
+                logger.error(f"Failed to read analysis from clipboard: {e}")
+                return False
+
+        if not analysis_text or len(analysis_text.strip()) < 50:
+            logger.warning("Analysis text too short or empty, skipping Intervals.icu posting")
+            return False
+
+        # Prepare note content
+        note_content = f"""## 📊 Analyse Coach IA
+
+{analysis_text}
+
+---
+*Analyse générée automatiquement par Cyclisme Training Logs*
+*Date: {datetime.now().strftime('%Y-%m-%d %H:%M')}*
+"""
+
+        # Get Intervals.icu credentials from config
+        intervals_config = get_data_config()
+        athlete_id = intervals_config.get("athlete_id")
+        api_key = intervals_config.get("api_key")
+
+        if not athlete_id or not api_key:
+            logger.error("Missing Intervals.icu credentials")
+            return False
+
+        # POST note via API
+        url = (
+            f"https://intervals.icu/api/v1/athlete/{athlete_id}/activities/{self.activity_id}/notes"
+        )
+        auth = ("API_KEY", api_key)
+        headers = {"Content-Type": "application/json"}
+        payload = {"note": note_content}
+
+        try:
+            response = requests.post(url, json=payload, auth=auth, headers=headers, timeout=10)
+
+            if response.status_code in [200, 201]:
+                logger.info(f"Analysis posted to Intervals.icu activity {self.activity_id}")
+                return True
+            else:
+                logger.error(
+                    f"Failed to post note to Intervals.icu: {response.status_code} - {response.text}"
+                )
+                return False
+
+        except Exception as e:
+            logger.error(f"Exception posting note to Intervals.icu: {e}")
+            return False
+
     def step_5_validate_analysis(self):
         """Étape 5 : Valider la réponse de Claude."""
         self.clear_screen()
@@ -2659,6 +2788,17 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
 
             state.mark_analyzed(self.activity_id, activity_date)
             print(f"✅ Activité {self.activity_id} marquée comme analysée")
+
+            # Post analysis to Intervals.icu as a note
+            print()
+            print("📤 Publication de l'analyse sur Intervals.icu...")
+            success = self._post_analysis_to_intervals()
+            if success:
+                print(f"✅ Analyse publiée sur Intervals.icu (activité {self.activity_id})")
+            else:
+                print(
+                    "⚠️  Échec publication sur Intervals.icu (analyse toujours dans workouts-history.md)"
+                )
 
         self.wait_user()
 
@@ -3121,6 +3261,9 @@ Réponds maintenant."""
                     if self.current_provider == "clipboard":
                         self.step_4_paste_prompt()
 
+                    # Display analysis to athlete (both clipboard and API providers)
+                    self.step_4b_display_analysis()
+
                     self.step_5_validate_analysis()
                     self.step_6_insert_analysis()
 
@@ -3147,6 +3290,8 @@ Réponds maintenant."""
                         # Step 4 only for clipboard provider
                         if self.current_provider == "clipboard":
                             self.step_4_paste_prompt()
+                        # Display analysis to athlete
+                        self.step_4b_display_analysis()
                         self.step_5_validate_analysis()
                         self.step_6_insert_analysis()
                         self.step_7_git_commit()
@@ -3174,6 +3319,8 @@ Réponds maintenant."""
                         # Step 4 only for clipboard provider
                         if self.current_provider == "clipboard":
                             self.step_4_paste_prompt()
+                        # Display analysis to athlete
+                        self.step_4b_display_analysis()
                         self.step_5_validate_analysis()
                         self.step_6_insert_analysis()
                         self.step_7_git_commit()
