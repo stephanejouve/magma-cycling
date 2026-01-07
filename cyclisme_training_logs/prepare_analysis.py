@@ -451,6 +451,11 @@ class PromptGenerator:
         )
         weight_kg = w_pre["weight"] if w_pre["weight"] and w_pre["weight"] > 0 else 0
 
+        # Avertissement sommeil manquant
+        sleep_warning = ""
+        if sleep_hours == 0:
+            sleep_warning = "\n⚠️  ATTENTION : Données de sommeil non disponibles dans Intervals.icu au moment de l'analyse\n   → Saisir les données wellness (Sleep) dans Intervals.icu avant génération du prompt\n   → Ou fournir l'information dans le feedback athlète\n\n"
+
         # Avertissement Strava si nécessaire
         strava_warning = ""
         if act["is_strava"]:
@@ -479,7 +484,7 @@ Certaines métriques (puissance, découplage) peuvent être manquantes ou incomp
 
 ## Séance à Analyser
 
-{strava_warning}{power_warning}### Informations Générales
+{strava_warning}{power_warning}{sleep_warning}### Informations Générales
 - **Nom** : {act['name']}
 - **Type** : {act['type']}
 - **Date** : {act['date']}
