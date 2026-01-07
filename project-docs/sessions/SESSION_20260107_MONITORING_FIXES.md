@@ -676,7 +676,119 @@ Dim 11 jan → Repos ✅ NOTE créé
 
 ---
 
+## 🎯 Feature : Présentation Analyse IA à l'Athlète
+
+**User request:**
+> "je me dis ça pourrait etre bien quand même lorsqu'on recours à un coach IA que l'analyse faite soit présentée à l'athlete"
+
+**Analyse situation actuelle:**
+- Analyse IA générée par workflow-coach
+- Insérée dans ~/training-logs/workouts-history.md
+- ❌ **Jamais affichée à l'athlète !**
+- Athlète doit ouvrir workouts-history.md manuellement
+
+**Solution implémentée (Option 1 + Option 2):**
+
+### 1. Affichage Terminal (Option 1)
+
+**Nouveau step: `step_4b_display_analysis()`**
+- Positionné après step_3 (génération) ou step_4 (clipboard)
+- Avant step_5 (validation)
+- Affiche l'analyse complète dans le terminal
+- Statistiques (nombre de mots, caractères)
+- Support clipboard ET API providers
+
+**Localisation:** workflow_coach.py:2548-2607
+
+**Intégration:**
+- 3 points d'appel dans le workflow
+- Workflow classique (single_executed)
+- Workflow batch repos/annulations
+- Workflow batch sessions sautées
+
+### 2. Publication Intervals.icu (Option 2)
+
+**Nouvelle fonction: `_post_analysis_to_intervals()`**
+- Poste l'analyse comme note sur l'activité Intervals.icu
+- Format markdown avec header "📊 Analyse Coach IA"
+- Timestamp automatique
+- API endpoint: POST /athlete/{id}/activities/{activity_id}/notes
+
+**Localisation:** workflow_coach.py:2608-2672
+
+**Intégration dans step_6_insert_analysis():**
+- Appelée après insertion réussie dans workouts-history.md
+- Après marquage activité comme analysée
+- Feedback utilisateur (succès/échec)
+- Non-bloquant (erreur ne stoppe pas workflow)
+
+### Modifications Fichiers
+
+**Fichier:** `cyclisme_training_logs/workflow_coach.py`
+
+**Ajouts:**
+- `step_4b_display_analysis()` (+59 LOC) - Affichage terminal
+- `_post_analysis_to_intervals()` (+65 LOC) - API Intervals.icu
+- Integration dans workflow (+9 LOC, 3 endroits)
+
+**Total:** +133 LOC
+
+### Tests
+
+**Test syntaxe:**
+```bash
+python3 -m py_compile cyclisme_training_logs/workflow_coach.py
+# ✅ Pass (no errors)
+```
+
+**Tests manuels à faire:**
+- [ ] Test workflow avec provider claude_api
+- [ ] Test workflow avec provider mistral_api
+- [ ] Test workflow avec provider clipboard
+- [ ] Vérifier note visible sur Intervals.icu
+- [ ] Vérifier affichage terminal lisible
+
+### Workflow Utilisateur Amélioré
+
+**Avant:**
+```
+1. Feedback athlète
+2. Génération analyse IA
+3. [Analyse invisible]
+4. Validation format
+5. Insertion workouts-history.md
+6. Git commit
+```
+
+**Après:**
+```
+1. Feedback athlète
+2. Génération analyse IA
+3. 📊 AFFICHAGE analyse complète (nouveau!)
+4. Validation format
+5. Insertion workouts-history.md
+   └─ 📤 Publication Intervals.icu (nouveau!)
+6. Git commit
+```
+
+### Bénéfices Athlète
+
+**Immédiat (Terminal):**
+- ✅ Visualisation analyse pendant workflow
+- ✅ Feedback immédiat sur qualité
+- ✅ Pas besoin d'ouvrir workouts-history.md
+
+**Persistant (Intervals.icu):**
+- ✅ Analyse accessible depuis mobile/desktop
+- ✅ Intégrée dans page activité
+- ✅ Visible sans ouvrir dossier training-logs
+- ✅ Consultable n'importe quand
+
+**Status:** ✅ Implémenté et testé (syntaxe OK)
+
+---
+
 **Session maintenue par:** Claude Code
 **Format:** Logging incrémental (adopté Jan 7, 00:45)
-**Status:** ✅ Session en cours - Incident documenté
+**Status:** ✅ Session en cours - Feature analyse IA implémentée
 **Sprint:** R6 Phase 1 - Observation & Monitoring
