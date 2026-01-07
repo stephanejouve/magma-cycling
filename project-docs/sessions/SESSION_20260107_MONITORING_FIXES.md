@@ -590,7 +590,93 @@ Dim 11 jan → Repos ✅ NOTE créé
 
 ---
 
+## 📋 Incident S075-03 : Warmup/Cooldown Omis (Découvert ultérieurement)
+
+**User report:**
+> "dans cette discussion tu as agis sur l'entrainement programmé aujourd'hui mercredi 07/01/2026 et malheureusement en uploadant une nouvelle version le warmup et le cooldown semble avoir été omis"
+
+**Investigation API:**
+```json
+{
+  "id": 86803817,
+  "name": "S075-03-TEC-CadenceVariation-V001",
+  "description": "Warmup 10min + Main set 5x + Cooldown 10min",
+  "workout_doc": {
+    "steps": [
+      // ❌ PROBLÈME: Seulement main set présent
+      // ❌ Warmup manquant
+      // ❌ Cooldown manquant
+    ]
+  }
+}
+```
+
+**Impact:**
+- Entraînement exécuté sans warmup/cooldown
+- Durée: 40min au lieu de 60min prévues
+- Structure compromise
+
+**Status:**
+- ❌ Trop tard pour corriger (workout déjà complété)
+- ✅ Documentation créée pour prévention future
+
+---
+
+## 📖 Création GUIDE_WORKOUT_UPLOAD_VALIDATION.md
+
+**Fichier:** `project-docs/guides/GUIDE_WORKOUT_UPLOAD_VALIDATION.md`
+
+**Contenu (800+ LOC):**
+- 📋 Checklist validation structure complète
+- ✅ Fonctions validate_workout_structure()
+- ✅ Cross-validation description ↔ workout_doc
+- 📊 Calcul durée totale récursive (avec reps)
+- 🔍 Template workflow upload robuste
+- 🛠️ Scripts à créer (validate_workout.py, upload_workout_safe.py)
+- 📈 Métriques validation
+- 🎯 Lessons learned
+
+**Sections clés:**
+
+1. **Validation Structure Complète:**
+   - Check sections: warmup/main/cooldown
+   - Calcul durée totale vs expected
+   - Tolérance 30s
+   - Warnings si sections manquantes
+
+2. **Cross-Validation Description:**
+   - Parser texte description
+   - Comparer keywords vs steps
+   - Alerter incohérences
+
+3. **Workflow Upload Robuste:**
+   - 7 étapes obligatoires
+   - Review visuel pre-upload
+   - Validation post-upload systématique
+
+4. **Template Structure Correcte:**
+   ```python
+   steps = [
+       {"text": "Warmup", "duration": 600, ...},
+       {"text": "Main set", "reps": 5, "steps": [...]},
+       {"text": "Cooldown", "duration": 600, ...}
+   ]
+   ```
+
+**Best practice documentée:**
+> "Un workout incomplet uploadé = entraînement raté. La validation doit être systématique et automatique, pas optionnelle."
+
+**Actions futures suggérées:**
+- [ ] Implémenter validate_workout.py
+- [ ] Intégrer validation dans workflow existant
+- [ ] Review tous uploads récents (S075-01/02/03)
+- [ ] Tests automatisés
+
+**Status:** ✅ Guide créé (mode robuste documenté)
+
+---
+
 **Session maintenue par:** Claude Code
 **Format:** Logging incrémental (adopté Jan 7, 00:45)
-**Status:** ✅ Session en cours - Format migré
+**Status:** ✅ Session en cours - Incident documenté
 **Sprint:** R6 Phase 1 - Observation & Monitoring
