@@ -788,7 +788,81 @@ python3 -m py_compile cyclisme_training_logs/workflow_coach.py
 
 ---
 
+## 🔄 Amélioration Servo-Mode : Affichage Recommandations IA
+
+**User observation (Jeudi 8 Jan, post-S075-04):**
+> "lorsqu'un avis est demandé en servo-mode pour une éventuelle modification des workouts à venir, ce serait intéressant également de pouvoir lire la réponse sollicitée"
+
+**Problème identifié:**
+- Servo-mode step_6b génère prompt asservissement
+- IA appelée pour recommandations planning
+- Réponse ai_response reçue
+- ❌ **Parsing JSON immédiat sans affichage !**
+- User ne voit jamais l'analyse complète, seulement modifications parsées
+
+**Solution implémentée:**
+
+### Affichage Complet Recommandations
+
+**Ajout dans step_6b_servo_control():**
+- Après réception `ai_response` (ligne ~2974)
+- Avant parsing `parse_ai_modifications()` (ligne ~3012)
+
+**Nouveau flux:**
+```
+1. Génération prompt asservissement + contexte planning
+2. Appel IA (mistral_api, claude_api, ou clipboard)
+3. Réception ai_response
+4. 📊 AFFICHAGE complet recommandations (nouveau!)
+   - Clear screen + header "Recommandations Coach IA"
+   - Display full AI response (toutes les lignes)
+   - Statistiques (mots, caractères)
+   - Wait user (lecture tranquille)
+5. 🔍 Parsing modifications JSON
+6. Confirmation & application modifications
+```
+
+**Code ajouté (+30 LOC):**
+```python
+# Display AI recommendations to user before parsing
+self.clear_screen()
+self.print_header(
+    "📊 Recommandations Coach IA",
+    "Asservissement Planning - Analyse Complète",
+)
+print("Voici l'analyse complète du coach IA pour le planning restant :")
+# [Display full response...]
+self.wait_user("Appuyer sur ENTRÉE pour analyser les modifications...")
+
+# Clear and show parsing screen
+self.clear_screen()
+self.print_header("🔍 Analyse des Modifications", "Parsing JSON")
+
+# Parse modifications
+modifications = self.parse_ai_modifications(ai_response)
+```
+
+**Bénéfices:**
+- ✅ User lit l'analyse complète avant décision
+- ✅ Contexte clair des recommandations
+- ✅ Pas de surprise lors parsing/confirmation
+- ✅ Cohérent avec step_4b_display_analysis()
+
+**Modifications:**
+- `cyclisme_training_logs/workflow_coach.py` (+30 LOC)
+- Localisation : step_6b_servo_control() ligne ~2979-3009
+
+**Test syntaxe:**
+```bash
+python3 -m py_compile cyclisme_training_logs/workflow_coach.py
+# ✅ Pass (no errors)
+```
+
+**Status:** ✅ Implémenté et testé (syntaxe OK)
+
+---
+
 **Session maintenue par:** Claude Code
 **Format:** Logging incrémental (adopté Jan 7, 00:45)
-**Status:** ✅ Session en cours - Feature analyse IA implémentée
+**Status:** ✅ Session en cours (Jeudi 8 Jan) - S075-04 terminée
 **Sprint:** R6 Phase 1 - Observation & Monitoring
