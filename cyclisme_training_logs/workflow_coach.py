@@ -2976,6 +2976,36 @@ Réponds maintenant."""
             self.wait_user()
             return
 
+        # Display AI recommendations to user before parsing
+        self.clear_screen()
+        self.print_header(
+            "📊 Recommandations Coach IA",
+            "Asservissement Planning - Analyse Complète",
+        )
+        print("Voici l'analyse complète du coach IA pour le planning restant :")
+        print()
+        self.print_separator()
+        print()
+
+        # Display full AI response
+        lines = ai_response.split("\n")
+        for line in lines:
+            print(line)
+
+        print()
+        self.print_separator()
+        print()
+
+        # Show stats
+        word_count = len(ai_response.split())
+        char_count = len(ai_response)
+        print(f"📊 Statistiques : {word_count} mots, {char_count} caractères")
+        print()
+
+        self.wait_user("Appuyer sur ENTRÉE pour analyser les modifications recommandées...")
+        self.clear_screen()
+        self.print_header("🔍 Analyse des Modifications", "Asservissement Planning - Parsing JSON")
+
         # Parse modifications from AI response
         modifications = self.parse_ai_modifications(ai_response)
 
