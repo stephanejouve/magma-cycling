@@ -51,6 +51,7 @@ prepare-analysis = "cyclisme_training_logs.prepare_analysis:main"
 # === Workflow & Automation ===
 collect-feedback = "cyclisme_training_logs.collect_athlete_feedback:main"
 workflow-coach = "cyclisme_training_logs.workflow_coach:main"
+end-of-week = "cyclisme_training_logs.workflows.end_of_week:main"
 insert-analysis = "cyclisme_training_logs.insert_analysis:main"
 manage-state = "cyclisme_training_logs.manage_workflow_state:main"
 backfill-history = "cyclisme_training_logs.scripts.backfill_history:main"
