@@ -40,10 +40,11 @@ Examples:
     CLI usage::
 
         # Command-line upload
-        poetry run upload-workouts --file S073-01-INT-SweetSpot-V001.zwo --date 2025-01-06
+        poetry run upload-workouts --week-id S073 --file S073-01-INT-SweetSpot-V001.zwo --date 2025-01-06
 
-        # Upload entire week
-        poetry run upload-workouts --week S073 --start-date 2025-01-06
+        # Upload entire week (start-date optional, calculated automatically)
+        poetry run upload-workouts --week-id S073
+        poetry run upload-workouts --week-id S073 --start-date 2025-01-06
 
 Author: Stéphane Jouve
 Created: 2024-10-XX
@@ -68,6 +69,41 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from cyclisme_training_logs.api.intervals_client import IntervalsClient  # noqa: E402
+
+
+def calculate_week_start_date(week_id: str) -> datetime:
+    """
+    Calculate Monday start date from project week ID.
+
+    Reads S001 reference date from .config.json (no hardcoded dates).
+
+    Args:
+        week_id: Week identifier (e.g., "S075")
+
+    Returns:
+        Datetime of Monday for that week
+
+    Examples:
+        >>> calculate_week_start_date("S075")
+        datetime(2026, 1, 5, 0, 0)
+    """
+    from cyclisme_training_logs.config import get_week_config
+
+    week_num = int(week_id[1:])  # S075 → 75
+
+    # Load S001 reference from config
+    week_config = get_week_config()
+    reference_date_obj = week_config.get_s001_date_obj()
+    reference_date = datetime.combine(reference_date_obj, datetime.min.time())
+
+    # Calculate target Monday
+    target_monday = reference_date + timedelta(weeks=week_num - 1)
+
+    # Validation: must be a Monday
+    if target_monday.weekday() != 0:
+        raise ValueError(f"Calculated date {target_monday} is not a Monday")
+
+    return target_monday
 
 
 class WorkoutUploader:
@@ -465,8 +501,8 @@ def main():
     parser.add_argument(
         "--start-date",
         type=str,
-        required=True,
-        help="Date de début - LUNDI pour semaine complète, date exacte pour single workout",
+        required=False,
+        help="Date de début - LUNDI pour semaine complète (optionnel, calculé automatiquement)",
     )
     parser.add_argument("--file", type=str, help="Fichier contenant les workouts")
     parser.add_argument("--dry-run", action="store_true", help="Simulation sans upload réel")
@@ -477,11 +513,21 @@ def main():
         print(f"❌ Format semaine invalide : {args.week_id}")
         sys.exit(1)
 
-    try:
-        start_date = datetime.strptime(args.start_date, "%Y-%m-%d")
-    except ValueError:
-        print(f"❌ Format date invalide : {args.start_date}")
-        sys.exit(1)
+    # Calculate start date automatically if not provided
+    if args.start_date:
+        try:
+            start_date = datetime.strptime(args.start_date, "%Y-%m-%d")
+        except ValueError:
+            print(f"❌ Format date invalide : {args.start_date}")
+            sys.exit(1)
+    else:
+        try:
+            start_date = calculate_week_start_date(args.week_id)
+            print(f"📅 Date calculée automatiquement : {start_date.strftime('%Y-%m-%d')}")
+        except (FileNotFoundError, ValueError) as e:
+            print(f"❌ Impossible de calculer la date pour {args.week_id}: {e}")
+            print("   Utilisez --start-date pour spécifier manuellement")
+            sys.exit(1)
 
     uploader = WorkoutUploader(args.week_id, start_date)
 
