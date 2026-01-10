@@ -862,7 +862,95 @@ python3 -m py_compile cyclisme_training_logs/workflow_coach.py
 
 ---
 
+---
+
+## 🔧 Amélioration Weekly Planner : Recommandation --file
+
+**User observation (Vendredi 10 Jan, post-S076 planning):**
+> "evidemment j'aurais du demandé l'option avec un fichier pour faire ça"
+
+**Context:**
+- User a lancé `poetry run weekly-planner --week-id S076 --start-date 2026-01-12`
+- Prompt généré et copié dans clipboard
+- User a collé dans IA et obtenu les 7 workouts
+- Lors upload avec `poetry run upload-workouts`, clipboard contenait autre chose (log terminal)
+- Résultat : Seulement 2 workouts uploadés au lieu de 7
+
+**Problème identifié:**
+- Clipboard volatile (facilement écrasé)
+- Pas de traçabilité de ce qui a été uploadé
+- Erreurs difficiles à diagnostiquer
+- Pas de possibilité de rejouer l'upload
+
+**Solution implémentée:**
+
+### Instructions Améliorées dans `wp`
+
+**Modifications weekly_planner.py (+28 LOC):**
+
+**Avant:**
+```
+📝 PROCHAINES ÉTAPES :
+1. Choisir IA
+2. Coller prompt
+3. Attendre génération
+4. Copier workouts
+5. Créer .zwo
+6. Uploader: poetry run upload-workouts --week-id S076
+```
+
+**Après:**
+```
+📝 PROCHAINES ÉTAPES (MÉTHODE RECOMMANDÉE) :
+1. Choisir IA
+2. Coller prompt
+3. Attendre génération
+4. Copier réponse COMPLÈTE
+
+5. Sauvegarder dans fichier :
+   pbpaste > ~/training-logs/data/week_planning/S076_workouts.txt
+
+6. Uploader depuis fichier (PLUS FIABLE) :
+   poetry run upload-workouts --week-id S076 \
+     --start-date 2026-01-12 \
+     --file ~/training-logs/data/week_planning/S076_workouts.txt
+
+💡 Pourquoi utiliser --file ?
+   • Clipboard volatile (peut être écrasé)
+   • Fichier = traçabilité et possibilité de rejouer
+   • Moins d'erreurs de manipulation
+```
+
+**Fonctionnalités ajoutées:**
+- Chemin fichier automatique (basé sur week_number)
+- Commande complète ready-to-copy
+- Explication rationale (pourquoi --file)
+- Commande `pbpaste >` pour sauvegarder
+
+**Bénéfices:**
+- ✅ Clipboard protégé contre écrasement
+- ✅ Traçabilité : fichier source conservé
+- ✅ Rejouable : `upload-workouts --file` peut être relancé
+- ✅ Debug facilité : inspection fichier source
+- ✅ Workflow plus robuste
+
+**Modifications:**
+- `cyclisme_training_logs/weekly_planner.py` : +23 LOC
+- Localisation : méthode `run()` ligne ~775-803
+
+**Test syntaxe:**
+```bash
+python3 -m py_compile cyclisme_training_logs/weekly_planner.py
+# ✅ Pass (no errors)
+```
+
+**Note:** L'option `--file` existait déjà dans `upload_workouts.py` (ligne 323), mais n'était pas recommandée explicitement dans les instructions `wp`.
+
+**Status:** ✅ Implémenté et testé
+
+---
+
 **Session maintenue par:** Claude Code
 **Format:** Logging incrémental (adopté Jan 7, 00:45)
-**Status:** ✅ Session en cours (Jeudi 8 Jan) - S075-04 terminée
+**Status:** ✅ Session en cours (Vendredi 10 Jan) - Amélioration wp
 **Sprint:** R6 Phase 1 - Observation & Monitoring
