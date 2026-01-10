@@ -2,7 +2,7 @@
 
 **Projet :** Système d'analyse et planification d'entraînement cyclisme
 **Période :** Novembre 2025 - Aujourd'hui
-**Version actuelle :** v2.2.0
+**Version actuelle :** v2.3.0
 **Statut :** Production-ready ✅
 
 ---
@@ -677,6 +677,266 @@ def _step6_archive_and_commit(self):
 
 ---
 
+### Sprint R8 - Extensibility & Multi-Systems (Envisioned Q3 2026)
+
+**Focus :** Architecture extensible pour systèmes de transmission multiples
+
+**Status :** 📋 ROADMAP (Aucune donnée disponible actuellement)
+
+#### Contexte
+
+**Implémentation actuelle (v2.3.0) :**
+- ✅ Analyse Di2 complète (Shimano Electronic Shifting)
+- ✅ Extraction: FrontGear, RearGear, GearRatio streams
+- ✅ Métriques: shifts, cross-chaining, patterns
+- ✅ Configuration Synchro Shift personnalisée
+
+**Limitation :**
+- Code spécifique Shimano Di2
+- Pas de support autres systèmes (SRAM AXS, Campagnolo EPS)
+
+#### Objectif Sprint R8
+
+Refactoriser architecture Di2 pour supporter **systèmes multiples** avec pattern abstraction:
+- Shimano Di2 (actuel - implémenté)
+- SRAM AXS (futur - quand données disponibles)
+- Campagnolo EPS (futur - si besoin)
+- FSA WE (futur - niche)
+
+#### Architecture Cible
+
+**Pattern Strategy pour systèmes de transmission :**
+
+```python
+# cyclisme_training_logs/analyzers/gear/base.py
+class GearSystemAnalyzer(ABC):
+    """Abstract base class for electronic shifting systems."""
+
+    @abstractmethod
+    def detect_system(self, streams: List[Dict]) -> bool:
+        """Detect if this system is present in streams."""
+        pass
+
+    @abstractmethod
+    def extract_metrics(self, streams: List[Dict]) -> Dict[str, Any]:
+        """Extract system-specific gear metrics."""
+        pass
+
+    @abstractmethod
+    def analyze_patterns(self, metrics: Dict) -> List[str]:
+        """Generate system-specific insights."""
+        pass
+```
+
+**Implémentations concrètes :**
+
+```python
+# cyclisme_training_logs/analyzers/gear/shimano_di2.py
+class ShimanoDi2Analyzer(GearSystemAnalyzer):
+    """Shimano Di2 analyzer (current implementation)."""
+
+    def detect_system(self, streams: List[Dict]) -> bool:
+        # Cherche FrontGear, RearGear streams
+        return any(s.get("type") == "FrontGear" for s in streams)
+
+    def extract_metrics(self, streams: List[Dict]) -> Dict:
+        # Implémentation actuelle (code existant)
+        return {
+            "shifts": total_shifts,
+            "front_shifts": front_shifts,
+            "rear_shifts": rear_shifts,
+            "cross_chaining_pct": cross_chain_time / total_time,
+            # ... Shimano-specific metrics
+        }
+
+# cyclisme_training_logs/analyzers/gear/sram_axs.py
+class SRAMAXSAnalyzer(GearSystemAnalyzer):
+    """SRAM AXS analyzer (future implementation)."""
+
+    def detect_system(self, streams: List[Dict]) -> bool:
+        # SRAM utilise possiblement streams différents
+        # Ex: "axs_front_gear", "axs_rear_gear", "battery_front", "battery_rear"
+        return any(s.get("type", "").startswith("axs_") for s in streams)
+
+    def extract_metrics(self, streams: List[Dict]) -> Dict:
+        # SRAM-specific: battery levels, sequential shift count, etc.
+        return {
+            "shifts": total_shifts,
+            "sequential_shifts": sequential_count,  # SRAM feature
+            "battery_front": battery_f,
+            "battery_rear": battery_r,
+            # ... SRAM-specific metrics
+        }
+
+# cyclisme_training_logs/analyzers/gear/factory.py
+class GearAnalyzerFactory:
+    """Factory to detect and instantiate appropriate analyzer."""
+
+    ANALYZERS = [
+        ShimanoDi2Analyzer,
+        SRAMAXSAnalyzer,
+        CampagnoloEPSAnalyzer,
+        # ... future systems
+    ]
+
+    @staticmethod
+    def create(streams: List[Dict]) -> Optional[GearSystemAnalyzer]:
+        """Auto-detect system and return analyzer."""
+        for analyzer_class in GearAnalyzerFactory.ANALYZERS:
+            analyzer = analyzer_class()
+            if analyzer.detect_system(streams):
+                return analyzer
+        return None
+```
+
+**Intégration dans WeeklyAggregator :**
+
+```python
+# cyclisme_training_logs/analyzers/weekly_aggregator.py
+def _extract_gear_metrics(self, activity_id: str) -> dict[str, Any] | None:
+    """Extract gear metrics (auto-detect system)."""
+    try:
+        streams = self.api.get_activity_streams(activity_id)
+
+        # Auto-detect system
+        analyzer = GearAnalyzerFactory.create(streams)
+        if not analyzer:
+            return None  # No electronic system detected
+
+        # Extract with detected analyzer
+        metrics = analyzer.extract_metrics(streams)
+        metrics["system"] = analyzer.__class__.__name__  # "ShimanoDi2Analyzer"
+
+        return metrics
+    except Exception as e:
+        logger.warning(f"Error extracting gear metrics: {e}")
+        return None
+```
+
+#### Différences Systèmes
+
+| Feature | Shimano Di2 | SRAM AXS | Campagnolo EPS |
+|---------|-------------|----------|----------------|
+| **Streams clés** | FrontGear, RearGear | axs_front_gear, axs_rear_gear | eps_front, eps_rear |
+| **Battery tracking** | Non (filaire interne) | ✅ Oui (2 batteries AA) | ✅ Oui (batterie rechargeable) |
+| **Sequential shifts** | Non | ✅ Oui (AXS feature) | Non |
+| **Synchro mode** | ✅ Oui (Semi-Synchro) | ✅ Oui (Compensating) | ✅ Oui (EPS mode) |
+| **Wireless** | Câbles internes | ✅ 100% wireless | Câbles EPS |
+| **Config app** | E-Tube Project | AXS Mobile App | MyCampy |
+
+#### Features Sprint R8
+
+**1. Refactoring Di2 (P0 - Breaking change)**
+- [ ] Extraire code Di2 actuel dans `ShimanoDi2Analyzer`
+- [ ] Créer abstractions `GearSystemAnalyzer` base
+- [ ] Implémenter `GearAnalyzerFactory` avec auto-detection
+- [ ] Migrer tests existants vers nouvelle architecture
+- [ ] Maintenir backward compatibility (métriques identiques)
+
+**2. SRAM AXS Support (P1 - Quand données disponibles)**
+- [ ] Implémenter `SRAMAXSAnalyzer`
+- [ ] Identifier streams SRAM dans Intervals.icu
+- [ ] Ajouter métriques spécifiques: battery, sequential shifts
+- [ ] Tests avec données réelles SRAM (BLOQUÉ: Aucune donnée actuellement)
+- [ ] Guide configuration AXS Compensating mode
+
+**3. Campagnolo EPS Support (P2 - Niche)**
+- [ ] Implémenter `CampagnoloEPSAnalyzer` si demande
+- [ ] Tests avec données EPS (BLOQUÉ: Aucune donnée actuellement)
+
+**4. Documentation Extensibilité (P0)**
+- [ ] Guide développeur: "Ajouter nouveau système transmission"
+- [ ] API documentation: `GearSystemAnalyzer` interface
+- [ ] Exemples: Comment implémenter `CustomSystemAnalyzer`
+
+#### Bénéfices
+
+**Extensibilité :**
+- ✅ Ajouter nouveau système sans modifier code existant
+- ✅ Auto-detection intelligente (pas de config manuelle)
+- ✅ Métriques communes + métriques spécifiques systèmes
+
+**Maintenabilité :**
+- ✅ Code Di2 isolé dans module dédié
+- ✅ Tests unitaires par système
+- ✅ Évolution indépendante systèmes
+
+**Future-proof :**
+- ✅ Support FSA WE, autres systèmes futurs
+- ✅ Architecture prête pour innovations (ex: Shimano Di2 v2)
+
+#### Dépendances & Blockers
+
+**Blocker CRITIQUE :**
+- ❌ **Aucune donnée SRAM AXS disponible** pour développement/tests
+- ❌ **Aucune donnée Campagnolo EPS** disponible
+- ❌ Impossible valider streams names, formats, edge cases
+
+**Solutions :**
+1. **Option A - Attente données réelles** (RECOMMANDÉ)
+   - Attendre acquisition vélo SRAM AXS ou prêt
+   - Développer avec vraies données = 0 risque erreur
+   - Timeline: Indéterminé (dépend équipement)
+
+2. **Option B - Reverse engineering documentation**
+   - Analyser doc Intervals.icu (si disponible)
+   - Risque: Assumptions incorrects si doc incomplète
+   - Timeline: 2-3 jours (sans garantie fonctionnement)
+
+3. **Option C - Community data sharing**
+   - Demander datasets SRAM à communauté Intervals.icu
+   - Risque: Privacy, qualité données variables
+   - Timeline: 1-2 semaines (si quelqu'un partage)
+
+**Recommandation MOA :**
+**Option A** - Attendre données réelles. Refactoring architecture (P0) peut être fait maintenant, support SRAM ajouté plus tard quand données disponibles.
+
+#### Plan Implémentation (Quand données disponibles)
+
+**Phase 1 : Refactoring Di2 (2-3 jours)**
+1. Créer modules `analyzers/gear/`
+2. Extraire code Di2 actuel → `ShimanoDi2Analyzer`
+3. Créer abstractions + factory
+4. Migrer tests (100% backward compatible)
+5. Documentation architecture
+
+**Phase 2 : SRAM Support (1-2 jours - BLOQUÉ)**
+1. ⏸️ Acquérir datasets SRAM AXS
+2. ⏸️ Analyser streams structure
+3. ⏸️ Implémenter `SRAMAXSAnalyzer`
+4. ⏸️ Tests + validation
+5. ⏸️ Guide configuration AXS
+
+**Phase 3 : Documentation (1 jour)**
+1. Guide développeur extensibilité
+2. Exemples ajout nouveau système
+3. Update CHANGELOG
+
+**Timeline estimée :** 4-6 jours (dont 1-2 jours BLOQUÉS)
+
+#### Métriques Succès
+
+- ✅ Refactoring Di2: 0 régression fonctionnelle
+- ✅ Architecture extensible validée (tests abstractions)
+- ✅ Documentation complète (guide développeur)
+- ⏸️ SRAM support: Attente données réelles
+- ⏸️ Campagnolo support: Attente données réelles
+
+#### Priorité & Timeline
+
+**Priorité :** P2 (Nice-to-have, pas urgent)
+
+**Trigger :**
+- Acquisition vélo/groupset SRAM AXS
+- Prêt matériel SRAM pour tests
+- Demande spécifique utilisateur SRAM
+
+**Timeline :** Q3 2026 (estimé, dépend disponibilité équipement)
+
+**Note :** Refactoring architecture (Phase 1) peut être anticipé pour améliorer maintenabilité code Di2 actuel, même sans données SRAM.
+
+---
+
 ### Long-Term Vision (2026-2027)
 
 #### Multi-Athlete Support
@@ -992,7 +1252,7 @@ cyclisme_training_logs/
 
 - **GitHub :** https://github.com/stephanejouve/cyclisme-training-logs
 - **Branch principale :** main
-- **Version :** v2.2.0
+- **Version :** v2.3.0
 - **License :** Private
 
 ---
@@ -1007,7 +1267,7 @@ cyclisme_training_logs/
 
 ---
 
-**Dernière mise à jour :** 4 janvier 2026
+**Dernière mise à jour :** 10 janvier 2026
 **Prochaine revue :** Sprint R6 planning (estimé mi-janvier 2026)
 
 🤖 *Generated with [Claude Code](https://claude.com/claude-code)*
