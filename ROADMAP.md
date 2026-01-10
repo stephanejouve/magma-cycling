@@ -507,6 +507,142 @@ Sprint R7 Start: 16 février 2026 (Semaine S081)
 
 ---
 
+### Sprint R6.5 - End-of-Week Automation (Janvier 2026)
+
+**Status :** 🔄 EN COURS
+**Focus :** Automatisation workflow fin de semaine
+
+#### Contexte
+
+Workflow fin de semaine actuellement manuel (5+ commandes) :
+```bash
+poetry run weekly-analysis --week-id S075 --start-date 2026-01-05
+poetry run weekly-planner --week-id S076 --start-date 2026-01-12
+# → Copier-coller manuel dans IA
+poetry run upload-workouts --week-id S076 --start-date 2026-01-12 --file workouts.txt
+# → Commit Git manuel
+```
+
+**Solution :** Orchestrateur end-of-week avec 6 étapes automatisées.
+
+#### Features Implémentées ✅
+
+**1. End-of-Week Orchestrator (Livré 10 Jan 2026)**
+- ✅ Script `cyclisme_training_logs/workflows/end_of_week.py` (+575 LOC)
+- ✅ 6-step workflow orchestration
+- ✅ Validation automatique workouts (warmup/cooldown checks)
+- ✅ Support providers: clipboard, claude_api, mistral_api
+- ✅ Modes: --dry-run, --auto, --archive (partial)
+- ✅ Poetry CLI: `poetry run end-of-week`
+
+**2. Weekly Planner Enhancement (Livré 10 Jan 2026)**
+- ✅ Load transition_sXXX.md + bilan_final_sXXX.md
+- ✅ Complete context for AI planning (TSS, TSB, recommendations)
+
+**3. Upload Workouts Validation (Livré 10 Jan 2026)**
+- ✅ Automatic notation validation before upload
+- ✅ Critical checks: warmup/cooldown presence
+- ✅ Non-critical checks: ramps direction, power notation
+- ✅ Blocks upload if critical errors detected
+
+#### Features En Développement 🚧
+
+**4. Archive Mode - Git Automation (P1)**
+
+**Status :** 🚧 Specifications complètes, implémentation à venir
+
+**Fonctionnalité :**
+```bash
+poetry run end-of-week --week-completed S075 --week-next S076 --archive
+```
+
+**Comportement cible :**
+
+**Step 6 - Archive & Commit automatique :**
+1. Identifier fichiers modifiés/créés :
+   - Reports S075: `~/training-logs/weekly-reports/S075/*.md` (6 fichiers)
+   - Planning S076: `~/training-logs/data/week_planning/week_planning_S076.json`
+   - Workouts S076: `~/training-logs/data/week_planning/S076_workouts.txt`
+
+2. Générer session log automatique :
+   - `SESSION_YYYYMMDD_S075_TO_S076.md`
+   - Contient: résumé transition, TSS, recommandations, workouts
+
+3. Git commit automatique :
+   ```bash
+   git add ~/training-logs/weekly-reports/S075/
+   git add ~/training-logs/data/week_planning/week_planning_S076.json
+   git add ~/training-logs/data/week_planning/S076_workouts.txt
+   git commit -m "feat: Complete end-of-week S075 → S076
+
+   - Weekly analysis S075 (6 reports)
+   - Planning S076 generated
+   - 7 workouts uploaded to Intervals.icu
+
+   TSS S075: 370
+   TSB final: 0.0"
+   ```
+
+4. Push optionnel (avec flag `--push`)
+
+**Bénéfices :**
+- ✅ Workflow 100% automatisé
+- ✅ Traçabilité Git garantie (impossible d'oublier)
+- ✅ Messages commits standardisés
+- ✅ Session logs auto-générés
+- ✅ Historique propre et structuré
+
+**Risques & Mitigations :**
+
+| Risque | Mitigation |
+|--------|-----------|
+| Commits auto sans review | Mode --dry-run --archive pour prévisualiser |
+| Fichiers temporaires committé | .gitignore strict + filtrage explicite |
+| Collision avec workflow manuel | Vérifier git status, skip si rien à faire |
+| Message commit incorrect | Template validé + variables dynamiques |
+
+**Implémentation requise :**
+
+```python
+# cyclisme_training_logs/workflows/end_of_week.py
+def _step6_archive_and_commit(self):
+    """Step 6: Archive and commit (optional)."""
+    # 1. Identify modified files
+    # 2. Verify git status
+    # 3. Git add files
+    # 4. Generate commit message
+    # 5. Git commit
+    # 6. Optional: Git push
+```
+
+**Tâches :**
+- [ ] Implémenter identification fichiers automatique
+- [ ] Implémenter git status verification
+- [ ] Implémenter template commit message dynamique
+- [ ] Implémenter session log generator
+- [ ] Ajouter tests unitaires (coverage >90%)
+- [ ] Ajouter flag --no-push (commit local seulement)
+- [ ] Documenter workflow --archive dans GUIDE
+- [ ] Valider avec MOA sur 2-3 transitions
+
+**Timeline estimée :** 1-2 jours développement + 1 semaine validation
+
+**Priorité :** P1 (Nice-to-have, améliore UX mais non bloquant)
+
+**Dependencies :**
+- Git repository configured
+- .gitignore properly setup
+- User git identity configured
+
+**Validation :**
+- ✅ Dry-run montre preview commit exact
+- ✅ Fichiers corrects identifiés (6 reports + planning + workouts)
+- ✅ Aucun fichier temporaire committé
+- ✅ Message commit clair et standardisé
+- ✅ Session log généré avec contenu pertinent
+
+---
+
 ### Sprint R7 - Envisioned (Q2 2026)
 
 **Focus :** Automation & Intelligence
@@ -518,6 +654,7 @@ Sprint R7 Start: 16 février 2026 (Semaine S081)
 - [ ] Auto-adjustment temps réel (servo v2.0)
 - [ ] Auto-reconciliation quotidienne
 - [ ] Notifications intelligentes
+- [ ] AI Provider automation (claude_api, mistral_api direct calls)
 
 **2. Advanced Intelligence (P1)**
 - [ ] Pattern learning avancé (ML models)
