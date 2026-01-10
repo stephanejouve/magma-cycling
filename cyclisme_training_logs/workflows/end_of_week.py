@@ -44,20 +44,25 @@ import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-from cyclisme_training_logs.config import get_data_config
+from cyclisme_training_logs.config import get_data_config, get_week_config
 
 
 def calculate_week_start_date(week_id: str) -> date:
     """
     Calculate Monday start date from project week ID.
 
-    The project uses sequential week numbering starting from S001 = 2024-08-05.
+    The project uses sequential week numbering. Reference date (S001) is read from
+    .config.json in the data repository (no hardcoded dates).
 
     Args:
         week_id: Week identifier (e.g., "S075")
 
     Returns:
         Date of Monday for that week
+
+    Raises:
+        FileNotFoundError: If .config.json doesn't exist
+        ValueError: If .config.json is invalid or date is not a Monday
 
     Examples:
         >>> calculate_week_start_date("S001")
@@ -69,8 +74,9 @@ def calculate_week_start_date(week_id: str) -> date:
     """
     week_num = int(week_id[1:])  # S075 → 75
 
-    # Project reference: S001 started on Monday, August 5, 2024
-    s001_monday = date(2024, 8, 5)
+    # Load S001 reference date from config (no hardcoding)
+    week_config = get_week_config()
+    s001_monday = week_config.get_s001_date_obj()
 
     # Calculate target Monday
     target_monday = s001_monday + timedelta(weeks=week_num - 1)
