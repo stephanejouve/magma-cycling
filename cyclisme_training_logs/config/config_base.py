@@ -494,6 +494,143 @@ def reset_intervals_config():
 
 
 # ============================================================================
+# Week Reference Configuration
+# ============================================================================
+
+
+class WeekReferenceConfig:
+    """Configuration for week numbering reference date.
+
+    Manages the S001 reference date for calculating week start dates.
+    Reads from .config.json in the data repository (~/training-logs).
+
+    Attributes:
+        s001_date: Reference date for S001 (format: YYYY-MM-DD)
+        season: Season identifier (e.g., "2024-2025")
+        description: Optional description of the season
+
+    Examples:
+        >>> config = get_week_config()
+        >>> print(config.s001_date)
+        '2024-08-05'
+        >>> print(config.season)
+        '2024-2025'
+    """
+
+    def __init__(self, data_repo_path: Path | None = None):
+        """Initialize week reference configuration.
+
+        Args:
+            data_repo_path: Path to data repository. If None, uses get_data_config().
+
+        Raises:
+            FileNotFoundError: If .config.json doesn't exist
+            ValueError: If .config.json is invalid or missing required fields
+        """
+        import json
+
+        if data_repo_path is None:
+            data_config = get_data_config()
+            data_repo_path = data_config.data_repo_path
+
+        self.config_path = data_repo_path / ".config.json"
+
+        # Check if config file exists
+        if not self.config_path.exists():
+            raise FileNotFoundError(
+                f"Week reference config not found: {self.config_path}\n"
+                f"Create it with:\n"
+                f'  echo \'{{"week_reference": {{"s001_date": "2024-08-05", "season": "2024-2025"}}}}\' > {self.config_path}'
+            )
+
+        # Load config file
+        try:
+            with open(self.config_path, encoding="utf-8") as f:
+                config_data = json.load(f)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Invalid JSON in {self.config_path}: {e}") from e
+
+        # Extract week_reference section
+        week_ref = config_data.get("week_reference")
+        if not week_ref:
+            raise ValueError(f"Missing 'week_reference' section in {self.config_path}")
+
+        # Extract required fields
+        self.s001_date = week_ref.get("s001_date")
+        if not self.s001_date:
+            raise ValueError(f"Missing 's001_date' in week_reference section of {self.config_path}")
+
+        # Extract optional fields
+        self.season = week_ref.get("season", "Unknown")
+        self.description = week_ref.get("description", "")
+
+        # Validate date format (YYYY-MM-DD)
+        from datetime import datetime
+
+        try:
+            datetime.strptime(self.s001_date, "%Y-%m-%d")
+        except ValueError as e:
+            raise ValueError(
+                f"Invalid date format in {self.config_path}: '{self.s001_date}' "
+                f"(expected YYYY-MM-DD)"
+            ) from e
+
+    def get_s001_date_obj(self):
+        """Get S001 reference date as datetime.date object.
+
+        Returns:
+            datetime.date object for S001 reference date
+
+        Examples:
+            >>> config = get_week_config()
+            >>> ref_date = config.get_s001_date_obj()
+            >>> print(ref_date)
+            2024-08-05
+        """
+        from datetime import datetime
+
+        return datetime.strptime(self.s001_date, "%Y-%m-%d").date()
+
+
+# Global week config instance
+_week_config_instance: WeekReferenceConfig | None = None
+
+
+def get_week_config() -> WeekReferenceConfig:
+    """Get singleton instance of week reference config.
+
+    Returns:
+        WeekReferenceConfig instance
+
+    Raises:
+        FileNotFoundError: If .config.json doesn't exist
+        ValueError: If .config.json is invalid
+
+    Examples:
+        >>> config = get_week_config()
+        >>> print(config.s001_date)
+        '2024-08-05'
+    """
+    global _week_config_instance
+
+    if _week_config_instance is None:
+        _week_config_instance = WeekReferenceConfig()
+    return _week_config_instance
+
+
+def reset_week_config():
+    """Reset week config singleton (useful for tests).
+
+    Examples:
+        >>> reset_week_config()
+        >>> config = get_week_config()  # Creates new instance
+    """
+    global _week_config_instance
+
+    _week_config_instance = None
+
+
+# ============================================================================
 # Module Exports
 # ============================================================================
 
@@ -511,4 +648,8 @@ __all__ = [
     "IntervalsConfig",
     "get_intervals_config",
     "reset_intervals_config",
+    # Week reference config
+    "WeekReferenceConfig",
+    "get_week_config",
+    "reset_week_config",
 ]

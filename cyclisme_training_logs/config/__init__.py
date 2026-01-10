@@ -16,12 +16,15 @@ from cyclisme_training_logs.config.config_base import (
     AIProvidersConfig,
     DataRepoConfig,
     IntervalsConfig,
+    WeekReferenceConfig,
     get_ai_config,
     get_data_config,
     get_intervals_config,
+    get_week_config,
     reset_ai_config,
     reset_data_config,
     reset_intervals_config,
+    reset_week_config,
     set_data_config,
 )
 
@@ -34,6 +37,7 @@ __all__ = [
     "DataRepoConfig",
     "AIProvidersConfig",
     "IntervalsConfig",
+    "WeekReferenceConfig",
     "get_data_config",
     "set_data_config",
     "reset_data_config",
@@ -41,6 +45,8 @@ __all__ = [
     "reset_ai_config",
     "get_intervals_config",
     "reset_intervals_config",
+    "get_week_config",
+    "reset_week_config",
     # Sprint R2 additions
     "AthleteProfile",
     "TrainingThresholds",
