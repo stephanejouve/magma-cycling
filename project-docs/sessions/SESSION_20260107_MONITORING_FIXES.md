@@ -950,7 +950,107 @@ python3 -m py_compile cyclisme_training_logs/weekly_planner.py
 
 ---
 
+## 📦 Ajout Scripts Athlète dans Poetry
+
+**User observation (Vendredi 10 Jan, lors nettoyage S076):**
+> "il est pas dans poetry donc clear_week_planning.py ?"
+
+**Problème identifié:**
+- Script `clear_week_planning.py` existe dans `scripts/maintenance/`
+- Mais non accessible via `poetry run` (pas dans pyproject.toml)
+- Utilisateur doit utiliser `python scripts/maintenance/...` (moins pratique)
+- Plusieurs autres scripts utiles également manquants
+
+**Analyse scripts manquants:**
+
+**Scripts trouvés dans scripts/ :**
+- ✅ `check_workout_adherence.py` (monitoring Sprint R6)
+- ✅ `clear_week_planning.py` (nettoyage planning)
+- ✅ `format_planning.py` (reformatage sortie AI)
+- ⏭️ `validate_gartner_tags.py` (dev-only, qualité code)
+- ⏭️ `fix_d202/d205/d400/d401_docstrings.py` (migrations one-off)
+- ⏭️ `migrate_docstrings.py` (migration one-off)
+
+**Décision:** N'ajouter que les scripts utiles à l'athlète, pas les outils dev.
+
+**Solution implémentée:**
+
+### Ajout 3 Scripts Athlète dans pyproject.toml
+
+**Scripts ajoutés (+5 LOC) :**
+
+```toml
+# === Monitoring ===
+check-workout-adherence = "scripts.monitoring.check_workout_adherence:main"
+
+# === Maintenance & Cleanup ===
+project-clean = "scripts.maintenance.project_cleaner:main"
+clear-week-planning = "scripts.maintenance.clear_week_planning:main"
+format-planning = "scripts.maintenance.format_planning:main"
+```
+
+**1. check-workout-adherence**
+- Monitoring adherence workouts (Sprint R6)
+- Détection workouts sautés
+- Logging baseline PID
+- Usage : `poetry run check-workout-adherence --date 2026-01-05`
+
+**2. clear-week-planning**
+- Nettoyage planning semaine avant régénération
+- Supprime tous événements WORKOUT d'une semaine
+- Mode dry-run disponible
+- Usage : `poetry run clear-week-planning --week-id S076 --start-date 2026-01-12 --dry-run`
+
+**3. format-planning**
+- Reformatage sortie AI coach pour upload
+- Correction format issues
+- Workflow : wp → AI → format-planning → upload-workouts
+- Usage : `poetry run format-planning --week-id S075`
+
+**Scripts exclus (dev-only) :**
+- `validate-gartner-tags` : Validation qualité code
+- `fix_d*_docstrings` : Migrations docstrings one-off
+- `migrate_docstrings` : Migration ponctuelle
+
+**Bénéfices :**
+- ✅ Commandes plus courtes et cohérentes
+- ✅ Découvrabilité (dans README, --help, etc.)
+- ✅ Séparation claire athlète vs dev
+- ✅ Workflow S076 simplifié
+
+**Modifications :**
+- `pyproject.toml` : +5 lignes
+- Nouvelle section : `# === Monitoring ===`
+
+**Tests :**
+```bash
+poetry run check-workout-adherence --help  # ✅
+poetry run clear-week-planning --help      # ✅
+poetry run format-planning --help          # ✅
+```
+
+**Workflow S076 maintenant :**
+```bash
+# 1. Nettoyer (nouvelle commande simplifiée!)
+poetry run clear-week-planning --week-id S076 --start-date 2026-01-12 --dry-run
+poetry run clear-week-planning --week-id S076 --start-date 2026-01-12
+
+# 2. Régénérer
+poetry run weekly-planner --week-id S076 --start-date 2026-01-12
+
+# 3. Sauvegarder réponse IA
+pbpaste > ~/training-logs/data/week_planning/S076_workouts.txt
+
+# 4. Uploader
+poetry run upload-workouts --week-id S076 --start-date 2026-01-12 \
+  --file ~/training-logs/data/week_planning/S076_workouts.txt
+```
+
+**Status:** ✅ Implémenté et testé
+
+---
+
 **Session maintenue par:** Claude Code
 **Format:** Logging incrémental (adopté Jan 7, 00:45)
-**Status:** ✅ Session en cours (Vendredi 10 Jan) - Amélioration wp
+**Status:** ✅ Session en cours (Vendredi 10 Jan) - Scripts Poetry ajoutés
 **Sprint:** R6 Phase 1 - Observation & Monitoring
