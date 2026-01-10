@@ -152,16 +152,33 @@ class WeeklyPlanner:
         print("\n📄 Chargement bilan semaine précédente...")
 
         prev_week = self._previous_week_number()
-        # Use lowercase week ID for filename (standard depuis workflow_weekly)
-        bilan_file = self.weekly_reports_dir / prev_week / f"bilan_final_{prev_week.lower()}.md"
+        prev_week_dir = self.weekly_reports_dir / prev_week
 
+        # Use lowercase week ID for filename (standard depuis workflow_weekly)
+        bilan_file = prev_week_dir / f"bilan_final_{prev_week.lower()}.md"
+        transition_file = prev_week_dir / f"transition_{prev_week.lower()}.md"
+
+        content_parts = []
+
+        # Load bilan_final
         if bilan_file.exists():
-            content = bilan_file.read_text(encoding="utf-8")
-            print(f"  ✅ Bilan {prev_week} chargé ({len(content)} chars)")
-            return content
+            bilan_content = bilan_file.read_text(encoding="utf-8")
+            content_parts.append(f"## Bilan Final {prev_week}\n\n{bilan_content}")
+            print(f"  ✅ Bilan {prev_week} chargé ({len(bilan_content)} chars)")
         else:
             print(f"  ⚠️ Bilan {prev_week} non trouvé : {bilan_file}")
-            return f"[Bilan {prev_week} non disponible]"
+            content_parts.append(f"[Bilan {prev_week} non disponible]")
+
+        # Load transition (contains TSS, TSB, recommendations for next week)
+        if transition_file.exists():
+            transition_content = transition_file.read_text(encoding="utf-8")
+            content_parts.append(f"\n\n{transition_content}")
+            print(f"  ✅ Transition {prev_week} chargée ({len(transition_content)} chars)")
+        else:
+            print(f"  ⚠️ Transition {prev_week} non trouvée : {transition_file}")
+            content_parts.append(f"\n\n[Transition {prev_week} non disponible]")
+
+        return "\n".join(content_parts)
 
     def load_context_files(self) -> dict[str, str]:
         """Load les fichiers de contexte."""
