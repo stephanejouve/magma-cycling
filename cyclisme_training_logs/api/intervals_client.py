@@ -140,6 +140,35 @@ class IntervalsClient:
         response.raise_for_status()
         return response.json()
 
+    def get_activity_streams(self, activity_id: str) -> list[dict[str, Any]]:
+        """
+        Get time-series streams for a single activity.
+
+        Récupérer les données temporelles (streams) d'une activité.
+
+        Args:
+            activity_id: Activity ID (format: i107424849 or numeric string)
+
+        Returns:
+            List of stream dicts, each containing 'type' and 'data' fields.
+            Available streams: watts, heartrate, cadence, distance, altitude,
+            velocity_smooth, torque, left_right_balance, FrontGear, RearGear,
+            GearRatio, etc.
+
+        Raises:
+            requests.HTTPError: If API request fails or activity not found
+
+        Example:
+            >>> streams = client.get_activity_streams("i107424849")
+            >>> for stream in streams:
+            ...     print(f"{stream['type']}: {len(stream['data'])} points")
+        """
+        url = f"{self.BASE_URL}/activity/{activity_id}/streams"
+
+        response = self.session.get(url)
+        response.raise_for_status()
+        return response.json()
+
     def get_wellness(
         self, oldest: str | None = None, newest: str | None = None
     ) -> list[dict[str, Any]]:

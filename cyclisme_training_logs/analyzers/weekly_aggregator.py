@@ -255,8 +255,9 @@ class WeeklyAggregator(DataAggregator):
         )
 
         # 4. Training learnings (pour training_learnings)
+        # Use processed workouts to include gear_metrics and other enriched data
         processed["learnings"] = self._extract_training_learnings(
-            raw_data["activities"], raw_data.get("feedback", {})
+            processed["workouts"], raw_data.get("feedback", {})
         )
 
         # 5. Protocol adaptations (pour protocol_adaptations)
@@ -540,6 +541,81 @@ class WeeklyAggregator(DataAggregator):
 
         return summary
 
+    def _extract_gear_metrics(self, activity_id: str) -> dict[str, Any] | None:
+        """
+        Extract gear metrics (Di2) from activity streams.
+
+        Extrait métriques de changements de vitesse depuis les streams.
+
+        Args:
+            activity_id: Activity ID
+
+        Returns:
+            Dict avec métriques gear ou None si pas disponibles:
+            - shifts: Nombre total de changements
+            - front_shifts: Changements plateau avant
+            - rear_shifts: Changements pignon arrière
+            - avg_gear_ratio: Ratio moyen
+            - gear_ratio_distribution: Distribution des ratios utilisés
+        """
+        if not self.api:
+            return None
+
+        try:
+            # Fetch streams
+            streams = self.api.get_activity_streams(activity_id)
+
+            # Find gear streams
+            front_gear_stream = next((s for s in streams if s.get("type") == "FrontGear"), None)
+            rear_gear_stream = next((s for s in streams if s.get("type") == "RearGear"), None)
+            gear_ratio_stream = next((s for s in streams if s.get("type") == "GearRatio"), None)
+
+            if not (front_gear_stream and rear_gear_stream):
+                return None  # Pas de données gear disponibles
+
+            front_data = front_gear_stream.get("data", [])
+            rear_data = rear_gear_stream.get("data", [])
+            ratio_data = gear_ratio_stream.get("data", []) if gear_ratio_stream else []
+
+            # Remove None values and calculate metrics
+            front_clean = [f for f in front_data if f is not None]
+            rear_clean = [r for r in rear_data if r is not None]
+            ratio_clean = [r for r in ratio_data if r is not None]
+
+            if not front_clean or not rear_clean:
+                return None
+
+            # Count shifts (changes in gear values)
+            front_shifts = sum(
+                1 for i in range(1, len(front_clean)) if front_clean[i] != front_clean[i - 1]
+            )
+            rear_shifts = sum(
+                1 for i in range(1, len(rear_clean)) if rear_clean[i] != rear_clean[i - 1]
+            )
+
+            total_shifts = front_shifts + rear_shifts
+
+            # Calculate average gear ratio
+            avg_ratio = sum(ratio_clean) / len(ratio_clean) if ratio_clean else None
+
+            # Build gear ratio distribution (top 5 most used)
+            from collections import Counter
+
+            ratio_counts = Counter(round(r, 2) for r in ratio_clean if r)
+            top_ratios = dict(ratio_counts.most_common(5))
+
+            return {
+                "shifts": total_shifts,
+                "front_shifts": front_shifts,
+                "rear_shifts": rear_shifts,
+                "avg_gear_ratio": round(avg_ratio, 2) if avg_ratio else None,
+                "gear_ratio_distribution": top_ratios,
+            }
+
+        except Exception as e:
+            logger.warning(f"Error extracting gear metrics for {activity_id}: {e}")
+            return None
+
     def _process_workouts_detailed(
         self, activities: list[dict[str, Any]], feedback: dict[str, Any]
     ) -> list[dict[str, Any]]:
@@ -582,6 +658,20 @@ class WeeklyAggregator(DataAggregator):
             if activity_id in feedback:
                 workout["feedback"] = feedback[activity_id]
 
+            # Ajouter métriques gear (Di2) si activité outdoor
+            is_outdoor = activity.get("trainer") is False or activity.get("type") == "Ride"
+            if is_outdoor and activity_id:
+                try:
+                    gear_metrics = self._extract_gear_metrics(activity_id)
+                    if gear_metrics:
+                        workout["gear_metrics"] = gear_metrics
+                        logger.debug(
+                            f"Extracted gear metrics for {activity_id}: "
+                            f"{gear_metrics.get('shifts', 0)} shifts"
+                        )
+                except Exception as e:
+                    logger.warning(f"Failed to extract gear metrics for {activity_id}: {e}")
+
             workouts.append(workout)
 
         return workouts
@@ -606,34 +696,30 @@ class WeeklyAggregator(DataAggregator):
         return evolution
 
     def _extract_training_learnings(
-        self, activities: list[dict[str, Any]], feedback: dict[str, Any]
+        self, workouts: list[dict[str, Any]], feedback: dict[str, Any]
     ) -> list[str]:
-        """Extract enseignements training (pour AI analysis)."""
+        """Extract enseignements training (pour AI analysis).
+
+        Args:
+            workouts: Processed workouts with enriched data (tss, if, gear_metrics, etc.)
+            feedback: Session feedback data
+        """
         learnings = []
 
         # Patterns répétés - Defensive: handle None values
-        high_tss_days = [
-            a
-            for a in activities
-            if (a.get("training_load") or a.get("icu_training_load") or 0) > 80
-        ]
+        high_tss_days = [w for w in workouts if (w.get("tss") or 0) > 80]
 
         if high_tss_days:
             learnings.append(f"{len(high_tss_days)} séances haute charge (TSS >80)")
 
         # IF élevés - Defensive: handle None values
-        high_if_days = [
-            a
-            for a in activities
-            if (a.get("if") or (a.get("icu_intensity", 0) / 100 if a.get("icu_intensity") else 0))
-            > 1.0
-        ]
+        high_if_days = [w for w in workouts if (w.get("if") or 0) > 1.0]
 
         if high_if_days:
             learnings.append(f"{len(high_if_days)} séances intensité élevée (IF >1.0)")
 
         # Pedal balance imbalance - Defensive: handle None
-        balances = [a.get("avg_lr_balance") for a in activities if a.get("avg_lr_balance")]
+        balances = [w.get("pedal_balance") for w in workouts if w.get("pedal_balance")]
         if balances:
             avg_balance = sum(balances) / len(balances)
             if avg_balance > 52.0:
@@ -648,6 +734,48 @@ class WeeklyAggregator(DataAggregator):
                     f"Déséquilibre pédalage détecté: {avg_balance:.1f}% gauche "
                     f"(-{imbalance_pct:.1f}% vs équilibre)"
                 )
+
+        # Gear shift analysis (Di2) - Defensive: handle None
+        outdoor_with_gears = [
+            w for w in workouts if w.get("gear_metrics") and w["gear_metrics"].get("shifts")
+        ]
+        if outdoor_with_gears:
+            total_shifts = sum(w["gear_metrics"]["shifts"] for w in outdoor_with_gears)
+            total_duration_hours = sum(w.get("duration", 0) / 3600 for w in outdoor_with_gears)
+
+            if total_duration_hours > 0:
+                shifts_per_hour = total_shifts / total_duration_hours
+
+                # Patterns de changement de vitesse
+                if shifts_per_hour > 50:
+                    learnings.append(
+                        f"Changements de vitesse fréquents: {total_shifts} shifts "
+                        f"({shifts_per_hour:.0f}/h) - considérer anticipation plus fluide"
+                    )
+                elif shifts_per_hour < 20 and total_shifts > 30:
+                    learnings.append(
+                        f"Bonne gestion des vitesses: {total_shifts} shifts "
+                        f"({shifts_per_hour:.0f}/h) - changements bien anticipés"
+                    )
+
+                # Analyse ratio moyen pour sorties outdoor
+                avg_ratios = [
+                    w["gear_metrics"]["avg_gear_ratio"]
+                    for w in outdoor_with_gears
+                    if w["gear_metrics"].get("avg_gear_ratio")
+                ]
+                if avg_ratios:
+                    overall_avg_ratio = sum(avg_ratios) / len(avg_ratios)
+                    if overall_avg_ratio < 1.5:
+                        learnings.append(
+                            f"Développement faible moyen ({overall_avg_ratio:.2f}) - "
+                            "terrain vallonné ou récupération"
+                        )
+                    elif overall_avg_ratio > 3.0:
+                        learnings.append(
+                            f"Développement élevé moyen ({overall_avg_ratio:.2f}) - "
+                            "sorties plates ou tempo soutenu"
+                        )
 
         # Feedback patterns - Defensive: handle None
         low_rpe = [
