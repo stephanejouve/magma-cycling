@@ -51,8 +51,8 @@ def calculate_week_start_date(week_id: str) -> date:
     """
     Calculate Monday start date from project week ID.
 
-    The project uses sequential week numbering. Reference date (S001) is read from
-    .config.json in the data repository (no hardcoded dates).
+    The project uses sequential week numbering with multi-season support.
+    Reference dates are read from .config.json (no hardcoded dates).
 
     Args:
         week_id: Week identifier (e.g., "S075")
@@ -66,20 +66,18 @@ def calculate_week_start_date(week_id: str) -> date:
 
     Examples:
         >>> calculate_week_start_date("S001")
-        date(2024, 8, 5)  # First week: Monday Aug 5, 2024
+        date(2024, 8, 5)  # Season 2024-2025: Monday Aug 5, 2024
         >>> calculate_week_start_date("S075")
-        date(2026, 1, 5)  # Week 75: Monday Jan 5, 2026
+        date(2026, 1, 5)  # Season 2026: Monday Jan 5, 2026
         >>> calculate_week_start_date("S076")
-        date(2026, 1, 12)  # Week 76: Monday Jan 12, 2026
+        date(2026, 1, 12)  # Season 2026: Monday Jan 12, 2026
     """
-    week_num = int(week_id[1:])  # S075 → 75
-
-    # Load S001 reference date from config (no hardcoding)
+    # Load reference date and offset from config (multi-season aware)
     week_config = get_week_config()
-    s001_monday = week_config.get_s001_date_obj()
+    reference_date, weeks_offset = week_config.get_reference_for_week(week_id)
 
     # Calculate target Monday
-    target_monday = s001_monday + timedelta(weeks=week_num - 1)
+    target_monday = reference_date + timedelta(weeks=weeks_offset)
 
     # Validation: must be a Monday
     if target_monday.weekday() != 0:

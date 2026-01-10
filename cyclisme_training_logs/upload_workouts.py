@@ -75,7 +75,7 @@ def calculate_week_start_date(week_id: str) -> datetime:
     """
     Calculate Monday start date from project week ID.
 
-    Reads S001 reference date from .config.json (no hardcoded dates).
+    Reads reference dates from .config.json with multi-season support (no hardcoded dates).
 
     Args:
         week_id: Week identifier (e.g., "S075")
@@ -85,19 +85,19 @@ def calculate_week_start_date(week_id: str) -> datetime:
 
     Examples:
         >>> calculate_week_start_date("S075")
-        datetime(2026, 1, 5, 0, 0)
+        datetime(2026, 1, 5, 0, 0)  # Season 2026
     """
     from cyclisme_training_logs.config import get_week_config
 
-    week_num = int(week_id[1:])  # S075 → 75
-
-    # Load S001 reference from config
+    # Load reference date and offset from config (multi-season aware)
     week_config = get_week_config()
-    reference_date_obj = week_config.get_s001_date_obj()
-    reference_date = datetime.combine(reference_date_obj, datetime.min.time())
+    reference_date, weeks_offset = week_config.get_reference_for_week(week_id)
+
+    # Convert to datetime
+    reference_datetime = datetime.combine(reference_date, datetime.min.time())
 
     # Calculate target Monday
-    target_monday = reference_date + timedelta(weeks=week_num - 1)
+    target_monday = reference_datetime + timedelta(weeks=weeks_offset)
 
     # Validation: must be a Monday
     if target_monday.weekday() != 0:
