@@ -6,6 +6,111 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 
+## [2.3.0] - 2026-01-10
+
+### Added - Analyse Di2 & Optimisation Synchro Shift
+
+**Extraction Données Di2** (`cyclisme_training_logs/api/intervals_client.py`, `cyclisme_training_logs/analyzers/weekly_aggregator.py`):
+- **IntervalsClient.get_activity_streams()** : Récupération streams temporels activités
+  - Accès 17 types streams : FrontGear, RearGear, GearRatio, RearGearIndex, watts, heartrate, cadence, etc.
+  - Format: List[dict] avec 'type' et 'data' fields
+  - Utilisé pour extraction données Di2 (Shimano Electronic Shifting)
+- **WeeklyAggregator._extract_gear_metrics()** : Extraction métriques changements vitesse
+  - Calcul shifts totaux, front shifts, rear shifts
+  - Calcul ratio moyen développement (gear_ratio)
+  - Distribution top 5 ratios utilisés (pour analyse préférences)
+  - Détection outdoor/indoor: `activity.get("trainer") is False or activity.get("type") == "Ride"`
+- **Analyse Patterns Training Learnings** :
+  - Détection changements excessifs (>50 shifts/h) → recommandation anticipation fluide
+  - Reconnaissance bonne gestion (<20 shifts/h, >30 shifts) → validation pratique
+  - Analyse développement moyen : <1.5 (vallonné) vs >3.0 (plat)
+
+**Insights Analyse 23 Sorties** (Mai 2025 - Novembre 2025):
+- **211,579 points données** collectés (5,406 shifts totaux sur 58h50)
+- **Corrélation négative dénivelé vs shifts** (r = -0.40) :
+  - Terrain plat (<8m/km) : 123 shifts/h (micro-ajustements continus)
+  - Terrain vallonné+ (>12m/km) : 84 shifts/h (rapport stable sur pentes)
+  - Intensité non corrélée : r = -0.09 (changements = fonction terrain, pas effort)
+- **Cross-chaining détecté 19.4%** :
+  - 50T + gros pignons (≥24T) : 18.9% du temps
+  - Impact : usure transmission +39%, efficacité -2-3%
+- **Usage plateaux** :
+  - Grand plateau (50T) : 76.9% (terrain majoritairement plat)
+  - Petit plateau (34T) : 23.1%
+  - Ratio plateau/pignon : 1:14.9 (15× plus changements pignon que plateau)
+
+**Configuration Synchro Shift Personnalisée** :
+- **PDF Professionnel** : `~/training-logs/Di2_Synchro_Shift_Configuration.pdf`
+  - 8 pages, 12 KB
+  - Analyse personnalisée basée sur données réelles utilisateur
+- **Recommandations** :
+  - Mode : Semi-Synchro priorité grand plateau (50T)
+  - Transition UP (34T → 50T) : Point 21T (observé 47× naturellement)
+  - Transition DOWN (50T → 34T) : Point 30T (observé 59× naturellement)
+  - Plages autorisées : 34T pour 21-34T, 50T pour 11-24T
+- **Bénéfices attendus** :
+  - Réduction cross-chaining : 19.4% → <2%
+  - Usure chaîne réduite : ~39%
+  - Efficacité transmission : +2-3%
+- **Guide complet** :
+  - Configuration E-Tube Project (PC/Mac)
+  - Configuration E-Tube Ride (smartphone)
+  - Procédure test et ajustement
+  - Alternative règle mentale simple
+
+**Tests** :
+- Validation extraction Di2 sur S067-01-TERRAIN (10 nov 2025) : 394 shifts détectés
+- Test corrélation terrain : 23 sorties, 3 catégories (plat/vallonné/vallonné+)
+- Génération PDF : 23 sorties analysées en <2min
+
+### Fixed - Validateur Jours Repos
+
+**WorkoutUploader.validate_workout_notation()** (`cyclisme_training_logs/upload_workouts.py`):
+- **Problème** : Validateur exigeait warmup/cooldown pour TOUS workouts, y compris repos
+  - Jours repos (format: S076-07-REPOS) rejetés comme incomplets
+  - Utilisateur forcé d'ajouter sections factices "Warmup: Repos" pour passer validation
+- **Solution** : Détection automatique jours repos + skip validation
+  - Pattern détection : `r"(?i)-REPOS($|\s)"` (case insensitive, word boundary)
+  - Si repos détecté → skip validation warmup/cooldown
+  - Autres workouts → validation normale maintenue
+- **Format accepté** :
+  ```
+  === WORKOUT S076-07-REPOS ===
+  REPOS COMPLET - Aucune activite
+  === FIN WORKOUT ===
+  ```
+- **Tests** :
+  - S999-01-REC-Test (normal) : ✅ Validation warmup/cooldown active
+  - S999-07-REPOS (repos) : ✅ Skip validation, pas warnings
+  - Pre-commit hooks : ✅ Tous passés
+
+### Changed - Weekly Analysis
+
+**Training Learnings** (`cyclisme_training_logs/analyzers/weekly_aggregator.py`):
+- **Refactoring** : `_extract_training_learnings()` reçoit maintenant `processed["workouts"]` au lieu de `raw_data["activities"]`
+  - Permet accès données enrichies : gear_metrics, pedal_balance, etc.
+  - Fix data flow : extraction gear → process workouts → analyze learnings
+- **Nouveau champ workouts** : `gear_metrics` (dict optionnel) :
+  - `shifts` : int (total changements vitesse)
+  - `front_shifts` : int (changements plateau avant)
+  - `rear_shifts` : int (changements pignon arrière)
+  - `avg_gear_ratio` : float (ratio moyen développement)
+  - `gear_ratio_distribution` : dict (top 5 ratios utilisés)
+
+### Documentation
+
+**Session Log** (`project-docs/sessions/SESSION_20260110_DI2_ANALYSIS.md`):
+- Brief MOA complet (10 janvier 2026)
+- Objectifs, livrables, statistiques, découvertes techniques
+- Validation MOA : ✅ Prêt production
+
+**Références** :
+- Commits : a5c75c7 (feat Di2), cd066a0 (fix validateur)
+- Documents générés : Di2_Synchro_Shift_Configuration.pdf
+- Période analysée : Mai 2025 - Novembre 2025 (23 sorties outdoor)
+
+---
+
 ## [2.2.0] - 2026-01-02
 
 ### Added - Sprint R4++ (Backfill Historique & PID Controller)
