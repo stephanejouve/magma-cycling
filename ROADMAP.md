@@ -668,6 +668,11 @@ def _step6_archive_and_commit(self):
 - [ ] TrainingPeaks export
 - [ ] Wahoo SYSTM integration
 
+**4. Configuration & Flexibility (P2)**
+- [ ] Externalized week reference configuration (S001 date)
+- [ ] Season reset support without code modification
+- [ ] Multi-season configuration support
+
 **Durée estimée :** 3-4 semaines
 
 ---
@@ -697,6 +702,171 @@ def _step6_archive_and_commit(self):
 - [ ] Training plans library
 - [ ] Coach services platform
 - [ ] Premium features
+
+---
+
+## 🔮 Future Improvements
+
+### Externalized Week Reference Configuration
+
+**Contexte :** Actuellement, la date de référence S001 (2024-08-05) est hard-codée dans le code (`end_of_week.py`). Cela pose problème pour :
+- Reset saisonnier (nouvelle saison = S001)
+- Arrêt prolongé avec reprise
+- Multi-athlète (chaque athlète sa propre référence)
+- Historique (risque écrasement lors de reset)
+
+**Solution Proposée :** Configuration externalisée dans le data repo de l'athlète.
+
+#### Architecture Cible
+
+**Fichier : `~/training-logs/.config.json`**
+```json
+{
+  "athlete_id": "i151223",
+  "name": "Stéphane Jouve",
+
+  "week_reference": {
+    "s001_date": "2024-08-05",
+    "description": "Season 2024-2025",
+    "season": "2024-2025"
+  },
+
+  "intervals_config": {
+    "athlete_id": "i151223",
+    "api_key": "xxxxx"
+  }
+}
+```
+
+#### Scénarios Supportés
+
+**Scénario 1 : Reset Saisonnier (Option A - Nouveau Repo)**
+```bash
+# Créer nouveau repo pour nouvelle saison
+mkdir ~/training-logs-2026
+cd ~/training-logs-2026
+
+# Nouvelle config avec nouvelle référence S001
+cat > .config.json <<EOF
+{
+  "athlete_id": "i151223",
+  "week_reference": {
+    "s001_date": "2026-09-01",
+    "description": "Season 2026-2027"
+  },
+  "legacy_repos": ["~/training-logs"]
+}
+EOF
+
+# Pointer variable env
+export TRAINING_DATA_REPO=~/training-logs-2026
+```
+
+**Bénéfices :**
+- ✅ Historique 2024-2025 préservé intact dans `~/training-logs`
+- ✅ Nouvelle saison dans repo séparé `~/training-logs-2026`
+- ✅ Pas de collision S001 ancienne vs S001 nouvelle
+- ✅ Séparation claire des saisons
+
+**Scénario 2 : Reset Saisonnier (Option B - Multi-Saisons)**
+```json
+// ~/training-logs/.config.json
+{
+  "athlete_id": "i151223",
+  "current_season": "2026-2027",
+
+  "seasons": {
+    "2024-2025": {
+      "s001_date": "2024-08-05",
+      "last_week": "S080",
+      "archived": false
+    },
+    "2026-2027": {
+      "s001_date": "2026-09-01",
+      "last_week": null,
+      "archived": false
+    }
+  }
+}
+```
+
+**Bénéfices :**
+- ✅ Une seule config, plusieurs saisons
+- ✅ Historique complet dans un repo
+- ✅ Sélection automatique saison courante
+
+**Scénario 3 : Arrêt Prolongé**
+```python
+# Après 6 mois pause (S080 → S107)
+# Option 1: Continuer séquence (S081, S082...)
+# Option 2: Marquer contexte dans metadata
+
+{
+  "week_id": "S081",
+  "context": "return_from_injury",
+  "previous_week": "S080",
+  "gap_weeks": 27
+}
+```
+
+#### Implémentation
+
+**Modules à créer :**
+```python
+# cyclisme_training_logs/config/athlete_config.py
+class AthleteConfig:
+    """Load athlete configuration from data repo."""
+
+    def get_week_reference_date(self, season: str = None) -> date:
+        """Get S001 reference date for a season."""
+        # Read from ~/training-logs/.config.json
+        # Return date object
+```
+
+**Modules à modifier :**
+```python
+# cyclisme_training_logs/workflows/end_of_week.py
+def calculate_week_start_date(week_id: str, config: AthleteConfig = None) -> date:
+    """Calculate with config (not hard-coded)."""
+    if config is None:
+        config = AthleteConfig()  # Load from data repo
+
+    s001_monday = config.get_week_reference_date()
+    # ... rest of calculation
+```
+
+#### Avantages
+
+| Aspect | Hard-coded (Actuel) | Config Externe (Futur) |
+|--------|---------------------|------------------------|
+| **Flexibilité** | ❌ Modifier code | ✅ Éditer JSON |
+| **Reset saison** | ❌ Refactoring | ✅ Nouveau repo ou config |
+| **Multi-athlète** | ❌ Même référence | ✅ Config par athlète |
+| **Historique** | ⚠️ Risque écrasement | ✅ Préservé |
+| **Portabilité** | ❌ Lié au code | ✅ Lié aux données |
+
+#### Plan d'Implémentation (Futur)
+
+**Phase 1 : Migration Config (1-2 heures)**
+1. Créer `~/training-logs/.config.json`
+2. Créer `cyclisme_training_logs/config/athlete_config.py`
+3. Modifier `calculate_week_start_date()` pour lire config
+4. Tests : Vérifier backward compatibility
+5. Documentation : `GUIDE_SEASON_RESET.md`
+
+**Phase 2 : Support Multi-Saisons (2-3 heures)**
+1. Étendre schema config pour `seasons` dict
+2. Auto-detect saison courante
+3. Tests avec plusieurs saisons
+4. Migration guide pour utilisateurs existants
+
+**Priorité :** P2 (Nice-to-have, pas urgent)
+
+**Trigger :** Besoin de reset saisonnier ou multi-athlète
+
+**Risques :** Migration breaking change si mal documentée
+
+**Mitigation :** Migration progressive avec fallback hard-coded
 
 ---
 
