@@ -41,10 +41,45 @@ Metadata:
 
 import argparse
 import sys
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from cyclisme_training_logs.config import get_data_config
+
+
+def calculate_week_start_date(week_id: str) -> date:
+    """
+    Calculate Monday start date from project week ID.
+
+    The project uses sequential week numbering starting from S001 = 2024-08-05.
+
+    Args:
+        week_id: Week identifier (e.g., "S075")
+
+    Returns:
+        Date of Monday for that week
+
+    Examples:
+        >>> calculate_week_start_date("S001")
+        date(2024, 8, 5)  # First week: Monday Aug 5, 2024
+        >>> calculate_week_start_date("S075")
+        date(2026, 1, 5)  # Week 75: Monday Jan 5, 2026
+        >>> calculate_week_start_date("S076")
+        date(2026, 1, 12)  # Week 76: Monday Jan 12, 2026
+    """
+    week_num = int(week_id[1:])  # S075 → 75
+
+    # Project reference: S001 started on Monday, August 5, 2024
+    s001_monday = date(2024, 8, 5)
+
+    # Calculate target Monday
+    target_monday = s001_monday + timedelta(weeks=week_num - 1)
+
+    # Validation: must be a Monday
+    if target_monday.weekday() != 0:
+        raise ValueError(f"Calculated date {target_monday} is not a Monday (got {target_monday})")
+
+    return target_monday
 
 
 class EndOfWeekWorkflow:
@@ -77,6 +112,12 @@ class EndOfWeekWorkflow:
         self.auto = auto
         self.archive = archive
 
+        # Calculate dates automatically
+        self.completed_start_date = calculate_week_start_date(week_completed)
+        self.completed_end_date = self.completed_start_date + timedelta(days=6)
+        self.next_start_date = calculate_week_start_date(week_next)
+        self.next_end_date = self.next_start_date + timedelta(days=6)
+
         # Configuration
         try:
             config = get_data_config()
@@ -104,6 +145,16 @@ class EndOfWeekWorkflow:
         print("=" * 80)
         print(f"🏁 END-OF-WEEK WORKFLOW: {self.week_completed} → {self.week_next}")
         print("=" * 80)
+        print()
+        print("📅 Dates calculées automatiquement:")
+        print(
+            f"   {self.week_completed}: {self.completed_start_date.strftime('%d/%m/%Y')} → "
+            f"{self.completed_end_date.strftime('%d/%m/%Y')}"
+        )
+        print(
+            f"   {self.week_next}: {self.next_start_date.strftime('%d/%m/%Y')} → "
+            f"{self.next_end_date.strftime('%d/%m/%Y')}"
+        )
         print()
 
         try:
@@ -162,9 +213,6 @@ class EndOfWeekWorkflow:
             return True
 
         try:
-            # Déterminer start_date de la semaine complétée
-            # Pour l'instant, on suppose que l'utilisateur fournit la date
-            # TODO: Calculer automatiquement depuis week number
             completed_week_file = (
                 self.reports_dir
                 / self.week_completed
@@ -183,7 +231,8 @@ class EndOfWeekWorkflow:
                 print(f"  ⚠️  Analyse {self.week_completed} introuvable")
                 print("  💡 Vous devez d'abord exécuter:")
                 print(
-                    f"     poetry run weekly-analysis --week-id {self.week_completed} --start-date YYYY-MM-DD"
+                    f"     poetry run weekly-analysis --week-id {self.week_completed} "
+                    f"--start-date {self.completed_start_date.strftime('%Y-%m-%d')}"
                 )
                 return False
 
@@ -222,15 +271,10 @@ class EndOfWeekWorkflow:
             return True
 
         try:
-            # Call weekly-planner programmatically
-
-            # Calculate next week start date (auto-detect from week number)
-            # For now, require user to provide or calculate
-            # TODO: Auto-calculate Monday of next week
-
             print("  ℹ️  Pour générer le prompt, utilisez:")
             print(
-                f"     poetry run weekly-planner --week-id {self.week_next} --start-date YYYY-MM-DD"
+                f"     poetry run weekly-planner --week-id {self.week_next} "
+                f"--start-date {self.next_start_date.strftime('%Y-%m-%d')}"
             )
             print()
             print("  💡 Le prompt sera copié dans votre clipboard")
@@ -369,9 +413,11 @@ class EndOfWeekWorkflow:
             return False
 
         try:
-            # Calculate start date for next week (Monday)
-            # TODO: Auto-calculate from week number
-            print(f"  📅 Semaine : {self.week_next}")
+            print(
+                f"  📅 Semaine : {self.week_next} "
+                f"({self.next_start_date.strftime('%d/%m/%Y')} → "
+                f"{self.next_end_date.strftime('%d/%m/%Y')})"
+            )
             print()
 
             if not self.auto:
@@ -387,7 +433,9 @@ class EndOfWeekWorkflow:
             print()
             print("  💡 Exécutez manuellement:")
             print(
-                f"     poetry run upload-workouts --week-id {self.week_next} --start-date YYYY-MM-DD --file {self.workouts_file}"
+                f"     poetry run upload-workouts --week-id {self.week_next} "
+                f"--start-date {self.next_start_date.strftime('%Y-%m-%d')} "
+                f"--file {self.workouts_file}"
             )
             print()
 
