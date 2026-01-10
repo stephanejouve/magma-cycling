@@ -502,6 +502,8 @@ class WeeklyAggregator(DataAggregator):
             "avg_tss": 0,
             "avg_if": 0,
             "total_distance": sum((a.get("distance") or 0) for a in activities),
+            "avg_pedal_balance": None,
+            "pedal_balance_imbalance": False,
         }
 
         if activities:
@@ -515,6 +517,16 @@ class WeeklyAggregator(DataAggregator):
             ]
             if ifs:
                 summary["avg_if"] = sum(ifs) / len(ifs)
+
+            # Pedal balance moyen
+            balances = [
+                a.get("avg_lr_balance") for a in activities if a.get("avg_lr_balance") is not None
+            ]
+            if balances:
+                avg_balance = sum(balances) / len(balances)
+                summary["avg_pedal_balance"] = avg_balance
+                # Déséquilibre si >52% ou <48% (tolérance 2%)
+                summary["pedal_balance_imbalance"] = avg_balance > 52.0 or avg_balance < 48.0
 
         # Métriques finales (dernière journée)
         if activities:
@@ -538,7 +550,8 @@ class WeeklyAggregator(DataAggregator):
         - icu_training_load → tss
         - icu_intensity (%) → if (normalisé 0.0-1.0)
         - icu_weighted_avg_watts → normalized_power
-        - icu_average_watts → average_power.
+        - icu_average_watts → average_power
+        - avg_lr_balance → pedal_balance (%).
         """
         workouts = []
 
@@ -562,6 +575,7 @@ class WeeklyAggregator(DataAggregator):
                 "average_power": activity.get("icu_average_watts", 0),
                 "average_hr": activity.get("average_hr", 0),
                 "max_hr": activity.get("max_hr", 0),
+                "pedal_balance": activity.get("avg_lr_balance"),  # Left/Right balance (%)
             }
 
             # Ajouter feedback si disponible
@@ -618,6 +632,23 @@ class WeeklyAggregator(DataAggregator):
         if high_if_days:
             learnings.append(f"{len(high_if_days)} séances intensité élevée (IF >1.0)")
 
+        # Pedal balance imbalance - Defensive: handle None
+        balances = [a.get("avg_lr_balance") for a in activities if a.get("avg_lr_balance")]
+        if balances:
+            avg_balance = sum(balances) / len(balances)
+            if avg_balance > 52.0:
+                imbalance_pct = avg_balance - 50.0
+                learnings.append(
+                    f"Déséquilibre pédalage détecté: {avg_balance:.1f}% gauche "
+                    f"(+{imbalance_pct:.1f}% vs équilibre)"
+                )
+            elif avg_balance < 48.0:
+                imbalance_pct = 50.0 - avg_balance
+                learnings.append(
+                    f"Déséquilibre pédalage détecté: {avg_balance:.1f}% gauche "
+                    f"(-{imbalance_pct:.1f}% vs équilibre)"
+                )
+
         # Feedback patterns - Defensive: handle None
         low_rpe = [
             fid for fid, f in feedback.items() if f.get("rpe") is not None and f.get("rpe") <= 3
@@ -646,6 +677,19 @@ class WeeklyAggregator(DataAggregator):
                     "recommendation": "Add recovery day next week",
                 }
             )
+
+        # Check pedal balance imbalance in learnings
+        for learning in learnings:
+            if "Déséquilibre pédalage" in learning:
+                adaptations.append(
+                    {
+                        "type": "pedal_balance",
+                        "reason": learning,
+                        "recommendation": "Intégrer exercices unilatéraux (single leg drills) "
+                        "et vérifier position/réglages",
+                    }
+                )
+                break  # Only add once
 
         return adaptations
 
