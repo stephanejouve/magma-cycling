@@ -226,19 +226,23 @@ class WorkoutUploader:
                     break  # Only warn once per workout
 
         # CRITICAL: Check for warmup/cooldown presence
-        # Look for section markers, not just word mentions
-        has_warmup = re.search(
-            r"(?i)(^|\n)\s*[-*#]?\s*(warmup|échauffement|warm-up)[\s:*]", content
-        )
-        has_cooldown = re.search(
-            r"(?i)(^|\n)\s*[-*#]?\s*(cooldown|retour au calme|cool-down)[\s:*]", content
-        )
+        # Skip validation for rest days (REPOS)
+        is_rest_day = re.search(r"(?i)-REPOS($|\s)", workout_id)
 
-        if not has_warmup:
-            warnings.append(f"🚨 {workout_id}: WARMUP MANQUANT - séance incomplète")
+        if not is_rest_day:
+            # Look for section markers, not just word mentions
+            has_warmup = re.search(
+                r"(?i)(^|\n)\s*[-*#]?\s*(warmup|échauffement|warm-up)[\s:*]", content
+            )
+            has_cooldown = re.search(
+                r"(?i)(^|\n)\s*[-*#]?\s*(cooldown|retour au calme|cool-down)[\s:*]", content
+            )
 
-        if not has_cooldown:
-            warnings.append(f"🚨 {workout_id}: COOLDOWN MANQUANT - séance incomplète")
+            if not has_warmup:
+                warnings.append(f"🚨 {workout_id}: WARMUP MANQUANT - séance incomplète")
+
+            if not has_cooldown:
+                warnings.append(f"🚨 {workout_id}: COOLDOWN MANQUANT - séance incomplète")
 
         return warnings
 
