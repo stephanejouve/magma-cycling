@@ -118,11 +118,17 @@ class WeeklyAnalysis:
         self.context_files: dict[str, str] = {}
 
     def _calculate_week_start(self) -> datetime:
-        """Calculate la date de début de la semaine basé sur le numéro."""
-        # Pour l'instant, utiliser une date de référence (à ajuster)
+        """Calculate la date de début de la semaine basé sur le numéro.
 
-        # Exemple: S001 = 2024-01-01 (lundi)
-        reference_date = datetime(2024, 1, 1)  # S001 commence le 1er janvier 2024
+        Reads S001 reference date from .config.json (no hardcoded dates).
+        """
+        from cyclisme_training_logs.config import get_week_config
+
+        # Load S001 reference from config
+        week_config = get_week_config()
+        reference_date_obj = week_config.get_s001_date_obj()
+        reference_date = datetime.combine(reference_date_obj, datetime.min.time())
+
         weeks_offset = self.week_int - 1
         return reference_date + timedelta(weeks=weeks_offset)
 
