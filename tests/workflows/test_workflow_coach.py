@@ -485,3 +485,243 @@ class TestGapDetectionLogic:
         result = coach._filter_documented_sessions(sessions, state, "cancelled")
 
         assert result == []
+
+
+class TestFeedbackCollection:
+    """Test feedback collection methods."""
+
+    def test_validate_feedback_collection_skip_flag(self):
+        """Test _validate_feedback_collection respects skip_feedback flag."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        coach.unanalyzed_activities = [{"id": "i12345"}]
+
+        should_collect, skip_reason = coach._validate_feedback_collection()
+
+        assert should_collect is False
+        assert skip_reason == "skipped_by_flag"
+
+    def test_validate_feedback_collection_no_gaps(self):
+        """Test _validate_feedback_collection when no gaps detected."""
+        coach = WorkflowCoach(skip_feedback=False, skip_git=True)
+        coach.unanalyzed_activities = []
+
+        should_collect, skip_reason = coach._validate_feedback_collection()
+
+        assert should_collect is False
+        assert skip_reason == "no_gaps"
+
+    def test_validate_feedback_collection_should_collect(self):
+        """Test _validate_feedback_collection when feedback should be collected."""
+        coach = WorkflowCoach(skip_feedback=False, skip_git=True)
+        coach.unanalyzed_activities = [{"id": "i12345"}]
+
+        should_collect, skip_reason = coach._validate_feedback_collection()
+
+        assert should_collect is True
+        assert skip_reason is None
+
+    @patch.object(WorkflowCoach, "load_credentials", return_value=("i123", "key123"))
+    def test_prepare_feedback_context_success(self, mock_load_creds):
+        """Test _prepare_feedback_context with valid credentials and activity."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        coach.unanalyzed_activities = [
+            {
+                "id": "i12345",
+                "name": "Morning Ride",
+                "start_date_local": "2025-12-20T08:00:00",
+            }
+        ]
+
+        activity, athlete_id, api_key = coach._prepare_feedback_context()
+
+        assert activity is not None
+        assert activity["id"] == "i12345"
+        assert athlete_id == "i123"
+        assert api_key == "key123"
+
+    @patch.object(WorkflowCoach, "load_credentials", return_value=(None, None))
+    def test_prepare_feedback_context_no_credentials(self, mock_load_creds):
+        """Test _prepare_feedback_context when credentials missing."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        coach.unanalyzed_activities = [{"id": "i12345"}]
+
+        activity, athlete_id, api_key = coach._prepare_feedback_context()
+
+        assert activity is None
+        assert athlete_id == ""
+        assert api_key == ""
+
+    @patch("subprocess.run")
+    def test_execute_feedback_collection_with_activity(self, mock_subprocess):
+        """Test _execute_feedback_collection with activity context."""
+        mock_result = Mock()
+        mock_result.returncode = 0
+        mock_subprocess.return_value = mock_result
+
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        activity = {
+            "name": "Morning Ride",
+            "start_date_local": "2025-12-20T08:00:00",
+            "moving_time": 3600,
+            "icu_training_load": 75,
+            "icu_intensity": 105,
+        }
+
+        returncode = coach._execute_feedback_collection(activity, "full")
+
+        assert returncode == 0
+        assert mock_subprocess.called
+        # Verify subprocess called with correct args
+        call_args = mock_subprocess.call_args[0][0]
+        assert "--activity-name" in call_args
+        assert "Morning Ride" in call_args
+
+    @patch("subprocess.run")
+    def test_execute_feedback_collection_quick_mode(self, mock_subprocess):
+        """Test _execute_feedback_collection with quick mode."""
+        mock_result = Mock()
+        mock_result.returncode = 0
+        mock_subprocess.return_value = mock_result
+
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+
+        returncode = coach._execute_feedback_collection(None, "quick")
+
+        assert returncode == 0
+        # Verify --quick flag present
+        call_args = mock_subprocess.call_args[0][0]
+        assert "--quick" in call_args
+
+    @patch("builtins.input", side_effect=["7h30", "85", "65", "48"])
+    def test_collect_rest_feedback_valid(self, mock_input):
+        """Test _collect_rest_feedback with valid input."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        session_data = {
+            "session_id": "S072-07",
+            "date": "2025-12-22",
+            "name": "Repos actif",
+        }
+
+        feedback = coach._collect_rest_feedback(session_data)
+
+        assert feedback["sleep_duration"] == "7h30"
+        assert feedback["sleep_score"] == 85
+        assert feedback["hrv"] == 65
+        assert feedback["resting_hr"] == 48
+
+
+class TestMarkdownGeneration:
+    """Test markdown generation and export methods."""
+
+    @patch("builtins.print")
+    def test_preview_markdowns_single(self, mock_print):
+        """Test _preview_markdowns displays single markdown."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        markdowns = [("2025-12-20", "# Morning Ride\n\nGreat session today!")]
+
+        coach._preview_markdowns(markdowns)
+
+        assert mock_print.called
+        # Should print preview header
+        call_args_str = str(mock_print.call_args_list)
+        assert "PREVIEW" in call_args_str or "Morning Ride" in call_args_str
+
+    @patch("subprocess.Popen")
+    def test_copy_to_clipboard_success(self, mock_popen):
+        """Test _copy_to_clipboard copies markdown successfully."""
+        mock_process = Mock()
+        mock_process.returncode = 0
+        mock_process.communicate.return_value = (b"", b"")
+        mock_popen.return_value = mock_process
+
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        markdowns = [("2025-12-20", "# Test markdown")]
+
+        result = coach._copy_to_clipboard(markdowns)
+
+        assert result is True
+        assert mock_popen.called
+
+    @patch("subprocess.Popen", side_effect=Exception("Copy failed"))
+    def test_copy_to_clipboard_failure(self, mock_popen):
+        """Test _copy_to_clipboard handles copy failure."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        markdowns = [("2025-12-20", "# Test markdown")]
+
+        result = coach._copy_to_clipboard(markdowns)
+
+        assert result is False
+
+    def test_detect_session_type_from_markdown_normal(self):
+        """Test _detect_session_type_from_markdown returns None for normal workout."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        markdown = "# S072-03 - Morning Tempo\n\nGreat tempo session."
+
+        session_type = coach._detect_session_type_from_markdown(markdown)
+
+        # Normal workouts return None (not "workout")
+        assert session_type is None
+
+    def test_detect_session_type_from_markdown_rest(self):
+        """Test _detect_session_type_from_markdown detects rest day."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        markdown = "# REPOS - 2025-12-22\n\n[REPOS]"
+
+        session_type = coach._detect_session_type_from_markdown(markdown)
+
+        assert session_type == "rest"
+
+    def test_detect_session_type_from_markdown_cancelled(self):
+        """Test _detect_session_type_from_markdown detects cancelled."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        markdown = "# S072-02 - [ANNULÉE]\n\nSession cancelled due to fatigue."
+
+        session_type = coach._detect_session_type_from_markdown(markdown)
+
+        assert session_type == "cancelled"
+
+
+class TestUIHelpers:
+    """Test UI helper methods."""
+
+    @patch("os.system")
+    def test_clear_screen(self, mock_system):
+        """Test clear_screen calls os.system with clear."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+
+        coach.clear_screen()
+
+        assert mock_system.called
+        # Should call with 'clear' on Unix or 'cls' on Windows
+        call_arg = mock_system.call_args[0][0]
+        assert call_arg in ["clear", "cls"]
+
+    @patch("builtins.print")
+    def test_print_header(self, mock_print):
+        """Test print_header prints formatted header."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+
+        coach.print_header("Test Title", "Test Subtitle")
+
+        assert mock_print.called
+        # Should print title
+        call_args_str = str(mock_print.call_args_list)
+        assert "Test Title" in call_args_str
+
+    @patch("builtins.print")
+    def test_print_separator(self, mock_print):
+        """Test print_separator prints line."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+
+        coach.print_separator()
+
+        assert mock_print.called
+
+    @patch("builtins.input", return_value="")
+    def test_wait_user(self, mock_input):
+        """Test wait_user waits for enter key."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+
+        coach.wait_user("Press enter to continue")
+
+        assert mock_input.called
