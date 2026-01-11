@@ -111,9 +111,9 @@ def test_extract_training_learnings():
     aggregator = WeeklyAggregator(week="S073", start_date=date(2025, 1, 6))
 
     activities = [
-        {"training_load": 85, "if": 1.1},
-        {"training_load": 90, "if": 1.15},
-        {"training_load": 45, "if": 0.8},
+        {"tss": 85, "if": 1.1},
+        {"tss": 90, "if": 1.15},
+        {"tss": 45, "if": 0.8},
     ]
 
     feedback = {"a1": {"rpe": 2}, "a2": {"rpe": 3}}
