@@ -244,6 +244,36 @@ class WorkoutUploader:
             if not has_cooldown:
                 warnings.append(f"🚨 {workout_id}: COOLDOWN MANQUANT - séance incomplète")
 
+            # CRITICAL: Check for missing dashes before instructions
+            # Parser Intervals.icu requires dashes to identify steps
+            sections = ["warmup", "main set", "cooldown"]
+            lines = content.split("\n")
+
+            for i, line in enumerate(lines):
+                # Check if this is a section header
+                if re.search(r"(?i)(warmup|main set|cooldown)", line):
+                    # Check next non-empty lines for missing dashes
+                    for j in range(i + 1, min(i + 10, len(lines))):
+                        next_line = lines[j].strip()
+
+                        # Skip empty lines
+                        if not next_line:
+                            continue
+
+                        # Stop if we hit another section
+                        if re.search(r"(?i)(warmup|main set|cooldown)", next_line):
+                            break
+
+                        # Check if line looks like an instruction but has no dash
+                        # Instruction pattern: starts with time (10m, 3x, etc)
+                        if re.match(r"^\d+[mx]?\s", next_line):
+                            if not next_line.startswith("-"):
+                                warnings.append(
+                                    f"🚨 {workout_id}: TIRET MANQUANT - instruction sans tiret: '{next_line[:40]}...'\n"
+                                    f"   → Parser Intervals.icu nécessite '-' devant chaque instruction"
+                                )
+                                break  # One warning per section is enough
+
         return warnings
 
     def parse_workouts_file(self, filepath: Path) -> list[dict]:
@@ -322,7 +352,9 @@ class WorkoutUploader:
 
                 if critical_warnings:
                     print("🚨 ERREURS CRITIQUES DÉTECTÉES - Upload BLOQUÉ")
-                    print("   Des séances sont incomplètes (warmup/cooldown manquants)")
+                    print("   Des séances sont incomplètes ou mal formatées:")
+                    print("   - Warmup/cooldown manquants")
+                    print("   - Tirets manquants devant les instructions")
                     print("   → Utilisez format-planning pour corriger le format")
                     return []
             else:
@@ -408,7 +440,9 @@ class WorkoutUploader:
 
                 if critical_warnings:
                     print("🚨 ERREURS CRITIQUES DÉTECTÉES - Upload BLOQUÉ")
-                    print("   Des séances sont incomplètes (warmup/cooldown manquants)")
+                    print("   Des séances sont incomplètes ou mal formatées:")
+                    print("   - Warmup/cooldown manquants")
+                    print("   - Tirets manquants devant les instructions")
                     print("   → Utilisez format-planning pour corriger le format")
                     return []
             else:
@@ -463,15 +497,42 @@ class WorkoutUploader:
         print(f"Mode : {'DRY RUN (simulation)' if dry_run else 'RÉEL'}")
         print("=" * 70)
 
-        stats = {"success": 0, "failed": 0, "skipped": 0}
+        stats = {"success": 0, "failed": 0}
 
         for workout in workouts:
             print(f"\n📅 Jour {workout['day']:02d} - {workout['date']}")
             print(f"   {workout['filename']}")
 
+            # Handle rest days (REPOS) - create REST event instead of skipping
             if "REPOS" in workout["filename"].upper():
-                print("  ⭐ Ignoré (jour de repos)")
-                stats["skipped"] += 1
+                if dry_run:
+                    print("  🔍 DRY RUN - Jour de repos (REST event)")
+                    stats["success"] += 1
+                else:
+                    try:
+                        # Create REST event
+                        event_data = {
+                            "category": "NOTE",
+                            "name": "Repos",
+                            "description": workout.get("description", "Jour de repos complet"),
+                            "start_date_local": f"{workout['date']}T06:00:00",
+                        }
+
+                        if self.api is None:
+                            print("  ❌ Erreur : API non initialisée")
+                            stats["failed"] += 1
+                        else:
+                            response = self.api.create_event(event_data)
+                            if response:
+                                print(f"  ✅ Jour de repos créé : {workout['date']}")
+                                stats["success"] += 1
+                            else:
+                                print(f"  ❌ Échec création repos : {workout['date']}")
+                                stats["failed"] += 1
+
+                    except Exception as e:
+                        print(f"  ❌ Erreur création repos : {e}")
+                        stats["failed"] += 1
                 continue
 
             if dry_run:
@@ -488,7 +549,6 @@ class WorkoutUploader:
         print("=" * 70)
         print(f"✅ Succès   : {stats['success']}")
         print(f"❌ Échecs   : {stats['failed']}")
-        print(f"⭐️  Ignorés  : {stats['skipped']}")
         print(f"📝 Total    : {len(workouts)}")
         print("=" * 70)
 
