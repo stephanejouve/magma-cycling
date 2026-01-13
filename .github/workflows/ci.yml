@@ -45,9 +45,57 @@ jobs:
       - name: Install dependencies
         run: poetry install --no-interaction --no-ansi
 
-      - name: Run unit tests
+      - name: Setup test environment
         run: |
-          poetry run pytest tests/config/ tests/intelligence/ tests/planning/ tests/test_*.py -v --cov=cyclisme_training_logs --cov-report=xml --cov-report=term
+          # Create minimal .env for tests
+          cat > .env << 'EOF'
+          # Test environment variables
+          ATHLETE_AGE=54
+          ATHLETE_CATEGORY=master
+          ATHLETE_RECOVERY_CAPACITY=exceptional
+          ATHLETE_SLEEP_DEPENDENT=true
+          ATHLETE_FTP=240
+          ATHLETE_WEIGHT=72.5
+          # Intervals.icu API (both formats for compatibility)
+          INTERVALS_ATHLETE_ID=test_athlete
+          INTERVALS_API_KEY=test_key
+          VITE_INTERVALS_ATHLETE_ID=test_athlete
+          VITE_INTERVALS_API_KEY=test_key
+          # Data repository path
+          TRAINING_DATA_REPO=${{ github.workspace }}/test-data
+          DATA_REPO_PATH=${{ github.workspace }}/test-data
+          EOF
+
+          # Create test data directory structure
+          mkdir -p ${{ github.workspace }}/test-data/week_planning
+          mkdir -p ${{ github.workspace }}/test-data/data
+
+          # Create S072 planning file (required by tests)
+          cat > ${{ github.workspace }}/test-data/week_planning/week_planning_S072.json << 'EOF'
+          {
+            "week": "S072",
+            "start_date": "2025-12-15",
+            "sessions": []
+          }
+          EOF
+
+      - name: Run unit tests
+        env:
+          ATHLETE_AGE: 54
+          ATHLETE_CATEGORY: master
+          ATHLETE_RECOVERY_CAPACITY: exceptional
+          ATHLETE_SLEEP_DEPENDENT: "true"
+          ATHLETE_FTP: 240
+          ATHLETE_WEIGHT: 72.5
+          INTERVALS_ATHLETE_ID: test_athlete
+          INTERVALS_API_KEY: test_key
+          VITE_INTERVALS_ATHLETE_ID: test_athlete
+          VITE_INTERVALS_API_KEY: test_key
+          TRAINING_DATA_REPO: ${{ github.workspace }}/test-data
+          DATA_REPO_PATH: ${{ github.workspace }}/test-data
+          CI: "true"
+        run: |
+          poetry run pytest tests/config/ tests/intelligence/ tests/planning/ tests/test_ai_providers/ tests/utils/ -v --cov=cyclisme_training_logs --cov-report=xml --cov-report=term
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
