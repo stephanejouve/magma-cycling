@@ -17,7 +17,7 @@ repos:
     rev: 25.12.0
     hooks:
       - id: black
-        language_version: python3.11
+        language_version: python3.13
         args: ['--line-length=100']
 
   # Ruff - Fast Python linter
@@ -96,7 +96,7 @@ repos:
 
 # Configuration
 default_language_version:
-  python: python3.11
+  python: python3.13
 
 # Skip these files
 exclude: |
