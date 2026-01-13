@@ -677,7 +677,299 @@ def _step6_archive_and_commit(self):
 
 ---
 
-### Sprint R8 - Extensibility & Multi-Systems (Envisioned Q3 2026)
+### Sprint R8 - Code Coverage & Test Quality (Planifié Q1 2026)
+
+**Focus :** Améliorer couverture de tests workflow_coach.py et modules critiques
+
+**Status :** 🚧 EN COURS (19% → 50% coverage workflow_coach.py)
+
+#### Objectif Sprint R8
+
+Augmenter significativement la couverture de tests des modules critiques pour garantir stabilité et faciliter maintenance future.
+
+**Target principal :** `workflow_coach.py` (3,523 lignes, orchestrateur central)
+- Coverage actuel : 19% (338/1822 lignes)
+- Target : 50% (+31%, ~56 tests additionnels)
+
+#### Architecture Sprint R8
+
+**Phase 1 : Core Logic Tests (Complété 11 Jan 2026)** ✅
+- 26 tests créés (+4% coverage)
+- Modules : Parsing, Initialization, Planning, Gap Detection
+- Commits : 5a5c304
+
+**Phase 2 : Integration Tests (Complété 11 Jan 2026)** ✅
+- 18 tests créés (+5% coverage)
+- Modules : Feedback Collection, Markdown Generation, UI Helpers
+- Commits : e3bdfbe
+
+**Phase 3 : Workflow Steps Tests (En cours)**
+- Target : 33 tests additionnels
+- Modules : Analysis Preparation, Special Sessions, Intervals.icu API, AI Workflow
+- Estimation : 6 heures développement
+
+#### Livrables Sprint R8
+
+**Tests :**
+- ✅ 44 tests Phase 1-2 complétés
+- 🚧 33 tests Phase 3 en cours
+- Target : 77 tests totaux
+
+**Coverage :**
+- ✅ workflow_coach.py : 10% → 19% (+9%)
+- Target : 19% → 50% (+31%)
+
+**Documentation :**
+- ✅ SPRINT_R8_RESUME.md (guide reprise)
+- ✅ SESSION_20260111_SPRINT_R8.md (log complet)
+
+#### Métriques Succès
+
+- ✅ Coverage workflow_coach.py ≥ 50%
+- ✅ 0 régressions fonctionnelles
+- ✅ 100% tests passing
+- ✅ Documentation complète
+
+#### Timeline
+
+```
+11 Jan 2026 : Phase 1-2 complétées (44 tests, +9% coverage)
+12 Jan 2026 : Bug fix S076 (production)
+Jan-Fév 2026 : Consolidation terrain (pause sprint)
+~2 Fév 2026 : Décision PO/MOA - Finaliser Phase 3 ou autre priorité
+```
+
+**Durée estimée Phase 3 :** 6 heures développement (si reprend)
+
+---
+
+### Sprint R9 - Code Reusability & Utilities (Planifié Q1-Q2 2026)
+
+**Focus :** Éliminer duplications et créer bibliothèque utilitaires partagés
+
+**Status :** 📋 ROADMAP (Identifié 12 Jan 2026)
+
+**Priorité :** P1 (Important pour maintenabilité long-terme)
+
+#### Contexte
+
+**Audit code réalisé 12 janvier 2026 :**
+
+**Points forts identifiés :** ✅
+- IntervalsClient unifié (13+ réutilisations)
+- Configuration centralisée (DataRepoConfig singleton)
+- AI Providers Factory (5 providers, 0 duplication)
+- Training Intelligence réutilisée partout
+
+**Duplications identifiées :** ⚠️
+
+| Fonction | Duplications | Impact |
+|----------|--------------|--------|
+| `calculate_week_start_date()` | 2 fichiers | ~40 LOC |
+| `load_credentials()` | 2 fichiers | ~30 LOC |
+| Opérations clipboard (`pbpaste`) | 5 fichiers | ~50 LOC |
+| Formatage dates | 8+ fichiers | ~80 LOC |
+| Validation markdown | 3 fichiers | ~60 LOC |
+
+**Total duplication estimée :** ~260 lignes de code
+
+**Score réutilisation actuel :** 7/10 🟡
+
+#### Objectif Sprint R9
+
+Atteindre **9/10 en réutilisation** en créant modules utilitaires communs et éliminant duplications.
+
+#### Architecture Cible
+
+**Nouveaux modules utilitaires :**
+
+```python
+# cyclisme_training_logs/utils/clipboard.py
+"""Clipboard operations utilities."""
+
+def read_clipboard() -> str:
+    """Read text from system clipboard (pbpaste)."""
+
+def write_clipboard(content: str) -> bool:
+    """Write text to system clipboard (pbcopy)."""
+```
+
+```python
+# cyclisme_training_logs/utils/credentials.py
+"""Credentials management utilities."""
+
+def load_credentials() -> tuple[str, str]:
+    """Load Intervals.icu credentials from environment."""
+
+def validate_credentials(athlete_id: str, api_key: str) -> bool:
+    """Validate credentials format."""
+```
+
+```python
+# cyclisme_training_logs/utils/date_utils.py
+"""Date calculation and formatting utilities."""
+
+def calculate_week_start_date(week_id: str) -> date:
+    """Calculate Monday start date from week ID (centralized)."""
+
+def format_date_range(start: date, end: date) -> str:
+    """Format date range for display (DD/MM/YYYY → DD/MM/YYYY)."""
+
+def parse_week_id(week_id: str) -> int:
+    """Parse week ID to number (S075 → 75)."""
+```
+
+```python
+# cyclisme_training_logs/utils/markdown_utils.py
+"""Markdown generation utilities."""
+
+def generate_markdown_section(title: str, content: str, level: int = 2) -> str:
+    """Generate markdown section with title."""
+
+def format_list(items: list[str], ordered: bool = False) -> str:
+    """Format list as markdown (bulleted or numbered)."""
+
+def validate_markdown_structure(content: str) -> list[str]:
+    """Validate markdown structure, return warnings."""
+```
+
+#### Features Sprint R9
+
+**1. Création Modules Utilitaires (P0)** ⭐
+
+**Tâches :**
+- [ ] Créer `utils/clipboard.py` avec fonctions pbpaste/pbcopy
+- [ ] Créer `utils/credentials.py` avec load/validate credentials
+- [ ] Créer `utils/date_utils.py` avec calculs dates centralisés
+- [ ] Créer `utils/markdown_utils.py` avec génération/validation
+- [ ] Tests unitaires pour chaque module (coverage ≥95%)
+
+**Impact :**
+- 🔻 ~260 lignes duplication éliminées
+- ✅ +4 modules utilitaires réutilisables
+- ✅ Maintenabilité améliorée (single source of truth)
+
+**Durée estimée :** 2-3 jours
+
+**2. Migration Fichiers Existants (P0)** ⭐
+
+**Tâches :**
+- [ ] Migrer `workflow_coach.py` vers utils (5 fonctions)
+- [ ] Migrer `upload_workouts.py` vers utils (3 fonctions)
+- [ ] Migrer `end_of_week.py` vers utils (2 fonctions)
+- [ ] Migrer `prepare_analysis.py` vers utils (2 fonctions)
+- [ ] Migrer `insert_analysis.py` vers utils (1 fonction)
+- [ ] Tests de régression (0 breaking changes)
+
+**Impact :**
+- 🔻 ~200 lignes éliminées des gros fichiers
+- ✅ Code plus lisible et maintenable
+- ✅ Facilite tests unitaires
+
+**Durée estimée :** 1-2 jours
+
+**3. Refactoring Gros Fichiers (P1)**
+
+**Fichiers cibles :**
+
+| Fichier | Lignes | Complexité | Action |
+|---------|--------|------------|--------|
+| `workflow_coach.py` | 3,523 | B-7 | Extraire helpers workflow |
+| `prepare_analysis.py` | 1,254 | ? | Extraire parsing/validation |
+| `rest_and_cancellations.py` | 923 | ? | Extraire markdown generation |
+| `weekly_aggregator.py` | 908 | ? | Extraire enrichissement |
+
+**Tâches :**
+- [ ] Identifier fonctions réutilisables dans chaque fichier
+- [ ] Extraire vers modules appropriés (utils/ ou core/)
+- [ ] Maintenir backward compatibility
+- [ ] Tests de régression complets
+
+**Impact :**
+- 🔻 ~400-600 lignes extraites vers modules
+- ✅ Fichiers principaux plus focalisés
+- ✅ Réutilisation maximale
+
+**Durée estimée :** 3-4 jours
+
+**4. Documentation Patterns (P1)**
+
+**Tâches :**
+- [ ] Guide développeur : "Éviter duplication de code"
+- [ ] Exemples : "Utiliser modules utils/"
+- [ ] Architecture decision records (ADR) pour patterns
+- [ ] Update CODING_STANDARDS.md avec règles réutilisation
+
+**Durée estimée :** 1 jour
+
+#### Livrables Sprint R9
+
+**Code :**
+- ✅ 4 nouveaux modules utils/ (clipboard, credentials, date_utils, markdown_utils)
+- ✅ ~260 lignes duplication éliminées
+- ✅ 15+ fichiers migrés vers utils
+- ✅ Tests unitaires complets (coverage ≥95% sur utils/)
+
+**Documentation :**
+- ✅ Guide développeur réutilisation
+- ✅ ADR patterns décisions
+- ✅ CODING_STANDARDS.md mis à jour
+
+**Métriques :**
+- ✅ Score réutilisation : 7/10 → 9/10
+- ✅ Duplication code : ~260 LOC éliminées
+- ✅ Maintenabilité : +30% (estimé)
+
+#### Métriques Succès
+
+- ✅ Score réutilisation ≥ 9/10
+- ✅ Duplication < 50 lignes totales
+- ✅ 0 régressions fonctionnelles
+- ✅ Coverage utils/ ≥ 95%
+- ✅ Documentation complète
+
+#### Bénéfices
+
+**Court terme :**
+- ✅ Code plus lisible et maintenable
+- ✅ Tests plus simples (fonctions isolées)
+- ✅ Réduction duplication → moins de bugs
+
+**Long terme :**
+- ✅ Onboarding développeurs facilité
+- ✅ Évolution features plus rapide
+- ✅ Patterns réutilisation standardisés
+- ✅ Base solide pour futurs sprints
+
+#### Risques & Mitigations
+
+| Risque | Probabilité | Impact | Mitigation |
+|--------|-------------|--------|-----------|
+| Breaking changes | Moyenne | Élevé | Tests régression exhaustifs |
+| Imports circulaires | Faible | Moyen | Architecture modulaire claire |
+| Over-engineering | Faible | Faible | Extraire seulement fonctions utilisées 2+ fois |
+
+#### Timeline Estimée
+
+```
+Phase 1 : Création modules utils (2-3 jours)
+Phase 2 : Migration fichiers (1-2 jours)
+Phase 3 : Refactoring gros fichiers (3-4 jours)
+Phase 4 : Documentation (1 jour)
+
+Total : 7-10 jours développement
+```
+
+**Prérequis :**
+- ✅ Sprint R8 complété (coverage ≥ 50% workflow_coach.py)
+- ✅ 0 bugs production en cours
+- ✅ Validation MOA/PO priorité refactoring
+
+**Note MOA/PO :** Ce sprint améliore qualité code sans ajouter features. Bénéfices long-terme maintenabilité et vélocité développement futurs sprints.
+
+---
+
+### Sprint R10 - Extensibility & Multi-Systems (Envisioned Q3 2026)
 
 **Focus :** Architecture extensible pour systèmes de transmission multiples
 

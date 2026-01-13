@@ -725,3 +725,550 @@ class TestUIHelpers:
         coach.wait_user("Press enter to continue")
 
         assert mock_input.called
+
+
+class TestAnalysisPreparation:
+    """Test analysis preparation methods."""
+
+    @patch("subprocess.run")
+    @patch("builtins.print")
+    def test_step_3_prepare_analysis_clipboard_mode(self, mock_print, mock_subprocess):
+        """Test step_3_prepare_analysis with clipboard mode."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        coach.current_provider = "clipboard"
+
+        # Mock subprocess for prepare_analysis and pbpaste
+        mock_subprocess.side_effect = [
+            Mock(returncode=0),  # prepare_analysis success
+            Mock(stdout="- **Nom** : Test Activity\nPrompt content here", returncode=0),  # pbpaste
+        ]
+
+        with patch.object(coach, 'wait_user'):
+            coach.step_3_prepare_analysis()
+
+        assert coach.activity_name == "Test Activity"
+        assert mock_subprocess.call_count == 2
+
+    @patch("subprocess.run")
+    @patch("builtins.print")
+    def test_step_3_prepare_analysis_with_activity_id(self, mock_print, mock_subprocess):
+        """Test step_3_prepare_analysis includes activity_id in command."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        coach.current_provider = "clipboard"
+        coach.activity_id = "12345"
+
+        mock_subprocess.side_effect = [
+            Mock(returncode=0),
+            Mock(stdout="- **Nom** : Activity\nPrompt", returncode=0),
+        ]
+
+        with patch.object(coach, 'wait_user'):
+            coach.step_3_prepare_analysis()
+
+        # Verify activity_id was passed to prepare_analysis
+        first_call_args = mock_subprocess.call_args_list[0][0][0]
+        assert "--activity-id" in first_call_args
+        assert "12345" in first_call_args
+
+    @patch("subprocess.run")
+    @patch("sys.exit", side_effect=SystemExit)
+    @patch("builtins.print")
+    def test_step_3_prepare_analysis_error_handling(self, mock_print, mock_exit, mock_subprocess):
+        """Test step_3_prepare_analysis handles subprocess errors."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        coach.current_provider = "clipboard"
+
+        # prepare_analysis fails
+        mock_subprocess.return_value = Mock(returncode=1)
+
+        # Should exit on error
+        try:
+            coach.step_3_prepare_analysis()
+        except SystemExit:
+            pass
+
+        assert mock_exit.called
+        mock_exit.assert_called_with(1)
+
+    @patch("builtins.input", return_value="070")
+    def test_detect_week_id_user_input(self, mock_input):
+        """Test _detect_week_id prompts user when week_id not set."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+
+        week_id = coach._detect_week_id()
+
+        assert week_id == "S070"
+        assert mock_input.called
+
+    def test_detect_week_id_already_set(self):
+        """Test _detect_week_id uses existing week_id when available."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        coach.week_id = "S065"
+
+        week_id = coach._detect_week_id()
+
+        assert week_id == "S065"
+
+    @patch("builtins.input", return_value="S072")
+    def test_detect_week_id_adds_prefix(self, mock_input):
+        """Test _detect_week_id handles input with S prefix."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+
+        week_id = coach._detect_week_id()
+
+        assert week_id == "S072"
+
+    @patch("cyclisme_training_logs.workflow_coach.get_data_config")
+    def test_check_planning_available_exists(self, mock_config):
+        """Test _check_planning_available when planning file exists."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        coach.week_id = "S070"
+
+        mock_planning_dir = Mock()
+        mock_planning_file = Mock()
+        mock_planning_file.exists.return_value = True
+        mock_planning_dir.__truediv__ = Mock(return_value=mock_planning_file)
+
+        mock_config.return_value.week_planning_dir = mock_planning_dir
+
+        result = coach._check_planning_available()
+
+        assert result is True
+
+    @patch("cyclisme_training_logs.workflow_coach.get_data_config")
+    def test_check_planning_available_missing(self, mock_config):
+        """Test _check_planning_available when planning file is missing."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        coach.week_id = "S070"
+
+        mock_planning_dir = Mock()
+        mock_planning_file = Mock()
+        mock_planning_file.exists.return_value = False
+        mock_planning_dir.__truediv__ = Mock(return_value=mock_planning_file)
+
+        mock_config.return_value.week_planning_dir = mock_planning_dir
+
+        result = coach._check_planning_available()
+
+        assert result is False
+
+    @patch("builtins.input", side_effect=["X", "Y", "F"])
+    @patch("builtins.print")
+    def test_ask_fallback_consent_validates_input(self, mock_print, mock_input):
+        """Test _ask_fallback_consent validates and retries on invalid input."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+
+        choice = coach._ask_fallback_consent(
+            failed_provider="openai",
+            next_provider="anthropic",
+            error_msg="API timeout"
+        )
+
+        assert choice == "F"
+        assert mock_input.call_count == 3  # Two invalid, one valid
+
+    @patch("builtins.input", return_value="C")
+    def test_ask_fallback_consent_clipboard_choice(self, mock_input):
+        """Test _ask_fallback_consent accepts clipboard choice."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+
+        choice = coach._ask_fallback_consent(
+            failed_provider="openai",
+            next_provider="anthropic",
+            error_msg="API error"
+        )
+
+        assert choice == "C"
+
+    @patch("builtins.input", return_value="Q")
+    def test_ask_fallback_consent_quit_choice(self, mock_input):
+        """Test _ask_fallback_consent accepts quit choice."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+
+        choice = coach._ask_fallback_consent(
+            failed_provider="openai",
+            next_provider="anthropic",
+            error_msg="API error"
+        )
+
+        assert choice == "Q"
+
+
+class TestSpecialSessions:
+    """Test special sessions handling methods."""
+
+    @patch("cyclisme_training_logs.workflow_coach.generate_rest_day_entry")
+    @patch("builtins.input", return_value="0")  # Mock menu choice
+    @patch("builtins.print")
+    def test_show_special_sessions_with_rest_days(self, mock_print, mock_input, mock_generate):
+        """Test _show_special_sessions generates rest day markdowns."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        coach.reconciliation = {
+            "rest_days": [
+                {"session_id": "S070-01", "name": "Repos", "date": "2026-01-05"}
+            ],
+            "cancelled": []
+        }
+
+        mock_generate.return_value = "# Repos markdown"
+
+        with patch.object(coach, '_collect_rest_feedback', return_value={"feedback": "Good rest"}):
+            with patch.object(coach, '_preview_markdowns'):
+                result = coach._show_special_sessions()
+
+        assert mock_generate.called
+        call_args = mock_generate.call_args
+        assert call_args[1]["session_data"]["session_id"] == "S070-01"
+        assert result == "exit_workflow"
+
+    @patch("cyclisme_training_logs.workflow_coach.generate_cancelled_session_entry")
+    @patch("builtins.input", return_value="0")  # Mock menu choice
+    @patch("builtins.print")
+    def test_show_special_sessions_with_cancelled(self, mock_print, mock_input, mock_generate):
+        """Test _show_special_sessions generates cancelled session markdowns."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        coach.reconciliation = {
+            "rest_days": [],
+            "cancelled": [
+                {"session_id": "S070-02", "name": "Cancelled", "date": "2026-01-06", "cancellation_reason": "Weather"}
+            ]
+        }
+
+        mock_generate.return_value = "# Cancelled markdown"
+
+        with patch.object(coach, '_preview_markdowns'):
+            result = coach._show_special_sessions()
+
+        assert mock_generate.called
+        call_args = mock_generate.call_args
+        assert call_args[1]["session_data"]["session_id"] == "S070-02"
+        assert call_args[1]["reason"] == "Weather"
+        assert result == "exit_workflow"
+
+    @patch("builtins.print")
+    def test_show_special_sessions_empty(self, mock_print):
+        """Test _show_special_sessions with no special sessions."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        coach.reconciliation = {
+            "rest_days": [],
+            "cancelled": []
+        }
+
+        coach._show_special_sessions()
+
+        # Should print warning about no special sessions
+        call_args_str = str(mock_print.call_args_list)
+        assert "Aucune session spéciale" in call_args_str
+
+    def test_show_special_sessions_no_reconciliation(self):
+        """Test _show_special_sessions returns early without reconciliation."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        coach.reconciliation = None
+
+        result = coach._show_special_sessions()
+
+        # Should return None early
+        assert result is None
+
+    @patch("builtins.print")
+    def test_handle_rest_cancellations_no_reconciliation(self, mock_print):
+        """Test _handle_rest_cancellations with no reconciliation."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        coach.reconciliation = None
+
+        with patch.object(coach, 'wait_user'):
+            result = coach._handle_rest_cancellations()
+
+        assert result == "exit"
+
+    @patch("builtins.print")
+    def test_handle_rest_cancellations_returns_exit(self, mock_print):
+        """Test _handle_rest_cancellations returns exit after processing."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        coach.reconciliation = {"rest_days": [], "cancelled": []}
+
+        with patch.object(coach, '_show_special_sessions', return_value="done"):
+            result = coach._handle_rest_cancellations()
+
+        assert result == "exit"
+
+    @patch("builtins.print")
+    def test_handle_rest_cancellations_returns_continue(self, mock_print):
+        """Test _handle_rest_cancellations returns continue for AI enrichment."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        coach.reconciliation = {"rest_days": [], "cancelled": []}
+
+        with patch.object(coach, '_show_special_sessions', return_value="continue_workflow"):
+            result = coach._handle_rest_cancellations()
+
+        assert result == "continue"
+
+    @patch("builtins.print")
+    def test_handle_skipped_sessions_empty(self, mock_print):
+        """Test _handle_skipped_sessions with empty list."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+
+        with patch.object(coach, 'wait_user'):
+            result = coach._handle_skipped_sessions([])
+
+        assert result == "exit"
+
+    @patch("builtins.print")
+    def test_handle_skipped_sessions_single(self, mock_print):
+        """Test _handle_skipped_sessions with single session."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+
+        skipped = [
+            {"planned_name": "S070-01 - Endurance", "planned_date": "2026-01-05"}
+        ]
+
+        with patch.object(coach, '_generate_skipped_markdown', return_value="# Skipped"):
+            with patch.object(coach, '_preview_markdowns'):
+                with patch.object(coach, '_insert_to_history'):
+                    with patch("builtins.input", side_effect=["fatigue", "2", "o"]):  # reason + menu + confirm
+                        result = coach._handle_skipped_sessions(skipped)
+
+        assert result == "exit"
+
+    @patch("builtins.print")
+    def test_handle_skipped_sessions_multiple(self, mock_print):
+        """Test _handle_skipped_sessions with multiple sessions."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+
+        skipped = [
+            {"planned_name": "S070-01 - Endurance", "planned_date": "2026-01-05"},
+            {"planned_name": "S070-02 - Intervals", "planned_date": "2026-01-06"}
+        ]
+
+        with patch.object(coach, '_generate_skipped_markdown', return_value="# Skipped"):
+            with patch.object(coach, '_preview_markdowns'):
+                with patch.object(coach, '_insert_to_history'):
+                    with patch("builtins.input", side_effect=["météo", "emploi du temps", "2", "o"]):  # 2 reasons + menu + confirm
+                        result = coach._handle_skipped_sessions(skipped)
+
+        assert result == "exit"
+
+    @patch("builtins.print")
+    def test_handle_skipped_sessions_default_reason(self, mock_print):
+        """Test _handle_skipped_sessions uses default reason when empty."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+
+        skipped = [{"planned_name": "S070-01", "planned_date": "2026-01-05"}]
+
+        markdown_calls = []
+
+        def capture_markdown_call(session, reason):
+            markdown_calls.append(reason)
+            return "# Skipped"
+
+        with patch.object(coach, '_generate_skipped_markdown', side_effect=capture_markdown_call):
+            with patch.object(coach, '_preview_markdowns'):
+                with patch.object(coach, '_insert_to_history'):
+                    with patch("builtins.input", side_effect=["", "2", "o"]):  # empty reason + menu + confirm
+                        result = coach._handle_skipped_sessions(skipped)
+
+        # Should use "Non spécifié" as default
+        assert "Non spécifié" in markdown_calls
+        assert result == "exit"
+
+    @patch("builtins.print")
+    def test_handle_batch_all_in_development(self, mock_print):
+        """Test _handle_batch_all shows development message."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+
+        with patch.object(coach, 'wait_user'):
+            result = coach._handle_batch_all()
+
+        assert result == "exit"
+        # Should mention it's in development
+        call_args_str = str(mock_print.call_args_list)
+        assert "développement" in call_args_str.lower()
+
+
+class TestIntervalsAPI:
+    """Test Intervals.icu API integration methods."""
+
+    @patch("cyclisme_training_logs.api.intervals_client.IntervalsClient")
+    def test_get_workout_id_intervals_success(self, mock_client_class):
+        """Test _get_workout_id_intervals finds workout ID."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+
+        # Mock API response
+        mock_client = Mock()
+        mock_client.get_events.return_value = [
+            {"id": "12345", "category": "WORKOUT", "date": "2026-01-05"},
+            {"id": "67890", "category": "NOTE", "date": "2026-01-05"}
+        ]
+        mock_client_class.return_value = mock_client
+
+        with patch.object(coach, 'load_credentials', return_value=("athlete123", "key456")):
+            workout_id = coach._get_workout_id_intervals("2026-01-05")
+
+        assert workout_id == "12345"
+        mock_client.get_events.assert_called_once_with(oldest="2026-01-05", newest="2026-01-05")
+
+    @patch("cyclisme_training_logs.api.intervals_client.IntervalsClient")
+    def test_get_workout_id_intervals_not_found(self, mock_client_class):
+        """Test _get_workout_id_intervals when no workout exists."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+
+        mock_client = Mock()
+        mock_client.get_events.return_value = [
+            {"id": "67890", "category": "NOTE", "date": "2026-01-05"}
+        ]
+        mock_client_class.return_value = mock_client
+
+        with patch.object(coach, 'load_credentials', return_value=("athlete123", "key456")):
+            workout_id = coach._get_workout_id_intervals("2026-01-05")
+
+        assert workout_id is None
+
+    @patch("cyclisme_training_logs.api.intervals_client.IntervalsClient")
+    @patch("builtins.print")
+    def test_get_workout_id_intervals_no_credentials(self, mock_print, mock_client_class):
+        """Test _get_workout_id_intervals with missing credentials."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+
+        with patch.object(coach, 'load_credentials', return_value=(None, None)):
+            workout_id = coach._get_workout_id_intervals("2026-01-05")
+
+        assert workout_id is None
+
+    @patch("cyclisme_training_logs.api.intervals_client.IntervalsClient")
+    def test_delete_workout_intervals_success(self, mock_client_class):
+        """Test _delete_workout_intervals succeeds."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+
+        mock_client = Mock()
+        mock_response = Mock()
+        mock_response.raise_for_status = Mock()
+        mock_client.session.delete.return_value = mock_response
+        mock_client.BASE_URL = "https://intervals.icu/api/v1"
+        mock_client_class.return_value = mock_client
+
+        with patch.object(coach, 'load_credentials', return_value=("athlete123", "key456")):
+            result = coach._delete_workout_intervals("workout789")
+
+        assert result is True
+        mock_client.session.delete.assert_called_once()
+
+    @patch("cyclisme_training_logs.api.intervals_client.IntervalsClient")
+    @patch("builtins.print")
+    def test_delete_workout_intervals_error(self, mock_print, mock_client_class):
+        """Test _delete_workout_intervals handles errors."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+
+        mock_client = Mock()
+        mock_client.session.delete.side_effect = Exception("API error")
+        mock_client.BASE_URL = "https://intervals.icu/api/v1"
+        mock_client_class.return_value = mock_client
+
+        with patch.object(coach, 'load_credentials', return_value=("athlete123", "key456")):
+            result = coach._delete_workout_intervals("workout789")
+
+        assert result is False
+
+    @patch("cyclisme_training_logs.api.intervals_client.IntervalsClient")
+    def test_upload_workout_intervals_success(self, mock_client_class):
+        """Test _upload_workout_intervals succeeds."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+
+        mock_client = Mock()
+        mock_client.create_event.return_value = {"id": "new_workout_123"}
+        mock_client_class.return_value = mock_client
+
+        with patch.object(coach, 'load_credentials', return_value=("athlete123", "key456")):
+            result = coach._upload_workout_intervals(
+                date="2026-01-05",
+                code="S070-03-REC-V001",
+                structure="2x20 @ Z3"
+            )
+
+        assert result is True
+        mock_client.create_event.assert_called_once()
+        call_args = mock_client.create_event.call_args[0][0]
+        assert call_args["category"] == "WORKOUT"
+        assert call_args["name"] == "S070-03-REC-V001"
+        assert call_args["description"] == "2x20 @ Z3"
+
+    @patch("cyclisme_training_logs.api.intervals_client.IntervalsClient")
+    @patch("builtins.print")
+    def test_upload_workout_intervals_invalid_format(self, mock_print, mock_client_class):
+        """Test _upload_workout_intervals with API error."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+
+        mock_client = Mock()
+        mock_client.create_event.side_effect = Exception("Invalid format")
+        mock_client_class.return_value = mock_client
+
+        with patch.object(coach, 'load_credentials', return_value=("athlete123", "key456")):
+            result = coach._upload_workout_intervals(
+                date="2026-01-05",
+                code="S070-03",
+                structure="invalid"
+            )
+
+        assert result is False
+
+    @patch("cyclisme_training_logs.workflow_coach.get_data_config")
+    @patch("requests.post")
+    def test_post_analysis_to_intervals_success(self, mock_post, mock_config):
+        """Test _post_analysis_to_intervals posts successfully."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        coach.activity_id = "act123"
+        coach.analysis_result = "Great workout! Power was consistent throughout the intervals. Good recovery between sets."
+
+        mock_config_obj = Mock()
+        mock_config_obj.get.side_effect = lambda key: {
+            "athlete_id": "athlete123",
+            "api_key": "key456"
+        }.get(key)
+        mock_config.return_value = mock_config_obj
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_post.return_value = mock_response
+
+        result = coach._post_analysis_to_intervals()
+
+        assert result is True
+        assert mock_post.called
+        call_args = mock_post.call_args
+        assert "act123" in call_args[0][0]  # URL contains activity_id
+        assert "Great workout" in call_args[1]["json"]["note"]
+
+    @patch("cyclisme_training_logs.workflow_coach.get_data_config")
+    @patch("requests.post")
+    def test_post_analysis_to_intervals_no_activity_id(self, mock_post, mock_config):
+        """Test _post_analysis_to_intervals without activity_id."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        coach.activity_id = None
+
+        result = coach._post_analysis_to_intervals()
+
+        assert result is False
+        assert not mock_post.called
+
+    @patch("cyclisme_training_logs.workflow_coach.get_data_config")
+    @patch("requests.post")
+    def test_post_analysis_to_intervals_error(self, mock_post, mock_config):
+        """Test _post_analysis_to_intervals handles API errors."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        coach.activity_id = "act123"
+        coach.analysis_result = "Analysis text here with enough content to pass the length check requirement of 50 characters."
+
+        mock_config_obj = Mock()
+        mock_config_obj.get.side_effect = lambda key: {
+            "athlete_id": "athlete123",
+            "api_key": "key456"
+        }.get(key)
+        mock_config.return_value = mock_config_obj
+
+        mock_response = Mock()
+        mock_response.status_code = 500
+        mock_response.text = "Server error"
+        mock_post.return_value = mock_response
+
+        result = coach._post_analysis_to_intervals()
+
+        assert result is False
