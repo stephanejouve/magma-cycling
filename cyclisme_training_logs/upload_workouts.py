@@ -246,7 +246,6 @@ class WorkoutUploader:
 
             # CRITICAL: Check for missing dashes before instructions
             # Parser Intervals.icu requires dashes to identify steps
-            sections = ["warmup", "main set", "cooldown"]
             lines = content.split("\n")
 
             for i, line in enumerate(lines):
