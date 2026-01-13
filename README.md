@@ -202,7 +202,7 @@ poetry run --help
 ### Run Tests
 
 ```bash
-# All tests (497 tests including integration tests)
+# All tests (598 tests including integration tests)
 poetry run pytest tests/ -v
 
 # Unit tests only (326 tests - what CI runs)
@@ -211,13 +211,29 @@ poetry run pytest tests/config/ tests/intelligence/ tests/planning/ tests/test_a
 # Specific module
 poetry run pytest tests/intelligence/ -v
 poetry run pytest tests/planning/ -v
+poetry run pytest tests/api/ -v  # Di2 tests (6 tests)
+poetry run pytest tests/workflows/ -v  # Upload tests (32 tests)
 
 # With coverage
 poetry run pytest tests/ -v --cov=cyclisme_training_logs --cov-report=html
 # Open htmlcov/index.html in browser
+
+# Coverage report
+poetry run pytest tests/ --cov=cyclisme_training_logs --cov-report=term
 ```
 
-**Note**: CI/CD runs unit tests only (326 tests). Full test suite (497 tests) includes integration tests requiring local data files and API access.
+**Test Suite v2.3.1:**
+- **598 tests total** (596 passed, 1 failed legacy, 1 skipped)
+- **54 new tests** (v2.3.1): Di2 analysis + upload_workouts
+  - API Di2: 6 tests (intervals_client gear streams)
+  - Analyzers: 9 tests (gear metrics extraction)
+  - Workflows: 32 tests (validator + uploader)
+  - Integration: 8 tests (Di2 workflow end-to-end)
+- **Coverage: 29%** overall (improvement from 28%)
+  - Core modules: 90-100% (utils, intelligence, planning)
+  - New modules: 53-72% (upload_workouts, intervals_client)
+
+**Note**: CI/CD runs unit tests only (326 tests). Full test suite includes integration tests requiring local data files and API access.
 
 ### Code Quality
 
@@ -275,9 +291,10 @@ cyclisme-training-logs/
 
 ## 📊 Version
 
-**Current:** v2.1.1 (2026-01-02)
+**Current:** v2.3.1 (2026-01-10)
 
 **Recent Releases:**
+- **v2.3.1** - Di2 Analysis + Tests (54 tests, coverage +1%, upload_workouts +53%)
 - **v2.2.0** - Sprint R4++ (Training Intelligence + Backfill + PID) - 120/100 MOA
 - **v2.1.1** - Intervals.icu Sync Fix (session cancellation → NOTE)
 - **v2.1.0** - Sprint R4 (Training Intelligence & Feedback Loop)
