@@ -743,7 +743,7 @@ class TestAnalysisPreparation:
             Mock(stdout="- **Nom** : Test Activity\nPrompt content here", returncode=0),  # pbpaste
         ]
 
-        with patch.object(coach, 'wait_user'):
+        with patch.object(coach, "wait_user"):
             coach.step_3_prepare_analysis()
 
         assert coach.activity_name == "Test Activity"
@@ -762,7 +762,7 @@ class TestAnalysisPreparation:
             Mock(stdout="- **Nom** : Activity\nPrompt", returncode=0),
         ]
 
-        with patch.object(coach, 'wait_user'):
+        with patch.object(coach, "wait_user"):
             coach.step_3_prepare_analysis()
 
         # Verify activity_id was passed to prepare_analysis
@@ -859,9 +859,7 @@ class TestAnalysisPreparation:
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
 
         choice = coach._ask_fallback_consent(
-            failed_provider="openai",
-            next_provider="anthropic",
-            error_msg="API timeout"
+            failed_provider="openai", next_provider="anthropic", error_msg="API timeout"
         )
 
         assert choice == "F"
@@ -873,9 +871,7 @@ class TestAnalysisPreparation:
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
 
         choice = coach._ask_fallback_consent(
-            failed_provider="openai",
-            next_provider="anthropic",
-            error_msg="API error"
+            failed_provider="openai", next_provider="anthropic", error_msg="API error"
         )
 
         assert choice == "C"
@@ -886,9 +882,7 @@ class TestAnalysisPreparation:
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
 
         choice = coach._ask_fallback_consent(
-            failed_provider="openai",
-            next_provider="anthropic",
-            error_msg="API error"
+            failed_provider="openai", next_provider="anthropic", error_msg="API error"
         )
 
         assert choice == "Q"
@@ -904,16 +898,14 @@ class TestSpecialSessions:
         """Test _show_special_sessions generates rest day markdowns."""
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
         coach.reconciliation = {
-            "rest_days": [
-                {"session_id": "S070-01", "name": "Repos", "date": "2026-01-05"}
-            ],
-            "cancelled": []
+            "rest_days": [{"session_id": "S070-01", "name": "Repos", "date": "2026-01-05"}],
+            "cancelled": [],
         }
 
         mock_generate.return_value = "# Repos markdown"
 
-        with patch.object(coach, '_collect_rest_feedback', return_value={"feedback": "Good rest"}):
-            with patch.object(coach, '_preview_markdowns'):
+        with patch.object(coach, "_collect_rest_feedback", return_value={"feedback": "Good rest"}):
+            with patch.object(coach, "_preview_markdowns"):
                 result = coach._show_special_sessions()
 
         assert mock_generate.called
@@ -930,13 +922,18 @@ class TestSpecialSessions:
         coach.reconciliation = {
             "rest_days": [],
             "cancelled": [
-                {"session_id": "S070-02", "name": "Cancelled", "date": "2026-01-06", "cancellation_reason": "Weather"}
-            ]
+                {
+                    "session_id": "S070-02",
+                    "name": "Cancelled",
+                    "date": "2026-01-06",
+                    "cancellation_reason": "Weather",
+                }
+            ],
         }
 
         mock_generate.return_value = "# Cancelled markdown"
 
-        with patch.object(coach, '_preview_markdowns'):
+        with patch.object(coach, "_preview_markdowns"):
             result = coach._show_special_sessions()
 
         assert mock_generate.called
@@ -949,10 +946,7 @@ class TestSpecialSessions:
     def test_show_special_sessions_empty(self, mock_print):
         """Test _show_special_sessions with no special sessions."""
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
-        coach.reconciliation = {
-            "rest_days": [],
-            "cancelled": []
-        }
+        coach.reconciliation = {"rest_days": [], "cancelled": []}
 
         coach._show_special_sessions()
 
@@ -976,7 +970,7 @@ class TestSpecialSessions:
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
         coach.reconciliation = None
 
-        with patch.object(coach, 'wait_user'):
+        with patch.object(coach, "wait_user"):
             result = coach._handle_rest_cancellations()
 
         assert result == "exit"
@@ -987,7 +981,7 @@ class TestSpecialSessions:
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
         coach.reconciliation = {"rest_days": [], "cancelled": []}
 
-        with patch.object(coach, '_show_special_sessions', return_value="done"):
+        with patch.object(coach, "_show_special_sessions", return_value="done"):
             result = coach._handle_rest_cancellations()
 
         assert result == "exit"
@@ -998,7 +992,7 @@ class TestSpecialSessions:
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
         coach.reconciliation = {"rest_days": [], "cancelled": []}
 
-        with patch.object(coach, '_show_special_sessions', return_value="continue_workflow"):
+        with patch.object(coach, "_show_special_sessions", return_value="continue_workflow"):
             result = coach._handle_rest_cancellations()
 
         assert result == "continue"
@@ -1008,7 +1002,7 @@ class TestSpecialSessions:
         """Test _handle_skipped_sessions with empty list."""
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
 
-        with patch.object(coach, 'wait_user'):
+        with patch.object(coach, "wait_user"):
             result = coach._handle_skipped_sessions([])
 
         assert result == "exit"
@@ -1018,14 +1012,14 @@ class TestSpecialSessions:
         """Test _handle_skipped_sessions with single session."""
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
 
-        skipped = [
-            {"planned_name": "S070-01 - Endurance", "planned_date": "2026-01-05"}
-        ]
+        skipped = [{"planned_name": "S070-01 - Endurance", "planned_date": "2026-01-05"}]
 
-        with patch.object(coach, '_generate_skipped_markdown', return_value="# Skipped"):
-            with patch.object(coach, '_preview_markdowns'):
-                with patch.object(coach, '_insert_to_history'):
-                    with patch("builtins.input", side_effect=["fatigue", "2", "o"]):  # reason + menu + confirm
+        with patch.object(coach, "_generate_skipped_markdown", return_value="# Skipped"):
+            with patch.object(coach, "_preview_markdowns"):
+                with patch.object(coach, "_insert_to_history"):
+                    with patch(
+                        "builtins.input", side_effect=["fatigue", "2", "o"]
+                    ):  # reason + menu + confirm
                         result = coach._handle_skipped_sessions(skipped)
 
         assert result == "exit"
@@ -1037,13 +1031,15 @@ class TestSpecialSessions:
 
         skipped = [
             {"planned_name": "S070-01 - Endurance", "planned_date": "2026-01-05"},
-            {"planned_name": "S070-02 - Intervals", "planned_date": "2026-01-06"}
+            {"planned_name": "S070-02 - Intervals", "planned_date": "2026-01-06"},
         ]
 
-        with patch.object(coach, '_generate_skipped_markdown', return_value="# Skipped"):
-            with patch.object(coach, '_preview_markdowns'):
-                with patch.object(coach, '_insert_to_history'):
-                    with patch("builtins.input", side_effect=["météo", "emploi du temps", "2", "o"]):  # 2 reasons + menu + confirm
+        with patch.object(coach, "_generate_skipped_markdown", return_value="# Skipped"):
+            with patch.object(coach, "_preview_markdowns"):
+                with patch.object(coach, "_insert_to_history"):
+                    with patch(
+                        "builtins.input", side_effect=["météo", "emploi du temps", "2", "o"]
+                    ):  # 2 reasons + menu + confirm
                         result = coach._handle_skipped_sessions(skipped)
 
         assert result == "exit"
@@ -1061,10 +1057,12 @@ class TestSpecialSessions:
             markdown_calls.append(reason)
             return "# Skipped"
 
-        with patch.object(coach, '_generate_skipped_markdown', side_effect=capture_markdown_call):
-            with patch.object(coach, '_preview_markdowns'):
-                with patch.object(coach, '_insert_to_history'):
-                    with patch("builtins.input", side_effect=["", "2", "o"]):  # empty reason + menu + confirm
+        with patch.object(coach, "_generate_skipped_markdown", side_effect=capture_markdown_call):
+            with patch.object(coach, "_preview_markdowns"):
+                with patch.object(coach, "_insert_to_history"):
+                    with patch(
+                        "builtins.input", side_effect=["", "2", "o"]
+                    ):  # empty reason + menu + confirm
                         result = coach._handle_skipped_sessions(skipped)
 
         # Should use "Non spécifié" as default
@@ -1076,7 +1074,7 @@ class TestSpecialSessions:
         """Test _handle_batch_all shows development message."""
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
 
-        with patch.object(coach, 'wait_user'):
+        with patch.object(coach, "wait_user"):
             result = coach._handle_batch_all()
 
         assert result == "exit"
@@ -1097,11 +1095,11 @@ class TestIntervalsAPI:
         mock_client = Mock()
         mock_client.get_events.return_value = [
             {"id": "12345", "category": "WORKOUT", "date": "2026-01-05"},
-            {"id": "67890", "category": "NOTE", "date": "2026-01-05"}
+            {"id": "67890", "category": "NOTE", "date": "2026-01-05"},
         ]
         mock_client_class.return_value = mock_client
 
-        with patch.object(coach, 'load_credentials', return_value=("athlete123", "key456")):
+        with patch.object(coach, "load_credentials", return_value=("athlete123", "key456")):
             workout_id = coach._get_workout_id_intervals("2026-01-05")
 
         assert workout_id == "12345"
@@ -1118,7 +1116,7 @@ class TestIntervalsAPI:
         ]
         mock_client_class.return_value = mock_client
 
-        with patch.object(coach, 'load_credentials', return_value=("athlete123", "key456")):
+        with patch.object(coach, "load_credentials", return_value=("athlete123", "key456")):
             workout_id = coach._get_workout_id_intervals("2026-01-05")
 
         assert workout_id is None
@@ -1129,7 +1127,7 @@ class TestIntervalsAPI:
         """Test _get_workout_id_intervals with missing credentials."""
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
 
-        with patch.object(coach, 'load_credentials', return_value=(None, None)):
+        with patch.object(coach, "load_credentials", return_value=(None, None)):
             workout_id = coach._get_workout_id_intervals("2026-01-05")
 
         assert workout_id is None
@@ -1146,7 +1144,7 @@ class TestIntervalsAPI:
         mock_client.BASE_URL = "https://intervals.icu/api/v1"
         mock_client_class.return_value = mock_client
 
-        with patch.object(coach, 'load_credentials', return_value=("athlete123", "key456")):
+        with patch.object(coach, "load_credentials", return_value=("athlete123", "key456")):
             result = coach._delete_workout_intervals("workout789")
 
         assert result is True
@@ -1163,7 +1161,7 @@ class TestIntervalsAPI:
         mock_client.BASE_URL = "https://intervals.icu/api/v1"
         mock_client_class.return_value = mock_client
 
-        with patch.object(coach, 'load_credentials', return_value=("athlete123", "key456")):
+        with patch.object(coach, "load_credentials", return_value=("athlete123", "key456")):
             result = coach._delete_workout_intervals("workout789")
 
         assert result is False
@@ -1177,11 +1175,9 @@ class TestIntervalsAPI:
         mock_client.create_event.return_value = {"id": "new_workout_123"}
         mock_client_class.return_value = mock_client
 
-        with patch.object(coach, 'load_credentials', return_value=("athlete123", "key456")):
+        with patch.object(coach, "load_credentials", return_value=("athlete123", "key456")):
             result = coach._upload_workout_intervals(
-                date="2026-01-05",
-                code="S070-03-REC-V001",
-                structure="2x20 @ Z3"
+                date="2026-01-05", code="S070-03-REC-V001", structure="2x20 @ Z3"
             )
 
         assert result is True
@@ -1201,11 +1197,9 @@ class TestIntervalsAPI:
         mock_client.create_event.side_effect = Exception("Invalid format")
         mock_client_class.return_value = mock_client
 
-        with patch.object(coach, 'load_credentials', return_value=("athlete123", "key456")):
+        with patch.object(coach, "load_credentials", return_value=("athlete123", "key456")):
             result = coach._upload_workout_intervals(
-                date="2026-01-05",
-                code="S070-03",
-                structure="invalid"
+                date="2026-01-05", code="S070-03", structure="invalid"
             )
 
         assert result is False
@@ -1221,7 +1215,7 @@ class TestIntervalsAPI:
         mock_config_obj = Mock()
         mock_config_obj.get.side_effect = lambda key: {
             "athlete_id": "athlete123",
-            "api_key": "key456"
+            "api_key": "key456",
         }.get(key)
         mock_config.return_value = mock_config_obj
 
@@ -1260,7 +1254,7 @@ class TestIntervalsAPI:
         mock_config_obj = Mock()
         mock_config_obj.get.side_effect = lambda key: {
             "athlete_id": "athlete123",
-            "api_key": "key456"
+            "api_key": "key456",
         }.get(key)
         mock_config.return_value = mock_config_obj
 

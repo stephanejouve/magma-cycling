@@ -13,11 +13,7 @@ Test Categories:
 - Analysis Validation (2 tests)
 """
 
-import sys
-from pathlib import Path
 from unittest.mock import Mock, patch
-
-import pytest
 
 from cyclisme_training_logs.workflow_coach import WorkflowCoach
 
@@ -95,7 +91,9 @@ class TestAIAnalysisExecution:
 
         # Mock AI analyzer
         mock_analyzer = Mock()
-        mock_analyzer.analyze_session.return_value = "AI analysis result here with complete markdown content for the session analysis."
+        mock_analyzer.analyze_session.return_value = (
+            "AI analysis result here with complete markdown content for the session analysis."
+        )
         coach.ai_analyzer = mock_analyzer
 
         # Mock subprocess (prepare_analysis + pbpaste)
@@ -104,12 +102,15 @@ class TestAIAnalysisExecution:
             Mock(stdout="- **Nom** : Test Activity\nPrompt content", returncode=0),  # pbpaste
         ]
 
-        with patch.object(coach, 'wait_user'):
+        with patch.object(coach, "wait_user"):
             coach.step_3_prepare_analysis()
 
         # Should call AI analyzer
         assert mock_analyzer.analyze_session.called
-        assert coach.analysis_result == "AI analysis result here with complete markdown content for the session analysis."
+        assert (
+            coach.analysis_result
+            == "AI analysis result here with complete markdown content for the session analysis."
+        )
 
     @patch("subprocess.run")
     @patch("builtins.print")
@@ -137,7 +138,7 @@ class TestAIAnalysisExecution:
         ]
 
         # Mock fallback consent
-        with patch.object(coach, '_ask_fallback_consent', return_value='Q'):
+        with patch.object(coach, "_ask_fallback_consent", return_value="Q"):
             with patch("sys.exit") as mock_exit:
                 coach.step_3_prepare_analysis()
 
@@ -156,11 +157,11 @@ class TestAIAnalysisExecution:
             Mock(stdout="- **Nom** : Test\nPrompt", returncode=0),  # pbpaste
         ]
 
-        with patch.object(coach, 'wait_user'):
+        with patch.object(coach, "wait_user"):
             coach.step_3_prepare_analysis()
 
         # Should NOT call AI analyzer (manual mode)
-        assert not hasattr(coach, 'analysis_result') or coach.analysis_result is None
+        assert not hasattr(coach, "analysis_result") or coach.analysis_result is None
 
 
 class TestAIResponseDisplay:
@@ -172,9 +173,11 @@ class TestAIResponseDisplay:
         """Test step_4b_display_analysis displays API result."""
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
         coach.activity_name = "Morning Tempo"
-        coach.analysis_result = "### Morning Tempo\n\n**Execution:** Great session\n\n**Metrics:** HR avg 145"
+        coach.analysis_result = (
+            "### Morning Tempo\n\n**Execution:** Great session\n\n**Metrics:** HR avg 145"
+        )
 
-        with patch.object(coach, 'wait_user'):
+        with patch.object(coach, "wait_user"):
             coach.step_4b_display_analysis()
 
         # Should print analysis
@@ -192,15 +195,17 @@ class TestAIResponseDisplay:
         # No analysis_result set (clipboard mode)
         mock_subprocess.return_value = Mock(
             stdout="### Evening Ride\n\n**Analysis:** Good recovery ride with proper zones maintained throughout.",
-            returncode=0
+            returncode=0,
         )
 
-        with patch.object(coach, 'wait_user'):
+        with patch.object(coach, "wait_user"):
             coach.step_4b_display_analysis()
 
         # Should read from clipboard
         assert mock_subprocess.called
-        mock_subprocess.assert_called_once_with(["pbpaste"], capture_output=True, text=True, check=True)
+        mock_subprocess.assert_called_once_with(
+            ["pbpaste"], capture_output=True, text=True, check=True
+        )
 
 
 class TestProviderFallback:
@@ -234,13 +239,17 @@ class TestProviderFallback:
         ]
 
         # Mock fallback consent: choose fallback
-        with patch.object(coach, '_ask_fallback_consent', return_value='F'):
-            with patch("cyclisme_training_logs.workflow_coach.AIProviderFactory.create") as mock_factory:
+        with patch.object(coach, "_ask_fallback_consent", return_value="F"):
+            with patch(
+                "cyclisme_training_logs.workflow_coach.AIProviderFactory.create"
+            ) as mock_factory:
                 mock_new_analyzer = Mock()
-                mock_new_analyzer.analyze_session.return_value = "Fallback analysis result with sufficient content length"
+                mock_new_analyzer.analyze_session.return_value = (
+                    "Fallback analysis result with sufficient content length"
+                )
                 mock_factory.return_value = mock_new_analyzer
 
-                with patch.object(coach, 'wait_user'):
+                with patch.object(coach, "wait_user"):
                     coach.step_3_prepare_analysis()
 
         # Should switch to mistral_api
@@ -275,12 +284,14 @@ class TestProviderFallback:
         ]
 
         # User chooses clipboard mode
-        with patch.object(coach, '_ask_fallback_consent', return_value='C'):
-            with patch("cyclisme_training_logs.workflow_coach.AIProviderFactory.create") as mock_factory:
+        with patch.object(coach, "_ask_fallback_consent", return_value="C"):
+            with patch(
+                "cyclisme_training_logs.workflow_coach.AIProviderFactory.create"
+            ) as mock_factory:
                 mock_clipboard = Mock()
                 mock_factory.return_value = mock_clipboard
 
-                with patch.object(coach, 'wait_user'):
+                with patch.object(coach, "wait_user"):
                     coach.step_3_prepare_analysis()
 
         # Should switch to clipboard
@@ -328,7 +339,7 @@ class TestAnalysisValidation:
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
         coach.activity_name = "Test Activity"
 
-        with patch.object(coach, 'wait_user'):
+        with patch.object(coach, "wait_user"):
             coach.step_5_validate_analysis()
 
         # Should continue (not exit)
@@ -355,7 +366,7 @@ class TestAnalysisValidation:
         coach = WorkflowCoach(skip_feedback=True, skip_git=True, auto_mode=True)
         coach.activity_name = "Test Activity"
 
-        with patch.object(coach, 'wait_user'):
+        with patch.object(coach, "wait_user"):
             coach.step_5_validate_analysis()
 
         # Should auto-validate (no input prompt)
@@ -374,7 +385,7 @@ class TestPastePromptStep:
         coach.current_provider = "clipboard"
         coach.activity_name = "Morning Session"
 
-        with patch.object(coach, 'wait_user'):
+        with patch.object(coach, "wait_user"):
             coach.step_4_paste_prompt()
 
         # Should print instructions
@@ -392,10 +403,9 @@ class TestPastePromptStep:
         coach.current_provider = "mistral_api"
         coach.activity_name = "Evening Ride"
 
-        with patch.object(coach, 'wait_user'):
+        with patch.object(coach, "wait_user"):
             coach.step_4_paste_prompt()
 
         # Should mention provider
-        call_args_str = str(mock_print.call_args_list)
         # Either the provider key or display name should appear
         assert mock_print.called

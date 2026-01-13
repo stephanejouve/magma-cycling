@@ -4,8 +4,10 @@ Tests cover complete Di2 extraction workflow from
 Intervals.icu API through weekly analysis reporting.
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
+
 from cyclisme_training_logs.analyzers.weekly_aggregator import WeeklyAggregator
 from cyclisme_training_logs.api.intervals_client import IntervalsClient
 
@@ -23,8 +25,8 @@ class TestDi2WorkflowIntegration:
     def aggregator(self, mock_api):
         """Create WeeklyAggregator with mocked API."""
         from datetime import date
-        from unittest.mock import patch
-        with patch('cyclisme_training_logs.analyzers.weekly_aggregator.get_intervals_config'):
+
+        with patch("cyclisme_training_logs.analyzers.weekly_aggregator.get_intervals_config"):
             aggregator = WeeklyAggregator(week="S075", start_date=date(2026, 1, 5))
             aggregator.api = mock_api
             return aggregator
@@ -61,8 +63,8 @@ class TestDi2WorkflowIntegration:
             {"type": "RearGear", "data": rear_gear},
             {
                 "type": "GearRatio",
-                "data": [f / r for f, r in zip(front_gear, rear_gear)]
-            }
+                "data": [f / r for f, r in zip(front_gear, rear_gear, strict=False)],
+            },
         ]
 
     def test_di2_extraction_outdoor_activity_complete(
@@ -127,8 +129,8 @@ class TestDi2WorkflowIntegration:
                     "front_shifts": 19,
                     "rear_shifts": 815,
                     "avg_gear_ratio": 2.15,
-                    "gear_ratio_distribution": {2.38: 200, 2.08: 150, 1.85: 100}
-                }
+                    "gear_ratio_distribution": {2.38: 200, 2.08: 150, 1.85: 100},
+                },
             }
         ]
 
@@ -141,8 +143,7 @@ class TestDi2WorkflowIntegration:
 
         # Check if any learning mentions shifts/gear
         di2_learning_found = any(
-            "shifts" in learning.lower() or "vitesse" in learning.lower()
-            for learning in learnings
+            "shifts" in learning.lower() or "vitesse" in learning.lower() for learning in learnings
         )
         assert di2_learning_found, "Di2 patterns should be in training learnings"
 
@@ -150,8 +151,8 @@ class TestDi2WorkflowIntegration:
         """Test workflow gracefully handles missing API."""
         # Given: Aggregator without API
         from datetime import date
-        from unittest.mock import patch
-        with patch('cyclisme_training_logs.analyzers.weekly_aggregator.get_intervals_config'):
+
+        with patch("cyclisme_training_logs.analyzers.weekly_aggregator.get_intervals_config"):
             aggregator_no_api = WeeklyAggregator(week="S075", start_date=date(2026, 1, 5))
             aggregator_no_api.api = None  # No API
 
@@ -191,9 +192,9 @@ class TestDi2WorkflowIntegration:
                     "gear_ratio_distribution": {
                         1.85: 500,  # 50T-27T (cross-chain)
                         1.67: 300,  # 50T-30T (cross-chain)
-                        2.38: 100   # 50T-21T (OK)
-                    }
-                }
+                        2.38: 100,  # 50T-21T (OK)
+                    },
+                },
             }
         ]
 
@@ -216,7 +217,7 @@ class TestDi2WorkflowIntegration:
                 "name": "S056-01-TERRAIN",
                 "trainer": False,
                 "duration": 7200,
-                "gear_metrics": {"shifts": 800, "front_shifts": 20, "rear_shifts": 780}
+                "gear_metrics": {"shifts": 800, "front_shifts": 20, "rear_shifts": 780},
             },
             {
                 "id": "i107424853",
@@ -224,16 +225,17 @@ class TestDi2WorkflowIntegration:
                 "name": "S056-03-TERRAIN",
                 "trainer": False,
                 "duration": 5400,
-                "gear_metrics": {"shifts": 600, "front_shifts": 15, "rear_shifts": 585}
-            }
+                "gear_metrics": {"shifts": 600, "front_shifts": 15, "rear_shifts": 585},
+            },
         ]
 
         # When: Extracting learnings
-        learnings = aggregator._extract_training_learnings(workouts_multiple_di2, {})
+        _learnings = aggregator._extract_training_learnings(workouts_multiple_di2, {})
 
         # Then: Aggregates all Di2 data
         outdoor_with_gears = [
-            w for w in workouts_multiple_di2
+            w
+            for w in workouts_multiple_di2
             if w.get("gear_metrics") and w["gear_metrics"].get("shifts")
         ]
         assert len(outdoor_with_gears) == 2

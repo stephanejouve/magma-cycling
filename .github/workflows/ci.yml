@@ -47,7 +47,7 @@ jobs:
 
       - name: Run unit tests
         run: |
-          poetry run pytest tests/config/ tests/intelligence/ tests/planning/ tests/test_activity_tracking.py tests/test_annual_plan.py tests/test_config.py tests/test_data_config.py tests/test_generate_ical.py tests/test_periodic_tss.py tests/test_performance_metrics.py tests/test_session_name_parser.py tests/test_training_intensity_distribution.py tests/test_weekly_aggregator.py tests/test_weekly_volume_tracker.py -v --cov=cyclisme_training_logs --cov-report=xml --cov-report=term
+          poetry run pytest tests/config/ tests/intelligence/ tests/planning/ tests/test_*.py -v --cov=cyclisme_training_logs --cov-report=xml --cov-report=term
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4

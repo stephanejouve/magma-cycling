@@ -1,7 +1,8 @@
 """Tests pour les bugs corrigés dans upload_workouts.py."""
-import pytest
+
 from datetime import datetime
 from unittest.mock import Mock, patch
+
 from cyclisme_training_logs.upload_workouts import WorkoutUploader
 
 
@@ -17,7 +18,7 @@ class TestValidationTiretsManquants:
             "description": """Warmup
 
 12m ramp 50-65% 85rpm
-3m 65% 90rpm"""
+3m 65% 90rpm""",
         }
 
         warnings = uploader.validate_workout_notation(workout)
@@ -39,7 +40,7 @@ class TestValidationTiretsManquants:
 
 Main set
 
-35m 68-70% 88rpm"""
+35m 68-70% 88rpm""",
         }
 
         warnings = uploader.validate_workout_notation(workout)
@@ -65,7 +66,7 @@ Main set
 
 Cooldown
 
-10m ramp 65-50% 85rpm"""
+10m ramp 65-50% 85rpm""",
         }
 
         warnings = uploader.validate_workout_notation(workout)
@@ -92,7 +93,7 @@ Main set
 
 Cooldown
 
-- 10m ramp 65-50% 85rpm"""
+- 10m ramp 65-50% 85rpm""",
         }
 
         warnings = uploader.validate_workout_notation(workout)
@@ -198,7 +199,7 @@ Main set
 
 Cooldown
 
-10m ramp 65-50% 85rpm"""
+10m ramp 65-50% 85rpm""",
         }
 
         warnings = uploader.validate_workout_notation(workout)
