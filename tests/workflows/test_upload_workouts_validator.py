@@ -4,7 +4,6 @@ Tests cover rest day detection pattern and conditional
 warmup/cooldown validation (fix commit cd066a0).
 """
 
-import pytest
 import re
 
 
@@ -36,7 +35,6 @@ class TestRestDayValidatorPattern:
         """Test REPOS with additional text (S076-07-REPOS-COMPLET)."""
         # Given: REPOS with suffix text
         workout_id = "S076-07-REPOS-COMPLET"
-        content = "REPOS COMPLET - Journee de recuperation totale"
 
         # When: Checking pattern
         is_rest_day = re.search(r"(?i)-REPOS($|\s)", workout_id)
@@ -161,7 +159,6 @@ Cooldown
         """Test REPOS-like text in description (false positive check)."""
         # Given: Workout with "REPOS" in middle (not after hyphen)
         workout_id = "S076-03-REC-RecuperationPostRepos"
-        content = "Recuperation post repos day"
 
         # When: Checking pattern (should NOT match)
         is_rest_day = re.search(r"(?i)-REPOS($|\s)", workout_id)

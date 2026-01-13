@@ -29,7 +29,11 @@ from cyclisme_training_logs.config.config_base import (
 )
 
 # Logging configuration (Quick Wins)
-from cyclisme_training_logs.config.logging_config import get_logger, set_log_level, setup_logging
+from cyclisme_training_logs.config.logging_config import (
+    get_logger,
+    set_log_level,
+    setup_logging,
+)
 from cyclisme_training_logs.config.thresholds import TrainingThresholds
 
 __all__ = [

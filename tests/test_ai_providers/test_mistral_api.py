@@ -9,7 +9,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from cyclisme_training_logs.ai_providers.base import AIProvider
-from cyclisme_training_logs.ai_providers.mistral_api import MistralAPIAnalyzer, WorkflowError
+from cyclisme_training_logs.ai_providers.mistral_api import (
+    MistralAPIAnalyzer,
+    WorkflowError,
+)
 
 
 @pytest.fixture

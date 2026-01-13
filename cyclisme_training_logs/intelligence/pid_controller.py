@@ -27,7 +27,9 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from cyclisme_training_logs.intelligence.training_intelligence import TrainingIntelligence
+    from cyclisme_training_logs.intelligence.training_intelligence import (
+        TrainingIntelligence,
+    )
 
 
 @dataclass

@@ -244,7 +244,9 @@ class WeeklyAnalysis:
                 day_wellness = next((w for w in wellness_data if w["id"] == date_str), None)
 
                 if day_wellness:
-                    from cyclisme_training_logs.utils.metrics import extract_wellness_metrics
+                    from cyclisme_training_logs.utils.metrics import (
+                        extract_wellness_metrics,
+                    )
 
                     day_metrics = extract_wellness_metrics(day_wellness)
                     daily_metrics.append(
