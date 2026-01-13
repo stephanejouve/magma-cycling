@@ -4,29 +4,27 @@ Tests couvrent WorkoutUploader classe et fonctions utilitaires
 pour upload workouts vers Intervals.icu.
 """
 
+from datetime import datetime
+from unittest.mock import Mock, mock_open, patch
+
 import pytest
-import json
-from datetime import datetime, timedelta
-from pathlib import Path
-from unittest.mock import Mock, patch, mock_open, MagicMock
-from cyclisme_training_logs.upload_workouts import (
-    calculate_week_start_date,
-    WorkoutUploader
-)
+
+from cyclisme_training_logs.upload_workouts import WorkoutUploader, calculate_week_start_date
 
 
 class TestCalculateWeekStartDate:
     """Tests for calculate_week_start_date() function."""
 
-    @patch('cyclisme_training_logs.config.get_week_config')
+    @patch("cyclisme_training_logs.config.get_week_config")
     def test_calculate_week_start_date_s075(self, mock_config):
         """Test S075 calculates to 2026-01-05 (Monday)."""
         # Given: S075 with reference config
         from datetime import date
+
         mock_week_config = Mock()
         mock_week_config.get_reference_for_week.return_value = (
             date(2024, 8, 5),  # S001 reference
-            74  # S075 = S001 + 74 weeks
+            74,  # S075 = S001 + 74 weeks
         )
         mock_config.return_value = mock_week_config
 
@@ -37,15 +35,16 @@ class TestCalculateWeekStartDate:
         assert result == datetime(2026, 1, 5, 0, 0)
         assert result.weekday() == 0  # Monday
 
-    @patch('cyclisme_training_logs.config.get_week_config')
+    @patch("cyclisme_training_logs.config.get_week_config")
     def test_calculate_week_start_date_s001_reference(self, mock_config):
         """Test S001 returns reference date."""
         # Given: S001 (reference week)
         from datetime import date
+
         mock_week_config = Mock()
         mock_week_config.get_reference_for_week.return_value = (
             date(2024, 8, 5),  # S001 reference
-            0  # S001 itself, 0 offset
+            0,  # S001 itself, 0 offset
         )
         mock_config.return_value = mock_week_config
 
@@ -56,15 +55,16 @@ class TestCalculateWeekStartDate:
         assert result == datetime(2024, 8, 5, 0, 0)
         assert result.weekday() == 0  # Monday
 
-    @patch('cyclisme_training_logs.config.get_week_config')
+    @patch("cyclisme_training_logs.config.get_week_config")
     def test_calculate_week_start_date_validates_monday(self, mock_config):
         """Test raises error if calculated date is not Monday."""
         # Given: Invalid reference (not Monday)
         from datetime import date
+
         mock_week_config = Mock()
         mock_week_config.get_reference_for_week.return_value = (
             date(2024, 8, 6),  # Tuesday (invalid)
-            0
+            0,
         )
         mock_config.return_value = mock_week_config
 
@@ -76,9 +76,13 @@ class TestCalculateWeekStartDate:
 class TestWorkoutUploaderInit:
     """Tests for WorkoutUploader initialization."""
 
-    @patch('cyclisme_training_logs.upload_workouts.IntervalsClient')
-    @patch('builtins.open', new_callable=mock_open, read_data='{"athlete_id": "i151223", "api_key": "test_key"}')
-    @patch('pathlib.Path.exists', return_value=True)
+    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch(
+        "builtins.open",
+        new_callable=mock_open,
+        read_data='{"athlete_id": "i151223", "api_key": "test_key"}',
+    )
+    @patch("pathlib.Path.exists", return_value=True)
     def test_init_with_config_file(self, mock_exists, mock_file, mock_client):
         """Test init with .intervals_config.json."""
         # Given: Config file exists
@@ -94,9 +98,11 @@ class TestWorkoutUploaderInit:
         assert uploader.api is not None
         mock_client.assert_called_once_with("i151223", "test_key")
 
-    @patch('cyclisme_training_logs.upload_workouts.IntervalsClient')
-    @patch('pathlib.Path.exists', return_value=False)
-    @patch.dict('os.environ', {'VITE_INTERVALS_ATHLETE_ID': 'i151223', 'VITE_INTERVALS_API_KEY': 'test_key'})
+    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch("pathlib.Path.exists", return_value=False)
+    @patch.dict(
+        "os.environ", {"VITE_INTERVALS_ATHLETE_ID": "i151223", "VITE_INTERVALS_API_KEY": "test_key"}
+    )
     def test_init_with_env_vars(self, mock_exists, mock_client):
         """Test init with environment variables."""
         # Given: Config file doesn't exist, env vars set
@@ -110,8 +116,8 @@ class TestWorkoutUploaderInit:
         assert uploader.week_number == "S076"
         mock_client.assert_called_once_with("i151223", "test_key")
 
-    @patch('pathlib.Path.exists', return_value=False)
-    @patch.dict('os.environ', {}, clear=True)
+    @patch("pathlib.Path.exists", return_value=False)
+    @patch.dict("os.environ", {}, clear=True)
     def test_init_without_credentials_exits(self, mock_exists):
         """Test init without credentials exits."""
         # Given: No config file, no env vars
@@ -126,9 +132,13 @@ class TestWorkoutUploaderInit:
 class TestValidateWorkoutNotation:
     """Tests for validate_workout_notation() method."""
 
-    @patch('cyclisme_training_logs.upload_workouts.IntervalsClient')
-    @patch('builtins.open', new_callable=mock_open, read_data='{"athlete_id": "i151223", "api_key": "test_key"}')
-    @patch('pathlib.Path.exists', return_value=True)
+    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch(
+        "builtins.open",
+        new_callable=mock_open,
+        read_data='{"athlete_id": "i151223", "api_key": "test_key"}',
+    )
+    @patch("pathlib.Path.exists", return_value=True)
     def test_validate_workout_notation_valid(self, mock_exists, mock_file, mock_client):
         """Test validation of correctly formatted workout."""
         # Given: Valid workout
@@ -144,7 +154,7 @@ Main set
 - 25m 58-62% 85rpm
 
 Cooldown
-- 10m ramp 60-45% 85rpm"""
+- 10m ramp 60-45% 85rpm""",
         }
 
         # When: Validating
@@ -153,9 +163,13 @@ Cooldown
         # Then: No warnings
         assert len(warnings) == 0
 
-    @patch('cyclisme_training_logs.upload_workouts.IntervalsClient')
-    @patch('builtins.open', new_callable=mock_open, read_data='{"athlete_id": "i151223", "api_key": "test_key"}')
-    @patch('pathlib.Path.exists', return_value=True)
+    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch(
+        "builtins.open",
+        new_callable=mock_open,
+        read_data='{"athlete_id": "i151223", "api_key": "test_key"}',
+    )
+    @patch("pathlib.Path.exists", return_value=True)
     def test_validate_bad_repetition_notation(self, mock_exists, mock_file, mock_client):
         """Test detects bad repetition notation (3x [...])."""
         # Given: Workout with bad notation
@@ -168,7 +182,7 @@ Main set
 3x [
 - 9m 88% 90rpm
 - 4m 62% 85rpm
-]"""
+]""",
         }
 
         # When: Validating
@@ -179,17 +193,18 @@ Main set
         assert "3x [...]" in warnings[0]
         assert "Main set: 3x" in warnings[0]
 
-    @patch('cyclisme_training_logs.upload_workouts.IntervalsClient')
-    @patch('builtins.open', new_callable=mock_open, read_data='{"athlete_id": "i151223", "api_key": "test_key"}')
-    @patch('pathlib.Path.exists', return_value=True)
+    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch(
+        "builtins.open",
+        new_callable=mock_open,
+        read_data='{"athlete_id": "i151223", "api_key": "test_key"}',
+    )
+    @patch("pathlib.Path.exists", return_value=True)
     def test_validate_rest_day_skips_warmup_cooldown(self, mock_exists, mock_file, mock_client):
         """Test rest day (REPOS) skips warmup/cooldown validation."""
         # Given: Rest day workout
         uploader = WorkoutUploader("S075", datetime(2026, 1, 5))
-        workout = {
-            "name": "S075-07-REPOS",
-            "description": "REPOS COMPLET - Aucune activite"
-        }
+        workout = {"name": "S075-07-REPOS", "description": "REPOS COMPLET - Aucune activite"}
 
         # When: Validating
         warnings = uploader.validate_workout_notation(workout)
@@ -204,10 +219,16 @@ Main set
 class TestParseWorkoutsFile:
     """Tests for parse_workouts_file() method."""
 
-    @patch('cyclisme_training_logs.upload_workouts.IntervalsClient')
-    @patch('builtins.open', new_callable=mock_open, read_data='{"athlete_id": "i151223", "api_key": "test_key"}')
-    @patch('pathlib.Path.exists', return_value=True)
-    def test_parse_workouts_file_single_workout(self, mock_exists, mock_file, mock_client, tmp_path):
+    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch(
+        "builtins.open",
+        new_callable=mock_open,
+        read_data='{"athlete_id": "i151223", "api_key": "test_key"}',
+    )
+    @patch("pathlib.Path.exists", return_value=True)
+    def test_parse_workouts_file_single_workout(
+        self, mock_exists, mock_file, mock_client, tmp_path
+    ):
         """Test parsing file with single workout."""
         # Given: File with one workout
         uploader = WorkoutUploader("S075", datetime(2026, 1, 5))
@@ -241,10 +262,16 @@ Cooldown
         assert "Main set" in workouts[0]["description"]
         assert "Cooldown" in workouts[0]["description"]
 
-    @patch('cyclisme_training_logs.upload_workouts.IntervalsClient')
-    @patch('builtins.open', new_callable=mock_open, read_data='{"athlete_id": "i151223", "api_key": "test_key"}')
-    @patch('pathlib.Path.exists', return_value=True)
-    def test_parse_workouts_file_multiple_workouts(self, mock_exists, mock_file, mock_client, tmp_path):
+    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch(
+        "builtins.open",
+        new_callable=mock_open,
+        read_data='{"athlete_id": "i151223", "api_key": "test_key"}',
+    )
+    @patch("pathlib.Path.exists", return_value=True)
+    def test_parse_workouts_file_multiple_workouts(
+        self, mock_exists, mock_file, mock_client, tmp_path
+    ):
         """Test parsing file with multiple workouts."""
         # Given: File with 3 workouts
         uploader = WorkoutUploader("S075", datetime(2026, 1, 5))
@@ -286,9 +313,13 @@ REPOS COMPLET - Aucune activite
         assert workouts[1]["name"] == "S075-02-END"
         assert workouts[2]["name"] == "S075-07-REPOS"
 
-    @patch('cyclisme_training_logs.upload_workouts.IntervalsClient')
-    @patch('builtins.open', new_callable=mock_open, read_data='{"athlete_id": "i151223", "api_key": "test_key"}')
-    @patch('pathlib.Path.exists', return_value=True)
+    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch(
+        "builtins.open",
+        new_callable=mock_open,
+        read_data='{"athlete_id": "i151223", "api_key": "test_key"}',
+    )
+    @patch("pathlib.Path.exists", return_value=True)
     def test_parse_workouts_file_extracts_tss(self, mock_exists, mock_file, mock_client, tmp_path):
         """Test parsing extracts TSS from description."""
         # Given: Workout with TSS in description
@@ -322,9 +353,13 @@ Cooldown
 class TestUploadWorkout:
     """Tests for upload_workout() method."""
 
-    @patch('cyclisme_training_logs.upload_workouts.IntervalsClient')
-    @patch('builtins.open', new_callable=mock_open, read_data='{"athlete_id": "i151223", "api_key": "test_key"}')
-    @patch('pathlib.Path.exists', return_value=True)
+    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch(
+        "builtins.open",
+        new_callable=mock_open,
+        read_data='{"athlete_id": "i151223", "api_key": "test_key"}',
+    )
+    @patch("pathlib.Path.exists", return_value=True)
     def test_upload_workout_success(self, mock_exists, mock_file, mock_client_class):
         """Test successful workout upload."""
         # Given: Uploader with mocked API
@@ -336,7 +371,7 @@ class TestUploadWorkout:
         workout = {
             "name": "S075-01-REC",
             "description": "Recuperation (30min, 20 TSS)\nMain set\n- 10m 60% 85rpm",
-            "date": "2026-01-05"  # Required by upload_workout
+            "date": "2026-01-05",  # Required by upload_workout
         }
 
         # When: Uploading
@@ -346,9 +381,13 @@ class TestUploadWorkout:
         assert success is True
         mock_api_instance.create_event.assert_called_once()
 
-    @patch('cyclisme_training_logs.upload_workouts.IntervalsClient')
-    @patch('builtins.open', new_callable=mock_open, read_data='{"athlete_id": "i151223", "api_key": "test_key"}')
-    @patch('pathlib.Path.exists', return_value=True)
+    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch(
+        "builtins.open",
+        new_callable=mock_open,
+        read_data='{"athlete_id": "i151223", "api_key": "test_key"}',
+    )
+    @patch("pathlib.Path.exists", return_value=True)
     def test_upload_workout_api_failure(self, mock_exists, mock_file, mock_client_class):
         """Test workout upload handles API failure."""
         # Given: API raises exception
@@ -357,11 +396,7 @@ class TestUploadWorkout:
         mock_client_class.return_value = mock_api_instance
 
         uploader = WorkoutUploader("S075", datetime(2026, 1, 5))
-        workout = {
-            "name": "S075-01-REC",
-            "description": "Recuperation",
-            "date": "2026-01-05"
-        }
+        workout = {"name": "S075-01-REC", "description": "Recuperation", "date": "2026-01-05"}
 
         # When: Uploading
         success = uploader.upload_workout(workout)
@@ -373,16 +408,32 @@ class TestUploadWorkout:
 class TestUploadAll:
     """Tests for upload_all() method."""
 
-    @patch('cyclisme_training_logs.upload_workouts.IntervalsClient')
-    @patch('builtins.open', new_callable=mock_open, read_data='{"athlete_id": "i151223", "api_key": "test_key"}')
-    @patch('pathlib.Path.exists', return_value=True)
+    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch(
+        "builtins.open",
+        new_callable=mock_open,
+        read_data='{"athlete_id": "i151223", "api_key": "test_key"}',
+    )
+    @patch("pathlib.Path.exists", return_value=True)
     def test_upload_all_dry_run(self, mock_exists, mock_file, mock_client):
         """Test dry-run mode doesn't upload."""
         # Given: Uploader with workouts
         uploader = WorkoutUploader("S075", datetime(2026, 1, 5))
         workouts = [
-            {"name": "S075-01-REC", "description": "Recuperation", "day": 1, "date": "2026-01-05", "filename": "S075-01-REC"},
-            {"name": "S075-02-END", "description": "Endurance", "day": 2, "date": "2026-01-06", "filename": "S075-02-END"}
+            {
+                "name": "S075-01-REC",
+                "description": "Recuperation",
+                "day": 1,
+                "date": "2026-01-05",
+                "filename": "S075-01-REC",
+            },
+            {
+                "name": "S075-02-END",
+                "description": "Endurance",
+                "day": 2,
+                "date": "2026-01-06",
+                "filename": "S075-02-END",
+            },
         ]
 
         # When: Uploading in dry-run mode
@@ -394,9 +445,13 @@ class TestUploadAll:
         # API create_event should not be called in dry-run
         uploader.api.create_event.assert_not_called()
 
-    @patch('cyclisme_training_logs.upload_workouts.IntervalsClient')
-    @patch('builtins.open', new_callable=mock_open, read_data='{"athlete_id": "i151223", "api_key": "test_key"}')
-    @patch('pathlib.Path.exists', return_value=True)
+    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch(
+        "builtins.open",
+        new_callable=mock_open,
+        read_data='{"athlete_id": "i151223", "api_key": "test_key"}',
+    )
+    @patch("pathlib.Path.exists", return_value=True)
     def test_upload_all_success(self, mock_exists, mock_file, mock_client_class):
         """Test batch upload all workouts."""
         # Given: Uploader with mocked API
@@ -406,8 +461,20 @@ class TestUploadAll:
 
         uploader = WorkoutUploader("S075", datetime(2026, 1, 5))
         workouts = [
-            {"name": "S075-01-REC", "description": "Recuperation", "day": 1, "date": "2026-01-05", "filename": "S075-01-REC"},
-            {"name": "S075-02-END", "description": "Endurance", "day": 2, "date": "2026-01-06", "filename": "S075-02-END"}
+            {
+                "name": "S075-01-REC",
+                "description": "Recuperation",
+                "day": 1,
+                "date": "2026-01-05",
+                "filename": "S075-01-REC",
+            },
+            {
+                "name": "S075-02-END",
+                "description": "Endurance",
+                "day": 2,
+                "date": "2026-01-06",
+                "filename": "S075-02-END",
+            },
         ]
 
         # When: Uploading (not dry-run)
@@ -418,9 +485,13 @@ class TestUploadAll:
         assert result["failed"] == 0
         assert mock_api_instance.create_event.call_count == 2
 
-    @patch('cyclisme_training_logs.upload_workouts.IntervalsClient')
-    @patch('builtins.open', new_callable=mock_open, read_data='{"athlete_id": "i151223", "api_key": "test_key"}')
-    @patch('pathlib.Path.exists', return_value=True)
+    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch(
+        "builtins.open",
+        new_callable=mock_open,
+        read_data='{"athlete_id": "i151223", "api_key": "test_key"}',
+    )
+    @patch("pathlib.Path.exists", return_value=True)
     def test_upload_all_partial_failure(self, mock_exists, mock_file, mock_client_class):
         """Test batch upload with some failures."""
         # Given: API fails on second upload
@@ -428,15 +499,33 @@ class TestUploadAll:
         mock_api_instance.create_event.side_effect = [
             {"id": "123"},  # First success
             Exception("API Error"),  # Second fails
-            {"id": "125"}  # Third success
+            {"id": "125"},  # Third success
         ]
         mock_client_class.return_value = mock_api_instance
 
         uploader = WorkoutUploader("S075", datetime(2026, 1, 5))
         workouts = [
-            {"name": "S075-01-REC", "description": "Recuperation", "day": 1, "date": "2026-01-05", "filename": "S075-01-REC"},
-            {"name": "S075-02-END", "description": "Endurance", "day": 2, "date": "2026-01-06", "filename": "S075-02-END"},
-            {"name": "S075-03-INT", "description": "Intervals", "day": 3, "date": "2026-01-07", "filename": "S075-03-INT"}
+            {
+                "name": "S075-01-REC",
+                "description": "Recuperation",
+                "day": 1,
+                "date": "2026-01-05",
+                "filename": "S075-01-REC",
+            },
+            {
+                "name": "S075-02-END",
+                "description": "Endurance",
+                "day": 2,
+                "date": "2026-01-06",
+                "filename": "S075-02-END",
+            },
+            {
+                "name": "S075-03-INT",
+                "description": "Intervals",
+                "day": 3,
+                "date": "2026-01-07",
+                "filename": "S075-03-INT",
+            },
         ]
 
         # When: Uploading
@@ -450,10 +539,16 @@ class TestUploadAll:
 class TestIntegrationUploadWorkflow:
     """Integration tests for complete upload workflow."""
 
-    @patch('cyclisme_training_logs.upload_workouts.IntervalsClient')
-    @patch('builtins.open', new_callable=mock_open, read_data='{"athlete_id": "i151223", "api_key": "test_key"}')
-    @patch('pathlib.Path.exists', return_value=True)
-    def test_full_workflow_parse_validate_upload(self, mock_exists, mock_file, mock_client_class, tmp_path):
+    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch(
+        "builtins.open",
+        new_callable=mock_open,
+        read_data='{"athlete_id": "i151223", "api_key": "test_key"}',
+    )
+    @patch("pathlib.Path.exists", return_value=True)
+    def test_full_workflow_parse_validate_upload(
+        self, mock_exists, mock_file, mock_client_class, tmp_path
+    ):
         """Test complete workflow: parse → validate → upload."""
         # Given: Mock API and workout file
         mock_api_instance = Mock()

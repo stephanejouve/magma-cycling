@@ -4,9 +4,11 @@ Tests cover _extract_gear_metrics() in WeeklyAggregator
 for calculating shifts, cross-chaining, and patterns.
 """
 
-import pytest
 from datetime import date
 from unittest.mock import Mock, patch
+
+import pytest
+
 from cyclisme_training_logs.analyzers.weekly_aggregator import WeeklyAggregator
 
 
@@ -16,9 +18,9 @@ class TestExtractGearMetrics:
     @pytest.fixture
     def aggregator(self):
         """Create WeeklyAggregator with mocked API."""
-        from datetime import date
+
         # Create aggregator (API initialization will be mocked below)
-        with patch('cyclisme_training_logs.analyzers.weekly_aggregator.get_intervals_config'):
+        with patch("cyclisme_training_logs.analyzers.weekly_aggregator.get_intervals_config"):
             aggregator = WeeklyAggregator(week="S075", start_date=date(2026, 1, 5))
             # Mock the API
             aggregator.api = Mock()
@@ -30,34 +32,22 @@ class TestExtractGearMetrics:
         return [
             {
                 "type": "FrontGear",
-                "data": [50, 50, 50, 50, 34, 34, 34, 34, 50, 50]  # 2 front shifts
+                "data": [50, 50, 50, 50, 34, 34, 34, 34, 50, 50],  # 2 front shifts
             },
-            {
-                "type": "RearGear",
-                "data": [21, 24, 27, 30, 30, 27, 24, 21, 21, 18]  # 8 rear shifts
-            },
+            {"type": "RearGear", "data": [21, 24, 27, 30, 30, 27, 24, 21, 21, 18]},  # 8 rear shifts
             {
                 "type": "GearRatio",
-                "data": [2.38, 2.08, 1.85, 1.67, 1.13, 1.26, 1.42, 1.62, 2.38, 2.78]
-            }
+                "data": [2.38, 2.08, 1.85, 1.67, 1.13, 1.26, 1.42, 1.62, 2.38, 2.78],
+            },
         ]
 
     @pytest.fixture
     def cross_chaining_streams(self):
         """Di2 streams with cross-chaining (50T + 27T)."""
         return [
-            {
-                "type": "FrontGear",
-                "data": [50] * 100  # Always 50T
-            },
-            {
-                "type": "RearGear",
-                "data": [27] * 50 + [21] * 50  # 50% on 27T (cross-chain)
-            },
-            {
-                "type": "GearRatio",
-                "data": [1.85] * 50 + [2.38] * 50
-            }
+            {"type": "FrontGear", "data": [50] * 100},  # Always 50T
+            {"type": "RearGear", "data": [27] * 50 + [21] * 50},  # 50% on 27T (cross-chain)
+            {"type": "GearRatio", "data": [1.85] * 50 + [2.38] * 50},
         ]
 
     def test_extract_gear_metrics_complete_data(self, aggregator, complete_di2_streams):
@@ -90,7 +80,9 @@ class TestExtractGearMetrics:
         assert isinstance(metrics["gear_ratio_distribution"], dict)
         assert len(metrics["gear_ratio_distribution"]) > 0
 
-    def test_extract_gear_metrics_cross_chaining_detection(self, aggregator, cross_chaining_streams):
+    def test_extract_gear_metrics_cross_chaining_detection(
+        self, aggregator, cross_chaining_streams
+    ):
         """Test cross-chaining pattern detection in metrics."""
         # Given: Streams with known cross-chaining (50T + 27T)
         activity_id = "i107424850"
@@ -127,7 +119,7 @@ class TestExtractGearMetrics:
         activity_id = "i107424852"
         streams_missing_front = [
             {"type": "RearGear", "data": [21, 24, 27]},
-            {"type": "GearRatio", "data": [2.38, 2.08, 1.85]}
+            {"type": "GearRatio", "data": [2.38, 2.08, 1.85]},
         ]
         aggregator.api.get_activity_streams.return_value = streams_missing_front
 
@@ -143,7 +135,7 @@ class TestExtractGearMetrics:
         activity_id = "i107424853"
         streams_missing_rear = [
             {"type": "FrontGear", "data": [50, 50, 34]},
-            {"type": "GearRatio", "data": [2.38, 2.08, 1.26]}
+            {"type": "GearRatio", "data": [2.38, 2.08, 1.26]},
         ]
         aggregator.api.get_activity_streams.return_value = streams_missing_rear
 
@@ -158,18 +150,9 @@ class TestExtractGearMetrics:
         # Given: Streams with None (signal dropout)
         activity_id = "i107424854"
         streams_with_none = [
-            {
-                "type": "FrontGear",
-                "data": [50, 50, None, 34, None, 50]
-            },
-            {
-                "type": "RearGear",
-                "data": [21, None, 24, 27, 27, None]
-            },
-            {
-                "type": "GearRatio",
-                "data": [2.38, None, 2.08, 1.26, 1.26, None]
-            }
+            {"type": "FrontGear", "data": [50, 50, None, 34, None, 50]},
+            {"type": "RearGear", "data": [21, None, 24, 27, 27, None]},
+            {"type": "GearRatio", "data": [2.38, None, 2.08, 1.26, 1.26, None]},
         ]
         aggregator.api.get_activity_streams.return_value = streams_with_none
 
@@ -189,8 +172,32 @@ class TestExtractGearMetrics:
         # Create streams with 10 different ratios (but top 5 should be returned)
         streams_many_ratios = [
             {"type": "FrontGear", "data": [50] * 100},
-            {"type": "RearGear", "data": [11]*20 + [13]*18 + [15]*16 + [17]*14 + [19]*12 + [21]*10 + [24]*5 + [27]*3 + [30]*1 + [34]*1},
-            {"type": "GearRatio", "data": [4.55]*20 + [3.85]*18 + [3.33]*16 + [2.94]*14 + [2.63]*12 + [2.38]*10 + [2.08]*5 + [1.85]*3 + [1.67]*1 + [1.47]*1}
+            {
+                "type": "RearGear",
+                "data": [11] * 20
+                + [13] * 18
+                + [15] * 16
+                + [17] * 14
+                + [19] * 12
+                + [21] * 10
+                + [24] * 5
+                + [27] * 3
+                + [30] * 1
+                + [34] * 1,
+            },
+            {
+                "type": "GearRatio",
+                "data": [4.55] * 20
+                + [3.85] * 18
+                + [3.33] * 16
+                + [2.94] * 14
+                + [2.63] * 12
+                + [2.38] * 10
+                + [2.08] * 5
+                + [1.85] * 3
+                + [1.67] * 1
+                + [1.47] * 1,
+            },
         ]
         aggregator.api.get_activity_streams.return_value = streams_many_ratios
 
@@ -221,7 +228,7 @@ class TestExtractGearMetrics:
         streams_no_shifts = [
             {"type": "FrontGear", "data": [50] * 100},
             {"type": "RearGear", "data": [21] * 100},
-            {"type": "GearRatio", "data": [2.38] * 100}
+            {"type": "GearRatio", "data": [2.38] * 100},
         ]
         aggregator.api.get_activity_streams.return_value = streams_no_shifts
 

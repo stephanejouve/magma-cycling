@@ -4,8 +4,10 @@ Tests cover get_activity_streams() method for extracting
 Di2 electronic shifting data (FrontGear, RearGear, GearRatio).
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
+
 from cyclisme_training_logs.api.intervals_client import IntervalsClient
 
 
@@ -21,26 +23,11 @@ class TestGetActivityStreamsDi2:
     def mock_di2_streams(self):
         """Mock Di2 streams data (realistic structure)."""
         return [
-            {
-                "type": "FrontGear",
-                "data": [50, 50, 50, 34, 34, 50, 50]
-            },
-            {
-                "type": "RearGear",
-                "data": [21, 21, 24, 27, 27, 21, 18]
-            },
-            {
-                "type": "GearRatio",
-                "data": [2.38, 2.38, 2.08, 1.26, 1.26, 2.38, 2.78]
-            },
-            {
-                "type": "watts",
-                "data": [150, 160, 170, 140, 145, 155, 165]
-            },
-            {
-                "type": "heartrate",
-                "data": [120, 125, 130, 115, 118, 122, 128]
-            }
+            {"type": "FrontGear", "data": [50, 50, 50, 34, 34, 50, 50]},
+            {"type": "RearGear", "data": [21, 21, 24, 27, 27, 21, 18]},
+            {"type": "GearRatio", "data": [2.38, 2.38, 2.08, 1.26, 1.26, 2.38, 2.78]},
+            {"type": "watts", "data": [150, 160, 170, 140, 145, 155, 165]},
+            {"type": "heartrate", "data": [120, 125, 130, 115, 118, 122, 128]},
         ]
 
     def test_get_activity_streams_success_with_di2(self, client, mock_di2_streams):
@@ -48,7 +35,7 @@ class TestGetActivityStreamsDi2:
         # Given: Activity with Di2 data
         activity_id = "i107424849"
 
-        with patch.object(client.session, 'get') as mock_get:
+        with patch.object(client.session, "get") as mock_get:
             mock_response = Mock()
             mock_response.json.return_value = mock_di2_streams
             mock_get.return_value = mock_response
@@ -86,10 +73,10 @@ class TestGetActivityStreamsDi2:
         streams_no_di2 = [
             {"type": "watts", "data": [150, 160, 170]},
             {"type": "heartrate", "data": [120, 125, 130]},
-            {"type": "cadence", "data": [90, 92, 95]}
+            {"type": "cadence", "data": [90, 92, 95]},
         ]
 
-        with patch.object(client.session, 'get') as mock_get:
+        with patch.object(client.session, "get") as mock_get:
             mock_response = Mock()
             mock_response.json.return_value = streams_no_di2
             mock_get.return_value = mock_response
@@ -112,7 +99,7 @@ class TestGetActivityStreamsDi2:
         # Given: API unavailable
         activity_id = "i107424851"
 
-        with patch.object(client.session, 'get') as mock_get:
+        with patch.object(client.session, "get") as mock_get:
             mock_response = Mock()
             mock_response.raise_for_status.side_effect = Exception("HTTP 503 Service Unavailable")
             mock_get.return_value = mock_response
@@ -128,7 +115,7 @@ class TestGetActivityStreamsDi2:
         # Given: Activity with empty streams (edge case)
         activity_id = "i107424852"
 
-        with patch.object(client.session, 'get') as mock_get:
+        with patch.object(client.session, "get") as mock_get:
             mock_response = Mock()
             mock_response.json.return_value = []
             mock_get.return_value = mock_response
@@ -147,10 +134,10 @@ class TestGetActivityStreamsDi2:
         activity_id = "i107424853"
         streams_partial = [
             {"type": "RearGear", "data": [21, 24, 27]},
-            {"type": "watts", "data": [150, 160, 170]}
+            {"type": "watts", "data": [150, 160, 170]},
         ]
 
-        with patch.object(client.session, 'get') as mock_get:
+        with patch.object(client.session, "get") as mock_get:
             mock_response = Mock()
             mock_response.json.return_value = streams_partial
             mock_get.return_value = mock_response
@@ -170,10 +157,10 @@ class TestGetActivityStreamsDi2:
         activity_id = "i107424854"
         streams_with_none = [
             {"type": "FrontGear", "data": [50, 50, None, 34, 34]},
-            {"type": "RearGear", "data": [21, None, 24, 27, 27]}
+            {"type": "RearGear", "data": [21, None, 24, 27, 27]},
         ]
 
-        with patch.object(client.session, 'get') as mock_get:
+        with patch.object(client.session, "get") as mock_get:
             mock_response = Mock()
             mock_response.json.return_value = streams_with_none
             mock_get.return_value = mock_response

@@ -14,11 +14,8 @@ Test Categories:
 - Export Methods (2 tests)
 """
 
-import sys
 from pathlib import Path
-from unittest.mock import Mock, patch, mock_open
-
-import pytest
+from unittest.mock import Mock, mock_open, patch
 
 from cyclisme_training_logs.workflow_coach import WorkflowCoach
 
@@ -31,8 +28,8 @@ class TestWelcomeStep:
         """Test step_1_welcome displays welcome screen."""
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
 
-        with patch.object(coach, 'clear_screen'):
-            with patch.object(coach, 'wait_user'):
+        with patch.object(coach, "clear_screen"):
+            with patch.object(coach, "wait_user"):
                 coach.step_1_welcome()
 
         # Should print welcome message
@@ -62,8 +59,8 @@ class TestGitCommitStep:
             Mock(stdout="On branch main\nnothing to commit", returncode=0),  # git status
         ]
 
-        with patch.object(coach, 'clear_screen'):
-            with patch.object(coach, 'wait_user'):
+        with patch.object(coach, "clear_screen"):
+            with patch.object(coach, "wait_user"):
                 coach.step_7_git_commit()
 
         # Should execute git commands
@@ -75,8 +72,8 @@ class TestGitCommitStep:
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
         coach.activity_name = "Test"
 
-        with patch.object(coach, 'clear_screen'):
-            with patch.object(coach, 'wait_user'):
+        with patch.object(coach, "clear_screen"):
+            with patch.object(coach, "wait_user"):
                 coach.step_7_git_commit()
 
         # Should skip git operations
@@ -97,8 +94,8 @@ class TestAnalysisInsertion:
         # Mock successful subprocess
         mock_subprocess.return_value = Mock(returncode=0)
 
-        with patch.object(coach, 'clear_screen'):
-            with patch.object(coach, 'wait_user'):
+        with patch.object(coach, "clear_screen"):
+            with patch.object(coach, "wait_user"):
                 coach.step_6_insert_analysis()
 
         # Should call insert_analysis.py
@@ -117,8 +114,8 @@ class TestAnalysisInsertion:
         # Mock failed subprocess
         mock_subprocess.return_value = Mock(returncode=1)
 
-        with patch.object(coach, 'clear_screen'):
-            with patch.object(coach, 'wait_user'):
+        with patch.object(coach, "clear_screen"):
+            with patch.object(coach, "wait_user"):
                 try:
                     coach.step_6_insert_analysis()
                 except SystemExit:
@@ -178,7 +175,6 @@ class TestMarkdownHelpers:
 
         # Should print preview
         assert mock_print.called
-        call_args_str = str(mock_print.call_args_list)
         # Should contain some session content or preview indicators
         assert mock_print.call_count > 0
 
@@ -194,7 +190,7 @@ class TestDisplayMethods:
         gaps_data = {
             "unanalyzed": [
                 {"id": "i12345", "start_date_local": "2026-01-12T10:00:00", "name": "Morning Ride"},
-                {"id": "i67890", "start_date_local": "2026-01-13T10:00:00", "name": "Tempo"}
+                {"id": "i67890", "start_date_local": "2026-01-13T10:00:00", "name": "Tempo"},
             ],
             "skipped": [],
             "rest_days": [],
@@ -217,12 +213,14 @@ class TestDisplayMethods:
             "week_id": "S070",
             "planned_sessions": [
                 {"date": "2026-01-11", "session_id": "S070-07", "type": "ENDURANCE"}
-            ]
+            ],
         }
 
         result = {
             "matched": [],
-            "rest_days": [{"session_id": "S070-07", "date": "2026-01-11", "rest_reason": "Recovery"}],
+            "rest_days": [
+                {"session_id": "S070-07", "date": "2026-01-11", "rest_reason": "Recovery"}
+            ],
             "cancelled": [],
             "lightened": [],
         }
@@ -249,7 +247,7 @@ class TestExportMethods:
             ("2026-01-13", "# Session 2\n\nMore content"),
         ]
 
-        result = coach._export_markdowns(markdowns, "S070")
+        _result = coach._export_markdowns(markdowns, "S070")
 
         # Should create directory and write files
         assert mock_mkdir.called or mock_file.called
