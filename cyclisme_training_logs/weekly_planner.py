@@ -109,7 +109,9 @@ class WeeklyPlanner:
             if wellness and len(wellness) > 0:
                 current = wellness[0]
 
-                from cyclisme_training_logs.utils.metrics import extract_wellness_metrics
+                from cyclisme_training_logs.utils.metrics import (
+                    extract_wellness_metrics,
+                )
 
                 wellness_metrics = extract_wellness_metrics(current)
                 metrics = {

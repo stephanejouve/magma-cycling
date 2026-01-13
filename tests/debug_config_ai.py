@@ -7,7 +7,11 @@ Tests AIProvidersConfig singleton and configuration management.
 import os
 from unittest.mock import patch
 
-from cyclisme_training_logs.config import AIProvidersConfig, get_ai_config, reset_ai_config
+from cyclisme_training_logs.config import (
+    AIProvidersConfig,
+    get_ai_config,
+    reset_ai_config,
+)
 
 
 class TestAIProvidersConfig:

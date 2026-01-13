@@ -390,7 +390,9 @@ class WeeklyAggregator(DataAggregator):
                     wellness = None
 
                 if wellness:
-                    from cyclisme_training_logs.utils.metrics import extract_wellness_metrics
+                    from cyclisme_training_logs.utils.metrics import (
+                        extract_wellness_metrics,
+                    )
 
                     wellness_metrics = extract_wellness_metrics(wellness)
                     ramp_rate = wellness.get("ramp_rate")

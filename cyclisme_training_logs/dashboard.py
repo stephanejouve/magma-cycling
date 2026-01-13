@@ -139,7 +139,10 @@ def print_recent_learnings(intelligence_path: Path | None) -> None:
 
     if intelligence_path and intelligence_path.exists():
         try:
-            from cyclisme_training_logs.intelligence import ConfidenceLevel, TrainingIntelligence
+            from cyclisme_training_logs.intelligence import (
+                ConfidenceLevel,
+                TrainingIntelligence,
+            )
 
             intelligence = TrainingIntelligence.load_from_file(intelligence_path)
 

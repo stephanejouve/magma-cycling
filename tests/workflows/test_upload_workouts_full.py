@@ -9,7 +9,10 @@ from unittest.mock import Mock, mock_open, patch
 
 import pytest
 
-from cyclisme_training_logs.upload_workouts import WorkoutUploader, calculate_week_start_date
+from cyclisme_training_logs.upload_workouts import (
+    WorkoutUploader,
+    calculate_week_start_date,
+)
 
 
 class TestCalculateWeekStartDate:
