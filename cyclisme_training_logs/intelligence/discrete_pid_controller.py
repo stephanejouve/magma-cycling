@@ -271,6 +271,143 @@ class DiscretePIDController:
             "recommendation": recommendation,
         }
 
+    def compute_cycle_correction_enhanced(
+        self,
+        measured_ftp: float,
+        cycle_duration_weeks: int,
+        adherence_rate: float,
+        avg_cardiovascular_coupling: float,
+        tss_completion_rate: float,
+        test_date: datetime | None = None,
+    ) -> dict[str, float | int | str | dict]:
+        """
+        Calculate PID correction with multi-criteria validation (Enhanced).
+
+        Computes base PID correction then validates with complementary variables
+        to detect inconsistencies and adjust recommendations contextually.
+
+        Complementary Variables (P0 Priority):
+            - adherence_rate: Discipline (completed/planned workouts)
+            - avg_cardiovascular_coupling: Quality (découplage cardio %)
+            - tss_completion_rate: Capacity (TSS realized/planned)
+
+        Validation Rules:
+            - adherence < 0.80 → Red flag: Weak discipline, reduce gains 0.7x
+            - coupling > 0.08 → Red flag: Overload detected, reduce gains 0.6x
+            - tss_completion < 0.85 → Red flag: Insufficient capacity, cap correction ≤5 TSS
+
+        Args:
+            measured_ftp: FTP mesurée lors test (W)
+            cycle_duration_weeks: Durée cycle écoulé (semaines)
+            adherence_rate: Taux adhérence cycle (0.0-1.0)
+            avg_cardiovascular_coupling: Découplage cardio moyen cycle (%)
+            tss_completion_rate: Taux complétion TSS cycle (0.0-1.0)
+            test_date: Date test FTP (défaut: now)
+
+        Returns:
+            Dict with keys:
+                - error, p_term, i_term, d_term, output: PID terms
+                - tss_per_week: TSS adjustment (original)
+                - tss_per_week_adjusted: TSS adjustment after validation
+                - cycle_duration: Cycle duration
+                - recommendation: Recommendation with validation context
+                - validation: {
+                    "red_flags": List[str],
+                    "warnings": List[str],
+                    "confidence": float (0.0-1.0),
+                    "validated": bool,
+                    "adjustments": List[str]
+                  }
+
+        Example:
+            >>> controller = DiscretePIDController(0.008, 0.001, 0.12, 260)
+            >>> result = controller.compute_cycle_correction_enhanced(
+            ...     measured_ftp=206,
+            ...     cycle_duration_weeks=6,
+            ...     adherence_rate=0.92,
+            ...     avg_cardiovascular_coupling=0.062,
+            ...     tss_completion_rate=0.94
+            ... )
+            >>> result["validation"]["validated"]
+            True
+            >>> result["tss_per_week_adjusted"]
+            8
+        """
+        # Compute base PID correction
+        base_correction = self.compute_cycle_correction(
+            measured_ftp=measured_ftp,
+            cycle_duration_weeks=cycle_duration_weeks,
+            test_date=test_date,
+        )
+
+        # Extract base TSS adjustment
+        tss_original = base_correction["tss_per_week"]
+        tss_adjusted = float(tss_original)
+
+        # Validation logic
+        red_flags = []
+        warnings = []
+        adjustments = []
+        confidence = 1.0
+
+        # Check 1: Adherence Rate (Discipline)
+        if adherence_rate < 0.80:
+            red_flags.append("Discipline faible: adherence < 80%")
+            tss_adjusted *= 0.7
+            adjustments.append("Gains réduits 30% (discipline)")
+            confidence *= 0.7
+
+        # Check 2: Cardiovascular Coupling (Quality)
+        if avg_cardiovascular_coupling > 0.08:
+            red_flags.append("Surcharge détectée: découplage cardio > 8%")
+            tss_adjusted *= 0.6
+            adjustments.append("Gains réduits 40% (surcharge)")
+            confidence *= 0.6
+        elif avg_cardiovascular_coupling > 0.06:
+            warnings.append("Qualité dégradée: découplage cardio 6-8%")
+            confidence *= 0.9
+
+        # Check 3: TSS Completion Rate (Capacity)
+        if tss_completion_rate < 0.85:
+            red_flags.append("Capacité insuffisante: TSS completion < 85%")
+            if tss_adjusted > 5:
+                tss_adjusted = 5.0
+                adjustments.append("Correction plafonnée 5 TSS max (capacité)")
+            confidence *= 0.8
+        elif tss_completion_rate < 0.90:
+            warnings.append("Capacité limite: TSS completion 85-90%")
+            confidence *= 0.95
+
+        # Round adjusted TSS
+        tss_adjusted = round(tss_adjusted)
+
+        # Generate enhanced recommendation
+        validated = len(red_flags) == 0
+        recommendation = self._get_enhanced_recommendation(
+            tss_adjusted=tss_adjusted,
+            tss_original=tss_original,
+            red_flags=red_flags,
+            warnings=warnings,
+            adjustments=adjustments,
+            validated=validated,
+        )
+
+        # Build enhanced result
+        result = {
+            **base_correction,
+            "tss_per_week_adjusted": tss_adjusted,
+            "recommendation": recommendation,
+            "validation": {
+                "red_flags": red_flags,
+                "warnings": warnings,
+                "confidence": round(confidence, 2),
+                "validated": validated,
+                "adjustments": adjustments,
+            },
+        }
+
+        return result
+
     def _get_recommendation(self, tss_per_week: float, error: float) -> str:
         """
         Generate actionable recommendation in French.
@@ -319,6 +456,78 @@ class DiscretePIDController:
         # Maintien
         else:
             return "Maintien charge actuelle sur cycle"
+
+    def _get_enhanced_recommendation(
+        self,
+        tss_adjusted: float,
+        tss_original: float,
+        red_flags: list[str],
+        warnings: list[str],
+        adjustments: list[str],
+        validated: bool,
+    ) -> str:
+        """
+        Generate enhanced recommendation with validation context.
+
+        Args:
+            tss_adjusted: Adjusted TSS per week after validation
+            tss_original: Original TSS per week from base PID
+            red_flags: List of red flags detected
+            warnings: List of warnings detected
+            adjustments: List of adjustments applied
+            validated: Whether correction is validated (no red flags)
+
+        Returns:
+            Enhanced recommendation string in French
+        """
+        tss_adj = round(tss_adjusted)
+
+        # Build base recommendation
+        if abs(tss_adj) < 3:
+            base_rec = "Maintien protocoles actuels"
+        elif tss_adj >= 15:
+            base_rec = f"Augmenter TSS +{tss_adj}/semaine - Focus Sweet-Spot 88-90% FTP"
+        elif tss_adj >= 8:
+            base_rec = f"Augmenter TSS +{tss_adj}/semaine - Progression modérée"
+        elif tss_adj <= -15:
+            base_rec = f"Réduire TSS {tss_adj}/semaine - Priorité récupération"
+        elif tss_adj <= -8:
+            base_rec = f"Réduire TSS {tss_adj}/semaine - Ajustement léger"
+        else:
+            base_rec = "Maintien charge actuelle sur cycle"
+
+        # Add validation context if not validated
+        if not validated:
+            context_parts = [base_rec]
+
+            # Add adjustment notice if TSS was modified
+            if tss_original != tss_adj:
+                context_parts.append(
+                    f"\n⚠️  Correction ajustée: {tss_original} → {tss_adj} TSS/semaine"
+                )
+
+            # Add red flags
+            if red_flags:
+                context_parts.append("\n🚨 Red flags détectés:")
+                for flag in red_flags:
+                    context_parts.append(f"  • {flag}")
+
+            # Add adjustments applied
+            if adjustments:
+                context_parts.append("\n🔧 Ajustements appliqués:")
+                for adj in adjustments:
+                    context_parts.append(f"  • {adj}")
+
+            # Add warnings if any
+            if warnings:
+                context_parts.append("\n⚠️  Warnings:")
+                for warning in warnings:
+                    context_parts.append(f"  • {warning}")
+
+            return "".join(context_parts)
+
+        # Validated correction - add success indicator
+        return f"✅ {base_rec}"
 
     def reset(self):
         """
