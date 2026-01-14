@@ -15,16 +15,16 @@ Behavior:
 
 Usage:
     # Cancel a session (local only)
-    poetry run update-session --week S074 --session S074-05 --status cancelled --reason "Fatigue"
+    poetry run update-session --week-id S074 --session S074-05 --status cancelled --reason "Fatigue"
 
     # Cancel and sync with Intervals.icu (converts to NOTE)
-    poetry run update-session --week S074 --session S074-05 --status cancelled --reason "Fatigue" --sync
+    poetry run update-session --week-id S074 --session S074-05 --status cancelled --reason "Fatigue" --sync
 
     # Skip session with sync
-    poetry run update-session --week S074 --session S074-03 --status skipped --reason "Travel" --sync
+    poetry run update-session --week-id S074 --session S074-03 --status skipped --reason "Travel" --sync
 
     # Mark as completed (local only)
-    poetry run update-session --week S074 --session S074-01 --status completed
+    poetry run update-session --week-id S074 --session S074-01 --status completed
 
 Metadata:
     Created: 2026-01-02
@@ -267,13 +267,13 @@ def main():
 Examples:
 
   # Cancel session (local only)
-  %(prog)s --week S074 --session S074-05 --status cancelled --reason "Fatigue"
+  %(prog)s --week-id S074 --session S074-05 --status cancelled --reason "Fatigue"
 
   # Cancel and sync with Intervals.icu
-  %(prog)s --week S074 --session S074-05 --status cancelled --reason "Fatigue" --sync
+  %(prog)s --week-id S074 --session S074-05 --status cancelled --reason "Fatigue" --sync
 
   # Skip session with sync
-  %(prog)s --week S074 --session S074-03 --status skipped --reason "Travel" --sync
+  %(prog)s --week-id S074 --session S074-03 --status skipped --reason "Travel" --sync
 
 Valid statuses:
   - planned     : Session is planned (default)
@@ -286,7 +286,7 @@ Valid statuses:
         """,
     )
 
-    parser.add_argument("--week", type=str, required=True, help="Week ID (e.g., S074)")
+    parser.add_argument("--week-id", type=str, required=True, help="Week ID (e.g., S074)")
 
     parser.add_argument("--session", type=str, required=True, help="Session ID (e.g., S074-05)")
 
@@ -346,10 +346,10 @@ Valid statuses:
 
         # Create planner instance
         project_root = Path(__file__).parent.parent
-        planner = WeeklyPlanner(args.week, start_date, project_root)
+        planner = WeeklyPlanner(args.week_id, start_date, project_root)
 
         print(f"\n📝 Updating session {args.session}")
-        print(f"   Week: {args.week}")
+        print(f"   Week: {args.week_id}")
         print(f"   Status: {args.status}")
         if args.reason:
             print(f"   Reason: {args.reason}")
@@ -376,7 +376,7 @@ Valid statuses:
                 sys.exit(0)
 
             # Get session date from planning
-            planning_file = planning_dir / f"week_planning_{args.week}.json"
+            planning_file = planning_dir / f"week_planning_{args.week_id}.json"
 
             if not planning_file.exists():
                 print("\n⚠️  Warning: Could not find planning file to get session date")
