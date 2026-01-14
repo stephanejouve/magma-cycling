@@ -122,6 +122,36 @@ Persistance
         Path("~/data/intelligence.json").expanduser()
     )
 
+discrete_pid_controller
+-----------------------
+
+.. automodule:: cyclisme_training_logs.intelligence.discrete_pid_controller
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Contrôleur PID Discret adapté aux mesures sporadiques FTP (tous les 6-8 semaines).
+
+biomechanics
+------------
+
+.. automodule:: cyclisme_training_logs.intelligence.biomechanics
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module intégration recherche Grappe (2000) - cadence optimale et coefficients PID adaptatifs.
+
+biomechanics_intervals
+----------------------
+
+.. automodule:: cyclisme_training_logs.intelligence.biomechanics_intervals
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Extraction métriques biomécaniques depuis API Intervals.icu.
+
 Voir Aussi
 ----------
 
