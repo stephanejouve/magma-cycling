@@ -493,3 +493,182 @@ def test_training_intelligence_discrete_pid_realistic_scenario():
     # FTP should have improved (conservative gains with 5 learnings)
     assert current_ftp > 200.0
     assert current_ftp >= 203.0  # At least 3W improvement over 3 cycles
+
+
+# ============================================================================
+# ENHANCED VALIDATION TESTS
+# ============================================================================
+
+
+def test_enhanced_validation_all_criteria_good():
+    """Test enhanced validation with all criteria passing."""
+    controller = DiscretePIDController(kp=0.008, ki=0.001, kd=0.12, setpoint=260)
+
+    result = controller.compute_cycle_correction_enhanced(
+        measured_ftp=206,
+        cycle_duration_weeks=6,
+        adherence_rate=0.92,  # Good
+        avg_cardiovascular_coupling=0.055,  # Good
+        tss_completion_rate=0.94,  # Good
+    )
+
+    # Validation should pass
+    assert result["validation"]["validated"] is True
+    assert len(result["validation"]["red_flags"]) == 0
+    assert result["validation"]["confidence"] == 1.0
+
+    # TSS adjustment should be unchanged
+    assert result["tss_per_week"] == result["tss_per_week_adjusted"]
+
+    # Recommendation should have success indicator
+    assert "✅" in result["recommendation"]
+
+
+def test_enhanced_validation_low_adherence():
+    """Test enhanced validation with low adherence (< 0.80)."""
+    controller = DiscretePIDController(kp=0.008, ki=0.001, kd=0.12, setpoint=260)
+
+    result = controller.compute_cycle_correction_enhanced(
+        measured_ftp=206,
+        cycle_duration_weeks=6,
+        adherence_rate=0.75,  # Low (< 0.80)
+        avg_cardiovascular_coupling=0.055,
+        tss_completion_rate=0.94,
+    )
+
+    # Should have red flag
+    assert result["validation"]["validated"] is False
+    assert len(result["validation"]["red_flags"]) == 1
+    assert "Discipline faible" in result["validation"]["red_flags"][0]
+
+    # TSS should be reduced 30%
+    original_tss = result["tss_per_week"]
+    adjusted_tss = result["tss_per_week_adjusted"]
+    assert adjusted_tss < original_tss
+    assert abs(adjusted_tss - original_tss * 0.7) <= 1  # Within rounding
+
+    # Confidence should be reduced
+    assert result["validation"]["confidence"] == 0.7
+
+    # Recommendation should contain red flag info
+    assert "🚨" in result["recommendation"]
+
+
+def test_enhanced_validation_high_coupling():
+    """Test enhanced validation with high cardiovascular coupling (> 0.08)."""
+    controller = DiscretePIDController(kp=0.008, ki=0.001, kd=0.12, setpoint=260)
+
+    result = controller.compute_cycle_correction_enhanced(
+        measured_ftp=206,
+        cycle_duration_weeks=6,
+        adherence_rate=0.92,
+        avg_cardiovascular_coupling=0.095,  # High (> 0.08)
+        tss_completion_rate=0.94,
+    )
+
+    # Should have red flag
+    assert result["validation"]["validated"] is False
+    assert "Surcharge détectée" in result["validation"]["red_flags"][0]
+
+    # TSS should be reduced 40%
+    original_tss = result["tss_per_week"]
+    adjusted_tss = result["tss_per_week_adjusted"]
+    assert adjusted_tss < original_tss
+    assert abs(adjusted_tss - original_tss * 0.6) <= 1  # Within rounding
+
+    # Confidence should be 0.6
+    assert result["validation"]["confidence"] == 0.6
+
+
+def test_enhanced_validation_low_tss_completion():
+    """Test enhanced validation with low TSS completion (< 0.85)."""
+    controller = DiscretePIDController(kp=0.008, ki=0.001, kd=0.12, setpoint=260)
+
+    result = controller.compute_cycle_correction_enhanced(
+        measured_ftp=206,
+        cycle_duration_weeks=6,
+        adherence_rate=0.92,
+        avg_cardiovascular_coupling=0.055,
+        tss_completion_rate=0.82,  # Low (< 0.85)
+    )
+
+    # Should have red flag
+    assert result["validation"]["validated"] is False
+    assert "Capacité insuffisante" in result["validation"]["red_flags"][0]
+
+    # TSS should be capped at 5 if original > 5
+    adjusted_tss = result["tss_per_week_adjusted"]
+    assert adjusted_tss <= 5
+
+    # Confidence should be 0.8
+    assert result["validation"]["confidence"] == 0.8
+
+
+def test_enhanced_validation_multiple_red_flags():
+    """Test enhanced validation with multiple red flags."""
+    controller = DiscretePIDController(kp=0.008, ki=0.001, kd=0.12, setpoint=260)
+
+    result = controller.compute_cycle_correction_enhanced(
+        measured_ftp=206,
+        cycle_duration_weeks=6,
+        adherence_rate=0.75,  # Low
+        avg_cardiovascular_coupling=0.095,  # High
+        tss_completion_rate=0.82,  # Low
+    )
+
+    # Should have 3 red flags
+    assert result["validation"]["validated"] is False
+    assert len(result["validation"]["red_flags"]) == 3
+
+    # Confidence should be multiplicative: 0.7 * 0.6 * 0.8 = 0.34
+    assert result["validation"]["confidence"] == 0.34
+
+    # TSS should be heavily reduced
+    adjusted_tss = result["tss_per_week_adjusted"]
+    assert adjusted_tss <= 5  # Capped by capacity check
+
+
+def test_enhanced_validation_warnings_only():
+    """Test enhanced validation with warnings but no red flags."""
+    controller = DiscretePIDController(kp=0.008, ki=0.001, kd=0.12, setpoint=260)
+
+    result = controller.compute_cycle_correction_enhanced(
+        measured_ftp=206,
+        cycle_duration_weeks=6,
+        adherence_rate=0.92,
+        avg_cardiovascular_coupling=0.07,  # Warning level (0.06-0.08)
+        tss_completion_rate=0.88,  # Warning level (0.85-0.90)
+    )
+
+    # Should be validated (no red flags)
+    assert result["validation"]["validated"] is True
+    assert len(result["validation"]["red_flags"]) == 0
+
+    # Should have 2 warnings
+    assert len(result["validation"]["warnings"]) == 2
+    assert "Qualité dégradée" in result["validation"]["warnings"][0]
+    assert "Capacité limite" in result["validation"]["warnings"][1]
+
+    # Confidence should be reduced but not drastically: 0.9 * 0.95 = 0.855 → 0.85
+    assert result["validation"]["confidence"] == 0.85
+
+
+def test_enhanced_validation_gains_reduction_cumulative():
+    """Test that gains reductions are cumulative."""
+    controller = DiscretePIDController(kp=0.008, ki=0.001, kd=0.12, setpoint=260)
+
+    # Base correction with 54W error should give ~8 TSS
+    result = controller.compute_cycle_correction_enhanced(
+        measured_ftp=206,
+        cycle_duration_weeks=6,
+        adherence_rate=0.75,  # 0.7x reduction
+        avg_cardiovascular_coupling=0.095,  # 0.6x reduction
+        tss_completion_rate=0.94,  # No reduction
+    )
+
+    # Combined reduction: 0.7 * 0.6 = 0.42x
+    original_tss = result["tss_per_week"]
+    adjusted_tss = result["tss_per_week_adjusted"]
+
+    expected_adjusted = round(original_tss * 0.7 * 0.6)
+    assert adjusted_tss == expected_adjusted
