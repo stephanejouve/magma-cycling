@@ -7,7 +7,11 @@ including fiber profile adjustments and duration considerations.
 
 import pytest
 
-from cyclisme_training_logs.intelligence.biomechanics import calculer_cadence_optimale
+from cyclisme_training_logs.intelligence.biomechanics import (
+    calculer_cadence_optimale,
+    calculer_cout_energetique,
+    calculer_cout_energetique_from_activity,
+)
 
 # ============================================================================
 # BASIC CADENCE TESTS - ZONE FTP
@@ -400,3 +404,173 @@ def test_pid_grappe_integration_endurant_long_endurance():
 
     assert result["cadence_cible"] == 75
     assert result["ajustement_biomecanique"] == 1.0  # Perfect match
+
+
+# ============================================================================
+# ENERGY COST (CE) TESTS
+# ============================================================================
+
+
+def test_cout_energetique_sweet_spot_optimal_cadence():
+    """Test CE calculation for Sweet-Spot with optimal cadence."""
+    # 60 min @ 250W, 90 rpm (optimal), 70 kg
+    ce = calculer_cout_energetique(250, 90, 3600, 70.0)
+
+    assert ce["energie_totale_kj"] == 900.0  # 250W × 3600s / 1000
+    assert ce["efficience_mecanique"] == 21.0  # Optimal cadence, no penalty
+    assert ce["cout_metabolique_w_kg"] == 3.57  # 250W / 70kg
+    assert ce["vitesse_estimee_kmh"] == 10.0  # sqrt(250 / 2.5)
+
+
+def test_cout_energetique_vo2_high_cadence():
+    """Test CE calculation for VO2 with high cadence."""
+    # 5 min @ 350W, 105 rpm, 70 kg
+    ce = calculer_cout_energetique(350, 105, 300, 70.0)
+
+    assert ce["energie_totale_kj"] == 105.0  # 350W × 300s / 1000
+    assert ce["efficience_mecanique"] == 20.4  # 21.0 × 0.97 (slight penalty at 105 rpm)
+    assert ce["cout_metabolique_w_kg"] == 5.0  # 350W / 70kg
+
+
+def test_cout_energetique_low_cadence_penalty():
+    """Test CE calculation with low cadence penalty."""
+    # 45 min @ 200W, 70 rpm (slightly low, not very low), 70 kg
+    ce = calculer_cout_energetique(200, 70, 2700, 70.0)
+
+    assert ce["energie_totale_kj"] == 540.0  # 200W × 2700s / 1000
+    assert ce["efficience_mecanique"] == 19.9  # 21.0 × 0.95 (-5% for 70-85 rpm)
+    assert ce["cout_metabolique_w_kg"] == 2.86
+
+
+def test_cout_energetique_very_low_cadence():
+    """Test CE calculation with very low cadence."""
+    # 60 min @ 220W, 60 rpm (very low), 70 kg
+    ce = calculer_cout_energetique(220, 60, 3600, 70.0)
+
+    assert ce["energie_totale_kj"] == 792.0  # 220W × 3600s / 1000
+    assert ce["efficience_mecanique"] == 18.9  # 21.0 × 0.90 (-10% penalty)
+    assert ce["cout_metabolique_w_kg"] == 3.14
+
+
+def test_cout_energetique_very_high_cadence():
+    """Test CE calculation with very high cadence."""
+    # 45 min @ 280W, 115 rpm (very high), 70 kg
+    ce = calculer_cout_energetique(280, 115, 2700, 70.0)
+
+    assert ce["energie_totale_kj"] == 756.0  # 280W × 2700s / 1000
+    assert ce["efficience_mecanique"] == 19.3  # 21.0 × 0.92 (-8% penalty)
+    assert ce["cout_metabolique_w_kg"] == 4.0
+
+
+def test_cout_energetique_slightly_low_cadence():
+    """Test CE calculation with slightly low cadence."""
+    # 60 min @ 240W, 80 rpm (slightly low), 70 kg
+    ce = calculer_cout_energetique(240, 80, 3600, 70.0)
+
+    assert ce["energie_totale_kj"] == 864.0  # 240W × 3600s / 1000
+    assert ce["efficience_mecanique"] == 19.9  # 21.0 × 0.95 = 19.95 → 19.9
+    assert ce["cout_metabolique_w_kg"] == 3.43
+
+
+def test_cout_energetique_slightly_high_cadence():
+    """Test CE calculation with slightly high cadence."""
+    # 60 min @ 260W, 100 rpm (slightly high), 70 kg
+    ce = calculer_cout_energetique(260, 100, 3600, 70.0)
+
+    assert ce["energie_totale_kj"] == 936.0  # 260W × 3600s / 1000
+    assert ce["efficience_mecanique"] == 20.4  # 21.0 × 0.97 (-3% penalty)
+    assert ce["cout_metabolique_w_kg"] == 3.71
+
+
+def test_cout_energetique_different_weight():
+    """Test CE calculation with different athlete weight."""
+    # 60 min @ 250W, 90 rpm, 80 kg
+    ce = calculer_cout_energetique(250, 90, 3600, 80.0)
+
+    assert ce["energie_totale_kj"] == 900.0
+    assert ce["cout_metabolique_w_kg"] == 3.12  # 250W / 80kg (lower W/kg)
+
+
+def test_cout_energetique_cout_km():
+    """Test energy cost per km calculation."""
+    # 60 min @ 250W, 90 rpm, 70 kg
+    # Speed ≈ 10 km/h → Distance = 10 km
+    # CE = 900 kJ / 10 km = 90 kJ/km
+    ce = calculer_cout_energetique(250, 90, 3600, 70.0)
+
+    assert ce["vitesse_estimee_kmh"] == 10.0
+    assert ce["cout_km_kj"] == 90.0
+
+
+def test_cout_energetique_from_activity_complete():
+    """Test CE calculation from complete activity data."""
+    activity = {
+        "icu_average_watts": 250,
+        "average_cadence": 90,
+        "moving_time": 3600,
+        "distance": 30000,  # 30 km
+    }
+
+    ce = calculer_cout_energetique_from_activity(activity, 70.0)
+
+    assert ce is not None
+    assert ce["energie_totale_kj"] == 900.0
+    assert ce["distance_reelle_km"] == 30.0
+    assert ce["cout_km_reel_kj"] == 30.0  # 900 kJ / 30 km
+
+
+def test_cout_energetique_from_activity_no_distance():
+    """Test CE calculation from activity without distance."""
+    activity = {
+        "icu_average_watts": 250,
+        "average_cadence": 90,
+        "moving_time": 3600,
+    }
+
+    ce = calculer_cout_energetique_from_activity(activity, 70.0)
+
+    assert ce is not None
+    assert ce["energie_totale_kj"] == 900.0
+    assert "distance_reelle_km" not in ce
+    assert "cout_km_reel_kj" not in ce
+
+
+def test_cout_energetique_from_activity_missing_power():
+    """Test CE calculation with missing power field."""
+    activity = {
+        "average_cadence": 90,
+        "moving_time": 3600,
+    }
+
+    ce = calculer_cout_energetique_from_activity(activity, 70.0)
+
+    assert ce is None
+
+
+def test_cout_energetique_from_activity_missing_cadence():
+    """Test CE calculation with missing cadence field."""
+    activity = {
+        "icu_average_watts": 250,
+        "moving_time": 3600,
+    }
+
+    ce = calculer_cout_energetique_from_activity(activity, 70.0)
+
+    assert ce is None
+
+
+def test_cout_energetique_from_activity_average_watts_fallback():
+    """Test CE calculation using average_watts fallback."""
+    activity = {
+        "average_watts": 240,  # Fallback field
+        "average_cadence": 88,
+        "moving_time": 3600,
+        "distance": 28000,
+    }
+
+    ce = calculer_cout_energetique_from_activity(activity, 70.0)
+
+    assert ce is not None
+    assert ce["energie_totale_kj"] == 864.0  # 240W × 3600s / 1000
+    assert ce["distance_reelle_km"] == 28.0
+    assert ce["cout_km_reel_kj"] == 30.86  # 864 / 28
