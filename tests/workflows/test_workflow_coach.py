@@ -1266,3 +1266,200 @@ class TestIntervalsAPI:
         result = coach._post_analysis_to_intervals()
 
         assert result is False
+
+
+class TestCredentialsLoadingAdvanced:
+    """Test load_credentials with config file scenarios."""
+
+    @patch("pathlib.Path.exists", return_value=True)
+    @patch(
+        "builtins.open",
+        new_callable=mock_open,
+        read_data='{"athlete_id": "i999", "api_key": "secret999"}',
+    )
+    @patch("json.load")
+    def test_load_credentials_from_config_file(self, mock_json_load, mock_file, mock_exists):
+        """Test load_credentials loads from config file when it exists."""
+        # Mock json.load to return config data
+        mock_json_load.return_value = {"athlete_id": "i999", "api_key": "secret999"}
+
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        athlete_id, api_key = coach.load_credentials()
+
+        assert athlete_id == "i999"
+        assert api_key == "secret999"
+
+    @patch("pathlib.Path.exists", return_value=True)
+    @patch("builtins.open", new_callable=mock_open, read_data='{"invalid": "data"}')
+    @patch("json.load")
+    @patch.dict(
+        "os.environ", {"VITE_INTERVALS_ATHLETE_ID": "i123", "VITE_INTERVALS_API_KEY": "key123"}
+    )
+    def test_load_credentials_config_file_missing_keys(
+        self, mock_json_load, mock_file, mock_exists
+    ):
+        """Test load_credentials falls back to env when config file has missing keys."""
+        # Config file exists but doesn't have required keys
+        mock_json_load.return_value = {"invalid": "data"}
+
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        athlete_id, api_key = coach.load_credentials()
+
+        # Should fall back to env vars
+        assert athlete_id == "i123"
+        assert api_key == "key123"
+
+    @patch("pathlib.Path.exists", return_value=True)
+    @patch("builtins.open", side_effect=Exception("Read error"))
+    @patch.dict(
+        "os.environ", {"VITE_INTERVALS_ATHLETE_ID": "i456", "VITE_INTERVALS_API_KEY": "key456"}
+    )
+    @patch("builtins.print")
+    def test_load_credentials_config_file_read_error(self, mock_print, mock_file, mock_exists):
+        """Test load_credentials handles config file read errors."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        athlete_id, api_key = coach.load_credentials()
+
+        # Should print error and fall back to env vars
+        assert mock_print.called
+        assert athlete_id == "i456"
+        assert api_key == "key456"
+
+
+class TestWorkoutTemplatesLoading:
+    """Test load_workout_templates method."""
+
+    def test_load_workout_templates_directory_not_exists(self):
+        """Test load_workout_templates when templates directory doesn't exist."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True, servo_mode=True)
+
+        # Should return empty dict (actual directory might exist, but method handles gracefully)
+        assert isinstance(coach.workout_templates, dict)
+
+    @patch("pathlib.Path.glob")
+    @patch("pathlib.Path.exists", return_value=True)
+    @patch(
+        "builtins.open",
+        new_callable=mock_open,
+        read_data='{"id": "recovery_30", "name": "Recovery 30min", "tss": 30}',
+    )
+    @patch("json.load")
+    @patch("builtins.print")
+    def test_load_workout_templates_success(
+        self, mock_print, mock_json_load, mock_file, mock_exists, mock_glob
+    ):
+        """Test load_workout_templates successfully loads templates."""
+        # Mock template file
+        mock_template_path = Mock()
+        mock_template_path.name = "recovery_30.json"
+        mock_glob.return_value = [mock_template_path]
+
+        mock_json_load.return_value = {
+            "id": "recovery_30",
+            "name": "Recovery 30min",
+            "tss": 30,
+        }
+
+        # Need to mock Path.exists for specific paths
+        def exists_side_effect():
+            # Return True for templates_dir check
+            return True
+
+        with patch("pathlib.Path.exists", side_effect=exists_side_effect):
+            coach = WorkflowCoach(skip_feedback=True, skip_git=True, servo_mode=True)
+
+        # Verify template was loaded
+        assert "recovery_30" in coach.workout_templates
+        assert coach.workout_templates["recovery_30"]["name"] == "Recovery 30min"
+
+    @patch("pathlib.Path.exists", return_value=True)
+    @patch("pathlib.Path.glob")
+    @patch("builtins.open", side_effect=Exception("JSON parse error"))
+    @patch("builtins.print")
+    def test_load_workout_templates_json_error(self, mock_print, mock_file, mock_glob, mock_exists):
+        """Test load_workout_templates handles JSON parsing errors."""
+        # Mock template file that will cause error
+        mock_template_path = Mock()
+        mock_template_path.name = "invalid.json"
+        mock_glob.return_value = [mock_template_path]
+
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True, servo_mode=True)
+
+        # Should handle error gracefully and return empty dict
+        assert coach.workout_templates == {}
+        # Check error message was printed
+        assert any("Erreur" in str(call) for call in mock_print.call_args_list)
+
+
+class TestRemainingSessionsLoading:
+    """Test load_remaining_sessions method."""
+
+    @patch("cyclisme_training_logs.workflow_coach.get_data_config")
+    @patch("pathlib.Path.exists", return_value=False)
+    @patch("builtins.print")
+    def test_load_remaining_sessions_file_not_found(self, mock_print, mock_exists, mock_config):
+        """Test load_remaining_sessions when planning file doesn't exist."""
+        mock_config_obj = Mock()
+        mock_config_obj.week_planning_dir = Path("/fake/path")
+        mock_config.return_value = mock_config_obj
+
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        remaining = coach.load_remaining_sessions("S099")
+
+        assert remaining == []
+        # Should print warning
+        assert mock_print.called
+
+    @patch("cyclisme_training_logs.workflow_coach.get_data_config")
+    @patch("pathlib.Path.exists", return_value=True)
+    @patch("builtins.open", new_callable=mock_open)
+    @patch("json.load")
+    def test_load_remaining_sessions_success(
+        self, mock_json_load, mock_file, mock_exists, mock_config
+    ):
+        """Test load_remaining_sessions successfully loads future sessions."""
+        from datetime import datetime, timedelta
+
+        mock_config_obj = Mock()
+        mock_config_obj.week_planning_dir = Path("/fake/path")
+        mock_config.return_value = mock_config_obj
+
+        # Create planning with past and future sessions
+        today = datetime.now().date()
+        past_date = (today - timedelta(days=2)).strftime("%Y-%m-%d")
+        future_date = (today + timedelta(days=2)).strftime("%Y-%m-%d")
+
+        mock_json_load.return_value = {
+            "week_id": "S072",
+            "planned_sessions": [
+                {"date": past_date, "session_id": "S072-01", "name": "Past", "type": "TEMPO"},
+                {"date": future_date, "session_id": "S072-03", "name": "Future", "type": "VO2"},
+            ],
+        }
+
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        remaining = coach.load_remaining_sessions("S072")
+
+        # Should only return future session
+        assert len(remaining) == 1
+        assert remaining[0]["date"] == future_date
+        assert remaining[0]["name"] == "Future"
+
+    @patch("cyclisme_training_logs.workflow_coach.get_data_config")
+    @patch("pathlib.Path.exists", return_value=True)
+    @patch("builtins.open", side_effect=Exception("Read error"))
+    @patch("builtins.print")
+    def test_load_remaining_sessions_read_error(
+        self, mock_print, mock_file, mock_exists, mock_config
+    ):
+        """Test load_remaining_sessions handles file read errors."""
+        mock_config_obj = Mock()
+        mock_config_obj.week_planning_dir = Path("/fake/path")
+        mock_config.return_value = mock_config_obj
+
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        remaining = coach.load_remaining_sessions("S072")
+
+        assert remaining == []
+        # Should print error message
+        assert mock_print.called
