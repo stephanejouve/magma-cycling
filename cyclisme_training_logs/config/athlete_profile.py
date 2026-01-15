@@ -38,6 +38,19 @@ class AthleteProfile(BaseModel):
         sleep_dependent: Whether performance is strongly sleep-dependent
         ftp: Functional Threshold Power in watts
         weight: Athlete weight in kg
+        profil_fibres: Muscle fiber profile type (affects optimal cadence and power profile)
+        cadence_offset: Personal cadence offset adjustment in rpm (default: 0)
+
+    Biomechanics Fields (Grappe Integration):
+        profil_fibres:
+            - "explosif": Fast-twitch dominant (better at VO2, higher optimal cadence)
+            - "mixte": Balanced fiber type (standard recommendations)
+            - "endurant": Slow-twitch dominant (better at endurance, lower optimal cadence)
+
+        cadence_offset:
+            Personal adjustment to optimal cadence recommendations (rpm)
+            Range: -15 to +15 rpm typical
+            Example: -5 = athlete prefers 5 rpm lower than Grappe recommendations
     """
 
     age: int = Field(gt=0, le=120, description="Athlete age in years")
@@ -48,6 +61,18 @@ class AthleteProfile(BaseModel):
     sleep_dependent: bool = Field(description="Whether performance is strongly sleep-dependent")
     ftp: int = Field(gt=0, description="Functional Threshold Power in watts")
     weight: float = Field(gt=0, description="Athlete weight in kg")
+
+    # Biomechanics fields (Grappe integration)
+    profil_fibres: Literal["explosif", "mixte", "endurant"] = Field(
+        default="mixte",
+        description="Muscle fiber profile type (explosif/mixte/endurant)",
+    )
+    cadence_offset: int = Field(
+        default=0,
+        ge=-15,
+        le=15,
+        description="Personal cadence offset adjustment in rpm",
+    )
 
     @classmethod
     def from_env(cls) -> "AthleteProfile":
@@ -61,6 +86,8 @@ class AthleteProfile(BaseModel):
             ATHLETE_SLEEP_DEPENDENT: Sleep dependency (true/false)
             ATHLETE_FTP: Functional Threshold Power in watts (int)
             ATHLETE_WEIGHT: Weight in kg (float)
+            ATHLETE_PROFIL_FIBRES: Fiber profile (explosif/mixte/endurant, default: mixte)
+            ATHLETE_CADENCE_OFFSET: Cadence offset in rpm (int, default: 0)
 
         Returns:
             AthleteProfile: Configured athlete profile
@@ -72,6 +99,7 @@ class AthleteProfile(BaseModel):
         Examples:
             >>> profile = AthleteProfile.from_env()
             >>> print(f"Category: {profile.category}, Age: {profile.age}")
+            >>> print(f"Fiber profile: {profile.profil_fibres}")
         """
         try:
             age = int(os.getenv("ATHLETE_AGE", "0"))
@@ -80,6 +108,10 @@ class AthleteProfile(BaseModel):
             sleep_dep_str = os.getenv("ATHLETE_SLEEP_DEPENDENT", "false").lower()
             ftp = int(os.getenv("ATHLETE_FTP", "0"))
             weight = float(os.getenv("ATHLETE_WEIGHT", "0"))
+
+            # Biomechanics fields (optional, with defaults)
+            profil_fibres = os.getenv("ATHLETE_PROFIL_FIBRES", "mixte").lower()
+            cadence_offset = int(os.getenv("ATHLETE_CADENCE_OFFSET", "0"))
 
             # Parse boolean
             sleep_dependent = sleep_dep_str in ["true", "1", "yes", "on"]
@@ -103,6 +135,8 @@ class AthleteProfile(BaseModel):
                 sleep_dependent=sleep_dependent,
                 ftp=ftp,
                 weight=weight,
+                profil_fibres=profil_fibres,  # type: ignore
+                cadence_offset=cadence_offset,
             )
 
         except ValidationError as e:

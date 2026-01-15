@@ -191,3 +191,147 @@ class TestAthleteProfileMethods:
                 ftp=0,
                 weight=72.5,
             )
+
+
+class TestAthleteProfileBiomechanics:
+    """Tests for biomechanics fields (Grappe integration)."""
+
+    def test_default_biomechanics_fields(self):
+        """Test default values for biomechanics fields."""
+        profile = AthleteProfile(
+            age=35,
+            category="senior",
+            recovery_capacity="normal",
+            sleep_dependent=False,
+            ftp=280,
+            weight=70.0,
+        )
+
+        assert profile.profil_fibres == "mixte"
+        assert profile.cadence_offset == 0
+
+    def test_profil_fibres_explosif(self):
+        """Test explosif fiber profile."""
+        profile = AthleteProfile(
+            age=28,
+            category="senior",
+            recovery_capacity="normal",
+            sleep_dependent=False,
+            ftp=320,
+            weight=68.0,
+            profil_fibres="explosif",
+        )
+
+        assert profile.profil_fibres == "explosif"
+
+    def test_profil_fibres_endurant(self):
+        """Test endurant fiber profile."""
+        profile = AthleteProfile(
+            age=42,
+            category="master",
+            recovery_capacity="exceptional",
+            sleep_dependent=True,
+            ftp=250,
+            weight=73.0,
+            profil_fibres="endurant",
+        )
+
+        assert profile.profil_fibres == "endurant"
+
+    def test_invalid_profil_fibres(self):
+        """Test invalid fiber profile."""
+        with pytest.raises(ValueError):
+            AthleteProfile(
+                age=35,
+                category="senior",
+                recovery_capacity="normal",
+                sleep_dependent=False,
+                ftp=280,
+                weight=70.0,
+                profil_fibres="invalid",  # type: ignore
+            )
+
+    def test_cadence_offset_positive(self):
+        """Test positive cadence offset."""
+        profile = AthleteProfile(
+            age=35,
+            category="senior",
+            recovery_capacity="normal",
+            sleep_dependent=False,
+            ftp=280,
+            weight=70.0,
+            cadence_offset=10,
+        )
+
+        assert profile.cadence_offset == 10
+
+    def test_cadence_offset_negative(self):
+        """Test negative cadence offset."""
+        profile = AthleteProfile(
+            age=35,
+            category="senior",
+            recovery_capacity="normal",
+            sleep_dependent=False,
+            ftp=280,
+            weight=70.0,
+            cadence_offset=-5,
+        )
+
+        assert profile.cadence_offset == -5
+
+    def test_cadence_offset_out_of_range_high(self):
+        """Test cadence offset too high."""
+        with pytest.raises(ValueError):
+            AthleteProfile(
+                age=35,
+                category="senior",
+                recovery_capacity="normal",
+                sleep_dependent=False,
+                ftp=280,
+                weight=70.0,
+                cadence_offset=20,  # Above max 15
+            )
+
+    def test_cadence_offset_out_of_range_low(self):
+        """Test cadence offset too low."""
+        with pytest.raises(ValueError):
+            AthleteProfile(
+                age=35,
+                category="senior",
+                recovery_capacity="normal",
+                sleep_dependent=False,
+                ftp=280,
+                weight=70.0,
+                cadence_offset=-20,  # Below min -15
+            )
+
+    def test_from_env_with_biomechanics_fields(self, monkeypatch):
+        """Test loading profile with biomechanics fields from env."""
+        monkeypatch.setenv("ATHLETE_AGE", "35")
+        monkeypatch.setenv("ATHLETE_CATEGORY", "senior")
+        monkeypatch.setenv("ATHLETE_RECOVERY_CAPACITY", "normal")
+        monkeypatch.setenv("ATHLETE_SLEEP_DEPENDENT", "false")
+        monkeypatch.setenv("ATHLETE_FTP", "280")
+        monkeypatch.setenv("ATHLETE_WEIGHT", "70.0")
+        monkeypatch.setenv("ATHLETE_PROFIL_FIBRES", "explosif")
+        monkeypatch.setenv("ATHLETE_CADENCE_OFFSET", "5")
+
+        profile = AthleteProfile.from_env()
+
+        assert profile.profil_fibres == "explosif"
+        assert profile.cadence_offset == 5
+
+    def test_from_env_without_biomechanics_fields(self, monkeypatch):
+        """Test loading profile without biomechanics fields uses defaults."""
+        monkeypatch.setenv("ATHLETE_AGE", "35")
+        monkeypatch.setenv("ATHLETE_CATEGORY", "senior")
+        monkeypatch.setenv("ATHLETE_RECOVERY_CAPACITY", "normal")
+        monkeypatch.setenv("ATHLETE_SLEEP_DEPENDENT", "false")
+        monkeypatch.setenv("ATHLETE_FTP", "280")
+        monkeypatch.setenv("ATHLETE_WEIGHT", "70.0")
+        # Biomechanics fields not set
+
+        profile = AthleteProfile.from_env()
+
+        assert profile.profil_fibres == "mixte"  # Default
+        assert profile.cadence_offset == 0  # Default
