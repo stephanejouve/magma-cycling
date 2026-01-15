@@ -1822,6 +1822,99 @@ class WorkflowCoach:
 
         print("=" * 70)
 
+    def _extract_metrics_from_analysis(self) -> dict:
+        """Extract key metrics from markdown analysis.
+
+        Returns:
+            Dict with tsb, sleep_hours, rpe, decoupling, avg_hr extracted from analysis_result.
+        """
+        import re
+
+        metrics = {
+            "tsb": None,
+            "sleep_hours": None,
+            "rpe": None,
+            "decoupling": None,
+            "avg_hr": None,
+        }
+
+        if not hasattr(self, "analysis_result") or not self.analysis_result:
+            return metrics
+
+        analysis = self.analysis_result
+
+        # Extract TSB (format: "TSB : +6" or "TSB : -3")
+        tsb_match = re.search(r"TSB\s*:\s*([+-]?\d+)", analysis)
+        if tsb_match:
+            metrics["tsb"] = int(tsb_match.group(1))
+
+        # Extract sleep (format: "Sommeil : 7.5h" or "Sommeil : 0.0h")
+        sleep_match = re.search(r"Sommeil\s*:\s*(\d+\.?\d*)h", analysis)
+        if sleep_match:
+            metrics["sleep_hours"] = float(sleep_match.group(1))
+
+        # Extract decoupling (format: "Découplage : 11.2%" or "Découplage cardiovasculaire : 5.8%")
+        decoupling_match = re.search(r"Découplage[^:]*:\s*(\d+\.?\d*)%", analysis)
+        if decoupling_match:
+            metrics["decoupling"] = float(decoupling_match.group(1))
+
+        # Extract avg HR (format: "FC moyenne : 93bpm")
+        hr_match = re.search(r"FC moyenne\s*:\s*(\d+)bpm", analysis)
+        if hr_match:
+            metrics["avg_hr"] = int(hr_match.group(1))
+
+        # Try to get RPE from feedback file if not in analysis
+        try:
+            feedback_file = Path(".athlete_feedback") / "last_feedback.json"
+            if feedback_file.exists():
+                with open(feedback_file) as f:
+                    feedback = json.load(f)
+                    metrics["rpe"] = feedback.get("rpe")
+        except Exception:
+            pass
+
+        return metrics
+
+    def _prompt_sleep_if_missing(self, sleep_hours: float | None) -> float:
+        """Prompt athlete for sleep duration if missing from Intervals.icu.
+
+        Args:
+            sleep_hours: Sleep hours from Intervals.icu (or None)
+
+        Returns:
+            float: Sleep hours (from user input or original value)
+        """
+        # If sleep data is available and > 0, return as-is
+        if sleep_hours and sleep_hours > 0:
+            return sleep_hours
+
+        print()
+        print("⚠️  Données de sommeil non disponibles dans Intervals.icu")
+        print("   Pour une recommandation plus précise, tu peux saisir la durée de sommeil.")
+        print()
+
+        while True:
+            sleep_input = input("   Sommeil (format 7h30, ou Entrée pour ignorer) : ").strip()
+
+            if not sleep_input:
+                # User skipped, return 0.0
+                return 0.0
+
+            # Parse format "7h30", "7h", "7.5", "7,5"
+            try:
+                # Try formats: "7h30", "7h", "7.5"
+                if "h" in sleep_input:
+                    parts = sleep_input.lower().replace("h", ":").split(":")
+                    hours = float(parts[0])
+                    minutes = float(parts[1]) if len(parts) > 1 else 0.0
+                    total_hours = hours + (minutes / 60.0)
+                    return round(total_hours, 1)
+                else:
+                    # Try direct decimal: "7.5" or "7,5"
+                    return round(float(sleep_input.replace(",", ".")), 1)
+            except ValueError:
+                print("   ⚠️  Format invalide. Exemples: 7h30, 7h, 7.5")
+
     def _collect_rest_feedback(self, session_data: dict) -> dict:
         """Collect feedback athlète pour jour de repos.
 
@@ -2868,12 +2961,44 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
             self.wait_user()
             return
 
+        # Extract metrics from analysis
+        print()
+        print("🔍 Extraction des métriques de la séance analysée...")
+        metrics = self._extract_metrics_from_analysis()
+
+        # Prompt for sleep if missing
+        if metrics["sleep_hours"] is not None and metrics["sleep_hours"] == 0.0:
+            metrics["sleep_hours"] = self._prompt_sleep_if_missing(metrics["sleep_hours"])
+
+        # Format metrics for prompt
+        tsb_str = f"{metrics['tsb']:+d}" if metrics["tsb"] is not None else "N/A"
+        sleep_str = (
+            f"{metrics['sleep_hours']:.1f}h"
+            if metrics["sleep_hours"] is not None and metrics["sleep_hours"] > 0
+            else "Non disponible"
+        )
+        rpe_str = f"{metrics['rpe']}/10" if metrics["rpe"] is not None else "Non fourni"
+        decoupling_str = (
+            f"{metrics['decoupling']:.1f}%"
+            if metrics["decoupling"] is not None
+            else "Non disponible"
+        )
+        hr_str = f"{metrics['avg_hr']}bpm" if metrics["avg_hr"] is not None else "Non disponible"
+
         # Generate supplementary prompt for AI
         planning_context = self.format_remaining_sessions_compact(remaining_sessions)
 
         supplementary_prompt = f"""# ASSERVISSEMENT PLANNING - Demande Coach AI.
 
 Contexte : Tu viens d'analyser la séance du jour.
+
+## Métriques de la séance analysée
+- TSB pré-séance : {tsb_str}
+- Sommeil : {sleep_str}
+- RPE : {rpe_str}
+- Découplage cardiovasculaire : {decoupling_str}
+- FC moyenne : {hr_str}
+
 {planning_context}
 
 ## Catalogue Workouts Remplacement
@@ -2894,13 +3019,18 @@ Si modification planning nécessaire, utilise ces templates prédéfinis :
 
 ## Instructions
 
-Basé sur l'analyse de la séance du jour et les métriques (HRV, RPE, découplage, FC), **recommandes-tu des ajustements au planning restant ?**
+Basé sur l'analyse de la séance du jour et les métriques réelles ci-dessus, **recommandes-tu des ajustements au planning restant ?**
 
 Critères de décision:
 - HRV < -10% → Envisager allégement
 - RPE > 8/10 en zone endurance → Signal alarme
 - Découplage > 7.5% → Fatigue cardiaque
 - Sommeil < 7h → Vulnérabilité accrue
+
+**IMPORTANT:**
+- Utilise UNIQUEMENT les valeurs de métriques fournies ci-dessus
+- Si une métrique est "Non disponible", ne PAS inventer de valeur
+- Justifier les recommandations avec les métriques RÉELLES
 
 **Format JSON si modification recommandée** :
 ```json
@@ -2909,7 +3039,7 @@ Critères de décision:
   "target_date": "YYYY-MM-DD",
   "current_workout": "CODE",
   "template_id": "recovery_active_30tss",
-  "reason": "HRV -15%, prioriser récupération"
+  "reason": "Découplage 11.2%, prioriser récupération"
 }}]}}
 ```
 
