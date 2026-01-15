@@ -336,3 +336,174 @@ class PIDGrappeEnhanced:
             "ajustement_biomecanique": factor_cadence,
             "correction_base": correction_base,
         }
+
+
+def calculer_cout_energetique(
+    puissance_watts: float,
+    cadence_rpm: int,
+    duree_secondes: int,
+    poids_kg: float = 70.0,
+) -> dict[str, float]:
+    """
+    Calculate energy cost (CE) of locomotion based on Grappe research.
+
+    Computes biomechanical efficiency metrics:
+    - Total energy expenditure (kJ)
+    - Energy cost per km (kJ/km, assuming typical cycling speed)
+    - Mechanical efficiency (%)
+    - Metabolic cost (W/kg)
+
+    Energy Cost Concepts (Grappe 2000, p.40-56):
+        - CE (Coût Énergétique): Energy required per unit distance
+        - Lower CE = Better efficiency (less energy for same work)
+        - CE influenced by: cadence, position, bike fit, fatigue
+        - Optimal CE zone: 85-95 rpm for most cyclists
+
+    Mechanical Efficiency Formula:
+        η_mech = (Mechanical Work Output) / (Metabolic Energy Input)
+        Typical range: 18-25% for cycling (20-22% average)
+
+    Args:
+        puissance_watts: Average power output (W)
+        cadence_rpm: Average cadence (rpm)
+        duree_secondes: Session duration (seconds)
+        poids_kg: Athlete weight (kg, default: 70.0)
+
+    Returns:
+        Dict with keys:
+            - energie_totale_kj: Total energy expenditure (kJ)
+            - cout_km_kj: Energy cost per km (kJ/km, at ~30 km/h)
+            - efficience_mecanique: Mechanical efficiency (%)
+            - cout_metabolique_w_kg: Metabolic cost normalized by weight (W/kg)
+            - vitesse_estimee_kmh: Estimated speed based on power (km/h)
+
+    Notes:
+        - Efficiency calculation assumes 21% mechanical efficiency (typical)
+        - Speed estimation uses simplified power model (ignores wind, terrain)
+        - For accurate CE per km, use actual distance from activity data
+
+    Examples:
+        >>> # Sweet-Spot 60 min @ 250W, 90 rpm, 70 kg
+        >>> ce = calculer_cout_energetique(250, 90, 3600, 70.0)
+        >>> ce["energie_totale_kj"]
+        900.0
+        >>> ce["efficience_mecanique"]
+        21.0
+        >>> ce["cout_metabolique_w_kg"]
+        3.57
+
+        >>> # VO2 Max 5 min @ 350W, 105 rpm, 70 kg
+        >>> ce = calculer_cout_energetique(350, 105, 300, 70.0)
+        >>> ce["energie_totale_kj"]
+        105.0
+        >>> ce["cout_metabolique_w_kg"]
+        5.0
+    """
+    # Total mechanical work (kJ)
+    # Work = Power × Time
+    energie_totale_kj = (puissance_watts * duree_secondes) / 1000.0
+
+    # Mechanical efficiency (assume 21% typical for cycling)
+    # Real efficiency varies 18-25% depending on cadence, fitness, fatigue
+    efficience_mecanique = 21.0
+
+    # Adjust efficiency based on cadence (Grappe optimal zone)
+    # Efficiency peaks at 85-95 rpm, decreases outside this range
+    if cadence_rpm < 70:
+        # Very low cadence: muscular inefficiency
+        efficience_mecanique *= 0.90  # -10% efficiency
+    elif cadence_rpm < 85:
+        # Low cadence: slightly suboptimal
+        efficience_mecanique *= 0.95  # -5% efficiency
+    elif 85 <= cadence_rpm <= 95:
+        # Optimal cadence zone: peak efficiency
+        pass  # No adjustment
+    elif cadence_rpm <= 105:
+        # Slightly high cadence: minor cardiovascular cost
+        efficience_mecanique *= 0.97  # -3% efficiency
+    else:
+        # Very high cadence: cardiovascular inefficiency
+        efficience_mecanique *= 0.92  # -8% efficiency
+
+    # Metabolic cost normalized by weight (W/kg)
+    cout_metabolique_w_kg = round(puissance_watts / poids_kg, 2)
+
+    # Estimate speed from power (simplified model)
+    # Rough approximation: P ≈ 2.5 * v² (watts, km/h) for flat terrain
+    # v = sqrt(P / 2.5)
+    vitesse_estimee_kmh = round((puissance_watts / 2.5) ** 0.5, 1)
+
+    # Energy cost per km (kJ/km)
+    # CE = Total Energy / Distance
+    # Distance (km) = Speed (km/h) × Time (h)
+    distance_km = vitesse_estimee_kmh * (duree_secondes / 3600.0)
+    cout_km_kj = round(energie_totale_kj / distance_km, 2) if distance_km > 0 else 0.0
+
+    return {
+        "energie_totale_kj": round(energie_totale_kj, 1),
+        "cout_km_kj": cout_km_kj,
+        "efficience_mecanique": round(efficience_mecanique, 1),
+        "cout_metabolique_w_kg": cout_metabolique_w_kg,
+        "vitesse_estimee_kmh": vitesse_estimee_kmh,
+    }
+
+
+def calculer_cout_energetique_from_activity(
+    activity: dict,
+    poids_kg: float = 70.0,
+) -> dict[str, float] | None:
+    """
+    Calculate energy cost from Intervals.icu activity data.
+
+    Convenience wrapper that extracts metrics from activity dict and
+    computes CE using actual distance if available.
+
+    Args:
+        activity: Activity dict from Intervals.icu API with fields:
+            - icu_average_watts or average_watts: Average power (W)
+            - average_cadence: Average cadence (rpm)
+            - moving_time: Duration (seconds)
+            - distance: Distance (meters, optional)
+        poids_kg: Athlete weight (kg, default: 70.0)
+
+    Returns:
+        Dict from calculer_cout_energetique() with additional fields:
+            - distance_reelle_km: Actual distance if available (km)
+            - cout_km_reel_kj: Actual energy cost per km (kJ/km)
+        Returns None if required fields missing
+
+    Example:
+        >>> activity = {
+        ...     "icu_average_watts": 250,
+        ...     "average_cadence": 90,
+        ...     "moving_time": 3600,
+        ...     "distance": 30000  # 30 km
+        ... }
+        >>> ce = calculer_cout_energetique_from_activity(activity, 70.0)
+        >>> ce["cout_km_reel_kj"]
+        30.0  # 900 kJ / 30 km
+    """
+    # Extract metrics from activity
+    puissance = activity.get("icu_average_watts") or activity.get("average_watts")
+    cadence = activity.get("average_cadence")
+    duree = activity.get("moving_time")
+
+    if not all([puissance, cadence, duree]):
+        return None
+
+    # Calculate base CE
+    ce = calculer_cout_energetique(
+        puissance_watts=puissance,
+        cadence_rpm=int(cadence),
+        duree_secondes=int(duree),
+        poids_kg=poids_kg,
+    )
+
+    # If actual distance available, compute real CE per km
+    distance_m = activity.get("distance")
+    if distance_m and distance_m > 0:
+        distance_km = distance_m / 1000.0
+        ce["distance_reelle_km"] = round(distance_km, 2)
+        ce["cout_km_reel_kj"] = round(ce["energie_totale_kj"] / distance_km, 2)
+
+    return ce
