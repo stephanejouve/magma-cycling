@@ -61,6 +61,9 @@ logs/*.txt
 logs/erreurs_*.log
 logs/sortie_*.log
 
+# Session transcripts (too large for git)
+project-docs/logs/*.jsonl
+
 # Fichiers spécifiques projet (si besoin)
 # private/
 # drafts/
