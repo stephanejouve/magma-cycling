@@ -1229,6 +1229,326 @@ def _extract_gear_metrics(self, activity_id: str) -> dict[str, Any] | None:
 
 ---
 
+### Sprint R9.C - Upload Workouts UX Enhancement (Planifié Q1 2026)
+
+**Focus :** Simplifier upload de workouts individuels avec mode single-workout dédié
+
+**Status :** 📋 ROADMAP (Identifié 16 Jan 2026)
+
+**Priorité :** P2 (Nice-to-have, améliore UX mais non bloquant)
+
+#### Contexte
+
+**Situation actuelle (upload_workouts.py) :**
+- ✅ Fonctionne bien pour upload batch (semaine complète)
+- ✅ Support --file pour single workout EXISTE mais limitant
+- ⚠️ Nécessite --week-id obligatoire (pas naturel pour 1 workout)
+- ⚠️ Nécessite format délimiteur spécial `=== WORKOUT ... ===`
+- ⚠️ Nécessite numéro jour dans nom (`-04-`)
+
+**Cas d'usage identifié 16 Jan 2026 :**
+```bash
+# Restauration workout supprimé par mégarde (S076-04, 2026-01-15)
+# Solution actuelle: Script Python custom (~85 lignes)
+# Souhaité: Commande CLI simple
+```
+
+#### Objectif Sprint R9.C
+
+Ajouter **mode --single-workout** simplifié pour upload rapide d'un seul workout sans contraintes batch.
+
+#### Architecture Cible
+
+**Nouveau mode CLI simplifié :**
+
+```bash
+# Mode simple: workout-id + date + description file
+poetry run upload-workouts \
+  --single-workout \
+  --workout-id S076-04-END-EnduranceProgressive-V001 \
+  --date 2026-01-15 \
+  --description-file workout.txt
+
+# Mode inline: description directe
+poetry run upload-workouts \
+  --single-workout \
+  --workout-id S076-04-END-EnduranceProgressive-V001 \
+  --date 2026-01-15 \
+  --description "Endurance Progressive (75min, 58 TSS)
+
+Warmup
+- 12m ramp 50-65% 85rpm
+...
+"
+
+# Mode interactif: ouvre éditeur
+poetry run upload-workouts \
+  --single-workout \
+  --workout-id S076-04-END-EnduranceProgressive-V001 \
+  --date 2026-01-15 \
+  --interactive  # Ouvre $EDITOR
+```
+
+**Différences avec mode batch actuel :**
+
+| Feature | Mode Batch (actuel) | Mode Single (proposé) |
+|---------|--------------------|-----------------------|
+| **--week-id** | ✅ Requis | ❌ Optionnel (inféré de workout-id) |
+| **Format délimiteur** | ✅ Requis (`=== WORKOUT ===`) | ❌ Non requis (fichier direct) |
+| **Numéro jour** | ✅ Requis (`-04-`) | ❌ Non requis (date explicite) |
+| **Fichier temporaire** | ✅ Oui | ✅ Optionnel (inline ou interactive) |
+| **Validation workout** | ✅ Oui (warmup/cooldown) | ✅ Oui (identique) |
+| **Confirmation** | ✅ Oui | ✅ Oui (ou --yes pour skip) |
+
+#### Features Sprint R9.C
+
+**1. Mode --single-workout (P0)** ⭐
+
+**Tâches :**
+- [ ] Ajouter flag `--single-workout` mutuellement exclusif avec mode batch
+- [ ] Ajouter arguments: `--workout-id`, `--date`, `--description-file`
+- [ ] Parser simplifié sans délimiteurs (lit fichier entier)
+- [ ] Inférer --week-id depuis workout-id si nécessaire (ex: S076-04 → S076)
+- [ ] Horaire start_time basé sur day_of_week (comme mode batch)
+- [ ] Validation notation identique (warmup/cooldown checks)
+- [ ] Tests unitaires + tests intégration
+
+**Implémentation :**
+
+```python
+# cyclisme_training_logs/upload_workouts.py
+
+def parse_single_workout(
+    workout_id: str,
+    date: str,
+    description_file: Path = None,
+    description_text: str = None
+) -> dict:
+    """Parse single workout without delimiters."""
+    if description_file:
+        description = description_file.read_text(encoding="utf-8").strip()
+    elif description_text:
+        description = description_text.strip()
+    else:
+        raise ValueError("Must provide --description-file or --description")
+
+    return {
+        "name": workout_id,
+        "date": date,
+        "description": description,
+        "filename": workout_id,
+        "day": 1  # Not used in single mode
+    }
+
+def main():
+    parser = argparse.ArgumentParser(...)
+
+    # Mode selection (mutually exclusive)
+    mode_group = parser.add_mutually_exclusive_group()
+    mode_group.add_argument("--single-workout", action="store_true",
+                            help="Upload single workout (no week batch)")
+
+    # Single workout args
+    parser.add_argument("--workout-id", type=str,
+                        help="Workout ID (ex: S076-04-END-EnduranceProgressive-V001)")
+    parser.add_argument("--date", type=str,
+                        help="Workout date (YYYY-MM-DD, ex: 2026-01-15)")
+    parser.add_argument("--description-file", type=str,
+                        help="File containing workout description")
+    parser.add_argument("--description", type=str,
+                        help="Inline workout description")
+
+    # ... existing args (--week-id, --file, etc.)
+
+    args = parser.parse_args()
+
+    if args.single_workout:
+        # Single workout mode
+        if not args.workout_id or not args.date:
+            parser.error("--single-workout requires --workout-id and --date")
+
+        workout = parse_single_workout(
+            args.workout_id,
+            args.date,
+            Path(args.description_file) if args.description_file else None,
+            args.description
+        )
+
+        # Infer week_id if needed (for uploader init)
+        week_match = re.match(r"(S\d{3})", args.workout_id)
+        week_id = week_match.group(1) if week_match else "S999"
+
+        # Use workout date as start_date
+        start_date = datetime.strptime(args.date, "%Y-%m-%d")
+
+        uploader = WorkoutUploader(week_id, start_date)
+        workouts = [workout]
+    else:
+        # Batch mode (existing code)
+        # ...
+```
+
+**Durée estimée :** 4-6 heures
+
+**2. Mode --interactive (P1)**
+
+**Tâches :**
+- [ ] Ajouter flag `--interactive` pour ouvrir éditeur
+- [ ] Détection `$EDITOR` env variable (fallback: nano)
+- [ ] Création fichier temporaire avec template
+- [ ] Édition puis lecture fichier après fermeture éditeur
+- [ ] Tests (mock subprocess)
+
+**Exemple template :**
+```
+# Workout: S076-04-END-EnduranceProgressive-V001
+# Date: 2026-01-15
+# Lines starting with # are ignored
+
+Endurance Progressive (75min, 58 TSS)
+
+Warmup
+- 12m ramp 50-65% 85rpm
+- 3m 65% 90rpm
+
+Main set
+- 50m ramp 68-75% 88rpm
+
+Cooldown
+- 10m ramp 72-50% 85rpm
+```
+
+**Durée estimée :** 2-3 heures
+
+**3. Mode --from-clipboard (P2)**
+
+**Tâches :**
+- [ ] Réutiliser fonction `parse_clipboard()` existante
+- [ ] Adapter pour single workout (sans délimiteurs)
+- [ ] Validation identique
+
+**Usage :**
+```bash
+# Copier description dans clipboard, puis:
+poetry run upload-workouts \
+  --single-workout \
+  --workout-id S076-04-END-EnduranceProgressive-V001 \
+  --date 2026-01-15 \
+  --from-clipboard
+```
+
+**Durée estimée :** 1-2 heures
+
+**4. Documentation & Examples (P0)**
+
+**Tâches :**
+- [ ] Update README.md avec exemples --single-workout
+- [ ] Guide: "Upload Single Workout" (3 méthodes)
+- [ ] Update --help message
+- [ ] Add to CHANGELOG.md
+
+**Durée estimée :** 1 heure
+
+#### Livrables Sprint R9.C
+
+**Code :**
+- ✅ Mode --single-workout complet (P0)
+- ✅ Mode --interactive (P1)
+- ✅ Mode --from-clipboard (P2)
+- ✅ Tests unitaires (coverage ≥90%)
+- ✅ Backward compatibility (mode batch inchangé)
+
+**Documentation :**
+- ✅ README.md examples
+- ✅ Guide "Upload Single Workout"
+- ✅ CHANGELOG.md entry
+
+**Exemples CLI :**
+```bash
+# Méthode 1: Description file (simple)
+poetry run upload-workouts --single-workout \
+  --workout-id S076-04-END-EnduranceProgressive-V001 \
+  --date 2026-01-15 \
+  --description-file workout.txt
+
+# Méthode 2: Interactive editor
+poetry run upload-workouts --single-workout \
+  --workout-id S076-04-END-EnduranceProgressive-V001 \
+  --date 2026-01-15 \
+  --interactive
+
+# Méthode 3: Clipboard
+# (Copier description d'abord)
+poetry run upload-workouts --single-workout \
+  --workout-id S076-04-END-EnduranceProgressive-V001 \
+  --date 2026-01-15 \
+  --from-clipboard
+
+# Méthode 4: Inline (pour scripts)
+poetry run upload-workouts --single-workout \
+  --workout-id S076-04-END-EnduranceProgressive-V001 \
+  --date 2026-01-15 \
+  --description "Endurance Progressive...
+Warmup
+- 12m ramp..." \
+  --yes  # Skip confirmation
+```
+
+#### Métriques Succès
+
+- ✅ Upload single workout en <30 secondes (incluant édition)
+- ✅ 0 fichiers temporaires requis (mode inline/clipboard)
+- ✅ Validation identique mode batch (warmup/cooldown)
+- ✅ 100% backward compatible (mode batch inchangé)
+- ✅ Documentation complète avec 4 exemples
+
+#### Bénéfices
+
+**UX améliorée :**
+- ✅ Restauration workout supprimé en 1 commande
+- ✅ Upload rapide workout ponctuel (remplacement, ajout)
+- ✅ Pas de fichier temporaire à créer
+- ✅ Pas de format délimiteur compliqué
+
+**Use cases supportés :**
+- ✅ Restauration après suppression (cas 16 Jan 2026)
+- ✅ Upload workout de remplacement (adaptation plan)
+- ✅ Ajout workout ponctuel (hors planning hebdo)
+- ✅ Scripts automatisation (CI/CD avec --yes)
+
+#### Risques & Mitigations
+
+| Risque | Probabilité | Impact | Mitigation |
+|--------|-------------|--------|-----------|
+| Breaking change mode batch | Faible | Élevé | Mutually exclusive flags + tests régression |
+| Confusion --file vs --description-file | Moyenne | Faible | Documentation claire, deprecation warning |
+| Validation bypass | Faible | Moyen | Réutiliser validate_workout_notation() |
+
+#### Timeline Estimée
+
+```
+Phase 1 : Mode --single-workout (P0) - 4-6 heures
+Phase 2 : Mode --interactive (P1) - 2-3 heures
+Phase 3 : Mode --from-clipboard (P2) - 1-2 heures
+Phase 4 : Documentation (P0) - 1 heure
+
+Total : 8-12 heures développement (1-2 jours)
+```
+
+**Prérequis :**
+- ✅ Sprint R9 ou R9.B complété (DRY improvements)
+- ✅ 0 bugs production upload-workouts
+- ✅ Validation MOA/PO priorité UX enhancement
+
+**Trigger :**
+- Besoin récurrent d'upload single workout
+- Feedback utilisateur sur complexité mode --file
+- Scripts automatisation nécessitent mode simple
+
+**Note MOA/PO :** Enhancement UX qui simplifie cas d'usage fréquent (restauration, remplacement). Améliore productivité sans ajouter complexité au code existant (mode batch préservé).
+
+---
+
 ### Long-Term Vision (2026-2027)
 
 #### Multi-Athlete Support
