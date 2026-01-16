@@ -2,7 +2,7 @@
 
 **Date du rapport:** 16 janvier 2026
 **Sprints couverts:** R9 (Grappe), R9.A (Workflow Coach Tests), R9.B (Code Reusability)
-**Status global:** ✅ TOUS COMPLÉTÉS
+**Status global:** ✅ R9 & R9.A COMPLÉTÉS | 🚧 R9.B Phase 1 COMPLÉTÉE (Phase 2 À FAIRE)
 
 ---
 
@@ -10,13 +10,14 @@
 
 ### Résumé Exécutif
 
-Trois sprints R9 livrés en 2 jours avec succès complet:
+Sprint R9 en cours - R9 et R9.A complétés, R9.B Phase 1 complétée:
 
 | Sprint | Objectif | Status | Date | Tests | Coverage |
 |--------|----------|--------|------|-------|----------|
 | **R9 (Grappe)** | Intégration biomécanique Grappe | ✅ COMPLÉTÉ | 15 jan | 82/82 (100%) | 96-97% |
 | **R9.A (Tests)** | Workflow Coach coverage +30% | ✅ COMPLÉTÉ | 16 jan | 117/117 (100%) | 49%→50% |
-| **R9.B (DRY)** | Éliminer duplications code | ✅ COMPLÉTÉ | 16 jan | 117/117 (100%) | ~30 LOC |
+| **R9.B Phase 1** | Helpers centralisés (2 fichiers) | ✅ COMPLÉTÉ | 16 jan | 117/117 (100%) | -31 LOC |
+| **R9.B Phase 2** | Refactoriser 12+ fichiers restants | 📋 À FAIRE | TBD | - | -210-270 LOC |
 
 **Métriques Globales:**
 - ✅ **199 tests créés** (82 + 9 + 108 existants)
@@ -176,7 +177,7 @@ supplementary_prompt = f"""
 ## 🎯 Sprint R9.B - Code Reusability (DRY)
 
 **Date:** 16 janvier 2026
-**Status:** ✅ COMPLÉTÉ (Phase 1)
+**Status:** 🚧 EN COURS - Phase 1 ✅ COMPLÉTÉE / Phase 2 📋 À FAIRE
 **Rapport détaillé:** `SESSION_20260116_SPRINT_R9.md`
 
 ### Objectifs
@@ -531,11 +532,11 @@ def test_load_credentials_missing(self, mock_get_config, mock_load_json):
 | R8 | Di2 Analysis | 100% | 96% | Jan 10-14 |
 | **R9 (Grappe)** | **Biomechanics** | **100%** | **96-97%** | **Jan 15** |
 | **R9.A** | **Workflow Tests** | **100%** | **50%** | **Jan 16** |
-| **R9.B** | **Code DRY** | **100%** | **-31 LOC** | **Jan 16** |
+| **R9.B Phase 1** | **Code DRY (Helpers)** | **100%** | **-31 LOC** | **Jan 16** |
 
 ### In Progress 🚧
-- Sprint R9.A Phase 2 (Coverage 50% → 70%)
-- Sprint R9.B Phase 2 (Refactor 12+ files)
+- **Sprint R9.B Phase 2** - Refactoriser 12+ fichiers restants (-210-270 LOC)
+- Sprint R9.A Phase 2 - Coverage 50% → 70%
 
 ### Planned 📋
 - Sprint R10 - Multi-System Gear Support
@@ -564,27 +565,35 @@ def test_load_credentials_missing(self, mock_get_config, mock_load_json):
 - [x] Documentation session
 - [x] CI/CD passing
 
-### Sprint R9.B (DRY)
+### Sprint R9.B Phase 1 (DRY - Helpers Centralisés)
 - [x] 240-300 LOC analysées
-- [x] 2 helpers centralisés
-- [x] 2 fichiers refactorisés
-- [x] -31 LOC éliminées
+- [x] 2 helpers centralisés créés
+- [x] 2 fichiers core refactorisés
+- [x] -31 LOC éliminées (Phase 1 seulement)
 - [x] 117/117 tests passing
 - [x] 1 commit
 - [x] Documentation session
 - [x] CI/CD passing
 
+### Sprint R9.B Phase 2 (DRY - Refactoring Restant)
+- [ ] Refactoriser 12+ fichiers restants
+- [ ] Éliminer 210-270 LOC dupliquées additionnelles
+- [ ] Valider tests après refactoring
+- [ ] Commit Phase 2
+- [ ] **Status: 📋 À FAIRE**
+
 ---
 
 ## 🎉 Conclusion
 
-**Status:** ✅ TOUS SPRINTS R9 COMPLÉTÉS AVEC SUCCÈS
+**Status:** ✅ R9 & R9.A COMPLÉTÉS | 🚧 R9.B Phase 1 COMPLÉTÉE (Phase 2 À FAIRE)
 
-**Résultats:**
+**Résultats Phase 1:**
 - ✅ 199 tests passing (100%)
 - ✅ 9 commits livrés
 - ✅ ~1,000 LOC ajoutées (quality code)
-- ✅ -31 LOC duplicated éliminées
+- ✅ -31 LOC duplicated éliminées (Phase 1)
+- 📋 -210-270 LOC restantes à éliminer (Phase 2)
 - ✅ 0 breaking changes
 - ✅ All CI/CD passing
 
@@ -592,14 +601,18 @@ def test_load_credentials_missing(self, mock_get_config, mock_load_json):
 - ✅ Optimisation cadence basée science (Grappe)
 - ✅ Personnalisation profil athlète
 - ✅ Quality assurance renforcée (tests)
-- ✅ Maintenabilité améliorée (DRY)
+- 🚧 Maintenabilité améliorée (DRY Phase 1 - helpers centralisés)
 - ✅ Servo-mode plus fiable (bug fix)
 
-**Next Steps:**
-1. ✅ Documentation Sphinx (en cours)
-2. Sprint R9.A Phase 2 (coverage → 70%)
-3. Sprint R9.B Phase 2 (refactor 12+ files)
-4. Sprint R10 - Multi-System Gear Support
+**Next Steps (Prioritaires):**
+1. **Sprint R9.B Phase 2** - Refactoriser 12+ fichiers restants (2-3h)
+2. Sprint R9.A Phase 2 - Coverage → 70% (30-40 tests)
+3. Sprint R10 - Multi-System Gear Support
+
+**Work Remaining:**
+- Sprint R9.B Phase 2: 12+ fichiers à refactoriser
+- Estimation: -210-270 LOC dupliquées à éliminer
+- Effort: 2-3h refactoring + validation tests
 
 ---
 
