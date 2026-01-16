@@ -5,7 +5,7 @@
 **Objectifs:**
 1. Sprint R9.A - Augmenter coverage workflow_coach.py (19% → 50%)
 2. Sprint R9.B - Éliminer duplications de code (DRY principle)
-**Résultats:** ✅ R9.A Complete (51.4% coverage), ✅ R9.B Complete (240-300 LOC dupliquées éliminées)
+**Résultats:** ✅ R9.A Complete (51.4% coverage), 🚧 R9.B Phase 1 Complete (-31 LOC, Phase 2 à faire)
 
 ---
 
@@ -23,9 +23,9 @@
 ### Sprint R9.B - Code Reusability (DRY)
 - **Objectif:** Éliminer duplications de credential loading
 - **Analyse:** 240-300 LOC dupliquées identifiées
-- **Livré:** Helpers centralisés + 2 fichiers refactorisés
-- **Impact:** -47 LOC dans fichiers core, +97 LOC helpers (net: +50)
-- **Future:** 12+ fichiers additionnels à refactoriser
+- **Livré Phase 1:** Helpers centralisés + 2 fichiers refactorisés
+- **Impact Phase 1:** -31 LOC dupliquées éliminées (+97 helpers, +20 tests)
+- **Phase 2 (À faire):** 12+ fichiers additionnels à refactoriser (-210-270 LOC)
 
 ---
 
@@ -420,30 +420,33 @@ def test_load_credentials_missing(self, mock_get_config, mock_load_json):
     assert result == (None, None)
 ```
 
-### Résultats Sprint R9.B
+### Résultats Sprint R9.B Phase 1
 
 **✅ Tests:** 117/117 passing
 **✅ Linting:** All pre-commit hooks passed
 **✅ Commit:** 6e39e6a
 
-**Impact Code:**
-- **config_base.py:** +97 lignes (2 helpers)
-- **config/__init__.py:** +5 lignes (exports)
-- **workflow_coach.py:** -13 lignes (refactorisé)
-- **upload_workouts.py:** -18 lignes (refactorisé)
-- **test_workflow_coach.py:** +20 lignes (tests mis à jour)
+**Impact Code Phase 1:**
+- **config_base.py:** +97 lignes (2 helpers centralisés créés)
+- **config/__init__.py:** +5 lignes (exports publics)
+- **workflow_coach.py:** -13 lignes (refactorisé avec helpers)
+- **upload_workouts.py:** -18 lignes (refactorisé avec factory)
+- **test_workflow_coach.py:** +20 lignes (tests mis à jour pour mocking centralisé)
 - **Net:** +91 lignes (141 additions - 50 deletions)
+- **Duplication éliminée:** -31 LOC (2 fichiers core)
 
-**Bénéfices:**
-- ✅ Élimination de ~30 lignes de code dupliqué dans 2 fichiers core
-- ✅ Single source of truth pour credential management
+**Bénéfices Phase 1:**
+- ✅ Élimination de 31 lignes de code dupliqué dans 2 fichiers core
+- ✅ Single source of truth pour credential management (helpers réutilisables)
 - ✅ Error handling cohérent via `logging.warning()`
 - ✅ Backward compatible avec `.intervals_config.json`
 - ✅ Fallback gracieux vers environment variables
-- ✅ 12+ fichiers additionnels identifiés pour refactoring futur
+- ✅ 12+ fichiers additionnels identifiés pour Phase 2
 
-**Future Work:**
-Refactoriser 12+ fichiers additionnels pour utiliser les nouveaux helpers centralisés, éliminant 210-270 LOC supplémentaires.
+**Phase 2 - À Faire:**
+- 📋 Refactoriser 12+ fichiers additionnels pour utiliser les nouveaux helpers
+- 📋 Éliminer 210-270 LOC dupliquées supplémentaires
+- 📋 Estimation effort: 2-3h refactoring + validation tests
 
 ---
 
@@ -530,14 +533,13 @@ Refactoriser 12+ fichiers additionnels pour utiliser les nouveaux helpers centra
 - 1 bug fix (servo-mode hallucination)
 - 2 commits livrés
 
-### ✅ Sprint R9.B (Code Reusability) - COMPLÉTÉ
+### 🚧 Sprint R9.B (Code Reusability) - Phase 1 COMPLÉTÉE
 - Date: 16 janvier 2026
-- 240-300 LOC duplications identifiées
-- 2 helpers centralisés créés
-- 2 fichiers core refactorisés
-- ~30 LOC éliminées (2 fichiers)
-- 12+ fichiers identifiés pour future work
-- 1 commit livré
+- 240-300 LOC duplications identifiées (analyse complète)
+- Phase 1 ✅: 2 helpers centralisés créés + 2 fichiers refactorisés
+- Phase 1 ✅: -31 LOC éliminées (2 fichiers core)
+- Phase 2 📋: 12+ fichiers restants à refactoriser (-210-270 LOC)
+- 1 commit livré (Phase 1)
 
 ---
 
