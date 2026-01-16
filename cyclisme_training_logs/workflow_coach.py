@@ -177,27 +177,26 @@ class WorkflowCoach:
         logger.info(f"AI Analyzer initialized: {self.ai_analyzer.__class__.__name__}")
 
     def load_credentials(self):
-        """Load credentials Intervals.icu de manière robuste."""
-        import json
-        import os
-        from pathlib import Path
+        """Load credentials Intervals.icu de manière robuste.
 
-        config_path = Path.home() / ".intervals_config.json"
-        if config_path.exists():
-            try:
-                with open(config_path) as f:
-                    config = json.load(f)
-                    athlete_id = config.get("athlete_id")
-                    api_key = config.get("api_key")
-                    if athlete_id and api_key:
-                        return athlete_id, api_key
-            except Exception as e:
-                print(f"⚠️  Erreur config : {e}")
+        Uses centralized config loading (Sprint R9.B - DRY).
+        Tries .intervals_config.json first (backward compatibility),
+        then environment variables.
+        """
+        from cyclisme_training_logs.config import get_intervals_config, load_json_config
 
-        athlete_id = os.getenv("VITE_INTERVALS_ATHLETE_ID")
-        api_key = os.getenv("VITE_INTERVALS_API_KEY")
-        if athlete_id and api_key:
-            return athlete_id, api_key
+        # Try .intervals_config.json first (backward compatibility)
+        config_file = load_json_config("~/.intervals_config.json")
+        if config_file:
+            athlete_id = config_file.get("athlete_id")
+            api_key = config_file.get("api_key")
+            if athlete_id and api_key:
+                return athlete_id, api_key
+
+        # Fallback to environment variables via centralized config
+        intervals_config = get_intervals_config()
+        if intervals_config.is_configured():
+            return intervals_config.athlete_id, intervals_config.api_key
 
         return None, None
 

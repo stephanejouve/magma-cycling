@@ -59,7 +59,6 @@ Metadata:
     Version: v2
 """
 import argparse
-import json
 import re
 import sys
 from datetime import datetime, timedelta
@@ -67,8 +66,6 @@ from pathlib import Path
 
 # Ajouter le répertoire parent au PYTHONPATH
 sys.path.insert(0, str(Path(__file__).parent))
-
-from cyclisme_training_logs.api.intervals_client import IntervalsClient  # noqa: E402
 
 
 def calculate_week_start_date(week_id: str) -> datetime:
@@ -124,25 +121,11 @@ class WorkoutUploader:
 
     def _init_api(self):
         """Initialize l'API Intervals.icu."""
-        import os
-
         try:
-            # Charger credentials depuis config ou env
-            config_path = Path.home() / ".intervals_config.json"
+            # Sprint R9.B - Use centralized client creation
+            from cyclisme_training_logs.config import create_intervals_client
 
-            if config_path.exists():
-                with open(config_path) as f:
-                    config = json.load(f)
-                    athlete_id = config.get("athlete_id")
-                    api_key = config.get("api_key")
-            else:
-                athlete_id = os.getenv("VITE_INTERVALS_ATHLETE_ID")
-                api_key = os.getenv("VITE_INTERVALS_API_KEY")
-
-            if not athlete_id or not api_key:
-                raise ValueError("Credentials API manquants")
-
-            self.api = IntervalsClient(athlete_id, api_key)
+            self.api = create_intervals_client()
             print("✅ API Intervals.icu connectée")
         except Exception as e:
             print(f"❌ Erreur connexion API : {e}")
