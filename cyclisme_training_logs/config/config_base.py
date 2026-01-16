@@ -47,6 +47,7 @@ Metadata:
     Version: v2
 """
 
+import json
 import os
 from pathlib import Path
 
@@ -491,6 +492,99 @@ def reset_intervals_config():
     global _intervals_config_instance
 
     _intervals_config_instance = None
+
+
+def create_intervals_client():
+    """Factory function for creating configured IntervalsClient.
+
+    This is the preferred way to create an IntervalsClient instance as it
+    centralizes credential loading and validation.
+
+    Returns:
+        IntervalsClient: Configured client ready to use
+
+    Raises:
+        ValueError: If Intervals.icu credentials are not configured
+        ImportError: If IntervalsClient module is not available
+
+    Examples:
+        >>> from cyclisme_training_logs.config import create_intervals_client
+        >>> client = create_intervals_client()
+        >>> activities = client.get_activities(oldest="2026-01-01", newest="2026-01-15")
+
+    Note:
+        Replaces pattern of manually loading credentials and creating client:
+        ```python
+        # OLD (duplicated across 21 instances):
+        athlete_id = os.getenv("VITE_INTERVALS_ATHLETE_ID")
+        api_key = os.getenv("VITE_INTERVALS_API_KEY")
+        client = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
+
+        # NEW (centralized):
+        client = create_intervals_client()
+        ```
+    """
+    from cyclisme_training_logs.api.intervals_client import IntervalsClient
+
+    config = get_intervals_config()
+
+    if not config.is_configured():
+        raise ValueError(
+            "Intervals.icu API not configured. "
+            "Set VITE_INTERVALS_ATHLETE_ID and VITE_INTERVALS_API_KEY environment variables."
+        )
+
+    return IntervalsClient(athlete_id=config.athlete_id, api_key=config.api_key)
+
+
+def load_json_config(config_file: str) -> dict | None:
+    """Generic JSON config loader with expanduser support.
+
+    Safely loads a JSON configuration file with proper error handling.
+    Supports ~ expansion for user home directory.
+
+    Args:
+        config_file: Path to JSON config file (e.g., "~/.intervals_config.json")
+
+    Returns:
+        dict: Parsed JSON config, or None if file doesn't exist or is invalid
+
+    Examples:
+        >>> config = load_json_config("~/.intervals_config.json")
+        >>> if config:
+        ...     athlete_id = config.get("athlete_id")
+
+    Note:
+        Replaces pattern duplicated across 11 files:
+        ```python
+        # OLD (duplicated):
+        config_path = Path.home() / ".intervals_config.json"
+        if config_path.exists():
+            with open(config_path) as f:
+                config = json.load(f)
+
+        # NEW (centralized):
+        config = load_json_config("~/.intervals_config.json")
+        ```
+    """
+    from pathlib import Path
+
+    config_path = Path(config_file).expanduser()
+
+    if not config_path.exists():
+        return None
+
+    try:
+        with open(config_path) as f:
+            return json.load(f)
+    except Exception as e:
+        # Log error but don't crash - allow caller to handle
+        # Catches JSON decode errors, file I/O errors, and any other exceptions
+        import logging
+
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Failed to load config from {config_path}: {e}")
+        return None
 
 
 # ============================================================================

@@ -207,10 +207,15 @@ class TestInitialization:
         assert athlete_id == "i123"
         assert api_key == "key123"
 
-    @patch.dict("os.environ", {}, clear=True)
-    @patch("pathlib.Path.exists", return_value=False)
-    def test_load_credentials_missing(self, mock_exists):
+    @patch("cyclisme_training_logs.config.load_json_config", return_value=None)
+    @patch("cyclisme_training_logs.config.get_intervals_config")
+    def test_load_credentials_missing(self, mock_get_config, mock_load_json):
         """Test load_credentials returns None when credentials missing."""
+        # Mock IntervalsConfig as not configured
+        mock_intervals_config = Mock()
+        mock_intervals_config.is_configured.return_value = False
+        mock_get_config.return_value = mock_intervals_config
+
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
 
         result = coach.load_credentials()
@@ -1309,19 +1314,22 @@ class TestCredentialsLoadingAdvanced:
         assert athlete_id == "i123"
         assert api_key == "key123"
 
-    @patch("pathlib.Path.exists", return_value=True)
-    @patch("builtins.open", side_effect=Exception("Read error"))
-    @patch.dict(
-        "os.environ", {"VITE_INTERVALS_ATHLETE_ID": "i456", "VITE_INTERVALS_API_KEY": "key456"}
-    )
-    @patch("builtins.print")
-    def test_load_credentials_config_file_read_error(self, mock_print, mock_file, mock_exists):
+    @patch("cyclisme_training_logs.config.load_json_config", return_value=None)
+    @patch("cyclisme_training_logs.config.get_intervals_config")
+    def test_load_credentials_config_file_read_error(self, mock_get_config, mock_load_json):
         """Test load_credentials handles config file read errors."""
+        # load_json_config returns None on error (logs warning internally)
+        # Mock IntervalsConfig to return env var credentials
+        mock_intervals_config = Mock()
+        mock_intervals_config.is_configured.return_value = True
+        mock_intervals_config.athlete_id = "i456"
+        mock_intervals_config.api_key = "key456"
+        mock_get_config.return_value = mock_intervals_config
+
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
         athlete_id, api_key = coach.load_credentials()
 
-        # Should print error and fall back to env vars
-        assert mock_print.called
+        # Should fall back to env vars from centralized config
         assert athlete_id == "i456"
         assert api_key == "key456"
 
