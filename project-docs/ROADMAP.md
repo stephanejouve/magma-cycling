@@ -1549,6 +1549,293 @@ Total : 8-12 heures développement (1-2 jours)
 
 ---
 
+### Sprint R9.D - Indoor/Outdoor Adaptive Analysis (Planifié Q1 2026)
+
+**Focus :** Critères de validation adaptés au type de sortie (indoor vs outdoor)
+
+**Status :** 📋 ROADMAP (Identifié 17 Jan 2026)
+
+**Priorité :** P1 (Important pour qualité analyses outdoor)
+
+#### Contexte
+
+**Problématique identifiée 17 Jan 2026 :**
+
+Analyse activité outdoor (i118516044) marquée comme "échec" avec critères indoor:
+- ❌ Découplage cardiovasculaire -22.9% (anormal pour indoor)
+- ❌ Variabilité puissance élevée (NP 175W vs Pavg 126W)
+- ❌ Cadence basse et variable (69rpm vs 88rpm cible)
+
+**Réalité outdoor :**
+- ✅ Découplage négatif **normal** (descentes = FC ↓ mais puissance maintenue)
+- ✅ Variabilité puissance **normale** (terrain, vent, circulation)
+- ✅ Cadence variable **normale** (montées/descentes/virages)
+
+**Cause racine :**
+- Workflow analyse avec critères indoor stricts
+- Association workout planifié indoor → activité outdoor créée manuellement
+- IA applique validation inadaptée au contexte
+
+#### Objectif Sprint R9.D
+
+Adapter les **critères de validation** selon le type de sortie avec solution **flag manuel** immédiate et détection automatique future.
+
+#### Architecture Solution
+
+**Phase 1 : Flag Manuel --outdoor (Implémentation Immédiate)** ⭐
+
+**Nouveau flag CLI :**
+
+```bash
+# Analyse activité outdoor avec critères adaptés
+poetry run workflow-coach \
+  --activity-id i118516044 \
+  --outdoor \
+  --provider claude_api
+
+# Batch mode avec flag global
+poetry run workflow-coach --outdoor --auto
+```
+
+**Implémentation :**
+
+```python
+# cyclisme_training_logs/workflow_coach.py
+
+def main():
+    parser = argparse.ArgumentParser(...)
+    parser.add_argument("--outdoor", action="store_true",
+                        help="Apply outdoor-specific validation criteria")
+    # ...
+
+class WorkflowCoach:
+    def __init__(self, outdoor_mode: bool = False):
+        self.outdoor_mode = outdoor_mode
+        # ...
+
+    def _prepare_analysis_context(self):
+        """Add ride type to AI prompt context."""
+        ride_type = "OUTDOOR" if self.outdoor_mode else "INDOOR"
+
+        context = f"""
+**TYPE DE SORTIE**: {ride_type}
+
+{"→ Critères d'évaluation adaptés:" if self.outdoor_mode else ""}
+{self._get_outdoor_criteria() if self.outdoor_mode else ""}
+"""
+        return context
+
+    def _get_outdoor_criteria(self) -> str:
+        """Return outdoor-specific validation criteria."""
+        return """
+- Découplage cardiovasculaire: <15% (ou négatif accepté si descentes)
+- Variabilité puissance: NP peut être 30-40% > Pavg (terrain/vent)
+- Cadence: ±20rpm vs cible accepté (montées/descentes)
+- Adhérence workout: Comparaison TSS/IF global, pas structure fine
+- Interruptions: Normales (feux, circulation, arrêts ravitaillement)
+"""
+```
+
+**Critères de Validation Différenciés :**
+
+| Critère | Indoor (Home Trainer) | Outdoor (Route) |
+|---------|----------------------|-----------------|
+| **Découplage CV** | <7.5% strict | <15% ou négatif accepté |
+| **Variabilité puissance** | NP/Pavg < 1.15 | NP/Pavg peut atteindre 1.40 |
+| **Cadence** | ±5rpm vs cible | ±20rpm vs cible |
+| **Structure workout** | Adhérence stricte | TSS/IF global seulement |
+| **Interruptions** | Anormales | Normales (feux, etc.) |
+| **Découplage négatif** | ❌ Erreur capteur | ✅ Normal (descentes) |
+
+**Prompt IA enrichi :**
+
+```markdown
+## CONTEXTE TYPE DE SORTIE
+
+**TYPE**: OUTDOOR
+
+**Critères d'évaluation adaptés outdoor:**
+- Découplage cardiovasculaire relaxé (<15% ou négatif si descentes)
+- Variabilité puissance normale (NP jusqu'à 40% > Pavg)
+- Cadence variable acceptée (terrain montagneux, virages)
+- Comparaison workout basée sur TSS/IF global, pas structure fine
+- Interruptions normales (feux, circulation, ravitaillement)
+
+**Indicateurs positifs outdoor:**
+- Découplage négatif si présence descentes (FC ↓, puissance maintenue)
+- NP élevé vs Pavg si terrain varié (attaques/relances)
+- Cadence basse si montées raides (<70rpm acceptable)
+```
+
+**Durée estimée Phase 1 :** 3-4 heures
+
+**Phase 2 : Détection Automatique (Évolution Future)** 🔮
+
+**Critères de détection :**
+
+```python
+def detect_ride_type(activity_data: dict, streams: List[dict]) -> str:
+    """Auto-detect indoor vs outdoor from activity data."""
+
+    # Indoor si:
+    indicators_indoor = [
+        not activity_data.get("has_gps", False),           # Pas GPS
+        activity_data.get("trainer", False),                # Flag trainer
+        activity_data.get("elevation_gain", 0) < 50,       # <50m dénivelé
+        _get_power_variability(streams) < 1.15,            # Faible variabilité
+        activity_data.get("device_name", "").lower() in TRAINERS  # Zwift, TrainerRoad
+    ]
+
+    if sum(indicators_indoor) >= 3:
+        return "INDOOR"
+
+    return "OUTDOOR"  # Par défaut outdoor si doute
+```
+
+**Intégration future :**
+
+```python
+# Auto-detection remplace flag manuel
+ride_type = detect_ride_type(activity, streams)
+self.outdoor_mode = (ride_type == "OUTDOOR")
+```
+
+**Durée estimée Phase 2 :** 4-6 heures (développement + validation)
+
+#### Features Sprint R9.D
+
+**1. Flag --outdoor Manuel (P0)** ⭐
+
+**Tâches :**
+- [ ] Ajouter argument `--outdoor` dans workflow_coach.py
+- [ ] Générer contexte prompt avec critères adaptés
+- [ ] Documenter différences validation indoor/outdoor
+- [ ] Tests unitaires flag outdoor
+- [ ] Update --help message
+
+**Impact :**
+- ✅ Analyses outdoor correctes immédiatement
+- ✅ Pas de faux négatifs sur découplage/variabilité
+- ✅ Recommandations IA pertinentes au contexte
+
+**Durée estimée :** 3-4 heures
+
+**2. Documentation Critères (P0)**
+
+**Tâches :**
+- [ ] Guide: "Analyser une sortie outdoor"
+- [ ] Tableau comparatif critères indoor/outdoor
+- [ ] Exemples analyses réelles (indoor vs outdoor)
+- [ ] Update CHANGELOG.md
+
+**Durée estimée :** 1-2 heures
+
+**3. Tests Validation (P1)**
+
+**Tâches :**
+- [ ] Tests avec activités outdoor réelles
+- [ ] Validation IA génère bonnes recommandations
+- [ ] Comparaison avant/après sur cas 17 Jan 2026
+- [ ] Edge cases (indoor avec GPS, outdoor sur trainer)
+
+**Durée estimée :** 2 heures
+
+**4. Détection Automatique (P2 - Future)**
+
+**Tâches (pour plus tard) :**
+- [ ] Implémenter `detect_ride_type()` avec heuristiques
+- [ ] Validation sur 50+ activités variées
+- [ ] Fallback manuel si détection incertaine
+- [ ] Logging décisions pour apprentissage
+
+**Durée estimée :** 4-6 heures (quand priorité)
+
+#### Livrables Sprint R9.D
+
+**Code Phase 1 :**
+- ✅ Flag --outdoor dans workflow_coach.py
+- ✅ Contexte prompt adaptatif indoor/outdoor
+- ✅ Tests unitaires (coverage ≥90%)
+
+**Documentation :**
+- ✅ Guide "Analyser sortie outdoor"
+- ✅ Tableau comparatif critères
+- ✅ CHANGELOG.md entry
+
+**Exemples CLI :**
+
+```bash
+# Analyse outdoor manuelle
+poetry run workflow-coach \
+  --activity-id i118516044 \
+  --outdoor \
+  --provider claude_api
+
+# Analyse outdoor auto mode
+poetry run workflow-coach --outdoor --auto
+
+# Analyse indoor (comportement par défaut, aucun flag)
+poetry run workflow-coach --activity-id i123456789
+```
+
+#### Métriques Succès
+
+- ✅ Analyses outdoor ne génèrent plus faux négatifs
+- ✅ Découplage négatif accepté si outdoor
+- ✅ Variabilité puissance élevée expliquée (terrain)
+- ✅ Recommandations IA contextuelles pertinentes
+- ✅ 0 régressions sur analyses indoor existantes
+
+#### Bénéfices
+
+**Court terme (Phase 1) :**
+- ✅ Résout problème immédiat (17 Jan 2026)
+- ✅ Analyses outdoor exploitables et justes
+- ✅ Pas de fausses alertes "séance non validée"
+- ✅ IA comprend contexte et adapte recommandations
+
+**Long terme (Phase 2) :**
+- ✅ Zéro friction utilisateur (détection auto)
+- ✅ Validation robuste tous types sorties
+- ✅ Base pour futures analyses terrain avancées
+
+#### Risques & Mitigations
+
+| Risque | Probabilité | Impact | Mitigation |
+|--------|-------------|--------|-----------|
+| Oubli flag --outdoor | Élevée | Moyen | Détection auto Phase 2 |
+| Critères trop laxistes | Faible | Moyen | Validation sur vraies données |
+| Régression indoor | Faible | Élevé | Tests régression exhaustifs |
+| Confusion utilisateur | Moyenne | Faible | Documentation claire avec exemples |
+
+#### Timeline Estimée
+
+```
+Phase 1 : Flag --outdoor manuel (P0) - 3-4 heures
+Phase 2 : Documentation (P0) - 1-2 heures
+Phase 3 : Tests validation (P1) - 2 heures
+Phase 4 : Détection auto (P2 - Future) - 4-6 heures
+
+Total Phase 1-3 : 6-8 heures développement (1 jour)
+Total avec Phase 4 : 10-14 heures (1.5-2 jours)
+```
+
+**Recommandation :** Implémenter Phase 1-3 maintenant (1 jour), Phase 4 plus tard quand besoin détection auto se fait sentir.
+
+**Prérequis :**
+- ✅ Sprint R9.C complété (upload single-workout)
+- ✅ Cas d'usage outdoor identifié (17 Jan 2026)
+- ✅ Validation MOA/PO priorité analyses justes
+
+**Trigger Implémentation :**
+- ✅ Cas réel outdoor analysé avec biais indoor (DÉJÀ VÉCU)
+- ✅ Besoin immédiat analyses outdoor correctes
+- ✅ Impact qualité recommandations coach
+
+**Note MOA/PO :** Amélioration critique qualité analyses. Évite fausses alertes outdoor et permet recommandations contextuelles. Flag manuel simple (Phase 1) résout 90% problème, détection auto (Phase 2) élimine friction résiduelle plus tard.
+
+---
+
 ### Long-Term Vision (2026-2027)
 
 #### Multi-Athlete Support
