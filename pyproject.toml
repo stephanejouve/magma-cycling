@@ -79,6 +79,7 @@ normalize-reports = "cyclisme_training_logs.normalize_weekly_reports_casing:main
 check-workout-adherence = "scripts.monitoring.check_workout_adherence:main"
 
 # === Maintenance & Cleanup ===
+cleanup-archives = "scripts.maintenance.cleanup_old_archives:main"
 project-clean = "scripts.maintenance.project_cleaner:main"
 clear-week-planning = "scripts.maintenance.clear_week_planning:main"
 format-planning = "scripts.maintenance.format_planning:main"
