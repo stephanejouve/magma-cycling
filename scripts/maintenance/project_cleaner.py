@@ -236,29 +236,30 @@ class ProjectCleaner:
     def create_archive(
         self, sprint_name: str, output_dir: Path, dry_run: bool = False
     ) -> tuple[Path | None, str | None]:
-        """Create project archive outside project directory.
+        """Create project archive in releases/ and copy to iCloud.
 
         Args:
             sprint_name: Sprint identifier (e.g., "R22").
-            output_dir: Directory to save archive (outside project).
+            output_dir: Directory to save archive (releases/).
             dry_run: If True, only show what would be done.
 
         Returns:
             Tuple of (archive path, SHA256 checksum) or (None, None) if dry_run.
         """
+        # Archive filename with date
+        date_str = datetime.now().strftime("%Y%m%d")
+        archive_name = f"sprint-{sprint_name.lower()}-v2.2.0-{date_str}.tar.gz"
+
         if dry_run:
+            self.print_info(f"Would create archive: {output_dir}/{archive_name}")
             self.print_info(
-                f"Would create archive: {output_dir}/sprint-{sprint_name.lower()}-"
-                f"v2.2.0-{datetime.now():%Y%m%d}.tar.gz"
+                f"Would copy to: ~/Documents/cyclisme-training-logs-archives/{archive_name}"
             )
             return None, None
 
         # Create output directory
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        # Archive filename with date
-        date_str = datetime.now().strftime("%Y%m%d")
-        archive_name = f"sprint-{sprint_name.lower()}-v2.2.0-{date_str}.tar.gz"
         archive_path = output_dir / archive_name
 
         # Create tar.gz archive
@@ -288,6 +289,17 @@ class ProjectCleaner:
         checksum_path = output_dir / f"{archive_name}.sha256"
         with open(checksum_path, "w") as f:
             f.write(f"{checksum}  {archive_name}\n")
+
+        # Copy to iCloud Documents for easy sharing from iPhone
+        icloud_dir = Path.home() / "Documents" / "cyclisme-training-logs-archives"
+        icloud_dir.mkdir(parents=True, exist_ok=True)
+
+        icloud_archive_path = icloud_dir / archive_name
+        icloud_checksum_path = icloud_dir / f"{archive_name}.sha256"
+
+        self.print_info(f"Copying to iCloud: {icloud_archive_path}")
+        shutil.copy2(archive_path, icloud_archive_path)
+        shutil.copy2(checksum_path, icloud_checksum_path)
 
         return archive_path, checksum
 
@@ -405,14 +417,19 @@ class ProjectCleaner:
         Returns:
             Dictionary with archive results.
         """
-        results = {"archive_created": False, "archive_path": None, "checksum": None}
+        results = {
+            "archive_created": False,
+            "archive_path": None,
+            "icloud_path": None,
+            "checksum": None,
+        }
 
         self.print_header("📦 Project Archiving Bot")
 
-        # Determine output directory (outside project)
-        output_dir = Path("/tmp") / f"sprint-{sprint_name.lower()}"
+        # Output directory in releases/ (local, gitignored)
+        output_dir = self.project_root / "releases"
 
-        # Create archive
+        # Create archive (also copies to iCloud)
         archive_path, checksum = self.create_archive(sprint_name, output_dir, dry_run)
 
         if not dry_run and archive_path:
@@ -420,12 +437,23 @@ class ProjectCleaner:
             results["archive_path"] = archive_path
             results["checksum"] = checksum
 
+            # iCloud path
+            icloud_path = (
+                Path.home() / "Documents" / "cyclisme-training-logs-archives" / archive_path.name
+            )
+            results["icloud_path"] = icloud_path
+
             # Print results
             size_mb = archive_path.stat().st_size / (1024 * 1024)
             self.print_success(f"Archive created: {archive_path}")
             print(f"  Size: {size_mb:.1f} MB")
             print(f"  SHA256: {checksum}")
-            print(f"\n{BLUE}Archive saved outside project to keep structure clean!{RESET}")
+            print(f"\n{GREEN}✅ Archive saved in 2 locations:{RESET}")
+            print(f"  1. Local (gitignored): {archive_path}")
+            print(f"  2. iCloud (shareable):  {icloud_path}")
+            print(
+                f"\n{BLUE}📱 Access from iPhone: Files → Documents → cyclisme-training-logs-archives{RESET}"
+            )
 
         return results
 
