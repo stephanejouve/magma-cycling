@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- LaunchAgent for automatic iCloud docs sync -->
+    <key>Label</key>
+    <string>com.cyclisme.sync-docs-icloud</string>
+
+    <!-- Script to run -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/stephanejouve/cyclisme-training-logs/scripts/maintenance/sync_docs_icloud.sh</string>
+    </array>
+
+    <!-- Run at login -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- Run every hour (3600 seconds) -->
+    <key>StartInterval</key>
+    <integer>3600</integer>
+
+    <!-- Working directory -->
+    <key>WorkingDirectory</key>
+    <string>/Users/stephanejouve/cyclisme-training-logs</string>
+
+    <!-- Environment variables -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+
+    <!-- Standard output/error logs -->
+    <key>StandardOutPath</key>
+    <string>/Users/stephanejouve/Library/Logs/sync-docs-icloud.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/stephanejouve/Library/Logs/sync-docs-icloud.error.log</string>
+
+    <!-- Success/failure exit timeout -->
+    <key>ExitTimeOut</key>
+    <integer>60</integer>
+
+    <!-- Low priority (nice) -->
+    <key>Nice</key>
+    <integer>5</integer>
+</dict>
+</plist>
