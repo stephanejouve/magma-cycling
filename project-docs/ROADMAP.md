@@ -1836,6 +1836,648 @@ Total avec Phase 4 : 10-14 heures (1.5-2 jours)
 
 ---
 
+### Sprint R9.E - Workflow Tests Enhancement (Planifié Q1 2026)
+
+**Focus :** Améliorer couverture tests workflows end-of-week et workflow_weekly
+
+**Status :** 📋 ROADMAP (Identifié 17 Jan 2026)
+
+**Priorité :** P1 (Critical - modules production non testés)
+
+#### Contexte
+
+**État Actuel (17 Jan 2026) :**
+
+| Module | Lignes | Coverage | Tests | Status |
+|--------|--------|----------|-------|--------|
+| `end_of_week.py` | 617 | **0%** | 0 | ❌ Critique |
+| `workflow_weekly.py` | 309 | 54% | 9 | ⚠️ Insuffisant |
+| **TOTAL** | 926 | ~27% | 9 | ❌ Risque élevé |
+
+**Problèmes identifiés :**
+- ❌ End-of-week workflow **0% couvert** (617 lignes production non testées)
+- ⚠️ Workflow weekly 46% lignes non couvertes (lignes 212-305 + edge cases)
+- ❌ Aucun test intégration end-to-end
+- ❌ Validation steps non testées (validation, upload, archive)
+
+**Risques production :**
+- Régressions silencieuses indétectables
+- Refactoring bloqué (pas de safety net)
+- Edge cases non couverts (API failures, missing files)
+- Incidents possibles chaque semaine (workflows utilisés hebdomadairement)
+
+#### Objectif Sprint R9.E
+
+Atteindre **≥80% coverage** sur les deux workflows avec tests unitaires + intégration.
+
+**Cible :**
+- end_of_week.py: 0% → ≥80% (+480 lignes couvertes)
+- workflow_weekly.py: 54% → ≥80% (+80 lignes couvertes)
+- **Total: +560 lignes sécurisées**
+
+#### Architecture Tests Proposée
+
+**Phase 1 : end_of_week.py - Tests Unitaires (P0)** ⭐
+
+**Fichier :** `tests/workflows/test_end_of_week.py` (nouveau)
+
+**Tests à créer (estimé : 25-30 tests) :**
+
+```python
+# tests/workflows/test_end_of_week.py
+
+class TestCalculateWeekStartDate:
+    """Tests for week date calculation."""
+
+    def test_calculate_s001_returns_correct_monday(self):
+        """S001 should return reference Monday from config."""
+        result = calculate_week_start_date("S001")
+        assert result.weekday() == 0  # Monday
+
+    def test_calculate_s075_adds_74_weeks(self):
+        """S075 should add 74 weeks to S001 reference."""
+        result = calculate_week_start_date("S075")
+        assert result.weekday() == 0
+
+    def test_raises_if_result_not_monday(self):
+        """Should raise ValueError if calculated date isn't Monday."""
+        # Test with invalid config (edge case)
+
+
+class TestEndOfWeekWorkflowInit:
+    """Tests for EndOfWeekWorkflow initialization."""
+
+    def test_init_with_valid_weeks(self):
+        """Initialize with valid week IDs."""
+        workflow = EndOfWeekWorkflow("S075", "S076")
+        assert workflow.week_completed == "S075"
+        assert workflow.week_next == "S076"
+
+    def test_init_calculates_dates_correctly(self):
+        """Dates should be calculated from week IDs."""
+        workflow = EndOfWeekWorkflow("S075", "S076")
+        assert workflow.completed_start_date.weekday() == 0  # Monday
+        assert workflow.next_start_date == workflow.completed_start_date + timedelta(weeks=1)
+
+    def test_init_with_dry_run_flag(self):
+        """Dry-run mode should be properly initialized."""
+        workflow = EndOfWeekWorkflow("S075", "S076", dry_run=True)
+        assert workflow.dry_run is True
+
+    def test_init_with_archive_flag(self):
+        """Archive mode should be properly initialized."""
+        workflow = EndOfWeekWorkflow("S075", "S076", archive=True)
+        assert workflow.archive is True
+
+
+class TestStep1AnalyzeWeek:
+    """Tests for Step 1: Analyze completed week."""
+
+    def test_step1_dry_run_returns_mock_data(self):
+        """Dry run should return simulated reports."""
+        workflow = EndOfWeekWorkflow("S075", "S076", dry_run=True)
+        result = workflow._step1_analyze_completed_week()
+        assert result is True
+        assert "DRY-RUN" in workflow.reports["bilan_final"]
+        assert "DRY-RUN" in workflow.reports["transition"]
+
+    def test_step1_loads_existing_reports_if_found(self, tmp_path, monkeypatch):
+        """Should load existing reports if analysis already done."""
+        # Mock reports directory with existing files
+        reports_dir = tmp_path / "weekly-reports" / "S075"
+        reports_dir.mkdir(parents=True)
+
+        bilan = reports_dir / "bilan_final_s075.md"
+        bilan.write_text("# Bilan final S075\nTest content")
+
+        transition = reports_dir / "transition_s075.md"
+        transition.write_text("# Transition S075\nTest content")
+
+        # Mock config to return tmp_path
+        monkeypatch.setattr("cyclisme_training_logs.workflows.end_of_week.get_data_config",
+                           lambda: Mock(data_repo_path=tmp_path))
+
+        workflow = EndOfWeekWorkflow("S075", "S076")
+        result = workflow._step1_analyze_completed_week()
+
+        assert result is True
+        assert "Test content" in workflow.reports["bilan_final"]
+
+    def test_step1_fails_if_no_analysis_found(self, tmp_path, monkeypatch):
+        """Should return False with helpful message if analysis missing."""
+        # Mock empty reports directory
+        monkeypatch.setattr("cyclisme_training_logs.workflows.end_of_week.get_data_config",
+                           lambda: Mock(data_repo_path=tmp_path))
+
+        workflow = EndOfWeekWorkflow("S075", "S076")
+        result = workflow._step1_analyze_completed_week()
+
+        assert result is False
+
+
+class TestStep2GeneratePlanningPrompt:
+    """Tests for Step 2: Generate planning prompt."""
+
+    def test_step2_dry_run_returns_success(self):
+        """Dry run should skip prompt generation."""
+        workflow = EndOfWeekWorkflow("S075", "S076", dry_run=True)
+        workflow.reports = {"bilan_final": "test", "transition": "test"}
+        result = workflow._step2_generate_planning_prompt()
+        assert result is True
+
+    def test_step2_generates_prompt_with_context(self, tmp_path, monkeypatch):
+        """Should generate prompt including transition and bilan."""
+        # Mock weekly-planner call
+        mock_subprocess = Mock(return_value=Mock(returncode=0))
+        monkeypatch.setattr("subprocess.run", mock_subprocess)
+
+        workflow = EndOfWeekWorkflow("S075", "S076")
+        workflow.reports = {
+            "bilan_final": "# Bilan S075\nTSS: 370",
+            "transition": "# Transition\nTSB: +5"
+        }
+
+        result = workflow._step2_generate_planning_prompt()
+
+        assert result is True
+        # Verify subprocess called with correct args
+
+
+class TestStep3GetAIWorkouts:
+    """Tests for Step 3: Get workouts from AI provider."""
+
+    def test_step3_clipboard_mode_reads_from_clipboard(self, monkeypatch):
+        """Clipboard mode should read workouts via pbpaste."""
+        workouts_text = """=== WORKOUT S076-01 ===
+Endurance Base (60min)
+...
+"""
+        mock_pbpaste = Mock(return_value=Mock(stdout=workouts_text, returncode=0))
+        monkeypatch.setattr("subprocess.run", mock_pbpaste)
+
+        workflow = EndOfWeekWorkflow("S075", "S076", provider="clipboard")
+        result = workflow._step3_get_ai_workouts()
+
+        assert result is True
+        assert workflow.workouts_file.exists()
+
+    def test_step3_claude_api_calls_provider(self, monkeypatch):
+        """Claude API mode should call AI provider."""
+        mock_analyzer = Mock()
+        mock_analyzer.analyze.return_value = "Workout content"
+
+        mock_factory = Mock(return_value=mock_analyzer)
+        monkeypatch.setattr("cyclisme_training_logs.workflows.end_of_week.get_ai_analyzer",
+                           mock_factory)
+
+        workflow = EndOfWeekWorkflow("S075", "S076", provider="claude_api")
+        result = workflow._step3_get_ai_workouts()
+
+        assert result is True
+
+    def test_step3_dry_run_skips_ai_call(self):
+        """Dry run should skip AI provider call."""
+        workflow = EndOfWeekWorkflow("S075", "S076", dry_run=True)
+        result = workflow._step3_get_ai_workouts()
+        assert result is True
+
+
+class TestStep4ValidateWorkouts:
+    """Tests for Step 4: Validate workout notation."""
+
+    def test_step4_validates_warmup_cooldown_present(self, tmp_path):
+        """Should validate warmup/cooldown sections exist."""
+        workouts_file = tmp_path / "workouts.txt"
+        workouts_file.write_text("""=== WORKOUT S076-01-END-EnduranceBase-V001 ===
+Endurance Base (60min, 40 TSS)
+
+Main set
+- 60m 65% 88rpm
+""")
+
+        workflow = EndOfWeekWorkflow("S075", "S076")
+        workflow.workouts_file = workouts_file
+        result = workflow._step4_validate_workouts()
+
+        # Should detect missing warmup/cooldown
+        assert len(workflow.validation_warnings) > 0
+
+    def test_step4_accepts_valid_workout_notation(self, tmp_path):
+        """Should accept workout with proper warmup/cooldown."""
+        workouts_file = tmp_path / "workouts.txt"
+        workouts_file.write_text("""=== WORKOUT S076-01-END-EnduranceBase-V001 ===
+Endurance Base (60min, 40 TSS)
+
+Warmup
+- 10m ramp 50-65% 85rpm
+
+Main set
+- 40m 65% 88rpm
+
+Cooldown
+- 10m ramp 65-50% 85rpm
+""")
+
+        workflow = EndOfWeekWorkflow("S075", "S076")
+        workflow.workouts_file = workouts_file
+        result = workflow._step4_validate_workouts()
+
+        assert result is True
+        assert len(workflow.validation_warnings) == 0
+
+    def test_step4_repos_days_skip_validation(self, tmp_path):
+        """REST days should skip warmup/cooldown validation."""
+        workouts_file = tmp_path / "workouts.txt"
+        workouts_file.write_text("""=== WORKOUT S076-07-REPOS ===
+Repos obligatoire
+""")
+
+        workflow = EndOfWeekWorkflow("S075", "S076")
+        workflow.workouts_file = workouts_file
+        result = workflow._step4_validate_workouts()
+
+        assert result is True  # No validation errors for REPOS
+
+
+class TestStep5UploadWorkouts:
+    """Tests for Step 5: Upload workouts to Intervals.icu."""
+
+    def test_step5_dry_run_skips_upload(self):
+        """Dry run should skip actual upload."""
+        workflow = EndOfWeekWorkflow("S075", "S076", dry_run=True)
+        result = workflow._step5_upload_workouts()
+        assert result is True
+
+    def test_step5_calls_upload_workouts(self, tmp_path, monkeypatch):
+        """Should call upload-workouts script with correct parameters."""
+        mock_subprocess = Mock(return_value=Mock(returncode=0))
+        monkeypatch.setattr("subprocess.run", mock_subprocess)
+
+        workflow = EndOfWeekWorkflow("S075", "S076")
+        workflow.workouts_file = tmp_path / "workouts.txt"
+        workflow.workouts_file.write_text("test")
+
+        result = workflow._step5_upload_workouts()
+
+        assert result is True
+        # Verify subprocess called
+
+    def test_step5_handles_upload_failure(self, tmp_path, monkeypatch):
+        """Should handle upload API errors gracefully."""
+        mock_subprocess = Mock(return_value=Mock(returncode=1))
+        monkeypatch.setattr("subprocess.run", mock_subprocess)
+
+        workflow = EndOfWeekWorkflow("S075", "S076")
+        workflow.workouts_file = tmp_path / "workouts.txt"
+        workflow.workouts_file.write_text("test")
+
+        result = workflow._step5_upload_workouts()
+
+        assert result is False
+
+
+class TestStep6ArchiveCommit:
+    """Tests for Step 6: Archive and commit (optional)."""
+
+    def test_step6_skipped_if_archive_false(self):
+        """Should skip if --archive not specified."""
+        workflow = EndOfWeekWorkflow("S075", "S076", archive=False)
+        # Should not raise, just skip
+        workflow._step6_archive_and_commit()
+
+    def test_step6_skipped_in_dry_run(self):
+        """Should skip in dry-run mode."""
+        workflow = EndOfWeekWorkflow("S075", "S076", archive=True, dry_run=True)
+        # Should not raise, just skip
+        workflow._step6_archive_and_commit()
+
+    def test_step6_creates_git_commit(self, monkeypatch):
+        """Should create git commit with proper message (future implementation)."""
+        # TODO: Will be tested when Step 6 is implemented
+        pass
+
+
+class TestWorkflowRun:
+    """Tests for main workflow.run() orchestration."""
+
+    def test_run_executes_all_steps_in_order(self, monkeypatch):
+        """Should execute steps 1-6 in correct order."""
+        workflow = EndOfWeekWorkflow("S075", "S076", dry_run=True)
+        result = workflow.run()
+        assert result is True
+
+    def test_run_stops_at_first_failure(self, monkeypatch):
+        """Should stop workflow if any step fails."""
+        workflow = EndOfWeekWorkflow("S075", "S076")
+
+        # Mock step1 to fail
+        monkeypatch.setattr(workflow, "_step1_analyze_completed_week", lambda: False)
+
+        result = workflow.run()
+        assert result is False
+
+    def test_run_handles_keyboard_interrupt(self, monkeypatch):
+        """Should handle Ctrl+C gracefully."""
+        workflow = EndOfWeekWorkflow("S075", "S076")
+
+        def raise_interrupt():
+            raise KeyboardInterrupt()
+
+        monkeypatch.setattr(workflow, "_step1_analyze_completed_week", raise_interrupt)
+
+        result = workflow.run()
+        assert result is False
+
+
+class TestEndToEndIntegration:
+    """Integration tests for full workflow."""
+
+    def test_full_workflow_dry_run_completes(self):
+        """Test complete workflow in dry-run mode."""
+        workflow = EndOfWeekWorkflow("S075", "S076", dry_run=True)
+        result = workflow.run()
+        assert result is True
+
+    def test_full_workflow_with_mocked_dependencies(self, tmp_path, monkeypatch):
+        """Test workflow with all dependencies mocked."""
+        # Mock all external dependencies:
+        # - weekly-analysis reports
+        # - weekly-planner
+        # - AI provider
+        # - upload-workouts
+        # Then verify workflow completes
+        pass
+```
+
+**Couverture estimée :** 25-30 tests → ~70-80% coverage end_of_week.py
+
+**Durée estimée Phase 1 :** 8-12 heures (1.5-2 jours)
+
+**Phase 2 : workflow_weekly.py - Compléter Coverage (P0)** ⭐
+
+**Tests à ajouter dans `tests/test_workflow_weekly.py` (fichier existant) :**
+
+```python
+# tests/test_workflow_weekly.py (compléter avec ~10-15 tests)
+
+class TestWeeklyWorkflowEdgeCases:
+    """Test edge cases and error handling paths."""
+
+    def test_weekly_workflow_handles_week_with_no_activities(self, monkeypatch):
+        """Should handle week with zero activities gracefully."""
+        # Cover lines 212-305 (main gap)
+        mock_api = Mock()
+        mock_api.get_activities.return_value = []  # Empty week
+
+        workflow = WeeklyWorkflow("S075", date(2026, 1, 5))
+        # Should not crash, generate reports with "No activities" message
+
+    def test_weekly_workflow_handles_api_failure(self, monkeypatch):
+        """Should handle Intervals.icu API failures gracefully."""
+        mock_api = Mock()
+        mock_api.get_activities.side_effect = Exception("API Error")
+
+        workflow = WeeklyWorkflow("S075", date(2026, 1, 5))
+        # Should catch exception, log error, continue
+
+    def test_weekly_workflow_handles_partial_data(self, monkeypatch):
+        """Should handle activities with missing data fields."""
+        mock_api = Mock()
+        mock_api.get_activities.return_value = [
+            {"id": "i123", "name": "Test"},  # Missing TSS, IF, etc.
+        ]
+
+        workflow = WeeklyWorkflow("S075", date(2026, 1, 5))
+        # Should handle None values gracefully
+
+    def test_weekly_workflow_creates_all_output_directories(self, tmp_path, monkeypatch):
+        """Should create reports directory structure if missing."""
+        monkeypatch.setattr("cyclisme_training_logs.config.get_data_config",
+                           lambda: Mock(data_repo_path=tmp_path))
+
+        workflow = WeeklyWorkflow("S075", date(2026, 1, 5))
+        # Should create weekly-reports/S075/
+        assert (tmp_path / "weekly-reports" / "S075").exists()
+
+
+class TestWeeklyWorkflowAIProviders:
+    """Test AI provider integration in weekly workflow."""
+
+    def test_workflow_with_claude_api_provider(self, monkeypatch):
+        """Test weekly analysis with Claude API provider."""
+        mock_analyzer = Mock()
+        mock_analyzer.analyze.return_value = "Analysis content"
+
+        # Mock provider factory
+        monkeypatch.setattr("cyclisme_training_logs.ai_providers.get_ai_analyzer",
+                           lambda x: mock_analyzer)
+
+        workflow = WeeklyWorkflow("S075", date(2026, 1, 5), provider="claude_api")
+        # Verify analyzer called with correct prompts
+
+    def test_workflow_with_mistral_provider(self, monkeypatch):
+        """Test weekly analysis with Mistral API provider."""
+        pass
+
+    def test_workflow_fallback_on_provider_failure(self, monkeypatch):
+        """Test fallback behavior if AI provider fails."""
+        mock_analyzer = Mock()
+        mock_analyzer.analyze.side_effect = Exception("API Error")
+
+        # Should handle gracefully or fallback to clipboard mode
+
+
+class TestWeeklyWorkflowReports:
+    """Test report generation and structure."""
+
+    def test_generates_all_6_required_reports(self, tmp_path, monkeypatch):
+        """Should generate all 6 reports: workout_history, metrics_evolution,
+        learnings, adaptations, transition, bilan_final."""
+        monkeypatch.setattr("cyclisme_training_logs.config.get_data_config",
+                           lambda: Mock(data_repo_path=tmp_path))
+
+        workflow = WeeklyWorkflow("S075", date(2026, 1, 5))
+        # Mock run
+
+        reports_dir = tmp_path / "weekly-reports" / "S075"
+        assert (reports_dir / "workout_history_s075.md").exists()
+        assert (reports_dir / "metrics_evolution_s075.md").exists()
+        assert (reports_dir / "learnings_s075.md").exists()
+        assert (reports_dir / "adaptations_s075.md").exists()
+        assert (reports_dir / "transition_s075.md").exists()
+        assert (reports_dir / "bilan_final_s075.md").exists()
+
+    def test_reports_contain_required_markdown_sections(self, tmp_path, monkeypatch):
+        """Each report should have proper markdown structure."""
+        # Verify # headings, ## sections, bullet points, etc.
+
+    def test_bilan_final_includes_tss_metrics(self, monkeypatch):
+        """Bilan final should include TSS total, TSB, CTL, ATL."""
+        pass
+
+    def test_transition_includes_recommendations(self, monkeypatch):
+        """Transition report should include next week recommendations."""
+        pass
+
+
+class TestWeeklyWorkflowCLI:
+    """Test CLI argument parsing and main() function."""
+
+    def test_run_weekly_analysis_utility_function(self, monkeypatch):
+        """Test run_weekly_analysis() helper function."""
+        # Already has basic test, add edge cases
+        pass
+
+    def test_cli_with_invalid_week_id_format(self):
+        """Should handle invalid week ID format gracefully."""
+        # Test with "S1" instead of "S001"
+        # Test with "invalid"
+        pass
+
+    def test_cli_with_invalid_date_format(self):
+        """Should handle invalid date format."""
+        # Test with "2026/01/05" instead of "2026-01-05"
+        pass
+```
+
+**Couverture estimée :** 10-15 tests → 54% → 80%+ coverage
+
+**Durée estimée Phase 2 :** 4-6 heures
+
+**Phase 3 : Tests Intégration End-to-End (P1)**
+
+**Fichier :** `tests/workflows/test_workflows_integration.py` (nouveau)
+
+```python
+# tests/workflows/test_workflows_integration.py
+
+class TestCompleteWeeklyTransition:
+    """Integration tests for complete weekly workflow transition."""
+
+    def test_end_of_week_to_weekly_analysis_integration(self, tmp_path, monkeypatch):
+        """Test complete transition S075 → S076 with mocked dependencies."""
+        # 1. Setup: Create mock weekly-analysis reports for S075
+        # 2. Run: end-of-week workflow S075 → S076
+        # 3. Verify: All artifacts created correctly
+        #    - Planning S076 generated
+        #    - Workouts file created
+        #    - Validation passed
+        #    - Upload called (mocked)
+        pass
+
+    def test_workflow_with_realistic_intervals_data(self, monkeypatch):
+        """Integration test with realistic mocked Intervals.icu data."""
+        # Mock API with realistic activity data (5-7 activities)
+        # Run weekly-analysis
+        # Verify all 6 reports generated correctly
+        pass
+
+    def test_two_week_transition_sequence(self, tmp_path, monkeypatch):
+        """Test S074 → S075 → S076 sequential workflow."""
+        # Verify workflows can chain properly
+        pass
+```
+
+**Durée estimée Phase 3 :** 2-3 heures
+
+#### Livrables Sprint R9.E
+
+**Code :**
+- ✅ `tests/workflows/test_end_of_week.py` (~400-500 lignes, 25-30 tests)
+- ✅ `tests/test_workflow_weekly.py` complété (~200 lignes additionnelles, 10-15 tests)
+- ✅ `tests/workflows/test_workflows_integration.py` (~150 lignes, 3-5 tests)
+- ✅ **Total : ~40-50 tests nouveaux**
+
+**Coverage :**
+- ✅ end_of_week.py : 0% → ≥80% (+480 lignes couvertes)
+- ✅ workflow_weekly.py : 54% → ≥80% (+80 lignes couvertes)
+- ✅ Global workflows/ : ~27% → ≥80%
+
+**Documentation :**
+- ✅ TESTS_COVERAGE_REPORT.md mis à jour avec métriques
+- ✅ Guide : "Testing Workflows" (mocking strategies, fixtures)
+- ✅ CHANGELOG.md entry
+
+**Métriques :**
+- ✅ +560 lignes code production sécurisées
+- ✅ +40-50 tests automatisés
+- ✅ 0 régressions fonctionnelles détectées
+
+#### Métriques Succès
+
+- ✅ Coverage end_of_week.py ≥ 80%
+- ✅ Coverage workflow_weekly.py ≥ 80%
+- ✅ 100% tests passing (all ~890 tests)
+- ✅ 0 régressions fonctionnelles
+- ✅ Tests robustes (proper mocking, no external dependencies)
+- ✅ CI/CD green (all pre-commit hooks pass)
+
+#### Bénéfices
+
+**Sécurité Production :**
+- ✅ Workflows critiques testés (utilisés chaque semaine)
+- ✅ Régressions détectées avant production (CI/CD)
+- ✅ Edge cases couverts (API failures, missing files, corrupted data)
+- ✅ Incidents possibles détectés en développement
+
+**Maintenabilité :**
+- ✅ Refactoring sécurisé (test safety net)
+- ✅ Documentation code par tests (examples)
+- ✅ Onboarding développeurs facilité (tests = specs)
+- ✅ Confiance modifications futures (green tests = ship it)
+
+**Qualité :**
+- ✅ Bugs détectés avant utilisateurs
+- ✅ Comportement attendu documenté
+- ✅ Standards qualité maintenus (coverage ≥80%)
+- ✅ Validation automatique continue
+
+**ROI :**
+- Investment : 2-3 jours développement
+- Gain : Sécurité infrastructure critique long-terme
+- Prévention : 1 incident production évité = ROI positif
+
+#### Risques & Mitigations
+
+| Risque | Probabilité | Impact | Mitigation |
+|--------|-------------|--------|-----------|
+| Mocking complexe (filesystem, subprocess, API) | Moyenne | Moyen | Créer fixtures réutilisables, helpers mocking |
+| Tests fragiles (couplage implémentation) | Moyenne | Élevé | Test behavior not implementation, builders pattern |
+| Durée développement dépassée | Faible | Moyen | Prioriser P0 strict, accepter 70% si contrainte temps |
+| Régression workflow production | Faible | Élevé | Tests intégration couvrent scénarios réels |
+| False positives (tests passent, bugs existent) | Faible | Élevé | Code review tests, validation données réalistes |
+
+#### Timeline Estimée
+
+```
+Phase 1: end_of_week.py tests (P0)       - 8-12 heures (1.5-2 jours)
+Phase 2: workflow_weekly.py compléments (P0) - 4-6 heures (0.5-1 jour)
+Phase 3: Tests intégration (P1)          - 2-3 heures (0.5 jour)
+
+Total: 14-21 heures développement (2-3 jours)
+```
+
+**Recommandation Timeline :**
+- Jour 1 : Phase 1 (end_of_week.py tests) → 50% coverage
+- Jour 2 : Phase 1 complétée + Phase 2 (workflow_weekly.py) → 80% coverage
+- Jour 3 : Phase 3 (intégration) + documentation → 80%+ coverage finalisée
+
+**Prérequis :**
+- ✅ Sprint R8 complété (workflow_coach coverage ≥50%)
+- ✅ Sprint R9.D complété ou en parallèle (indépendant)
+- ✅ 0 bugs production workflows critiques
+- ✅ Validation MOA/PO priorité qualité
+
+**Trigger Implémentation (CONDITIONS DÉJÀ REMPLIES) :**
+- ❌ **Workflows critiques non testés** = risque élevé production (DÉJÀ VÉCU)
+- ✅ Besoin refactoring workflows bloqué par manque tests (ACTUEL)
+- ✅ Incidents production détectables par tests (PRÉVENTIF)
+- ❌ 617 lignes production 0% couvertes = dette technique critique (URGENT)
+
+**Note MOA/PO :** Sprint **critique pour sécurité production**. Workflows end-of-week et weekly-analysis utilisés **chaque semaine** en production, **0% tests** = risque incidents silencieux élevé. Investment **2-3 jours** pour sécuriser infrastructure critique **long-terme**. ROI positif dès **1 incident évité**. Recommandation forte : **Priorité P0 après R9.D**.
+
+---
+
 ### Long-Term Vision (2026-2027)
 
 #### Multi-Athlete Support
