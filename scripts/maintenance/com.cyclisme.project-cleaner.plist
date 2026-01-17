@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- LaunchAgent for automatic project cleanup (temp files) -->
+    <key>Label</key>
+    <string>com.cyclisme.project-cleaner</string>
+
+    <!-- Script to run with Poetry -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>-c</string>
+        <string>cd /Users/stephanejouve/cyclisme-training-logs && /Users/stephanejouve/.local/bin/poetry run project-clean</string>
+    </array>
+
+    <!-- Run at login -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- Run once per day (86400 seconds) -->
+    <key>StartInterval</key>
+    <integer>86400</integer>
+
+    <!-- Working directory -->
+    <key>WorkingDirectory</key>
+    <string>/Users/stephanejouve/cyclisme-training-logs</string>
+
+    <!-- Environment variables -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/Users/stephanejouve/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+
+    <!-- Standard output/error logs -->
+    <key>StandardOutPath</key>
+    <string>/Users/stephanejouve/Library/Logs/project-cleaner.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/stephanejouve/Library/Logs/project-cleaner.error.log</string>
+
+    <!-- Success/failure exit timeout -->
+    <key>ExitTimeOut</key>
+    <integer>120</integer>
+
+    <!-- Low priority (nice) -->
+    <key>Nice</key>
+    <integer>10</integer>
+</dict>
+</plist>

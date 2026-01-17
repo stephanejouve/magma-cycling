@@ -186,6 +186,37 @@ scripts/maintenance/sync_docs_icloud.sh
 - Utiliser iCloud uniquement pour **consultation et partage**, pas édition
 - Les fichiers `.DS_Store`, `.json`, `.jsonl` sont exclus automatiquement
 
+## 🧹 Project Cleaner Automation
+
+**LaunchAgent:** `com.cyclisme.project-cleaner`
+
+**Ce qu'il fait:**
+- Nettoie fichiers temporaires (`__pycache__`, `.DS_Store`, `.pyc`, etc.)
+- Identifie fichiers mal placés à la racine
+- Vérifie standards pre-commit
+
+**Fréquence:**
+- ✅ Au démarrage système
+- ✅ Une fois par jour (86400s)
+
+**Logs:**
+- Standard: `~/Library/Logs/project-cleaner.log`
+- Erreurs: `~/Library/Logs/project-cleaner.error.log`
+
+**Installation:**
+```bash
+# Copier le plist
+cp scripts/maintenance/com.cyclisme.project-cleaner.plist ~/Library/LaunchAgents/
+
+# Charger le LaunchAgent
+launchctl load ~/Library/LaunchAgents/com.cyclisme.project-cleaner.plist
+
+# Vérifier
+launchctl list | grep project-cleaner
+```
+
+**Sécurité:** Safe, supprime seulement les fichiers temporaires standard.
+
 ---
 
 **Créé:** 17 janvier 2026
