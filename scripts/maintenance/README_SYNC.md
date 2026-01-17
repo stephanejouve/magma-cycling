@@ -217,6 +217,88 @@ launchctl list | grep project-cleaner
 
 **Sécurité:** Safe, supprime seulement les fichiers temporaires standard.
 
+## 🗑️ Nettoyage Archives iCloud
+
+**Script:** `cleanup_old_archives.py`
+
+**Objectif:** Libérer espace iCloud en supprimant anciennes archives MOA.
+
+**Stratégie par défaut:** Garde les **3 archives les plus récentes**
+
+### Commandes
+
+**Nettoyage standard (garde 3 récentes):**
+```bash
+poetry run cleanup-archives
+```
+
+**Garde N archives:**
+```bash
+poetry run cleanup-archives --keep 5
+```
+
+**Garde archives de moins de N jours:**
+```bash
+poetry run cleanup-archives --keep-days 30
+```
+
+**Prévisualiser (dry-run):**
+```bash
+poetry run cleanup-archives --dry-run
+```
+
+### Où nettoie-t-il?
+
+**✅ Nettoie:** `~/Documents/cyclisme-training-logs-archives/` (iCloud)
+
+**❌ Préserve:** `releases/` (local, jamais touché)
+
+### Automatisation (optionnelle)
+
+**Option 1: Hebdomadaire (recommandé)**
+
+Exécuter manuellement après chaque livraison MOA:
+```bash
+poetry run cleanup-archives
+```
+
+**Option 2: LaunchAgent hebdomadaire**
+
+Si besoin d'automatisation (non implémenté par défaut):
+```bash
+# Créer LaunchAgent pour nettoyage le dimanche
+# StartCalendarInterval: Day 0 (dimanche), Hour 23
+```
+
+### Exemple de sortie
+
+```
+🗑️  iCloud Archives Cleanup
+
+Archives to keep (most recent 3):
+  ✅ sprint-r9-v2.2.0-20260117.tar.gz (18.9 MB, 2026-01-17 07:45)
+  ✅ sprint-r8-v2.2.0-20260111.tar.gz (17.2 MB, 2026-01-11 22:30)
+  ✅ sprint-r7-v2.2.0-20260104.tar.gz (16.8 MB, 2026-01-04 18:15)
+
+Archives to delete:
+  ❌ sprint-r6-v2.2.0-20251228.tar.gz (15.3 MB, 2025-12-28 14:20)
+  ❌ sprint-r5-v2.2.0-20251221.tar.gz (14.9 MB, 2025-12-21 09:45)
+
+Summary:
+  Mode: keeping 3 most recent
+  Files deleted: 4 (2 archives + 2 checksums)
+  Space freed: 30.2 MB
+
+✅ Cleanup completed successfully!
+```
+
+### Sécurité
+
+- ✅ Archives locales (`releases/`) **jamais touchées**
+- ✅ Dry-run disponible pour prévisualiser
+- ✅ Ne supprime que les `.tar.gz` et `.sha256` dans iCloud
+- ✅ Garde toujours les N plus récentes
+
 ---
 
 **Créé:** 17 janvier 2026
