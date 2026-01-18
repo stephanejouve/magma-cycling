@@ -1,525 +1,477 @@
-"""
-Tests for intervals_sync module.
+"""Tests for intervals_sync module (Sprint R3 Module 3)."""
 
-Tests bidirectional sync between local training plans/calendars and Intervals.icu.
-"""
-
-from datetime import date
+from datetime import date, datetime
 from unittest.mock import Mock, patch
 
 import pytest
 
 from cyclisme_training_logs.config.athlete_profile import AthleteProfile
 from cyclisme_training_logs.planning.calendar import TrainingCalendar, WorkoutType
-from cyclisme_training_logs.planning.intervals_sync import IntervalsSync, SyncStatus
-from cyclisme_training_logs.planning.planning_manager import (
-    ObjectiveType,
-    PriorityLevel,
-    TrainingObjective,
-    TrainingPlan,
+from cyclisme_training_logs.planning.intervals_sync import (
+    CalendarDiff,
+    IntervalsSync,
+    SyncStatusReport,
 )
 
 
 @pytest.fixture
-def master_profile():
-    """Master athlete profile (54 years)."""
+def athlete_profile():
+    """Create test athlete profile."""
     return AthleteProfile(
         age=54,
         category="master",
         recovery_capacity="good",
         sleep_dependent=True,
-        ftp=220,
-        weight=83.8,
+        ftp=240,
+        weight=72.5,
     )
 
 
-class TestSyncStatus:
-    """Tests for SyncStatus dataclass."""
+@pytest.fixture
+def calendar(athlete_profile):
+    """Create test calendar with sessions."""
+    cal = TrainingCalendar(year=2026, athlete_profile=athlete_profile)
 
-    def test_sync_status_defaults(self):
-        """Test SyncStatus with default values."""
-        status = SyncStatus(success=True)
-        assert status.success is True
-        assert status.events_created == 0
-        assert status.events_updated == 0
-        assert status.events_deleted == 0
-        assert status.errors == []
-        assert status.warnings == []
+    # Add 3 sessions (Mon/Wed/Fri)
+    cal.add_session(
+        session_date=date(2026, 1, 20),  # Monday
+        workout_type=WorkoutType.ENDURANCE,
+        planned_tss=80,
+        duration_min=90,
+        intensity_pct=70.0,
+        notes="Base endurance",
+    )
 
-    def test_sync_status_with_values(self):
-        """Test SyncStatus with custom values."""
-        status = SyncStatus(
-            success=True,
-            events_created=5,
-            events_updated=3,
-            events_deleted=1,
-            errors=["error1"],
-            warnings=["warning1"],
+    cal.add_session(
+        session_date=date(2026, 1, 22),  # Wednesday
+        workout_type=WorkoutType.TEMPO,
+        planned_tss=65,
+        duration_min=60,
+        intensity_pct=85.0,
+        notes="Sweet spot",
+    )
+
+    cal.add_session(
+        session_date=date(2026, 1, 24),  # Friday
+        workout_type=WorkoutType.RECOVERY,
+        planned_tss=30,
+        duration_min=45,
+        intensity_pct=55.0,
+        notes="Active recovery",
+    )
+
+    return cal
+
+
+@pytest.fixture
+def mock_intervals_client():
+    """Create mock Intervals.icu client."""
+    mock_client = Mock()
+    return mock_client
+
+
+class TestCalendarDiff:
+    """Tests for CalendarDiff dataclass."""
+
+    def test_has_changes_empty(self):
+        """Test has_changes() with no changes."""
+        diff = CalendarDiff(
+            added_remote=[],
+            removed_remote=[],
+            moved_remote=[],
+            modified_remote=[],
         )
-        assert status.success is True
-        assert status.events_created == 5
-        assert status.events_updated == 3
-        assert status.events_deleted == 1
-        assert status.errors == ["error1"]
-        assert status.warnings == ["warning1"]
+        assert not diff.has_changes()
 
-    def test_sync_status_to_dict(self):
-        """Test SyncStatus.to_dict() serialization."""
-        status = SyncStatus(
-            success=True,
-            events_created=2,
-            errors=["error1", "error2"],
+    def test_has_changes_with_removed(self):
+        """Test has_changes() with removed workouts."""
+        diff = CalendarDiff(
+            added_remote=[],
+            removed_remote=[{"date": date(2026, 1, 22), "name": "Tempo"}],
+            moved_remote=[],
+            modified_remote=[],
         )
-        result = status.to_dict()
-        assert result["success"] is True
-        assert result["events_created"] == 2
-        assert result["errors"] == ["error1", "error2"]
+        assert diff.has_changes()
+
+    def test_has_changes_with_added(self):
+        """Test has_changes() with added workouts."""
+        diff = CalendarDiff(
+            added_remote=[{"date": date(2026, 1, 23), "name": "Extra"}],
+            removed_remote=[],
+            moved_remote=[],
+            modified_remote=[],
+        )
+        assert diff.has_changes()
+
+    def test_has_changes_with_modified(self):
+        """Test has_changes() with modified workouts."""
+        diff = CalendarDiff(
+            added_remote=[],
+            removed_remote=[],
+            moved_remote=[],
+            modified_remote=[{"date": date(2026, 1, 20), "delta_tss": -15}],
+        )
+        assert diff.has_changes()
+
+
+class TestSyncStatusReport:
+    """Tests for SyncStatusReport dataclass."""
+
+    def test_summary_synced(self):
+        """Test summary() when synced."""
+        diff = CalendarDiff(
+            added_remote=[],
+            removed_remote=[],
+            moved_remote=[],
+            modified_remote=[],
+        )
+        report = SyncStatusReport(
+            last_check=datetime.now(),
+            is_synced=True,
+            diff=diff,
+            warnings=[],
+        )
+
+        summary = report.summary()
+        assert "✅ Calendrier synchronisé" in summary
+
+    def test_summary_with_changes(self):
+        """Test summary() with changes."""
+        diff = CalendarDiff(
+            added_remote=[{"date": "2026-01-23"}],
+            removed_remote=[{"date": "2026-01-22"}],
+            moved_remote=[],
+            modified_remote=[{"date": "2026-01-20"}],
+        )
+        report = SyncStatusReport(
+            last_check=datetime.now(),
+            is_synced=False,
+            diff=diff,
+            warnings=[],
+        )
+
+        summary = report.summary()
+        assert "⚠️ Changements détectés:" in summary
+        assert "1 workouts supprimés par coach" in summary
+        assert "1 workouts ajoutés par coach" in summary
+        assert "1 workouts modifiés par coach" in summary
 
 
 class TestIntervalsSync:
     """Tests for IntervalsSync class."""
 
-    @patch("cyclisme_training_logs.planning.intervals_sync.create_intervals_client")
-    def test_init_success(self, mock_create_client):
-        """Test successful initialization."""
-        mock_client = Mock()
-        mock_create_client.return_value = mock_client
+    def test_init(self):
+        """Test IntervalsSync initialization."""
+        with patch("cyclisme_training_logs.planning.intervals_sync.create_intervals_client"):
+            sync = IntervalsSync()
+            assert sync.client is not None
 
-        sync = IntervalsSync()
+    def test_fetch_remote_calendar_empty(self, mock_intervals_client):
+        """Test fetch_remote_calendar() with no events."""
+        mock_intervals_client.get_events.return_value = []
 
-        assert sync.client == mock_client
-        mock_create_client.assert_called_once()
+        with patch(
+            "cyclisme_training_logs.planning.intervals_sync.create_intervals_client"
+        ) as mock_create:
+            mock_create.return_value = mock_intervals_client
 
-    @patch("cyclisme_training_logs.planning.intervals_sync.create_intervals_client")
-    def test_init_missing_credentials(self, mock_create_client):
-        """Test initialization fails with missing credentials."""
-        mock_create_client.side_effect = ValueError("Credentials not configured")
+            sync = IntervalsSync()
+            calendar = sync.fetch_remote_calendar(
+                start_date=date(2026, 1, 20),
+                end_date=date(2026, 1, 26),
+            )
 
-        with pytest.raises(ValueError, match="Credentials not configured"):
-            IntervalsSync()
+            assert calendar == {}
+            mock_intervals_client.get_events.assert_called_once_with(
+                oldest="2026-01-20",
+                newest="2026-01-26",
+            )
 
-    @patch("cyclisme_training_logs.planning.intervals_sync.create_intervals_client")
-    def test_push_plan_to_intervals_success(self, mock_create_client):
-        """Test successful plan push to Intervals.icu."""
-        # Setup mock client
-        mock_client = Mock()
-        mock_create_client.return_value = mock_client
-        mock_client.create_event.return_value = {"id": 123, "name": "Test Event"}
-
-        # Create a plan with objectives
-        plan = TrainingPlan(
-            name="test-plan",
-            start_date=date(2026, 1, 20),
-            end_date=date(2026, 2, 16),
-            objectives=[
-                TrainingObjective(
-                    name="Gran Fondo",
-                    target_date=date(2026, 2, 2),
-                    objective_type=ObjectiveType.EVENT,
-                    priority=PriorityLevel.HIGH,
-                ),
-                TrainingObjective(
-                    name="FTP Test",
-                    target_date=date(2026, 2, 10),
-                    objective_type=ObjectiveType.FTP_TARGET,
-                    priority=PriorityLevel.MEDIUM,
-                    target_value=250,
-                ),
-            ],
-        )
-
-        # Push plan
-        sync = IntervalsSync()
-        status = sync.push_plan_to_intervals(plan)
-
-        # Verify
-        assert status.success is True
-        assert status.events_created == 2
-        assert len(status.errors) == 0
-        assert mock_client.create_event.call_count == 2
-
-    @patch("cyclisme_training_logs.planning.intervals_sync.create_intervals_client")
-    def test_push_plan_to_intervals_partial_failure(self, mock_create_client):
-        """Test plan push with some event creation failures."""
-        mock_client = Mock()
-        mock_create_client.return_value = mock_client
-        # First event succeeds, second fails
-        mock_client.create_event.side_effect = [
-            {"id": 123, "name": "Event 1"},
-            None,  # Failure
-        ]
-
-        plan = TrainingPlan(
-            name="test-plan",
-            start_date=date(2026, 1, 20),
-            end_date=date(2026, 2, 16),
-            objectives=[
-                TrainingObjective(
-                    name="Objective 1",
-                    target_date=date(2026, 2, 1),
-                    objective_type=ObjectiveType.EVENT,
-                    priority=PriorityLevel.HIGH,
-                ),
-                TrainingObjective(
-                    name="Objective 2",
-                    target_date=date(2026, 2, 10),
-                    objective_type=ObjectiveType.MILESTONE,
-                    priority=PriorityLevel.MEDIUM,
-                ),
-            ],
-        )
-
-        sync = IntervalsSync()
-        status = sync.push_plan_to_intervals(plan)
-
-        assert status.success is True  # At least one succeeded
-        assert status.events_created == 1
-        assert len(status.errors) == 1
-        assert "Objective 2" in status.errors[0]
-
-    @patch("cyclisme_training_logs.planning.intervals_sync.create_intervals_client")
-    def test_push_plan_empty_objectives(self, mock_create_client):
-        """Test pushing plan with no objectives."""
-        mock_client = Mock()
-        mock_create_client.return_value = mock_client
-
-        plan = TrainingPlan(
-            name="test-plan",
-            start_date=date(2026, 1, 20),
-            end_date=date(2026, 2, 16),
-            objectives=[],
-        )
-
-        sync = IntervalsSync()
-        status = sync.push_plan_to_intervals(plan)
-
-        assert status.success is False  # No events created
-        assert status.events_created == 0
-        mock_client.create_event.assert_not_called()
-
-    @patch("cyclisme_training_logs.planning.intervals_sync.create_intervals_client")
-    def test_sync_calendar_create_new_sessions(self, mock_create_client, master_profile):
-        """Test syncing calendar creates new workout events."""
-        mock_client = Mock()
-        mock_create_client.return_value = mock_client
-        mock_client.get_events.return_value = []  # No existing events
-        mock_client.get_activities.return_value = []
-        mock_client.create_event.return_value = {"id": 123}
-
-        calendar = TrainingCalendar(year=2026, athlete_profile=master_profile)
-        calendar.add_session(
-            session_date=date(2026, 1, 20),
-            workout_type=WorkoutType.ENDURANCE,
-            planned_tss=100,
-        )
-        calendar.add_session(
-            session_date=date(2026, 1, 22),
-            workout_type=WorkoutType.TEMPO,
-            planned_tss=80,
-        )
-
-        sync = IntervalsSync()
-        status = sync.sync_calendar(
-            calendar=calendar,
-            start_date=date(2026, 1, 20),
-            end_date=date(2026, 1, 26),
-        )
-
-        assert status.success is True
-        assert status.events_created == 2
-        assert status.events_updated == 0
-        assert mock_client.create_event.call_count == 2
-
-    @patch("cyclisme_training_logs.planning.intervals_sync.create_intervals_client")
-    def test_sync_calendar_update_existing_sessions(self, mock_create_client, master_profile):
-        """Test syncing calendar updates existing workout events."""
-        mock_client = Mock()
-        mock_create_client.return_value = mock_client
-
-        # Mock existing events in Intervals.icu
-        mock_client.get_events.return_value = [
+    def test_fetch_remote_calendar_with_workouts(self, mock_intervals_client):
+        """Test fetch_remote_calendar() with workouts."""
+        mock_intervals_client.get_events.return_value = [
             {
-                "id": 100,
+                "id": 89100872,
                 "category": "WORKOUT",
-                "name": "S003-01-END",
-                "start_date_local": "2026-01-20",
+                "name": "S077-01-END-Endurance",
+                "start_date_local": "2026-01-20T17:00:00",
+                "description": "Endurance workout",
             },
-        ]
-        mock_client.get_activities.return_value = []
-        mock_client.update_event.return_value = {"id": 100, "name": "S003-01-END"}
-
-        calendar = TrainingCalendar(year=2026, athlete_profile=master_profile)
-        calendar.add_session(
-            session_date=date(2026, 1, 20),
-            workout_type=WorkoutType.ENDURANCE,
-            planned_tss=100,
-        )
-
-        sync = IntervalsSync()
-        status = sync.sync_calendar(
-            calendar=calendar,
-            start_date=date(2026, 1, 20),
-            end_date=date(2026, 1, 26),
-        )
-
-        assert status.success is True
-        assert status.events_created == 0
-        assert status.events_updated == 1
-        mock_client.update_event.assert_called_once()
-
-    @patch("cyclisme_training_logs.planning.intervals_sync.create_intervals_client")
-    def test_sync_calendar_import_activities(self, mock_create_client, master_profile):
-        """Test syncing imports completed activities to calendar."""
-        mock_client = Mock()
-        mock_create_client.return_value = mock_client
-        mock_client.get_events.return_value = []
-
-        # Mock completed activity in Intervals.icu
-        mock_client.get_activities.return_value = [
             {
-                "id": "i123",
-                "start_date_local": "2026-01-20T08:00:00",
-                "icu_training_load": 105,  # Actual TSS
-            }
-        ]
-        mock_client.create_event.return_value = {"id": 123}
-
-        calendar = TrainingCalendar(year=2026, athlete_profile=master_profile)
-        calendar.add_session(
-            session_date=date(2026, 1, 20),
-            workout_type=WorkoutType.ENDURANCE,
-            planned_tss=100,
-        )
-
-        sync = IntervalsSync()
-        status = sync.sync_calendar(
-            calendar=calendar,
-            start_date=date(2026, 1, 20),
-            end_date=date(2026, 1, 26),
-        )
-
-        # Check that actual TSS was updated from activity
-        session = calendar.sessions[date(2026, 1, 20)]
-        assert session.actual_tss == 105
-        assert status.success is True
-
-    @patch("cyclisme_training_logs.planning.intervals_sync.create_intervals_client")
-    def test_sync_calendar_empty_calendar(self, mock_create_client, master_profile):
-        """Test syncing empty calendar."""
-        mock_client = Mock()
-        mock_create_client.return_value = mock_client
-        mock_client.get_events.return_value = []
-        mock_client.get_activities.return_value = []
-
-        calendar = TrainingCalendar(year=2026, athlete_profile=master_profile)
-
-        sync = IntervalsSync()
-        status = sync.sync_calendar(
-            calendar=calendar,
-            start_date=date(2026, 1, 20),
-            end_date=date(2026, 1, 26),
-        )
-
-        assert status.success is True
-        assert status.events_created == 0
-        assert status.events_updated == 0
-
-    @patch("cyclisme_training_logs.planning.intervals_sync.create_intervals_client")
-    def test_update_workout_intervals_create_new(self, mock_create_client):
-        """Test updating workout creates new event if not exists."""
-        mock_client = Mock()
-        mock_create_client.return_value = mock_client
-        mock_client.get_events.return_value = []  # No existing workout
-        mock_client.create_event.return_value = {"id": 123, "name": "Test Workout"}
-
-        sync = IntervalsSync()
-        status = sync.update_workout_intervals(
-            workout_date=date(2026, 1, 20),
-            workout_data={
-                "name": "S003-01-END",
-                "description": "60min @ 70% FTP",
-                "planned_tss": 100,
+                "id": 89100873,
+                "category": "NOTE",  # Should be filtered out
+                "name": "Recovery note",
+                "start_date_local": "2026-01-21T17:00:00",
             },
-        )
-
-        assert status.success is True
-        assert status.events_created == 1
-        assert status.events_updated == 0
-        mock_client.create_event.assert_called_once()
-
-    @patch("cyclisme_training_logs.planning.intervals_sync.create_intervals_client")
-    def test_update_workout_intervals_update_existing(self, mock_create_client):
-        """Test updating workout updates existing event."""
-        mock_client = Mock()
-        mock_create_client.return_value = mock_client
-
-        # Mock existing workout
-        mock_client.get_events.return_value = [
             {
-                "id": 100,
+                "id": 89100874,
                 "category": "WORKOUT",
-                "name": "S003-01-END",
-                "start_date_local": "2026-01-20",
-            }
-        ]
-        mock_client.update_event.return_value = {"id": 100, "name": "S003-01-END"}
-
-        sync = IntervalsSync()
-        status = sync.update_workout_intervals(
-            workout_date=date(2026, 1, 20),
-            workout_data={
-                "name": "S003-01-END",
-                "description": "Updated: 90min @ 70% FTP",
-                "planned_tss": 120,
+                "name": "S077-03-TEMPO-Tempo",
+                "start_date_local": "2026-01-22T17:00:00",
+                "description": "Tempo workout",
             },
-        )
-
-        assert status.success is True
-        assert status.events_created == 0
-        assert status.events_updated == 1
-        mock_client.update_event.assert_called_once()
-
-    @patch("cyclisme_training_logs.planning.intervals_sync.create_intervals_client")
-    def test_update_workout_intervals_api_failure(self, mock_create_client):
-        """Test update workout handles API failure gracefully."""
-        mock_client = Mock()
-        mock_create_client.return_value = mock_client
-        mock_client.get_events.return_value = []
-        mock_client.create_event.return_value = None  # API failure
-
-        sync = IntervalsSync()
-        status = sync.update_workout_intervals(
-            workout_date=date(2026, 1, 20),
-            workout_data={"name": "Test", "description": "Test"},
-        )
-
-        assert status.success is False
-        assert status.events_created == 0
-        assert len(status.errors) == 1
-
-    @patch("cyclisme_training_logs.planning.intervals_sync.create_intervals_client")
-    def test_fetch_plan_status_no_activities(self, mock_create_client):
-        """Test fetching plan status with no completed activities."""
-        mock_client = Mock()
-        mock_create_client.return_value = mock_client
-        mock_client.get_events.return_value = []
-        mock_client.get_activities.return_value = []
-
-        plan = TrainingPlan(
-            name="test-plan",
-            start_date=date(2026, 1, 20),
-            end_date=date(2026, 2, 16),
-            objectives=[
-                TrainingObjective(
-                    name="Objective 1",
-                    target_date=date(2026, 2, 1),
-                    objective_type=ObjectiveType.EVENT,
-                    priority=PriorityLevel.HIGH,
-                ),
-            ],
-        )
-
-        sync = IntervalsSync()
-        status = sync.fetch_plan_status(plan)
-
-        assert status["plan_id"] == "test-plan"
-        assert status["objectives_total"] == 1
-        assert status["objectives_completed"] == 0
-        assert status["completion_percent"] == 0
-        assert len(status["objectives"]) == 1
-        assert status["objectives"][0]["completed"] is False
-
-    @patch("cyclisme_training_logs.planning.intervals_sync.create_intervals_client")
-    def test_fetch_plan_status_with_completed_activities(self, mock_create_client):
-        """Test fetching plan status with completed activities."""
-        mock_client = Mock()
-        mock_create_client.return_value = mock_client
-        mock_client.get_events.return_value = []
-
-        # Mock completed activity on objective date
-        mock_client.get_activities.return_value = [
-            {
-                "id": "i123",
-                "start_date_local": "2026-02-01T08:00:00",
-                "icu_training_load": 100,
-            }
         ]
 
-        plan = TrainingPlan(
-            name="test-plan",
-            start_date=date(2026, 1, 20),
-            end_date=date(2026, 2, 16),
-            objectives=[
-                TrainingObjective(
-                    name="Objective 1",
-                    target_date=date(2026, 2, 1),
-                    objective_type=ObjectiveType.EVENT,
-                    priority=PriorityLevel.HIGH,
-                ),
-                TrainingObjective(
-                    name="Objective 2",
-                    target_date=date(2026, 2, 10),
-                    objective_type=ObjectiveType.FTP_TARGET,
-                    priority=PriorityLevel.MEDIUM,
-                ),
-            ],
-        )
+        with patch(
+            "cyclisme_training_logs.planning.intervals_sync.create_intervals_client"
+        ) as mock_create:
+            mock_create.return_value = mock_intervals_client
 
-        sync = IntervalsSync()
-        status = sync.fetch_plan_status(plan)
+            sync = IntervalsSync()
+            calendar = sync.fetch_remote_calendar(
+                start_date=date(2026, 1, 20),
+                end_date=date(2026, 1, 26),
+            )
 
-        assert status["objectives_total"] == 2
-        assert status["objectives_completed"] == 1
-        assert status["completion_percent"] == 50
-        assert status["objectives"][0]["completed"] is True
-        assert status["objectives"][1]["completed"] is False
+            # Should have 2 workouts (NOTE filtered out)
+            assert len(calendar) == 2
+            assert date(2026, 1, 20) in calendar
+            assert date(2026, 1, 22) in calendar
+            assert calendar[date(2026, 1, 20)]["name"] == "S077-01-END-Endurance"
 
-    @patch("cyclisme_training_logs.planning.intervals_sync.create_intervals_client")
-    def test_fetch_plan_status_empty_plan(self, mock_create_client):
-        """Test fetching status for plan with no objectives."""
-        mock_client = Mock()
-        mock_create_client.return_value = mock_client
-        mock_client.get_events.return_value = []
-        mock_client.get_activities.return_value = []
+    def test_detect_changes_no_changes(self, calendar, mock_intervals_client):
+        """Test detect_changes() when local and remote are synced."""
+        # Mock remote calendar matching local
+        mock_intervals_client.get_events.return_value = [
+            {
+                "id": 1,
+                "category": "WORKOUT",
+                "name": "S077-01-ENDURANCE-Base",
+                "start_date_local": "2026-01-20T17:00:00",
+            },
+            {
+                "id": 2,
+                "category": "WORKOUT",
+                "name": "S077-03-TEMPO-SweetSpot",
+                "start_date_local": "2026-01-22T17:00:00",
+            },
+            {
+                "id": 3,
+                "category": "WORKOUT",
+                "name": "S077-05-RECOVERY-Active",
+                "start_date_local": "2026-01-24T17:00:00",
+            },
+        ]
 
-        plan = TrainingPlan(
-            name="empty-plan",
-            start_date=date(2026, 1, 20),
-            end_date=date(2026, 2, 16),
-            objectives=[],
-        )
+        with patch(
+            "cyclisme_training_logs.planning.intervals_sync.create_intervals_client"
+        ) as mock_create:
+            mock_create.return_value = mock_intervals_client
 
-        sync = IntervalsSync()
-        status = sync.fetch_plan_status(plan)
+            sync = IntervalsSync()
+            diff = sync.detect_changes(
+                local_calendar=calendar,
+                start_date=date(2026, 1, 20),
+                end_date=date(2026, 1, 26),
+            )
 
-        assert status["objectives_total"] == 0
-        assert status["objectives_completed"] == 0
-        assert status["completion_percent"] == 0
+            assert not diff.has_changes()
+            assert len(diff.removed_remote) == 0
+            assert len(diff.added_remote) == 0
+            assert len(diff.modified_remote) == 0
 
-    @patch("cyclisme_training_logs.planning.intervals_sync.create_intervals_client")
-    def test_fetch_plan_status_api_error(self, mock_create_client):
-        """Test fetch_plan_status handles API errors gracefully."""
-        mock_client = Mock()
-        mock_create_client.return_value = mock_client
-        mock_client.get_events.side_effect = Exception("API Error")
+    def test_detect_changes_workout_removed_by_coach(self, calendar, mock_intervals_client):
+        """Test detect_changes() when coach deletes a workout."""
+        # Mock remote calendar missing Wednesday workout
+        mock_intervals_client.get_events.return_value = [
+            {
+                "id": 1,
+                "category": "WORKOUT",
+                "name": "S077-01-ENDURANCE-Base",
+                "start_date_local": "2026-01-20T17:00:00",
+            },
+            # Wednesday (2026-01-22) missing - coach deleted it
+            {
+                "id": 3,
+                "category": "WORKOUT",
+                "name": "S077-05-RECOVERY-Active",
+                "start_date_local": "2026-01-24T17:00:00",
+            },
+        ]
 
-        plan = TrainingPlan(
-            name="test-plan",
-            start_date=date(2026, 1, 20),
-            end_date=date(2026, 2, 16),
-            objectives=[
-                TrainingObjective(
-                    name="Objective 1",
-                    target_date=date(2026, 2, 1),
-                    objective_type=ObjectiveType.EVENT,
-                    priority=PriorityLevel.HIGH,
-                ),
-            ],
-        )
+        with patch(
+            "cyclisme_training_logs.planning.intervals_sync.create_intervals_client"
+        ) as mock_create:
+            mock_create.return_value = mock_intervals_client
 
-        sync = IntervalsSync()
-        status = sync.fetch_plan_status(plan)
+            sync = IntervalsSync()
+            diff = sync.detect_changes(
+                local_calendar=calendar,
+                start_date=date(2026, 1, 20),
+                end_date=date(2026, 1, 26),
+            )
 
-        assert "error" in status
-        assert "API Error" in status["error"]
-        assert status["completion_percent"] == 0
+            assert diff.has_changes()
+            assert len(diff.removed_remote) == 1
+            assert diff.removed_remote[0]["date"] == date(2026, 1, 22)
+            assert "TEMPO" in diff.removed_remote[0]["name"]
+
+    def test_detect_changes_workout_added_by_coach(self, calendar, mock_intervals_client):
+        """Test detect_changes() when coach adds a workout."""
+        # Mock remote calendar with extra Saturday workout
+        mock_intervals_client.get_events.return_value = [
+            {
+                "id": 1,
+                "category": "WORKOUT",
+                "name": "S077-01-ENDURANCE-Base",
+                "start_date_local": "2026-01-20T17:00:00",
+            },
+            {
+                "id": 2,
+                "category": "WORKOUT",
+                "name": "S077-03-TEMPO-SweetSpot",
+                "start_date_local": "2026-01-22T17:00:00",
+            },
+            {
+                "id": 3,
+                "category": "WORKOUT",
+                "name": "S077-05-RECOVERY-Active",
+                "start_date_local": "2026-01-24T17:00:00",
+            },
+            {
+                "id": 4,
+                "category": "WORKOUT",
+                "name": "S077-06-INT-CoachAdded",
+                "start_date_local": "2026-01-25T09:00:00",  # Saturday - coach added
+            },
+        ]
+
+        with patch(
+            "cyclisme_training_logs.planning.intervals_sync.create_intervals_client"
+        ) as mock_create:
+            mock_create.return_value = mock_intervals_client
+
+            sync = IntervalsSync()
+            diff = sync.detect_changes(
+                local_calendar=calendar,
+                start_date=date(2026, 1, 20),
+                end_date=date(2026, 1, 26),
+            )
+
+            assert diff.has_changes()
+            assert len(diff.added_remote) == 1
+            assert diff.added_remote[0]["date"] == date(2026, 1, 25)
+            assert "CoachAdded" in diff.added_remote[0]["name"]
+
+    def test_detect_changes_workout_modified_by_coach(self, calendar, mock_intervals_client):
+        """Test detect_changes() when coach modifies a workout."""
+        # Mock remote calendar with modified Wednesday workout (changed type)
+        mock_intervals_client.get_events.return_value = [
+            {
+                "id": 1,
+                "category": "WORKOUT",
+                "name": "S077-01-ENDURANCE-Base",
+                "start_date_local": "2026-01-20T17:00:00",
+            },
+            {
+                "id": 2,
+                "category": "WORKOUT",
+                "name": "S077-03-RECOVERY-CoachModified",  # Was TEMPO, now RECOVERY
+                "start_date_local": "2026-01-22T17:00:00",
+            },
+            {
+                "id": 3,
+                "category": "WORKOUT",
+                "name": "S077-05-RECOVERY-Active",
+                "start_date_local": "2026-01-24T17:00:00",
+            },
+        ]
+
+        with patch(
+            "cyclisme_training_logs.planning.intervals_sync.create_intervals_client"
+        ) as mock_create:
+            mock_create.return_value = mock_intervals_client
+
+            sync = IntervalsSync()
+            diff = sync.detect_changes(
+                local_calendar=calendar,
+                start_date=date(2026, 1, 20),
+                end_date=date(2026, 1, 26),
+            )
+
+            assert diff.has_changes()
+            assert len(diff.modified_remote) == 1
+            assert diff.modified_remote[0]["date"] == date(2026, 1, 22)
+
+    def test_get_sync_status_synced(self, calendar, mock_intervals_client):
+        """Test get_sync_status() when synced."""
+        # Mock remote calendar matching local
+        mock_intervals_client.get_events.return_value = [
+            {
+                "id": 1,
+                "category": "WORKOUT",
+                "name": "S077-01-ENDURANCE-Base",
+                "start_date_local": "2026-01-20T17:00:00",
+            },
+            {
+                "id": 2,
+                "category": "WORKOUT",
+                "name": "S077-03-TEMPO-SweetSpot",
+                "start_date_local": "2026-01-22T17:00:00",
+            },
+            {
+                "id": 3,
+                "category": "WORKOUT",
+                "name": "S077-05-RECOVERY-Active",
+                "start_date_local": "2026-01-24T17:00:00",
+            },
+        ]
+
+        with patch(
+            "cyclisme_training_logs.planning.intervals_sync.create_intervals_client"
+        ) as mock_create:
+            mock_create.return_value = mock_intervals_client
+
+            sync = IntervalsSync()
+            status = sync.get_sync_status(
+                calendar=calendar,
+                start_date=date(2026, 1, 20),
+                end_date=date(2026, 1, 26),
+            )
+
+            assert status.is_synced
+            assert len(status.warnings) == 0
+            assert "✅ Calendrier synchronisé" in status.summary()
+
+    def test_get_sync_status_with_changes(self, calendar, mock_intervals_client):
+        """Test get_sync_status() with changes detected."""
+        # Mock remote calendar with changes
+        mock_intervals_client.get_events.return_value = [
+            {
+                "id": 1,
+                "category": "WORKOUT",
+                "name": "S077-01-ENDURANCE-Base",
+                "start_date_local": "2026-01-20T17:00:00",
+            },
+            # Wednesday missing (removed by coach)
+            {
+                "id": 3,
+                "category": "WORKOUT",
+                "name": "S077-05-RECOVERY-Active",
+                "start_date_local": "2026-01-24T17:00:00",
+            },
+            {
+                "id": 4,
+                "category": "WORKOUT",
+                "name": "S077-06-INT-CoachAdded",
+                "start_date_local": "2026-01-25T09:00:00",  # Added by coach
+            },
+        ]
+
+        with patch(
+            "cyclisme_training_logs.planning.intervals_sync.create_intervals_client"
+        ) as mock_create:
+            mock_create.return_value = mock_intervals_client
+
+            sync = IntervalsSync()
+            status = sync.get_sync_status(
+                calendar=calendar,
+                start_date=date(2026, 1, 20),
+                end_date=date(2026, 1, 26),
+            )
+
+            assert not status.is_synced
+            assert len(status.warnings) == 2
+            assert "⚠️ Changements détectés:" in status.summary()
+            assert "supprimé" in status.warnings[0]
+            assert "ajouté" in status.warnings[1]
