@@ -16,6 +16,7 @@ from cyclisme_training_logs.planning.calendar import (
     WeeklySummary,
     WorkoutType,
 )
+from cyclisme_training_logs.planning.intervals_sync import IntervalsSync, SyncStatus
 from cyclisme_training_logs.planning.planning_manager import (
     PlanningManager,
     TrainingObjective,
@@ -30,4 +31,6 @@ __all__ = [
     "TrainingSession",
     "WeeklySummary",
     "WorkoutType",
+    "IntervalsSync",
+    "SyncStatus",
 ]
