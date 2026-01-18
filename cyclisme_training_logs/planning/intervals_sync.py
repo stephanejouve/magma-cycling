@@ -52,9 +52,11 @@ Metadata:
 
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
+from difflib import unified_diff
 
 from cyclisme_training_logs.config import create_intervals_client
 from cyclisme_training_logs.planning.calendar import TrainingCalendar
+from cyclisme_training_logs.upload_workouts import calculate_description_hash
 
 
 @dataclass
@@ -168,6 +170,45 @@ class SyncStatusReport:
             lines.append(f"  • {len(self.diff.moved_remote)} workouts déplacés par coach")
 
         return "\n".join(lines)
+
+
+def calculate_description_diff(local_desc: str, remote_desc: str) -> str:
+    """
+    Calculate textual diff between local and remote descriptions.
+
+    Args:
+        local_desc: Local workout description
+        remote_desc: Remote workout description from Intervals.icu
+
+    Returns:
+        Formatted diff string showing changes
+
+    Examples:
+        >>> local = "Main set 3x10m 90%"
+        >>> remote = "Main set 4x10m 90%"
+        >>> diff = calculate_description_diff(local, remote)
+        >>> print(diff)
+        - Main set 3x10m 90%
+        + Main set 4x10m 90%
+    """
+    local_lines = local_desc.splitlines(keepends=True)
+    remote_lines = remote_desc.splitlines(keepends=True)
+
+    diff_lines = list(
+        unified_diff(
+            local_lines,
+            remote_lines,
+            fromfile="local",
+            tofile="remote (Intervals.icu)",
+            lineterm="",
+        )
+    )
+
+    if not diff_lines:
+        return "No differences"
+
+    # Skip header lines (---/+++) and return clean diff
+    return "\n".join(line.rstrip() for line in diff_lines[3:] if line.strip())
 
 
 class IntervalsSync:
@@ -309,12 +350,18 @@ class IntervalsSync:
         while current <= end_date:
             if current in local_calendar.sessions:
                 session = local_calendar.sessions[current]
+                # Get description if available (from planned session metadata)
+                description = getattr(session, "description", "")
                 local[current] = {
                     "date": current,
                     "name": f"{current}-{session.workout_type.value.upper()}",
                     "planned_tss": session.planned_tss,
                     "type": session.workout_type.value,
                     "duration_min": session.duration_min,
+                    "description": description,
+                    "description_hash": (
+                        calculate_description_hash(description) if description else None
+                    ),
                 }
             current += timedelta(days=1)
 
@@ -340,31 +387,47 @@ class IntervalsSync:
                 )
 
         # Check modified (same date but different content)
-        # Only detect modifications if workout TYPE changed (e.g., TEMPO → RECOVERY)
         for check_date in set(local.keys()) & set(remote.keys()):
             local_workout = local[check_date]
             remote_workout = remote[check_date]
 
-            # Extract workout type from remote name
-            local_type = local_workout.get("type", "").upper()
-            remote_name = remote_workout.get("name", "").upper()
+            # Calculate remote description hash
+            remote_description = remote_workout.get("description", "")
+            remote_hash = (
+                calculate_description_hash(remote_description) if remote_description else None
+            )
+            local_hash = local_workout.get("description_hash")
 
-            # Map workout types to common name patterns
-            type_patterns = {
-                "ENDURANCE": ["END", "ENDURANCE"],
-                "TEMPO": ["TEMPO", "SWEET", "SST"],
-                "THRESHOLD": ["THRESHOLD", "FTP", "SEUIL"],
-                "VO2MAX": ["VO2", "INTERVALLE"],
-                "RECOVERY": ["RECOVERY", "REC", "RECUPERATION"],
-                "REST": ["REST", "REPOS"],
-            }
+            # Detect modifications via hash comparison
+            content_modified = False
+            if local_hash and remote_hash and local_hash != remote_hash:
+                content_modified = True
+            elif not local_hash:
+                # Fallback: Check if workout TYPE changed (e.g., TEMPO → RECOVERY)
+                local_type = local_workout.get("type", "").upper()
+                remote_name = remote_workout.get("name", "").upper()
 
-            # Check if remote name contains expected type pattern
-            expected_patterns = type_patterns.get(local_type.upper(), [local_type])
-            type_matches = any(pattern in remote_name for pattern in expected_patterns)
+                # Map workout types to common name patterns
+                type_patterns = {
+                    "ENDURANCE": ["END", "ENDURANCE"],
+                    "TEMPO": ["TEMPO", "SWEET", "SST"],
+                    "THRESHOLD": ["THRESHOLD", "FTP", "SEUIL"],
+                    "VO2MAX": ["VO2", "INTERVALLE"],
+                    "RECOVERY": ["RECOVERY", "REC", "RECUPERATION"],
+                    "REST": ["REST", "REPOS"],
+                }
 
-            # Only flag as modified if type doesn't match
-            if not type_matches:
+                # Check if remote name contains expected type pattern
+                expected_patterns = type_patterns.get(local_type.upper(), [local_type])
+                type_matches = any(pattern in remote_name for pattern in expected_patterns)
+                if not type_matches:
+                    content_modified = True
+
+            if content_modified:
+                # Calculate textual diff
+                local_desc = local_workout.get("description", "N/A")
+                textual_diff = calculate_description_diff(local_desc, remote_description)
+
                 modified_remote.append(
                     {
                         "date": check_date,
@@ -372,7 +435,10 @@ class IntervalsSync:
                         "remote": {
                             "name": remote_workout.get("name"),
                             "id": remote_workout.get("id"),
+                            "description": remote_description,
+                            "description_hash": remote_hash,
                         },
+                        "diff": textual_diff,
                     }
                 )
 

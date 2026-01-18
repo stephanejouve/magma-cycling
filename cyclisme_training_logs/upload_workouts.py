@@ -59,6 +59,7 @@ Metadata:
     Version: v2
 """
 import argparse
+import hashlib
 import re
 import sys
 from datetime import datetime, timedelta
@@ -101,6 +102,19 @@ def calculate_week_start_date(week_id: str) -> datetime:
         raise ValueError(f"Calculated date {target_monday} is not a Monday")
 
     return target_monday
+
+
+def calculate_description_hash(description: str) -> str:
+    """
+    Calculate SHA256 hash of workout description for change detection.
+
+    Args:
+        description: Workout description text
+
+    Returns:
+        16-character hex hash of description (first 16 chars of SHA256)
+    """
+    return hashlib.sha256(description.encode("utf-8")).hexdigest()[:16]
 
 
 class WorkoutUploader:
@@ -457,6 +471,9 @@ class WorkoutUploader:
             response = self.api.create_event(event_data)
 
             if response:
+                # Store hash and event_id for sync tracking
+                workout["description_hash"] = calculate_description_hash(workout["description"])
+                workout["intervals_id"] = response.get("id")
                 print(f"  ✅ Uploadé : {workout['name']} ({workout['date']})")
                 return True
             else:
