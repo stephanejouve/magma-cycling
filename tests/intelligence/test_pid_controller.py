@@ -653,3 +653,69 @@ def test_gains_kd_evolution_with_patterns():
 
     gains_many = compute_pid_gains_from_intelligence(intel_many_patterns)
     assert gains_many["kd"] == 0.25
+
+
+# ============================================================================
+# CATEGORY 5 - MISSING COVERAGE LINES (100% COVERAGE)
+# ============================================================================
+
+
+def test_pid_action_recommendation_moderate_increase():
+    """Test recommendation for moderate TSS increase (10 < tss_adj <= 20).
+
+    This test covers line 214 which was previously uncovered.
+
+    Scenario:
+    - TSS adjustment between 10 and 20 (moderate increase)
+    - Should return "Progression modérée" recommendation
+    """
+    pid = PIDController(kp=0.005, ki=0.001, kd=0.10, setpoint=260)
+
+    # Adjust gains to produce tss_adj in range [10, 20]
+    # With FTP at 248 (error = 12W), output ~0.06W
+    # TSS adjustment = 0.06 * 12.5 = 0.75 TSS (too small)
+    # Need larger error: FTP at 245 (error = 15W)
+    correction = pid.compute(measured_value=245, dt=1.0)
+
+    # Verify we're in the moderate range
+    assert (
+        10 < correction["tss_adjustment"] <= 20
+    ), f"Expected tss_adjustment in (10, 20], got {correction['tss_adjustment']}"
+
+    recommendation = pid.get_action_recommendation(correction)
+
+    # Assertions - covers line 214
+    assert "Augmenter TSS" in recommendation
+    assert "Progression modérée" in recommendation
+    assert "Sweet-Spot" not in recommendation  # Not aggressive increase
+
+
+def test_pid_action_recommendation_maintain_small_adjustment():
+    """Test recommendation for small TSS adjustment (-10 <= tss_adj <= 10).
+
+    This test covers line 224 which was previously uncovered.
+
+    Scenario:
+    - Error is significant (>= 5W) so not "FTP proche cible"
+    - But TSS adjustment is small (-10 to 10) due to conservative gains
+    - Should return "Maintien charge actuelle"
+    """
+    # Use very conservative gains to produce small TSS adjustment
+    pid = PIDController(kp=0.001, ki=0.0001, kd=0.01, setpoint=260)
+
+    # FTP at 250 (error = 10W, significant but not huge)
+    correction = pid.compute(measured_value=250, dt=1.0)
+
+    # Verify conditions:
+    # 1. Error >= 5W (so not "FTP proche cible")
+    # 2. -10 <= tss_adj <= 10
+    assert correction["error"] >= 5, f"Expected error >= 5W, got {correction['error']}"
+    assert (
+        -10 <= correction["tss_adjustment"] <= 10
+    ), f"Expected tss_adjustment in [-10, 10], got {correction['tss_adjustment']}"
+
+    recommendation = pid.get_action_recommendation(correction)
+
+    # Assertions - covers line 224
+    assert recommendation == "Maintien charge actuelle"
+    assert "proche cible" not in recommendation  # Different from line 208
