@@ -69,6 +69,7 @@ backfill-intelligence = "cyclisme_training_logs.scripts.backfill_intelligence:ma
 # === Rapports & Organisation ===
 organize-report = "cyclisme_training_logs.organize_weekly_report:main"
 weekly-planner = "cyclisme_training_logs.weekly_planner:main"
+generate-report = "cyclisme_training_logs.reports.cli:main"
 
 # === Debug & Validation ===
 check-sources = "cyclisme_training_logs.check_activity_sources:main"
