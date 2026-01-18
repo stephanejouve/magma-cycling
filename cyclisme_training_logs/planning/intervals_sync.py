@@ -159,7 +159,7 @@ class IntervalsSync:
                         f"Priority: {objective.priority.value}\n"
                         f"Target: {objective.target_value or 'N/A'}"
                     ),
-                    "start_date_local": objective.target_date.strftime("%Y-%m-%d"),
+                    "start_date_local": f"{objective.target_date.strftime('%Y-%m-%d')}T08:00:00",  # ISO 8601
                 }
 
                 # If it's an event-type objective, use WORKOUT category
@@ -265,7 +265,7 @@ class IntervalsSync:
                             f"Intensity: {session.intensity_pct}% FTP\n"
                             f"{session.notes or ''}"
                         ),
-                        "start_date_local": session_date_str,
+                        "start_date_local": f"{session_date_str}T08:00:00",  # ISO 8601 with time
                     }
 
                     if session_date_str in existing_events:
@@ -372,7 +372,7 @@ class IntervalsSync:
                 "type": "Ride",  # Required by Intervals.icu API
                 "name": workout_data.get("name", "Workout"),
                 "description": workout_data.get("description", ""),
-                "start_date_local": workout_date_str,
+                "start_date_local": f"{workout_date_str}T08:00:00",  # ISO 8601 with time
             }
 
             # Add planned TSS if provided
