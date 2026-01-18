@@ -6,11 +6,21 @@ Runs as a cron job to:
 1. Detect new completed activities uploaded to Intervals.icu
 2. Detect planning modifications made by external coach
 3. Generate daily report with all changes
+4. Optional: Send report via email (Brevo API)
 
 Usage:
     poetry run daily-sync
     poetry run daily-sync --date 2026-01-15
     poetry run daily-sync --week-id S077 --start-date 2026-01-19
+    poetry run daily-sync --date 2026-01-15 --week-id S077 --start-date 2026-01-19 --send-email
+
+Email configuration (in .env):
+    BREVO_API_KEY=xkeysib-...
+    EMAIL_TO=your-email@example.com
+    EMAIL_FROM=training@yourdomain.com
+    EMAIL_FROM_NAME="Training Logs"
+
+See docs/BREVO_SETUP.md for complete setup guide.
 
 Author: Stéphane Jouve
 Created: 2026-01-18
@@ -18,14 +28,19 @@ Created: 2026-01-18
 Metadata:
     Status: Production
     Priority: P2
-    Version: v1.0
+    Version: v2.0
 """
 
 import argparse
 import json
+import os
 import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
+
+import markdown2
+import sib_api_v3_sdk
+from sib_api_v3_sdk.rest import ApiException
 
 from cyclisme_training_logs.config import create_intervals_client
 from cyclisme_training_logs.config.athlete_profile import AthleteProfile
@@ -302,7 +317,165 @@ class DailySync:
 
         return report_file
 
-    def run(self, check_date: date, week_id: str | None = None, start_date: date | None = None):
+    def send_email(self, report_file: Path, check_date: date) -> bool:
+        """
+        Send daily report via email using Brevo API.
+
+        Args:
+            report_file: Path to markdown report file
+            check_date: Date of report
+
+        Returns:
+            True if email sent successfully
+
+        Environment variables required:
+            BREVO_API_KEY: Brevo API key
+            EMAIL_TO: Recipient email address
+            EMAIL_FROM: Sender email address (verified in Brevo)
+            EMAIL_FROM_NAME: Sender name (optional, default: "Training Logs")
+        """
+        # Check environment variables
+        api_key = os.getenv("BREVO_API_KEY")
+        email_to = os.getenv("EMAIL_TO")
+        email_from = os.getenv("EMAIL_FROM")
+        email_from_name = os.getenv("EMAIL_FROM_NAME", "Training Logs")
+
+        if not all([api_key, email_to, email_from]):
+            print("\n⚠️  Configuration email manquante dans .env:")
+            if not api_key:
+                print("  - BREVO_API_KEY manquant")
+            if not email_to:
+                print("  - EMAIL_TO manquant")
+            if not email_from:
+                print("  - EMAIL_FROM manquant")
+            return False
+
+        print("\n📧 Envoi email via Brevo...")
+
+        try:
+            # Configure Brevo API
+            configuration = sib_api_v3_sdk.Configuration()
+            configuration.api_key["api-key"] = api_key
+
+            # Read markdown report
+            markdown_content = report_file.read_text(encoding="utf-8")
+
+            # Convert markdown to HTML with CSS styling
+            html_content = markdown2.markdown(
+                markdown_content,
+                extras=["fenced-code-blocks", "tables", "code-friendly"],
+            )
+
+            # Add CSS styling for better email rendering
+            styled_html = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    body {{
+                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                        line-height: 1.6;
+                        color: #333;
+                        max-width: 800px;
+                        margin: 0 auto;
+                        padding: 20px;
+                    }}
+                    h1 {{
+                        color: #2c3e50;
+                        border-bottom: 3px solid #3498db;
+                        padding-bottom: 10px;
+                    }}
+                    h2 {{
+                        color: #34495e;
+                        margin-top: 30px;
+                        border-bottom: 2px solid #ecf0f1;
+                        padding-bottom: 5px;
+                    }}
+                    h3 {{
+                        color: #7f8c8d;
+                        margin-top: 20px;
+                    }}
+                    code {{
+                        background-color: #f8f9fa;
+                        padding: 2px 6px;
+                        border-radius: 3px;
+                        font-family: 'Monaco', 'Courier New', monospace;
+                        font-size: 0.9em;
+                    }}
+                    pre {{
+                        background-color: #f8f9fa;
+                        border: 1px solid #e1e4e8;
+                        border-radius: 6px;
+                        padding: 16px;
+                        overflow-x: auto;
+                    }}
+                    pre code {{
+                        background-color: transparent;
+                        padding: 0;
+                    }}
+                    ul {{
+                        line-height: 1.8;
+                    }}
+                    hr {{
+                        border: none;
+                        border-top: 2px solid #ecf0f1;
+                        margin: 30px 0;
+                    }}
+                    .emoji {{
+                        font-size: 1.2em;
+                    }}
+                    a {{
+                        color: #3498db;
+                        text-decoration: none;
+                    }}
+                    a:hover {{
+                        text-decoration: underline;
+                    }}
+                </style>
+            </head>
+            <body>
+                {html_content}
+            </body>
+            </html>
+            """
+
+            # Create email object
+            api_instance = sib_api_v3_sdk.TransactionalEmailsApi(
+                sib_api_v3_sdk.ApiClient(configuration)
+            )
+
+            subject = f"📊 Rapport Quotidien Training - {check_date.strftime('%d/%m/%Y')}"
+
+            send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
+                to=[{"email": email_to}],
+                sender={"name": email_from_name, "email": email_from},
+                subject=subject,
+                html_content=styled_html,
+                text_content=markdown_content,  # Fallback for text-only clients
+            )
+
+            # Send email
+            api_response = api_instance.send_transac_email(send_smtp_email)
+
+            print(f"  ✅ Email envoyé avec succès (ID: {api_response.message_id})")
+            print(f"  📬 Destinataire: {email_to}")
+            return True
+
+        except ApiException as e:
+            print(f"  ❌ Erreur Brevo API: {e}")
+            return False
+        except Exception as e:
+            print(f"  ❌ Erreur envoi email: {e}")
+            return False
+
+    def run(
+        self,
+        check_date: date,
+        week_id: str | None = None,
+        start_date: date | None = None,
+        send_email: bool = False,
+    ):
         """
         Run daily sync check.
 
@@ -310,6 +483,7 @@ class DailySync:
             check_date: Date to check activities
             week_id: Optional week ID for planning check
             start_date: Optional week start date
+            send_email: Send report via email (requires Brevo config in .env)
         """
         print("=" * 80)
         print("DAILY SYNC - Vérification Quotidienne")
@@ -332,6 +506,13 @@ class DailySync:
         report_file = self.generate_report(check_date, new_activities, planning_changes)
 
         print(f"\n📝 Rapport généré: {report_file}")
+
+        # 4. Send email if requested
+        if send_email:
+            email_sent = self.send_email(report_file, check_date)
+            if not email_sent:
+                print("\n⚠️  Email non envoyé - vérifiez configuration .env")
+
         print("\n" + "=" * 80)
         print("✅ Daily sync terminé")
         print("=" * 80)
@@ -355,6 +536,11 @@ def main():
         "--start-date",
         type=str,
         help="Week start date (YYYY-MM-DD). Required if --week-id specified",
+    )
+    parser.add_argument(
+        "--send-email",
+        action="store_true",
+        help="Send report via email (requires BREVO_API_KEY in .env)",
     )
 
     args = parser.parse_args()
@@ -381,7 +567,12 @@ def main():
 
     # Run sync
     sync = DailySync(tracking_file=tracking_file, reports_dir=reports_dir)
-    sync.run(check_date=check_date, week_id=args.week_id, start_date=start_date)
+    sync.run(
+        check_date=check_date,
+        week_id=args.week_id,
+        start_date=start_date,
+        send_email=args.send_email,
+    )
 
 
 if __name__ == "__main__":
