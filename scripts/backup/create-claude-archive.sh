@@ -453,13 +453,31 @@ EOFREADME
 echo "=== Création archive tar.gz ==="
 cd /tmp
 tar -czf "claude-code-context_${TIMESTAMP}.tar.gz" "claude-code-context_${TIMESTAMP}/"
-mv "claude-code-context_${TIMESTAMP}.tar.gz" ~/
+
+# Destination dans l'organisation du projet
+DEST_DIR="$HOME/cyclisme-training-logs/project-docs/archives/claude-code"
+mkdir -p "$DEST_DIR"
+
+ARCHIVE_NAME="claude-code-context_${TIMESTAMP}.tar.gz"
+ARCHIVE_PATH="$DEST_DIR/$ARCHIVE_NAME"
+CHECKSUM_PATH="$DEST_DIR/${ARCHIVE_NAME}.sha256"
+
+mv "claude-code-context_${TIMESTAMP}.tar.gz" "$ARCHIVE_PATH"
+
+echo "=== Calcul checksum SHA256 ==="
+cd "$DEST_DIR"
+shasum -a 256 "$ARCHIVE_NAME" > "$CHECKSUM_PATH"
+CHECKSUM=$(cat "$CHECKSUM_PATH" | awk '{print $1}')
 
 echo ""
-echo "✅ Archive créée : ~/claude-code-context_${TIMESTAMP}.tar.gz"
+echo "✅ Archive créée : $ARCHIVE_PATH"
 echo ""
-du -h ~/claude-code-context_${TIMESTAMP}.tar.gz
+du -h "$ARCHIVE_PATH"
+echo ""
+echo "🔐 SHA256 : $CHECKSUM"
+echo "   Checksum sauvegardé dans : $CHECKSUM_PATH"
 echo ""
 echo "🎯 Prêt pour Claude Code"
+echo "📍 Emplacement: project-docs/archives/claude-code/"
 
 rm -rf "${ARCHIVE_DIR}"

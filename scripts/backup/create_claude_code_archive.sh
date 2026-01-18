@@ -19,8 +19,8 @@ cp pyproject.toml "${ARCHIVE_DIR}/"
 cp poetry.lock "${ARCHIVE_DIR}/"
 cp .gitignore "${ARCHIVE_DIR}/"
 cp README.md "${ARCHIVE_DIR}/"
-cp COMMANDS.md "${ARCHIVE_DIR}/"
-cp ALIASES.md "${ARCHIVE_DIR}/"
+[ -f COMMANDS.md ] && cp COMMANDS.md "${ARCHIVE_DIR}/" || echo "⚠️  COMMANDS.md absent"
+[ -f ALIASES.md ] && cp ALIASES.md "${ARCHIVE_DIR}/" || echo "⚠️  ALIASES.md absent"
 
 echo "=== Copie modules Python ==="
 mkdir -p "${ARCHIVE_DIR}/cyclisme_training_logs"
@@ -777,15 +777,32 @@ EOFREADME
 echo "=== Création archive tar.gz ==="
 cd /tmp
 tar -czf "claude-code-context_${TIMESTAMP}.tar.gz" "claude-code-context_${TIMESTAMP}/"
-mv "claude-code-context_${TIMESTAMP}.tar.gz" ~/
+
+# Destination dans l'organisation du projet
+DEST_DIR="$HOME/cyclisme-training-logs/project-docs/archives/claude-code"
+mkdir -p "$DEST_DIR"
+
+ARCHIVE_NAME="claude-code-context_${TIMESTAMP}.tar.gz"
+ARCHIVE_PATH="$DEST_DIR/$ARCHIVE_NAME"
+CHECKSUM_PATH="$DEST_DIR/${ARCHIVE_NAME}.sha256"
+
+mv "claude-code-context_${TIMESTAMP}.tar.gz" "$ARCHIVE_PATH"
+
+echo "=== Calcul checksum SHA256 ==="
+cd "$DEST_DIR"
+shasum -a 256 "$ARCHIVE_NAME" > "$CHECKSUM_PATH"
+CHECKSUM=$(cat "$CHECKSUM_PATH" | awk '{print $1}')
 
 echo ""
 echo "✅ Archive créée avec ARCHITECTURE POETRY complète !"
 echo ""
-echo "📦 Fichier : ~/claude-code-context_${TIMESTAMP}.tar.gz"
+echo "📦 Fichier : $ARCHIVE_PATH"
 echo ""
 echo "📊 Taille :"
-du -h ~/claude-code-context_${TIMESTAMP}.tar.gz
+du -h "$ARCHIVE_PATH"
+echo ""
+echo "🔐 SHA256 : $CHECKSUM"
+echo "   Checksum sauvegardé dans : $CHECKSUM_PATH"
 echo ""
 echo "📋 Fichiers principaux :"
 echo "   1️⃣  POETRY_ARCHITECTURE.md (PRIORITÉ ABSOLUE)"
@@ -794,7 +811,8 @@ echo "   3️⃣  CURRENT_STATE.md"
 echo "   4️⃣  README_ARCHIVE.md"
 echo ""
 echo "🎯 Prêt pour Claude Code avec architecture Poetry complète"
+echo "📍 Emplacement: project-docs/archives/claude-code/"
 
-rm -rf "${ARCHIVE_DIR}"
+rm -rf "/tmp/claude-code-context_${TIMESTAMP}"
 
 exit 0

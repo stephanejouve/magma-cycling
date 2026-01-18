@@ -36,6 +36,7 @@ temp/
 *.tar
 *.gz
 *.7z
+*.sha256
 
 # Fichiers Python (si scripts stats)
 __pycache__/
@@ -74,6 +75,7 @@ scripts/*_raw.json
 # État workflow (local, ne pas commiter)
 .workflow_state.json
 .athlete_feedback/
+.archive_needed
 
 # ============================================================================
 # DATA FILES - Managed in external training-logs repository
