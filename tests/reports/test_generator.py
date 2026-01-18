@@ -18,8 +18,8 @@ class TestReportGenerator:
         """Test generator initialization with default provider."""
         generator = ReportGenerator()
 
-        assert generator.ai_provider == "claude"
-        assert generator.ai_client is None
+        assert generator.ai_provider == "claude_api"
+        assert generator.ai_analyzer is None
 
     def test_init_custom_provider(self):
         """Test generator initialization with custom provider."""

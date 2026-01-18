@@ -1,6 +1,7 @@
 """CLI interface for AI-powered report generation.
 
 Sprint R10 MVP Day 4 - Command-line interface for weekly reports.
+Refactored Day 5 to use existing ai_providers infrastructure.
 
 Author: Claude Code
 Created: 2026-01-18
@@ -8,7 +9,8 @@ Created: 2026-01-18
 Usage:
     generate-report --week S076 --type workout_history
     generate-report --week S076 --type bilan_final --output ~/reports
-    generate-report --week S076 --type workout_history --provider claude
+    generate-report --week S076 --type workout_history --provider claude_api
+    generate-report --week S076 --type bilan_final --provider mistral_api
 """
 
 import argparse
@@ -43,15 +45,18 @@ Examples:
   generate-report --week S076 --type bilan_final --output ~/custom/reports
 
   # Use specific AI provider
-  generate-report --week S076 --type workout_history --provider claude
+  generate-report --week S076 --type workout_history --provider claude_api
+  generate-report --week S076 --type bilan_final --provider mistral_api
 
 Report Types:
   workout_history  Detailed session-by-session chronology (factual, 2000 words)
   bilan_final      Strategic synthesis and learnings (strategic, 1500 words)
 
 AI Providers:
-  claude           Claude Sonnet 4.5 (requires ANTHROPIC_API_KEY)
-  openai           OpenAI GPT-4 (requires OPENAI_API_KEY)
+  claude_api       Claude Sonnet 4 (requires CLAUDE_API_KEY)
+  mistral_api      Mistral Large (requires MISTRAL_API_KEY) - Best value
+  openai           OpenAI GPT-4 Turbo (requires OPENAI_API_KEY)
+  ollama           Local LLMs via Ollama (free, private)
   clipboard        Copy prompt to clipboard (no API required)
         """,
     )
@@ -85,9 +90,9 @@ AI Providers:
     parser.add_argument(
         "--provider",
         "-p",
-        default="claude",
-        choices=["claude", "openai", "clipboard"],
-        help="AI provider to use (default: claude)",
+        default="claude_api",
+        choices=["claude_api", "mistral_api", "openai", "ollama", "clipboard"],
+        help="AI provider to use (default: claude_api)",
         metavar="PROVIDER",
     )
 

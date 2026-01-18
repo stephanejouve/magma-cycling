@@ -6,11 +6,14 @@ Sprint R10 MVP focuses on 2 critical reports:
 - workout_history: Detailed chronological session-by-session analysis
 - bilan_final: Comprehensive week synthesis and learnings
 
+Uses existing ai_providers/ infrastructure for all AI operations.
+
 Author: Claude Code (Sprint R10 MVP)
 Created: 2026-01-18
+Refactored: 2026-01-18 (Day 5 - integrated with ai_providers/)
 Status: Production
 Priority: P0
-Version: 1.0.0
+Version: 1.1.0
 
 Metadata:
     Created: 2026-01-18
@@ -18,25 +21,19 @@ Metadata:
     Category: REPORTS
     Status: Production
     Priority: P0
-    Version: 1.0.0
+    Version: 1.1.0
 """
 
-from cyclisme_training_logs.reports.ai_client import (
-    AIClient,
+from cyclisme_training_logs.reports.generator import (
     AIClientError,
-    ClaudeClient,
-    OpenAIClient,
-    create_ai_client,
+    ReportGenerationError,
+    ReportGenerator,
 )
-from cyclisme_training_logs.reports.generator import ReportGenerator
 
 __all__ = [
     "ReportGenerator",
-    "AIClient",
-    "ClaudeClient",
-    "OpenAIClient",
-    "create_ai_client",
-    "AIClientError",
+    "ReportGenerationError",
+    "AIClientError",  # Alias for ConfigError from ai_providers
 ]
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
