@@ -21,8 +21,22 @@ Metadata:
     Version: 1.0.0
 """
 
+from cyclisme_training_logs.reports.ai_client import (
+    AIClient,
+    AIClientError,
+    ClaudeClient,
+    OpenAIClient,
+    create_ai_client,
+)
 from cyclisme_training_logs.reports.generator import ReportGenerator
 
-__all__ = ["ReportGenerator"]
+__all__ = [
+    "ReportGenerator",
+    "AIClient",
+    "ClaudeClient",
+    "OpenAIClient",
+    "create_ai_client",
+    "AIClientError",
+]
 
 __version__ = "1.0.0"

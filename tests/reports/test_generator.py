@@ -6,8 +6,6 @@ Author: Claude Code
 Created: 2026-01-18
 """
 
-from pathlib import Path
-
 import pytest
 
 from cyclisme_training_logs.reports import ReportGenerator
@@ -46,34 +44,6 @@ class TestReportGenerator:
         with pytest.raises(ValueError, match="Invalid report type"):
             generator.generate_report(week="S076", report_type="invalid_report")
 
-    def test_generate_report_not_implemented(self):
-        """Test generate_report raises NotImplementedError (MVP skeleton)."""
-        generator = ReportGenerator()
-
-        with pytest.raises(NotImplementedError, match="not yet implemented"):
-            generator.generate_report(week="S076", report_type="workout_history")
-
-    def test_generate_report_with_output_dir(self):
-        """Test generate_report accepts custom output directory."""
-        generator = ReportGenerator()
-        output_dir = Path("/tmp/test_reports")
-
-        with pytest.raises(NotImplementedError):
-            # Should not raise ValueError for output_dir
-            generator.generate_report(
-                week="S076",
-                report_type="workout_history",
-                output_dir=output_dir,
-            )
-
-    def test_generate_report_with_ai_provider_override(self):
-        """Test generate_report accepts AI provider override."""
-        generator = ReportGenerator(ai_provider="claude")
-
-        with pytest.raises(NotImplementedError):
-            # Should not raise ValueError for ai_provider override
-            generator.generate_report(
-                week="S076",
-                report_type="workout_history",
-                ai_provider="openai",
-            )
+    # Note: Full integration tests removed - generate_report now fully implemented
+    # Integration testing will be done with proper mocking of DataCollector and AIClient
+    # in dedicated integration test files (Day 3)
