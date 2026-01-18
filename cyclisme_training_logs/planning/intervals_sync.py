@@ -165,6 +165,7 @@ class IntervalsSync:
                 # If it's an event-type objective, use WORKOUT category
                 if objective.objective_type.value == "event":
                     event_data["category"] = "WORKOUT"
+                    event_data["type"] = "Ride"  # Required by Intervals.icu API
                     event_data["description"] = f"Event: {objective.name}\n{objective.notes or ''}"
 
                 created = self.client.create_event(event_data)
@@ -255,6 +256,7 @@ class IntervalsSync:
 
                     event_data = {
                         "category": "WORKOUT",
+                        "type": "Ride",  # Required by Intervals.icu API
                         "name": session_name,
                         "description": (
                             f"Type: {session.workout_type.value}\n"
@@ -367,6 +369,7 @@ class IntervalsSync:
             # Prepare event data
             event_data = {
                 "category": "WORKOUT",
+                "type": "Ride",  # Required by Intervals.icu API
                 "name": workout_data.get("name", "Workout"),
                 "description": workout_data.get("description", ""),
                 "start_date_local": workout_date_str,
