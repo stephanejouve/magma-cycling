@@ -7,6 +7,8 @@ Created: 2026-01-18
 """
 
 from cyclisme_training_logs.reports.templates.bilan_final import BilanFinalTemplate
-from cyclisme_training_logs.reports.templates.workout_history import WorkoutHistoryTemplate
+from cyclisme_training_logs.reports.templates.workout_history import (
+    WorkoutHistoryTemplate,
+)
 
 __all__ = ["WorkoutHistoryTemplate", "BilanFinalTemplate"]

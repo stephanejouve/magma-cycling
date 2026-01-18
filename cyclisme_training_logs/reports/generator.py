@@ -19,11 +19,17 @@ from pathlib import Path
 from typing import Any
 
 from cyclisme_training_logs.reports.ai_client import AIClientError, create_ai_client
-from cyclisme_training_logs.reports.data_collector import DataCollectionError, DataCollector
+from cyclisme_training_logs.reports.data_collector import (
+    DataCollectionError,
+    DataCollector,
+)
 from cyclisme_training_logs.reports.prompts.workout_history_prompt import (
     build_workout_history_prompt,
 )
-from cyclisme_training_logs.reports.validators import MarkdownValidator, ValidationResult
+from cyclisme_training_logs.reports.validators import (
+    MarkdownValidator,
+    ValidationResult,
+)
 
 logger = logging.getLogger(__name__)
 
