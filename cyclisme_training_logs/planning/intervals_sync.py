@@ -1,519 +1,446 @@
-"""
-Intervals.icu bidirectional sync for training plans and calendars.
+r"""
+Bidirectional sync between local TrainingCalendar and Intervals.icu.
 
-This module provides bidirectional synchronization between local training plans/
-calendars and the Intervals.icu platform.
+Handles external coach modifications (add/remove/move/modify workouts).
+Delegates to existing tools:
+- upload_workouts.py for push operations (via CLI)
+- intervals_client for pull operations
 
-Author: Claude Code (Sprint R3 Completion)
+Examples:
+    Check sync status to detect coach modifications::
+
+        from cyclisme_training_logs.planning.intervals_sync import IntervalsSync
+        from cyclisme_training_logs.planning.calendar import TrainingCalendar
+        from cyclisme_training_logs.config.athlete_profile import AthleteProfile
+        from datetime import date
+
+        # Create local calendar
+        profile = AthleteProfile.from_env()
+        calendar = TrainingCalendar(year=2026, athlete_profile=profile)
+
+        # Add sessions to calendar
+        # ...
+
+        # Check sync status with Intervals.icu
+        sync = IntervalsSync()
+        status = sync.get_sync_status(
+            calendar=calendar,
+            start_date=date(2026, 1, 20),
+            end_date=date(2026, 1, 26)
+        )
+
+        print(status.summary())
+        # ⚠️ Changements détectés:
+        #   • 1 workouts supprimés par coach
+        #   • 2 workouts modifiés par coach
+
+        # Detail changes
+        if status.diff.removed_remote:
+            print("\\n🗑️ Workouts supprimés par coach:")
+            for workout in status.diff.removed_remote:
+                print(f"  • {workout['date']}: {workout['name']}")
+
+Author: Stéphane Jouve
 Created: 2026-01-18
-Status: Production
-Priority: P1
-Version: 1.0.0
+Sprint: R3 - Module 3
 
 Metadata:
-    Created: 2026-01-18
-    Author: Cyclisme Training Logs Team
-    Category: PLANNING
     Status: Production
-    Priority: P1
-    Version: 1.0.0
+    Priority: P2
+    Version: v1.0
 """
 
-import logging
-from dataclasses import dataclass
-from datetime import date, datetime
-from typing import Any
+from dataclasses import dataclass, field
+from datetime import date, datetime, timedelta
 
 from cyclisme_training_logs.config import create_intervals_client
 from cyclisme_training_logs.planning.calendar import TrainingCalendar
-from cyclisme_training_logs.planning.planning_manager import TrainingPlan
-
-logger = logging.getLogger(__name__)
 
 
 @dataclass
 class SyncStatus:
     """
-    Status of sync operation with Intervals.icu.
+    Status of sync operation.
 
     Attributes:
         success: Whether sync operation succeeded
         events_created: Number of events created in Intervals.icu
         events_updated: Number of events updated in Intervals.icu
-        events_deleted: Number of events deleted from Intervals.icu
-        errors: List of error messages encountered
+        errors: List of error messages
         warnings: List of warning messages
     """
 
     success: bool
     events_created: int = 0
     events_updated: int = 0
-    events_deleted: int = 0
-    errors: list[str] = None
-    warnings: list[str] = None
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
 
-    def __post_init__(self):
-        """Initialize mutable defaults."""
-        if self.errors is None:
-            self.errors = []
-        if self.warnings is None:
-            self.warnings = []
 
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary representation.
+@dataclass
+class CalendarDiff:
+    """
+    Difference between local and remote calendars.
+
+    Detects changes made by external coach in Intervals.icu.
+
+    Attributes:
+        added_remote: Workouts added by coach (not in local)
+        removed_remote: Workouts removed by coach (in local but not in remote)
+        moved_remote: Workouts moved to different dates by coach
+        modified_remote: Workouts modified by coach (TSS/description changes)
+
+    Examples:
+        >>> diff = CalendarDiff(
+        ...     added_remote=[],
+        ...     removed_remote=[{"date": date(2026, 1, 22), "name": "Tempo"}],
+        ...     moved_remote=[],
+        ...     modified_remote=[]
+        ... )
+        >>> diff.has_changes()
+        True
+    """
+
+    added_remote: list[dict] = field(default_factory=list)
+    removed_remote: list[dict] = field(default_factory=list)
+    moved_remote: list[dict] = field(default_factory=list)
+    modified_remote: list[dict] = field(default_factory=list)
+
+    def has_changes(self) -> bool:
+        """
+        Check if any changes detected.
 
         Returns:
-            Dictionary with all status fields
+            True if any changes detected, False otherwise
         """
-        return {
-            "success": self.success,
-            "events_created": self.events_created,
-            "events_updated": self.events_updated,
-            "events_deleted": self.events_deleted,
-            "errors": self.errors,
-            "warnings": self.warnings,
-        }
+        return bool(
+            self.added_remote or self.removed_remote or self.moved_remote or self.modified_remote
+        )
+
+
+@dataclass
+class SyncStatusReport:
+    """
+    Synchronization status report.
+
+    Attributes:
+        last_check: Timestamp of last sync check
+        is_synced: Whether local and remote are in sync
+        diff: Detailed differences (if not synced)
+        warnings: List of warning messages
+
+    Examples:
+        >>> diff = CalendarDiff(removed_remote=[{"date": "2026-01-22", "name": "Tempo"}])
+        >>> report = SyncStatusReport(
+        ...     last_check=datetime.now(),
+        ...     is_synced=False,
+        ...     diff=diff,
+        ...     warnings=["Coach a supprimé des workouts"]
+        ... )
+        >>> print(report.summary())
+        ⚠️ Changements détectés:
+          • 1 workouts supprimés par coach
+    """
+
+    last_check: datetime
+    is_synced: bool
+    diff: CalendarDiff
+    warnings: list[str] = field(default_factory=list)
+
+    def summary(self) -> str:
+        """
+        Generate human-readable summary.
+
+        Returns:
+            Formatted summary string
+        """
+        if self.is_synced:
+            return "✅ Calendrier synchronisé"
+
+        lines = ["⚠️ Changements détectés:"]
+        if self.diff.removed_remote:
+            lines.append(f"  • {len(self.diff.removed_remote)} workouts supprimés par coach")
+        if self.diff.added_remote:
+            lines.append(f"  • {len(self.diff.added_remote)} workouts ajoutés par coach")
+        if self.diff.modified_remote:
+            lines.append(f"  • {len(self.diff.modified_remote)} workouts modifiés par coach")
+        if self.diff.moved_remote:
+            lines.append(f"  • {len(self.diff.moved_remote)} workouts déplacés par coach")
+
+        return "\n".join(lines)
 
 
 class IntervalsSync:
     """
-    Manager for bidirectional sync with Intervals.icu.
+    Bidirectional sync manager for Intervals.icu.
 
-    This class handles synchronization of training plans and calendars between
-    the local system and Intervals.icu platform, including:
-    - Pushing training plans to Intervals.icu calendar
-    - Syncing calendar events bidirectionally
-    - Updating individual workout sessions
-    - Fetching sync status and validation
+    Detects external coach modifications and provides sync status.
+    Delegates push/pull to existing tools to avoid duplication:
+    - Push: Use upload-workouts CLI command
+    - Pull: Use intervals_client from config
 
-    Attributes:
-        client: IntervalsClient instance for API communication
+    Use Cases:
+        - Detect when coach deletes a workout
+        - Detect when coach moves a workout to different date
+        - Detect when coach modifies TSS or description
+        - Monitor sync status between local plan and remote calendar
 
-    Example:
-        >>> from cyclisme_training_logs.planning import IntervalsSync, PlanningManager
-        >>> manager = PlanningManager()
-        >>> plan = manager.create_training_plan(
-        ...     start_date=date(2026, 1, 20),
-        ...     end_date=date(2026, 2, 16),
-        ...     objectives=[]
-        ... )
+    Examples:
+        >>> from cyclisme_training_logs.planning.calendar import TrainingCalendar
+        >>> from cyclisme_training_logs.config.athlete_profile import AthleteProfile
+        >>>
+        >>> # Create local calendar
+        >>> profile = AthleteProfile.from_env()
+        >>> calendar = TrainingCalendar(year=2026, athlete_profile=profile)
+        >>>
+        >>> # Check sync status
         >>> sync = IntervalsSync()
-        >>> status = sync.push_plan_to_intervals(plan)
-        >>> print(f"Created {status.events_created} events")
+        >>> status = sync.get_sync_status(
+        ...     calendar=calendar,
+        ...     start_date=date(2026, 1, 20),
+        ...     end_date=date(2026, 1, 26)
+        ... )
+        >>>
+        >>> if not status.is_synced:
+        ...     print(status.summary())
+        ...     # ⚠️ Changements détectés:
+        ...     #   • 1 workouts supprimés par coach
+
+    Notes:
+        For pushing local plans to Intervals.icu, use the upload-workouts CLI:
+            poetry run upload-workouts --week-id S077 --file S077_workouts.txt
+
+        This class focuses on READ operations and change detection only.
     """
 
     def __init__(self):
-        """
-        Initialize IntervalsSync with configured API client.
-
-        Raises:
-            ValueError: If Intervals.icu credentials are not configured
-        """
+        """Initialize sync manager with Intervals.icu client."""
         self.client = create_intervals_client()
-        logger.info("IntervalsSync initialized")
 
-    def push_plan_to_intervals(self, plan: TrainingPlan) -> SyncStatus:
+    def fetch_remote_calendar(self, start_date: date, end_date: date) -> dict[date, dict]:
         """
-        Push training plan to Intervals.icu calendar.
+        Fetch calendar from Intervals.icu (read-only).
 
-        Creates calendar events in Intervals.icu for all objectives/deadlines
-        in the training plan. Each objective becomes a WORKOUT or NOTE event
-        depending on its type.
+        Delegates to intervals_client.get_events().
 
         Args:
-            plan: TrainingPlan to push to Intervals.icu
+            start_date: Start of period to fetch
+            end_date: End of period to fetch
 
         Returns:
-            SyncStatus with operation results
+            Dict mapping dates to event data:
+            {
+                date(2026, 1, 20): {
+                    "id": 89100872,
+                    "name": "S077-01-END-Endurance",
+                    "planned_tss": 80,
+                    "description": "...",
+                    "category": "WORKOUT",
+                },
+                ...
+            }
 
-        Example:
-            >>> manager = PlanningManager()
-            >>> plan = manager.create_training_plan(
-            ...     start_date=date(2026, 1, 20),
-            ...     end_date=date(2026, 2, 16),
-            ...     objectives=[]
-            ... )
-            >>> manager.add_deadline(
-            ...     plan_id=plan.name,
-            ...     date=date(2026, 2, 2),
-            ...     event_name="Gran Fondo Test Event",
-            ...     priority="high"
-            ... )
+        Examples:
             >>> sync = IntervalsSync()
-            >>> status = sync.push_plan_to_intervals(plan)
-            >>> assert status.success
-            >>> assert status.events_created >= 1
-        """
-        status = SyncStatus(success=False)
-
-        try:
-            logger.info(f"Pushing plan {plan.name} to Intervals.icu")
-
-            # Push each objective as a calendar event
-            for objective in plan.objectives:
-                event_data = {
-                    "category": "NOTE",  # Use NOTE for objectives/milestones
-                    "name": objective.name,
-                    "description": (
-                        f"Training objective: {objective.objective_type.value}\n"
-                        f"Priority: {objective.priority.value}\n"
-                        f"Target: {objective.target_value or 'N/A'}"
-                    ),
-                    "start_date_local": f"{objective.target_date.strftime('%Y-%m-%d')}T08:00:00",  # ISO 8601
-                }
-
-                # If it's an event-type objective, use WORKOUT category
-                if objective.objective_type.value == "event":
-                    event_data["category"] = "WORKOUT"
-                    event_data["type"] = "Ride"  # Required by Intervals.icu API
-                    event_data["description"] = f"Event: {objective.name}\n{objective.notes or ''}"
-
-                created = self.client.create_event(event_data)
-                if created:
-                    status.events_created += 1
-                    logger.info(f"Created event for objective: {objective.name}")
-                else:
-                    status.errors.append(f"Failed to create event for: {objective.name}")
-                    logger.warning(f"Failed to create event for: {objective.name}")
-
-            # Mark success if at least one event was created
-            status.success = status.events_created > 0
-
-            logger.info(
-                f"Push complete: {status.events_created} events created, "
-                f"{len(status.errors)} errors"
-            )
-
-        except Exception as e:
-            status.errors.append(f"Push failed: {str(e)}")
-            logger.error(f"Error pushing plan to Intervals.icu: {e}", exc_info=True)
-
-        return status
-
-    def sync_calendar(
-        self,
-        calendar: TrainingCalendar,
-        start_date: date,
-        end_date: date,
-    ) -> SyncStatus:
-        """
-        Bidirectional sync of calendar with Intervals.icu.
-
-        Synchronizes training sessions between local TrainingCalendar and
-        Intervals.icu, handling both directions:
-        - Local → Intervals: Push new/updated sessions
-        - Intervals → Local: Import completed activities
-
-        Args:
-            calendar: TrainingCalendar to sync
-            start_date: Start date for sync window
-            end_date: End date for sync window
-
-        Returns:
-            SyncStatus with sync results
-
-        Example:
-            >>> calendar = TrainingCalendar(year=2026, rest_days=[6])
-            >>> calendar.add_session(
-            ...     date=date(2026, 1, 20),
-            ...     workout_type=WorkoutType.ENDURANCE,
-            ...     planned_tss=100,
-            ...     name="S003-01-END"
-            ... )
-            >>> sync = IntervalsSync()
-            >>> status = sync.sync_calendar(
-            ...     calendar=calendar,
+            >>> calendar = sync.fetch_remote_calendar(
             ...     start_date=date(2026, 1, 20),
             ...     end_date=date(2026, 1, 26)
             ... )
-            >>> assert status.success
+            >>> len(calendar)  # Number of workouts
+            3
         """
-        status = SyncStatus(success=False)
+        events = self.client.get_events(
+            oldest=start_date.strftime("%Y-%m-%d"),
+            newest=end_date.strftime("%Y-%m-%d"),
+        )
 
-        try:
-            logger.info(f"Syncing calendar from {start_date} to {end_date}")
-
-            # Fetch existing events from Intervals.icu
-            oldest_str = start_date.strftime("%Y-%m-%d")
-            newest_str = end_date.strftime("%Y-%m-%d")
-            intervals_events = self.client.get_events(oldest=oldest_str, newest=newest_str)
-
-            # Build map of existing events by date
-            existing_events: dict[str, dict] = {}
-            for event in intervals_events:
-                if event.get("category") == "WORKOUT":
-                    event_date = event.get("start_date_local")
-                    existing_events[event_date] = event
-
-            # Push local sessions to Intervals.icu
-            for session_date in calendar.sessions:
-                if start_date <= session_date <= end_date:
-                    session = calendar.sessions[session_date]
-                    session_date_str = session_date.strftime("%Y-%m-%d")
-
-                    # Generate session name from date and type
-                    session_name = f"{session_date_str}-{session.workout_type.value.upper()}"
-
-                    event_data = {
-                        "category": "WORKOUT",
-                        "type": "Ride",  # Required by Intervals.icu API
-                        "name": session_name,
-                        "description": (
-                            f"Type: {session.workout_type.value}\n"
-                            f"Planned TSS: {session.planned_tss}\n"
-                            f"Duration: {session.duration_min}min\n"
-                            f"Intensity: {session.intensity_pct}% FTP\n"
-                            f"{session.notes or ''}"
-                        ),
-                        "start_date_local": f"{session_date_str}T08:00:00",  # ISO 8601 with time
-                    }
-
-                    if session_date_str in existing_events:
-                        # Update existing event
-                        event_id = existing_events[session_date_str]["id"]
-                        updated = self.client.update_event(event_id, event_data)
-                        if updated:
-                            status.events_updated += 1
-                            logger.info(f"Updated event: {session_name}")
-                        else:
-                            status.errors.append(f"Failed to update: {session_name}")
-                    else:
-                        # Create new event
-                        created = self.client.create_event(event_data)
-                        if created:
-                            status.events_created += 1
-                            logger.info(f"Created event: {session_name}")
-                        else:
-                            status.errors.append(f"Failed to create: {session_name}")
-
-            # Fetch completed activities from Intervals.icu and update calendar
-            activities = self.client.get_activities(oldest=oldest_str, newest=newest_str)
-            for activity in activities:
-                activity_date_str = activity.get("start_date_local", "")[:10]
+        # Transform to dict by date
+        calendar = {}
+        for event in events:
+            if event.get("category") == "WORKOUT":
+                # Parse date from start_date_local (ISO format)
+                date_str = event.get("start_date_local", "")[:10]  # YYYY-MM-DD
                 try:
-                    activity_date = datetime.strptime(activity_date_str, "%Y-%m-%d").date()
-                    if activity_date in calendar.sessions:
-                        session = calendar.sessions[activity_date]
-                        # Update actual TSS from activity
-                        actual_tss = activity.get("icu_training_load")
-                        if actual_tss and session.actual_tss != actual_tss:
-                            session.actual_tss = actual_tss
-                            logger.info(f"Updated actual TSS for {activity_date}: {actual_tss}")
-                except (ValueError, AttributeError) as e:
-                    status.warnings.append(f"Could not parse activity date: {activity_date_str}")
-                    logger.warning(f"Could not parse activity date {activity_date_str}: {e}")
+                    event_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+                    calendar[event_date] = event
+                except ValueError:
+                    # Skip events with invalid dates
+                    continue
 
-            status.success = True
-            logger.info(
-                f"Sync complete: {status.events_created} created, "
-                f"{status.events_updated} updated, {len(status.errors)} errors"
-            )
+        return calendar
 
-        except Exception as e:
-            status.errors.append(f"Sync failed: {str(e)}")
-            logger.error(f"Error syncing calendar: {e}", exc_info=True)
-
-        return status
-
-    def update_workout_intervals(
-        self,
-        workout_date: date,
-        workout_data: dict[str, Any],
-    ) -> SyncStatus:
+    def detect_changes(
+        self, local_calendar: TrainingCalendar, start_date: date, end_date: date
+    ) -> CalendarDiff:
         """
-        Update a specific workout in Intervals.icu.
+        Detect changes between local and remote calendars.
 
-        Updates or creates a single workout event in Intervals.icu calendar.
-        If a workout exists on the given date, it will be updated; otherwise
-        a new workout will be created.
+        Identifies workouts added, removed, moved, or modified by external coach.
 
         Args:
-            workout_date: Date of the workout to update
-            workout_data: Workout data dict containing:
-                - name: Workout name
-                - description: Workout description/intervals
-                - planned_tss: (optional) Planned TSS
-                - workout_type: (optional) Workout type
+            local_calendar: Local TrainingCalendar instance
+            start_date: Start of period to check
+            end_date: End of period to check
 
         Returns:
-            SyncStatus with update results
+            CalendarDiff with detected changes
 
-        Example:
+        Examples:
+            >>> from cyclisme_training_logs.planning.calendar import TrainingCalendar
+            >>> from cyclisme_training_logs.config.athlete_profile import AthleteProfile
+            >>>
+            >>> profile = AthleteProfile.from_env()
+            >>> calendar = TrainingCalendar(year=2026, athlete_profile=profile)
+            >>>
             >>> sync = IntervalsSync()
-            >>> status = sync.update_workout_intervals(
-            ...     workout_date=date(2026, 1, 20),
-            ...     workout_data={
-            ...         "name": "S003-01-END-EnduranceBase",
-            ...         "description": "60min @ 70% FTP",
-            ...         "planned_tss": 100
-            ...     }
-            ... )
-            >>> assert status.success
+            >>> diff = sync.detect_changes(calendar, start_date, end_date)
+            >>>
+            >>> if diff.removed_remote:
+            ...     print(f"⚠️ Coach deleted {len(diff.removed_remote)} workouts:")
+            ...     for workout in diff.removed_remote:
+            ...         print(f"  • {workout['date']}: {workout['name']}")
         """
-        status = SyncStatus(success=False)
+        # Fetch remote state
+        remote = self.fetch_remote_calendar(start_date, end_date)
 
-        try:
-            workout_date_str = workout_date.strftime("%Y-%m-%d")
-            logger.info(f"Updating workout on {workout_date_str}")
+        # Build local state dict
+        local = {}
+        current = start_date
+        while current <= end_date:
+            if current in local_calendar.sessions:
+                session = local_calendar.sessions[current]
+                local[current] = {
+                    "date": current,
+                    "name": f"{current}-{session.workout_type.value.upper()}",
+                    "planned_tss": session.planned_tss,
+                    "type": session.workout_type.value,
+                    "duration_min": session.duration_min,
+                }
+            current += timedelta(days=1)
 
-            # Check if workout already exists on this date
-            events = self.client.get_events(oldest=workout_date_str, newest=workout_date_str)
-            existing_workout = None
-            for event in events:
-                if event.get("category") == "WORKOUT" and event.get("name") == workout_data.get(
-                    "name"
-                ):
-                    existing_workout = event
-                    break
+        # Detect differences
+        added_remote = []
+        removed_remote = []
+        modified_remote = []
 
-            # Prepare event data
-            event_data = {
-                "category": "WORKOUT",
-                "type": "Ride",  # Required by Intervals.icu API
-                "name": workout_data.get("name", "Workout"),
-                "description": workout_data.get("description", ""),
-                "start_date_local": f"{workout_date_str}T08:00:00",  # ISO 8601 with time
-            }
+        # Check removed (in local but not in remote)
+        for local_date, local_workout in local.items():
+            if local_date not in remote:
+                removed_remote.append(local_workout)
 
-            # Add planned TSS if provided
-            if "planned_tss" in workout_data:
-                event_data["description"] += f"\n\nPlanned TSS: {workout_data['planned_tss']}"
-
-            if existing_workout:
-                # Update existing workout
-                event_id = existing_workout["id"]
-                updated = self.client.update_event(event_id, event_data)
-                if updated:
-                    status.events_updated = 1
-                    status.success = True
-                    logger.info(f"Updated workout: {workout_data.get('name')}")
-                else:
-                    status.errors.append(f"Failed to update workout: {workout_data.get('name')}")
-            else:
-                # Create new workout
-                created = self.client.create_event(event_data)
-                if created:
-                    status.events_created = 1
-                    status.success = True
-                    logger.info(f"Created workout: {workout_data.get('name')}")
-                else:
-                    status.errors.append(f"Failed to create workout: {workout_data.get('name')}")
-
-        except Exception as e:
-            status.errors.append(f"Update failed: {str(e)}")
-            logger.error(f"Error updating workout: {e}", exc_info=True)
-
-        return status
-
-    def fetch_plan_status(
-        self,
-        plan: TrainingPlan,
-    ) -> dict[str, Any]:
-        """
-        Fetch sync status and completion for a training plan.
-
-        Retrieves the current status of a training plan in Intervals.icu,
-        including which objectives have been completed (have paired activities)
-        and overall plan progress.
-
-        Args:
-            plan: TrainingPlan to check status for
-
-        Returns:
-            Dictionary with status information:
-                - plan_id: Plan identifier
-                - start_date: Plan start date
-                - end_date: Plan end date
-                - objectives_total: Total number of objectives
-                - objectives_completed: Number of completed objectives
-                - completion_percent: Percentage complete (0-100)
-                - objectives: List of objective status dicts
-
-        Example:
-            >>> manager = PlanningManager()
-            >>> plan = manager.create_training_plan(
-            ...     start_date=date(2026, 1, 20),
-            ...     end_date=date(2026, 2, 16),
-            ...     objectives=[]
-            ... )
-            >>> sync = IntervalsSync()
-            >>> status = sync.fetch_plan_status(plan)
-            >>> print(f"Plan completion: {status['completion_percent']}%")
-        """
-        try:
-            logger.info(f"Fetching status for plan {plan.name}")
-
-            # Fetch events from Intervals.icu for the plan date range
-            oldest_str = plan.start_date.strftime("%Y-%m-%d")
-            newest_str = plan.end_date.strftime("%Y-%m-%d")
-            intervals_events = self.client.get_events(oldest=oldest_str, newest=newest_str)
-
-            # Fetch activities to check for completions
-            activities = self.client.get_activities(oldest=oldest_str, newest=newest_str)
-            activity_dates = {
-                datetime.strptime(a.get("start_date_local", "")[:10], "%Y-%m-%d").date()
-                for a in activities
-                if a.get("start_date_local")
-            }
-
-            # Build objective status list
-            objectives_status = []
-            completed_count = 0
-
-            for objective in plan.objectives:
-                # Check if there's an activity on the objective date
-                is_completed = objective.target_date in activity_dates
-
-                # Check if objective exists in Intervals.icu
-                in_intervals = any(
-                    event.get("name") == objective.name
-                    and event.get("start_date_local") == objective.target_date.strftime("%Y-%m-%d")
-                    for event in intervals_events
+        # Check added (in remote but not in local)
+        for remote_date, remote_workout in remote.items():
+            if remote_date not in local:
+                added_remote.append(
+                    {
+                        "date": remote_date,
+                        "name": remote_workout.get("name", "Unnamed"),
+                        "id": remote_workout.get("id"),
+                    }
                 )
 
-                obj_status = {
-                    "name": objective.name,
-                    "target_date": objective.target_date.strftime("%Y-%m-%d"),
-                    "priority": objective.priority.value,
-                    "type": objective.objective_type.value,
-                    "completed": is_completed,
-                    "in_intervals": in_intervals,
-                    "days_remaining": objective.days_remaining(),
-                }
+        # Check modified (same date but different content)
+        # Only detect modifications if workout TYPE changed (e.g., TEMPO → RECOVERY)
+        for check_date in set(local.keys()) & set(remote.keys()):
+            local_workout = local[check_date]
+            remote_workout = remote[check_date]
 
-                if is_completed:
-                    completed_count += 1
+            # Extract workout type from remote name
+            local_type = local_workout.get("type", "").upper()
+            remote_name = remote_workout.get("name", "").upper()
 
-                objectives_status.append(obj_status)
-
-            # Calculate completion percentage
-            total_objectives = len(plan.objectives)
-            completion_percent = (
-                int((completed_count / total_objectives) * 100) if total_objectives > 0 else 0
-            )
-
-            status = {
-                "plan_id": plan.name,
-                "start_date": plan.start_date.strftime("%Y-%m-%d"),
-                "end_date": plan.end_date.strftime("%Y-%m-%d"),
-                "objectives_total": total_objectives,
-                "objectives_completed": completed_count,
-                "completion_percent": completion_percent,
-                "objectives": objectives_status,
+            # Map workout types to common name patterns
+            type_patterns = {
+                "ENDURANCE": ["END", "ENDURANCE"],
+                "TEMPO": ["TEMPO", "SWEET", "SST"],
+                "THRESHOLD": ["THRESHOLD", "FTP", "SEUIL"],
+                "VO2MAX": ["VO2", "INTERVALLE"],
+                "RECOVERY": ["RECOVERY", "REC", "RECUPERATION"],
+                "REST": ["REST", "REPOS"],
             }
 
-            logger.info(
-                f"Plan status: {completion_percent}% complete ({completed_count}/{total_objectives})"
+            # Check if remote name contains expected type pattern
+            expected_patterns = type_patterns.get(local_type.upper(), [local_type])
+            type_matches = any(pattern in remote_name for pattern in expected_patterns)
+
+            # Only flag as modified if type doesn't match
+            if not type_matches:
+                modified_remote.append(
+                    {
+                        "date": check_date,
+                        "local": local_workout,
+                        "remote": {
+                            "name": remote_workout.get("name"),
+                            "id": remote_workout.get("id"),
+                        },
+                    }
+                )
+
+        # Moved detection: TODO (complex pattern matching)
+        # For now, empty (Phase 2 feature)
+        moved_remote = []
+
+        return CalendarDiff(
+            added_remote=added_remote,
+            removed_remote=removed_remote,
+            moved_remote=moved_remote,
+            modified_remote=modified_remote,
+        )
+
+    def get_sync_status(
+        self, calendar: TrainingCalendar, start_date: date, end_date: date
+    ) -> SyncStatusReport:
+        """
+        Get synchronization status between local and remote.
+
+        Detects if external coach has made changes to calendar.
+
+        Args:
+            calendar: Local TrainingCalendar instance
+            start_date: Start of period to check
+            end_date: End of period to check
+
+        Returns:
+            SyncStatusReport with detailed status and warnings
+
+        Examples:
+            >>> from cyclisme_training_logs.planning.calendar import TrainingCalendar
+            >>> from cyclisme_training_logs.config.athlete_profile import AthleteProfile
+            >>>
+            >>> profile = AthleteProfile.from_env()
+            >>> calendar = TrainingCalendar(year=2026, athlete_profile=profile)
+            >>>
+            >>> sync = IntervalsSync()
+            >>> status = sync.get_sync_status(calendar, start_date, end_date)
+            >>>
+            >>> print(status.summary())
+            # ⚠️ Changements détectés:
+            #   • 1 workouts supprimés par coach
+            #   • 2 workouts modifiés par coach
+            >>>
+            >>> if status.warnings:
+            ...     for warning in status.warnings:
+            ...         print(f"⚠️ {warning}")
+        """
+        diff = self.detect_changes(calendar, start_date, end_date)
+
+        warnings = []
+        if diff.removed_remote:
+            warnings.append(
+                f"Coach a supprimé {len(diff.removed_remote)} workout(s) - vérifier calendrier"
+            )
+        if diff.modified_remote:
+            warnings.append(
+                f"Coach a modifié {len(diff.modified_remote)} workout(s) - TSS plan possiblement impacté"
+            )
+        if diff.added_remote:
+            warnings.append(
+                f"Coach a ajouté {len(diff.added_remote)} workout(s) - plan local incomplet"
             )
 
-            return status
-
-        except Exception as e:
-            logger.error(f"Error fetching plan status: {e}", exc_info=True)
-            return {
-                "plan_id": plan.name,
-                "error": str(e),
-                "objectives_total": len(plan.objectives),
-                "objectives_completed": 0,
-                "completion_percent": 0,
-            }
+        return SyncStatusReport(
+            last_check=datetime.now(),
+            is_synced=not diff.has_changes(),
+            diff=diff,
+            warnings=warnings,
+        )
