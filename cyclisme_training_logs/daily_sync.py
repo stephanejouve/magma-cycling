@@ -20,7 +20,7 @@ Email configuration (in .env):
     EMAIL_FROM=training@yourdomain.com
     EMAIL_FROM_NAME="Training Logs"
 
-See docs/BREVO_SETUP.md for complete setup guide.
+See project-docs/BREVO_SETUP.md for complete setup guide.
 
 Author: Stéphane Jouve
 Created: 2026-01-18
