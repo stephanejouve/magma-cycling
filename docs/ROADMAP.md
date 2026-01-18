@@ -318,7 +318,14 @@
 - "do not reinvent wheel at very sprint buddy" (2026-01-18)
 
 **Logged**: 2026-01-18
-**Status**: Awaiting MOA decision
+**Status**: ✅ RESOLVED (2026-01-18)
+
+**Resolution**: Option A implemented - Reports module refactored to use AIProviderFactory
+- Removed ai_client.py (~200 LOC)
+- Updated generator.py to use AIProviderFactory.create()
+- All 57 tests passing
+- Mistral AI and Ollama support now available in reports
+- Commit: 62d29fc "refactor: Integrate reports module with existing ai_providers infrastructure"
 
 ### Refactoring Candidates
 
@@ -388,6 +395,11 @@
 
 | Version | Date       | Changes                                           |
 |---------|------------|---------------------------------------------------|
+| 1.2     | 2026-01-18 | Technical debt RESOLVED                          |
+|         |            | - Reports module refactored to use ai_providers/ |
+|         |            | - Removed ~200 LOC duplication                   |
+|         |            | - Mistral AI and Ollama now available in reports |
+|         |            | - All 57 tests passing                           |
 | 1.1     | 2026-01-18 | Added critical technical debt item               |
 |         |            | - Documented duplicate AI provider infrastructure |
 |         |            | - 3 resolution options proposed for MOA          |
