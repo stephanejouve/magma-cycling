@@ -1,6 +1,6 @@
 """Tests for AI prompt builders.
 
-Sprint R10 MVP Day 2 - Tests for prompt construction.
+Sprint R10 MVP Day 2-3 - Tests for prompt construction.
 
 Author: Claude Code
 Created: 2026-01-18
@@ -8,6 +8,14 @@ Created: 2026-01-18
 
 import pytest
 
+from cyclisme_training_logs.reports.prompts.bilan_final_prompt import (
+    _format_behavioral_learnings,
+    _format_key_sessions,
+    _format_metrics_final,
+    _format_objectives,
+    _format_protocol_adaptations,
+    build_bilan_final_prompt,
+)
 from cyclisme_training_logs.reports.prompts.workout_history_prompt import (
     _calculate_tss_percentage,
     _format_activities,
@@ -20,6 +28,7 @@ from tests.reports.fixtures import (
     SAMPLE_ACTIVITIES_S076,
     SAMPLE_LEARNINGS,
     SAMPLE_WELLNESS_DATA,
+    SAMPLE_WORKOUT_HISTORY_REPORT,
 )
 
 
@@ -242,3 +251,241 @@ class TestCalculateTSSPercentage:
 
         # Then: Should calculate correctly (500/400 = 125%)
         assert percentage == 125
+
+
+class TestBuildBilanFinalPrompt:
+    """Tests for build_bilan_final_prompt function (Day 3)."""
+
+    def test_build_prompt_with_valid_data(self):
+        """Test prompt building with valid bilan_final data."""
+        # Given: Valid week data with all required fields
+        week_data = {
+            "week_number": "S076",
+            "objectives": [
+                "Valider protocole Z2 indoor 90min",
+                "Tester capacité SST outdoor 3x8min",
+            ],
+            "workout_history_summary": SAMPLE_WORKOUT_HISTORY_REPORT,
+            "metrics_final": {
+                "start": {"ctl": 100, "atl": 50, "tsb": 50, "hrv": 58},
+                "end": {"ctl": 105, "atl": 55, "tsb": 50, "hrv": 58},
+            },
+        }
+
+        # When: Building prompt
+        prompt = build_bilan_final_prompt(week_data)
+
+        # Then: Prompt should contain key elements
+        assert "strategic cycling coach" in prompt.lower()
+        assert "S076" in prompt
+        assert "SYNTHESIS FOCUS" in prompt
+        assert "MAX 3-4 DISCOVERIES" in prompt
+        assert "French" in prompt or "français" in prompt.lower()
+        assert "Objectifs vs Réalisé" in prompt
+        assert "1500 words" in prompt or "1500" in prompt
+
+    def test_build_prompt_missing_required_field(self):
+        """Test prompt building fails with missing required field."""
+        # Given: Incomplete week data (missing workout_history_summary)
+        week_data = {
+            "week_number": "S076",
+            "objectives": ["Objective 1"],
+            "metrics_final": {"start": {}, "end": {}},
+            # Missing workout_history_summary
+        }
+
+        # When/Then: Building prompt should raise ValueError
+        with pytest.raises(ValueError, match="Missing required field"):
+            build_bilan_final_prompt(week_data)
+
+    def test_prompt_contains_objectives(self):
+        """Test prompt includes objectives information."""
+        # Given: Week data with objectives
+        week_data = {
+            "week_number": "S076",
+            "objectives": [
+                "Valider protocole Z2 indoor 90min",
+                "Tester capacité SST outdoor 3x8min",
+            ],
+            "workout_history_summary": "Summary of week",
+            "metrics_final": {"start": {}, "end": {}},
+        }
+
+        # When: Building prompt
+        prompt = build_bilan_final_prompt(week_data)
+
+        # Then: Prompt should include objectives
+        assert "Valider protocole Z2" in prompt or "Planned Objectives" in prompt
+        assert "Tester capacité SST" in prompt or "objectives" in prompt.lower()
+
+
+class TestFormatObjectives:
+    """Tests for _format_objectives helper (Day 3)."""
+
+    def test_format_objectives_with_data(self):
+        """Test formatting objectives list."""
+        # Given: List of objectives
+        objectives = [
+            "Valider protocole Z2 indoor 90min",
+            "Tester capacité SST outdoor 3x8min",
+        ]
+
+        # When: Formatting objectives
+        formatted = _format_objectives(objectives)
+
+        # Then: Should contain numbered objectives
+        assert "1." in formatted
+        assert "2." in formatted
+        assert "Valider protocole Z2" in formatted
+        assert "Tester capacité SST" in formatted
+
+    def test_format_objectives_empty_list(self):
+        """Test formatting empty objectives list."""
+        # Given: Empty list
+        objectives = []
+
+        # When: Formatting objectives
+        formatted = _format_objectives(objectives)
+
+        # Then: Should return "no objectives" message
+        assert "Aucun objectif" in formatted or "no objective" in formatted.lower()
+
+
+class TestFormatMetricsFinal:
+    """Tests for _format_metrics_final helper (Day 3)."""
+
+    def test_format_metrics_final_with_start_end_structure(self):
+        """Test formatting metrics with start/end structure."""
+        # Given: Metrics with start and end
+        metrics = {
+            "start": {"ctl": 100, "atl": 50, "tsb": 50, "hrv": 58},
+            "end": {"ctl": 105, "atl": 55, "tsb": 50, "hrv": 58},
+        }
+
+        # When: Formatting metrics
+        formatted = _format_metrics_final(metrics)
+
+        # Then: Should contain start and end sections
+        assert "Début" in formatted or "start" in formatted.lower()
+        assert "Fin" in formatted or "end" in formatted.lower()
+        assert "CTL" in formatted
+        assert "100" in formatted  # Start CTL
+        assert "105" in formatted  # End CTL
+
+    def test_format_metrics_final_empty_data(self):
+        """Test formatting empty metrics."""
+        # Given: Empty metrics
+        metrics = {}
+
+        # When: Formatting metrics
+        formatted = _format_metrics_final(metrics)
+
+        # Then: Should return "not available" message
+        assert "non disponibles" in formatted.lower() or "not available" in formatted.lower()
+
+
+class TestFormatProtocolAdaptations:
+    """Tests for _format_protocol_adaptations helper (Day 3)."""
+
+    def test_format_protocol_adaptations_with_data(self):
+        """Test formatting protocol adaptations list."""
+        # Given: List of adaptations
+        adaptations = [
+            {
+                "title": "Z2 Indoor Duration Extended",
+                "description": "Extended from 60min to 90min based on tolerance",
+            },
+            {
+                "title": "SST Intervals Adjusted",
+                "description": "Reduced recovery from 6min to 4min",
+            },
+        ]
+
+        # When: Formatting adaptations
+        formatted = _format_protocol_adaptations(adaptations)
+
+        # Then: Should contain adaptation details
+        assert "Adaptation 1" in formatted or "adaptation" in formatted.lower()
+        assert "Z2 Indoor Duration Extended" in formatted
+        assert "SST Intervals Adjusted" in formatted
+
+    def test_format_protocol_adaptations_empty_list(self):
+        """Test formatting empty adaptations list."""
+        # Given: Empty list
+        adaptations = []
+
+        # When: Formatting adaptations
+        formatted = _format_protocol_adaptations(adaptations)
+
+        # Then: Should return "no adaptations" message
+        assert "Aucune adaptation" in formatted or "no adaptation" in formatted.lower()
+
+
+class TestFormatKeySessions:
+    """Tests for _format_key_sessions helper (Day 3)."""
+
+    def test_format_key_sessions_with_data(self):
+        """Test formatting key sessions list."""
+        # Given: List of key sessions
+        sessions = [
+            {
+                "name": "Z2 Base Indoor - Test Protocol",
+                "date": "2026-01-13",
+                "significance": "First validation of 90min Z2 indoor protocol",
+            },
+        ]
+
+        # When: Formatting sessions
+        formatted = _format_key_sessions(sessions)
+
+        # Then: Should contain session details
+        assert "Session 1" in formatted or "session" in formatted.lower()
+        assert "Z2 Base Indoor" in formatted
+        assert "2026-01-13" in formatted
+
+    def test_format_key_sessions_empty_list(self):
+        """Test formatting empty sessions list."""
+        # Given: Empty list
+        sessions = []
+
+        # When: Formatting sessions
+        formatted = _format_key_sessions(sessions)
+
+        # Then: Should return message to extract from workout_history
+        assert "workout_history" in formatted.lower() or "séances clés" in formatted.lower()
+
+
+class TestFormatBehavioralLearnings:
+    """Tests for _format_behavioral_learnings helper (Day 3)."""
+
+    def test_format_behavioral_learnings_with_data(self):
+        """Test formatting behavioral learnings list."""
+        # Given: List of behavioral learnings
+        learnings = [
+            {
+                "aspect": "Discipline Indoor",
+                "observation": "Maintained focus for full 90min indoor session",
+            },
+        ]
+
+        # When: Formatting learnings
+        formatted = _format_behavioral_learnings(learnings)
+
+        # Then: Should contain learning details
+        assert "Learning 1" in formatted or "learning" in formatted.lower()
+        assert "Discipline Indoor" in formatted
+        assert "Maintained focus" in formatted
+
+    def test_format_behavioral_learnings_empty_list(self):
+        """Test formatting empty learnings list."""
+        # Given: Empty list
+        learnings = []
+
+        # When: Formatting learnings
+        formatted = _format_behavioral_learnings(learnings)
+
+        # Then: Should return message to extract from workout_history
+        assert (
+            "workout_history" in formatted.lower()
+            or "enseignements comportementaux" in formatted.lower()
+        )

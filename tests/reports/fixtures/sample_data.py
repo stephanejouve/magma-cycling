@@ -6,7 +6,7 @@ Author: Claude Code (Sprint R10 MVP)
 Created: 2026-01-18
 """
 
-# Sample week data for S076
+# Sample week data for S076 (complete with all required fields)
 SAMPLE_WEEK_DATA_S076 = {
     "week_number": "S076",
     "start_date": "2026-01-13",
@@ -18,6 +18,71 @@ SAMPLE_WEEK_DATA_S076 = {
         "Tester capacité SST outdoor 3x8min",
         "Confirmer récupération post-bloc intensif",
     ],
+    "activities": [
+        {
+            "id": "12345",
+            "name": "Z2 Base Indoor - Test Protocol",
+            "start_date": "2026-01-13T09:00:00",
+            "type": "Ride",
+            "moving_time": 5400,  # 90 min
+            "tss": 85,
+            "if_": 0.72,
+            "np": 180,
+            "avg_hr": 135,
+            "indoor": True,
+        },
+        {
+            "id": "12346",
+            "name": "SST Intervals Outdoor 3x8",
+            "start_date": "2026-01-15T14:00:00",
+            "type": "Ride",
+            "moving_time": 4200,  # 70 min
+            "tss": 95,
+            "if_": 0.88,
+            "np": 220,
+            "avg_hr": 155,
+            "indoor": False,
+        },
+        {
+            "id": "12347",
+            "name": "Recovery Spin",
+            "start_date": "2026-01-16T10:00:00",
+            "type": "Ride",
+            "moving_time": 3600,  # 60 min
+            "tss": 42,
+            "if_": 0.55,
+            "np": 140,
+            "avg_hr": 120,
+            "indoor": True,
+        },
+    ],
+    "wellness_data": {
+        "hrv_avg": 58,
+        "hrv_trend": "stable",
+        "sleep_quality_avg": 7.2,
+        "fatigue_score_avg": 3.5,
+        "readiness_avg": 8.1,
+    },
+    "learnings": [
+        {
+            "type": "protocol_validation",
+            "title": "Z2 Indoor Protocol Validated",
+            "description": "90min Z2 indoor @ 72% IF maintenu sans dérive cardiaque",
+            "session_id": "12345",
+            "confidence": "high",
+        },
+        {
+            "type": "performance_discovery",
+            "title": "SST Outdoor Capacity Confirmed",
+            "description": "3x8min SST @ 88% IF avec récupération complète inter-intervalles",
+            "session_id": "12346",
+            "confidence": "high",
+        },
+    ],
+    "metrics_evolution": {
+        "start": {"ctl": 100, "atl": 50, "tsb": 50, "hrv": 58},
+        "end": {"ctl": 105, "atl": 55, "tsb": 50, "hrv": 58},
+    },
 }
 
 # Sample activities for S076

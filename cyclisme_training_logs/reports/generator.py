@@ -23,6 +23,9 @@ from cyclisme_training_logs.reports.data_collector import (
     DataCollectionError,
     DataCollector,
 )
+from cyclisme_training_logs.reports.prompts.bilan_final_prompt import (
+    build_bilan_final_prompt,
+)
 from cyclisme_training_logs.reports.prompts.workout_history_prompt import (
     build_workout_history_prompt,
 )
@@ -243,8 +246,7 @@ class ReportGenerator:
         if report_type == "workout_history":
             return build_workout_history_prompt(week_data)
         elif report_type == "bilan_final":
-            # TODO: Implement bilan_final prompt (Day 3)
-            raise NotImplementedError("bilan_final prompt not yet implemented")
+            return build_bilan_final_prompt(week_data)
         else:
             raise ValueError(f"Unknown report type: {report_type}")
 
