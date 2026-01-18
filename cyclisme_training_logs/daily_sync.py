@@ -33,7 +33,6 @@ Metadata:
 
 import argparse
 import json
-import os
 import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -42,7 +41,7 @@ import markdown2
 import sib_api_v3_sdk
 from sib_api_v3_sdk.rest import ApiException
 
-from cyclisme_training_logs.config import create_intervals_client
+from cyclisme_training_logs.config import create_intervals_client, get_email_config
 from cyclisme_training_logs.config.athlete_profile import AthleteProfile
 from cyclisme_training_logs.planning.calendar import TrainingCalendar, WorkoutType
 from cyclisme_training_logs.planning.intervals_sync import IntervalsSync
@@ -328,26 +327,20 @@ class DailySync:
         Returns:
             True if email sent successfully
 
-        Environment variables required:
-            BREVO_API_KEY: Brevo API key
-            EMAIL_TO: Recipient email address
-            EMAIL_FROM: Sender email address (verified in Brevo)
-            EMAIL_FROM_NAME: Sender name (optional, default: "Training Logs")
+        Configuration (via config.py):
+            Uses get_email_config() which reads from .env:
+            - BREVO_API_KEY: Brevo API key
+            - EMAIL_TO: Recipient email address
+            - EMAIL_FROM: Sender email address (verified in Brevo)
+            - EMAIL_FROM_NAME: Sender name (optional, default: "Training Logs")
         """
-        # Check environment variables
-        api_key = os.getenv("BREVO_API_KEY")
-        email_to = os.getenv("EMAIL_TO")
-        email_from = os.getenv("EMAIL_FROM")
-        email_from_name = os.getenv("EMAIL_FROM_NAME", "Training Logs")
+        # Get email configuration
+        email_config = get_email_config()
 
-        if not all([api_key, email_to, email_from]):
+        if not email_config.is_configured():
             print("\n⚠️  Configuration email manquante dans .env:")
-            if not api_key:
-                print("  - BREVO_API_KEY manquant")
-            if not email_to:
-                print("  - EMAIL_TO manquant")
-            if not email_from:
-                print("  - EMAIL_FROM manquant")
+            for var in email_config.get_missing_vars():
+                print(f"  - {var} manquant")
             return False
 
         print("\n📧 Envoi email via Brevo...")
@@ -355,7 +348,7 @@ class DailySync:
         try:
             # Configure Brevo API
             configuration = sib_api_v3_sdk.Configuration()
-            configuration.api_key["api-key"] = api_key
+            configuration.api_key["api-key"] = email_config.api_key
 
             # Read markdown report
             markdown_content = report_file.read_text(encoding="utf-8")
@@ -448,8 +441,8 @@ class DailySync:
             subject = f"📊 Rapport Quotidien Training - {check_date.strftime('%d/%m/%Y')}"
 
             send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
-                to=[{"email": email_to}],
-                sender={"name": email_from_name, "email": email_from},
+                to=[{"email": email_config.email_to}],
+                sender={"name": email_config.email_from_name, "email": email_config.email_from},
                 subject=subject,
                 html_content=styled_html,
                 text_content=markdown_content,  # Fallback for text-only clients
@@ -459,7 +452,7 @@ class DailySync:
             api_response = api_instance.send_transac_email(send_smtp_email)
 
             print(f"  ✅ Email envoyé avec succès (ID: {api_response.message_id})")
-            print(f"  📬 Destinataire: {email_to}")
+            print(f"  📬 Destinataire: {email_config.email_to}")
             return True
 
         except ApiException as e:
