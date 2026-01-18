@@ -8,26 +8,35 @@ Created: 2026-01-18
 
 from typing import Any
 
+from cyclisme_training_logs.reports.prompts.workout_history_prompt import (
+    _calculate_tss_percentage,
+    _format_activities,
+    _format_learnings,
+    _format_metrics_evolution,
+    _format_wellness,
+)
+
 
 def build_bilan_final_prompt(week_data: dict[str, Any]) -> str:
     """Build AI prompt for bilan_final report generation.
 
     Constructs synthesis-focused prompt including:
     - System instructions (synthesis role, strategic focus)
-    - Week objectives vs realized
-    - Workout history summary (input)
-    - Protocol adaptations
+    - Week context and activities (raw data)
+    - Metrics evolution
     - Output format specification
 
     Args:
-        week_data: Dictionary with all week data
+        week_data: Dictionary with all week data (same structure as workout_history)
             - week_number: str (e.g., "S076")
-            - objectives: list[str] (planned objectives)
-            - workout_history_summary: str (from workout_history report)
-            - metrics_final: dict (final comparison metrics)
-            - protocol_adaptations: list[dict] (protocol changes)
-            - key_sessions: list[dict] (critical sessions)
-            - behavioral_learnings: list[dict] (behavioral insights)
+            - start_date: str (ISO format)
+            - end_date: str (ISO format)
+            - tss_planned: int
+            - tss_realized: int
+            - activities: list[dict] (activity details)
+            - wellness_data: dict (HRV, sleep, etc.)
+            - learnings: list[dict] (training intelligence)
+            - metrics_evolution: dict (start/end metrics)
 
     Returns:
         Complete AI prompt string
@@ -36,17 +45,22 @@ def build_bilan_final_prompt(week_data: dict[str, Any]) -> str:
         ValueError: If required data missing
 
     Examples:
-        >>> week_data = {"week_number": "S076", "objectives": [...]}
+        >>> week_data = {"week_number": "S076", "activities": [...]}
         >>> prompt = build_bilan_final_prompt(week_data)
         >>> "strategic cycling coach" in prompt.lower()
         True
     """
-    # Validate required data
+    # Validate required data (same as workout_history)
     required_fields = [
         "week_number",
-        "objectives",
-        "workout_history_summary",
-        "metrics_final",
+        "start_date",
+        "end_date",
+        "tss_planned",
+        "tss_realized",
+        "activities",
+        "wellness_data",
+        "learnings",
+        "metrics_evolution",
     ]
     for field in required_fields:
         if field not in week_data:
@@ -54,40 +68,42 @@ def build_bilan_final_prompt(week_data: dict[str, Any]) -> str:
 
     # Extract data
     week_number = week_data["week_number"]
-    objectives = week_data["objectives"]
-    workout_history_summary = week_data["workout_history_summary"]
-    metrics_final = week_data["metrics_final"]
-    protocol_adaptations = week_data.get("protocol_adaptations", [])
-    key_sessions = week_data.get("key_sessions", [])
-    behavioral_learnings = week_data.get("behavioral_learnings", [])
+    start_date = week_data["start_date"]
+    end_date = week_data["end_date"]
+    tss_planned = week_data["tss_planned"]
+    tss_realized = week_data["tss_realized"]
+    activities = week_data["activities"]
+    wellness_data = week_data["wellness_data"]
+    learnings = week_data["learnings"]
+    metrics_evolution = week_data["metrics_evolution"]
 
-    # Format objectives
-    objectives_formatted = _format_objectives(objectives)
+    # Calculate TSS percentage
+    tss_percentage = _calculate_tss_percentage(tss_planned, tss_realized)
 
-    # Format metrics
-    metrics_formatted = _format_metrics_final(metrics_final)
+    # Format activities (use workout_history formatter)
+    activities_formatted = _format_activities(activities)
 
-    # Format protocol adaptations
-    protocols_formatted = _format_protocol_adaptations(protocol_adaptations)
+    # Format wellness
+    wellness_formatted = _format_wellness(wellness_data)
 
-    # Format key sessions
-    sessions_formatted = _format_key_sessions(key_sessions)
+    # Format learnings
+    learnings_formatted = _format_learnings(learnings)
 
-    # Format behavioral learnings
-    behavioral_formatted = _format_behavioral_learnings(behavioral_learnings)
+    # Format metrics evolution (start vs end)
+    metrics_formatted = _format_metrics_evolution(metrics_evolution)
 
     # Construct full prompt
     prompt = f"""You are a strategic cycling coach synthesizing weekly training outcomes into a comprehensive final assessment.
 
 ## Your Role
 
-You are writing a **strategic, synthesis-focused** final assessment report in **French** for week {week_number}. Your goal is to extract high-level insights, validate protocols, and provide actionable recommendations for future training.
+You are writing a **strategic, synthesis-focused** final assessment report in **French** for week {week_number} ({start_date} to {end_date}). Your goal is to extract high-level insights, validate protocols, and provide actionable recommendations for future training.
 
 ## Critical Constraints
 
 1. **SYNTHESIS FOCUS**: Extract high-level patterns, NOT session-by-session details
 2. **STRATEGIC TONE**: Focus on learnings, protocols, and future applications
-3. **REFERENCE WORKOUT HISTORY**: All claims must be supported by workout_history data
+3. **DATA-DRIVEN**: All claims must be supported by activity data and learnings provided
 4. **MAX 3-4 DISCOVERIES**: Limit major discoveries to the most impactful findings
 5. **CONCISE CONCLUSION**: 2-3 sentences maximum for conclusion
 6. **French Language**: All text in French, professional cycling vocabulary
@@ -95,29 +111,24 @@ You are writing a **strategic, synthesis-focused** final assessment report in **
 
 ## Week Context: {week_number}
 
-### Planned Objectives
+**Dates:** {start_date} to {end_date}
+**TSS Planned:** {tss_planned} | **TSS Realized:** {tss_realized} ({tss_percentage}%)
 
-{objectives_formatted}
+### Activities Summary
 
-### Workout History Summary (Reference Source)
+{activities_formatted}
 
-{workout_history_summary}
+### Wellness Data
 
-### Final Metrics Comparison
+{wellness_formatted}
+
+### Training Intelligence Learnings
+
+{learnings_formatted}
+
+### Metrics Evolution (Start → End)
 
 {metrics_formatted}
-
-### Protocol Adaptations (if any)
-
-{protocols_formatted}
-
-### Key Sessions Identified
-
-{sessions_formatted}
-
-### Behavioral Learnings
-
-{behavioral_formatted}
 
 ## Required Report Structure
 
@@ -127,24 +138,22 @@ Generate a markdown report with the following sections:
 
 Main title with week number.
 
-### 2. ## Objectifs vs Réalisé
+### 2. ## Semaine en Chiffres
 
-Compare planned objectives to actual outcomes:
-- What was planned (brief)
-- What was achieved (with evidence from workout_history)
-- TSS planned vs realized (percentage)
-- Overall objective achievement assessment
+Synthesize the week's key metrics and outcomes:
+- TSS planned vs realized with percentage
+- Total sessions completed
+- Key intensity markers (IF ranges, durations)
+- Overall execution assessment
 
 **Format:**
 ```
-**Objectifs planifiés:**
-1. [Objective 1] ✅/❌
-2. [Objective 2] ✅/❌
-3. [Objective 3] ✅/❌
+**Charge d'entraînement:**
+- TSS: {tss_realized}/{tss_planned} ({tss_percentage}%)
+- Séances: [X] complétées
+- Focus principal: [Type d'entraînement observé]
 
-**TSS:** XXX/YYY (ZZ%) - [Commentary on achievement]
-
-[2-3 sentences synthesizing objective achievement with specific evidence]
+[2-3 sentences synthesizing the week's training load and execution patterns]
 ```
 
 ### 3. ## Métriques Finales
@@ -249,139 +258,7 @@ Before finalizing, verify:
 
 ## Now Generate the Report
 
-Using the workout_history summary and data provided above, generate the complete bilan_final report following the structure and guidelines exactly. Focus on synthesis and strategic insights, not session-by-session details.
+Using the activities, learnings, and metrics data provided above, generate the complete bilan_final report following the structure and guidelines exactly. Focus on synthesis and strategic insights, not session-by-session details.
 """
 
     return prompt
-
-
-def _format_objectives(objectives: list[str]) -> str:
-    """Format objectives list for prompt.
-
-    Args:
-        objectives: List of planned objectives
-
-    Returns:
-        Formatted objectives string
-    """
-    if not objectives:
-        return "Aucun objectif spécifique défini."
-
-    formatted = []
-    for i, objective in enumerate(objectives, 1):
-        formatted.append(f"{i}. {objective}")
-
-    return "\n".join(formatted)
-
-
-def _format_metrics_final(metrics_final: dict[str, Any]) -> str:
-    """Format final metrics for prompt.
-
-    Args:
-        metrics_final: Dictionary with final metrics
-
-    Returns:
-        Formatted metrics string
-    """
-    if not metrics_final:
-        return "Métriques finales non disponibles."
-
-    # Extract start and end metrics if structured that way
-    if "start" in metrics_final and "end" in metrics_final:
-        start = metrics_final["start"]
-        end = metrics_final["end"]
-
-        return f"""**Début de semaine:**
-- CTL: {start.get('ctl', 'N/A')}
-- ATL: {start.get('atl', 'N/A')}
-- TSB: {start.get('tsb', 'N/A')}
-- HRV: {start.get('hrv', 'N/A')}
-
-**Fin de semaine:**
-- CTL: {end.get('ctl', 'N/A')}
-- ATL: {end.get('atl', 'N/A')}
-- TSB: {end.get('tsb', 'N/A')}
-- HRV: {end.get('hrv', 'N/A')}
-"""
-    else:
-        # Flat structure
-        lines = []
-        for key, value in metrics_final.items():
-            lines.append(f"- {key}: {value}")
-        return "\n".join(lines)
-
-
-def _format_protocol_adaptations(adaptations: list[dict[str, Any]]) -> str:
-    """Format protocol adaptations for prompt.
-
-    Args:
-        adaptations: List of protocol adaptation dicts
-
-    Returns:
-        Formatted adaptations string
-    """
-    if not adaptations:
-        return "Aucune adaptation de protocole identifiée."
-
-    formatted = []
-    for i, adaptation in enumerate(adaptations, 1):
-        title = adaptation.get("title", "Adaptation")
-        description = adaptation.get("description", "")
-        formatted.append(
-            f"""**Adaptation {i}: {title}**
-- Description: {description}
-"""
-        )
-
-    return "\n".join(formatted)
-
-
-def _format_key_sessions(sessions: list[dict[str, Any]]) -> str:
-    """Format key sessions for prompt.
-
-    Args:
-        sessions: List of key session dicts
-
-    Returns:
-        Formatted sessions string
-    """
-    if not sessions:
-        return "Séances clés à extraire du workout_history summary."
-
-    formatted = []
-    for i, session in enumerate(sessions, 1):
-        name = session.get("name", "Session")
-        date = session.get("date", "")
-        significance = session.get("significance", "")
-        formatted.append(
-            f"""**Session {i}: {name}** ({date})
-- Importance: {significance}
-"""
-        )
-
-    return "\n".join(formatted)
-
-
-def _format_behavioral_learnings(learnings: list[dict[str, Any]]) -> str:
-    """Format behavioral learnings for prompt.
-
-    Args:
-        learnings: List of behavioral learning dicts
-
-    Returns:
-        Formatted learnings string
-    """
-    if not learnings:
-        return "Enseignements comportementaux à extraire du workout_history summary."
-
-    formatted = []
-    for i, learning in enumerate(learnings, 1):
-        aspect = learning.get("aspect", "Comportement")
-        observation = learning.get("observation", "")
-        formatted.append(
-            f"""**Learning {i}: {aspect}**
-- Observation: {observation}
-"""
-        )
-
-    return "\n".join(formatted)

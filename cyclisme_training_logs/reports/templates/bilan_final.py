@@ -58,7 +58,7 @@ class BilanFinalTemplate:
         """
         return {
             "sections": [
-                "Objectifs vs Réalisé",  # Objectives planned vs realized
+                "Semaine en Chiffres",  # Week metrics and execution summary
                 "Métriques Finales",  # Final metrics comparison
                 "Découvertes Majeures",  # Major discoveries (max 3-4)
                 "Séances Clés",  # Key sessions analyzed

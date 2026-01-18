@@ -215,7 +215,7 @@ class MarkdownValidator:
                 "Enseignements Majeurs",
             ],
             "bilan_final": [
-                "Objectifs vs Réalisé",
+                "Semaine en Chiffres",
                 "Métriques Finales",
                 "Découvertes Majeures",
                 "Conclusion",
