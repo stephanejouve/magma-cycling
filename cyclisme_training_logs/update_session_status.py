@@ -37,7 +37,6 @@ Metadata:
 """
 import argparse
 import json
-import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -53,26 +52,11 @@ if env_file.exists():
 sys.path.insert(0, str(Path(__file__).parent))
 
 from cyclisme_training_logs.api.intervals_client import IntervalsClient  # noqa: E402
+from cyclisme_training_logs.config import create_intervals_client  # noqa: E402
 from cyclisme_training_logs.weekly_planner import WeeklyPlanner  # noqa: E402
 
 # Statuses that should remove the event from Intervals.icu
 STATUSES_TO_DELETE = ["cancelled", "skipped"]
-
-
-def load_intervals_credentials() -> tuple[str | None, str | None]:
-    """Load Intervals.icu credentials from environment.
-
-    Returns:
-        Tuple of (athlete_id, api_key) or (None, None) if not configured.
-    """
-    athlete_id = os.getenv("INTERVALS_ATHLETE_ID")
-
-    api_key = os.getenv("INTERVALS_API_KEY")
-
-    if not athlete_id or not api_key:
-        return None, None
-
-    return athlete_id, api_key
 
 
 def find_event_by_session(
@@ -365,13 +349,16 @@ Valid statuses:
 
         print("\n✅ Local planning JSON updated successfully")
 
-        # Sync with Intervals.icu if requested
+        # Sync with Intervals.icu if requested (Sprint R9.B Phase 2 - centralized)
         if args.sync:
-            athlete_id, api_key = load_intervals_credentials()
-
-            if not athlete_id or not api_key:
+            # Create Intervals.icu client
+            try:
+                client = create_intervals_client()
+            except ValueError:
                 print("\n⚠️  Warning: Intervals.icu credentials not configured")
-                print("   Set INTERVALS_ATHLETE_ID and INTERVALS_API_KEY environment variables")
+                print(
+                    "   Set VITE_INTERVALS_ATHLETE_ID and VITE_INTERVALS_API_KEY environment variables"
+                )
                 print("   Skipping sync with Intervals.icu")
                 sys.exit(0)
 
@@ -399,9 +386,6 @@ Valid statuses:
                 print("\n⚠️  Warning: Could not find session date in planning")
                 print("   Skipping sync with Intervals.icu")
                 sys.exit(0)
-
-            # Create Intervals.icu client
-            client = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
 
             # Sync
             sync_success = sync_with_intervals(

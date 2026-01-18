@@ -81,7 +81,7 @@ from pathlib import Path
 from typing import Any
 
 from cyclisme_training_logs.api.intervals_client import IntervalsClient
-from cyclisme_training_logs.config import get_intervals_config
+from cyclisme_training_logs.config import create_intervals_client
 from cyclisme_training_logs.core.data_aggregator import DataAggregator
 
 logger = logging.getLogger(__name__)
@@ -146,21 +146,15 @@ class WeeklyAggregator(DataAggregator):
         self.end_date = start_date + timedelta(days=6)
         self.api: IntervalsClient | None
 
-        # Initialize Intervals.icu API with configuration
+        # Initialize Intervals.icu API with configuration (Sprint R9.B Phase 2)
         try:
-            intervals_config = get_intervals_config()
-            if intervals_config.is_configured():
-                self.api = IntervalsClient(
-                    athlete_id=intervals_config.athlete_id, api_key=intervals_config.api_key
-                )
-                logger.info(
-                    f"Intervals.icu API initialized for athlete {intervals_config.athlete_id}"
-                )
-            else:
-                logger.warning(
-                    "Intervals.icu API not configured (missing VITE_INTERVALS_ATHLETE_ID or VITE_INTERVALS_API_KEY)"
-                )
-                self.api = None
+            self.api = create_intervals_client()
+            logger.info(f"Intervals.icu API initialized for athlete {self.api.athlete_id}")
+        except ValueError:
+            logger.warning(
+                "Intervals.icu API not configured (missing VITE_INTERVALS_ATHLETE_ID or VITE_INTERVALS_API_KEY)"
+            )
+            self.api = None
         except Exception as e:
             logger.warning(f"Failed to initialize Intervals API: {e}")
             self.api = None

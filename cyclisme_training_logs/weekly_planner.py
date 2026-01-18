@@ -16,7 +16,7 @@ from typing import Any
 # Ajouter le répertoire parent au PYTHONPATH
 sys.path.insert(0, str(Path(__file__).parent))
 
-from cyclisme_training_logs.api.intervals_client import IntervalsClient  # noqa: E402
+from cyclisme_training_logs.config import create_intervals_client  # noqa: E402
 
 
 class WeeklyPlanner:
@@ -64,17 +64,13 @@ class WeeklyPlanner:
         self._init_api()
 
     def _init_api(self):
-        """Initialize l'API Intervals.icu."""
+        """Initialize l'API Intervals.icu (Sprint R9.B Phase 2 - centralized)."""
         try:
-            # Load credentials from .env or config file
-            from cyclisme_training_logs.config import get_intervals_config
-
-            config = get_intervals_config()
-            if not config.is_configured():
-                raise ValueError("Intervals.icu credentials not configured in .env")
-
-            self.api = IntervalsClient(athlete_id=config.athlete_id, api_key=config.api_key)
+            self.api = create_intervals_client()
             print("✅ API Intervals.icu connectée")
+        except ValueError as e:
+            print(f"⚠️ API non disponible : {e}")
+            print("   Les métriques seront approximatives")
         except Exception as e:
             print(f"⚠️ API non disponible : {e}")
             print("   Les métriques seront approximatives")

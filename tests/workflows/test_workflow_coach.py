@@ -194,12 +194,23 @@ class TestInitialization:
             assert coach.servo_mode is True
             assert coach.workout_templates == {"template1": {}}
 
+    @patch("cyclisme_training_logs.config.get_intervals_config")
+    @patch("cyclisme_training_logs.config.load_json_config", return_value=None)
     @patch("pathlib.Path.exists", return_value=False)
     @patch.dict(
-        "os.environ", {"VITE_INTERVALS_ATHLETE_ID": "i123", "VITE_INTERVALS_API_KEY": "key123"}
+        "os.environ",
+        {"VITE_INTERVALS_ATHLETE_ID": "i123", "VITE_INTERVALS_API_KEY": "key123"},
+        clear=True,
     )
-    def test_load_credentials_from_env(self, mock_exists):
+    def test_load_credentials_from_env(self, mock_exists, mock_load_json, mock_get_config):
         """Test load_credentials loads from environment variables."""
+        # Mock IntervalsConfig to return test credentials
+        mock_intervals_config = Mock()
+        mock_intervals_config.is_configured.return_value = True
+        mock_intervals_config.athlete_id = "i123"
+        mock_intervals_config.api_key = "key123"
+        mock_get_config.return_value = mock_intervals_config
+
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
 
         athlete_id, api_key = coach.load_credentials()
@@ -1091,96 +1102,92 @@ class TestSpecialSessions:
 class TestIntervalsAPI:
     """Test Intervals.icu API integration methods."""
 
-    @patch("cyclisme_training_logs.api.intervals_client.IntervalsClient")
-    def test_get_workout_id_intervals_success(self, mock_client_class):
+    def test_get_workout_id_intervals_success(self):
         """Test _get_workout_id_intervals finds workout ID."""
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
 
-        # Mock API response
+        # Mock API client (Sprint R9.B Phase 2 - centralized API)
         mock_client = Mock()
         mock_client.get_events.return_value = [
             {"id": "12345", "category": "WORKOUT", "date": "2026-01-05"},
             {"id": "67890", "category": "NOTE", "date": "2026-01-05"},
         ]
-        mock_client_class.return_value = mock_client
 
-        with patch.object(coach, "load_credentials", return_value=("athlete123", "key456")):
+        with patch.object(coach, "_get_api", return_value=mock_client):
             workout_id = coach._get_workout_id_intervals("2026-01-05")
 
         assert workout_id == "12345"
         mock_client.get_events.assert_called_once_with(oldest="2026-01-05", newest="2026-01-05")
 
-    @patch("cyclisme_training_logs.api.intervals_client.IntervalsClient")
-    def test_get_workout_id_intervals_not_found(self, mock_client_class):
+    def test_get_workout_id_intervals_not_found(self):
         """Test _get_workout_id_intervals when no workout exists."""
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
 
+        # Mock API client (Sprint R9.B Phase 2 - centralized API)
         mock_client = Mock()
         mock_client.get_events.return_value = [
             {"id": "67890", "category": "NOTE", "date": "2026-01-05"}
         ]
-        mock_client_class.return_value = mock_client
 
-        with patch.object(coach, "load_credentials", return_value=("athlete123", "key456")):
+        with patch.object(coach, "_get_api", return_value=mock_client):
             workout_id = coach._get_workout_id_intervals("2026-01-05")
 
         assert workout_id is None
 
-    @patch("cyclisme_training_logs.api.intervals_client.IntervalsClient")
     @patch("builtins.print")
-    def test_get_workout_id_intervals_no_credentials(self, mock_print, mock_client_class):
+    def test_get_workout_id_intervals_no_credentials(self, mock_print):
         """Test _get_workout_id_intervals with missing credentials."""
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
 
-        with patch.object(coach, "load_credentials", return_value=(None, None)):
+        # Mock _get_api to raise ValueError (Sprint R9.B Phase 2 - centralized API)
+        with patch.object(coach, "_get_api", side_effect=ValueError("Credentials not configured")):
             workout_id = coach._get_workout_id_intervals("2026-01-05")
 
         assert workout_id is None
 
-    @patch("cyclisme_training_logs.api.intervals_client.IntervalsClient")
-    def test_delete_workout_intervals_success(self, mock_client_class):
+    def test_delete_workout_intervals_success(self):
         """Test _delete_workout_intervals succeeds."""
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
 
+        # Mock API client (Sprint R9.B Phase 2 - centralized API)
         mock_client = Mock()
         mock_response = Mock()
         mock_response.raise_for_status = Mock()
         mock_client.session.delete.return_value = mock_response
         mock_client.BASE_URL = "https://intervals.icu/api/v1"
-        mock_client_class.return_value = mock_client
+        mock_client.athlete_id = "athlete123"
 
-        with patch.object(coach, "load_credentials", return_value=("athlete123", "key456")):
+        with patch.object(coach, "_get_api", return_value=mock_client):
             result = coach._delete_workout_intervals("workout789")
 
         assert result is True
         mock_client.session.delete.assert_called_once()
 
-    @patch("cyclisme_training_logs.api.intervals_client.IntervalsClient")
     @patch("builtins.print")
-    def test_delete_workout_intervals_error(self, mock_print, mock_client_class):
+    def test_delete_workout_intervals_error(self, mock_print):
         """Test _delete_workout_intervals handles errors."""
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
 
+        # Mock API client with error (Sprint R9.B Phase 2 - centralized API)
         mock_client = Mock()
         mock_client.session.delete.side_effect = Exception("API error")
         mock_client.BASE_URL = "https://intervals.icu/api/v1"
-        mock_client_class.return_value = mock_client
+        mock_client.athlete_id = "athlete123"
 
-        with patch.object(coach, "load_credentials", return_value=("athlete123", "key456")):
+        with patch.object(coach, "_get_api", return_value=mock_client):
             result = coach._delete_workout_intervals("workout789")
 
         assert result is False
 
-    @patch("cyclisme_training_logs.api.intervals_client.IntervalsClient")
-    def test_upload_workout_intervals_success(self, mock_client_class):
+    def test_upload_workout_intervals_success(self):
         """Test _upload_workout_intervals succeeds."""
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
 
+        # Mock API client (Sprint R9.B Phase 2 - centralized API)
         mock_client = Mock()
         mock_client.create_event.return_value = {"id": "new_workout_123"}
-        mock_client_class.return_value = mock_client
 
-        with patch.object(coach, "load_credentials", return_value=("athlete123", "key456")):
+        with patch.object(coach, "_get_api", return_value=mock_client):
             result = coach._upload_workout_intervals(
                 date="2026-01-05", code="S070-03-REC-V001", structure="2x20 @ Z3"
             )
@@ -1192,17 +1199,16 @@ class TestIntervalsAPI:
         assert call_args["name"] == "S070-03-REC-V001"
         assert call_args["description"] == "2x20 @ Z3"
 
-    @patch("cyclisme_training_logs.api.intervals_client.IntervalsClient")
     @patch("builtins.print")
-    def test_upload_workout_intervals_invalid_format(self, mock_print, mock_client_class):
+    def test_upload_workout_intervals_invalid_format(self, mock_print):
         """Test _upload_workout_intervals with API error."""
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
 
+        # Mock API client with error (Sprint R9.B Phase 2 - centralized API)
         mock_client = Mock()
         mock_client.create_event.side_effect = Exception("Invalid format")
-        mock_client_class.return_value = mock_client
 
-        with patch.object(coach, "load_credentials", return_value=("athlete123", "key456")):
+        with patch.object(coach, "_get_api", return_value=mock_client):
             result = coach._upload_workout_intervals(
                 date="2026-01-05", code="S070-03", structure="invalid"
             )
@@ -1294,18 +1300,28 @@ class TestCredentialsLoadingAdvanced:
         assert athlete_id == "i999"
         assert api_key == "secret999"
 
+    @patch("cyclisme_training_logs.config.get_intervals_config")
     @patch("pathlib.Path.exists", return_value=True)
     @patch("builtins.open", new_callable=mock_open, read_data='{"invalid": "data"}')
     @patch("json.load")
     @patch.dict(
-        "os.environ", {"VITE_INTERVALS_ATHLETE_ID": "i123", "VITE_INTERVALS_API_KEY": "key123"}
+        "os.environ",
+        {"VITE_INTERVALS_ATHLETE_ID": "i123", "VITE_INTERVALS_API_KEY": "key123"},
+        clear=True,
     )
     def test_load_credentials_config_file_missing_keys(
-        self, mock_json_load, mock_file, mock_exists
+        self, mock_json_load, mock_file, mock_exists, mock_get_config
     ):
         """Test load_credentials falls back to env when config file has missing keys."""
         # Config file exists but doesn't have required keys
         mock_json_load.return_value = {"invalid": "data"}
+
+        # Mock IntervalsConfig to return test credentials
+        mock_intervals_config = Mock()
+        mock_intervals_config.is_configured.return_value = True
+        mock_intervals_config.athlete_id = "i123"
+        mock_intervals_config.api_key = "key123"
+        mock_get_config.return_value = mock_intervals_config
 
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
         athlete_id, api_key = coach.load_credentials()

@@ -767,13 +767,11 @@ def process_week_with_rest_handling(
     week_id: str,
     start_date: str,
     end_date: str,
-    athlete_id: str,
-    api_key: str,
     planning_dir: Path | None = None,
     output_file: Path | None = None,
 ) -> dict:
     """
-    Workflow complet avec gestion repos/annulations.
+    Workflow complet avec gestion repos/annulations (Sprint R9.B Phase 2).
 
     Process:
     1. Charger planning semaine (week_planning.json)
@@ -790,15 +788,16 @@ def process_week_with_rest_handling(
         week_id: Ex "S070"
         start_date: "2025-12-02"
         end_date: "2025-12-08"
-        athlete_id: ID athlète Intervals.icu
-        api_key: Clé API Intervals.icu
         planning_dir: Répertoire plannings (optionnel)
         output_file: Fichier sortie markdown (optionnel)
 
     Returns:
         Dict avec résumé réconciliation et chemins fichiers générés
+
+    Note:
+        Credentials are loaded automatically via create_intervals_client().
     """
-    from cyclisme_training_logs.api.intervals_client import IntervalsClient
+    from cyclisme_training_logs.config import create_intervals_client
 
     logger.info(f"\n{'=' * 70}")
     logger.info(f"WORKFLOW SEMAINE {week_id} AVEC GESTION REPOS/ANNULATIONS")
@@ -812,8 +811,8 @@ def process_week_with_rest_handling(
         logger.warning("Fallback mode standard (sans planning)")
         return {"status": "fallback", "message": "Planning non trouvé, utiliser workflow standard"}
 
-    # 2. Récupérer activités Intervals.icu
-    api = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
+    # 2. Récupérer activités Intervals.icu (centralized client creation)
+    api = create_intervals_client()
     activities = api.get_activities(oldest=start_date, newest=end_date)
     logger.info(f"Activités récupérées : {len(activities)}")
 
