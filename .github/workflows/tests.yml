@@ -97,6 +97,7 @@ jobs:
           tests/config/ \
           tests/intelligence/ \
           tests/planning/ \
+          tests/reports/ \
           tests/test_ai_providers/ \
           tests/utils/ \
           tests/workflows/test_insert_analysis.py \
