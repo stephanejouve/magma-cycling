@@ -179,3 +179,111 @@ class TestTrainingThresholdsValidation:
                 recovery_sleep_hours_min=7.0,
                 recovery_resting_hr_deviation_max=10,
             )
+
+
+class TestTrainingThresholdsFromEnvErrors:
+    """Tests for error handling in from_env() method."""
+
+    def test_from_env_with_pydantic_validation_error(self, monkeypatch):
+        """Test from_env() raises ValueError on Pydantic ValidationError.
+
+        Covers lines 121-122: ValidationError exception handling.
+
+        Scenario:
+        - Set HRV threshold > 100 (violates Pydantic validator)
+        - from_env() should catch ValidationError and raise ValueError
+        """
+        monkeypatch.setenv("TSB_FRESH_MIN", "10")
+        monkeypatch.setenv("TSB_OPTIMAL_MIN", "-5")
+        monkeypatch.setenv("TSB_FATIGUED_MIN", "-15")
+        monkeypatch.setenv("TSB_CRITICAL", "-25")
+        monkeypatch.setenv("ATL_CTL_RATIO_OPTIMAL", "1.0")
+        monkeypatch.setenv("ATL_CTL_RATIO_WARNING", "1.3")
+        monkeypatch.setenv("ATL_CTL_RATIO_CRITICAL", "1.8")
+        monkeypatch.setenv("RECOVERY_HRV_THRESHOLD_PERCENT", "150")  # Invalid > 100
+        monkeypatch.setenv("RECOVERY_SLEEP_HOURS_MIN", "7.0")
+        monkeypatch.setenv("RECOVERY_RESTING_HR_DEVIATION_MAX", "10")
+
+        with pytest.raises(ValueError) as exc_info:
+            TrainingThresholds.from_env()
+
+        # Verify error message mentions validation failure
+        assert "Invalid training thresholds configuration" in str(exc_info.value)
+
+    def test_from_env_with_invalid_numeric_literal(self, monkeypatch):
+        """Test from_env() raises ValueError on invalid numeric conversion.
+
+        Covers lines 124-126: ValueError handling for numeric conversion.
+
+        Scenario:
+        - Set environment variable to non-numeric string
+        - float() conversion fails with ValueError
+        - Python ≤3.12: message contains "invalid literal" → line 125 (custom message)
+        - Python 3.13+: message is "could not convert..." → line 126 (re-raise)
+
+        Both paths should raise ValueError with meaningful message.
+        """
+        monkeypatch.setenv("TSB_FRESH_MIN", "not_a_number")  # Invalid numeric string
+        monkeypatch.setenv("TSB_OPTIMAL_MIN", "-5")
+        monkeypatch.setenv("TSB_FATIGUED_MIN", "-15")
+        monkeypatch.setenv("TSB_CRITICAL", "-25")
+        monkeypatch.setenv("ATL_CTL_RATIO_OPTIMAL", "1.0")
+        monkeypatch.setenv("ATL_CTL_RATIO_WARNING", "1.3")
+        monkeypatch.setenv("ATL_CTL_RATIO_CRITICAL", "1.8")
+        monkeypatch.setenv("RECOVERY_HRV_THRESHOLD_PERCENT", "90")
+        monkeypatch.setenv("RECOVERY_SLEEP_HOURS_MIN", "7.0")
+        monkeypatch.setenv("RECOVERY_RESTING_HR_DEVIATION_MAX", "10")
+
+        with pytest.raises(ValueError) as exc_info:
+            TrainingThresholds.from_env()
+
+        # Verify error message is meaningful (either custom or original)
+        error_msg = str(exc_info.value)
+        assert (
+            "Invalid numeric value in thresholds configuration" in error_msg  # Line 125
+            or "could not convert" in error_msg  # Line 126 (Python 3.13+)
+            or "invalid literal" in error_msg  # Line 126 (Python ≤3.12)
+        )
+
+    def test_from_env_with_invalid_literal_python_312_behavior(self, monkeypatch):
+        """Test from_env() custom error message with 'invalid literal' (Python ≤3.12).
+
+        Covers line 125: Custom error message for "invalid literal" case.
+
+        Scenario:
+        - Simulate Python ≤3.12 behavior where float() raises ValueError
+          with "invalid literal for float()" in the message
+        - from_env() should catch this and wrap with custom message
+        - This ensures line 125 is covered even when running on Python 3.13+
+
+        Note: Python 3.13+ changed the ValueError message from float(),
+        so we need to explicitly test the old behavior.
+        """
+        import builtins
+        from unittest.mock import patch
+
+        # Mock float() to simulate Python ≤3.12 behavior
+        original_float = builtins.float
+
+        def mock_float(value):
+            if value == "old_style_error":
+                raise ValueError("invalid literal for float() with base 10: 'old_style_error'")
+            return original_float(value)
+
+        monkeypatch.setenv("TSB_FRESH_MIN", "old_style_error")  # Triggers mock
+        monkeypatch.setenv("TSB_OPTIMAL_MIN", "-5")
+        monkeypatch.setenv("TSB_FATIGUED_MIN", "-15")
+        monkeypatch.setenv("TSB_CRITICAL", "-25")
+        monkeypatch.setenv("ATL_CTL_RATIO_OPTIMAL", "1.0")
+        monkeypatch.setenv("ATL_CTL_RATIO_WARNING", "1.3")
+        monkeypatch.setenv("ATL_CTL_RATIO_CRITICAL", "1.8")
+        monkeypatch.setenv("RECOVERY_HRV_THRESHOLD_PERCENT", "90")
+        monkeypatch.setenv("RECOVERY_SLEEP_HOURS_MIN", "7.0")
+        monkeypatch.setenv("RECOVERY_RESTING_HR_DEVIATION_MAX", "10")
+
+        with patch("builtins.float", side_effect=mock_float):
+            with pytest.raises(ValueError) as exc_info:
+                TrainingThresholds.from_env()
+
+            # Verify custom error message (line 125)
+            assert "Invalid numeric value in thresholds configuration" in str(exc_info.value)
