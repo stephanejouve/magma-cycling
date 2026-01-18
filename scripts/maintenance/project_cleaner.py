@@ -458,6 +458,69 @@ class ProjectCleaner:
         return results
 
 
+def check_and_run_claude_archive(project_root: Path) -> bool:
+    """Check if Claude Code archive is needed and create it if requested.
+
+    Reads .archive_needed file at project root. If TRUE, creates Claude Code
+    archive and resets flag to FALSE.
+
+    Args:
+        project_root: Path to project root directory.
+
+    Returns:
+        True if archive was created, False otherwise.
+    """
+    archive_flag_file = project_root / ".archive_needed"
+
+    # Check if flag file exists
+    if not archive_flag_file.exists():
+        return False
+
+    try:
+        # Read flag value
+        flag_value = archive_flag_file.read_text().strip().upper()
+
+        if flag_value == "TRUE":
+            print(f"{BLUE}🎯 Claude Code archive requested (.archive_needed = TRUE){RESET}")
+            print(f"{BLUE}Creating archive...{RESET}\n")
+
+            # Run Claude Code archive script
+            archive_script = project_root / "scripts" / "backup" / "create_claude_code_archive.sh"
+
+            if not archive_script.exists():
+                print(f"{YELLOW}⚠️  Archive script not found: {archive_script}{RESET}")
+                return False
+
+            result = subprocess.run(
+                ["/bin/bash", str(archive_script)],
+                cwd=project_root,
+                capture_output=True,
+                text=True,
+            )
+
+            if result.returncode == 0:
+                print(f"{GREEN}✅ Claude Code archive created successfully{RESET}")
+                # Extract archive path from output
+                for line in result.stdout.splitlines():
+                    if "📦 Fichier :" in line or ".tar.gz" in line:
+                        print(f"  {line}")
+
+                # Reset flag to FALSE
+                archive_flag_file.write_text("FALSE\n")
+                print(f"\n{GREEN}✅ Reset .archive_needed = FALSE{RESET}")
+                return True
+            else:
+                print(f"{RED}❌ Archive creation failed:{RESET}")
+                print(result.stderr)
+                return False
+
+    except Exception as e:
+        print(f"{YELLOW}⚠️  Error checking archive flag: {e}{RESET}")
+        return False
+
+    return False
+
+
 def main():
     """Main entry point for the cleanup bot."""
     parser = argparse.ArgumentParser(
@@ -494,6 +557,9 @@ Examples:
     # Initialize cleaner
     project_root = Path(__file__).parent.parent.parent
     cleaner = ProjectCleaner(project_root)
+
+    # Check if Claude Code archive is needed (before main cleanup)
+    check_and_run_claude_archive(project_root)
 
     try:
         if args.archive:
