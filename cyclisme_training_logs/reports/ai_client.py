@@ -81,7 +81,7 @@ class ClaudeClient(AIClient):
         """Initialize Claude client.
 
         Args:
-            api_key: Anthropic API key (defaults to ANTHROPIC_API_KEY env var)
+            api_key: Anthropic API key (defaults to ANTHROPIC_API_KEY or CLAUDE_API_KEY env var)
             model: Model identifier (defaults to claude-sonnet-4-5-20250929)
             max_retries: Maximum retry attempts for failed requests
 
@@ -95,7 +95,8 @@ class ClaudeClient(AIClient):
                 "anthropic package not installed. " "Install with: pip install anthropic"
             ) from e
 
-        self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
+        # Check both ANTHROPIC_API_KEY (standard) and CLAUDE_API_KEY (legacy)
+        self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY") or os.getenv("CLAUDE_API_KEY")
         self.model = model or self.DEFAULT_MODEL
         self.max_retries = max_retries
         self._client = None
@@ -106,7 +107,7 @@ class ClaudeClient(AIClient):
         else:
             logger.warning(
                 "ClaudeClient initialized without API key. "
-                "Set ANTHROPIC_API_KEY environment variable."
+                "Set ANTHROPIC_API_KEY or CLAUDE_API_KEY environment variable."
             )
 
     def is_configured(self) -> bool:
@@ -140,7 +141,7 @@ class ClaudeClient(AIClient):
         """
         if not self.is_configured():
             raise AIClientError(
-                "ClaudeClient not configured. Set ANTHROPIC_API_KEY environment variable."
+                "ClaudeClient not configured. Set ANTHROPIC_API_KEY or CLAUDE_API_KEY environment variable."
             )
 
         for attempt in range(self.max_retries):
