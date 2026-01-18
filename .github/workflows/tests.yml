@@ -99,6 +99,7 @@ jobs:
           tests/planning/ \
           tests/test_ai_providers/ \
           tests/utils/ \
+          tests/workflows/ \
           -v --cov=cyclisme_training_logs --cov-report=xml --cov-report=term
       continue-on-error: false
 
