@@ -255,6 +255,71 @@
 4. **Rate Limits**: No explicit rate limit handling
 5. **Cache Missing**: WeeklyAggregator results not cached (repeated queries)
 
+### Critical Technical Debt 🚨
+
+#### 1. **Duplicate AI Provider Infrastructure** - PRIORITY: HIGH
+
+**Issue**: Sprint R10 MVP created a parallel AI provider system instead of using existing infrastructure
+
+**Current State**:
+- **Existing System** (Production-ready):
+  - `cyclisme_training_logs/ai_providers/` - Complete AI provider infrastructure
+  - `AIProviderFactory` - Factory pattern for provider creation
+  - `AIAnalyzer` base class - Abstract interface for all providers
+  - **All providers implemented**: clipboard, claude_api, mistral_api, openai, ollama
+  - `AIProvidersConfig` in config_base.py - Centralized config management
+
+- **Reports Module** (Duplicate):
+  - `cyclisme_training_logs/reports/ai_client.py` - New parallel system
+  - `ClaudeClient`, `OpenAIClient` classes - Duplicate implementations
+  - `create_ai_client()` factory - Duplicate factory pattern
+  - Only 2 providers: claude, openai (missing mistral, ollama, clipboard)
+
+**Problem**:
+- Code duplication (~200 LOC)
+- Mistral support exists in main system but not in reports
+- Two config systems for same providers
+- Maintenance burden (changes must be made twice)
+- Inconsistent provider naming (claude vs claude_api)
+
+**Root Cause**:
+- Sprint R10 implemented in isolation without architecture review
+- Missing discovery phase: "do not reinvent wheel at very sprint buddy" (User feedback)
+- Fast 5-day sprint prioritized delivery over integration
+
+**Resolution Path** (MOA Decision Required):
+
+**Option A: Refactor Reports to Use Existing Infrastructure** (Recommended)
+- Adapt reports module to use `AIProviderFactory`
+- Bridge interface difference: `analyze_session()` vs `generate()`
+- Benefits: Single source of truth, Mistral/Ollama support immediately available
+- Effort: 1-2 days refactoring + testing
+- Risk: Medium (changes core reports pipeline)
+
+**Option B: Keep Separate, Document Rationale**
+- Document why reports needs separate implementation
+- Add Mistral/Ollama to reports/ai_client.py
+- Benefits: No risk to working system
+- Effort: 1 day per new provider
+- Risk: Low (maintains status quo)
+- Cost: Ongoing maintenance duplication
+
+**Option C: Merge Systems into Unified Provider Layer**
+- Create new unified interface compatible with both use cases
+- Migrate both systems to unified interface
+- Benefits: Long-term maintainability, single provider system
+- Effort: 3-5 days (major refactor)
+- Risk: High (affects multiple modules)
+
+**Recommended Action**: Option A - Refactor reports to use existing `ai_providers/`
+
+**User Feedback**:
+- "oupsy this bullet may address to the project MOA" (2026-01-18)
+- "do not reinvent wheel at very sprint buddy" (2026-01-18)
+
+**Logged**: 2026-01-18
+**Status**: Awaiting MOA decision
+
 ### Refactoring Candidates
 
 1. **Prompt Management**: Consider external prompt files (YAML/JSON) vs Python strings
@@ -323,6 +388,10 @@
 
 | Version | Date       | Changes                                           |
 |---------|------------|---------------------------------------------------|
+| 1.1     | 2026-01-18 | Added critical technical debt item               |
+|         |            | - Documented duplicate AI provider infrastructure |
+|         |            | - 3 resolution options proposed for MOA          |
+|         |            | - Logged user feedback on architecture           |
 | 1.0     | 2026-01-18 | Initial ROADMAP created                          |
 |         |            | - Sprint R10 MVP marked COMPLETE                 |
 |         |            | - Mistral AI support logged (user request)       |
