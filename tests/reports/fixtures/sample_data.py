@@ -225,14 +225,12 @@ Indicateurs wellness stables (HRV 58, Readiness 8.1) témoignent d'une gestion a
 # Sample valid bilan_final report
 SAMPLE_BILAN_FINAL_REPORT = """# Bilan Final S076
 
-## Objectifs vs Réalisé
+## Semaine en Chiffres
 
-**Objectifs planifiés:**
-1. Valider protocole Z2 indoor 90min ✅
-2. Tester capacité SST outdoor 3x8min ✅
-3. Confirmer récupération post-bloc intensif ✅
-
-**TSS:** 423/450 (94%) - Objectif atteint avec marge appropriée
+**Charge d'entraînement:**
+- TSS: 423/450 (94%)
+- Séances: 3 complétées
+- Focus principal: Validation protocoles Z2/SST
 
 Les trois objectifs de validation de protocoles ont été pleinement atteints, confirmant la maturité des adaptations développées durant le bloc hivernal. La légère sous-réalisation TSS (6%) reflète une gestion prudente de la charge, cohérente avec la phase de consolidation.
 

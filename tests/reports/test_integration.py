@@ -125,20 +125,10 @@ class TestReportGeneratorIntegration:
     @patch("anthropic.Anthropic")
     def test_generate_bilan_final_success(self, mock_anthropic, mock_data_collector_class):
         """Test successful bilan_final report generation."""
-        # Given: Mocked dependencies with bilan_final data
+        # Given: Mocked dependencies with bilan_final data (same structure as workout_history)
         mock_collector = Mock()
         mock_data_collector_class.return_value = mock_collector
-
-        bilan_data = {
-            "week_number": "S076",
-            "objectives": ["Objective 1", "Objective 2"],
-            "workout_history_summary": "Summary of week...",
-            "metrics_final": {
-                "start": {"ctl": 100, "atl": 50},
-                "end": {"ctl": 105, "atl": 55},
-            },
-        }
-        mock_collector.collect_week_data.return_value = bilan_data
+        mock_collector.collect_week_data.return_value = SAMPLE_WEEK_DATA_S076
 
         # Mock AI response
         mock_ai_client = Mock()
@@ -147,7 +137,7 @@ class TestReportGeneratorIntegration:
         mock_content = Mock()
         mock_content.text = """# Bilan Final S076
 
-## Objectifs vs Réalisé
+## Semaine en Chiffres
 ## Métriques Finales
 ## Découvertes Majeures
 ## Conclusion
