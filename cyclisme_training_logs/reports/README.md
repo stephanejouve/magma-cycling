@@ -1,15 +1,18 @@
 # AI-Powered Weekly Reports Module
 
 **Sprint R10 MVP** - Automated weekly training report generation using Claude Sonnet 4.5
+**Refactored Day 5** - Now uses existing `ai_providers/` infrastructure (removes 200 LOC duplication)
 
 ## Overview
 
 The `reports` module provides AI-powered generation of comprehensive weekly training reports in French. It orchestrates data collection from multiple sources (Intervals.icu, training intelligence) and uses Large Language Models to synthesize insights into structured markdown reports.
 
+Uses the project's existing `ai_providers/` infrastructure (AIProviderFactory) for all AI operations, providing immediate access to all supported providers: Claude API, Mistral AI, OpenAI, Ollama (local), and Clipboard (manual).
+
 ### Key Features
 
 - **Two Report Types**: Factual workout history + strategic synthesis
-- **AI-Powered**: Uses Claude Sonnet 4.5 for natural language generation
+- **5 AI Providers**: Claude API, Mistral AI (best value), OpenAI, Ollama (local/free), Clipboard
 - **Multi-Source Data**: Integrates activities, wellness, metrics, and learnings
 - **Validation**: Automatic markdown structure and content validation
 - **CLI Interface**: Easy command-line usage with `generate-report`
@@ -23,7 +26,6 @@ reports/
 ├── cli.py                   # Command-line interface
 ├── generator.py             # Core orchestration (ReportGenerator)
 ├── data_collector.py        # Multi-source data aggregation
-├── ai_client.py             # AI provider abstraction (Claude, OpenAI, Clipboard)
 ├── prompts/                 # AI prompt builders
 │   ├── workout_history_prompt.py
 │   └── bilan_final_prompt.py
@@ -32,14 +34,27 @@ reports/
 └── templates/               # Report structure definitions
     ├── workout_history.py
     └── bilan_final.py
+
+# Uses existing project infrastructure:
+../ai_providers/             # AI provider abstraction (all providers)
+├── factory.py               # AIProviderFactory (creates providers)
+├── base.py                  # AIAnalyzer interface
+├── claude_api.py            # Claude Sonnet 4
+├── mistral_api.py           # Mistral Large (best value)
+├── openai_api.py            # OpenAI GPT-4 Turbo
+├── ollama.py                # Local LLMs (free, private)
+└── clipboard.py             # Manual copy/paste workflow
+
+../config/config_base.py     # AIProvidersConfig (centralized config)
 ```
 
 ### Design Principles
 
 1. **Separation of Concerns**: Data collection, prompt building, AI generation, and validation are separate
-2. **Testability**: All components mocked in tests (WeeklyAggregator, Anthropic API)
-3. **Type Safety**: Pydantic models for configuration, clear interfaces
-4. **Error Handling**: Graceful degradation with specific error types
+2. **Reuses Existing Infrastructure**: Uses `ai_providers/` instead of duplicating (Day 5 refactor)
+3. **Testability**: All components mocked in tests (WeeklyAggregator, AIProviderFactory)
+4. **Type Safety**: Pydantic models for configuration, clear interfaces
+5. **Error Handling**: Graceful degradation with specific error types
 
 ## Report Types
 
@@ -89,17 +104,23 @@ reports/
 ### Command-Line Interface (CLI)
 
 ```bash
-# Generate workout_history report for week S076
+# Generate workout_history report for week S076 (uses Claude by default)
 generate-report --week S076 --type workout_history
 
 # Generate bilan_final with custom output directory
 generate-report --week S076 --type bilan_final --output ~/custom/reports
 
+# Use Mistral AI (best value - $2/1M input, $6/1M output)
+generate-report --week S076 --type workout_history --provider mistral_api
+
 # Use clipboard provider (copy prompt, no API key required)
 generate-report --week S076 --type workout_history --provider clipboard
 
-# Use OpenAI instead of Claude
+# Use OpenAI GPT-4
 generate-report --week S076 --type bilan_final --provider openai
+
+# Use local Ollama (free, unlimited, private)
+generate-report --week S076 --type workout_history --provider ollama
 
 # Enable verbose logging
 generate-report --week S076 --type workout_history --verbose
@@ -114,8 +135,8 @@ generate-report --help
 from cyclisme_training_logs.reports import ReportGenerator
 from pathlib import Path
 
-# Initialize generator with AI provider
-generator = ReportGenerator(ai_provider="claude")
+# Initialize generator with AI provider (defaults to claude_api)
+generator = ReportGenerator(ai_provider="claude_api")
 
 # Generate workout_history report
 report_path = generator.generate_report(
@@ -131,8 +152,16 @@ print(f"Report generated: {report_path}")
 ### Advanced Usage
 
 ```python
+# Use Mistral AI (best value)
+generator = ReportGenerator(ai_provider="mistral_api")
+report_path = generator.generate_report(
+    week="S076",
+    report_type="bilan_final",
+    output_dir=Path("/custom/path")
+)
+
 # Override AI provider per request
-generator = ReportGenerator(ai_provider="claude")
+generator = ReportGenerator(ai_provider="claude_api")
 report_path = generator.generate_report(
     week="S076",
     report_type="bilan_final",

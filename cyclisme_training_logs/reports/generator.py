@@ -18,7 +18,11 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from cyclisme_training_logs.reports.ai_client import AIClientError, create_ai_client
+from cyclisme_training_logs.ai_providers.factory import (
+    AIProviderFactory,
+    ConfigError,
+)
+from cyclisme_training_logs.config import get_ai_config
 from cyclisme_training_logs.reports.data_collector import (
     DataCollectionError,
     DataCollector,
@@ -37,6 +41,10 @@ from cyclisme_training_logs.reports.validators import (
 logger = logging.getLogger(__name__)
 
 
+# Alias ConfigError as AIClientError for backward compatibility
+AIClientError = ConfigError
+
+
 class ReportGenerationError(Exception):
     """Exception raised when report generation fails."""
 
@@ -49,10 +57,12 @@ class ReportGenerator:
     Orchestrates data collection from multiple sources and uses AI to generate
     comprehensive weekly training reports in markdown format.
 
+    Uses existing ai_providers infrastructure (AIProviderFactory) for all AI operations.
+
     Examples:
         Basic usage::
 
-            generator = ReportGenerator(ai_provider="claude")
+            generator = ReportGenerator(ai_provider="claude_api")
             report_path = generator.generate_report(
                 week="S076",
                 report_type="workout_history"
@@ -60,7 +70,7 @@ class ReportGenerator:
 
         With custom output directory::
 
-            generator = ReportGenerator(ai_provider="claude")
+            generator = ReportGenerator(ai_provider="mistral_api")
             report_path = generator.generate_report(
                 week="S076",
                 report_type="bilan_final",
@@ -68,23 +78,24 @@ class ReportGenerator:
             )
 
     Attributes:
-        ai_provider: AI provider name ("claude", "openai", "clipboard")
-        ai_client: Initialized AI client for generation
+        ai_provider: AI provider name ("claude_api", "mistral_api", "openai", "ollama", "clipboard")
+        ai_analyzer: Initialized AI analyzer for generation
     """
 
-    def __init__(self, ai_provider: str = "claude"):
+    def __init__(self, ai_provider: str = "claude_api"):
         """Initialize report generator with AI provider.
 
         Args:
-            ai_provider: AI provider to use ("claude", "openai", "clipboard")
+            ai_provider: AI provider to use ("claude_api", "mistral_api", "openai", "ollama", "clipboard")
+                        Defaults to "claude_api"
 
         Raises:
             ValueError: If AI provider not supported
         """
         self.ai_provider = ai_provider
-        self.ai_client = None
+        self.ai_analyzer = None
 
-        # Initialize AI client (lazy - done in generate_report)
+        # Initialize AI analyzer (lazy - done in generate_report)
         logger.info(f"ReportGenerator initialized with provider: {ai_provider}")
 
     def generate_report(
@@ -154,13 +165,13 @@ class ReportGenerator:
             logger.info("Step 2/5: Building AI prompt...")
             prompt = self._build_prompt(week_data, report_type)
 
-            # Step 3: Initialize AI client
+            # Step 3: Initialize AI analyzer
             logger.info("Step 3/5: Generating report via AI...")
-            if not self.ai_client:
-                self._initialize_ai_client(provider)
+            if not self.ai_analyzer:
+                self._initialize_ai_analyzer(provider)
 
-            # Generate report
-            generated_text = self.ai_client.generate(prompt, max_tokens=4096)
+            # Generate report using analyze_session interface
+            generated_text = self.ai_analyzer.analyze_session(prompt, dataset=week_data)
 
             # Step 4: Validate output
             logger.info("Step 4/5: Validating report...")
@@ -250,24 +261,33 @@ class ReportGenerator:
         else:
             raise ValueError(f"Unknown report type: {report_type}")
 
-    def _initialize_ai_client(self, provider: str):
-        """Initialize AI client for specified provider.
+    def _initialize_ai_analyzer(self, provider: str):
+        """Initialize AI analyzer for specified provider.
+
+        Uses existing AIProviderFactory to create analyzer instance
+        with configuration from config_base.py.
 
         Args:
-            provider: AI provider name
+            provider: AI provider name ("claude_api", "mistral_api", etc.)
 
         Raises:
             ValueError: If provider not supported
-            AIClientError: If client initialization fails
+            AIClientError: If analyzer initialization fails
         """
-        logger.info(f"Initializing AI client: {provider}")
-        self.ai_client = create_ai_client(provider)
+        logger.info(f"Initializing AI analyzer: {provider}")
 
-        if not self.ai_client.is_configured():
-            raise AIClientError(
-                f"AI client '{provider}' not configured. "
-                f"Please set required environment variables."
-            )
+        # Get AI config from centralized config
+        ai_config = get_ai_config()
+
+        # Get provider-specific config dict
+        provider_config = ai_config.get_provider_config(provider)
+
+        # Create analyzer using factory
+        try:
+            self.ai_analyzer = AIProviderFactory.create(provider, provider_config)
+            logger.info(f"AI analyzer initialized: {provider}")
+        except ConfigError as e:
+            raise AIClientError(f"Failed to initialize AI provider '{provider}': {str(e)}") from e
 
     def _validate_report(
         self,
