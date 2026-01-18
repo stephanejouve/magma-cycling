@@ -238,9 +238,8 @@ Date : 15/01/2026
         mock_config = Mock()
         mock_config.workouts_history_path = sample_history_file
         mock_config.data_repo_path = tmp_path
-        monkeypatch.setattr(
-            "cyclisme_training_logs.insert_analysis.get_data_config", lambda: mock_config
-        )
+        # Patch the config module, not the insert_analysis import
+        monkeypatch.setattr("cyclisme_training_logs.config.get_data_config", lambda: mock_config)
 
         manager = WorkoutHistoryManager()
         content = manager.read_history()
@@ -267,9 +266,7 @@ Date : 15/01/2026
         mock_config = Mock()
         mock_config.workouts_history_path = sample_history_file
         mock_config.data_repo_path = tmp_path
-        monkeypatch.setattr(
-            "cyclisme_training_logs.insert_analysis.get_data_config", lambda: mock_config
-        )
+        monkeypatch.setattr("cyclisme_training_logs.config.get_data_config", lambda: mock_config)
 
         manager = WorkoutHistoryManager()
         content = sample_history_file.read_text()
@@ -292,9 +289,7 @@ Content
         mock_config = Mock()
         mock_config.workouts_history_path = sample_history_file
         mock_config.data_repo_path = tmp_path
-        monkeypatch.setattr(
-            "cyclisme_training_logs.insert_analysis.get_data_config", lambda: mock_config
-        )
+        monkeypatch.setattr("cyclisme_training_logs.config.get_data_config", lambda: mock_config)
 
         manager = WorkoutHistoryManager()
         content = sample_history_file.read_text()
@@ -322,9 +317,7 @@ class TestCLIIntegration:
         mock_config = Mock()
         mock_config.workouts_history_path = history_file
         mock_config.data_repo_path = tmp_path
-        monkeypatch.setattr(
-            "cyclisme_training_logs.insert_analysis.get_data_config", lambda: mock_config
-        )
+        monkeypatch.setattr("cyclisme_training_logs.config.get_data_config", lambda: mock_config)
 
         # Mock clipboard
         mock_clipboard = "### Test\nDate : 15/01/2026\n"
@@ -366,9 +359,7 @@ Content
         mock_config = Mock()
         mock_config.workouts_history_path = history_file
         mock_config.data_repo_path = tmp_path
-        monkeypatch.setattr(
-            "cyclisme_training_logs.insert_analysis.get_data_config", lambda: mock_config
-        )
+        monkeypatch.setattr("cyclisme_training_logs.config.get_data_config", lambda: mock_config)
 
         monkeypatch.setattr(
             "sys.argv", ["insert-analysis", "--file", str(analysis_file), "--yes", "--dry-run"]
