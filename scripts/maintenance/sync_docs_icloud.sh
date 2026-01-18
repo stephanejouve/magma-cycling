@@ -86,6 +86,7 @@ fi
 # Rsync options
 RSYNC_OPTS=(
     -a                          # Archive mode (recursive, preserve permissions, times, etc.)
+    --no-times                  # Don't preserve modification times (fixes iCloud permission errors)
     --update                    # Skip files that are newer in target
     --ignore-errors             # Continue on errors (iCloud sync conflicts)
     $VERBOSE                    # Verbose if requested
