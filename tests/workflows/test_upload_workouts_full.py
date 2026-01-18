@@ -79,53 +79,60 @@ class TestCalculateWeekStartDate:
 class TestWorkoutUploaderInit:
     """Tests for WorkoutUploader initialization."""
 
-    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch("cyclisme_training_logs.config.create_intervals_client")
     @patch(
         "builtins.open",
         new_callable=mock_open,
         read_data='{"athlete_id": "i151223", "api_key": "test_key"}',
     )
     @patch("pathlib.Path.exists", return_value=True)
-    def test_init_with_config_file(self, mock_exists, mock_file, mock_client):
-        """Test init with .intervals_config.json."""
-        # Given: Config file exists
+    def test_init_with_config_file(self, mock_exists, mock_file, mock_create_client):
+        """Test init with .intervals_config.json (Sprint R9.B Phase 2)."""
+        # Given: Config file exists and mock client factory
         week_num = "S075"
         start_date = datetime(2026, 1, 5)
+        mock_api = Mock()
+        mock_create_client.return_value = mock_api
 
         # When: Creating uploader
         uploader = WorkoutUploader(week_num, start_date)
 
-        # Then: API initialized with config
+        # Then: API initialized via centralized factory
         assert uploader.week_number == "S075"
         assert uploader.start_date == start_date
-        assert uploader.api is not None
-        mock_client.assert_called_once_with("i151223", "test_key")
+        assert uploader.api is mock_api
+        mock_create_client.assert_called_once()
 
-    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch("cyclisme_training_logs.config.create_intervals_client")
     @patch("pathlib.Path.exists", return_value=False)
     @patch.dict(
         "os.environ", {"VITE_INTERVALS_ATHLETE_ID": "i151223", "VITE_INTERVALS_API_KEY": "test_key"}
     )
-    def test_init_with_env_vars(self, mock_exists, mock_client):
-        """Test init with environment variables."""
-        # Given: Config file doesn't exist, env vars set
+    def test_init_with_env_vars(self, mock_exists, mock_create_client):
+        """Test init with environment variables (Sprint R9.B Phase 2)."""
+        # Given: Config file doesn't exist, env vars set, mock client factory
         week_num = "S076"
         start_date = datetime(2026, 1, 12)
+        mock_api = Mock()
+        mock_create_client.return_value = mock_api
 
         # When: Creating uploader
         uploader = WorkoutUploader(week_num, start_date)
 
-        # Then: API initialized with env vars
+        # Then: API initialized via centralized factory (no params)
         assert uploader.week_number == "S076"
-        mock_client.assert_called_once_with("i151223", "test_key")
+        assert uploader.api is mock_api
+        mock_create_client.assert_called_once()
 
+    @patch("cyclisme_training_logs.config.create_intervals_client")
     @patch("pathlib.Path.exists", return_value=False)
     @patch.dict("os.environ", {}, clear=True)
-    def test_init_without_credentials_exits(self, mock_exists):
-        """Test init without credentials exits."""
-        # Given: No config file, no env vars
+    def test_init_without_credentials_exits(self, mock_exists, mock_create_client):
+        """Test init without credentials exits (Sprint R9.B Phase 2)."""
+        # Given: No config file, no env vars, client creation fails
         week_num = "S075"
         start_date = datetime(2026, 1, 5)
+        mock_create_client.side_effect = ValueError("Credentials not configured")
 
         # When/Then: Exits with error
         with pytest.raises(SystemExit):
@@ -135,7 +142,7 @@ class TestWorkoutUploaderInit:
 class TestValidateWorkoutNotation:
     """Tests for validate_workout_notation() method."""
 
-    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch("cyclisme_training_logs.config.create_intervals_client")
     @patch(
         "builtins.open",
         new_callable=mock_open,
@@ -166,7 +173,7 @@ Cooldown
         # Then: No warnings
         assert len(warnings) == 0
 
-    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch("cyclisme_training_logs.config.create_intervals_client")
     @patch(
         "builtins.open",
         new_callable=mock_open,
@@ -196,7 +203,7 @@ Main set
         assert "3x [...]" in warnings[0]
         assert "Main set: 3x" in warnings[0]
 
-    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch("cyclisme_training_logs.config.create_intervals_client")
     @patch(
         "builtins.open",
         new_callable=mock_open,
@@ -222,7 +229,7 @@ Main set
 class TestParseWorkoutsFile:
     """Tests for parse_workouts_file() method."""
 
-    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch("cyclisme_training_logs.config.create_intervals_client")
     @patch(
         "builtins.open",
         new_callable=mock_open,
@@ -265,7 +272,7 @@ Cooldown
         assert "Main set" in workouts[0]["description"]
         assert "Cooldown" in workouts[0]["description"]
 
-    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch("cyclisme_training_logs.config.create_intervals_client")
     @patch(
         "builtins.open",
         new_callable=mock_open,
@@ -316,7 +323,7 @@ REPOS COMPLET - Aucune activite
         assert workouts[1]["name"] == "S075-02-END"
         assert workouts[2]["name"] == "S075-07-REPOS"
 
-    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch("cyclisme_training_logs.config.create_intervals_client")
     @patch(
         "builtins.open",
         new_callable=mock_open,
@@ -356,7 +363,7 @@ Cooldown
 class TestUploadWorkout:
     """Tests for upload_workout() method."""
 
-    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch("cyclisme_training_logs.config.create_intervals_client")
     @patch(
         "builtins.open",
         new_callable=mock_open,
@@ -384,7 +391,7 @@ class TestUploadWorkout:
         assert success is True
         mock_api_instance.create_event.assert_called_once()
 
-    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch("cyclisme_training_logs.config.create_intervals_client")
     @patch(
         "builtins.open",
         new_callable=mock_open,
@@ -411,7 +418,7 @@ class TestUploadWorkout:
 class TestUploadAll:
     """Tests for upload_all() method."""
 
-    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch("cyclisme_training_logs.config.create_intervals_client")
     @patch(
         "builtins.open",
         new_callable=mock_open,
@@ -448,7 +455,7 @@ class TestUploadAll:
         # API create_event should not be called in dry-run
         uploader.api.create_event.assert_not_called()
 
-    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch("cyclisme_training_logs.config.create_intervals_client")
     @patch(
         "builtins.open",
         new_callable=mock_open,
@@ -488,7 +495,7 @@ class TestUploadAll:
         assert result["failed"] == 0
         assert mock_api_instance.create_event.call_count == 2
 
-    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch("cyclisme_training_logs.config.create_intervals_client")
     @patch(
         "builtins.open",
         new_callable=mock_open,
@@ -542,7 +549,7 @@ class TestUploadAll:
 class TestIntegrationUploadWorkflow:
     """Integration tests for complete upload workflow."""
 
-    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch("cyclisme_training_logs.config.create_intervals_client")
     @patch(
         "builtins.open",
         new_callable=mock_open,

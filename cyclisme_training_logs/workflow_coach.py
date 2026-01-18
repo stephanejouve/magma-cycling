@@ -149,6 +149,9 @@ class WorkflowCoach:
         # Servo control attributes
         self.workout_templates = {}
 
+        # API client (lazy initialization via _get_api())
+        self.api = None
+
         # Load workout templates if servo mode enabled
         if self.servo_mode:
             self.workout_templates = self.load_workout_templates()
@@ -199,6 +202,30 @@ class WorkflowCoach:
             return intervals_config.athlete_id, intervals_config.api_key
 
         return None, None
+
+    def _get_api(self):
+        """Get or create Intervals.icu API client (lazy initialization).
+
+        Returns:
+            IntervalsClient: Configured API client
+
+        Raises:
+            ValueError: If credentials not configured
+
+        Note:
+            Sprint R9.B Phase 2 - Centralized API client creation using
+            create_intervals_client() factory to eliminate duplication.
+        """
+        if self.api is None:
+            from cyclisme_training_logs.config import create_intervals_client
+
+            try:
+                self.api = create_intervals_client()
+            except ValueError as e:
+                print(f"❌ {e}")
+                raise
+
+        return self.api
 
     def load_workout_templates(self):
         """Charge catalogue templates au démarrage.
@@ -408,17 +435,8 @@ class WorkflowCoach:
             str: ID workout ou None.
         """
         try:
-            # Import IntervalsAPI from prepare_analysis
-            from cyclisme_training_logs.api.intervals_client import IntervalsClient
-
-            # Load credentials
-            athlete_id, api_key = self.load_credentials()
-            if not athlete_id or not api_key:
-                print("⚠️  Credentials non disponibles")
-                return None
-
-            # Create API client
-            api = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
+            # Get API client (centralized, Sprint R9.B Phase 2)
+            api = self._get_api()
 
             # Get events for the date
             events = api.get_events(oldest=date, newest=date)
@@ -444,19 +462,11 @@ class WorkflowCoach:
             bool: True si succès.
         """
         try:
-            # Import IntervalsAPI
-            from cyclisme_training_logs.api.intervals_client import IntervalsClient
-
-            # Load credentials
-            athlete_id, api_key = self.load_credentials()
-            if not athlete_id or not api_key:
-                return False
-
-            # Create API client
-            api = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
+            # Get API client (centralized, Sprint R9.B Phase 2)
+            api = self._get_api()
 
             # DELETE request
-            url = f"{api.BASE_URL}/athlete/{athlete_id}/events/{workout_id}"
+            url = f"{api.BASE_URL}/athlete/{api.athlete_id}/events/{workout_id}"
             response = api.session.delete(url)
             response.raise_for_status()
 
@@ -478,16 +488,8 @@ class WorkflowCoach:
             bool: True si succès.
         """
         try:
-            # Import IntervalsAPI
-            from cyclisme_training_logs.api.intervals_client import IntervalsClient
-
-            # Load credentials
-            athlete_id, api_key = self.load_credentials()
-            if not athlete_id or not api_key:
-                return False
-
-            # Create API client
-            api = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
+            # Get API client (centralized, Sprint R9.B Phase 2)
+            api = self._get_api()
 
             # Prepare event data
             event = {
@@ -690,16 +692,13 @@ class WorkflowCoach:
 
         self.print_header("🤖 WORKFLOW COACH AI - Réconciliation Batch", f"Semaine {week_id}")
 
-        # 0. Initialiser API
-        from cyclisme_training_logs.api.intervals_client import IntervalsClient
-
-        athlete_id, api_key = self.load_credentials()
-        if not athlete_id or not api_key:
+        # 0. Initialiser API (centralized, Sprint R9.B Phase 2)
+        try:
+            api = self._get_api()
+        except ValueError:
             print("❌ Credentials Intervals.icu non trouvées")
             print("   Vérifier ~/.intervals_config.json ou variables d'environnement")
             return
-
-        api = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
 
         # 1. Charger planning JSON local
         config = get_data_config()
@@ -1075,17 +1074,14 @@ class WorkflowCoach:
 
         return filtered
 
-    def _detect_rest_and_cancelled_sessions(
-        self, athlete_id: str, api_key: str
-    ) -> tuple[list[dict], list[dict]]:
+    def _detect_rest_and_cancelled_sessions(self) -> tuple[list[dict], list[dict]]:
         """Detect rest days and cancelled sessions from planning.
-
-        Args:
-            athlete_id: Intervals.icu athlete ID
-            api_key: Intervals.icu API key
 
         Returns:
             Tuple of (rest_days, cancelled_sessions).
+
+        Note:
+            Sprint R9.B Phase 2 - Uses centralized API client via _get_api().
         """
         rest_days: list[dict] = []
 
@@ -1108,10 +1104,8 @@ class WorkflowCoach:
             if not validate_week_planning(self.planning):
                 return rest_days, cancelled_sessions
 
-            # Reconciliation
-            from cyclisme_training_logs.api.intervals_client import IntervalsClient
-
-            api = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
+            # Reconciliation (centralized API client, Sprint R9.B Phase 2)
+            api = self._get_api()
 
             planning_activities = api.get_activities(
                 oldest=self.planning["start_date"], newest=self.planning["end_date"]
@@ -1353,9 +1347,7 @@ class WorkflowCoach:
             self.skipped_sessions = None
 
         # 4. Detect rest days and cancelled sessions from planning
-        rest_days, cancelled_sessions = self._detect_rest_and_cancelled_sessions(
-            athlete_id, api_key
-        )
+        rest_days, cancelled_sessions = self._detect_rest_and_cancelled_sessions()
 
         # 5. Filter out already documented rest/cancelled sessions
         rest_days = self._filter_documented_sessions(rest_days, state, "rest")

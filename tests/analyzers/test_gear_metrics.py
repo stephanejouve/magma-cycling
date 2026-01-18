@@ -17,10 +17,10 @@ class TestExtractGearMetrics:
 
     @pytest.fixture
     def aggregator(self):
-        """Create WeeklyAggregator with mocked API."""
+        """Create WeeklyAggregator with mocked API (Sprint R9.B Phase 2)."""
 
         # Create aggregator (API initialization will be mocked below)
-        with patch("cyclisme_training_logs.analyzers.weekly_aggregator.get_intervals_config"):
+        with patch("cyclisme_training_logs.analyzers.weekly_aggregator.create_intervals_client"):
             aggregator = WeeklyAggregator(week="S075", start_date=date(2026, 1, 5))
             # Mock the API
             aggregator.api = Mock()

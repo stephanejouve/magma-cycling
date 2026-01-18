@@ -106,7 +106,7 @@ Cooldown
 class TestReposDaysUpload:
     """Test bug: jours REPOS ignorés au lieu d'être créés."""
 
-    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch("cyclisme_training_logs.config.create_intervals_client")
     def test_repos_creates_event_not_skipped(self, mock_client_class):
         """Test que REPOS crée un événement NOTE au lieu d'être ignoré."""
         uploader = WorkoutUploader("S076", datetime(2026, 1, 12))
@@ -139,7 +139,7 @@ class TestReposDaysUpload:
         assert call_args["category"] == "NOTE"
         assert call_args["name"] == "Repos"
 
-    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch("cyclisme_training_logs.config.create_intervals_client")
     def test_repos_dry_run(self, mock_client_class):
         """Test que REPOS fonctionne en dry-run."""
         uploader = WorkoutUploader("S076", datetime(2026, 1, 12))
@@ -208,7 +208,7 @@ Cooldown
         critical_warnings = [w for w in warnings if "🚨" in w]
         assert len(critical_warnings) >= 3  # At least 3 sections with missing dashes
 
-    @patch("cyclisme_training_logs.upload_workouts.IntervalsClient")
+    @patch("cyclisme_training_logs.config.create_intervals_client")
     def test_s076_complete_week_with_repos(self, mock_client_class):
         """Test upload semaine complète S076 avec jour repos."""
         uploader = WorkoutUploader("S076", datetime(2026, 1, 12))
