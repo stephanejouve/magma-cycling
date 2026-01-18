@@ -552,6 +552,9 @@ def main():
     )
     parser.add_argument("--file", type=str, help="Fichier contenant les workouts")
     parser.add_argument("--dry-run", action="store_true", help="Simulation sans upload réel")
+    parser.add_argument(
+        "--yes", "-y", action="store_true", help="Skip confirmation prompt (for automation)"
+    )
 
     args = parser.parse_args()
 
@@ -586,7 +589,7 @@ def main():
         print("\n❌ Aucun workout détecté")
         sys.exit(1)
 
-    if not args.dry_run:
+    if not args.dry_run and not args.yes:
         print("\n⚠️  ATTENTION : Upload RÉEL sur Intervals.icu")
         print(f"   {len(workouts)} workout(s) seront créés pour {args.week_id}")
         response = input("\nContinuer ? (o/n) : ")
