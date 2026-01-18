@@ -348,19 +348,108 @@ class EndOfWeekWorkflow:
             print(f"  ❌ Fichier workouts introuvable : {workouts_file}")
             return False
 
+    def _get_workouts_api(self, provider_name: str) -> bool:
+        """Get workouts from any AI API provider (AI-agnostic).
+
+        Uses AIProviderFactory for provider-agnostic implementation.
+
+        Args:
+            provider_name: Provider name (claude_api, mistral_api, openai, ollama)
+
+        Returns:
+            True if workouts generated successfully
+        """
+        print(f"  🤖 Mode {provider_name.upper()} - Génération automatique")
+        print()
+
+        try:
+            # Import dependencies
+            import os
+
+            from cyclisme_training_logs.ai_providers.factory import AIProviderFactory
+            from cyclisme_training_logs.weekly_planner import WeeklyPlanner
+
+            # Build provider config from environment
+            config = {
+                "claude_api_key": os.getenv("CLAUDE_API_KEY"),
+                "claude_model": os.getenv("CLAUDE_MODEL", "claude-sonnet-4-20250514"),
+                "mistral_api_key": os.getenv("MISTRAL_API_KEY"),
+                "mistral_model": os.getenv("MISTRAL_MODEL", "mistral-large-latest"),
+                "openai_api_key": os.getenv("OPENAI_API_KEY"),
+                "openai_model": os.getenv("OPENAI_MODEL", "gpt-4-turbo"),
+                "ollama_host": os.getenv("OLLAMA_HOST", "http://localhost:11434"),
+                "ollama_model": os.getenv("OLLAMA_MODEL", "mistral:7b"),
+            }
+
+            # Validate provider config
+            is_valid, message = AIProviderFactory.validate_provider_config(provider_name, config)
+            if not is_valid:
+                print(f"  ❌ Configuration invalide : {message}")
+                return False
+
+            print(f"  ✅ {message}")
+            print()
+
+            # Create analyzer via factory (AI-agnostic)
+            analyzer = AIProviderFactory.create(provider_name, config)
+            print(f"  ℹ️  Provider: {analyzer.get_provider_info()['provider']}")
+            if "model" in analyzer.get_provider_info():
+                print(f"  ℹ️  Modèle: {analyzer.get_provider_info()['model']}")
+            print()
+
+            # Step 1: Generate prompt with WeeklyPlanner
+            print("  📝 Génération du prompt de planification...")
+            planner = WeeklyPlanner(
+                week_number=self.week_next, start_date=self.next_start_date, project_root=Path.cwd()
+            )
+
+            # Collect metrics and context
+            planner.current_metrics = planner.collect_current_metrics()
+            planner.previous_week_bilan = planner.load_previous_week_bilan()
+            planner.context_files = planner.load_context_files()
+
+            # Generate full prompt
+            prompt = planner.generate_planning_prompt()
+            print(f"  ✅ Prompt généré ({len(prompt)} caractères)")
+            print()
+
+            # Step 2: Call AI API (provider-agnostic)
+            print(f"  🤖 Appel {provider_name.upper()} pour génération workouts...")
+            print("  ⏳ Cela peut prendre 30-60 secondes...")
+            print()
+
+            workouts_response = analyzer.analyze_session(prompt)
+
+            print(f"  ✅ Workouts générés ({len(workouts_response)} caractères)")
+            print()
+
+            # Step 3: Save to file
+            workouts_file = self.planning_dir / f"{self.week_next}_workouts.txt"
+            workouts_file.write_text(workouts_response, encoding="utf-8")
+
+            self.workouts_content = workouts_response
+            self.workouts_file = workouts_file
+
+            print(f"  💾 Workouts sauvegardés : {workouts_file}")
+            print()
+
+            return True
+
+        except Exception as e:
+            print(f"  ❌ Erreur {provider_name.upper()} : {e}")
+            if self.verbose:
+                import traceback
+
+                traceback.print_exc()
+            return False
+
     def _get_workouts_claude_api(self) -> bool:
         """Get workouts from Claude API automatically."""
-        print("  🤖 Mode CLAUDE API - Génération automatique")
-        print("  ⚠️  Fonctionnalité en développement")
-        print("  💡 Utilisez --provider clipboard pour l'instant")
-        return False
+        return self._get_workouts_api("claude_api")
 
     def _get_workouts_mistral_api(self) -> bool:
         """Get workouts from Mistral API automatically."""
-        print("  🤖 Mode MISTRAL API - Génération automatique")
-        print("  ⚠️  Fonctionnalité en développement")
-        print("  💡 Utilisez --provider clipboard pour l'instant")
-        return False
+        return self._get_workouts_api("mistral_api")
 
     def _step4_validate_workouts(self) -> bool:
         """Step 4: Validate workouts notation with format-planning logic."""
