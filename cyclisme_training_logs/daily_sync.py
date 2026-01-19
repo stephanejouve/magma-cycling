@@ -48,6 +48,7 @@ from cyclisme_training_logs.config import (
     get_email_config,
 )
 from cyclisme_training_logs.config.athlete_profile import AthleteProfile
+from cyclisme_training_logs.insert_analysis import WorkoutHistoryManager
 from cyclisme_training_logs.planning.calendar import TrainingCalendar, WorkoutType
 from cyclisme_training_logs.planning.intervals_sync import IntervalsSync
 from cyclisme_training_logs.prepare_analysis import PromptGenerator
@@ -146,6 +147,7 @@ class DailySync:
         # Initialize AI analyzer if enabled
         self.ai_analyzer = None
         self.prompt_generator = None
+        self.history_manager = None
         if enable_ai_analysis:
             ai_config = get_ai_config()
             available = ai_config.get_available_providers()
@@ -154,6 +156,9 @@ class DailySync:
                 provider_config = ai_config.get_provider_config(provider)
                 self.ai_analyzer = AIProviderFactory.create(provider, provider_config)
                 self.prompt_generator = PromptGenerator()
+                self.history_manager = WorkoutHistoryManager(
+                    yes_confirm=True
+                )  # Auto-confirm for automation
                 print(f"🤖 AI Analysis activé (provider: {provider})")
             else:
                 print("⚠️  Aucun provider AI configuré - analysis désactivée")
@@ -260,9 +265,60 @@ class DailySync:
 
         return {"status": status, "diff": status.diff}
 
+    def _extract_existing_analysis(self, activity_name: str, activity_date_str: str) -> str | None:
+        """
+        Check if analysis already exists in workouts-history.md and extract it.
+
+        Args:
+            activity_name: Name of the activity
+            activity_date_str: Date in format DD/MM/YYYY
+
+        Returns:
+            Existing analysis text or None if not found
+        """
+        if not self.history_manager:
+            return None
+
+        try:
+            history_content = self.history_manager.read_history()
+            if not history_content:
+                return None
+
+            # Look for the activity entry
+            import re
+
+            # Pattern: ### ACTIVITY_NAME\nDate : DATE
+            pattern = (
+                rf"###\s*{re.escape(activity_name)}\s*\nDate\s*:\s*{re.escape(activity_date_str)}"
+            )
+            match = re.search(pattern, history_content)
+
+            if not match:
+                return None
+
+            # Extract the full entry (from ### to next ### or end)
+            start_pos = match.start()
+            next_entry = re.search(r"\n###\s+", history_content[start_pos + 1 :])
+
+            if next_entry:
+                end_pos = start_pos + 1 + next_entry.start()
+                analysis = history_content[start_pos:end_pos].strip()
+            else:
+                analysis = history_content[start_pos:].strip()
+
+            return analysis
+
+        except Exception as e:
+            print(f"     ⚠️  Erreur extraction analyse existante: {e}")
+            return None
+
     def analyze_activity(self, activity: dict) -> str | None:
         """
-        Generate AI analysis for an activity.
+        Generate or retrieve AI analysis for an activity.
+
+        Checks if analysis already exists in workouts-history.md:
+        - If yes: extracts and returns existing analysis
+        - If no: generates new analysis, inserts into history, and returns it
 
         Args:
             activity: Activity dict with id and other metadata
@@ -280,10 +336,22 @@ class DailySync:
                 print(f"  ⚠️  Pas d'ID Intervals.icu pour {activity.get('name', activity['id'])}")
                 return None
 
-            print(f"  🤖 Génération analyse AI pour {activity.get('name', intervals_id)}...")
+            activity_name = activity.get("name", "")
+            print(f"  🔍 Vérification analyse existante pour {activity_name}...")
 
-            # Get full activity data from Intervals.icu
+            # Get full activity to extract date
             full_activity = self.client.get_activity(intervals_id)
+            activity_date = date.fromisoformat(full_activity["start_date_local"].split("T")[0])
+            activity_date_str = activity_date.strftime("%d/%m/%Y")
+
+            # Check if analysis already exists
+            existing_analysis = self._extract_existing_analysis(activity_name, activity_date_str)
+
+            if existing_analysis:
+                print("     ✅ Analyse existante trouvée dans workouts-history.md")
+                return existing_analysis
+
+            print(f"  🤖 Génération nouvelle analyse AI pour {activity_name}...")
 
             # Add is_strava flag (required by PromptGenerator)
             full_activity["is_strava"] = full_activity.get("source") == "STRAVA"
@@ -334,6 +402,18 @@ class DailySync:
 
             if analysis:
                 print(f"     ✅ Analyse générée ({len(analysis)} caractères)")
+
+                # Insert analysis into workouts-history.md
+                print("     📝 Insertion dans workouts-history.md...")
+                try:
+                    if self.history_manager.insert_analysis(analysis):
+                        print("     ✅ Analyse insérée dans workouts-history.md")
+                    else:
+                        print("     ⚠️  Échec insertion (analyse utilisée quand même)")
+                except Exception as e:
+                    print(f"     ⚠️  Erreur insertion workouts-history.md: {e}")
+                    # Continue anyway - we still have the analysis for email
+
                 return analysis
             else:
                 print("     ⚠️  Échec génération analyse")
