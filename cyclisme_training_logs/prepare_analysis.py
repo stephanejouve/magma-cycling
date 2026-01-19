@@ -213,11 +213,33 @@ class PromptGenerator:
             "decoupling": activity.get("decoupling", None),
             "description": activity.get("description", ""),
             "tags": activity.get("tags", []),
+            "feel": activity.get("feel"),  # 1-4 scale for "How did it feel?"
             "is_strava": is_strava,
             "source": activity.get("source", "Unknown"),
         }
 
         return data
+
+    def _format_feel_value(self, feel_value):
+        """Format the 'feel' value (1-4 scale) into readable text.
+
+        Args:
+            feel_value: Numeric value 1-4 or None
+
+        Returns:
+            Formatted string with emoji
+        """
+        if feel_value is None:
+            return "_Non renseigné_"
+
+        feel_map = {
+            1: "😣 Difficile (1/4)",
+            2: "😐 Moyen (2/4)",
+            3: "🙂 Bon (3/4)",
+            4: "😊 Excellent (4/4)",
+        }
+
+        return feel_map.get(feel_value, f"_Valeur inconnue: {feel_value}_")
 
     def format_wellness_data(self, wellness):
         """Format les données wellness."""
@@ -228,6 +250,7 @@ class PromptGenerator:
                 "tsb": 0,
                 "weight": 0,
                 "sleep_seconds": 0,
+                "comments": "",
             }
 
         from cyclisme_training_logs.utils.metrics import extract_wellness_metrics
@@ -241,6 +264,7 @@ class PromptGenerator:
             "weight": wellness.get("weight", 0),
             "sleep_seconds": wellness.get("sleepSecs", 0),
             "sleep_quality": wellness.get("sleepQuality", 0),
+            "comments": wellness.get("comments", ""),
         }
 
     def format_planned_workout(self, planned_event):
@@ -514,9 +538,16 @@ Certaines métriques (puissance, découplage) peuvent être manquantes ou incomp
 - TSB : {w_post['tsb']:+.0f}
 
 ### Feedback Athlète (saisi dans Intervals.icu)
-{act['description'] if act['description'] else '_Aucun feedback athlète saisi_'}
 
-Tags : {', '.join(act['tags']) if act['tags'] else '_Aucun tag_'}
+**Ressenti général** : {self._format_feel_value(act.get('feel'))}
+
+**Notes activité** :
+{act['description'] if act['description'] else '_Aucune note saisie_'}
+
+**Notes wellness** :
+{w_pre.get('comments', '') if w_pre.get('comments') else '_Aucune note saisie_'}
+
+**Tags** : {', '.join(act['tags']) if act['tags'] else '_Aucun tag_'}
 
 ---
 """
@@ -591,7 +622,7 @@ En tant qu'assistant coach, analyse cette séance avec un regard factuel et tech
 2. Évaluer qualité via découplage (<7.5% = validé)
 3. Contextualiser avec TSB pré-séance et sommeil
 4. Identifier patterns (Sweet-Spot, Endurance, VO2, etc.)
-5. **Intégrer le feedback athlète** (section "Feedback Athlète") s'il est présent - ressenti, difficultés, observations subjectives
+5. **Intégrer le feedback athlète** (section "Feedback Athlète") s'il est présent - ressenti général (1-4), notes activité, notes wellness, observations subjectives
 6. Recommandations concrètes basées sur les données ET le ressenti
 
 **Gestion des données manquantes (activités Strava) :**
