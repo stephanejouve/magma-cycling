@@ -50,6 +50,7 @@ from cyclisme_training_logs.config import (
 from cyclisme_training_logs.config.athlete_profile import AthleteProfile
 from cyclisme_training_logs.planning.calendar import TrainingCalendar, WorkoutType
 from cyclisme_training_logs.planning.intervals_sync import IntervalsSync
+from cyclisme_training_logs.prepare_analysis import PromptGenerator
 
 
 class ActivityTracker:
@@ -144,6 +145,7 @@ class DailySync:
 
         # Initialize AI analyzer if enabled
         self.ai_analyzer = None
+        self.prompt_generator = None
         if enable_ai_analysis:
             ai_config = get_ai_config()
             available = ai_config.get_available_providers()
@@ -151,6 +153,7 @@ class DailySync:
                 provider = available[0]
                 provider_config = ai_config.get_provider_config(provider)
                 self.ai_analyzer = AIProviderFactory.create(provider, provider_config)
+                self.prompt_generator = PromptGenerator()
                 print(f"🤖 AI Analysis activé (provider: {provider})")
             else:
                 print("⚠️  Aucun provider AI configuré - analysis désactivée")
@@ -282,8 +285,49 @@ class DailySync:
             # Get full activity data from Intervals.icu
             full_activity = self.client.get_activity(intervals_id)
 
-            # Create simplified prompt for daily analysis
-            prompt = self._create_simple_prompt(full_activity)
+            # Add is_strava flag (required by PromptGenerator)
+            full_activity["is_strava"] = full_activity.get("source") == "STRAVA"
+
+            # Get wellness data (pre and post)
+            activity_date_str = full_activity["start_date_local"].split("T")[0]
+
+            # Get pre-workout wellness
+            try:
+                wellness_data = self.client.get_wellness(
+                    oldest=activity_date_str, newest=activity_date_str
+                )
+                wellness_pre = wellness_data[0] if wellness_data else None
+            except Exception:
+                wellness_pre = None
+
+            # Get post-workout wellness (may not exist yet for today's workout)
+            try:
+                activity_date = date.fromisoformat(activity_date_str)
+                next_day = activity_date + timedelta(days=1)
+                next_day_str = next_day.isoformat()
+                wellness_data = self.client.get_wellness(oldest=next_day_str, newest=next_day_str)
+                wellness_post = wellness_data[0] if wellness_data else None
+            except Exception:
+                wellness_post = None
+
+            # Load athlete context and recent workouts
+            athlete_context = self.prompt_generator.load_athlete_context()
+            recent_workouts = self.prompt_generator.load_recent_workouts(limit=5)
+
+            # Format activity data for prompt generation
+            activity_data = self.prompt_generator.format_activity_data(full_activity)
+
+            # Generate complete prompt
+            prompt = self.prompt_generator.generate_prompt(
+                activity_data=activity_data,
+                wellness_pre=wellness_pre,
+                wellness_post=wellness_post,
+                athlete_context=athlete_context,
+                recent_workouts=recent_workouts,
+                athlete_feedback=None,  # No feedback in automated mode
+                planned_workout=None,  # Could be added later
+                cycling_concepts=None,
+            )
 
             # Get AI analysis
             analysis = self.ai_analyzer.analyze_session(prompt)
@@ -298,54 +342,6 @@ class DailySync:
         except Exception as e:
             print(f"     ❌ Erreur analyse AI: {e}")
             return None
-
-    def _create_simple_prompt(self, activity: dict) -> str:
-        """
-        Create a simplified analysis prompt from activity data.
-
-        Args:
-            activity: Full activity data from Intervals.icu
-
-        Returns:
-            Prompt text for AI analysis
-        """
-        # Extract key metrics
-        name = activity.get("name", "Activité")
-        workout_type = activity.get("type", "N/A")
-        duration_min = activity.get("moving_time", 0) // 60
-        tss = activity.get("icu_training_load", "N/A")
-        avg_power = activity.get("average_watts", "N/A")
-        np = activity.get("np", "N/A")
-        avg_hr = activity.get("average_hr", "N/A")
-        max_hr = activity.get("max_hr", "N/A")
-        avg_cadence = activity.get("average_cadence", "N/A")
-
-        prompt = f"""Analyse cette séance de cyclisme et fournis un résumé concis.
-
-## Données de la séance
-
-**Nom**: {name}
-**Type**: {workout_type}
-**Durée**: {duration_min} min
-**TSS**: {tss}
-**Puissance moyenne**: {avg_power} W
-**NP**: {np} W
-**FC moyenne**: {avg_hr} bpm
-**FC max**: {max_hr} bpm
-**Cadence moyenne**: {avg_cadence} rpm
-
-## Instructions
-
-Fournis une analyse concise (3-4 paragraphes) qui inclut:
-
-1. **Observation générale**: Type de séance, durée, intensité
-2. **Points clés**: Métriques importantes et observations
-3. **Qualité d'exécution**: Comment la séance s'est déroulée
-4. **Recommandations**: Points d'attention pour les prochaines séances
-
-Format: Texte markdown simple, pas de titres de section, style conversationnel et direct.
-"""
-        return prompt
 
     def generate_report(
         self,
