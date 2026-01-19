@@ -241,6 +241,27 @@ class PromptGenerator:
 
         return feel_map.get(feel_value, f"_Valeur inconnue: {feel_value}_")
 
+    def _format_athlete_notes(self, activity_description, wellness_comments):
+        """Format athlete notes with wellness comments as fallback.
+
+        Args:
+            activity_description: Notes from activity description field
+            wellness_comments: Notes from wellness comments field
+
+        Returns:
+            Formatted string with notes and source indication
+        """
+        # Priority 1: Activity description
+        if activity_description and activity_description.strip():
+            return activity_description.strip()
+
+        # Priority 2: Wellness comments (fallback)
+        if wellness_comments and wellness_comments.strip():
+            return f"{wellness_comments.strip()}\n\n_Note: Feedback saisi dans wellness (pas de description activité)_"
+
+        # No notes at all
+        return "_Aucune note saisie_"
+
     def format_wellness_data(self, wellness):
         """Format les données wellness."""
         if not wellness:
@@ -541,11 +562,8 @@ Certaines métriques (puissance, découplage) peuvent être manquantes ou incomp
 
 **Ressenti général** : {self._format_feel_value(act.get('feel'))}
 
-**Notes activité** :
-{act['description'] if act['description'] else '_Aucune note saisie_'}
-
-**Notes wellness** :
-{w_pre.get('comments', '') if w_pre.get('comments') else '_Aucune note saisie_'}
+**Notes athlète** :
+{self._format_athlete_notes(act.get('description', ''), w_pre.get('comments', ''))}
 
 **Tags** : {', '.join(act['tags']) if act['tags'] else '_Aucun tag_'}
 
@@ -622,7 +640,7 @@ En tant qu'assistant coach, analyse cette séance avec un regard factuel et tech
 2. Évaluer qualité via découplage (<7.5% = validé)
 3. Contextualiser avec TSB pré-séance et sommeil
 4. Identifier patterns (Sweet-Spot, Endurance, VO2, etc.)
-5. **Intégrer le feedback athlète** (section "Feedback Athlète") s'il est présent - ressenti général (1-4), notes activité, notes wellness, observations subjectives
+5. **Intégrer le feedback athlète** (section "Feedback Athlète") s'il est présent - ressenti général (1-4) et notes textuelles (avec système de fallback: description activité en priorité, wellness comments si vide)
 6. Recommandations concrètes basées sur les données ET le ressenti
 
 **Gestion des données manquantes (activités Strava) :**
