@@ -41,7 +41,12 @@ import markdown2
 import sib_api_v3_sdk
 from sib_api_v3_sdk.rest import ApiException
 
-from cyclisme_training_logs.config import create_intervals_client, get_email_config
+from cyclisme_training_logs.ai_providers import AIProviderFactory
+from cyclisme_training_logs.config import (
+    create_intervals_client,
+    get_ai_config,
+    get_email_config,
+)
 from cyclisme_training_logs.config.athlete_profile import AthleteProfile
 from cyclisme_training_logs.planning.calendar import TrainingCalendar, WorkoutType
 from cyclisme_training_logs.planning.intervals_sync import IntervalsSync
@@ -122,18 +127,34 @@ class ActivityTracker:
 class DailySync:
     """Daily synchronization checker."""
 
-    def __init__(self, tracking_file: Path, reports_dir: Path):
+    def __init__(self, tracking_file: Path, reports_dir: Path, enable_ai_analysis: bool = False):
         """
         Initialize daily sync.
 
         Args:
             tracking_file: Path to activity tracking JSON
             reports_dir: Directory for daily reports
+            enable_ai_analysis: Enable automatic AI analysis of activities
         """
         self.client = create_intervals_client()
         self.tracker = ActivityTracker(tracking_file)
         self.reports_dir = reports_dir
         self.reports_dir.mkdir(parents=True, exist_ok=True)
+        self.enable_ai_analysis = enable_ai_analysis
+
+        # Initialize AI analyzer if enabled
+        self.ai_analyzer = None
+        if enable_ai_analysis:
+            ai_config = get_ai_config()
+            available = ai_config.get_available_providers()
+            if available:
+                provider = available[0]
+                provider_config = ai_config.get_provider_config(provider)
+                self.ai_analyzer = AIProviderFactory.create(provider, provider_config)
+                print(f"🤖 AI Analysis activé (provider: {provider})")
+            else:
+                print("⚠️  Aucun provider AI configuré - analysis désactivée")
+                self.enable_ai_analysis = False
 
     def check_activities(self, check_date: date) -> list[dict]:
         """
@@ -236,8 +257,102 @@ class DailySync:
 
         return {"status": status, "diff": status.diff}
 
+    def analyze_activity(self, activity: dict) -> str | None:
+        """
+        Generate AI analysis for an activity.
+
+        Args:
+            activity: Activity dict with id and other metadata
+
+        Returns:
+            Analysis text or None if failed
+        """
+        if not self.enable_ai_analysis or not self.ai_analyzer:
+            return None
+
+        try:
+            # Use Intervals.icu ID (paired_activity_id) instead of Strava ID
+            intervals_id = activity.get("paired_activity_id")
+            if not intervals_id:
+                print(f"  ⚠️  Pas d'ID Intervals.icu pour {activity.get('name', activity['id'])}")
+                return None
+
+            print(f"  🤖 Génération analyse AI pour {activity.get('name', intervals_id)}...")
+
+            # Get full activity data from Intervals.icu
+            full_activity = self.client.get_activity(intervals_id)
+
+            # Create simplified prompt for daily analysis
+            prompt = self._create_simple_prompt(full_activity)
+
+            # Get AI analysis
+            analysis = self.ai_analyzer.analyze_session(prompt)
+
+            if analysis:
+                print(f"     ✅ Analyse générée ({len(analysis)} caractères)")
+                return analysis
+            else:
+                print("     ⚠️  Échec génération analyse")
+                return None
+
+        except Exception as e:
+            print(f"     ❌ Erreur analyse AI: {e}")
+            return None
+
+    def _create_simple_prompt(self, activity: dict) -> str:
+        """
+        Create a simplified analysis prompt from activity data.
+
+        Args:
+            activity: Full activity data from Intervals.icu
+
+        Returns:
+            Prompt text for AI analysis
+        """
+        # Extract key metrics
+        name = activity.get("name", "Activité")
+        workout_type = activity.get("type", "N/A")
+        duration_min = activity.get("moving_time", 0) // 60
+        tss = activity.get("icu_training_load", "N/A")
+        avg_power = activity.get("average_watts", "N/A")
+        np = activity.get("np", "N/A")
+        avg_hr = activity.get("average_hr", "N/A")
+        max_hr = activity.get("max_hr", "N/A")
+        avg_cadence = activity.get("average_cadence", "N/A")
+
+        prompt = f"""Analyse cette séance de cyclisme et fournis un résumé concis.
+
+## Données de la séance
+
+**Nom**: {name}
+**Type**: {workout_type}
+**Durée**: {duration_min} min
+**TSS**: {tss}
+**Puissance moyenne**: {avg_power} W
+**NP**: {np} W
+**FC moyenne**: {avg_hr} bpm
+**FC max**: {max_hr} bpm
+**Cadence moyenne**: {avg_cadence} rpm
+
+## Instructions
+
+Fournis une analyse concise (3-4 paragraphes) qui inclut:
+
+1. **Observation générale**: Type de séance, durée, intensité
+2. **Points clés**: Métriques importantes et observations
+3. **Qualité d'exécution**: Comment la séance s'est déroulée
+4. **Recommandations**: Points d'attention pour les prochaines séances
+
+Format: Texte markdown simple, pas de titres de section, style conversationnel et direct.
+"""
+        return prompt
+
     def generate_report(
-        self, check_date: date, new_activities: list[dict], planning_changes: dict
+        self,
+        check_date: date,
+        new_activities: list[dict],
+        planning_changes: dict,
+        analyses: dict[int, str] | None = None,
     ) -> Path:
         """
         Generate markdown daily report.
@@ -269,6 +384,12 @@ class DailySync:
                     f.write(f"- **Durée**: {activity.get('moving_time', 0) // 60} min\n")
                     f.write(f"- **Activité liée**: {activity.get('paired_activity_id', 'N/A')}\n")
                     f.write("\n")
+
+                    # Add AI analysis if available
+                    if analyses and activity["id"] in analyses:
+                        f.write("#### 🤖 Analyse AI\n\n")
+                        f.write(analyses[activity["id"]])
+                        f.write("\n\n")
             else:
                 f.write("*Aucune nouvelle activité détectée*\n\n")
 
@@ -489,14 +610,23 @@ class DailySync:
         for activity in new_activities:
             self.tracker.mark_analyzed(activity, datetime.now())
 
-        # 2. Check planning changes (if week specified)
+        # 2. Generate AI analyses (if enabled)
+        analyses = {}
+        if self.enable_ai_analysis and new_activities:
+            print(f"\n🤖 Génération analyses AI pour {len(new_activities)} activité(s)...")
+            for activity in new_activities:
+                analysis = self.analyze_activity(activity)
+                if analysis:
+                    analyses[activity["id"]] = analysis
+
+        # 3. Check planning changes (if week specified)
         planning_changes = {"status": None, "diff": None}
         if week_id and start_date:
             end_date = start_date + timedelta(days=6)
             planning_changes = self.check_planning_changes(week_id, start_date, end_date)
 
-        # 3. Generate report
-        report_file = self.generate_report(check_date, new_activities, planning_changes)
+        # 4. Generate report
+        report_file = self.generate_report(check_date, new_activities, planning_changes, analyses)
 
         print(f"\n📝 Rapport généré: {report_file}")
 
@@ -535,6 +665,11 @@ def main():
         action="store_true",
         help="Send report via email (requires BREVO_API_KEY in .env)",
     )
+    parser.add_argument(
+        "--ai-analysis",
+        action="store_true",
+        help="Enable automatic AI analysis of activities",
+    )
 
     args = parser.parse_args()
 
@@ -559,7 +694,11 @@ def main():
     reports_dir = Path("/Users/stephanejouve/training-logs/daily-reports")
 
     # Run sync
-    sync = DailySync(tracking_file=tracking_file, reports_dir=reports_dir)
+    sync = DailySync(
+        tracking_file=tracking_file,
+        reports_dir=reports_dir,
+        enable_ai_analysis=args.ai_analysis,
+    )
     sync.run(
         check_date=check_date,
         week_id=args.week_id,
