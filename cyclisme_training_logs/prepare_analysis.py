@@ -513,9 +513,10 @@ Certaines métriques (puissance, découplage) peuvent être manquantes ou incomp
 - ATL : {w_post['atl']:.0f}
 - TSB : {w_post['tsb']:+.0f}
 
-### Description / Tags
-{act['description'] if act['description'] else '_Aucune description_'}
-{', '.join(act['tags']) if act['tags'] else ''}
+### Feedback Athlète (saisi dans Intervals.icu)
+{act['description'] if act['description'] else '_Aucun feedback athlète saisi_'}
+
+Tags : {', '.join(act['tags']) if act['tags'] else '_Aucun tag_'}
 
 ---
 """
@@ -590,7 +591,8 @@ En tant qu'assistant coach, analyse cette séance avec un regard factuel et tech
 2. Évaluer qualité via découplage (<7.5% = validé)
 3. Contextualiser avec TSB pré-séance et sommeil
 4. Identifier patterns (Sweet-Spot, Endurance, VO2, etc.)
-5. Recommandations concrètes basées sur les données
+5. **Intégrer le feedback athlète** (section "Feedback Athlète") s'il est présent - ressenti, difficultés, observations subjectives
+6. Recommandations concrètes basées sur les données ET le ressenti
 
 **Gestion des données manquantes (activités Strava) :**
 - Si puissance = 0W : Indiquer "_Données non disponibles (source Strava)_"
@@ -889,7 +891,7 @@ def analyze_batch(api, unanalyzed_activities, generator, state, project_root):
 
             print()
             if idx < total:
-                print(f"➡️  Passage à la séance {idx+1}/{total}...")
+                print(f"➡️  Passage à la séance {idx + 1}/{total}...")
                 print()
 
         except Exception as e:
