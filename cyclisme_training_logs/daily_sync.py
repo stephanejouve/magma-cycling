@@ -148,10 +148,14 @@ class ActivityTracker:
         if date_key not in self.data:
             self.data[date_key] = {"activities": []}
 
+        # Use paired_event_id if available (planned activity), otherwise activity ID (unplanned)
+        tracking_id = activity.get("paired_event_id") or activity["id"]
+
         self.data[date_key]["activities"].append(
             {
-                "id": activity["id"],
-                "paired_activity_id": activity.get("paired_activity_id"),
+                "id": tracking_id,
+                "activity_id": activity["id"],  # Store actual activity ID for reference
+                "paired_event_id": activity.get("paired_event_id"),
                 "name": activity.get("name"),
                 "type": activity.get("type"),
                 "icu_training_load": activity.get("icu_training_load"),
@@ -221,32 +225,56 @@ class DailySync:
         """
         Check for new completed activities on given date.
 
+        Retrieves both:
+        - Planned activities (paired with WORKOUT events)
+        - Unplanned activities (no event association)
+
         Args:
             check_date: Date to check
 
         Returns:
-            List of new completed activities
+            List of new completed activities (from activities API, not events)
         """
         print(f"\n🔍 Vérification activités du {check_date.strftime('%d/%m/%Y')}...")
 
-        # Get all events for the date
-        events = self.client.get_events(
+        # Get all activities for the date (includes both planned and unplanned)
+        all_activities = self.client.get_activities(
             oldest=check_date.isoformat(), newest=check_date.isoformat()
         )
 
-        # Filter completed activities (have paired_activity_id)
-        completed = [
-            e for e in events if e.get("paired_activity_id") and e.get("category") == "WORKOUT"
+        # Filter out activities that are ignored or incomplete
+        completed_activities = [
+            act
+            for act in all_activities
+            if not act.get("icu_ignore_time", False)  # Not ignored
+            and act.get("type") in ["Ride", "VirtualRide"]  # Cycling activities only
         ]
 
         # Filter new activities (not yet analyzed)
-        new_activities = [
-            activity
-            for activity in completed
-            if not self.tracker.is_analyzed(activity["id"], check_date)
-        ]
+        # Use activity ID (not event ID) for tracking
+        new_activities = []
+        planned_count = 0
+        unplanned_count = 0
 
-        print(f"  ✅ {len(completed)} activité(s) complétée(s)")
+        for activity in completed_activities:
+            # Convert activity ID to comparable format (tracker uses event IDs from old format)
+            # For new format, we use the event ID if available, otherwise the activity ID
+            tracking_id = activity.get("paired_event_id") or activity["id"]
+
+            # Check if already analyzed
+            if self.tracker.is_analyzed(tracking_id, check_date):
+                continue
+
+            new_activities.append(activity)
+
+            # Count planned vs unplanned
+            if activity.get("paired_event_id"):
+                planned_count += 1
+            else:
+                unplanned_count += 1
+
+        print(f"  ✅ {len(completed_activities)} activité(s) complétée(s)")
+        print(f"  📋 {planned_count} planifiée(s), {unplanned_count} non planifiée(s)")
         print(f"  🆕 {len(new_activities)} nouvelle(s) activité(s) à analyser")
 
         return new_activities
@@ -383,18 +411,17 @@ class DailySync:
             return None
 
         try:
-            # Use Intervals.icu ID (paired_activity_id) instead of Strava ID
-            intervals_id = activity.get("paired_activity_id")
-            if not intervals_id:
-                print(f"  ⚠️  Pas d'ID Intervals.icu pour {activity.get('name', activity['id'])}")
+            # Use activity ID directly (activity dict, not event dict)
+            activity_id = activity.get("id")
+            if not activity_id:
+                print(f"  ⚠️  Pas d'ID activité pour {activity.get('name', 'Unknown')}")
                 return None
 
             activity_name = activity.get("name", "")
             print(f"  🔍 Vérification analyse existante pour {activity_name}...")
 
-            # Get full activity to extract date
-            full_activity = self.client.get_activity(intervals_id)
-            activity_date = date.fromisoformat(full_activity["start_date_local"].split("T")[0])
+            # Extract date from activity
+            activity_date = date.fromisoformat(activity["start_date_local"].split("T")[0])
             activity_date_str = activity_date.strftime("%d/%m/%Y")
 
             # Check if analysis already exists
@@ -407,10 +434,10 @@ class DailySync:
             print(f"  🤖 Génération nouvelle analyse AI pour {activity_name}...")
 
             # Add is_strava flag (required by PromptGenerator)
-            full_activity["is_strava"] = full_activity.get("source") == "STRAVA"
+            activity["is_strava"] = activity.get("source") == "STRAVA"
 
             # Get wellness data (pre and post)
-            activity_date_str = full_activity["start_date_local"].split("T")[0]
+            activity_date_str = activity["start_date_local"].split("T")[0]
 
             # Get pre-workout wellness
             try:
@@ -436,7 +463,7 @@ class DailySync:
             recent_workouts = self.prompt_generator.load_recent_workouts(limit=5)
 
             # Format activity data for prompt generation
-            activity_data = self.prompt_generator.format_activity_data(full_activity)
+            activity_data = self.prompt_generator.format_activity_data(activity)
 
             # Generate complete prompt
             prompt = self.prompt_generator.generate_prompt(
