@@ -86,6 +86,48 @@ def calculate_week_start_date(week_id: str) -> date:
     return target_monday
 
 
+def calculate_weekly_transition(reference_date: date | None = None) -> tuple[str, str, date, date]:
+    """
+    Calculate week IDs for weekly transition (completed → next).
+
+    Logic:
+    - If Sunday (day 6) or Monday (day 0): transition from current week to next
+    - Otherwise: transition from current week to next (for manual runs)
+
+    Args:
+        reference_date: Reference date for calculation (default: today)
+
+    Returns:
+        Tuple of (week_completed, week_next, completed_start_date, next_start_date)
+
+    Examples:
+        >>> # Running on Sunday 2026-01-25 or Monday 2026-01-26
+        >>> calculate_weekly_transition(date(2026, 1, 25))
+        ('S077', 'S078', date(2026, 1, 19), date(2026, 1, 26))
+    """
+    if reference_date is None:
+        reference_date = date.today()
+
+    # Get week config
+    week_config = get_week_config()
+    s001_date = week_config.get_s001_date_obj("S001")
+
+    # Calculate weeks offset from S001
+    delta = reference_date - s001_date
+    weeks_offset = delta.days // 7
+
+    # Current week is the week containing reference_date
+    current_week_num = weeks_offset + 1
+    week_completed = f"S{current_week_num:03d}"
+    week_next = f"S{current_week_num + 1:03d}"
+
+    # Calculate start dates
+    completed_start_date = s001_date + timedelta(weeks=weeks_offset)
+    next_start_date = s001_date + timedelta(weeks=weeks_offset + 1)
+
+    return week_completed, week_next, completed_start_date, next_start_date
+
+
 class EndOfWeekWorkflow:
     """Orchestrateur workflow fin de semaine."""
 
@@ -513,7 +555,37 @@ class EndOfWeekWorkflow:
             )
             print()
 
-            if not self.auto:
+            if self.auto:
+                # Auto mode: call upload programmatically
+                print("  🤖 Mode automatique - Upload programmatique")
+                print(f"  📁 Fichier : {self.workouts_file}")
+                print()
+
+                from cyclisme_training_logs.upload_workouts import WorkoutUploader
+
+                uploader = WorkoutUploader(self.week_next, self.next_start_date)
+                workouts = uploader.parse_workouts_file(self.workouts_file)
+
+                if not workouts:
+                    print("  ❌ Erreur parsing workouts")
+                    return False
+
+                print(f"  📊 {len(workouts)} workouts à uploader")
+                print()
+
+                # Upload all workouts
+                result = uploader.upload_all(workouts, dry_run=False)
+
+                print()
+                print(f"  ✅ Upload réussi : {result['success']}/{result['total']}")
+                if result["errors"]:
+                    print(f"  ⚠️  Erreurs : {len(result['errors'])}")
+                    for error in result["errors"]:
+                        print(f"     • {error}")
+
+                return result["success"] == result["total"]
+            else:
+                # Manual mode: prompt user to upload manually
                 print("  ⚠️  Upload RÉEL vers Intervals.icu")
                 print(f"  📁 Fichier : {self.workouts_file}")
                 print()
@@ -522,22 +594,17 @@ class EndOfWeekWorkflow:
                     print("  ⚠️  Upload annulé")
                     return False
 
-            # Call upload-workouts
-            print()
-            print("  💡 Exécutez manuellement:")
-            print(
-                f"     poetry run upload-workouts --week-id {self.week_next} "
-                f"--start-date {self.next_start_date.strftime('%Y-%m-%d')} "
-                f"--file {self.workouts_file}"
-            )
-            print()
+                print()
+                print("  💡 Exécutez manuellement:")
+                print(
+                    f"     poetry run upload-workouts --week-id {self.week_next} "
+                    f"--start-date {self.next_start_date.strftime('%Y-%m-%d')} "
+                    f"--file {self.workouts_file}"
+                )
+                print()
 
-            if not self.auto:
                 response = input("  Upload effectué avec succès ? (o/n) : ")
                 return response.lower() == "o"
-            else:
-                # In auto mode, assume success (TODO: call programmatically)
-                return True
 
         except Exception as e:
             print(f"  ❌ Erreur upload : {e}")
@@ -615,15 +682,21 @@ Workflow complet:
     parser.add_argument(
         "--week-completed",
         type=str,
-        required=True,
-        help="Semaine terminée (format SXXX, ex: S075)",
+        required=False,
+        help="Semaine terminée (format SXXX, ex: S075). Optionnel si --auto-calculate",
     )
 
     parser.add_argument(
         "--week-next",
         type=str,
-        required=True,
-        help="Semaine à planifier (format SXXX, ex: S076)",
+        required=False,
+        help="Semaine à planifier (format SXXX, ex: S076). Optionnel si --auto-calculate",
+    )
+
+    parser.add_argument(
+        "--auto-calculate",
+        action="store_true",
+        help="Auto-calculer les week-ids à partir de la date du jour (pas de hard-coding)",
     )
 
     parser.add_argument(
@@ -665,32 +738,52 @@ def main():
     """Point d'entrée du script."""
     args = parse_args()
 
-    # Validate week formats
-    if not args.week_completed.startswith("S") or len(args.week_completed) != 4:
-        print(f"❌ Format semaine invalide : {args.week_completed}")
-        print("   Utiliser le format SXXX (ex: S075)")
-        return 1
+    # Auto-calculate week-ids if requested
+    if args.auto_calculate:
+        if args.week_completed or args.week_next:
+            print("⚠️  --auto-calculate ignore les --week-completed et --week-next fournis")
 
-    if not args.week_next.startswith("S") or len(args.week_next) != 4:
-        print(f"❌ Format semaine invalide : {args.week_next}")
-        print("   Utiliser le format SXXX (ex: S076)")
-        return 1
+        week_completed, week_next, completed_start, next_start = calculate_weekly_transition()
+        print("ℹ️  Transition auto-calculée:")
+        print(f"   • Semaine complétée: {week_completed} (début: {completed_start})")
+        print(f"   • Semaine suivante:  {week_next} (début: {next_start})")
+        print()
+    else:
+        # Manual mode - validate required args
+        if not args.week_completed or not args.week_next:
+            print("❌ Erreur: --week-completed et --week-next sont requis")
+            print("   Ou utilisez --auto-calculate pour calcul automatique")
+            return 1
 
-    # Check week sequence
-    completed_num = int(args.week_completed[1:])
-    next_num = int(args.week_next[1:])
+        week_completed = args.week_completed
+        week_next = args.week_next
 
-    if next_num != completed_num + 1:
-        print(f"⚠️  Attention : {args.week_next} ne suit pas {args.week_completed}")
-        if not args.auto:
-            response = input("Continuer quand même ? (o/n) : ")
-            if response.lower() != "o":
-                return 1
+        # Validate week formats
+        if not week_completed.startswith("S") or len(week_completed) != 4:
+            print(f"❌ Format semaine invalide : {week_completed}")
+            print("   Utiliser le format SXXX (ex: S075)")
+            return 1
+
+        if not week_next.startswith("S") or len(week_next) != 4:
+            print(f"❌ Format semaine invalide : {week_next}")
+            print("   Utiliser le format SXXX (ex: S076)")
+            return 1
+
+        # Check week sequence
+        completed_num = int(week_completed[1:])
+        next_num = int(week_next[1:])
+
+        if next_num != completed_num + 1:
+            print(f"⚠️  Attention : {week_next} ne suit pas {week_completed}")
+            if not args.auto:
+                response = input("Continuer quand même ? (o/n) : ")
+                if response.lower() != "o":
+                    return 1
 
     # Execute workflow
     workflow = EndOfWeekWorkflow(
-        week_completed=args.week_completed,
-        week_next=args.week_next,
+        week_completed=week_completed,
+        week_next=week_next,
         provider=args.provider,
         dry_run=args.dry_run,
         auto=args.auto,
