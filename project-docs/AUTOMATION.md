@@ -68,11 +68,13 @@ poetry run daily-sync --send-email --ai-analysis --auto-servo
 - **LaunchAgent**: `~/Library/LaunchAgents/com.traininglogs.endofweek.plist`
 
 ### What it does
-Complete 6-step weekly transition workflow:
+Complete 6-step weekly transition workflow (fully autonomous):
 
 1. **Analyze Completed Week**
-   - Runs `weekly-analysis` for the week that just ended
+   - Checks if `weekly-analysis` for completed week exists
+   - If not found, automatically runs `weekly-analysis` for the week that just ended
    - Generates bilan final, transition report, metrics evolution
+   - **No manual intervention required** - analysis runs automatically if needed
 
 2. **Generate Planning Prompt**
    - Runs `weekly-planner` for the upcoming week
@@ -93,6 +95,15 @@ Complete 6-step weekly transition workflow:
 6. **Archive (Optional)**
    - Archives reports and planning files
    - Commits changes to git
+
+### Prerequisites
+**None!** The workflow is fully autonomous:
+- ✅ Week-ids calculated automatically (no manual specification)
+- ✅ Weekly-analysis runs automatically if missing (no manual execution)
+- ✅ Dates calculated automatically (no hard-coded dates)
+- ✅ Full end-to-end execution (no manual interventions)
+
+The only requirement is that you have training activities in Intervals.icu for the completed week.
 
 ### Week-ID Calculation
 The workflow automatically calculates:
