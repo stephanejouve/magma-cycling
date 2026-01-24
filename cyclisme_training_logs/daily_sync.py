@@ -46,12 +46,49 @@ from cyclisme_training_logs.config import (
     create_intervals_client,
     get_ai_config,
     get_email_config,
+    get_week_config,
 )
 from cyclisme_training_logs.config.athlete_profile import AthleteProfile
 from cyclisme_training_logs.insert_analysis import WorkoutHistoryManager
 from cyclisme_training_logs.planning.calendar import TrainingCalendar, WorkoutType
 from cyclisme_training_logs.planning.intervals_sync import IntervalsSync
 from cyclisme_training_logs.prepare_analysis import PromptGenerator
+
+
+def calculate_current_week_info(target_date: date | None = None) -> tuple[str, date]:
+    """Calculate current week-id and start date based on WeekReferenceConfig.
+
+    Args:
+        target_date: Date to calculate week for (default: today)
+
+    Returns:
+        Tuple of (week_id, start_date)
+        - week_id: Week identifier (e.g., "S077")
+        - start_date: Monday start date for the week
+
+    Examples:
+        >>> week_id, start_date = calculate_current_week_info()
+        >>> print(week_id, start_date)
+        S077 2026-01-19
+    """
+    if target_date is None:
+        target_date = date.today()
+
+    # Get S001 reference date from config
+    week_config = get_week_config()
+    s001_date = week_config.get_s001_date_obj("S001")
+
+    # Calculate weeks difference from S001
+    delta = target_date - s001_date
+    weeks_offset = delta.days // 7
+
+    # Calculate week-id
+    week_id = f"S{weeks_offset + 1:03d}"
+
+    # Calculate Monday start date for this week
+    start_date = s001_date + timedelta(weeks=weeks_offset)
+
+    return week_id, start_date
 
 
 class ActivityTracker:
@@ -1119,23 +1156,32 @@ def main():
     else:
         check_date = date.today()
 
-    # Parse week start date if provided
+    # Determine week-id and start-date
+    week_id = args.week_id
     start_date = None
+
+    # Parse start-date if provided
     if args.start_date:
         start_date = datetime.strptime(args.start_date, "%Y-%m-%d").date()
 
-    # Validate week-id requires start-date
-    if args.week_id and not start_date:
-        print("❌ Erreur: --week-id nécessite --start-date")
-        sys.exit(1)
+    # Auto-calculate if needed (auto-servo enabled or week-id provided without start-date)
+    needs_week_info = args.auto_servo or (week_id and not start_date)
+
+    if needs_week_info and not (week_id and start_date):
+        calculated_week_id, calculated_start_date = calculate_current_week_info(check_date)
+
+        if not week_id:
+            week_id = calculated_week_id
+            start_date = calculated_start_date
+            print(f"ℹ️  Week-id auto-calculé: {week_id} (début: {start_date})")
+        elif not start_date:
+            start_date = calculated_start_date
+            print(f"ℹ️  Start-date auto-calculé pour {week_id}: {start_date}")
 
     # Validate auto-servo requirements
     if args.auto_servo:
         if not args.ai_analysis:
             print("❌ Erreur: --auto-servo nécessite --ai-analysis")
-            sys.exit(1)
-        if not args.week_id:
-            print("❌ Erreur: --auto-servo nécessite --week-id")
             sys.exit(1)
 
     # Setup paths
