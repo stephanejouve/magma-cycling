@@ -211,6 +211,10 @@ class PromptGenerator:
             "avg_hr": activity.get("average_heartrate", 0),
             "max_hr": activity.get("max_heartrate", 0),
             "decoupling": activity.get("decoupling", None),
+            "avg_temp": activity.get("average_temp"),  # Temperature in °C
+            "min_temp": activity.get("min_temp"),
+            "max_temp": activity.get("max_temp"),
+            "has_weather": activity.get("has_weather", False),
             "description": activity.get("description", ""),
             "tags": activity.get("tags", []),
             "feel": activity.get("feel"),  # 1-4 scale for "How did it feel?"
@@ -261,6 +265,55 @@ class PromptGenerator:
 
         # No notes at all
         return "_Aucune note saisie_"
+
+    def _format_temperature_data(self, avg_temp, min_temp, max_temp, has_weather):
+        """Format temperature data for activity analysis.
+
+        Args:
+            avg_temp: Average temperature in °C
+            min_temp: Minimum temperature in °C
+            max_temp: Maximum temperature in °C
+            has_weather: Whether weather data is available
+
+        Returns:
+            Formatted string with temperature information
+        """
+        if not has_weather or avg_temp is None:
+            return "_Données météo non disponibles_"
+
+        # Format average temperature
+        avg_str = f"{avg_temp:.1f}°C"
+
+        # Add min/max if available
+        if min_temp is not None and max_temp is not None:
+            range_str = f" (min {min_temp}°C, max {max_temp}°C)"
+        else:
+            range_str = ""
+
+        # Add contextual emoji based on temperature
+        if avg_temp < 5:
+            emoji = "🥶"
+            context = "très froid"
+        elif avg_temp < 10:
+            emoji = "❄️"
+            context = "froid"
+        elif avg_temp < 15:
+            emoji = "🌡️"
+            context = "frais"
+        elif avg_temp < 20:
+            emoji = "☀️"
+            context = "tempéré"
+        elif avg_temp < 25:
+            emoji = "🌤️"
+            context = "agréable"
+        elif avg_temp < 30:
+            emoji = "☀️"
+            context = "chaud"
+        else:
+            emoji = "🔥"
+            context = "très chaud"
+
+        return f"{emoji} {avg_str}{range_str} ({context})"
 
     def format_wellness_data(self, wellness):
         """Format les données wellness."""
@@ -478,6 +531,14 @@ class PromptGenerator:
 
         decoupling_str = f"{act['decoupling']:.1f}%" if act["decoupling"] else "N/A"
 
+        # Format temperature data
+        temperature_str = self._format_temperature_data(
+            act.get("avg_temp"),
+            act.get("min_temp"),
+            act.get("max_temp"),
+            act.get("has_weather", False),
+        )
+
         # Extraction robuste des métriques avec fallback
         avg_power = self.get_power_value(act, "avg")
         normalized_power = self.get_power_value(act, "np")
@@ -552,6 +613,7 @@ Certaines métriques (puissance, découplage) peuvent être manquantes ou incomp
 - FC moyenne : {self.safe_format_metric(avg_hr, '.0f', 'bpm')}
 - FC max : {self.safe_format_metric(max_hr, '.0f', 'bpm')}
 - Découplage cardiovasculaire : {decoupling_str}
+- Température : {temperature_str}
 
 ### Métriques Post-séance
 - CTL : {w_post['ctl']:.0f}
