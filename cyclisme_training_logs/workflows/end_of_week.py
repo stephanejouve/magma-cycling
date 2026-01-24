@@ -274,13 +274,42 @@ class EndOfWeekWorkflow:
                 self._load_existing_reports()
                 return True
             else:
+                # Analysis doesn't exist - run it automatically
                 print(f"  ⚠️  Analyse {self.week_completed} introuvable")
-                print("  💡 Vous devez d'abord exécuter:")
-                print(
-                    f"     poetry run weekly-analysis --week-id {self.week_completed} "
-                    f"--start-date {self.completed_start_date.strftime('%Y-%m-%d')}"
-                )
-                return False
+                print("  🤖 Lancement automatique de weekly-analysis...")
+                print()
+
+                try:
+                    from cyclisme_training_logs.weekly_analysis import WeeklyAnalysis
+
+                    # Run weekly-analysis programmatically
+                    analysis = WeeklyAnalysis(
+                        self.week_completed, self.completed_start_date.strftime("%Y-%m-%d")
+                    )
+                    analysis.run()
+
+                    # Verify that analysis was created
+                    if completed_week_file.exists():
+                        print()
+                        print(f"  ✅ Analyse {self.week_completed} générée avec succès")
+                        print(f"  📁 {completed_week_file}")
+
+                        # Load newly created reports
+                        self._load_existing_reports()
+                        return True
+                    else:
+                        print()
+                        print("  ❌ Erreur : fichier bilan_final non créé")
+                        return False
+
+                except Exception as e:
+                    print()
+                    print(f"  ❌ Erreur lors de weekly-analysis : {e}")
+                    if "--verbose" in sys.argv:
+                        import traceback
+
+                        traceback.print_exc()
+                    return False
 
         except Exception as e:
             print(f"  ❌ Erreur analyse : {e}")
