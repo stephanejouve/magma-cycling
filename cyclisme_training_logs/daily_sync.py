@@ -129,7 +129,13 @@ class ActivityTracker:
 class DailySync:
     """Daily synchronization checker."""
 
-    def __init__(self, tracking_file: Path, reports_dir: Path, enable_ai_analysis: bool = False):
+    def __init__(
+        self,
+        tracking_file: Path,
+        reports_dir: Path,
+        enable_ai_analysis: bool = False,
+        enable_auto_servo: bool = False,
+    ):
         """
         Initialize daily sync.
 
@@ -137,12 +143,14 @@ class DailySync:
             tracking_file: Path to activity tracking JSON
             reports_dir: Directory for daily reports
             enable_ai_analysis: Enable automatic AI analysis of activities
+            enable_auto_servo: Enable automatic servo mode for planning adjustments
         """
         self.client = create_intervals_client()
         self.tracker = ActivityTracker(tracking_file)
         self.reports_dir = reports_dir
         self.reports_dir.mkdir(parents=True, exist_ok=True)
         self.enable_ai_analysis = enable_ai_analysis
+        self.enable_auto_servo = enable_auto_servo
 
         # Initialize AI analyzer if enabled
         self.ai_analyzer = None
@@ -163,6 +171,14 @@ class DailySync:
             else:
                 print("⚠️  Aucun provider AI configuré - analysis désactivée")
                 self.enable_ai_analysis = False
+
+        # Servo detection criteria (same as workflow_coach)
+        self.servo_criteria = {
+            "decoupling_threshold": 7.5,  # Découplage >7.5%
+            "sleep_threshold_hours": 7.0,  # Sommeil <7h
+            "feel_threshold": 2,  # Feel ≤2/4 (Difficile/Moyen)
+            "tsb_threshold": -10,  # TSB <-10
+        }
 
     def check_activities(self, check_date: date) -> list[dict]:
         """
@@ -423,12 +439,269 @@ class DailySync:
             print(f"     ❌ Erreur analyse AI: {e}")
             return None
 
+    def extract_metrics_from_activity(
+        self, activity: dict, analysis: str | None, wellness_pre: dict | None
+    ) -> dict:
+        """
+        Extract key metrics from activity data and analysis.
+
+        Args:
+            activity: Activity dict from Intervals.icu
+            analysis: AI analysis text (if available)
+            wellness_pre: Pre-workout wellness data
+
+        Returns:
+            Dict with extracted metrics for servo evaluation
+        """
+        metrics = {
+            "tsb": None,
+            "sleep_hours": None,
+            "decoupling": None,
+            "feel": None,
+            "tss_planned": None,
+            "tss_actual": None,
+            "duration_planned_min": None,
+            "duration_actual_min": None,
+        }
+
+        # Extract from wellness
+        if wellness_pre:
+            try:
+                from cyclisme_training_logs.utils.metrics import extract_wellness_metrics
+
+                wellness_metrics = extract_wellness_metrics(wellness_pre)
+                metrics["tsb"] = wellness_metrics.get("tsb")
+
+                # Sleep in hours
+                sleep_secs = wellness_pre.get("sleepSecs", 0)
+                if sleep_secs:
+                    metrics["sleep_hours"] = sleep_secs / 3600.0
+
+                # Feel (1-4 scale)
+                metrics["feel"] = activity.get("feel")
+            except Exception as e:
+                print(f"     ⚠️  Erreur extraction wellness: {e}")
+
+        # Extract from activity
+        metrics["tss_actual"] = activity.get("icu_training_load")
+        metrics["duration_actual_min"] = activity.get("moving_time", 0) // 60
+        metrics["decoupling"] = activity.get("decoupling")
+
+        # Try to get planned values from session name (if it follows naming convention)
+        # This would require looking up the planning JSON, but for now we'll skip
+        # The servo will work without TSS comparison if not available
+
+        return metrics
+
+    def should_trigger_servo(self, metrics: dict) -> tuple[bool, list[str]]:
+        """
+        Evaluate if servo mode should be triggered based on metrics.
+
+        Uses same criteria as workflow_coach servo-mode:
+        - Découplage >7.5%
+        - Sommeil <7h
+        - Feel ≤2/4 (Difficile/Moyen)
+        - TSB <-10
+
+        Args:
+            metrics: Dict with extracted metrics
+
+        Returns:
+            Tuple of (should_trigger, reasons)
+        """
+        reasons = []
+
+        # Criterion 1: Decoupling
+        if metrics.get("decoupling") is not None:
+            if metrics["decoupling"] > self.servo_criteria["decoupling_threshold"]:
+                reasons.append(
+                    f"Découplage élevé ({metrics['decoupling']:.1f}% > {self.servo_criteria['decoupling_threshold']}%)"
+                )
+
+        # Criterion 2: Sleep
+        if metrics.get("sleep_hours") is not None:
+            if metrics["sleep_hours"] < self.servo_criteria["sleep_threshold_hours"]:
+                reasons.append(
+                    f"Sommeil insuffisant ({metrics['sleep_hours']:.1f}h < {self.servo_criteria['sleep_threshold_hours']}h)"
+                )
+
+        # Criterion 3: Feel (subjective)
+        if metrics.get("feel") is not None:
+            if metrics["feel"] <= self.servo_criteria["feel_threshold"]:
+                feel_labels = {1: "Difficile", 2: "Moyen", 3: "Bon", 4: "Excellent"}
+                feel_label = feel_labels.get(metrics["feel"], "Unknown")
+                reasons.append(f"Ressenti négatif ({feel_label} - {metrics['feel']}/4)")
+
+        # Criterion 4: TSB
+        if metrics.get("tsb") is not None:
+            if metrics["tsb"] < self.servo_criteria["tsb_threshold"]:
+                reasons.append(
+                    f"Forme dégradée (TSB {metrics['tsb']:+.0f} < {self.servo_criteria['tsb_threshold']})"
+                )
+
+        # Trigger if at least one strong signal
+        should_trigger = len(reasons) > 0
+
+        return should_trigger, reasons
+
+    def run_servo_adjustment(
+        self, week_id: str, activity: dict, metrics: dict, analysis: str | None
+    ) -> dict | None:
+        """
+        Run servo mode to get AI recommendations for planning adjustments.
+
+        Args:
+            week_id: Week identifier (e.g., "S077")
+            activity: Activity dict
+            metrics: Extracted metrics
+            analysis: AI analysis of the session
+
+        Returns:
+            Dict with servo recommendations or None if failed
+        """
+        try:
+            print("\n" + "=" * 80)
+            print("🔄 SERVO MODE AUTOMATIQUE - Ajustement Planning")
+            print("=" * 80)
+            print()
+
+            # Load remaining sessions from planning
+            from cyclisme_training_logs.workflow_coach import WorkflowCoach
+
+            coach = WorkflowCoach(servo_mode=True)
+            remaining_sessions = coach.load_remaining_sessions(week_id)
+
+            if not remaining_sessions:
+                print("  ⚠️  Aucune séance future dans le planning")
+                return None
+
+            print(f"📋 {len(remaining_sessions)} séance(s) restante(s) dans le planning")
+            print()
+
+            # Format metrics for prompt
+            tsb_str = f"{metrics['tsb']:+.0f}" if metrics.get("tsb") is not None else "N/A"
+            sleep_str = (
+                f"{metrics['sleep_hours']:.1f}h"
+                if metrics.get("sleep_hours") is not None
+                else "Non disponible"
+            )
+            decoupling_str = (
+                f"{metrics['decoupling']:.1f}%"
+                if metrics.get("decoupling") is not None
+                else "Non disponible"
+            )
+            feel_str = f"{metrics['feel']}/4" if metrics.get("feel") is not None else "Non fourni"
+
+            # Generate servo prompt (same as workflow_coach)
+            planning_context = coach.format_remaining_sessions_compact(remaining_sessions)
+
+            servo_prompt = f"""# ASSERVISSEMENT PLANNING - Demande Coach AI.
+
+Contexte : Tu viens d'analyser la séance du jour.
+
+## Métriques de la séance analysée
+- TSB pré-séance : {tsb_str}
+- Sommeil : {sleep_str}
+- Ressenti (Feel) : {feel_str}
+- Découplage cardiovasculaire : {decoupling_str}
+
+{planning_context}
+
+## Catalogue Workouts Remplacement
+
+Si modification planning nécessaire, utilise ces templates prédéfinis :
+
+**RÉCUPÉRATION** (remplacement END/INT léger) :
+- `recovery_active_30tss` : 45min Z1-Z2 (30 TSS)
+- `recovery_active_25tss` : 40min Z1-Z2 (25 TSS)
+- `recovery_short_20tss` : 30min Z1 (20 TSS)
+
+**ENDURANCE ALLÉGÉE** (remplacement END normal) :
+- `endurance_light_35tss` : 50min Z2 (35 TSS)
+- `endurance_short_40tss` : 55min Z2 (40 TSS)
+
+**INTENSITÉ RÉDUITE** (remplacement Sweet-Spot/VO2) :
+- `sweetspot_short_50tss` : 2x10min 88% (50 TSS)
+
+## Instructions
+
+Basé sur l'analyse de la séance du jour et les métriques réelles ci-dessus, **recommandes-tu des ajustements au planning restant ?**
+
+Critères de décision:
+- RPE > 8/10 en zone endurance → Signal alarme
+- Découplage > 7.5% → Fatigue cardiaque
+- Sommeil < 7h → Vulnérabilité accrue
+- TSB < -10 → Forme dégradée
+
+**IMPORTANT:**
+- Utilise UNIQUEMENT les valeurs de métriques fournies ci-dessus
+- Si une métrique est "Non disponible", ne PAS inventer de valeur
+- Justifier les recommandations avec les métriques RÉELLES
+
+**Format JSON si modification recommandée** :
+```json
+{{"modifications": [{{
+  "action": "lighten",
+  "target_date": "YYYY-MM-DD",
+  "current_workout": "CODE",
+  "template_id": "recovery_active_30tss",
+  "reason": "Découplage 11.2%, prioriser récupération"
+}}]}}
+```
+
+**Si aucune modification nécessaire** : Ne rien ajouter (pas de JSON).
+
+Réponds maintenant."""
+
+            # Call AI analyzer
+            print("🤖 Demande recommandations au coach AI...")
+            ai_response = self.ai_analyzer.analyze_session(servo_prompt)
+
+            if not ai_response:
+                print("  ⚠️  Pas de réponse du coach AI")
+                return None
+
+            print(f"  ✅ Réponse reçue ({len(ai_response)} caractères)")
+            print()
+
+            # Parse modifications
+            modifications = coach.parse_ai_modifications(ai_response)
+
+            result = {
+                "ai_response": ai_response,
+                "modifications": modifications,
+                "remaining_sessions": remaining_sessions,
+            }
+
+            if modifications:
+                print(f"📋 {len(modifications)} modification(s) recommandée(s)")
+                for mod in modifications:
+                    action = mod.get("action", "unknown")
+                    target_date = mod.get("target_date", "N/A")
+                    reason = mod.get("reason", "N/A")
+                    print(f"  • {target_date}: {action} - {reason}")
+            else:
+                print("✅ Aucune modification recommandée - planning maintenu")
+
+            print()
+            print("=" * 80)
+
+            return result
+
+        except Exception as e:
+            print(f"  ❌ Erreur servo mode: {e}")
+            import traceback
+
+            traceback.print_exc()
+            return None
+
     def generate_report(
         self,
         check_date: date,
         new_activities: list[dict],
         planning_changes: dict,
         analyses: dict[int, str] | None = None,
+        servo_result: dict | None = None,
     ) -> Path:
         """
         Generate markdown daily report.
@@ -437,6 +710,8 @@ class DailySync:
             check_date: Date of check
             new_activities: List of new completed activities
             planning_changes: Dict with planning changes
+            analyses: Dict of AI analyses by activity ID
+            servo_result: Servo mode recommendations (if triggered)
 
         Returns:
             Path to generated report file
@@ -504,6 +779,45 @@ class DailySync:
                             f.write("\n```\n\n")
             else:
                 f.write("*Aucune modification détectée dans le planning*\n\n")
+
+            # Section 3: Servo recommendations (if triggered)
+            if servo_result:
+                f.write("---\n\n")
+                f.write("## 🔄 Ajustements Planning (Auto-Servo)\n\n")
+
+                modifications = servo_result.get("modifications", [])
+                ai_response = servo_result.get("ai_response", "")
+
+                if modifications:
+                    f.write(
+                        f"**⚠️  {len(modifications)} modification(s) recommandée(s) par le coach AI**\n\n"
+                    )
+
+                    for mod in modifications:
+                        action = mod.get("action", "unknown")
+                        target_date = mod.get("target_date", "N/A")
+                        current_workout = mod.get("current_workout", "N/A")
+                        template_id = mod.get("template_id", "N/A")
+                        reason = mod.get("reason", "N/A")
+
+                        f.write(f"### 📅 {target_date}\n\n")
+                        f.write(f"- **Action**: {action}\n")
+                        f.write(f"- **Séance actuelle**: {current_workout}\n")
+                        f.write(f"- **Remplacement**: {template_id}\n")
+                        f.write(f"- **Raison**: {reason}\n\n")
+
+                    f.write("#### 🤖 Analyse complète du coach AI\n\n")
+                    f.write("```\n")
+                    f.write(ai_response[:500] + "..." if len(ai_response) > 500 else ai_response)
+                    f.write("\n```\n\n")
+
+                    f.write(
+                        "**⚠️  Action requise**: Utiliser `poetry run update-session` pour appliquer les modifications\n\n"
+                    )
+                else:
+                    f.write(
+                        "✅ **Aucune modification recommandée** - Planning maintenu tel quel\n\n"
+                    )
 
             f.write("---\n\n")
             f.write(
@@ -695,6 +1009,49 @@ class DailySync:
                 if analysis:
                     analyses[activity["id"]] = analysis
 
+        # 2b. Auto-servo mode evaluation (if enabled and AI analysis active)
+        servo_result = None
+        if self.enable_auto_servo and self.enable_ai_analysis and new_activities and week_id:
+            print("\n🔍 Évaluation conditions auto-servo...")
+
+            # Evaluate only the most recent activity (last one analyzed)
+            latest_activity = new_activities[-1]
+            latest_analysis = analyses.get(latest_activity["id"])
+
+            # Get wellness data for metrics extraction
+            try:
+                activity_date_str = latest_activity["start_date_local"].split("T")[0]
+                wellness_data = self.client.get_wellness(
+                    oldest=activity_date_str, newest=activity_date_str
+                )
+                wellness_pre = wellness_data[0] if wellness_data else None
+            except Exception:
+                wellness_pre = None
+
+            # Extract metrics
+            metrics = self.extract_metrics_from_activity(
+                latest_activity, latest_analysis, wellness_pre
+            )
+
+            # Check if servo should trigger
+            should_trigger, reasons = self.should_trigger_servo(metrics)
+
+            if should_trigger:
+                print("\n⚠️  Conditions détectées pour ajustement planning:")
+                for reason in reasons:
+                    print(f"   • {reason}")
+                print()
+
+                # Run servo adjustment
+                servo_result = self.run_servo_adjustment(
+                    week_id=week_id,
+                    activity=latest_activity,
+                    metrics=metrics,
+                    analysis=latest_analysis,
+                )
+            else:
+                print("  ✅ Aucun signal d'alerte - planning maintenu")
+
         # 3. Check planning changes (if week specified)
         planning_changes = {"status": None, "diff": None}
         if week_id and start_date:
@@ -702,7 +1059,9 @@ class DailySync:
             planning_changes = self.check_planning_changes(week_id, start_date, end_date)
 
         # 4. Generate report
-        report_file = self.generate_report(check_date, new_activities, planning_changes, analyses)
+        report_file = self.generate_report(
+            check_date, new_activities, planning_changes, analyses, servo_result
+        )
 
         print(f"\n📝 Rapport généré: {report_file}")
 
@@ -746,6 +1105,11 @@ def main():
         action="store_true",
         help="Enable automatic AI analysis of activities",
     )
+    parser.add_argument(
+        "--auto-servo",
+        action="store_true",
+        help="Enable automatic servo mode for planning adjustments (requires --ai-analysis and --week-id)",
+    )
 
     args = parser.parse_args()
 
@@ -765,6 +1129,15 @@ def main():
         print("❌ Erreur: --week-id nécessite --start-date")
         sys.exit(1)
 
+    # Validate auto-servo requirements
+    if args.auto_servo:
+        if not args.ai_analysis:
+            print("❌ Erreur: --auto-servo nécessite --ai-analysis")
+            sys.exit(1)
+        if not args.week_id:
+            print("❌ Erreur: --auto-servo nécessite --week-id")
+            sys.exit(1)
+
     # Setup paths
     tracking_file = Path("/Users/stephanejouve/training-logs/data/activities_tracking.json")
     reports_dir = Path("/Users/stephanejouve/training-logs/daily-reports")
@@ -774,6 +1147,7 @@ def main():
         tracking_file=tracking_file,
         reports_dir=reports_dir,
         enable_ai_analysis=args.ai_analysis,
+        enable_auto_servo=args.auto_servo,
     )
     sync.run(
         check_date=check_date,
