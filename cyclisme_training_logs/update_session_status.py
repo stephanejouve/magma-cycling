@@ -56,7 +56,7 @@ from cyclisme_training_logs.config import create_intervals_client  # noqa: E402
 from cyclisme_training_logs.weekly_planner import WeeklyPlanner  # noqa: E402
 
 # Statuses that should remove the event from Intervals.icu
-STATUSES_TO_DELETE = ["cancelled", "skipped"]
+STATUSES_TO_DELETE = ["cancelled", "skipped", "replaced"]
 
 
 def find_event_by_session(
@@ -125,14 +125,21 @@ def sync_with_intervals(
 
             print(f"   Found event: {event_name} (ID: {event_id}, Type: {event_category})")
 
-            # Check if already marked as cancelled
-            if event_name.startswith("[ANNULÉE]"):
-                print("   ℹ️  Event already marked as cancelled")
+            # Check if already marked as cancelled/skipped/replaced
+            if any(event_name.startswith(tag) for tag in ["[ANNULÉE]", "[SAUTÉE]", "[REMPLACÉE]"]):
+                print(f"   ℹ️  Event already marked (current: {event_name.split(']')[0]}])")
                 return True
 
             # Prepare cancelled note format
-            status_emoji = "❌" if new_status == "cancelled" else "⏭️"
-            status_text = "ANNULÉE" if new_status == "cancelled" else "SAUTÉE"
+            if new_status == "cancelled":
+                status_emoji = "❌"
+                status_text = "ANNULÉE"
+            elif new_status == "skipped":
+                status_emoji = "⏭️"
+                status_text = "SAUTÉE"
+            else:  # replaced
+                status_emoji = "🔄"
+                status_text = "REMPLACÉE"
 
             original_description = event.get("description", "")
             new_description = (
@@ -168,8 +175,15 @@ def sync_with_intervals(
                 print("   ⚠️  Cannot create cancelled note without session info")
                 return True
 
-            status_emoji = "❌" if new_status == "cancelled" else "⏭️"
-            status_text = "ANNULÉE" if new_status == "cancelled" else "SAUTÉE"
+            if new_status == "cancelled":
+                status_emoji = "❌"
+                status_text = "ANNULÉE"
+            elif new_status == "skipped":
+                status_emoji = "⏭️"
+                status_text = "SAUTÉE"
+            else:  # replaced
+                status_emoji = "🔄"
+                status_text = "REMPLACÉE"
 
             session_name = session_info.get("name", "Unknown")
             session_type = session_info.get("type", "")
