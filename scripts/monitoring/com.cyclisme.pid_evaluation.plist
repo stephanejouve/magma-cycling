@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Label (unique identifier) -->
+    <key>Label</key>
+    <string>com.cyclisme.pid_evaluation</string>
+
+    <!-- Program to run -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/stephanejouve/cyclisme-training-logs/scripts/monitoring/run_pid_evaluation.sh</string>
+    </array>
+
+    <!-- Schedule: Run daily at 23:00 (after adherence check at 22:00) -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>23</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <!-- Run on load (optional - for testing) -->
+    <key>RunAtLoad</key>
+    <false/>
+
+    <!-- Standard output/error -->
+    <key>StandardOutPath</key>
+    <string>/Users/stephanejouve/data/monitoring/pid_evaluation.stdout.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/stephanejouve/data/monitoring/pid_evaluation.stderr.log</string>
+
+    <!-- Working directory -->
+    <key>WorkingDirectory</key>
+    <string>/Users/stephanejouve/cyclisme-training-logs</string>
+
+    <!-- Environment variables -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/stephanejouve/.pyenv/shims</string>
+        <key>HOME</key>
+        <string>/Users/stephanejouve</string>
+    </dict>
+
+    <!-- Retry on failure -->
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+
+    <!-- Nice level (lower priority) -->
+    <key>Nice</key>
+    <integer>5</integer>
+
+    <!-- Don't run if on battery and low power -->
+    <key>LowPriorityIO</key>
+    <true/>
+</dict>
+</plist>
