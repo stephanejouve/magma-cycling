@@ -75,6 +75,9 @@ class BaselineAnalyzer:
         self.activities_data = []
         self.events_data = []
         self.cv_coupling_values = []
+        self.skipped_sessions = []  # NOTE events with [SAUTÉE] tag
+        self.replaced_sessions = []  # NOTE events with [REMPLACÉE] tag
+        self.cancelled_sessions = []  # NOTE events with [ANNULÉE] tag
 
         # Intervals.icu client
         self.client = create_intervals_client()
@@ -140,6 +143,75 @@ class BaselineAnalyzer:
             print(f"   ✅ Events: {len(self.events_data)} planned workouts")
         except Exception as e:
             print(f"   ⚠️  Events error: {e}")
+
+    def parse_skipped_replaced_sessions(self) -> None:
+        """Parse NOTE events for skipped/replaced/cancelled sessions.
+
+        Intervals.icu creates NOTE events with special tags when sessions are
+        cancelled/skipped/replaced via update-session script:
+        - [SAUTÉE] = Skipped session
+        - [REMPLACÉE] = Replaced session
+        - [ANNULÉE] = Cancelled session
+        """
+        print("\n📥 Parsing skipped/replaced sessions...")
+
+        if not self.events_data:
+            print("   ⚠️  No events data loaded")
+            return
+
+        # Find NOTE events with status tags
+        for event in self.events_data:
+            if event.get("category") != "NOTE":
+                continue
+
+            name = event.get("name", "")
+            description = event.get("description", "")
+            date = event.get("start_date_local", "").split("T")[0]
+
+            # Extract session info
+            session_data = {
+                "date": date,
+                "name": name,
+                "description": description,
+                "reason": self._extract_reason(description),
+            }
+
+            # Categorize by tag
+            if "[SAUTÉE]" in name:
+                self.skipped_sessions.append(session_data)
+            elif "[REMPLACÉE]" in name:
+                self.replaced_sessions.append(session_data)
+            elif "[ANNULÉE]" in name:
+                self.cancelled_sessions.append(session_data)
+
+        total_not_completed = (
+            len(self.skipped_sessions) + len(self.replaced_sessions) + len(self.cancelled_sessions)
+        )
+
+        print(f"   ✅ Skipped: {len(self.skipped_sessions)}")
+        print(f"   ✅ Replaced: {len(self.replaced_sessions)}")
+        print(f"   ✅ Cancelled: {len(self.cancelled_sessions)}")
+        print(f"   ✅ Total not-completed: {total_not_completed}")
+
+    def _extract_reason(self, description: str) -> str:
+        """Extract reason from NOTE description.
+
+        Args:
+            description: NOTE description text
+
+        Returns:
+            Reason string or "Non spécifiée"
+        """
+        if not description:
+            return "Non spécifiée"
+
+        # Look for "Raison: ..." pattern
+        lines = description.split("\n")
+        for line in lines:
+            if line.startswith("Raison:"):
+                return line.replace("Raison:", "").strip()
+
+        return "Non spécifiée"
 
     def load_cardiovascular_coupling(self) -> None:
         """Extract cardiovascular coupling from workout_history files."""
@@ -249,51 +321,116 @@ class BaselineAnalyzer:
         return quality
 
     def calculate_adherence_metrics(self) -> dict[str, Any]:
-        """Calculate adherence metrics.
+        """Calculate adherence metrics from Intervals.icu events.
+
+        Source of truth: Intervals.icu events
+        - WORKOUT events with paired_activity_id = completed sessions
+        - NOTE events with [SAUTÉE] = skipped sessions
+        - NOTE events with [REMPLACÉE] = replaced sessions
+        - NOTE events with [ANNULÉE] = cancelled sessions
 
         Returns:
-            Dict with adherence rate, completed, skipped, patterns
+            Dict with adherence rate, completed, skipped, replaced, cancelled details
         """
         print("\n📊 Calculating adherence metrics...")
 
-        if not self.adherence_data:
-            print("   ⚠️  No adherence data")
+        if not self.events_data:
+            print("   ⚠️  No events data")
             return {}
 
-        total_planned = sum(r["planned_workouts"] for r in self.adherence_data)
-        total_completed = sum(r["completed_activities"] for r in self.adherence_data)
-        total_skipped = sum(len(r.get("skipped_workouts", [])) for r in self.adherence_data)
+        # Count completed workouts (WORKOUT events with paired activity)
+        completed_workouts = [
+            e
+            for e in self.events_data
+            if e.get("category") == "WORKOUT" and e.get("paired_activity_id")
+        ]
 
+        # Total planned = completed + skipped + replaced + cancelled
+        total_planned = (
+            len(completed_workouts)
+            + len(self.skipped_sessions)
+            + len(self.replaced_sessions)
+            + len(self.cancelled_sessions)
+        )
+
+        total_completed = len(completed_workouts)
+        total_skipped = len(self.skipped_sessions)
+        total_replaced = len(self.replaced_sessions)
+        total_cancelled = len(self.cancelled_sessions)
+
+        # Calculate adherence rate (strict: only completed count as success)
         adherence_rate = total_completed / total_planned if total_planned > 0 else 0
 
-        # Identify skipped dates
-        skipped_dates = []
-        for record in self.adherence_data:
-            if record["status"] in ["MISSED", "PARTIAL"]:
-                skipped_dates.append(record["date"])
+        # Extract skipped/replaced dates and details
+        skipped_details = [
+            {
+                "date": s["date"],
+                "name": s["name"].replace("[SAUTÉE] ", ""),
+                "reason": s["reason"],
+            }
+            for s in self.skipped_sessions
+        ]
 
-        # Pattern by day of week
+        replaced_details = [
+            {
+                "date": r["date"],
+                "name": r["name"].replace("[REMPLACÉE] ", ""),
+                "reason": r["reason"],
+            }
+            for r in self.replaced_sessions
+        ]
+
+        cancelled_details = [
+            {
+                "date": c["date"],
+                "name": c["name"].replace("[ANNULÉE] ", ""),
+                "reason": c["reason"],
+            }
+            for c in self.cancelled_sessions
+        ]
+
+        # Pattern by day of week (only for completed workouts)
         day_patterns = {}
-        for record in self.adherence_data:
-            date = datetime.strptime(record["date"], "%Y-%m-%d")
+        for workout in completed_workouts:
+            date_str = workout.get("start_date_local", "").split("T")[0]
+            if not date_str:
+                continue
+            date = datetime.strptime(date_str, "%Y-%m-%d")
             day_name = date.strftime("%A")
             if day_name not in day_patterns:
                 day_patterns[day_name] = {"planned": 0, "completed": 0}
-            day_patterns[day_name]["planned"] += record["planned_workouts"]
-            day_patterns[day_name]["completed"] += record["completed_activities"]
+            day_patterns[day_name]["completed"] += 1
+
+        # Add skipped/replaced/cancelled to planned counts
+        for session in self.skipped_sessions + self.replaced_sessions + self.cancelled_sessions:
+            date = datetime.strptime(session["date"], "%Y-%m-%d")
+            day_name = date.strftime("%A")
+            if day_name not in day_patterns:
+                day_patterns[day_name] = {"planned": 0, "completed": 0}
+            day_patterns[day_name]["planned"] += 1
+
+        # Also count completed in planned
+        for day_name in day_patterns:
+            day_patterns[day_name]["planned"] += day_patterns[day_name]["completed"]
 
         metrics = {
             "rate": adherence_rate,
             "completed": total_completed,
             "planned": total_planned,
             "skipped": total_skipped,
-            "skipped_dates": skipped_dates,
+            "replaced": total_replaced,
+            "cancelled": total_cancelled,
+            "skipped_details": skipped_details,
+            "replaced_details": replaced_details,
+            "cancelled_details": cancelled_details,
             "day_patterns": day_patterns,
         }
 
         print(f"   ✅ Adherence Rate: {adherence_rate * 100:.1f}%")
         print(f"   ✅ Completed: {total_completed}/{total_planned}")
-        print(f"   ⚠️  Skipped: {total_skipped} workouts on {len(skipped_dates)} days")
+        print(f"   ⚠️  Skipped: {total_skipped}")
+        print(f"   ⚠️  Replaced: {total_replaced}")
+        print(f"   ⚠️  Cancelled: {total_cancelled}")
 
         return metrics
 
@@ -425,6 +562,7 @@ class BaselineAnalyzer:
         # Load all data
         self.load_adherence_data()
         self.load_intervals_data()
+        self.parse_skipped_replaced_sessions()  # Parse NOTE events for skipped/replaced
         self.load_cardiovascular_coupling()
 
         # Validate quality
@@ -527,15 +665,40 @@ Généré le: {datetime.now().strftime("%d/%m/%Y %H:%M")}
 - **Adherence Rate**: {adherence.get('rate', 0) * 100:.1f}%
 - **Séances complétées**: {adherence.get('completed', 0)}/{adherence.get('planned', 0)}
 - **Séances sautées**: {adherence.get('skipped', 0)}
+- **Séances remplacées**: {adherence.get('replaced', 0)}
+- **Séances annulées**: {adherence.get('cancelled', 0)}
 
-### Dates Séances Manquées
+### Détail Séances Non Complétées
 """
 
-        if adherence.get("skipped_dates"):
-            for date in adherence["skipped_dates"]:
-                report += f"- {date}\n"
-        else:
-            report += "- Aucune séance manquée ✅\n"
+        # Skipped sessions
+        if adherence.get("skipped_details"):
+            report += "\n#### ⏭️ Séances Sautées\n"
+            for detail in adherence["skipped_details"]:
+                report += f"- **{detail['date']}**: {detail['name']}\n"
+                report += f"  - Raison: {detail['reason']}\n"
+
+        # Replaced sessions
+        if adherence.get("replaced_details"):
+            report += "\n#### 🔄 Séances Remplacées\n"
+            for detail in adherence["replaced_details"]:
+                report += f"- **{detail['date']}**: {detail['name']}\n"
+                report += f"  - Raison: {detail['reason']}\n"
+
+        # Cancelled sessions
+        if adherence.get("cancelled_details"):
+            report += "\n#### ❌ Séances Annulées\n"
+            for detail in adherence["cancelled_details"]:
+                report += f"- **{detail['date']}**: {detail['name']}\n"
+                report += f"  - Raison: {detail['reason']}\n"
+
+        # If nothing skipped/replaced/cancelled
+        if (
+            not adherence.get("skipped_details")
+            and not adherence.get("replaced_details")
+            and not adherence.get("cancelled_details")
+        ):
+            report += "✅ Aucune séance manquée, remplacée ou annulée\n"
 
         report += """
 ### Patterns par Jour de Semaine
