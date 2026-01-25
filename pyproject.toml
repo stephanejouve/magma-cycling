@@ -81,6 +81,10 @@ normalize-reports = "cyclisme_training_logs.normalize_weekly_reports_casing:main
 
 # === Monitoring ===
 check-workout-adherence = "scripts.monitoring.check_workout_adherence:main"
+pid-daily-evaluation = "cyclisme_training_logs.scripts.pid_daily_evaluation:main"
+
+# === Analysis ===
+analyze-baseline = "cyclisme_training_logs.analysis.baseline_preliminary:main"
 
 # === Maintenance & Cleanup ===
 cleanup-archives = "scripts.maintenance.cleanup_old_archives:main"

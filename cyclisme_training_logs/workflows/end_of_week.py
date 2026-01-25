@@ -4,6 +4,7 @@ End-of-Week Workflow Orchestrator.
 
 Workflow automatisé complet pour transition hebdomadaire :
 1. Analyse semaine écoulée (weekly-analysis)
+1b. Évaluation PID & Training Intelligence (pid-daily-evaluation)
 2. Génération planning semaine suivante (weekly-planner)
 3. Appel AI provider pour génération workouts
 4. Validation notation (format-planning intégré)
@@ -208,6 +209,10 @@ class EndOfWeekWorkflow:
             if not self._step1_analyze_completed_week():
                 return False
 
+            # Step 1b: PID evaluation and intelligence learning
+            if not self._step1b_pid_evaluation():
+                return False
+
             # Step 2: Generate planning prompt for next week
             if not self._step2_generate_planning_prompt():
                 return False
@@ -332,6 +337,61 @@ class EndOfWeekWorkflow:
                 self.reports[key] = filepath.read_text(encoding="utf-8")
             else:
                 self.reports[key] = f"[{filename} non trouvé]"
+
+    def _step1b_pid_evaluation(self) -> bool:
+        """Step 1b: PID evaluation and intelligence learning."""
+        print("\n" + "=" * 80)
+        print("🧠 STEP 1b/6: Évaluation PID & Training Intelligence")
+        print("=" * 80)
+        print()
+
+        if self.dry_run:
+            print("🔍 DRY-RUN: Simulation évaluation PID")
+            return True
+
+        try:
+            print("  ℹ️  Collecte des métriques d'entraînement...")
+            print(f"  📅 Période: {self.completed_start_date} → {self.completed_end_date}")
+            print()
+
+            # Import and run PID evaluation
+            from cyclisme_training_logs.scripts.pid_daily_evaluation import (
+                PIDDailyEvaluator,
+            )
+
+            evaluator = PIDDailyEvaluator(dry_run=False)
+
+            # Run evaluation for the completed week
+            result = evaluator.run_daily_evaluation(days_back=7)
+
+            print()
+            print("  ✅ Évaluation PID terminée")
+            print("  📊 Données sauvegardées dans ~/data/monitoring/pid_evaluation.jsonl")
+            print("  🧠 Intelligence mise à jour dans ~/data/intelligence.json")
+
+            # Display test recommendation if present
+            test_rec = result.get("test_recommendation")
+            if test_rec:
+                print()
+                print("  " + "=" * 76)
+                print(f"  🎯 RECOMMANDATION DÉTECTÉE: {test_rec['status']}")
+                print("  " + "=" * 76)
+                print(f"  💡 {test_rec['message']}")
+                print(f"  📅 {test_rec['timing']}")
+                print(f"  ⏰ Dernier test: {test_rec['weeks_since_test']:.1f} semaines")
+                print(f"  💪 TSB actuel: {test_rec['tsb']:.1f}")
+                print("  " + "=" * 76)
+
+            return True
+
+        except Exception as e:
+            print(f"  ⚠️  Erreur évaluation PID (non bloquant) : {e}")
+            if "--verbose" in sys.argv:
+                import traceback
+
+                traceback.print_exc()
+            # Non-blocking: continue workflow even if PID evaluation fails
+            return True
 
     def _step2_generate_planning_prompt(self) -> bool:
         """Step 2: Generate planning prompt for next week."""
