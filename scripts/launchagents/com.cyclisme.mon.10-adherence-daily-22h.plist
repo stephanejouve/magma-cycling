@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- MONITORING: Workout Adherence - Collecte Métriques -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+
+    <!-- Service identifier -->
+    <key>Label</key>
+    <string>com.cyclisme.mon.10-adherence-daily-22h</string>
+
+    <!-- Metadata (documentation) -->
+    <key>Description</key>
+    <string>Daily monitoring: Collect workout adherence metrics at 22:00</string>
+
+    <key>Category</key>
+    <string>monitoring</string>
+
+    <key>Sequence</key>
+    <integer>10</integer>
+
+    <key>PreviousInChain</key>
+    <string>com.cyclisme.rept.10-daily-sync-21h30</string>
+
+    <key>NextInChain</key>
+    <string>com.cyclisme.anls.10-pid-evaluation-daily-23h</string>
+
+    <!-- Command to execute -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/stephanejouve/cyclisme-training-logs/scripts/monitoring/run_adherence_check.sh</string>
+    </array>
+
+    <!-- Working directory -->
+    <key>WorkingDirectory</key>
+    <string>/Users/stephanejouve/cyclisme-training-logs</string>
+
+    <!-- Schedule: Run daily at 22:00 -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>22</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <!-- Don't run at load -->
+    <key>RunAtLoad</key>
+    <false/>
+
+    <!-- Logging -->
+    <key>StandardOutPath</key>
+    <string>/Users/stephanejouve/data/monitoring/launchd.stdout.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/stephanejouve/data/monitoring/launchd.stderr.log</string>
+
+    <!-- Environment variables -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/stephanejouve/.pyenv/shims</string>
+        <key>HOME</key>
+        <string>/Users/stephanejouve</string>
+    </dict>
+
+    <!-- Retry on failure -->
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+
+    <!-- Low priority -->
+    <key>Nice</key>
+    <integer>5</integer>
+
+    <!-- Low IO priority -->
+    <key>LowPriorityIO</key>
+    <true/>
+</dict>
+</plist>

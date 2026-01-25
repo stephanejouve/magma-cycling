@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- MIGRATION PHASE 3: Archive Old Agents (7j après Phase 2) -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+
+    <key>Label</key>
+    <string>com.cyclisme.migration.30-phase3-archive-7d</string>
+
+    <key>Description</key>
+    <string>Migration Phase 3: Archive old agents 7 days after Phase 2</string>
+
+    <!-- Check every 12 hours if 7 days have passed -->
+    <key>StartInterval</key>
+    <integer>43200</integer>
+
+    <!-- Also run at load -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- Command -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/stephanejouve/cyclisme-training-logs/scripts/launchagents/migration-phase3-checker.sh</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/stephanejouve/cyclisme-training-logs/scripts/launchagents</string>
+
+    <!-- Logging -->
+    <key>StandardOutPath</key>
+    <string>/Users/stephanejouve/Library/Logs/cyclisme-migration-phase3.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/stephanejouve/Library/Logs/cyclisme-migration-phase3.error.log</string>
+
+    <!-- Environment -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+</dict>
+</plist>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- MIGRATION PHASE 2: Unload Old Agents (48h après Phase 1) -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+
+    <key>Label</key>
+    <string>com.cyclisme.migration.20-phase2-unload-48h</string>
+
+    <key>Description</key>
+    <string>Migration Phase 2: Unload old agents 48h after Phase 1</string>
+
+    <!-- Check every hour if 48h have passed -->
+    <key>StartInterval</key>
+    <integer>3600</integer>
+
+    <!-- Also run at load -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- Command -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/stephanejouve/cyclisme-training-logs/scripts/launchagents/migration-phase2-checker.sh</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/stephanejouve/cyclisme-training-logs/scripts/launchagents</string>
+
+    <!-- Logging -->
+    <key>StandardOutPath</key>
+    <string>/Users/stephanejouve/Library/Logs/cyclisme-migration-phase2.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/stephanejouve/Library/Logs/cyclisme-migration-phase2.error.log</string>
+
+    <!-- Environment -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+</dict>
+</plist>

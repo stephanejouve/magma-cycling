@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- REPORTING: Daily Sync - Rapport Quotidien -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+
+    <!-- Service identifier -->
+    <key>Label</key>
+    <string>com.cyclisme.rept.10-daily-sync-21h30</string>
+
+    <!-- Metadata (documentation) -->
+    <key>Description</key>
+    <string>Daily reporting: Detect new activities, generate AI analyses, send email report</string>
+
+    <key>Category</key>
+    <string>reporting</string>
+
+    <key>Sequence</key>
+    <integer>10</integer>
+
+    <key>NextInChain</key>
+    <string>com.cyclisme.mon.10-adherence-daily-22h</string>
+
+    <!-- Command to execute -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/stephanejouve/.local/bin/poetry</string>
+        <string>run</string>
+        <string>daily-sync</string>
+        <string>--send-email</string>
+        <string>--ai-analysis</string>
+        <string>--auto-servo</string>
+    </array>
+
+    <!-- Working directory -->
+    <key>WorkingDirectory</key>
+    <string>/Users/stephanejouve/cyclisme-training-logs</string>
+
+    <!-- Schedule: Run every day at 21:30 (9:30 PM) -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>21</integer>
+        <key>Minute</key>
+        <integer>30</integer>
+    </dict>
+
+    <!-- Don't run at load -->
+    <key>RunAtLoad</key>
+    <false/>
+
+    <!-- Logging -->
+    <key>StandardOutPath</key>
+    <string>/Users/stephanejouve/Library/Logs/cyclisme-rept-daily-sync.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/stephanejouve/Library/Logs/cyclisme-rept-daily-sync.error.log</string>
+
+    <!-- Environment variables -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/Users/stephanejouve/.local/bin:/usr/local/bin:/usr/bin:/bin</string>
+    </dict>
+
+    <!-- Low priority -->
+    <key>Nice</key>
+    <integer>5</integer>
+</dict>
+</plist>

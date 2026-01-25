@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- MAINTENANCE: Rsync Sites - Documentation Web Horaire -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+
+    <!-- Service identifier -->
+    <key>Label</key>
+    <string>com.cyclisme.mnt.30-rsync-sites-hourly</string>
+
+    <!-- Metadata (documentation) -->
+    <key>Description</key>
+    <string>Hourly maintenance: Sync Sphinx docs to local web server</string>
+
+    <key>Category</key>
+    <string>maintenance</string>
+
+    <key>Sequence</key>
+    <integer>30</integer>
+
+    <!-- Command to execute -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/zsh</string>
+        <string>-c</string>
+        <string>mkdir -p /Users/stephanejouve/Sites/cyclisme-training-logs &amp;&amp; rsync -av --delete /Users/stephanejouve/cyclisme-training-logs/docs/_build/html/ /Users/stephanejouve/Sites/cyclisme-training-logs/</string>
+    </array>
+
+    <!-- Run at login -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- Run every hour (3600 seconds) -->
+    <key>StartInterval</key>
+    <integer>3600</integer>
+
+    <!-- Logging -->
+    <key>StandardOutPath</key>
+    <string>/Users/stephanejouve/Library/Logs/cyclisme-mnt-rsync-sites.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/stephanejouve/Library/Logs/cyclisme-mnt-rsync-sites.error.log</string>
+
+    <!-- Low priority -->
+    <key>Nice</key>
+    <integer>5</integer>
+</dict>
+</plist>
