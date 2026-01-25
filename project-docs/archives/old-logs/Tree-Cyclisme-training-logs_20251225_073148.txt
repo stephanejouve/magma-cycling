@@ -1,0 +1,219 @@
+[H[2J✅ 6 templates chargés
+
+======================================================================
+  🎯 WORKFLOW COACH - Analyse de Séance
+  Orchestrateur intelligent pour l'analyse cyclisme
+======================================================================
+
+Ce workflow va te guider à travers 6 étapes :
+
+1. ✅ Bienvenue et présentation
+2. 💭 Collecte feedback athlète (optionnel)
+3. 📝 Préparation prompt d'analyse
+4. 🤖 Envoi à Claude.ai
+5. ✅ Validation de l'analyse
+6. 💾 Insertion dans les logs
+7. 💾 Commit git (optionnel)
+
+⏱️  Temps total estimé : 4-5 minutes
+
+💡 Le prompt généré contient automatiquement :
+   • Ton profil athlète et tes objectifs (project_prompt_v2_1_revised.md)
+   • L'historique de tes séances récentes (workouts-history.md)
+   • Les concepts d'entraînement cyclisme (cycling_training_concepts.md)
+     → Zones Z1-Z7, Sweet Spot, métriques TSS/IF/NP, critères validation
+   • Les données de ta séance depuis Intervals.icu
+   • Le workout planifié (si disponible)
+   • Ton feedback subjectif (si collecté)
+
+👉 Aucun upload de fichier nécessaire !
+
+
+Appuyer sur ENTRÉE pour démarrer...[H[2J[INFO] 
+======================================================================
+[INFO] DÉTECTION SÉANCES PLANIFIÉES SAUTÉES
+[INFO] ======================================================================
+[INFO] Période : 2025-11-25 → 2025-12-25
+[INFO] Workouts planifiés trouvés : 27
+[INFO] Activités réalisées trouvées : 28
+[WARNING] ⏭️  SKIPPED : S072-05-TEC-TechniqueCadence-V001 [2025-12-19]
+[INFO] 
+======================================================================
+[INFO] RÉSUMÉ DÉTECTION
+[INFO] ======================================================================
+[INFO] Workouts planifiés : 27
+[INFO] Activités réalisées : 28
+[INFO] Séances sautées : 1
+[INFO] ======================================================================
+
+[INFO] ✓ Planning validé
+[INFO] ======================================================================
+[INFO] Réconciliation S072
+[INFO] ======================================================================
+[INFO] Sessions planifiées : 7
+[INFO] Sessions exécutées : 4
+[INFO] Repos planifiés : 1
+[INFO] Séances annulées : 0
+[INFO] Séances sautées : 2
+[INFO] Activités non planifiées : 2
+[INFO] ======================================================================
+
+======================================================================
+  🔍 Détection Gaps
+  Étape 1b/7 : Détection séances à documenter
+======================================================================
+
+
+======================================================================
+📊 RÉSUMÉ GAPS DÉTECTÉS
+======================================================================
+
+💤 Repos planifiés non documentés : 1
+   • [2025-12-21] S072-07 - Protocole repos hebdomadaire
+
+⏭️  Séances planifiées sautées : 1
+   • [2025-12-19] S072-05-TEC-TechniqueCadence-V001 (0 TSS, il y a 5j)
+
+======================================================================
+💡 QUE VEUX-TU FAIRE ?
+======================================================================
+
+  [2] Traiter repos/sautées en batch
+  [0] Quitter
+
+Ton choix : 
+======================================================================
+📝 GÉNÉRATION SESSIONS SPÉCIALES
+======================================================================
+
+💤 Génération 1 repos planifiés...
+
+   → S072-07 - ReposObligatoire
+
+📝 Feedback pour S072-07 (repos planifié)
+   (Laisser vide pour ignorer)
+   Sommeil (format 7h30) :    Score sommeil (0-100) :    VFC (ms) :    FC repos (bpm) :       ✓ Généré (1651 chars)
+
+✅ 1 markdowns générés
+
+======================================================================
+👁️  PREVIEW MARKDOWNS GÉNÉRÉS
+======================================================================
+
+📄 Markdown 1/1
+   Date    : 2025-12-21
+   Titre   : ### S072-07-REC-ReposObligatoire
+   Lignes  : 60
+   Chars   : 1651
+
+   Début :
+   ### S072-07-REC-ReposObligatoire
+   Date : 21/12/2025
+   
+   #### Métriques Pré-séance
+   - CTL : 50
+   - ATL : 35
+   - TSB : +15
+   - Sommeil : 8h02 (score 57, VFC 38ms)
+   - FC repos : 45 bpm
+   
+   ... (50 lignes suivantes)
+
+======================================================================
+
+======================================================================
+💡 Que veux-tu faire avec ces markdowns ?
+======================================================================
+  [1] Enrichir avec Claude.ai (analyse coach)
+  [2] Insérer tel quel dans workouts-history.md
+  [3] Export fichier seulement
+  [4] Copier dans presse-papier
+  [0] Retour menu réconciliation
+
+Ton choix (0/1/2/3/4) : 
+⚠️  Confirmer insertion directe (sans enrichissement) ? (o/n) : 
+✅ Insertion réussie dans /Users/stephanejouve/cyclisme-training-logs/logs/workouts-history.md
+   1 sessions ajoutées
+
+⚠️  Note : Les entrées ont été ajoutées à la fin du fichier
+   Tu peux les réorganiser manuellement si besoin
+
+✅ Sessions documentées
+
+──────────────────────────────────────────────────────────────────────
+💾 Commit Git
+──────────────────────────────────────────────────────────────────────
+Commiter les modifications ? (o/n) :    ✅ Commit réussi !
+Pousser vers remote ? (o/n) :    ✅ Push réussi !
+──────────────────────────────────────────────────────────────────────
+
+✅ Sessions spéciales documentées
+
+══════════════════════════════════════════════════════════════════════
+🔄 Retour détection gaps pour sessions restantes...
+══════════════════════════════════════════════════════════════════════
+
+Appuyer sur ENTRÉE pour continuer...[H[2J[INFO] 
+======================================================================
+[INFO] DÉTECTION SÉANCES PLANIFIÉES SAUTÉES
+[INFO] ======================================================================
+[INFO] Période : 2025-11-25 → 2025-12-25
+[INFO] Workouts planifiés trouvés : 27
+[INFO] Activités réalisées trouvées : 28
+[WARNING] ⏭️  SKIPPED : S072-05-TEC-TechniqueCadence-V001 [2025-12-19]
+[INFO] 
+======================================================================
+[INFO] RÉSUMÉ DÉTECTION
+[INFO] ======================================================================
+[INFO] Workouts planifiés : 27
+[INFO] Activités réalisées : 28
+[INFO] Séances sautées : 1
+[INFO] ======================================================================
+
+[INFO] ✓ Planning validé
+[INFO] ======================================================================
+[INFO] Réconciliation S072
+[INFO] ======================================================================
+[INFO] Sessions planifiées : 7
+[INFO] Sessions exécutées : 4
+[INFO] Repos planifiés : 1
+[INFO] Séances annulées : 0
+[INFO] Séances sautées : 2
+[INFO] Activités non planifiées : 2
+[INFO] ======================================================================
+
+======================================================================
+  🔍 Détection Gaps
+  Étape 1b/7 : Détection séances à documenter
+======================================================================
+
+
+======================================================================
+📊 RÉSUMÉ GAPS DÉTECTÉS
+======================================================================
+
+💤 Repos planifiés non documentés : 1
+   • [2025-12-21] S072-07 - Protocole repos hebdomadaire
+
+⏭️  Séances planifiées sautées : 1
+   • [2025-12-19] S072-05-TEC-TechniqueCadence-V001 (0 TSS, il y a 5j)
+
+======================================================================
+💡 QUE VEUX-TU FAIRE ?
+======================================================================
+
+  [2] Traiter repos/sautées en batch
+  [0] Quitter
+
+Ton choix : 
+======================================================================
+📝 GÉNÉRATION SESSIONS SPÉCIALES
+======================================================================
+
+💤 Génération 1 repos planifiés...
+
+   → S072-07 - ReposObligatoire
+
+📝 Feedback pour S072-07 (repos planifié)
+   (Laisser vide pour ignorer)
+   Sommeil (format 7h30) :    Score sommeil (0-100) : 
