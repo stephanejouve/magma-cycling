@@ -238,8 +238,8 @@
 
 ## 🎯 État Actuel (18 Janvier 2026)
 
-**Sprint en cours:** R9 (R9.A-E complétés, R9.B Phase 2 pending)
-**Semaine:** S076 (12-18 janvier 2026)
+**Sprint en cours:** Pause Stratégique S078-S079 (post R9.A-F complétés)
+**Semaine:** S078 (26 jan - 01 fév 2026)
 **Version:** v2.3.1+
 
 ### ✅ Features Opérationnelles
@@ -441,166 +441,300 @@ Augmenter coverage workflow_coach.py de 19% à 27-29% (+8-10%) avec tests AI wor
 
 ---
 
-### Sprint R9 - Grappe Biomechanics (15-18 Jan 2026)
+### Sprint R9 - Monitoring & Baseline Analysis (04-25 Jan 2026)
 
-**Dates:** 15-18 janvier 2026
-**Status:** 🔄 EN COURS (R9.A-E complétés)
+**Dates:** 04-25 janvier 2026
+**Status:** ✅ COMPLÉTÉ (R9.A-F complétés)
 
-#### Sprint R9 (Grappe) - COMPLÉTÉ ✅
+> **📋 Note sur Réorganisation Historique (25 Jan 2026)**
+>
+> Ce Sprint R9 a été réorganisé pour refléter la chronologie réelle et l'architecture finale du projet :
+>
+> **Historique Git (ancienne structure)** :
+> - Sprint R9 initial : "Grappe Biomechanics" (15 jan 2026) - commits `24f17b6`, `ef77367`, etc.
+> - Sous-sprints ajoutés progressivement : R9.A (Workflow Tests), R9.B (DRY), R9.C (Upload UX), R9.D (Indoor/Outdoor), R9.E (Workflow Tests Enhancement)
+>
+> **ROADMAP actuel (nouvelle structure)** :
+> - Sprint R9 : "Monitoring & Baseline Analysis" (04-25 jan 2026)
+> - R9.A-F : Daily Sync, Session Update, Adherence, End-of-Week, Baseline, Pattern Analysis
+>
+> **Pourquoi cette réorganisation ?**
+> - La nouvelle structure reflète mieux la **vérité opérationnelle** du projet
+> - Les travaux "Grappe Biomechanics" existent dans le code (`cyclisme_training_logs/intelligence/biomechanics.py`) mais ont été intégrés hors sprint principal
+> - L'organisation Monitoring & Baseline correspond à la timeline réelle des livrables MOA (04-25 jan)
+>
+> **Impact** : Les commits git référençant "Sprint R9 Grappe" correspondent à des travaux parallèles intégrés dans une organisation différente. Cette note documente la dualité pour éviter confusion future.
+>
+> _Pour l'ancienne organisation, voir archive git ou `git log --grep="Sprint R9"`_
 
-**Date:** 15 janvier 2026
-**Objectif:** Intégrer recherche Grappe (2000) sur biomécanique cycliste
+---
+
+### R9.A - Daily Workout Sync ✅
+
+**Date:** 04 janvier 2026
+**Objectif:** Automatisation sync quotidien Intervals.icu
 
 **Livrables:**
-- ✅ **biomechanics.py** (343 lignes)
-  - `calculer_cadence_optimale()` : Calcul cadence par zone FTP
-  - `PIDGrappeEnhanced` : PID avec coefficients adaptatifs
-  - Règles Grappe: 85-105 rpm selon zone
-  - Ajustements profil fibres (explosif/mixte/endurant)
-
-- ✅ **biomechanics_intervals.py** (211 lignes)
-  - `extract_biomechanical_metrics()` : Extraction depuis Intervals.icu
-  - `get_cadence_recommendation_from_activities()` : Recommandations
-  - Moyennes pondérées par TSS
-
-- ✅ **athlete_profile.py** (extensions)
-  - Nouveaux champs: `muscle_fiber_type`, `biomechanical_profile`
-
-- ✅ **82 tests créés** (44 unitaires + 27 API + 11 intégration)
-  - `test_biomechanics.py` (403 lignes, 30 tests)
-  - `test_biomechanics_intervals.py` (391 lignes, 16 tests)
-  - `test_intervals_client_api.py` (27 tests API)
-  - `test_intervals_client_di2.py` (11 tests intégration)
-
-**Métriques:**
-- ✅ 100% tests passing (82/82)
-- ✅ Coverage 96-97% nouveaux modules
-- ✅ 6 commits livrés (tous CI/CD ✅)
+- ✅ LaunchAgent 22h00 automatique
+- ✅ Sync activities quotidien
+- ✅ Infrastructure monitoring opérationnelle
 
 **Impact:**
-- 🚴 Cadence optimisée basée sur science Grappe
-- 🧬 Profils athlètes adaptés (fibres musculaires)
-- 📊 Métriques biomécaniques depuis Intervals.icu
-
-**Commits clés:**
-- `24f17b6` - feat: Add biomechanics module with Grappe research integration
-- `ef77367` - feat: Add Intervals.icu API integration for biomechanics metrics
-- `48c03b2` - docs: Add biomechanics modules to Sphinx documentation
-- `d958278` - feat: Add energy cost (CE) calculation based on Grappe research
-- `538c22e` - feat: Extend AthleteProfile with biomechanics fields
-- `4c48bf7` - test: Add comprehensive integration tests for biomechanics modules
+- 🔄 Sync automatique sans intervention manuelle
+- 📊 Données toujours à jour pour analyses
 
 ---
 
-#### Sprint R9.A - Workflow Tests - COMPLÉTÉ ✅
+### R9.B - Session Update Workflow ✅
 
-**Date:** 16 janvier 2026
-**Objectif:** Coverage workflow_coach.py +30% (49% → 51.4%)
+**Date:** 08 janvier 2026
+**Objectif:** Script `update_session.py` pour gestion modifications
 
 **Livrables:**
-- ✅ **9 nouveaux tests** workflow_coach
-- ✅ **Coverage: 49% → 51.4%** (+2.4%)
-- ✅ Tests validation servo-mode
+- ✅ Gestion statuts [SAUTÉE], [REMPLACÉE], [ANNULÉE]
+- ✅ Workflow modifications sessions simplifié
+- ✅ Tracking raisons modifications
 
-**Commits:**
-- `c7e14d4` - test: Workflow Coach coverage increase 49% → 51.4% (+9 tests)
-- `e629f37` - fix: Servo-mode hallucinated sleep data - use real metrics
-
----
-
-#### Sprint R9.B - Code Reusability (DRY) - PHASE 1 COMPLÉTÉE ✅
-
-**Date:** 16 janvier 2026
-**Objectif:** Centraliser helpers réutilisables (DRY principle)
-
-**Phase 1 Livrée:**
-- ✅ **credential_helpers.py** : Chargement credentials unifié
-  - `load_intervals_credentials()` : Depuis .env ou config JSON
-  - `load_anthropic_api_key()` : Depuis .env
-  - Remplace 12+ occurrences dupliquées
-
-- ✅ **json_config_helpers.py** : Parsing JSON config
-  - `get_intervals_config_path()` : Gestion paths
-  - `load_intervals_config()` : Lecture config.json
-  - Remplace 8+ occurrences
-
-**Métriques Phase 1:**
-- ✅ 117/117 tests passing (100%)
-- ✅ **-31 LOC** (duplication éliminée)
-- ✅ CI/CD: All passing
-- ✅ Backward compatible
-
-**Phase 2 (À FAIRE):**
-- 📋 Refactoriser 12+ fichiers restants avec helpers centralisés
-- 📋 Estimation: -210-270 LOC supplémentaires
-
-**Commits:**
-- `6e39e6a` - refactor: Sprint R9.B - Centralize credential loading and JSON config (DRY)
-- `65f91ce` - docs: Add Sprint R9 session logs and progress report
+**Impact:**
+- ✏️ Gestion modifications sessions structurée
+- 📝 Traçabilité décisions entraînement
 
 ---
 
-#### Sprint R9.C - Upload Workouts UX - COMPLÉTÉ ✅
+### R9.C - Adherence Monitoring ✅
 
-**Date:** 17 janvier 2026
-**Objectif:** Améliorer UX upload_workouts avec validation et feedback
+**Date:** 10 janvier 2026
+**Objectif:** Système surveillance adherence workouts
 
-**Commits:**
-- `86cbf72` - docs: Add Sprint R9.C to roadmap - Upload Workouts UX Enhancement
+**Livrables:**
+- ✅ Script `check_workout_adherence.py`
+- ✅ LaunchAgent quotidien
+- ✅ Output : `~/data/monitoring/workout_adherence.jsonl`
+- ✅ Métriques TSS réalisé vs planifié
 
----
-
-#### Sprint R9.D - Indoor/Outdoor Adaptive Analysis - COMPLÉTÉ ✅
-
-**Date:** 18 janvier 2026
-**Objectif:** Adaptation analyses selon contexte indoor/outdoor
-
-**Commits:**
-- `c22aa06` - feat: Add Sprint R9.D - Indoor/Outdoor Adaptive Analysis
+**Impact:**
+- 📊 Tracking adherence automatique
+- 🔍 Détection patterns skip/modifications
 
 ---
 
-#### Sprint R9.E - Workflow Tests Enhancement - COMPLÉTÉ ✅
+### R9.D - End-of-Week Analysis ✅
 
-**Date:** 18 janvier 2026
-**Objectif:** Amélioration suite tests workflows
+**Date:** 15 janvier 2026
+**Objectif:** Automatisation rapports hebdomadaires
 
-**Commits:**
-- `9f75662` - feat: Add Sprint R9.E - Workflow Tests Enhancement
+**Livrables:**
+- ✅ Rapports end-of-week automatisés
+- ✅ Bug fixes multi-AI providers
+- ✅ Analyses complètes semaine
+
+**Impact:**
+- 📈 Analyse hebdomadaire automatique
+- 🤖 Multi-providers AI robustes
+
+---
+
+### R9.E - Baseline Preliminary Analysis ✅
+
+**Date:** 25 janvier 2026
+**Objectif:** Analyse baseline 21 jours (S076-S077)
+
+**Livrables:**
+- ✅ Adherence 77.8% (14/18 workouts)
+- ✅ 4 skipped identifiés (3 vendredi work_schedule, 1 replaced)
+- ✅ Dataset JSON v2.0.0
+- ✅ Rapport markdown enrichi
+- ✅ **Bug critique corrigé:** Adherence 100%→77.8% (<3h)
+
+**Insights:**
+1. Vendredi CRITICAL (33% adherence)
+2. Work_schedule = 100% raisons skip
+3. Lun-Jeu excellente adherence (100%)
+
+**Impact:**
+- 📊 Baseline 21 jours validée
+- 🔍 Patterns jour semaine identifiés
+
+---
+
+### R9.F - Advanced Pattern Analysis ✅
+
+**Date:** 25 janvier 2026
+**Objectif:** Détection patterns avancés et risk scoring
+
+**Livrables:**
+- ✅ Détection activités non sollicitées (101 TSS spontané)
+- ✅ Pattern jour semaine détaillé
+- ✅ Clustering raisons skip
+- ✅ Pattern type workout
+- ✅ **Innovation:** Risk scoring 0-100 (non demandé mais haute valeur)
+
+**Insights:**
+1. Activités spontanées = 89% sur-charge TSS
+2. Vendredi 33% adherence = CRITICAL risk
+3. Work_schedule clustering 100%
+
+**Impact:**
+- 🧠 Intelligence patterns terrain
+- ⚠️ Risk scoring actionnable
+- 📈 38 tests unitaires, 84% coverage
 
 ---
 
 #### Métriques Sprint R9 Global
 
 **Tests:**
-- R9 (Grappe): 82 tests créés
-- R9.A: 9 tests workflow_coach
-- R9.B-E: Tests existants maintenus
-- **Total: 199 tests** (82 + 9 + 108 existants)
-- **100% success rate** (199/199 passing)
+- R9.A-F: 38 tests unitaires
+- Coverage: 84% modules monitoring/analysis
+- **100% success rate** (38/38 passing)
 
-**Coverage:**
-- Intelligence (biomechanics): 96-97%
-- Workflow_coach: 49% → 51.4%
-- Global: Maintenu >29%
-
-**Code Quality:**
-- ✅ 10 commits livrés (R9: 6, R9.A: 2, R9.B: 2)
-- ✅ 0 breaking changes
-- ✅ All CI/CD passing
-- ✅ DRY: -31 LOC (Phase 1)
+**Résultats:**
+- ✅ Infrastructure monitoring opérationnelle
+- ✅ Baseline 21 jours validée (adherence 77.8%)
+- ✅ 4 insights actionnables identifiés
+- ✅ Dataset JSON v2.0.0 + rapports enrichis
 
 **Documentation:**
-- ✅ SPRINT_R9_GRAPPE_DELIVERY.md
-- ✅ SPRINT_R9_PROGRESS_REPORT.md
-- ✅ Session logs complets
+- ✅ SPRINT_R9_MONITORING_BASELINE.md
+- ✅ baseline_preliminary_report.md
+- ✅ advanced_pattern_analysis_report.md
+
+
 
 ---
 
-### État Actuel - 18 Janvier 2026
+## Pause Stratégique - S078-S079 ⏸️
 
-**Sprint en cours:** R9 (R9.A-E complétés, R9.B Phase 2 pending)
-**Semaine:** S076 (12-18 janvier 2026)
+**Dates** : 27 jan - 09 fév 2026 (2 semaines)
+**Status** : ⏸️ En cours (monitoring passif)
+
+### Objectifs
+1. **Accumulation données** : 21j → 42j (robustesse baseline)
+2. **Tests terrain** : Validation patterns R9.F
+3. **Focus entraînement** : Affûtage pré-tests S080 (TSB +10/+15)
+4. **Préparation S080** : Tests FTP critiques pour calibration PID
+
+### Activités
+- ✅ Monitoring automatique (LaunchAgent 22h00)
+- ✅ Application décision vendredi (repositionnement/flexibilité)
+- ✅ Surveillance activités spontanées (<100 TSS/semaine)
+- ✅ Documentation manuelle adaptations terrain
+- ❌ Aucun développement nouveau
+
+### Rationale
+- S080 tests FTP = milestone critique (inputs PID)
+- 2-3 semaines = trop court sprints complexes (R10-R11)
+- Infrastructure opérationnelle (aucun besoin urgent)
+- Repos cognitif avant phase importante
+
+---
+
+## Sprint S080 - FTP Tests & Baseline Validation 🎯
+
+**Dates** : 10-16 fév 2026 (1 semaine)
+**Status** : 🔜 À venir
+
+### Objectif
+Valider baseline FTP/VO2/Anaérobie/Sprint via protocole Zwift Camp
+
+### Tests Planifiés
+1. **Mardi 11/02** : FTP 20min (Flat Out Fast)
+2. **Jeudi 13/02** : CP5 VO2max (Climb Control)
+3. **Samedi 15/02** : CP4 Anaérobie + Sprint (Power Punches + Red Zone)
+4. **Optionnel Dimanche 16/02** : Ramp test
+
+### Livrables
+- [ ] FTP validée (vs estimation actuelle 216W)
+- [ ] CP5 baseline établie
+- [ ] CP4 + Sprint baseline établis
+- [ ] Rapport résultats : `~/docs/tests_s080_results.md`
+- [ ] Comparaison vs baseline Oct 2025
+
+### Inputs pour PID
+- 49 jours données monitoring (S076-S080)
+- FTP/CP5/CP4/Sprint validés scientifiquement
+- Patterns adherence consolidés
+- Baseline complète pour calibration
+
+---
+
+## Phase 3: Post-S080 Sprints - Training Intelligence 🚀
+
+**Dates** : 17 fév 2026+
+**Status** : 📋 Planifié
+
+### Sprint R10 - PID Calibration Complete 🎯 PRIORITÉ 1
+
+**Durée estimée** : 5-7 jours
+**Prerequisites** : Tests S080 complétés, 49j données
+
+#### Objectifs
+1. Calibration PID discrete controller
+2. Calcul gains Kp/Ki/Kd scientifiques
+3. Seuils validation (TSB, HRV, sommeil)
+4. Système corrections TSS automatiques
+
+#### Livrables
+- [ ] PID calibré opérationnel
+- [ ] Gains Kp/Ki/Kd documentés
+- [ ] Système validation implémenté
+- [ ] Tests ≥20 scenarios PID
+- [ ] CLI : `poetry run calibrate-pid`
+
+---
+
+### Sprint R11 - AI Weekly Reports 📊 PRIORITÉ 2
+
+**Durée estimée** : 3-4 jours
+**Prerequisites** : PID calibré, 7+ semaines données
+
+#### Objectifs
+1. Automatiser génération rapports hebdomadaires
+2. Insights AI sur évolution patterns
+3. Recommandations adaptations semaine suivante
+
+#### Livrables
+- [ ] Script génération rapports opérationnel
+- [ ] LaunchAgent configuré (21h00 dimanche)
+- [ ] 3 prompts AI validés
+- [ ] CLI : `poetry run generate-report --week SXXX`
+
+---
+
+### Sprint R12 - Monitoring Dashboard 📈 PRIORITÉ 3
+
+**Durée estimée** : 2-3 jours
+**Prerequisites** : PID + rapports opérationnels
+
+#### Objectifs
+1. Visualisations temps réel métriques clés
+2. Dashboard HTML simple auto-refresh
+3. Graphs CTL/ATL/TSB, adherence, HRV
+
+#### Livrables
+- [ ] Dashboard HTML fonctionnel
+- [ ] 5+ graphs interactifs
+- [ ] Script génération automatique
+
+---
+
+### Sprint R13 - Withings Integration (Optionnel) 🔌
+
+**Durée estimée** : 2-3 jours
+**Priorité** : Basse (nice-to-have)
+
+#### Objectifs
+1. Intégration API Withings (HRV, sommeil, composition)
+2. Enrichissement wellness data quotidien
+
+---
+
+---
+
+### État Actuel - 25 Janvier 2026
+
+**Sprint en cours:** Pause Stratégique S078-S079 (post R9.A-F complétés)
+**Semaine:** S078 (26 jan - 01 fév 2026)
 **Version:** v2.3.1+
 
 #### Prochains Sprints
@@ -2768,6 +2902,50 @@ cyclisme_training_logs/
 
 ---
 
+
+
+## Roadmap Summary - Updated 25 Jan 2026
+
+### ✅ Phase 1: Foundation (Complété)
+- R1-R8 : Core infrastructure, API sync, automation
+
+### ✅ Phase 2: Monitoring & Baseline (Complété)
+- R9.A-F : Monitoring adherence, baseline analysis, pattern analysis
+- **Durée** : 04-25 jan 2026 (3 semaines)
+- **Résultats** : Adherence 77.8%, 4 insights actionnables, infrastructure opérationnelle
+
+### ⏸️ Pause Stratégique (En cours)
+- S078-S079 : Monitoring passif, accumulation données
+- **Durée** : 27 jan - 09 fév 2026 (2 semaines)
+- **Objectif** : 42j baseline robuste, affûtage pré-tests S080
+
+### 🎯 Milestone S080 (À venir)
+- Tests FTP/VO2/Anaérobie/Sprint
+- **Date** : 10-16 fév 2026 (1 semaine)
+- **Critical** : Inputs essentiels calibration PID
+
+### 🚀 Phase 3: Training Intelligence (Post-S080)
+- R10 : PID Calibration (PRIORITÉ 1, 5-7j)
+- R11 : AI Weekly Reports (PRIORITÉ 2, 3-4j)
+- R12 : Monitoring Dashboard (PRIORITÉ 3, 2-3j)
+- R13 : Withings Integration (Optionnel, 2-3j)
+
+### Timeline Consolidée
+```
+✅ 04-25 jan    : Sprint R9 complété
+⏸️ 27 jan-09 fév : Pause stratégique (S078-S079)
+🎯 10-16 fév    : Tests S080 (milestone)
+🚀 17 fév+      : Sprints R10-R13 (training intelligence)
+```
+
+### Metrics Progression
+- **Adherence baseline** : 77.8% (14/18 workouts)
+- **Données collectées** : 21j → 42j (post-S079) → 49j (post-S080)
+- **Tests FTP** : 0 (depuis Oct 2025) → 4 tests S080
+- **PID status** : Non calibré → Calibration post-S080
+
+---
+
 ## ✅ Statut Global
 
 **Projet :** ✅ Production-Ready
@@ -2778,7 +2956,7 @@ cyclisme_training_logs/
 
 ---
 
-**Dernière mise à jour :** 10 janvier 2026
-**Prochaine revue :** Sprint R6 planning (estimé mi-janvier 2026)
+**Dernière mise à jour :** 25 janvier 2026
+**Prochaine revue :** Post-S080 Sprint R10 planning (estimé mi-février 2026)
 
 🤖 *Generated with [Claude Code](https://claude.com/claude-code)*
