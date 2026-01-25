@@ -2,8 +2,8 @@
 
 **Date de livraison**: 25 janvier 2026
 **Version**: v2.2.0
-**Archive**: `sprint-r9-v2.2.0-20260125.tar.gz`
-**SHA256**: `7ecbdc33a8e144aad7a9d66cf3ebbc7dd20b67d82050a499c5fadea2a4ec7220`
+**Archive**: `sprint-r9-v2.2.0-20260125.tar.gz` (22.3 MB)
+**SHA256**: `a784a1890a8eaa2c10a2c6818d42d01ceefa85fe37454671a63532e3f1a68605`
 
 ---
 
@@ -17,6 +17,8 @@ Ce sprint s'est concentré sur la **robustesse et l'automatisation complète** d
 3. ✅ Enrichissement contexte analyses AI
 4. ✅ Fiabilisation synchronisation iCloud
 5. ✅ Augmentation couverture tests
+6. ✅ Nettoyage complet organisation projet
+7. ✅ Mise à jour documentation Sphinx
 
 ---
 
@@ -237,6 +239,77 @@ tests/workflows/test_insert_analysis.py
 
 ---
 
+### 7. Nettoyage Complet Organisation Projet
+**Statut**: ✅ Terminé
+**Impact**: Majeur - Professionnalisme et maintenabilité
+
+#### Problème Initial
+Structure projet polluée avec fichiers obsolètes et mal placés:
+- 9 guides markdown dans code source (cyclisme_training_logs/)
+- 11 fichiers legacy (backups, scripts shell, test data)
+- 5 répertoires obsolètes à la racine (backups/, patches/, references/, withings_integration/, .athlete_feedback/)
+- 2 fichiers markdown dans docs/ Sphinx
+- Vieux logs et backups datant de novembre-décembre 2025
+
+#### Actions Réalisées
+**Total fichiers déplacés**: 41 fichiers + 5 répertoires
+
+1. **Nettoyage code source** (cyclisme_training_logs/)
+   - 9 guides markdown → `project-docs/archives/legacy-guides/`
+   - 11 fichiers legacy → `project-docs/archives/legacy-code/`
+   - Garde uniquement: Python modules + reports/README.md
+
+2. **Nettoyage racine projet**
+   - test_sync_detection.py → `scripts/debug/`
+   - .athlete_feedback/ (vide) → Supprimé
+   - backups/ → `project-docs/archives/old-backups/`
+   - patches/ → `project-docs/archives/patches/`
+   - references/ → `project-docs/guides/` (4 guides relocalisés)
+   - withings_integration/ → `project-docs/archives/withings_integration/`
+
+3. **Nettoyage docs/ Sphinx**
+   - ROADMAP.md (obsolète) → `project-docs/archives/old-prompts/`
+   - SPRINT_R10_MVP_COMPLETION.md → `project-docs/sprints/`
+
+4. **Nettoyage logs/**
+   - Vieux logs décembre 2025 → `project-docs/archives/old-logs/`
+   - Documents markdown → Archivés
+   - Garde uniquement: `weekly_reports/` actifs
+
+5. **Configuration mise à jour**
+   - `.pre-commit-config.yaml`: Exclusion `project-docs/archives/`
+   - Suppression exclusions obsolètes
+
+#### Structure Finale (Propre)
+```
+cyclisme-training-logs/
+├── .github/              # CI/CD workflows
+├── .claude/              # Claude Code settings
+├── cyclisme_training_logs/  # Source code Python UNIQUEMENT
+├── tests/                # Tests unitaires
+├── scripts/              # Scripts maintenance
+├── data/                 # Workout templates, planning
+├── logs/                 # Logs actifs uniquement
+├── docs/                 # Sphinx (.rst) UNIQUEMENT
+├── project-docs/         # Documentation + archives (15 sous-dossiers)
+└── releases/             # Archives releases (gitignored)
+```
+
+#### Bénéfices
+- **Clarté maximale**: Chaque chose à sa place légitime
+- **Navigation facilitée**: Structure logique et prévisible
+- **Standards Python**: Architecture professionnelle
+- **Zéro data loss**: Tout préservé dans archives/
+- **Git history**: 30 renommages détectés (100% traçabilité)
+
+#### Validation
+- ✅ Code source: Python modules uniquement
+- ✅ docs/: Sphinx (.rst, conf.py) uniquement
+- ✅ project-docs/: Documentation projet (.md)
+- ✅ Archives: 15 sous-répertoires (legacy code préservé)
+
+---
+
 ## 🐛 Bugs Corrigés
 
 ### Bug Critique
@@ -434,11 +507,24 @@ Le système est maintenant **production-ready** avec:
 
 **État**: Prêt pour utilisation quotidienne intensive sans supervision.
 
+### 📦 Note sur l'Archive
+
+L'archive a été **recréée après nettoyage complet** du projet pour garantir:
+- Structure propre et professionnelle
+- Documentation Sphinx à jour (25 janvier 2026)
+- Zéro fichiers obsolètes ou mal placés
+- Organisation optimale (chaque chose à sa place)
+
+Taille augmentée de 20.4 MB → 22.3 MB due à:
+- Documentation Sphinx complète (97 pages HTML)
+- Archives organisées dans project-docs/archives/
+- Aucun fichier legacy dans code source
+
 ---
 
-**Archive disponible**: `sprint-r9-v2.2.0-20260125.tar.gz` (20.4 MB)
+**Archive disponible**: `sprint-r9-v2.2.0-20260125.tar.gz` (22.3 MB)
 **Location**: iCloud Drive → Documents → cyclisme-training-logs-archives
-**SHA256**: `7ecbdc33a8e144aad7a9d66cf3ebbc7dd20b67d82050a499c5fadea2a4ec7220`
+**SHA256**: `a784a1890a8eaa2c10a2c6818d42d01ceefa85fe37454671a63532e3f1a68605`
 
 ---
 
