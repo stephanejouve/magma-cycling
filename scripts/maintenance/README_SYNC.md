@@ -37,28 +37,28 @@ Si le LaunchAgent n'est pas encore installé:
 
 ```bash
 # Copier le plist dans LaunchAgents
-cp scripts/maintenance/com.cyclisme.sync-docs-icloud.plist ~/Library/LaunchAgents/
+cp scripts/launchagents/com.cyclisme.mnt.20-sync-docs-hourly.plist ~/Library/LaunchAgents/
 
 # Charger le LaunchAgent
-launchctl load ~/Library/LaunchAgents/com.cyclisme.sync-docs-icloud.plist
+launchctl load ~/Library/LaunchAgents/com.cyclisme.mnt.20-sync-docs-hourly.plist
 
 # Vérifier qu'il tourne
 launchctl list | grep cyclisme
 ```
 
-Résultat attendu: `com.cyclisme.sync-docs-icloud` avec exit code 0
+Résultat attendu: `com.cyclisme.mnt.20-sync-docs-hourly` avec exit code 0
 
 ## 🤖 Synchronisation Automatique
 
-**LaunchAgent actif:** `com.cyclisme.sync-docs-icloud`
+**LaunchAgent actif:** `com.cyclisme.mnt.20-sync-docs-hourly`
 
 **Fréquence:**
 - ✅ Au démarrage système (RunAtLoad)
 - ✅ Toutes les heures (StartInterval: 3600s)
 
 **Logs:**
-- Standard: `~/Library/Logs/sync-docs-icloud.log`
-- Erreurs: `~/Library/Logs/sync-docs-icloud.error.log`
+- Standard: `~/Library/Logs/cyclisme-mnt-sync-docs.log`
+- Erreurs: `~/Library/Logs/cyclisme-mnt-sync-docs.error.log`
 
 ## 📱 Accès depuis iPhone
 
@@ -102,29 +102,29 @@ launchctl list | grep cyclisme
 
 ### Recharger après modification
 ```bash
-launchctl unload ~/Library/LaunchAgents/com.cyclisme.sync-docs-icloud.plist
-launchctl load ~/Library/LaunchAgents/com.cyclisme.sync-docs-icloud.plist
+launchctl unload ~/Library/LaunchAgents/com.cyclisme.mnt.20-sync-docs-hourly.plist
+launchctl load ~/Library/LaunchAgents/com.cyclisme.mnt.20-sync-docs-hourly.plist
 ```
 
 ### Désactiver temporairement
 ```bash
-launchctl unload ~/Library/LaunchAgents/com.cyclisme.sync-docs-icloud.plist
+launchctl unload ~/Library/LaunchAgents/com.cyclisme.mnt.20-sync-docs-hourly.plist
 ```
 
 ### Réactiver
 ```bash
-launchctl load ~/Library/LaunchAgents/com.cyclisme.sync-docs-icloud.plist
+launchctl load ~/Library/LaunchAgents/com.cyclisme.mnt.20-sync-docs-hourly.plist
 ```
 
 ### Voir les logs en temps réel
 ```bash
-tail -f ~/Library/Logs/sync-docs-icloud.log
+tail -f ~/Library/Logs/cyclisme-mnt-sync-docs.log
 ```
 
 ## ⚙️ Configuration
 
 ### Fichier LaunchAgent
-`~/Library/LaunchAgents/com.cyclisme.sync-docs-icloud.plist`
+`~/Library/LaunchAgents/com.cyclisme.mnt.20-sync-docs-hourly.plist`
 
 ### Changer la fréquence
 Éditer le plist, modifier `StartInterval`:
@@ -141,8 +141,8 @@ Valeurs courantes:
 
 Puis recharger:
 ```bash
-launchctl unload ~/Library/LaunchAgents/com.cyclisme.sync-docs-icloud.plist
-launchctl load ~/Library/LaunchAgents/com.cyclisme.sync-docs-icloud.plist
+launchctl unload ~/Library/LaunchAgents/com.cyclisme.mnt.20-sync-docs-hourly.plist
+launchctl load ~/Library/LaunchAgents/com.cyclisme.mnt.20-sync-docs-hourly.plist
 ```
 
 ## 🐛 Troubleshooting
@@ -153,7 +153,7 @@ launchctl load ~/Library/LaunchAgents/com.cyclisme.sync-docs-icloud.plist
 launchctl list | grep cyclisme
 
 # Vérifier les logs d'erreur
-cat ~/Library/Logs/sync-docs-icloud.error.log
+cat ~/Library/Logs/cyclisme-mnt-sync-docs.error.log
 
 # Tester manuellement
 scripts/maintenance/sync_docs_icloud.sh -v
