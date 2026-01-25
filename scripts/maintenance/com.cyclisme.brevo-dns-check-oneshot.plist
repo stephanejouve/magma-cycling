@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- ONE-SHOT: Brevo DNS Check (30 minutes after loading) -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+
+    <!-- Service identifier -->
+    <key>Label</key>
+    <string>com.cyclisme.brevo-dns-check-oneshot</string>
+
+    <!-- Metadata -->
+    <key>Description</key>
+    <string>One-shot: Check Brevo DNS propagation after 30 minutes</string>
+
+    <!-- Command to execute -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>-c</string>
+        <string>
+            sleep 1800 &amp;&amp; \
+            /Users/stephanejouve/cyclisme-training-logs/scripts/maintenance/check_brevo_dns.sh &amp;&amp; \
+            osascript -e 'display notification "DNS propagation vérifiée! Voir terminal." with title "✅ Brevo DNS Check"' &amp;&amp; \
+            launchctl unload ~/Library/LaunchAgents/com.cyclisme.brevo-dns-check-oneshot.plist
+        </string>
+    </array>
+
+    <!-- Working directory -->
+    <key>WorkingDirectory</key>
+    <string>/Users/stephanejouve/cyclisme-training-logs</string>
+
+    <!-- Run at load (then sleep 30 min) -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- Logging -->
+    <key>StandardOutPath</key>
+    <string>/Users/stephanejouve/Library/Logs/brevo-dns-check-oneshot.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/stephanejouve/Library/Logs/brevo-dns-check-oneshot.error.log</string>
+
+    <!-- Environment -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+
+    <!-- Timeout (ensure it can run for 30+ min) -->
+    <key>ExitTimeOut</key>
+    <integer>2400</integer>
+</dict>
+</plist>
