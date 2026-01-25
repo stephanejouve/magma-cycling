@@ -29,7 +29,7 @@ Ce workflow va te guider à travers 6 étapes :
 👉 Aucun upload de fichier nécessaire !
 
 
-Appuyer sur ENTRÉE pour démarrer...[H[2J[INFO] 
+Appuyer sur ENTRÉE pour démarrer...[H[2J[INFO]
 ======================================================================
 [INFO] DÉTECTION SÉANCES PLANIFIÉES SAUTÉES
 [INFO] ======================================================================
@@ -37,7 +37,7 @@ Appuyer sur ENTRÉE pour démarrer...[H[2J[INFO]
 [INFO] Workouts planifiés trouvés : 27
 [INFO] Activités réalisées trouvées : 28
 [WARNING] ⏭️  SKIPPED : S072-05-TEC-TechniqueCadence-V001 [2025-12-19]
-[INFO] 
+[INFO]
 ======================================================================
 [INFO] RÉSUMÉ DÉTECTION
 [INFO] ======================================================================
@@ -81,7 +81,7 @@ Appuyer sur ENTRÉE pour démarrer...[H[2J[INFO]
   [2] Traiter repos/sautées en batch
   [0] Quitter
 
-Ton choix : 
+Ton choix :
 ======================================================================
 📝 GÉNÉRATION SESSIONS SPÉCIALES
 ======================================================================
@@ -109,14 +109,14 @@ Ton choix :
    Début :
    ### S072-07-REC-ReposObligatoire
    Date : 21/12/2025
-   
+
    #### Métriques Pré-séance
    - CTL : 50
    - ATL : 35
    - TSB : +15
    - Sommeil : 8h02 (score 57, VFC 38ms)
    - FC repos : 45 bpm
-   
+
    ... (50 lignes suivantes)
 
 ======================================================================
@@ -130,8 +130,8 @@ Ton choix :
   [4] Copier dans presse-papier
   [0] Retour menu réconciliation
 
-Ton choix (0/1/2/3/4) : 
-⚠️  Confirmer insertion directe (sans enrichissement) ? (o/n) : 
+Ton choix (0/1/2/3/4) :
+⚠️  Confirmer insertion directe (sans enrichissement) ? (o/n) :
 ✅ Insertion réussie dans /Users/stephanejouve/cyclisme-training-logs/logs/workouts-history.md
    1 sessions ajoutées
 
@@ -153,7 +153,7 @@ Pousser vers remote ? (o/n) :    ✅ Push réussi !
 🔄 Retour détection gaps pour sessions restantes...
 ══════════════════════════════════════════════════════════════════════
 
-Appuyer sur ENTRÉE pour continuer...[H[2J[INFO] 
+Appuyer sur ENTRÉE pour continuer...[H[2J[INFO]
 ======================================================================
 [INFO] DÉTECTION SÉANCES PLANIFIÉES SAUTÉES
 [INFO] ======================================================================
@@ -161,7 +161,7 @@ Appuyer sur ENTRÉE pour continuer...[H[2J[INFO]
 [INFO] Workouts planifiés trouvés : 27
 [INFO] Activités réalisées trouvées : 28
 [WARNING] ⏭️  SKIPPED : S072-05-TEC-TechniqueCadence-V001 [2025-12-19]
-[INFO] 
+[INFO]
 ======================================================================
 [INFO] RÉSUMÉ DÉTECTION
 [INFO] ======================================================================
@@ -205,7 +205,7 @@ Appuyer sur ENTRÉE pour continuer...[H[2J[INFO]
   [2] Traiter repos/sautées en batch
   [0] Quitter
 
-Ton choix : 
+Ton choix :
 ======================================================================
 📝 GÉNÉRATION SESSIONS SPÉCIALES
 ======================================================================
@@ -216,4 +216,4 @@ Ton choix :
 
 📝 Feedback pour S072-07 (repos planifié)
    (Laisser vide pour ignorer)
-   Sommeil (format 7h30) :    Score sommeil (0-100) : 
+   Sommeil (format 7h30) :    Score sommeil (0-100) :
