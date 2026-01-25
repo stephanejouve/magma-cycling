@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- ONE-SHOT: End-of-Week Workflow (immediate execution) -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+
+    <!-- Service identifier -->
+    <key>Label</key>
+    <string>com.cyclisme.end-of-week-oneshot</string>
+
+    <!-- Metadata -->
+    <key>Description</key>
+    <string>One-shot: Execute end-of-week workflow immediately (S077 → S078)</string>
+
+    <!-- Command to execute -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>-c</string>
+        <string>
+            /Users/stephanejouve/.local/bin/poetry run end-of-week --auto-calculate --provider claude_api --auto &amp;&amp; \
+            osascript -e 'display notification "Workflow end-of-week terminé! Voir logs." with title "✅ End-of-Week"' &amp;&amp; \
+            launchctl unload ~/Library/LaunchAgents/com.cyclisme.end-of-week-oneshot.plist
+        </string>
+    </array>
+
+    <!-- Working directory -->
+    <key>WorkingDirectory</key>
+    <string>/Users/stephanejouve/cyclisme-training-logs</string>
+
+    <!-- Run immediately at load -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- Logging -->
+    <key>StandardOutPath</key>
+    <string>/Users/stephanejouve/Library/Logs/end-of-week-oneshot.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/stephanejouve/Library/Logs/end-of-week-oneshot.error.log</string>
+
+    <!-- Environment -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/Users/stephanejouve/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+
+    <!-- Timeout (allow 30 min for workflow completion) -->
+    <key>ExitTimeOut</key>
+    <integer>1800</integer>
+</dict>
+</plist>
