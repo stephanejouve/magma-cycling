@@ -36,6 +36,16 @@ poetry run workflow-coach
 
 ## 🚀 Features
 
+### 🤖 Automation & Monitoring (Sprint R9 - NEW!)
+- **Adherence monitoring** : Surveillance automatique adherence workouts (CLI + optional automation)
+- **Pattern analysis** : Détection patterns jour semaine, risk scoring 0-100
+- **Baseline analysis** : Analyse 21 jours adherence, TSS, patterns
+- **PID evaluation** : Intelligence AI 7 jours - génération learnings/patterns/adaptations
+- **Daily-sync automation** : Sync quotidien Intervals.icu (CLI command)
+- **End-of-week automation** : Planning hebdomadaire automatique (CLI command)
+- **Baseline established** : 77.8% adherence (14/18 workouts), 4 insights actionnables
+- **LaunchAgents** _(macOS only, optional)_ : Automation via 7 agents (scripts/launchagents/)
+
 ### 🧠 Training Intelligence
 - **Apprentissage progressif** : Learnings avec confidence LOW → MEDIUM → HIGH → VALIDATED
 - **Pattern detection** : Identification automatique patterns récurrents
@@ -60,6 +70,14 @@ poetry run workflow-coach
 - **4 AI providers** : OpenAI, Claude, Mistral, Ollama
 - **Clipboard fallback** : 0 API cost (copie/colle manuel)
 - **Workflow orchestration** : Workflow Coach pipeline complet
+
+### 📅 Optional: LaunchAgents Automation _(macOS only)_
+**Note**: All features work via CLI commands. LaunchAgents provide optional scheduling on macOS.
+
+For macOS users wanting automatic scheduling:
+- **7 agents available** in `scripts/launchagents/` with setup instructions
+- Automate: daily-sync (21:30), adherence check (22:00), PID evaluation (23:00), end-of-week (Sun 20:00)
+- **Other platforms**: Use cron (Linux) or Task Scheduler (Windows) with same CLI commands
 
 ---
 
@@ -116,10 +134,28 @@ OLLAMA_URL=http://localhost:11434
 
 ### CLI Commands
 
+**Monitoring & Adherence:**
+```bash
+# Check workout adherence (run manually or schedule via cron/LaunchAgents)
+poetry run check-workout-adherence --week S078
+
+# View adherence baseline data
+cat ~/data/monitoring/workout_adherence.jsonl | jq '.'
+
+# Generate baseline analysis (21 days)
+poetry run baseline-analysis --start-date 2026-01-05 --days 21
+
+# Pattern analysis with risk scoring
+poetry run pattern-analysis --data ~/data/monitoring/workout_adherence.jsonl
+```
+
 **Training Intelligence:**
 ```bash
 # Backfill intelligence from historical data (2024-2025)
 poetry run backfill-intelligence --start-date 2024-01-01 --end-date 2025-12-31 --output ~/data/intelligence.json
+
+# Daily PID evaluation (runs automatically at 23h00)
+poetry run pid-daily-evaluation --days-back 7
 
 # View learnings
 python -c "from cyclisme_training_logs.intelligence import TrainingIntelligence; ti = TrainingIntelligence.load_from_file('intelligence.json'); print([l.description for l in ti.learnings.values()])"
@@ -187,9 +223,12 @@ poetry run --help
 - **[GUIDE_COMMIT_GITHUB.md](project-docs/guides/GUIDE_COMMIT_GITHUB.md)** - Git workflow
 
 **Technical Docs** (`project-docs/`):
+- **[ROADMAP.md](project-docs/ROADMAP.md)** - Roadmap projet (Sprint R9-R13, Phase 3)
+- **[COMMIT_CONVENTIONS.md](project-docs/COMMIT_CONVENTIONS.md)** - Convention traçabilité commits
 - **[CHANGELOG.md](project-docs/CHANGELOG.md)** - Historique versions
 - **[ARCHITECTURE.md](project-docs/architecture/)** - Architecture système
 - **[WORKFLOWS/](project-docs/workflows/)** - Workflow diagrams (GRAFCET, UML)
+- **[LaunchAgents/](scripts/launchagents/)** - Automation setup (7 agents)
 
 **Sprints & Validation** (`project-docs/sprints/`):
 - **[SPRINT_R4PP_VALIDATION_MOA.md](project-docs/sprints/)** - Sprint R4++ (120/100) ✅
@@ -202,10 +241,10 @@ poetry run --help
 ### Run Tests
 
 ```bash
-# All tests (598 tests including integration tests)
+# All tests (636+ tests including integration tests)
 poetry run pytest tests/ -v
 
-# Unit tests only (326 tests - what CI runs)
+# Unit tests only (364+ tests - what CI runs)
 poetry run pytest tests/config/ tests/intelligence/ tests/planning/ tests/test_ai_providers/ tests/utils/ -v
 
 # Specific module
@@ -222,18 +261,20 @@ poetry run pytest tests/ -v --cov=cyclisme_training_logs --cov-report=html
 poetry run pytest tests/ --cov=cyclisme_training_logs --cov-report=term
 ```
 
-**Test Suite v2.3.1:**
-- **598 tests total** (596 passed, 1 failed legacy, 1 skipped)
-- **54 new tests** (v2.3.1): Di2 analysis + upload_workouts
-  - API Di2: 6 tests (intervals_client gear streams)
-  - Analyzers: 9 tests (gear metrics extraction)
-  - Workflows: 32 tests (validator + uploader)
-  - Integration: 8 tests (Di2 workflow end-to-end)
-- **Coverage: 29%** overall (improvement from 28%)
+**Test Suite v3.0.0:**
+- **636+ tests total** (634+ passed)
+- **38 new tests** (v3.0.0): Monitoring & baseline analysis
+  - Adherence monitoring: 15 tests
+  - Pattern analysis: 12 tests (risk scoring, day-of-week patterns)
+  - Baseline analysis: 11 tests (21-day baseline validation)
+- **54 tests** (v2.3.1): Di2 analysis + upload_workouts
+  - API Di2: 6 tests, Analyzers: 9 tests, Workflows: 32 tests, Integration: 8 tests
+- **Coverage: 30%** overall (improvement from 29%)
   - Core modules: 90-100% (utils, intelligence, planning)
-  - New modules: 53-72% (upload_workouts, intervals_client)
+  - Monitoring modules: 84% (adherence, patterns, baseline)
+  - Di2 modules: 53-72% (upload_workouts, intervals_client)
 
-**Note**: CI/CD runs unit tests only (326 tests). Full test suite includes integration tests requiring local data files and API access.
+**Note**: CI/CD runs unit tests only (364+ tests). Full test suite includes integration tests requiring local data files and API access.
 
 ### Code Quality
 
@@ -267,15 +308,20 @@ pre-commit install
 cyclisme-training-logs/
 ├── cyclisme_training_logs/      # Code production
 │   ├── intelligence/            # Training Intelligence (learnings, PID)
+│   ├── monitoring/              # Adherence monitoring, pattern analysis (NEW v3.0.0)
 │   ├── planning/                # Planning Manager (weekly planner)
 │   ├── analyzers/               # Weekly/daily aggregators
 │   ├── api/                     # Intervals.icu client
 │   ├── workflows/               # Workflow orchestration
 │   ├── ai_providers/            # Multi-AI support (OpenAI, Claude, etc.)
-│   ├── scripts/                 # CLI scripts (backfill, etc.)
+│   ├── scripts/                 # CLI scripts (backfill, pid-evaluation, etc.)
 │   └── ...
+├── scripts/                     # Automation scripts
+│   ├── launchagents/            # Optional: macOS LaunchAgents setup (NEW v3.0.0)
+│   └── monitoring/              # Monitoring automation scripts
 ├── tests/                       # Tests (unit + integration)
 │   ├── intelligence/            # Intelligence tests (44 tests)
+│   ├── monitoring/              # Monitoring tests (38 tests) (NEW v3.0.0)
 │   ├── planning/                # Planning tests
 │   ├── integration/             # Integration tests
 │   └── ...
@@ -283,7 +329,8 @@ cyclisme-training-logs/
 │   ├── guides/                  # User guides
 │   ├── sprints/                 # Sprint reports
 │   ├── workflows/               # Workflow diagrams
-│   └── architecture/            # Architecture docs
+│   ├── architecture/            # Architecture docs
+│   └── ROADMAP.md               # Roadmap projet (NEW v3.0.0)
 └── pyproject.toml               # Poetry config + CLI entry points
 ```
 
@@ -291,9 +338,17 @@ cyclisme-training-logs/
 
 ## 📊 Version
 
-**Current:** v2.3.1 (2026-01-10)
+**Current:** v3.0.0 (2026-01-25) 🚀
 
 **Recent Releases:**
+- **v3.0.0** (2026-01-25) - **Sprint R9 Complete & ROADMAP Reorganization** 🎯
+  - Sprint R9.A-F: Monitoring & Baseline Analysis (04-25 Jan)
+  - LaunchAgents architecture (7 agents productifs, auto-migration)
+  - Adherence baseline 77.8% (14/18 workouts)
+  - Pattern analysis avec risk scoring
+  - ROADMAP reorganization + Commit conventions
+  - 206 commits, 38 tests, 84% coverage modules monitoring
+  - [Release Notes](https://github.com/stephanejouve/cyclisme-training-logs/releases/tag/v3.0.0)
 - **v2.3.1** - Di2 Analysis + Tests (54 tests, coverage +1%, upload_workouts +53%)
 - **v2.2.0** - Sprint R4++ (Training Intelligence + Backfill + PID) - 120/100 MOA
 - **v2.1.1** - Intervals.icu Sync Fix (session cancellation → NOTE)
