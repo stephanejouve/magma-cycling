@@ -83,12 +83,17 @@ if [[ ! -d "$TARGET_DIR" ]]; then
     fi
 fi
 
-# Rsync options
+# Rsync options optimized for iCloud
 RSYNC_OPTS=(
-    -a                          # Archive mode (recursive, preserve permissions, times, etc.)
-    --no-times                  # Don't preserve modification times (fixes iCloud permission errors)
+    -r                          # Recursive (but not full archive mode)
+    --inplace                   # Update files in-place (no temp files - critical for iCloud)
+    --no-perms                  # Don't preserve permissions (iCloud manages these)
+    --no-owner                  # Don't preserve owner
+    --no-group                  # Don't preserve group
+    --no-times                  # Don't preserve modification times
     --update                    # Skip files that are newer in target
     --ignore-errors             # Continue on errors (iCloud sync conflicts)
+    --whole-file                # Copy whole files (no delta transfer - better for iCloud)
     $VERBOSE                    # Verbose if requested
     $DRY_RUN                    # Dry run if requested
     $STATS                      # Stats if requested
