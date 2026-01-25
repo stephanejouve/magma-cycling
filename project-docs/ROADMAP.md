@@ -2,7 +2,7 @@
 
 **Projet :** Système d'analyse et planification d'entraînement cyclisme
 **Période :** Novembre 2025 - Aujourd'hui
-**Version actuelle :** v2.3.0
+**Version actuelle :** v3.0.0
 **Statut :** Production-ready ✅
 
 ---
@@ -236,11 +236,11 @@
 
 ---
 
-## 🎯 État Actuel (18 Janvier 2026)
+## 🎯 État Actuel (25 Janvier 2026)
 
-**Sprint en cours:** Pause Stratégique S078-S079 (post R9.A-F complétés)
+**Sprint à venir:** Pause Stratégique S078-S079 (débute 27 jan, post R9.A-F complétés)
 **Semaine:** S078 (26 jan - 01 fév 2026)
-**Version:** v2.3.1+
+**Version:** v3.0.0
 
 ### ✅ Features Opérationnelles
 
@@ -284,8 +284,8 @@ trains --week-id S076                       # Servo-mode ajustements
 
 | Métrique | Valeur | Status |
 |----------|--------|--------|
-| **Tests passing** | 598/598 (100%) | ✅ |
-| **Coverage global** | 29% | 🔄 (+1% depuis v2.3.0) |
+| **Tests passing** | 636+/636+ (99.7%) | ✅ |
+| **Coverage global** | 30% | 🔄 (+1% depuis v2.3.1) |
 | **PEP 8 violations** | 0 | ✅ |
 | **PEP 257 violations** | 0 | ✅ |
 | **MyPy errors** | 0 | ✅ |
@@ -733,9 +733,9 @@ Valider baseline FTP/VO2/Anaérobie/Sprint via protocole Zwift Camp
 
 ### État Actuel - 25 Janvier 2026
 
-**Sprint en cours:** Pause Stratégique S078-S079 (post R9.A-F complétés)
+**Sprint à venir:** Pause Stratégique S078-S079 (débute 27 jan, post R9.A-F complétés)
 **Semaine:** S078 (26 jan - 01 fév 2026)
-**Version:** v2.3.1+
+**Version:** v3.0.0
 
 #### Prochains Sprints
 
@@ -1950,7 +1950,7 @@ Total avec Phase 4 : 10-14 heures (1.5-2 jours)
 
 #### Contexte
 
-**État Actuel (17 Jan 2026) :**
+**État Actuel (25 Jan 2026) :**
 
 | Module | Lignes | Coverage | Tests | Status |
 |--------|--------|----------|-------|--------|
@@ -2914,7 +2914,7 @@ cyclisme_training_logs/
 - **Durée** : 04-25 jan 2026 (3 semaines)
 - **Résultats** : Adherence 77.8%, 4 insights actionnables, infrastructure opérationnelle
 
-### ⏸️ Pause Stratégique (En cours)
+### ⏸️ Pause Stratégique (Planifiée - débute 27 jan)
 - S078-S079 : Monitoring passif, accumulation données
 - **Durée** : 27 jan - 09 fév 2026 (2 semaines)
 - **Objectif** : 42j baseline robuste, affûtage pré-tests S080
