@@ -28,7 +28,7 @@ Ce workflow va te guider à travers 6 étapes :
 👉 Aucun upload de fichier nécessaire !
 
 
-Appuyer sur ENTRÉE pour démarrer...[H[2J[INFO] 
+Appuyer sur ENTRÉE pour démarrer...[H[2J[INFO]
 ======================================================================
 [INFO] DÉTECTION SÉANCES PLANIFIÉES SAUTÉES
 [INFO] ======================================================================
@@ -36,7 +36,7 @@ Appuyer sur ENTRÉE pour démarrer...[H[2J[INFO]
 [INFO] Workouts planifiés trouvés : 27
 [INFO] Activités réalisées trouvées : 28
 [WARNING] ⏭️  SKIPPED : S072-05-TEC-TechniqueCadence-V001 [2025-12-19]
-[INFO] 
+[INFO]
 ======================================================================
 [INFO] RÉSUMÉ DÉTECTION
 [INFO] ======================================================================
@@ -66,7 +66,7 @@ Appuyer sur ENTRÉE pour démarrer...[H[2J[INFO]
   [2] Traiter sautées en batch
   [0] Quitter
 
-Ton choix : 
+Ton choix :
 ⚠️  Aucune réconciliation disponible
 
 Appuyer sur ENTRÉE pour continuer...
@@ -82,7 +82,7 @@ Commiter les modifications ? (o/n) :    ⚠️  Erreur git : Command '['git', 'c
 🔄 Retour détection gaps pour sessions restantes...
 ══════════════════════════════════════════════════════════════════════
 
-Appuyer sur ENTRÉE pour continuer...[H[2J[INFO] 
+Appuyer sur ENTRÉE pour continuer...[H[2J[INFO]
 ======================================================================
 [INFO] DÉTECTION SÉANCES PLANIFIÉES SAUTÉES
 [INFO] ======================================================================
@@ -90,7 +90,7 @@ Appuyer sur ENTRÉE pour continuer...[H[2J[INFO]
 [INFO] Workouts planifiés trouvés : 27
 [INFO] Activités réalisées trouvées : 28
 [WARNING] ⏭️  SKIPPED : S072-05-TEC-TechniqueCadence-V001 [2025-12-19]
-[INFO] 
+[INFO]
 ======================================================================
 [INFO] RÉSUMÉ DÉTECTION
 [INFO] ======================================================================
@@ -120,4 +120,4 @@ Appuyer sur ENTRÉE pour continuer...[H[2J[INFO]
   [2] Traiter sautées en batch
   [0] Quitter
 
-Ton choix : 
+Ton choix :
