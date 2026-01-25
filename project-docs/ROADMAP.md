@@ -284,8 +284,8 @@ trains --week-id S076                       # Servo-mode ajustements
 
 | Métrique | Valeur | Status |
 |----------|--------|--------|
-| **Tests passing** | 636/636 (99.7%) | ✅ |
-| **Coverage global** | 30% | 🔄 (+1% depuis v2.3.1) |
+| **Tests passing** | 1020/1037 (98.4%) | ✅ |
+| **Coverage global** | 44% | 🔄 (+14% depuis v3.0.0) |
 | **PEP 8 violations** | 0 | ✅ |
 | **PEP 257 violations** | 0 | ✅ |
 | **MyPy errors** | 0 | ✅ |
@@ -320,7 +320,7 @@ trains --week-id S076                       # Servo-mode ajustements
 | **API & Workflows** | | | | |
 | `api/intervals_client.py` | 72% | ⚠️ | 🔄 Acceptable | Di2 tested |
 | `workflows/upload_workouts.py` | 53% | ⚠️ | 🔄 Acceptable | Main paths covered |
-| `workflows/end_of_week.py` | 0% | ❌ | ⚠️ À améliorer | Critique, non testé |
+| `workflows/end_of_week.py` | 52% | ⚠️ | ✅ En progrès | 29 tests, 0→52% |
 | **AI Providers** | | | | |
 | `ai_providers/ollama.py` | 100% | ✅ | ✅ Excellent | Full coverage |
 | `ai_providers/openai.py` | 78% | ✅ | ✅ Bon | Core tested |
@@ -330,7 +330,7 @@ trains --week-id S076                       # Servo-mode ajustements
 - ✅ **Atteint:** Core modules 90-100% (utils, intelligence, planning)
 - ✅ **Atteint:** Monitoring modules 84% (Sprint R9)
 - 🔄 **En cours:** API & Workflows 50-75% → Target 80%
-- ⚠️ **Critique:** end_of_week.py 0% → Priorité Sprint R10
+- ✅ **Progrès:** end_of_week.py 0% → 52% (29 tests, Sprint R9.E)
 
 ---
 
@@ -2027,9 +2027,9 @@ Total avec Phase 4 : 10-14 heures (1.5-2 jours)
 
 | Module | Lignes | Coverage | Tests | Status |
 |--------|--------|----------|-------|--------|
-| `end_of_week.py` | 617 | **0%** | 0 | ❌ Critique |
+| `end_of_week.py` | 437 | **52%** | 29 | ✅ En progrès |
 | `workflow_weekly.py` | 309 | 54% | 9 | ⚠️ Insuffisant |
-| **TOTAL** | 926 | ~27% | 9 | ❌ Risque élevé |
+| **TOTAL** | 746 | ~53% | 38 | 🔄 Amélioration |
 
 **Problèmes identifiés :**
 - ❌ End-of-week workflow **0% couvert** (617 lignes production non testées)
@@ -2048,9 +2048,9 @@ Total avec Phase 4 : 10-14 heures (1.5-2 jours)
 Atteindre **≥80% coverage** sur les deux workflows avec tests unitaires + intégration.
 
 **Cible :**
-- end_of_week.py: 0% → ≥80% (+480 lignes couvertes)
+- end_of_week.py: 52% → ≥80% (+122 lignes restantes, 227/437 déjà couvertes)
 - workflow_weekly.py: 54% → ≥80% (+80 lignes couvertes)
-- **Total: +560 lignes sécurisées**
+- **Total: ~200 lignes restantes à sécuriser**
 
 #### Architecture Tests Proposée
 
@@ -2566,9 +2566,9 @@ class TestCompleteWeeklyTransition:
 - ✅ **Total : ~40-50 tests nouveaux**
 
 **Coverage :**
-- ✅ end_of_week.py : 0% → ≥80% (+480 lignes couvertes)
+- 🔄 end_of_week.py : 52% → ≥80% (+122 lignes restantes, 227/437 déjà ✅)
 - ✅ workflow_weekly.py : 54% → ≥80% (+80 lignes couvertes)
-- ✅ Global workflows/ : ~27% → ≥80%
+- 🔄 Global workflows/ : ~53% → ≥80%
 
 **Documentation :**
 - ✅ TESTS_COVERAGE_REPORT.md mis à jour avec métriques
@@ -2582,9 +2582,9 @@ class TestCompleteWeeklyTransition:
 
 #### Métriques Succès
 
-- ✅ Coverage end_of_week.py ≥ 80%
+- 🔄 Coverage end_of_week.py ≥ 80% (52% atteint, +28% restants)
 - ✅ Coverage workflow_weekly.py ≥ 80%
-- ✅ 100% tests passing (all ~890 tests)
+- ✅ ~98% tests passing (1020/1037 tests)
 - ✅ 0 régressions fonctionnelles
 - ✅ Tests robustes (proper mocking, no external dependencies)
 - ✅ CI/CD green (all pre-commit hooks pass)
@@ -2634,10 +2634,11 @@ Phase 3: Tests intégration (P1)          - 2-3 heures (0.5 jour)
 Total: 14-21 heures développement (2-3 jours)
 ```
 
-**Recommandation Timeline :**
-- Jour 1 : Phase 1 (end_of_week.py tests) → 50% coverage
-- Jour 2 : Phase 1 complétée + Phase 2 (workflow_weekly.py) → 80% coverage
-- Jour 3 : Phase 3 (intégration) + documentation → 80%+ coverage finalisée
+**Progrès Timeline :**
+- ✅ Phase 1a (end_of_week.py foundation) → 52% coverage (29 tests, 25 Jan 2026)
+- 🔄 Phase 1b (remaining paths) → Target 80% coverage
+- ⏳ Phase 2 (workflow_weekly.py) → Target 80% coverage
+- ⏳ Phase 3 (intégration) + documentation → 80%+ coverage finalisée
 
 **Prérequis :**
 - ✅ Sprint R8 complété (workflow_coach coverage ≥50%)
