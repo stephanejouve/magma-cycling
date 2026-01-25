@@ -280,23 +280,57 @@ trains --week-id S076                       # Servo-mode ajustements
 - **Project cleanup bot**
 - **Code review package** generator
 
-### 📊 Métriques Projet (18 Jan 2026)
+### 📊 Métriques Projet (25 Jan 2026)
 
 | Métrique | Valeur | Status |
 |----------|--------|--------|
-| **Tests passing** | 636+/636+ (99.7%) | ✅ |
+| **Tests passing** | 636/636 (99.7%) | ✅ |
 | **Coverage global** | 30% | 🔄 (+1% depuis v2.3.1) |
 | **PEP 8 violations** | 0 | ✅ |
 | **PEP 257 violations** | 0 | ✅ |
 | **MyPy errors** | 0 | ✅ |
 | **Ruff warnings** | 0 | ✅ |
 | **Complexité max** | B-7 | ✅ |
-| **Python files** | ~90+ | ✅ |
-| **Test files** | ~60+ | ✅ |
-| **Lines of code** | ~13,500+ | ✅ |
-| **Test ratio** | ~1:1.5 | ✅ |
+| **Python files** | 87 | ✅ |
+| **Test files** | 82 | ✅ |
+| **Lines of code** | 34,760 | ✅ |
+| **Test lines** | 22,048 | ✅ |
+| **Test ratio** | 1:1.58 | ✅ |
 | **Pre-commit hooks** | 14 actifs | ✅ |
 | **CI/CD** | GitHub Actions | ✅ |
+
+#### Breakdown Coverage par Module (v3.0.0)
+
+| Module | Coverage | Tests | Status | Notes |
+|--------|----------|-------|--------|-------|
+| **Core & Utils** | | | | |
+| `utils/metrics.py` | 100% | ✅ | ✅ Excellent | Calculs TSS/IF |
+| `utils/clipboard.py` | 100% | ✅ | ✅ Excellent | pbcopy/pbpaste |
+| `utils/date_utils.py` | 98% | ✅ | ✅ Excellent | Gestion semaines |
+| **Intelligence** | | | | |
+| `intelligence/training_intelligence.py` | 95% | ✅ | ✅ Excellent | Learnings/Patterns |
+| `intelligence/pid_controller.py` | 92% | ✅ | ✅ Excellent | Adaptive FTP |
+| **Planning** | | | | |
+| `planning/planning_manager.py` | 96% | ✅ | ✅ Excellent | Weekly planner |
+| `planning/calendar.py` | 98% | ✅ | ✅ Excellent | Calendar logic |
+| **Monitoring** (NEW v3.0.0) | | | | |
+| `monitoring/adherence.py` | 84% | ✅ | ✅ Bon | Workout tracking |
+| `monitoring/patterns.py` | 84% | ✅ | ✅ Bon | Pattern analysis |
+| `monitoring/baseline.py` | 84% | ✅ | ✅ Bon | Baseline 21j |
+| **API & Workflows** | | | | |
+| `api/intervals_client.py` | 72% | ⚠️ | 🔄 Acceptable | Di2 tested |
+| `workflows/upload_workouts.py` | 53% | ⚠️ | 🔄 Acceptable | Main paths covered |
+| `workflows/end_of_week.py` | 0% | ❌ | ⚠️ À améliorer | Critique, non testé |
+| **AI Providers** | | | | |
+| `ai_providers/ollama.py` | 100% | ✅ | ✅ Excellent | Full coverage |
+| `ai_providers/openai.py` | 78% | ✅ | ✅ Bon | Core tested |
+| `ai_providers/claude.py` | 75% | ✅ | ✅ Bon | Core tested |
+
+**Objectifs Coverage:**
+- ✅ **Atteint:** Core modules 90-100% (utils, intelligence, planning)
+- ✅ **Atteint:** Monitoring modules 84% (Sprint R9)
+- 🔄 **En cours:** API & Workflows 50-75% → Target 80%
+- ⚠️ **Critique:** end_of_week.py 0% → Priorité Sprint R10
 
 ---
 
@@ -1264,8 +1298,8 @@ def _extract_gear_metrics(self, activity_id: str) -> dict[str, Any] | None:
 #### Dépendances & Blockers
 
 **Blocker CRITIQUE :**
-- ❌ **Aucune donnée SRAM AXS disponible** pour développement/tests
-- ❌ **Aucune donnée Campagnolo EPS** disponible
+- ❌ **Aucune donnée SRAM AXS disponible** pour développement/tests → **[Issue #8](https://github.com/stephanejouve/cyclisme-training-logs/issues/8)**
+- ❌ **Aucune donnée Campagnolo EPS** disponible → **[Issue #9](https://github.com/stephanejouve/cyclisme-training-logs/issues/9)**
 - ❌ Impossible valider streams names, formats, edge cases
 
 **Solutions :**
@@ -2883,15 +2917,15 @@ cyclisme_training_logs/
 
 ### Livrables MOA
 
-- **LIVRAISON_MOA_20260104.md** : Sprint R4 Qualité
-- **LIVRAISON_MOA_CLEANUP_20260104.md** : Sprint R5 Organization
-- **review_package_v2.2.0.zip** : Package revue code (660KB)
+- **[LIVRAISON_MOA_20260104.md](sprints/LIVRAISON_MOA_20260104.md)** : Sprint R4 Qualité
+- **[LIVRAISON_MOA_SPRINT_R5++.md](sprints/LIVRAISON_MOA_SPRINT_R5++.md)** : Sprint R5 Organization
+- **[LIVRAISON_MOA_SPRINT_R9.md](sprints/LIVRAISON_MOA_SPRINT_R9.md)** : Sprint R9 Monitoring (NEW v3.0.0)
+- **[Tous les livrables MOA](sprints/)** : Historique complet
 
 ### Archives Sprints
 
-- **sprint-r4-qualite-v2.2.0.tar.gz** (1.1 MB)
-- **sprint-r5-organization-v2.2.0.tar.gz** (16.5 MB)
-- **review_package_v2.2.0.zip** (660 KB)
+- **[sprint-r4-qualite-v2.2.0.tar.gz](archives/old-releases/sprint-r4-qualite-v2.2.0.tar.gz)** (1.1 MB)
+- **[sprint-r4pp-v2.2.0.tar.gz](archives/old-releases/sprint-r4pp-v2.2.0.tar.gz)** : Sprint R4++ archive
 
 ### Repository
 
