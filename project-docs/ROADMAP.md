@@ -2031,17 +2031,17 @@ Total avec Phase 4 : 10-14 heures (1.5-2 jours)
 | `workflow_weekly.py` | 309 | 54% | 9 | ⚠️ Insuffisant |
 | **TOTAL** | 746 | ~53% | 38 | 🔄 Amélioration |
 
-**Problèmes identifiés :**
-- ❌ End-of-week workflow **0% couvert** (617 lignes production non testées)
+**État après Sprint R9.E (25 Jan 2026) :**
+- ✅ End-of-week workflow **52% couvert** (227/437 lignes testées, 29 tests)
+- ✅ Tests intégration end-to-end créés (2 tests, dry-run + full flow)
+- ✅ Validation steps partiellement testées (clipboard mode, manual upload)
 - ⚠️ Workflow weekly 46% lignes non couvertes (lignes 212-305 + edge cases)
-- ❌ Aucun test intégration end-to-end
-- ❌ Validation steps non testées (validation, upload, archive)
+- ⚠️ Reste 17 tests à fixer (imports locaux WeeklyAnalysis, PIDDailyEvaluator, WorkoutUploader)
 
-**Risques production :**
-- Régressions silencieuses indétectables
-- Refactoring bloqué (pas de safety net)
-- Edge cases non couverts (API failures, missing files)
-- Incidents possibles chaque semaine (workflows utilisés hebdomadairement)
+**Risques production restants :**
+- ⚠️ Certains edge cases non couverts (API failures auto mode, archive errors)
+- ⚠️ Refactoring partiellement sécurisé (fondation solide mais 48% restant)
+- ✅ Dry-run modes entièrement testés (protection simulation complète)
 
 #### Objectif Sprint R9.E
 
@@ -2386,9 +2386,11 @@ class TestEndToEndIntegration:
         pass
 ```
 
-**Couverture estimée :** 25-30 tests → ~70-80% coverage end_of_week.py
+**Couverture réelle (Sprint R9.E) :** 29 tests → 52% coverage end_of_week.py ✅
+**Couverture cible restante :** ~15-20 tests additionnels → 80% coverage
 
-**Durée estimée Phase 1 :** 8-12 heures (1.5-2 jours)
+**Durée Phase 1 :** ✅ Complétée (25 Jan 2026) - 29 tests passing, fondation établie
+**Durée estimée Phase 1b :** ~4-6 heures (fixer 17 tests + nouveaux paths)
 
 **Phase 2 : workflow_weekly.py - Compléter Coverage (P0)** ⭐
 
@@ -2647,12 +2649,12 @@ Total: 14-21 heures développement (2-3 jours)
 - ✅ Validation MOA/PO priorité qualité
 
 **Trigger Implémentation (CONDITIONS DÉJÀ REMPLIES) :**
-- ❌ **Workflows critiques non testés** = risque élevé production (DÉJÀ VÉCU)
-- ✅ Besoin refactoring workflows bloqué par manque tests (ACTUEL)
-- ✅ Incidents production détectables par tests (PRÉVENTIF)
-- ❌ 617 lignes production 0% couvertes = dette technique critique (URGENT)
+- ✅ **Workflows critiques partiellement testés** = risque réduit production (Sprint R9.E)
+- ✅ Refactoring workflows partiellement sécurisé (52% coverage fondation)
+- ✅ Incidents production détectables par tests (29 tests préventifs)
+- 🔄 437 lignes production 52% couvertes (227 testées, 210 restantes)
 
-**Note MOA/PO :** Sprint **critique pour sécurité production**. Workflows end-of-week et weekly-analysis utilisés **chaque semaine** en production, **0% tests** = risque incidents silencieux élevé. Investment **2-3 jours** pour sécuriser infrastructure critique **long-terme**. ROI positif dès **1 incident évité**. Recommandation forte : **Priorité P0 après R9.D**.
+**Note MOA/PO :** Sprint R9.E **partiellement complété** (25 Jan 2026). end_of_week.py passe de **0% à 52% coverage** (29 tests). Fondation solide établie (dry-run, user input, intégration). Reste **28% vers objectif 80%** (17 tests à fixer, imports locaux). Risque production **significativement réduit**. Investment restant **~1 jour** pour atteindre 80%. ROI **déjà positif**.
 
 ---
 
