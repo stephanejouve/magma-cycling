@@ -6,6 +6,162 @@ Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/)
 et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 
+## [3.0.0] - 2026-01-25
+
+### Added - Sprint R9 Complete: Monitoring & Baseline Analysis
+
+**Sprint R9.A-F** (04-25 Jan 2026) - **206 commits depuis v2.0.0**:
+
+**R9.A - Daily Workout Sync** (`daily-sync` command):
+- Sync quotidien automatique Intervals.icu (activities, wellness, events)
+- Email reporting avec analyse AI (via `--send-email --ai-analysis`)
+- Auto-servo mode pour ajustements FTP adaptatifs (`--auto-servo`)
+- LaunchAgent macOS: exécution automatique 21:30 daily
+
+**R9.B - Session Update & Sync** (`update-session` command):
+- Cancel/skip session avec sync bidirectionnel Intervals.icu
+- Format NOTE Intervals: `[ANNULÉE]` ou `[SAUTÉE]` avec raison
+- Status tracking: completed/cancelled/skipped/missed
+- Sync flag `--sync` pour propagation immédiate
+
+**R9.C - Adherence Monitoring** (`check-workout-adherence` command):
+- Surveillance automatique adherence workouts vs planned
+- Export JSON format JSONL: `~/data/monitoring/workout_adherence.jsonl`
+- Métriques: adherence_rate, completed_count, skipped_count, reasons
+- LaunchAgent macOS: exécution 22:00 daily
+
+**R9.D - End-of-Week Planning** (`end-of-week` command):
+- Génération automatique planning semaine suivante
+- Analysis semaine écoulée (TSS, IF, zones, recovery)
+- AI-powered weekly plan avec contraintes athlète
+- LaunchAgent macOS: exécution dimanche 20:00
+
+**R9.E - Baseline Preliminary Analysis** (`baseline-analysis` command):
+- Analyse 21 jours baseline adherence (5-25 Jan 2026)
+- **Adherence baseline: 77.8%** (14/18 workouts completed)
+- **4 insights actionnables**:
+  - Skips concentrés lundi-mardi (50%)
+  - Planning inadapté début semaine
+  - Week-end 100% adherence (force du projet)
+  - TSS target réaliste (350 TSS/semaine)
+
+**R9.F - Advanced Pattern Analysis** (`pattern-analysis` command):
+- Détection patterns jour semaine (day-of-week adherence)
+- Clustering skip reasons (fatigue, weather, schedule)
+- **Risk scoring 0-100**: probabilité skip par contexte
+- Statistical analysis: chi-square tests, correlation matrices
+
+**Monitoring Infrastructure**:
+- **7 LaunchAgents macOS** (architecture productive):
+  - `com.cyclisme.rept.10-daily-sync-21h30` (reporting)
+  - `com.cyclisme.mon.10-adherence-22h` (monitoring)
+  - `com.cyclisme.anls.10-pid-evaluation-23h` (intelligence AI)
+  - `com.cyclisme.flow.10-end-of-week-sun-20h` (workflow)
+  - `com.cyclisme.mnt.10-project-clean-daily` (maintenance)
+  - `com.cyclisme.flow.20-check-training-logs-hourly` (checks)
+  - `com.cyclisme.mon.20-sync-backup-daily-23h30` (backup)
+- Migration scripts 3-phases: install → validate (48h) → archive (7j)
+- Auto-migration via LaunchAgents (phase triggers automatiques)
+
+**Dataset v2.0.0** (`~/data/monitoring/`):
+- `workout_adherence.jsonl`: baseline 21 jours (18 entrées)
+- `pattern_analysis.json`: day-of-week statistics
+- `baseline_report.json`: metrics + insights + recommendations
+
+### Added - Tests Suite v3.0.0
+
+**38 nouveaux tests** monitoring & analysis (84% coverage modules nouveaux):
+
+**Adherence Monitoring** (`tests/monitoring/test_adherence.py` - 15 tests):
+- `test_check_workout_adherence_full_week`: Adherence semaine complète
+- `test_check_workout_adherence_partial_completion`: Completion partielle
+- `test_check_workout_adherence_all_skipped`: Tous workouts skipped
+- `test_check_workout_adherence_mixed_status`: Statuts mixtes
+- `test_check_workout_adherence_no_events`: Aucun event Intervals.icu
+- Edge cases: empty week, API failures, malformed data
+
+**Pattern Analysis** (`tests/monitoring/test_patterns.py` - 12 tests):
+- `test_pattern_analysis_day_of_week`: Analyse jour semaine
+- `test_pattern_analysis_skip_reasons_clustering`: Clustering raisons
+- `test_pattern_analysis_risk_scoring`: Risk scoring 0-100
+- `test_pattern_analysis_correlation_matrix`: Corrélations TSS/IF/adherence
+- `test_pattern_analysis_empty_data`: Dataset vide
+- Statistical validation: chi-square, distributions
+
+**Baseline Analysis** (`tests/monitoring/test_baseline.py` - 11 tests):
+- `test_baseline_analysis_21_days`: Baseline 21 jours validation
+- `test_baseline_analysis_adherence_calculation`: Calcul adherence 77.8%
+- `test_baseline_analysis_insights_generation`: Génération insights
+- `test_baseline_analysis_recommendations`: Recommendations actionnables
+- Edge cases: insufficient data, outliers, partial weeks
+
+**Test Suite Overall**:
+- **636+ tests total** (634+ passed, 99.7% success rate)
+- **Coverage: 30%** overall (+1% from v2.3.1)
+  - Monitoring modules: 84% (adherence, patterns, baseline)
+  - Core modules: 90-100% (utils, intelligence, planning)
+  - API modules: 53-72% (upload_workouts, intervals_client)
+- Pre-commit hooks: ✅ 0 violations
+
+### Changed - Documentation & Standards
+
+**COMMIT_CONVENTIONS.md** (new file):
+- Convention traçabilité git: `[ROADMAP@<commit-sha>]`
+- Format: `<type>(<scope>): <description> [ROADMAP@<sha>]`
+- Référence ROADMAP version active au moment du commit
+- Résout dualité git history vs ROADMAP actuel (Sprint R9 reorganization)
+- Helper command: `git log -1 --format=%h project-docs/ROADMAP.md`
+
+**README.md** v3.0.0:
+- Section "Automation & Monitoring" (Sprint R9 features)
+- Section "Development Standards & Conventions":
+  - CODING_STANDARDS.md (docstrings PEP 257 + Google Style)
+  - COMMIT_CONVENTIONS.md (ROADMAP traceability)
+  - Configuration management (config.py mandatory for .env)
+- Brevo email configuration (daily-sync reports)
+- LaunchAgents clarification: macOS-only, optional (CLI commands work everywhere)
+- Version updated: v2.3.1 → v3.0.0
+- Test stats: 598 → 636+ tests
+- Release notes: v3.0.0 with 206 commits
+
+**ROADMAP.md** reorganization:
+- Sprint R9: "Monitoring & Baseline Analysis" (04-25 Jan) - 6 sub-sprints (R9.A-F)
+- Pause Stratégique S078-S079 (27 Jan - 09 Fév)
+- Sprint S080 Tests FTP (10-16 Fév)
+- Phase 3: Post-S080 Sprints (R10-R13)
+- Roadmap Summary avec timeline consolidée
+- Note historique: dualité git history (Grappe 15 Jan) vs ROADMAP actuel (Monitoring)
+
+**LaunchAgents Documentation**:
+- `scripts/launchagents/README.md`: Migration guide 3-phases
+- Convention naming: `com.cyclisme.{CATEGORY}.{SEQ}-{NAME}-{SCHEDULE}`
+- Categories: rept (reporting), mon (monitoring), anls (analysis), flow (workflow), mnt (maintenance)
+- Validation: `plutil -lint` sur tous les .plist (16/16 passed)
+
+### Fixed - Git History Traceability
+
+**History rewrite** (reset soft + force push):
+- Commits ROADMAP reorganization avec références `[ROADMAP@<sha>]`
+- 2 commits réecrits: ROADMAP update + historical note
+- Force push avec `--force-with-lease` après pre-flight checks
+- 0 PR/Issue references impactés (clean history)
+
+**Configuration standards**:
+- Enforcement: ALL .env access via `cyclisme_training_logs/config.py`
+- Prohibition: Direct .env reading by modules
+- Documentation: README + code comments + pre-commit reminder
+
+### Release
+
+**GitHub Release v3.0.0** (25 Jan 2026):
+- URL: https://github.com/stephanejouve/cyclisme-training-logs/releases/tag/v3.0.0
+- Tag: v3.0.0
+- 206 commits depuis v2.0.0 (1er Jan 2026)
+- Release notes: Sprint R9 completion, LaunchAgents, ROADMAP reorganization
+- Artifacts: adherence baseline dataset (JSON), LaunchAgents migration scripts
+
+---
+
 ## [2.3.1] - 2026-01-10
 
 ### Added - Tests Suite Di2 & Upload Workouts
