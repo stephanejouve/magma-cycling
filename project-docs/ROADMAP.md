@@ -334,7 +334,30 @@ trains --week-id S076                       # Servo-mode ajustements
 
 ---
 
-## 🚀 Roadmap Future
+## 🗺️ Navigation Sprints
+
+**Structure ROADMAP par période:**
+
+| Période | Sprints | Section | Status |
+|---------|---------|---------|--------|
+| **Phase 0-1** | R1-R5 | [Historique des Features](#-historique-des-features-timeline-reconstituée) | ✅ Complétés (28 Déc - 04 Jan) |
+| **Phase 2** | R6-R9 | [Sprints Complétés - Détails](#-sprints-complétés---détails-r6-r9) | ✅ Complétés (05-25 Jan) |
+| **Pause** | S078-S079 | [Pause Stratégique](#pause-stratégique---s078-s079-) | 📅 27 Jan - 09 Fév |
+| **Milestone** | S080 | [Sprint S080 Tests](#sprint-s080---ftp-tests--baseline-validation-) | 🎯 10-16 Fév |
+| **Phase 3** | R10-R13 | [Post-S080 Sprints](#phase-3-post-s080-sprints---training-intelligence-) | 🚀 17 Fév+ (Planifiés) |
+
+**Raccourcis rapides:**
+- 📊 [Métriques Projet](#-métriques-projet-25-jan-2026) - Coverage breakdown, tests, LOC
+- 🔗 [Livrables MOA](#livrables-moa) - Documents sprint reviews
+- 📋 [Roadmap Summary](#roadmap-summary---updated-25-jan-2026) - Vue consolidée timeline
+
+---
+
+## ✅ Sprints Complétés - Détails (R6-R9)
+
+> **Note**: Pour les sprints R1-R5, voir section [Historique des Features](#-historique-des-features-timeline-reconstituée). Cette section détaille les sprints R6-R9 complétés entre 5-25 jan 2026.
+
+---
 
 ### Sprint R6 - CI/CD & Monitoring (5-7 Jan 2026)
 
@@ -482,24 +505,26 @@ Augmenter coverage workflow_coach.py de 19% à 27-29% (+8-10%) avec tests AI wor
 
 > **📋 Note sur Réorganisation Historique (25 Jan 2026)**
 >
-> Ce Sprint R9 a été réorganisé pour refléter la chronologie réelle et l'architecture finale du projet :
+> ⚠️ **Dualité Git History vs ROADMAP actuel** - Ce Sprint R9 a été réorganisé le 25 jan 2026 pour refléter la chronologie réelle du projet.
 >
-> **Historique Git (ancienne structure)** :
-> - Sprint R9 initial : "Grappe Biomechanics" (15 jan 2026) - commits `24f17b6`, `ef77367`, etc.
-> - Sous-sprints ajoutés progressivement : R9.A (Workflow Tests), R9.B (DRY), R9.C (Upload UX), R9.D (Indoor/Outdoor), R9.E (Workflow Tests Enhancement)
+> **Git History (commits 15-18 jan)** :
+> - Sprint R9 initial = "Grappe Biomechanics" (commits `24f17b6`, `ef77367`)
+> - Sous-sprints = R9.A (Workflow Tests), R9.B (DRY), R9.C (Upload UX), etc.
+> - Code existe : `cyclisme_training_logs/intelligence/biomechanics.py`
 >
-> **ROADMAP actuel (nouvelle structure)** :
-> - Sprint R9 : "Monitoring & Baseline Analysis" (04-25 jan 2026)
-> - R9.A-F : Daily Sync, Session Update, Adherence, End-of-Week, Baseline, Pattern Analysis
+> **ROADMAP Actuel (état 25 jan)** :
+> - Sprint R9 = **"Monitoring & Baseline Analysis"** (04-25 jan)
+> - Sous-sprints = R9.A-F (Daily Sync, Adherence, Baseline, Pattern Analysis)
+> - Correspond aux livrables MOA réels
 >
 > **Pourquoi cette réorganisation ?**
-> - La nouvelle structure reflète mieux la **vérité opérationnelle** du projet
-> - Les travaux "Grappe Biomechanics" existent dans le code (`cyclisme_training_logs/intelligence/biomechanics.py`) mais ont été intégrés hors sprint principal
-> - L'organisation Monitoring & Baseline correspond à la timeline réelle des livrables MOA (04-25 jan)
+> 1. La structure Monitoring reflète mieux l'architecture opérationnelle finale
+> 2. Les travaux Grappe existent mais hors sprint principal (intégration parallèle)
+> 3. La timeline 04-25 jan correspond aux releases et livrables réels
 >
-> **Impact** : Les commits git référençant "Sprint R9 Grappe" correspondent à des travaux parallèles intégrés dans une organisation différente. Cette note documente la dualité pour éviter confusion future.
+> **Pour développeurs** : Si vous cherchez le code Grappe, utilisez `git log --grep="Grappe"` ou consultez l'historique git. Les deux organisations coexistent (git = historique chronologique, ROADMAP = structure fonctionnelle).
 >
-> _Pour l'ancienne organisation, voir archive git ou `git log --grep="Sprint R9"`_
+> **Convention commits** : Utiliser `[ROADMAP@<sha>]` pour tracer quelle version ROADMAP était active (voir [COMMIT_CONVENTIONS.md](COMMIT_CONVENTIONS.md)).
 
 ---
 
@@ -881,11 +906,25 @@ Jan-Fév 2026 : Consolidation terrain (pause sprint)
 
 ---
 
-### Sprint R10 - Code Reusability & Utilities (Planifié Q1-Q2 2026)
+## 📋 Backlog & Ideas - Propositions Futures
+
+> ⚠️ **Important**: Cette section contient des **propositions d'amélioration et de refactoring** identifiées pendant le développement. Ces items NE SONT PAS les sprints R10-R13 officiels de Phase 3.
+>
+> **Sprints officiels Phase 3** (post-S080, 17 Fév+):
+> - ✅ Sprint R10 = PID Calibration → [Voir Phase 3](#phase-3-post-s080-sprints---training-intelligence-)
+> - ✅ Sprint R11 = AI Weekly Reports → [Voir Phase 3](#phase-3-post-s080-sprints---training-intelligence-)
+> - ✅ Sprint R12 = Monitoring Dashboard → [Voir Phase 3](#phase-3-post-s080-sprints---training-intelligence-)
+> - ✅ Sprint R13 = Withings Integration → [Voir Phase 3](#phase-3-post-s080-sprints---training-intelligence-)
+>
+> Les propositions ci-dessous sont des **backlog items** qui seront priorisés et potentiellement intégrés dans de futurs sprints (R14+).
+
+---
+
+### Proposition: Code Reusability & Utilities (Backlog)
 
 **Focus :** Éliminer duplications et créer bibliothèque utilitaires partagés
 
-**Status :** 📋 ROADMAP (Identifié 12 Jan 2026)
+**Status :** 📋 Backlog (Identifié 12 Jan 2026)
 
 **Priorité :** P1 (Important pour maintenabilité long-terme)
 
@@ -1107,7 +1146,7 @@ Total : 7-10 jours développement
 
 ---
 
-### Sprint R10 - Extensibility & Multi-Systems (Envisioned Q3 2026)
+### Proposition: Extensibility & Multi-Systems (Backlog Q3 2026)
 
 **Focus :** Architecture extensible pour systèmes de transmission multiples
 
@@ -1367,7 +1406,7 @@ def _extract_gear_metrics(self, activity_id: str) -> dict[str, Any] | None:
 
 ---
 
-### Sprint R10.A - Upload Workouts UX Enhancement (Planifié Q1 2026)
+### Proposition: Upload Workouts UX Enhancement (Backlog Q1 2026)
 
 **Focus :** Simplifier upload de workouts individuels avec mode single-workout dédié
 
@@ -1687,7 +1726,7 @@ Total : 8-12 heures développement (1-2 jours)
 
 ---
 
-### Sprint R10.B - Indoor/Outdoor Adaptive Analysis (Planifié Q1 2026)
+### Proposition: Indoor/Outdoor Adaptive Analysis (Backlog Q1 2026)
 
 **Focus :** Critères de validation adaptés au type de sortie (indoor vs outdoor)
 
@@ -1974,7 +2013,7 @@ Total avec Phase 4 : 10-14 heures (1.5-2 jours)
 
 ---
 
-### Sprint R10.C - Workflow Tests Enhancement (Planifié Q1 2026)
+### Proposition: Workflow Tests Enhancement (Backlog Q1 2026)
 
 **Focus :** Améliorer couverture tests workflows end-of-week et workflow_weekly
 
