@@ -285,13 +285,17 @@ class EndOfWeekWorkflow:
                 print()
 
                 try:
-                    from cyclisme_training_logs.weekly_analysis import WeeklyAnalysis
-
-                    # Run weekly-analysis programmatically
-                    analysis = WeeklyAnalysis(
-                        self.week_completed, self.completed_start_date.strftime("%Y-%m-%d")
+                    from cyclisme_training_logs.workflows.workflow_weekly import (
+                        run_weekly_analysis,
                     )
-                    analysis.run()
+
+                    # Run weekly-analysis programmatically (Phase 2 - modern system)
+                    run_weekly_analysis(
+                        week=self.week_completed,
+                        start_date=self.completed_start_date,
+                        data_dir=self.data_dir,
+                        ai_analysis=False,
+                    )
 
                     # Verify that analysis was created
                     if completed_week_file.exists():
