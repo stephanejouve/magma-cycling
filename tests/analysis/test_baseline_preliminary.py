@@ -187,25 +187,139 @@ def test_load_intervals_data_handles_errors(mock_client_factory, analyzer):
     assert len(analyzer.events_data) == 0
 
 
-def test_calculate_adherence_metrics(analyzer, mock_adherence_data):
-    """Test adherence metrics calculation."""
-    analyzer.adherence_data = mock_adherence_data
+def test_calculate_adherence_metrics(analyzer):
+    """Test adherence metrics calculation from Intervals.icu events."""
+    # Mock completed workouts (WORKOUT events with paired_activity_id)
+    analyzer.events_data = [
+        {
+            "category": "WORKOUT",
+            "paired_activity_id": "i123",
+            "start_date_local": "2026-01-05T10:00:00",
+        },
+        {
+            "category": "WORKOUT",
+            "paired_activity_id": "i124",
+            "start_date_local": "2026-01-06T10:00:00",
+        },
+        {
+            "category": "NOTE",
+            "name": "[SAUTÉE] S076-03",
+            "description": "Raison: Fatigue",
+            "start_date_local": "2026-01-07T00:00:00",
+        },
+        {
+            "category": "NOTE",
+            "name": "[REMPLACÉE] S076-05",
+            "description": "Raison: Weather",
+            "start_date_local": "2026-01-08T00:00:00",
+        },
+    ]
+
+    # Mock skipped/replaced sessions
+    analyzer.skipped_sessions = [
+        {
+            "date": "2026-01-07",
+            "name": "[SAUTÉE] S076-03",
+            "description": "Raison: Fatigue",
+            "reason": "Fatigue",
+        }
+    ]
+    analyzer.replaced_sessions = [
+        {
+            "date": "2026-01-08",
+            "name": "[REMPLACÉE] S076-05",
+            "description": "Raison: Weather",
+            "reason": "Weather",
+        }
+    ]
+    analyzer.cancelled_sessions = []
+
     metrics = analyzer.calculate_adherence_metrics()
 
-    assert metrics["rate"] == 2 / 3  # 2 completed out of 3 planned
+    assert (
+        metrics["rate"] == 2 / 4
+    )  # 2 completed out of 4 total planned (2 completed + 1 skipped + 1 replaced)
     assert metrics["completed"] == 2
-    assert metrics["planned"] == 3
+    assert metrics["planned"] == 4
     assert metrics["skipped"] == 1
-    assert len(metrics["skipped_dates"]) == 1
-    assert "2026-01-04" in metrics["skipped_dates"]
+    assert metrics["replaced"] == 1
+    assert metrics["cancelled"] == 0
+    assert len(metrics["skipped_details"]) == 1
+    assert len(metrics["replaced_details"]) == 1
+    assert metrics["skipped_details"][0]["date"] == "2026-01-07"
+    assert metrics["replaced_details"][0]["date"] == "2026-01-08"
 
 
 def test_calculate_adherence_metrics_empty_data(analyzer):
     """Test adherence metrics with no data."""
-    analyzer.adherence_data = []
+    analyzer.events_data = []
+    analyzer.skipped_sessions = []
+    analyzer.replaced_sessions = []
+    analyzer.cancelled_sessions = []
     metrics = analyzer.calculate_adherence_metrics()
 
     assert metrics == {}
+
+
+def test_parse_skipped_replaced_sessions(analyzer):
+    """Test parsing of NOTE events with status tags."""
+    analyzer.events_data = [
+        {
+            "category": "NOTE",
+            "name": "[SAUTÉE] S076-03-CAD-TechniqueCadence-V001",
+            "description": "⏭️ SÉANCE SAUTÉE\nRaison: Too late\n\n--- Description originale ---\nCadence work",
+            "start_date_local": "2026-01-14T00:00:00",
+        },
+        {
+            "category": "NOTE",
+            "name": "[REMPLACÉE] S077-06-END-EnduranceVolume-V001",
+            "description": "🔄 SÉANCE REMPLACÉE\nRaison: Mechanics issues\n\n--- Description originale ---\nEndurance",
+            "start_date_local": "2026-01-24T00:00:00",
+        },
+        {
+            "category": "NOTE",
+            "name": "[ANNULÉE] S076-01-Test",
+            "description": "❌ SÉANCE ANNULÉE\nRaison: Illness\n\n--- Description originale ---\nTest",
+            "start_date_local": "2026-01-10T00:00:00",
+        },
+        {"category": "WORKOUT", "name": "Regular workout", "paired_activity_id": "i123"},
+    ]
+
+    analyzer.parse_skipped_replaced_sessions()
+
+    assert len(analyzer.skipped_sessions) == 1
+    assert len(analyzer.replaced_sessions) == 1
+    assert len(analyzer.cancelled_sessions) == 1
+
+    # Check skipped session details
+    assert analyzer.skipped_sessions[0]["date"] == "2026-01-14"
+    assert "S076-03" in analyzer.skipped_sessions[0]["name"]
+    assert analyzer.skipped_sessions[0]["reason"] == "Too late"
+
+    # Check replaced session details
+    assert analyzer.replaced_sessions[0]["date"] == "2026-01-24"
+    assert "S077-06" in analyzer.replaced_sessions[0]["name"]
+    assert analyzer.replaced_sessions[0]["reason"] == "Mechanics issues"
+
+    # Check cancelled session details
+    assert analyzer.cancelled_sessions[0]["date"] == "2026-01-10"
+    assert "S076-01" in analyzer.cancelled_sessions[0]["name"]
+    assert analyzer.cancelled_sessions[0]["reason"] == "Illness"
+
+
+def test_extract_reason(analyzer):
+    """Test reason extraction from NOTE description."""
+    # With reason
+    desc1 = "⏭️ SÉANCE SAUTÉE\nRaison: Too late\n\n--- Description ---"
+    assert analyzer._extract_reason(desc1) == "Too late"
+
+    # Without reason
+    desc2 = "Some description without reason"
+    assert analyzer._extract_reason(desc2) == "Non spécifiée"
+
+    # Empty description
+    assert analyzer._extract_reason("") == "Non spécifiée"
+    assert analyzer._extract_reason(None) == "Non spécifiée"
 
 
 def test_calculate_tss_metrics(analyzer, mock_events_data, mock_activities_data):
@@ -429,9 +543,10 @@ def test_generate_markdown_report(analyzer, tmp_path):
 
     assert output_file.exists()
     content = output_file.read_text()
-    assert "# Rapport Baseline S076-S077" in content
+    assert "# Rapport Baseline" in content
     assert "85.0%" in content  # Adherence rate
     assert "GOOD" in content  # CV quality
+    assert "Séances complétées**: 17/20" in content  # New format with completed/planned
 
 
 def test_run_analysis_integration(analyzer, mock_adherence_data, tmp_path):
