@@ -316,6 +316,39 @@ pip install pre-commit
 pre-commit install
 ```
 
+### 📜 Development Standards & Conventions
+
+**REQUIRED READING** before contributing to this project:
+
+1. **[CODING_STANDARDS.md](CODING_STANDARDS.md)** - Production code quality standards
+   - ✅ Docstrings: PEP 257 + Google Style (OBLIGATOIRE)
+   - ✅ Imperative mood for functions (D401)
+   - ✅ Period ending first line (D400/D415)
+   - ✅ Public modules/classes/functions must have docstrings
+
+2. **[COMMIT_CONVENTIONS.md](project-docs/COMMIT_CONVENTIONS.md)** - Git commit traceability
+   - ✅ Format: `<type>(<scope>): <description> [ROADMAP@<sha>]`
+   - ✅ Reference ROADMAP version in all sprint-related commits
+   - ✅ Use scope: `(R9.A)`, `(R10)`, `(S080)`, `(roadmap)`
+   - ✅ Include `Refs:` and `ROADMAP commit:` in body
+
+3. **Configuration Management (Code Quality)**
+   - ✅ ALL `.env` variables MUST be accessed through `cyclisme_training_logs/config.py`
+   - ❌ Direct reading of `.env` files by modules is PROHIBITED
+   - ✅ Ensures centralized config, type safety, testability
+
+4. **Pre-commit Hooks** (recommended)
+   - Automatic formatting (black, isort)
+   - Linting (ruff)
+   - Security checks (detect-secrets)
+   - See installation above
+
+**Quick Command**:
+```bash
+# Get current ROADMAP SHA for commits
+git log -1 --format=%h project-docs/ROADMAP.md
+```
+
 ---
 
 ## 🏗️ Architecture
@@ -382,6 +415,13 @@ See [CHANGELOG.md](project-docs/CHANGELOG.md) for complete history.
 **Pull Requests:** Welcome for bug fixes, feature enhancements
 
 **Issues:** Use GitHub Issues for bug reports, feature requests
+
+**Before Contributing:**
+- 📜 **READ** [Development Standards & Conventions](#-development-standards--conventions) section
+- ✅ Follow [CODING_STANDARDS.md](CODING_STANDARDS.md) for all production code
+- ✅ Use [COMMIT_CONVENTIONS.md](project-docs/COMMIT_CONVENTIONS.md) for git commits
+- ✅ Access `.env` variables ONLY through `config.py`
+- 🔍 Run `poetry run poe check` before submitting PR
 
 ---
 
