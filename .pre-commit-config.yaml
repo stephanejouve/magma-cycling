@@ -26,6 +26,11 @@ repos:
     hooks:
       - id: ruff
         args: ['--fix', '--exit-non-zero-on-fix']
+        exclude: |
+          (?x)^(
+              project-docs/archives/.*|
+              scripts/debug/.*
+          )$
 
   # isort - Import sorting
   - repo: https://github.com/pycqa/isort
@@ -45,9 +50,7 @@ repos:
               tests/.*|
               scripts/debug/.*|
               scripts/fix_.*|
-              withings_integration/.*|
-              backups/.*|
-              .*patches/.*
+              project-docs/archives/.*
           )$
 
   # pycodestyle - PEP 8 style checker (modern standards)
@@ -64,9 +67,7 @@ repos:
               tests/.*|
               scripts/debug/.*|
               scripts/fix_.*|
-              withings_integration/.*|
-              backups/.*|
-              .*patches/.*
+              project-docs/archives/.*
           )$
 
   # Trailing whitespace & EOF
@@ -74,7 +75,9 @@ repos:
     rev: v6.0.0
     hooks:
       - id: trailing-whitespace
+        exclude: project-docs/archives/
       - id: end-of-file-fixer
+        exclude: project-docs/archives/
       - id: check-yaml
       - id: check-toml
       - id: check-json

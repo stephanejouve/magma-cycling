@@ -1,0 +1,13 @@
+=== TOUS LES CHAMPS DE L'ACTIVITÉ 16457456654 ===
+
+{
+  "id": "16457456654",
+  "icu_athlete_id": "i151223",
+  "start_date_local": "2025-11-14T17:42:25",
+  "source": "STRAVA",
+  "_note": "STRAVA activities are not available via the API"
+}
+
+
+=== NOMBRE DE CHAMPS ===
+Total: 5 champs
