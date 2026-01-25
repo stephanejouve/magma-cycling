@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- MAINTENANCE: Sync Docs iCloud - Synchronisation Horaire -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+
+    <!-- Service identifier -->
+    <key>Label</key>
+    <string>com.cyclisme.mnt.20-sync-docs-hourly</string>
+
+    <!-- Metadata (documentation) -->
+    <key>Description</key>
+    <string>Hourly maintenance: Sync MOA docs to iCloud Drive</string>
+
+    <key>Category</key>
+    <string>maintenance</string>
+
+    <key>Sequence</key>
+    <integer>20</integer>
+
+    <!-- Command to execute -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/stephanejouve/cyclisme-training-logs/scripts/maintenance/sync_docs_icloud.sh</string>
+    </array>
+
+    <!-- Working directory -->
+    <key>WorkingDirectory</key>
+    <string>/Users/stephanejouve/cyclisme-training-logs</string>
+
+    <!-- Run at login -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- Run every hour (3600 seconds) -->
+    <key>StartInterval</key>
+    <integer>3600</integer>
+
+    <!-- Logging -->
+    <key>StandardOutPath</key>
+    <string>/Users/stephanejouve/Library/Logs/cyclisme-mnt-sync-docs.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/stephanejouve/Library/Logs/cyclisme-mnt-sync-docs.error.log</string>
+
+    <!-- Environment variables -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    </dict>
+
+    <!-- Success/failure exit timeout -->
+    <key>ExitTimeOut</key>
+    <integer>60</integer>
+
+    <!-- Low priority -->
+    <key>Nice</key>
+    <integer>5</integer>
+</dict>
+</plist>
