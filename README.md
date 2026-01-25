@@ -115,6 +115,12 @@ Create `.env` file at project root:
 VITE_INTERVALS_ATHLETE_ID=i151223
 VITE_INTERVALS_API_KEY=your_api_key_here
 
+# Email (for daily-sync --send-email)
+BREVO_API_KEY=your_brevo_api_key_here
+EMAIL_TO=your.email@example.com
+EMAIL_FROM=noreply@yourdomain.com
+EMAIL_FROM_NAME=Training Logs
+
 # AI Providers (optional)
 OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
@@ -127,6 +133,16 @@ OLLAMA_URL=http://localhost:11434
 2. Go to Settings → Developer Settings
 3. Generate API key
 4. Your athlete ID is in URL: `https://intervals.icu/athlete/i151223/...`
+
+**Get Brevo (email) credentials (optional - for daily-sync email reports):**
+1. Create free account at [brevo.com](https://www.brevo.com) (ex-Sendinblue)
+2. Go to Settings → SMTP & API → API Keys
+3. Generate API key (v3)
+4. Configure sender email (must be verified)
+5. Add `BREVO_API_KEY`, `EMAIL_TO`, `EMAIL_FROM` to `.env`
+
+**⚙️ Code Quality Standards:**
+All `.env` variables MUST be accessed through `cyclisme_training_logs/config.py`. Direct reading of `.env` files by individual modules is prohibited. This ensures centralized configuration management, type safety, and easier testing.
 
 ---
 
