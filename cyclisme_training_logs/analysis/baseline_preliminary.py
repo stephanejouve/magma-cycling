@@ -78,6 +78,7 @@ class BaselineAnalyzer:
         self.skipped_sessions = []  # NOTE events with [SAUTÉE] tag
         self.replaced_sessions = []  # NOTE events with [REMPLACÉE] tag
         self.cancelled_sessions = []  # NOTE events with [ANNULÉE] tag
+        self.unsolicited_activities = []  # Activities without paired workout event
 
         # Intervals.icu client
         self.client = create_intervals_client()
@@ -212,6 +213,418 @@ class BaselineAnalyzer:
                 return line.replace("Raison:", "").strip()
 
         return "Non spécifiée"
+
+    def detect_unsolicited_activities(self) -> list[dict[str, Any]]:
+        """Detect activities without paired workout event (unsolicited/spontaneous).
+
+        Unsolicited activities are activities completed that don't match any
+        planned workout in the calendar. These can be:
+        - Spontaneous bonus workouts
+        - Outdoor rides replacing planned indoor sessions (not marked as replaced)
+        - Extra activities added on rest days
+
+        Returns:
+            List of unsolicited activity dicts with metadata
+        """
+        print("\n📥 Detecting unsolicited activities...")
+
+        if not self.activities_data:
+            print("   ⚠️  No activities data loaded")
+            return []
+
+        # Get all paired activity IDs from WORKOUT events
+        # Empty events_data is valid - means no paired workouts exist
+        workout_events = (
+            [e for e in self.events_data if e.get("category") == "WORKOUT"]
+            if self.events_data
+            else []
+        )
+        paired_activity_ids = {
+            e.get("paired_activity_id") for e in workout_events if e.get("paired_activity_id")
+        }
+
+        # Find activities NOT in paired set
+        unsolicited = []
+        for activity in self.activities_data:
+            activity_id = activity.get("id")
+            if activity_id and activity_id not in paired_activity_ids:
+                date = activity.get("start_date_local", "").split("T")[0]
+                unsolicited.append(
+                    {
+                        "date": date,
+                        "activity_id": activity_id,
+                        "name": activity.get("name", "Unnamed"),
+                        "type": activity.get("type", "Unknown"),
+                        "tss": activity.get("icu_training_load") or 0,
+                        "duration_seconds": activity.get("moving_time") or 0,
+                        "distance_meters": activity.get("distance") or 0,
+                        "avg_power": activity.get("average_watts"),
+                        "normalized_power": activity.get("normalized_power"),
+                    }
+                )
+
+        # Sort by date
+        unsolicited.sort(key=lambda x: x["date"])
+
+        print(f"   ✅ Found {len(unsolicited)} unsolicited activities")
+        if unsolicited:
+            total_tss = sum(a["tss"] for a in unsolicited)
+            print(f"   ✅ Total unsolicited TSS: {total_tss:.0f}")
+
+        return unsolicited
+
+    def analyze_skip_reasons(self, sessions: list[dict[str, Any]]) -> dict[str, Any]:
+        """Cluster skip/replace/cancel reasons into categories.
+
+        Categories:
+        - work_schedule: Late from work, work tasks, schedule conflicts
+        - mechanics: Bike/trainer issues, equipment problems
+        - health: Fatigue, illness, injury, recovery
+        - weather: Outdoor conditions, too hot/cold
+        - personal: Family, personal commitments
+        - other: Uncategorized reasons
+
+        Args:
+            sessions: List of session dicts with 'reason' field
+
+        Returns:
+            Dict with clustering stats and category details
+        """
+        print("\n📊 Analyzing skip reasons...")
+
+        if not sessions:
+            print("   ℹ️  No sessions to analyze")
+            return {
+                "total": 0,
+                "categories": {},
+                "distribution": {},
+            }
+
+        # Define category patterns (case-insensitive)
+        category_patterns = {
+            "work_schedule": [
+                r"\btoo\s+late\b",
+                r"\blate\s+from\s+work\b",
+                r"\breturn.*late\b",
+                r"\bwork\b",
+                r"\bschedule\b",
+                r"\bmeeting\b",
+                r"\boffice\b",
+                r"\bproject\b",
+                r"\bdeadline\b",
+            ],
+            "mechanics": [
+                r"\bmechanic",
+                r"\bbike\s+issue",
+                r"\btrainer\s+issue",
+                r"\bequipment",
+                r"\bbroken",
+                r"\brepair",
+                r"\bmaintenance",
+                r"\bgear\s+problem",
+            ],
+            "health": [
+                r"\bfatigue",
+                r"\btired",
+                r"\bill",
+                r"\bsick",
+                r"\binjur",
+                r"\brecovery",
+                r"\bpain",
+                r"\bsoreness",
+                r"\bhealthy",
+            ],
+            "weather": [
+                r"\bweather",
+                r"\brain",
+                r"\bstorm",
+                r"\bhot",
+                r"\bcold",
+                r"\bwind",
+                r"\bsnow",
+            ],
+            "personal": [
+                r"\bfamily",
+                r"\bpersonal",
+                r"\bemergency",
+                r"\bappointment",
+                r"\bvisit",
+                r"\bevent",
+            ],
+        }
+
+        # Categorize each session
+        categorized = {cat: [] for cat in category_patterns}
+        categorized["other"] = []
+
+        for session in sessions:
+            reason = session.get("reason", "").lower()
+            categorized_flag = False
+
+            for category, patterns in category_patterns.items():
+                for pattern in patterns:
+                    if re.search(pattern, reason, re.IGNORECASE):
+                        categorized[category].append(
+                            {
+                                "date": session.get("date"),
+                                "name": session.get("name"),
+                                "reason": session.get("reason"),
+                                "matched_pattern": pattern,
+                            }
+                        )
+                        categorized_flag = True
+                        break
+                if categorized_flag:
+                    break
+
+            if not categorized_flag:
+                categorized["other"].append(
+                    {
+                        "date": session.get("date"),
+                        "name": session.get("name"),
+                        "reason": session.get("reason"),
+                    }
+                )
+
+        # Calculate distribution
+        total = len(sessions)
+        distribution = {}
+        for category, items in categorized.items():
+            count = len(items)
+            if count > 0:
+                distribution[category] = {
+                    "count": count,
+                    "percentage": round(count / total * 100, 1),
+                }
+
+        # Print summary
+        print(f"   ✅ Analyzed {total} sessions")
+        for category, stats in distribution.items():
+            print(f"   📋 {category}: {stats['count']} ({stats['percentage']}%)")
+
+        return {
+            "total": total,
+            "categories": categorized,
+            "distribution": distribution,
+        }
+
+    def analyze_day_of_week_patterns(
+        self, day_patterns: dict[str, dict[str, int]]
+    ) -> dict[str, Any]:
+        """Analyze day-of-week adherence patterns with risk scoring.
+
+        Args:
+            day_patterns: Dict with day names as keys, each containing
+                         {"planned": int, "completed": int}
+
+        Returns:
+            Dict with enhanced day patterns including adherence rates,
+            risk scores, and recommendations
+        """
+        print("\n📅 Analyzing day-of-week patterns...")
+
+        if not day_patterns:
+            print("   ℹ️  No day patterns to analyze")
+            return {
+                "days": {},
+                "high_risk_days": [],
+                "recommendations": [],
+            }
+
+        # Calculate adherence rate and risk for each day
+        enriched_days = {}
+        for day, counts in day_patterns.items():
+            planned = counts["planned"]
+            completed = counts["completed"]
+            adherence_rate = completed / planned if planned > 0 else 0
+
+            # Risk scoring (0-100, higher = more risky)
+            # Risk = 100 * (1 - adherence_rate)
+            risk_score = round(100 * (1 - adherence_rate), 1)
+
+            # Risk level classification
+            if risk_score < 20:
+                risk_level = "LOW"
+            elif risk_score < 40:
+                risk_level = "MODERATE"
+            elif risk_score < 60:
+                risk_level = "HIGH"
+            else:
+                risk_level = "CRITICAL"
+
+            enriched_days[day] = {
+                "planned": planned,
+                "completed": completed,
+                "adherence_rate": round(adherence_rate, 3),
+                "risk_score": risk_score,
+                "risk_level": risk_level,
+            }
+
+        # Identify high-risk days (risk_score >= 40)
+        high_risk_days = [
+            {"day": day, "risk_score": data["risk_score"], "adherence_rate": data["adherence_rate"]}
+            for day, data in enriched_days.items()
+            if data["risk_score"] >= 40
+        ]
+        # Sort by risk score descending
+        high_risk_days.sort(key=lambda x: x["risk_score"], reverse=True)
+
+        # Generate recommendations
+        recommendations = []
+        for risk_day in high_risk_days:
+            day = risk_day["day"]
+            risk_score = risk_day["risk_score"]
+            adherence = risk_day["adherence_rate"]
+
+            if risk_score >= 60:
+                recommendations.append(
+                    f"⚠️ {day}: CRITICAL risk ({adherence * 100:.0f}% adherence). "
+                    f"Consider moving workouts to more reliable days or reducing session difficulty."
+                )
+            elif risk_score >= 40:
+                recommendations.append(
+                    f"⚠️ {day}: HIGH risk ({adherence * 100:.0f}% adherence). "
+                    f"Plan lighter sessions or build flexibility into schedule."
+                )
+
+        print(f"   ✅ Analyzed {len(enriched_days)} days")
+        print(f"   ⚠️  High-risk days: {len(high_risk_days)}")
+        for risk_day in high_risk_days:
+            print(f"      - {risk_day['day']}: {risk_day['adherence_rate'] * 100:.0f}% adherence")
+
+        return {
+            "days": enriched_days,
+            "high_risk_days": high_risk_days,
+            "recommendations": recommendations,
+        }
+
+    def analyze_workout_type_patterns(
+        self, completed_workouts: list[dict[str, Any]], all_sessions: list[dict[str, Any]]
+    ) -> dict[str, Any]:
+        """Analyze adherence patterns by workout type.
+
+        Extracts workout type from session names (e.g., CAD, INT, END, REC)
+        and calculates adherence rates per type.
+
+        Args:
+            completed_workouts: List of completed workout events
+            all_sessions: List of all sessions (completed + skipped + replaced + cancelled)
+
+        Returns:
+            Dict with workout type patterns, risk scores, and recommendations
+        """
+        print("\n🏋️ Analyzing workout type patterns...")
+
+        if not all_sessions:
+            print("   ℹ️  No sessions to analyze")
+            return {
+                "types": {},
+                "high_risk_types": [],
+                "recommendations": [],
+            }
+
+        # Extract workout type from session name
+        # Format: SXXX-XX-TYPE-Name-VXXX
+        type_pattern = re.compile(r"S\d+-\d+-([A-Z]+)-")
+
+        # Count planned and completed per type
+        type_stats = {}
+
+        # Process all sessions (planned)
+        for session in all_sessions:
+            name = session.get("name", "")
+            # Remove status tags
+            name = (
+                name.replace("[SAUTÉE] ", "").replace("[REMPLACÉE] ", "").replace("[ANNULÉE] ", "")
+            )
+
+            match = type_pattern.search(name)
+            if match:
+                workout_type = match.group(1)
+                if workout_type not in type_stats:
+                    type_stats[workout_type] = {"planned": 0, "completed": 0}
+                type_stats[workout_type]["planned"] += 1
+
+        # Process completed workouts
+        for workout in completed_workouts:
+            name = workout.get("name", "")
+            match = type_pattern.search(name)
+            if match:
+                workout_type = match.group(1)
+                if workout_type in type_stats:
+                    type_stats[workout_type]["completed"] += 1
+
+        # Calculate adherence and risk per type
+        enriched_types = {}
+        for workout_type, counts in type_stats.items():
+            planned = counts["planned"]
+            completed = counts["completed"]
+            adherence_rate = completed / planned if planned > 0 else 0
+
+            # Risk scoring (0-100, higher = more risky)
+            risk_score = round(100 * (1 - adherence_rate), 1)
+
+            # Risk level classification
+            if risk_score < 20:
+                risk_level = "LOW"
+            elif risk_score < 40:
+                risk_level = "MODERATE"
+            elif risk_score < 60:
+                risk_level = "HIGH"
+            else:
+                risk_level = "CRITICAL"
+
+            enriched_types[workout_type] = {
+                "planned": planned,
+                "completed": completed,
+                "adherence_rate": round(adherence_rate, 3),
+                "risk_score": risk_score,
+                "risk_level": risk_level,
+            }
+
+        # Identify high-risk types (risk_score >= 40)
+        high_risk_types = [
+            {
+                "type": workout_type,
+                "risk_score": data["risk_score"],
+                "adherence_rate": data["adherence_rate"],
+            }
+            for workout_type, data in enriched_types.items()
+            if data["risk_score"] >= 40
+        ]
+        # Sort by risk score descending
+        high_risk_types.sort(key=lambda x: x["risk_score"], reverse=True)
+
+        # Generate recommendations
+        recommendations = []
+        for risk_type in high_risk_types:
+            workout_type = risk_type["type"]
+            risk_score = risk_type["risk_score"]
+            adherence = risk_type["adherence_rate"]
+
+            if risk_score >= 60:
+                recommendations.append(
+                    f"⚠️ {workout_type} workouts: CRITICAL risk ({adherence * 100:.0f}% adherence). "
+                    f"Consider reducing frequency or intensity for this type."
+                )
+            elif risk_score >= 40:
+                recommendations.append(
+                    f"⚠️ {workout_type} workouts: HIGH risk ({adherence * 100:.0f}% adherence). "
+                    f"Review session difficulty or timing for this type."
+                )
+
+        print(f"   ✅ Analyzed {len(enriched_types)} workout types")
+        print(f"   ⚠️  High-risk types: {len(high_risk_types)}")
+        for risk_type in high_risk_types:
+            print(
+                f"      - {risk_type['type']}: {risk_type['adherence_rate'] * 100:.0f}% adherence"
+            )
+
+        return {
+            "types": enriched_types,
+            "high_risk_types": high_risk_types,
+            "recommendations": recommendations,
+        }
 
     def load_cardiovascular_coupling(self) -> None:
         """Extract cardiovascular coupling from workout_history files."""
@@ -413,6 +826,26 @@ class BaselineAnalyzer:
         for day_name in day_patterns:
             day_patterns[day_name]["planned"] += day_patterns[day_name]["completed"]
 
+        # Analyze skip reasons (cluster into categories)
+        skip_reasons_analysis = self.analyze_skip_reasons(self.skipped_sessions)
+
+        # Analyze day-of-week patterns with risk scoring
+        day_patterns_analysis = self.analyze_day_of_week_patterns(day_patterns)
+
+        # Analyze workout type patterns
+        # Build all_sessions list (completed + skipped + replaced + cancelled)
+        all_sessions = []
+        # Add completed workouts
+        for workout in completed_workouts:
+            all_sessions.append({"name": workout.get("name", "")})
+        # Add skipped/replaced/cancelled
+        for session in self.skipped_sessions + self.replaced_sessions + self.cancelled_sessions:
+            all_sessions.append({"name": session.get("name", "")})
+
+        workout_type_patterns_analysis = self.analyze_workout_type_patterns(
+            completed_workouts, all_sessions
+        )
+
         metrics = {
             "rate": adherence_rate,
             "completed": total_completed,
@@ -424,6 +857,9 @@ class BaselineAnalyzer:
             "replaced_details": replaced_details,
             "cancelled_details": cancelled_details,
             "day_patterns": day_patterns,
+            "skip_reasons_analysis": skip_reasons_analysis,
+            "day_patterns_analysis": day_patterns_analysis,
+            "workout_type_patterns_analysis": workout_type_patterns_analysis,
         }
 
         print(f"   ✅ Adherence Rate: {adherence_rate * 100:.1f}%")
@@ -563,6 +999,7 @@ class BaselineAnalyzer:
         self.load_adherence_data()
         self.load_intervals_data()
         self.parse_skipped_replaced_sessions()  # Parse NOTE events for skipped/replaced
+        self.unsolicited_activities = self.detect_unsolicited_activities()
         self.load_cardiovascular_coupling()
 
         # Validate quality
@@ -571,8 +1008,13 @@ class BaselineAnalyzer:
         # Calculate metrics
         adherence = self.calculate_adherence_metrics()
         tss = self.calculate_tss_metrics()
-        tsb = self.analyze_tsb_trajectory()
         cv_coupling = self.calculate_cv_coupling_metrics()
+        tsb = self.analyze_tsb_trajectory()
+
+        # Calculate unsolicited metrics
+        total_unsolicited_tss = sum(a["tss"] for a in self.unsolicited_activities)
+        actual_tss = tss.get("actual_total", 0)
+        unsolicited_percentage = (total_unsolicited_tss / actual_tss * 100) if actual_tss > 0 else 0
 
         # Assemble results
         results = {
@@ -581,13 +1023,19 @@ class BaselineAnalyzer:
                 "period_start": self.start_date.isoformat(),
                 "period_end": self.end_date.isoformat(),
                 "duration_days": self.duration_days,
-                "version": "1.0.0",
+                "version": "2.0.0",  # Updated for Sprint R9.F
             },
             "quality": quality,
             "adherence": adherence,
             "tss": tss,
             "tsb": tsb,
             "cardiovascular_coupling": cv_coupling,
+            "unsolicited_activities": {
+                "total_count": len(self.unsolicited_activities),
+                "total_tss": total_unsolicited_tss,
+                "percentage_of_total": unsolicited_percentage,
+                "details": self.unsolicited_activities,
+            },
         }
 
         print()
@@ -713,6 +1161,91 @@ Généré le: {datetime.now().strftime("%d/%m/%Y %H:%M")}
                 completed = stats["completed"]
                 rate = completed / planned * 100 if planned > 0 else 0
                 report += f"| {day} | {planned} | {completed} | {rate:.0f}% |\n"
+
+        # NEW: Section 1.1 - Unsolicited Activities Analysis
+        unsolicited = results.get("unsolicited_activities", {})
+        if unsolicited.get("total_count", 0) > 0:
+            report += f"""
+### 🏃 Activités Non Sollicitées
+
+- **Total**: {unsolicited.get('total_count', 0)} activités
+- **TSS non planifié**: {unsolicited.get('total_tss', 0):.0f}
+- **% du TSS total**: {unsolicited.get('percentage_of_total', 0):.1f}%
+
+#### Détail
+"""
+            for activity in unsolicited.get("details", [])[:5]:  # Limit to first 5
+                report += (
+                    f"- **{activity['date']}**: {activity['name']} ({activity['tss']:.0f} TSS)\n"
+                )
+                if activity.get("avg_power"):
+                    report += f"  - Puissance: {activity['avg_power']:.0f}W"
+                    if activity.get("normalized_power"):
+                        report += f" (NP: {activity['normalized_power']:.0f}W)"
+                    report += "\n"
+
+            # Explain TSS overload if applicable
+            if unsolicited.get("percentage_of_total", 0) > 10:
+                report += f"""
+**💡 Analyse** : Les activités non sollicitées représentent {unsolicited.get('percentage_of_total', 0):.0f}% du TSS total, ce qui explique en grande partie la sur-charge observée (+{(tss.get('completion_rate', 1) - 1) * 100:.0f}% TSS vs planifié).
+"""
+
+        # NEW: Section 1.2 - Skip Reasons Analysis
+        skip_reasons = adherence.get("skip_reasons_analysis", {})
+        if skip_reasons.get("total", 0) > 0:
+            report += f"""
+### 🔍 Analyse Raisons Séances Sautées
+
+- **Total séances analysées**: {skip_reasons.get('total', 0)}
+
+#### Distribution par Catégorie
+"""
+            for category, stats in skip_reasons.get("distribution", {}).items():
+                report += f"- **{category.replace('_', ' ').title()}**: {stats['count']} séances ({stats['percentage']:.0f}%)\n"
+
+            # Dominant category analysis
+            if skip_reasons.get("distribution"):
+                dominant = max(skip_reasons["distribution"].items(), key=lambda x: x[1]["count"])
+                dominant_category = dominant[0].replace("_", " ").title()
+                dominant_pct = dominant[1]["percentage"]
+                report += f"""
+**💡 Pattern dominant** : {dominant_category} ({dominant_pct:.0f}% des séances sautées)
+"""
+
+        # NEW: Section 1.3 - Day/Type Patterns Analysis
+        day_analysis = adherence.get("day_patterns_analysis", {})
+        type_analysis = adherence.get("workout_type_patterns_analysis", {})
+
+        if day_analysis.get("high_risk_days") or type_analysis.get("high_risk_types"):
+            report += """
+### 📊 Patterns à Risque
+
+"""
+            # High-risk days
+            if day_analysis.get("high_risk_days"):
+                report += "#### 📅 Jours à Risque\n"
+                for day_risk in day_analysis["high_risk_days"]:
+                    risk_emoji = "🔴" if day_risk["risk_score"] >= 60 else "🟠"
+                    report += f"- {risk_emoji} **{day_risk['day']}**: {day_risk['adherence_rate'] * 100:.0f}% adherence (Risque: {day_risk['risk_score']:.0f}/100)\n"
+
+            # High-risk types
+            if type_analysis.get("high_risk_types"):
+                report += "\n#### 🏋️ Types d'Entraînement à Risque\n"
+                for type_risk in type_analysis["high_risk_types"]:
+                    risk_emoji = "🔴" if type_risk["risk_score"] >= 60 else "🟠"
+                    report += f"- {risk_emoji} **{type_risk['type']}**: {type_risk['adherence_rate'] * 100:.0f}% adherence (Risque: {type_risk['risk_score']:.0f}/100)\n"
+
+            # Recommendations
+            all_recommendations = []
+            if day_analysis.get("recommendations"):
+                all_recommendations.extend(day_analysis["recommendations"])
+            if type_analysis.get("recommendations"):
+                all_recommendations.extend(type_analysis["recommendations"])
+
+            if all_recommendations:
+                report += "\n#### 💡 Recommandations Patterns\n"
+                for rec in all_recommendations:
+                    report += f"{rec}\n"
 
         report += f"""
 ---
@@ -964,7 +1497,7 @@ Généré le: {datetime.now().strftime("%d/%m/%Y %H:%M")}
 
 **Rapport généré automatiquement par BaselineAnalyzer**
 
-*Sprint R9.E - Baseline Preliminary Analysis*
+*Sprint R9.F - Advanced Pattern Analysis*
 """
 
         return report

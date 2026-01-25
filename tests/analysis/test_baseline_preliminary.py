@@ -322,6 +322,381 @@ def test_extract_reason(analyzer):
     assert analyzer._extract_reason(None) == "Non spécifiée"
 
 
+def test_detect_unsolicited_no_activities(analyzer):
+    """Test unsolicited detection with no activities."""
+    analyzer.activities_data = []
+    analyzer.events_data = []
+
+    result = analyzer.detect_unsolicited_activities()
+
+    assert result == []
+
+
+def test_detect_unsolicited_all_paired(analyzer):
+    """Test unsolicited detection when all activities are paired."""
+    analyzer.activities_data = [
+        {"id": "i123", "name": "Workout 1", "icu_training_load": 50},
+        {"id": "i124", "name": "Workout 2", "icu_training_load": 60},
+        {"id": "i125", "name": "Workout 3", "icu_training_load": 70},
+    ]
+    analyzer.events_data = [
+        {"category": "WORKOUT", "paired_activity_id": "i123"},
+        {"category": "WORKOUT", "paired_activity_id": "i124"},
+        {"category": "WORKOUT", "paired_activity_id": "i125"},
+    ]
+
+    result = analyzer.detect_unsolicited_activities()
+
+    assert result == []
+
+
+def test_detect_unsolicited_some_unpaired(analyzer):
+    """Test unsolicited detection with mix of paired and unpaired activities."""
+    analyzer.activities_data = [
+        {
+            "id": "i1",
+            "name": "Paired 1",
+            "start_date_local": "2026-01-05T10:00:00",
+            "type": "VirtualRide",
+            "icu_training_load": 50,
+            "moving_time": 3600,
+            "distance": 25000,
+            "average_watts": 150,
+            "normalized_power": 155,
+        },
+        {
+            "id": "i2",
+            "name": "Unpaired 1",
+            "start_date_local": "2026-01-06T10:00:00",
+            "type": "Ride",
+            "icu_training_load": 40,
+            "moving_time": 2700,
+            "distance": 20000,
+            "average_watts": 140,
+            "normalized_power": 145,
+        },
+        {
+            "id": "i3",
+            "name": "Paired 2",
+            "start_date_local": "2026-01-07T10:00:00",
+            "type": "VirtualRide",
+            "icu_training_load": 60,
+            "moving_time": 3900,
+            "distance": 28000,
+            "average_watts": 160,
+            "normalized_power": 165,
+        },
+        {
+            "id": "i4",
+            "name": "Unpaired 2",
+            "start_date_local": "2026-01-08T10:00:00",
+            "type": "Ride",
+            "icu_training_load": 35,
+            "moving_time": 2400,
+            "distance": 18000,
+            "average_watts": 135,
+            "normalized_power": 140,
+        },
+        {
+            "id": "i5",
+            "name": "Paired 3",
+            "start_date_local": "2026-01-09T10:00:00",
+            "type": "VirtualRide",
+            "icu_training_load": 55,
+            "moving_time": 3300,
+            "distance": 26000,
+            "average_watts": 145,
+            "normalized_power": 150,
+        },
+    ]
+    analyzer.events_data = [
+        {"category": "WORKOUT", "paired_activity_id": "i1"},
+        {"category": "WORKOUT", "paired_activity_id": "i3"},
+        {"category": "WORKOUT", "paired_activity_id": "i5"},
+    ]
+
+    result = analyzer.detect_unsolicited_activities()
+
+    assert len(result) == 2
+    assert result[0]["activity_id"] == "i2"
+    assert result[1]["activity_id"] == "i4"
+    # Verify sorted by date
+    assert result[0]["date"] == "2026-01-06"
+    assert result[1]["date"] == "2026-01-08"
+    # Verify data structure
+    assert result[0]["name"] == "Unpaired 1"
+    assert result[0]["tss"] == 40
+    assert result[0]["type"] == "Ride"
+
+
+def test_detect_unsolicited_missing_tss(analyzer):
+    """Test unsolicited detection handles missing TSS gracefully."""
+    analyzer.activities_data = [
+        {
+            "id": "i1",
+            "name": "No TSS Activity",
+            "start_date_local": "2026-01-05T10:00:00",
+            "type": "Ride",
+            "icu_training_load": None,  # Missing TSS
+            "moving_time": 3600,
+            "distance": 25000,
+        }
+    ]
+    analyzer.events_data = []  # No paired events
+
+    result = analyzer.detect_unsolicited_activities()
+
+    assert len(result) == 1
+    assert result[0]["activity_id"] == "i1"
+    assert result[0]["tss"] == 0  # Should default to 0
+
+
+def test_analyze_skip_reasons_empty(analyzer):
+    """Test skip reasons analysis with empty list."""
+    result = analyzer.analyze_skip_reasons([])
+
+    assert result["total"] == 0
+    assert result["categories"] == {}
+    assert result["distribution"] == {}
+
+
+def test_analyze_skip_reasons_work_schedule(analyzer):
+    """Test skip reasons analysis correctly identifies work schedule patterns."""
+    sessions = [
+        {
+            "date": "2026-01-14",
+            "name": "[SAUTÉE] S076-03-CAD",
+            "reason": "RETURN TOO LATE FROM WORK AND TASK CODING PROJECT INCOMING",
+        },
+        {
+            "date": "2026-01-16",
+            "name": "[SAUTÉE] S076-05-INT",
+            "reason": "RETURN TOO LATE FROM WORK AND ROAD ACCIDENT",
+        },
+        {
+            "date": "2026-01-23",
+            "name": "[SAUTÉE] S077-05-INT",
+            "reason": "Too Late",
+        },
+    ]
+
+    result = analyzer.analyze_skip_reasons(sessions)
+
+    assert result["total"] == 3
+    assert "work_schedule" in result["distribution"]
+    assert result["distribution"]["work_schedule"]["count"] == 3
+    assert result["distribution"]["work_schedule"]["percentage"] == 100.0
+    assert len(result["categories"]["work_schedule"]) == 3
+    # Verify each session was categorized
+    assert all("matched_pattern" in item for item in result["categories"]["work_schedule"])
+
+
+def test_analyze_skip_reasons_multiple_categories(analyzer):
+    """Test skip reasons analysis with multiple categories."""
+    sessions = [
+        {
+            "date": "2026-01-10",
+            "name": "[SAUTÉE] Workout 1",
+            "reason": "Too late from work",
+        },
+        {
+            "date": "2026-01-11",
+            "name": "[REMPLACÉE] Workout 2",
+            "reason": "Bike mechanics issue",
+        },
+        {
+            "date": "2026-01-12",
+            "name": "[SAUTÉE] Workout 3",
+            "reason": "Feeling sick and fatigued",
+        },
+        {
+            "date": "2026-01-13",
+            "name": "[SAUTÉE] Workout 4",
+            "reason": "Bad weather - heavy rain",
+        },
+    ]
+
+    result = analyzer.analyze_skip_reasons(sessions)
+
+    assert result["total"] == 4
+    assert result["distribution"]["work_schedule"]["count"] == 1
+    assert result["distribution"]["mechanics"]["count"] == 1
+    assert result["distribution"]["health"]["count"] == 1
+    assert result["distribution"]["weather"]["count"] == 1
+    # Each category should have 25%
+    for category in ["work_schedule", "mechanics", "health", "weather"]:
+        assert result["distribution"][category]["percentage"] == 25.0
+
+
+def test_analyze_skip_reasons_uncategorized(analyzer):
+    """Test skip reasons analysis handles uncategorized reasons."""
+    sessions = [
+        {
+            "date": "2026-01-10",
+            "name": "[SAUTÉE] Workout 1",
+            "reason": "Random reason xyz",
+        },
+        {
+            "date": "2026-01-11",
+            "name": "[ANNULÉE] Workout 2",
+            "reason": "Non spécifiée",
+        },
+        {
+            "date": "2026-01-12",
+            "name": "[SAUTÉE] Workout 3",
+            "reason": "Late from work",  # Should match work_schedule
+        },
+    ]
+
+    result = analyzer.analyze_skip_reasons(sessions)
+
+    assert result["total"] == 3
+    assert result["distribution"]["other"]["count"] == 2
+    assert result["distribution"]["work_schedule"]["count"] == 1
+    assert result["distribution"]["other"]["percentage"] == pytest.approx(66.7, abs=0.1)
+    assert result["distribution"]["work_schedule"]["percentage"] == pytest.approx(33.3, abs=0.1)
+
+
+def test_analyze_day_of_week_patterns_empty(analyzer):
+    """Test day-of-week patterns analysis with empty dict."""
+    result = analyzer.analyze_day_of_week_patterns({})
+
+    assert result["days"] == {}
+    assert result["high_risk_days"] == []
+    assert result["recommendations"] == []
+
+
+def test_analyze_day_of_week_patterns_all_good(analyzer):
+    """Test day-of-week patterns with high adherence (no high-risk days)."""
+    day_patterns = {
+        "Monday": {"planned": 3, "completed": 3},
+        "Tuesday": {"planned": 3, "completed": 3},
+        "Wednesday": {"planned": 3, "completed": 2},
+    }
+
+    result = analyzer.analyze_day_of_week_patterns(day_patterns)
+
+    assert len(result["days"]) == 3
+    # Monday: 100% adherence, 0 risk
+    assert result["days"]["Monday"]["adherence_rate"] == 1.0
+    assert result["days"]["Monday"]["risk_score"] == 0.0
+    assert result["days"]["Monday"]["risk_level"] == "LOW"
+    # Wednesday: 67% adherence, 33 risk (MODERATE)
+    assert result["days"]["Wednesday"]["adherence_rate"] == pytest.approx(0.667, abs=0.01)
+    assert result["days"]["Wednesday"]["risk_score"] == pytest.approx(33.3, abs=0.1)
+    assert result["days"]["Wednesday"]["risk_level"] == "MODERATE"
+    # No high-risk days (risk < 40)
+    assert len(result["high_risk_days"]) == 0
+    assert len(result["recommendations"]) == 0
+
+
+def test_analyze_day_of_week_patterns_high_risk(analyzer):
+    """Test day-of-week patterns with high-risk day (Friday 33% adherence)."""
+    day_patterns = {
+        "Monday": {"planned": 3, "completed": 3},
+        "Tuesday": {"planned": 3, "completed": 3},
+        "Friday": {"planned": 3, "completed": 1},  # 33% adherence = 67 risk
+        "Saturday": {"planned": 3, "completed": 2},  # 67% adherence = 33 risk
+    }
+
+    result = analyzer.analyze_day_of_week_patterns(day_patterns)
+
+    assert len(result["days"]) == 4
+    # Friday: 33% adherence, 67 risk (CRITICAL)
+    assert result["days"]["Friday"]["adherence_rate"] == pytest.approx(0.333, abs=0.01)
+    assert result["days"]["Friday"]["risk_score"] == pytest.approx(66.7, abs=0.1)
+    assert result["days"]["Friday"]["risk_level"] == "CRITICAL"
+    # High-risk days (risk >= 40): Friday only
+    assert len(result["high_risk_days"]) == 1
+    assert result["high_risk_days"][0]["day"] == "Friday"
+    assert result["high_risk_days"][0]["risk_score"] == pytest.approx(66.7, abs=0.1)
+    # Should have recommendation for Friday (CRITICAL)
+    assert len(result["recommendations"]) == 1
+    assert "Friday" in result["recommendations"][0]
+    assert "CRITICAL" in result["recommendations"][0]
+
+
+def test_analyze_workout_type_patterns_empty(analyzer):
+    """Test workout type patterns analysis with empty lists."""
+    result = analyzer.analyze_workout_type_patterns([], [])
+
+    assert result["types"] == {}
+    assert result["high_risk_types"] == []
+    assert result["recommendations"] == []
+
+
+def test_analyze_workout_type_patterns_all_good(analyzer):
+    """Test workout type patterns with high adherence (no high-risk types)."""
+    completed_workouts = [
+        {"name": "S076-01-CAD-TechniqueCadence-V001"},
+        {"name": "S076-02-END-EnduranceBase-V001"},
+        {"name": "S076-04-INT-SweetSpotIntro-V001"},
+    ]
+    all_sessions = [
+        {"name": "S076-01-CAD-TechniqueCadence-V001"},
+        {"name": "S076-02-END-EnduranceBase-V001"},
+        {"name": "S076-04-INT-SweetSpotIntro-V001"},
+    ]
+
+    result = analyzer.analyze_workout_type_patterns(completed_workouts, all_sessions)
+
+    assert len(result["types"]) == 3
+    assert "CAD" in result["types"]
+    assert "END" in result["types"]
+    assert "INT" in result["types"]
+    # All 100% adherence
+    assert result["types"]["CAD"]["adherence_rate"] == 1.0
+    assert result["types"]["CAD"]["risk_score"] == 0.0
+    assert result["types"]["CAD"]["risk_level"] == "LOW"
+    # No high-risk types
+    assert len(result["high_risk_types"]) == 0
+    assert len(result["recommendations"]) == 0
+
+
+def test_analyze_workout_type_patterns_high_risk(analyzer):
+    """Test workout type patterns with high-risk type (INT 33% adherence)."""
+    completed_workouts = [
+        {"name": "S076-01-CAD-TechniqueCadence-V001"},
+        {"name": "S076-02-END-EnduranceBase-V001"},
+        {"name": "S076-04-INT-SweetSpotIntro-V001"},  # 1/3 INT completed
+    ]
+    all_sessions = [
+        {"name": "S076-01-CAD-TechniqueCadence-V001"},
+        {"name": "S076-02-END-EnduranceBase-V001"},
+        {"name": "S076-03-CAD-TechniqueCadence-V001"},  # Planned but not completed
+        {"name": "S076-04-INT-SweetSpotIntro-V001"},
+        {"name": "[SAUTÉE] S076-05-INT-SweetSpotCourt-V001"},  # Skipped
+        {"name": "[SAUTÉE] S077-05-INT-SweetSpotCourt-V001"},  # Skipped
+    ]
+
+    result = analyzer.analyze_workout_type_patterns(completed_workouts, all_sessions)
+
+    assert len(result["types"]) == 3
+    # CAD: 1/2 = 50% adherence, 50 risk (HIGH)
+    assert result["types"]["CAD"]["planned"] == 2
+    assert result["types"]["CAD"]["completed"] == 1
+    assert result["types"]["CAD"]["adherence_rate"] == pytest.approx(0.5, abs=0.01)
+    assert result["types"]["CAD"]["risk_score"] == pytest.approx(50.0, abs=0.1)
+    assert result["types"]["CAD"]["risk_level"] == "HIGH"
+    # INT: 1/3 = 33% adherence, 67 risk (CRITICAL)
+    assert result["types"]["INT"]["planned"] == 3
+    assert result["types"]["INT"]["completed"] == 1
+    assert result["types"]["INT"]["adherence_rate"] == pytest.approx(0.333, abs=0.01)
+    assert result["types"]["INT"]["risk_score"] == pytest.approx(66.7, abs=0.1)
+    assert result["types"]["INT"]["risk_level"] == "CRITICAL"
+    # END: 1/1 = 100% adherence, 0 risk (LOW)
+    assert result["types"]["END"]["adherence_rate"] == 1.0
+    assert result["types"]["END"]["risk_level"] == "LOW"
+    # High-risk types: INT (67) and CAD (50)
+    assert len(result["high_risk_types"]) == 2
+    assert result["high_risk_types"][0]["type"] == "INT"  # Highest risk first
+    assert result["high_risk_types"][1]["type"] == "CAD"
+    # Should have recommendations for both
+    assert len(result["recommendations"]) == 2
+    assert any("INT" in r and "CRITICAL" in r for r in result["recommendations"])
+    assert any("CAD" in r and "HIGH" in r for r in result["recommendations"])
+
+
 def test_calculate_tss_metrics(analyzer, mock_events_data, mock_activities_data):
     """Test TSS metrics calculation."""
     analyzer.events_data = mock_events_data
