@@ -531,7 +531,9 @@ class DailySync:
         # Extract from wellness
         if wellness_pre:
             try:
-                from cyclisme_training_logs.utils.metrics import extract_wellness_metrics
+                from cyclisme_training_logs.utils.metrics import (
+                    extract_wellness_metrics,
+                )
 
                 wellness_metrics = extract_wellness_metrics(wellness_pre)
                 metrics["tsb"] = wellness_metrics.get("tsb")
