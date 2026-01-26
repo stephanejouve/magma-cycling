@@ -216,6 +216,23 @@ class WeeklyPlanner:
             if protocols:
                 context["protocols"] = "\n\n---\n\n".join(protocols)
 
+        # Charger intelligence.json (recommandations PID et adaptations)
+        intelligence_file = Path.home() / "data" / "intelligence.json"
+        try:
+            if intelligence_file.exists():
+                intelligence_data = json.loads(intelligence_file.read_text(encoding="utf-8"))
+                # Format as readable text for AI
+                context["intelligence"] = json.dumps(
+                    intelligence_data, indent=2, ensure_ascii=False
+                )
+                print("  ✅ intelligence.json")
+            else:
+                print("  ⚠️ Non trouvé : intelligence.json")
+                context["intelligence"] = "[Aucune recommandation d'adaptation disponible]"
+        except Exception as e:
+            print(f"  ⚠️ Erreur intelligence.json : {e}")
+            context["intelligence"] = f"[Erreur lecture intelligence.json: {e}]"
+
         return context
 
     def generate_planning_prompt(self) -> str:
@@ -264,6 +281,21 @@ class WeeklyPlanner:
 ## Protocoles Validés
 
 {self.context_files.get('protocols', '[Protocoles non chargés]')}
+
+---
+
+## 🧠 Intelligence AI & Adaptations Recommandées
+
+**IMPORTANT:** Les adaptations ci-dessous proviennent du système PID (Planification Intelligente Dynamique) qui analyse l'évolution de l'athlète. Ces recommandations doivent être **prioritaires** dans la planification.
+
+```json
+{self.context_files.get('intelligence', '[Aucune recommandation disponible]')}
+```
+
+**Instructions:**
+- Vérifier s'il y a des adaptations avec status "PROPOSED" et confidence "high"
+- Si une adaptation recommande un test FTP, planifier un affûtage (-40% TSS) cette semaine ou la suivante
+- Prendre en compte les "evidence" pour comprendre le contexte (dernier test, TSB, adhérence)
 
 ---
 
