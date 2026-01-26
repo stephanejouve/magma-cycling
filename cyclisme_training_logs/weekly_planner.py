@@ -87,6 +87,12 @@ class WeeklyPlanner:
 
         return f"S{current_num + 1:03d}"
 
+    def _week_after_next(self) -> str:
+        """Calculate le numéro de la semaine après la suivante."""
+        current_num = int(self.week_number[1:])
+
+        return f"S{current_num + 2:03d}"
+
     def collect_current_metrics(self) -> dict:
         """Collect les métriques actuelles depuis API."""
         print("\n📊 Collecte des métriques actuelles...")
@@ -292,10 +298,28 @@ class WeeklyPlanner:
 {self.context_files.get('intelligence', '[Aucune recommandation disponible]')}
 ```
 
-**Instructions:**
-- Vérifier s'il y a des adaptations avec status "PROPOSED" et confidence "high"
-- Si une adaptation recommande un test FTP, planifier un affûtage (-40% TSS) cette semaine ou la suivante
-- Prendre en compte les "evidence" pour comprendre le contexte (dernier test, TSB, adhérence)
+**Instructions CRITIQUES pour Test FTP:**
+
+Si une adaptation recommande un test FTP avec affûtage, suivre ce timing précis:
+
+1. **Semaine ACTUELLE ({self.week_number})**:
+   - Continuer entraînement normal ou légère réduction volume
+   - Ne PAS faire le test cette semaine
+   - Ne PAS faire l'affûtage cette semaine
+
+2. **Semaine SUIVANTE ({self._next_week_number()})**:
+   - Semaine d'affûtage: réduction -40% TSS
+   - Exemple: si CTL ~45, viser ~230 TSS total
+   - Focus: endurance douce, récupération, fraîcheur
+
+3. **Semaine APRÈS ({self._week_after_next()})**:
+   - Test FTP samedi (jour 6)
+   - Repos dimanche
+   - TSB optimal pour test: +5 à +15
+
+**Autres adaptations:**
+- Analyser "evidence" pour contexte (dernier test, TSB, adhérence)
+- Prioriser adaptations status="PROPOSED" + confidence="high"
 
 ---
 
