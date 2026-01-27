@@ -238,6 +238,11 @@ def main():
         action="store_true",
         help="Show what would be done without writing files",
     )
+    parser.add_argument(
+        "--summarize",
+        action="store_true",
+        help="Generate automatic summary after splitting",
+    )
 
     args = parser.parse_args()
 
@@ -261,6 +266,20 @@ def main():
         print("✅ Split completed successfully!")
         print(f"📁 Chunks: {len(chunk_paths)}")
         print(f"📋 Index: {index_path}")
+
+        # Generate summary if requested
+        if args.summarize:
+            print()
+            print("Generating summary...")
+            try:
+                # Import summarizer
+                sys.path.insert(0, str(args.input.parent.parent.parent / "scripts" / "maintenance"))
+                from session_summarizer import summarize_session
+
+                summary_text, summary_path = summarize_session(args.input)
+                print(f"✅ Summary: {summary_path}")
+            except Exception as e:
+                print(f"⚠️  Summary generation failed: {e}")
 
     except Exception as e:
         print(f"❌ Error: {e}", file=sys.stderr)

@@ -225,6 +225,15 @@ class ProjectCleaner:
                             f"{len(chunk_paths)} chunks"
                         )
 
+                        # Generate summary
+                        try:
+                            from session_summarizer import summarize_session
+
+                            _, summary_path = summarize_session(jsonl_file)
+                            self.print_info(f"Summary generated: {summary_path.name}")
+                        except Exception as e:
+                            self.print_warning(f"Summary generation failed: {e}")
+
                         # Archive original file
                         archive_name = jsonl_file.with_suffix(".jsonl.original")
                         jsonl_file.rename(archive_name)
