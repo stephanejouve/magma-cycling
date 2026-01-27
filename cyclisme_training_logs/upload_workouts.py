@@ -223,8 +223,8 @@ class WorkoutUploader:
                     break  # Only warn once per workout
 
         # CRITICAL: Check for warmup/cooldown presence
-        # Skip validation for rest days (REPOS)
-        is_rest_day = re.search(r"(?i)-REPOS($|\s)", workout_id)
+        # Skip validation for rest days (REPOS, ReposComplet, etc.)
+        is_rest_day = re.search(r"(?i)-REC-Repos", workout_id)
 
         if not is_rest_day:
             # Look for section markers, not just word mentions
