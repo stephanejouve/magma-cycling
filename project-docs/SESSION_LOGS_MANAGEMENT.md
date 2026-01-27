@@ -24,6 +24,9 @@ project-docs/sessions/
 # Split avec taille par défaut (1500 lignes/chunk)
 python scripts/maintenance/split_session_logs.py project-docs/sessions/SESSION_XXX.jsonl
 
+# Split avec génération automatique de résumé
+python scripts/maintenance/split_session_logs.py SESSION_XXX.jsonl --summarize
+
 # Spécifier une taille de chunk personnalisée
 python scripts/maintenance/split_session_logs.py SESSION_XXX.jsonl --chunk-size 2000
 
@@ -32,6 +35,19 @@ python scripts/maintenance/split_session_logs.py SESSION_XXX.jsonl --compress
 
 # Dry run pour prévisualiser
 python scripts/maintenance/split_session_logs.py SESSION_XXX.jsonl --dry-run
+```
+
+### Générer un résumé de session
+
+```bash
+# Générer résumé d'une session
+python scripts/maintenance/session_summarizer.py project-docs/sessions/SESSION_XXX.jsonl
+
+# Spécifier le fichier de sortie
+python scripts/maintenance/session_summarizer.py SESSION_XXX.jsonl --output custom_summary.md
+
+# Afficher le résumé dans le terminal
+python scripts/maintenance/session_summarizer.py SESSION_XXX.jsonl --stdout
 ```
 
 ### Navigation dans les chunks
@@ -80,10 +96,25 @@ poetry run project-clean --deep
 ### Comportement automatique
 
 1. **Détection:** Le cleaner scanne `project-docs/sessions/*.jsonl`
-2. **Seuil:** Fichiers > 10 MB sont splitésà
+2. **Seuil:** Fichiers > 10 MB sont splités
 3. **Split:** Création de chunks de 1500 lignes + index
-4. **Archive:** Original renommé en `.jsonl.original`
-5. **Log:** Rapport dans la sortie du cleaner
+4. **Résumé:** Génération automatique d'un résumé markdown (`*_SUMMARY.md`)
+5. **Archive:** Original renommé en `.jsonl.original`
+6. **Log:** Rapport dans la sortie du cleaner
+
+### Résumés automatiques
+
+Chaque session splitée génère un résumé qui contient:
+
+- **📋 Overview:** Date, durée, requête initiale
+- **🎯 Commits:** Liste des commits créés
+- **📁 Fichiers:** Fichiers créés/modifiés
+- **🤔 Décisions:** Questions posées et réponses
+- **✅ Tasks:** Todos complétés/en cours/pending
+- **🔧 Stats:** Outils utilisés (Bash, Read, Edit, etc.)
+- **⚠️ Erreurs:** Erreurs rencontrées (si applicable)
+
+**Exemple:** `SESSION_R9E_PHASE1_25JAN2026_SUMMARY.md`
 
 ---
 
@@ -123,6 +154,31 @@ Chaque session splitée génère un fichier `*_INDEX.md` contenant:
 
 ---
 
+## 💡 Pourquoi Résumés + Chunks ?
+
+### Pour Claude (IA)
+
+**Problème:** Claude ne peut pas lire les gros chunks (limite 256KB)
+
+**Solution:** Résumés légers (~5-10KB) lisibles directement
+- ✅ Comprend rapidement le contexte d'une session passée
+- ✅ Identifie les décisions et commits importants
+- ✅ Voit les fichiers modifiés sans lire le JSONL complet
+- ✅ Peut répondre à "où en sommes-nous ?" sans aide
+
+**Impact:** Claude récupère le contexte en <10 secondes vs impossible avant
+
+### Pour l'Humain
+
+**Bénéfices complémentaires:**
+- 🔍 Navigation rapide dans l'historique
+- 📊 Vue d'ensemble des accomplissements
+- 🎯 Retrouver rapidement une décision passée
+- 📁 Identifier quand un fichier a été créé/modifié
+- ⏱️ Tracking du temps passé par session
+
+**Workflow:** Résumé pour vue globale → Chunks pour détails si besoin
+
 ## 🎯 Bonnes Pratiques
 
 ### Quand spliter manuellement?
@@ -136,6 +192,26 @@ Chaque session splitée génère un fichier `*_INDEX.md` contenant:
 - Fichiers < 5 MB (overhead inutile)
 - Sessions actives (attendre la fin)
 - Fichiers déjà compressés `.gz`
+
+### Résumés vs Chunks vs Documentation
+
+**Résumé (`*_SUMMARY.md`):**
+- Vue globale rapide
+- Lisible par Claude et humains
+- Généré automatiquement
+- **Utiliser pour:** Comprendre rapidement une session passée
+
+**Chunks (`*_chunk*.jsonl`):**
+- Détails complets de la conversation
+- Trop gros pour Claude (3-8 MB)
+- Navigation avec grep/jq
+- **Utiliser pour:** Recherche précise, debugging, audit
+
+**Documentation projet:**
+- ROADMAP.md, CHANGELOG.md, etc.
+- Vue stratégique long-terme
+- Maintenue manuellement
+- **Utiliser pour:** Comprendre le projet dans sa globalité
 
 ### Gestion du Git
 
