@@ -179,6 +179,65 @@ class ProjectCleaner:
 
         return len(removed), removed
 
+    def split_large_session_logs(
+        self, threshold_mb: float = 10.0, dry_run: bool = False
+    ) -> tuple[int, list[Path]]:
+        """Split large session JSONL files into manageable chunks.
+
+        Args:
+            threshold_mb: Size threshold in MB for splitting (default: 10MB).
+            dry_run: If True, only report what would be split.
+
+        Returns:
+            Tuple of (count of files split, list of original file paths).
+        """
+        sessions_dir = self.project_root / "project-docs" / "sessions"
+        if not sessions_dir.exists():
+            return 0, []
+
+        split_files = []
+        threshold_bytes = threshold_mb * 1024 * 1024
+
+        for jsonl_file in sessions_dir.glob("*.jsonl"):
+            # Skip already-chunked files
+            if "_chunk" in jsonl_file.stem or "_INDEX" in jsonl_file.stem:
+                continue
+
+            file_size = jsonl_file.stat().st_size
+
+            if file_size > threshold_bytes:
+                if dry_run:
+                    size_mb = file_size / 1024 / 1024
+                    self.print_info(f"Would split {jsonl_file.name} ({size_mb:.1f} MB)")
+                else:
+                    try:
+                        # Import the split function from our script
+                        sys.path.insert(0, str(self.project_root / "scripts" / "maintenance"))
+                        from split_session_logs import split_session_log
+
+                        chunk_paths, index_path = split_session_log(
+                            jsonl_file, chunk_size=1500, compress=False
+                        )
+
+                        size_mb = file_size / 1024 / 1024
+                        self.print_success(
+                            f"Split {jsonl_file.name} ({size_mb:.1f} MB) → "
+                            f"{len(chunk_paths)} chunks"
+                        )
+
+                        # Archive original file
+                        archive_name = jsonl_file.with_suffix(".jsonl.original")
+                        jsonl_file.rename(archive_name)
+                        self.print_info(f"Original archived as {archive_name.name}")
+
+                    except Exception as e:
+                        self.print_warning(f"Could not split {jsonl_file.name}: {e}")
+                        continue
+
+                split_files.append(jsonl_file)
+
+        return len(split_files), split_files
+
     def check_root_files(self) -> list[Path]:
         """Check for files at root that shouldn't be there.
 
@@ -341,6 +400,7 @@ class ProjectCleaner:
         """
         results = {
             "temp_cleaned": 0,
+            "session_logs_split": 0,
             "misplaced_found": 0,
             "suggestions": {},
         }
@@ -361,6 +421,19 @@ class ProjectCleaner:
                     print(f"  ... and {len(removed) - 5} more")
         else:
             self.print_success("No temporary files to clean")
+
+        # 2. Split large session logs
+        self.print_info("Checking for large session logs...")
+        split_count, split_files = self.split_large_session_logs(threshold_mb=10.0, dry_run=dry_run)
+        results["session_logs_split"] = split_count
+
+        if split_count > 0:
+            self.print_success(f"Split {split_count} large session log(s)")
+            if deep:
+                for path in split_files:
+                    print(f"  - {path.name}")
+        else:
+            self.print_success("No large session logs to split")
 
         # 2. Check root directory
         self.print_info("Checking root directory organization...")
