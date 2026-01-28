@@ -815,6 +815,13 @@ Valider baseline FTP/VO2/Anaérobie/Sprint via protocole Zwift Camp
 **1. Full Automation (P0)**
 - [ ] Auto-planning basé sur IA (objectifs → planning complet)
 - [ ] Auto-adjustment temps réel (servo v2.0)
+  - [x] **Servo non-interactif** : Fix input() blocking en LaunchAgent (28 jan 2026)
+  - [ ] **Compensation TSS Intelligente** : Réorganiser planning fin de semaine
+    - Détection déficit TSS hebdomadaire (séances sautées)
+    - Contexte AI avec raisons annulations (fatigue vs circonstanciel)
+    - Recommandations : compenser, accepter déficit, ou reporter
+    - Décision basée métriques actuelles (TSB, sommeil, découplage)
+    - Mode non-interactif (recommandations par email, pas d'application auto)
 - [ ] Auto-reconciliation quotidienne
 - [ ] Notifications intelligentes
 - [ ] AI Provider automation (claude_api, mistral_api direct calls)
