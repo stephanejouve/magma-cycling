@@ -601,7 +601,30 @@ class WorkflowCoach:
         print(f"   {template['tss']} TSS, {template['duration_minutes']}min")
         print(f"   Raison : {mod['reason']}")
 
-        # Confirmation utilisateur (CRITIQUE)
+        # Check if non-interactive mode (LaunchAgent or auto_mode)
+        import sys
+
+        is_non_interactive = self.auto_mode or not sys.stdin.isatty()
+
+        if is_non_interactive:
+            # Non-interactive mode: Log recommendation but don't apply
+            print("   ℹ️  Mode automatique : recommandation enregistrée (pas d'application)")
+            print("   💡 Lancer manuellement : poetry run workflow-coach --servo-mode")
+            # Store recommendation for email notification
+            if not hasattr(self, "_servo_recommendations"):
+                self._servo_recommendations = []
+            self._servo_recommendations.append(
+                {
+                    "date": mod["target_date"],
+                    "template": template["name"],
+                    "tss": template["tss"],
+                    "reason": mod["reason"],
+                    "status": "pending_manual_application",
+                }
+            )
+            return
+
+        # Interactive mode: Ask for confirmation (CRITICAL)
         confirm = input("   Appliquer ? (o/n) : ").strip().lower()
         if confirm != "o":
             print("   ❌ Ignoré")
