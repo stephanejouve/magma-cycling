@@ -1299,7 +1299,7 @@ def main():
     )
     sync.run(
         check_date=check_date,
-        week_id=args.week_id,
+        week_id=week_id,
         start_date=start_date,
         send_email=args.send_email,
     )
