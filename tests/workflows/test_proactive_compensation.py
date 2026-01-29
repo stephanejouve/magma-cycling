@@ -32,6 +32,7 @@ from cyclisme_training_logs.workflows.proactive_compensation import (
     _identify_available_rest_days,
     _identify_cancelled_sessions,
     _parse_cancelled_notes_tss,
+    _parse_event_planned_tss,
     evaluate_weekly_deficit,
     format_compensation_section,
     generate_compensation_prompt,
@@ -57,6 +58,7 @@ def mock_client():
             "name": "Endurance 60min",
             "load": 60,
             "type": "Ride",
+            "description": "Endurance Base (60min, 60 TSS)\n\nWarmup\n- 10m ramp 50-65%",
         },
         {
             "id": 2,
@@ -66,6 +68,7 @@ def mock_client():
             "load": 55,
             "type": "Ride",
             "indoor": True,
+            "description": "Sweet Spot 2x10 (50min, 55 TSS)\n\nMain set\n- 2x10m 90%",
         },
         {
             "id": 3,
@@ -74,6 +77,7 @@ def mock_client():
             "name": "Tempo 45min",
             "load": 45,
             "type": "Ride",
+            "description": "Tempo 45min (45min, 45 TSS)\n\nMain set\n- 30m 82%",
         },
         # Note: Cancelled session (TSS lost should be parsed)
         {
@@ -182,6 +186,7 @@ def test_evaluate_weekly_deficit_below_threshold(mock_client):
             "category": "WORKOUT",
             "name": "Tempo",
             "load": 45,
+            "description": "Tempo 45min (45min, 45 TSS)\n\nMain set\n- 30m 82%",
         }
     ]
     mock_client.get_activities.return_value = []  # Nothing completed
@@ -359,6 +364,45 @@ def test_parse_cancelled_notes_no_notes():
     lost_tss = _parse_cancelled_notes_tss(events)
 
     assert lost_tss == 0.0
+
+
+def test_parse_event_planned_tss_from_workout():
+    """Parse TSS depuis description d'un workout."""
+    event = {
+        "category": "WORKOUT",
+        "name": "Endurance Base",
+        "description": "Endurance Base (75min, 56 TSS)\n\nWarmup\n- 12m ramp 50-65%",
+    }
+
+    tss = _parse_event_planned_tss(event)
+
+    assert tss == 56.0
+
+
+def test_parse_event_planned_tss_from_note():
+    """Parse TSS depuis description d'une note annulée."""
+    event = {
+        "category": "NOTE",
+        "name": "[ANNULÉE] Sweet Spot",
+        "description": "❌ SÉANCE ANNULÉE\n...\n--- Description originale ---\nSweet Spot 3x10 (74min, 82 TSS)",
+    }
+
+    tss = _parse_event_planned_tss(event)
+
+    assert tss == 82.0
+
+
+def test_parse_event_planned_tss_no_match():
+    """Pas de TSS parsable."""
+    event = {
+        "category": "NOTE",
+        "name": "Regular note",
+        "description": "Just a note without TSS",
+    }
+
+    tss = _parse_event_planned_tss(event)
+
+    assert tss == 0.0
 
 
 def test_identify_available_rest_days_sunday_free():
