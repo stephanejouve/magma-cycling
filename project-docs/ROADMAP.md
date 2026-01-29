@@ -790,15 +790,36 @@ Valider baseline FTP/VO2/Anaérobie/Sprint via protocole Zwift Camp
 
 ---
 
-### État Actuel - 25 Janvier 2026
+### État Actuel - 28 Janvier 2026
 
-**Sprint à venir:** Pause Stratégique S078-S079 (débute 27 jan, post R9.A-F complétés)
+**Sprint à venir:** Pause Stratégique S078-S079 (débute 29 jan, post R9.A-F complétés)
 **Semaine:** S078 (26 jan - 01 fév 2026)
 **Version:** v3.0.0
 
+#### 🧠 Insight Critique - Compensation TSS Proactive
+
+**Date** : 28 Jan 2026
+**Statut** : ✅ Validé - Planifié Mini-Sprint S080
+
+Le système servo actuel est UNIQUEMENT réactif (déclenché par séance complétée), ce qui est **incohérent avec la logique PID** qui utilise le terme Intégral (I) pour détecter erreurs accumulées.
+
+**Impact** : Séances sautées → Déficit TSS non géré → Quota hebdomadaire compromis
+
+**Solution** : Mode proactif avec 6 stratégies compensation (intensifier, ajouter séance, convert outdoor, utiliser repos, combinaison, accepter déficit)
+
+📄 **Documentation complète** : [`INSIGHT_COMPENSATION_TSS_PROACTIVE.md`](sprints/INSIGHT_COMPENSATION_TSS_PROACTIVE.md)
+
 #### Prochains Sprints
 
-**Immédiat:**
+**Immédiat (S078-S079):**
+- 🏖️ Pause stratégique (système en observation)
+- 📊 Accumulation données pour R10
+
+**S080 (10-12 Fév):**
+- 🚀 Mini-Sprint : Compensation TSS Proactive (2-3 jours)
+  - Cohérence architecture PID (terme Intégral actif)
+  - Détection déficits + 6 stratégies intelligentes
+  - Mode non-interactif (email recommandations)
 - 📋 Sprint R9.B Phase 2 : Compléter refactoring DRY (12+ fichiers)
 
 **Court terme (R10+):**
