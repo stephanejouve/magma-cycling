@@ -31,6 +31,7 @@ from cyclisme_training_logs.workflows.proactive_compensation import (
     _get_weather_forecast,
     _identify_available_rest_days,
     _identify_cancelled_sessions,
+    _parse_cancelled_notes_tss,
     evaluate_weekly_deficit,
     format_compensation_section,
     generate_compensation_prompt,
@@ -47,7 +48,7 @@ def mock_client():
     """Mock IntervalsClient for testing."""
     client = MagicMock()
 
-    # Mock get_events (planned workouts)
+    # Mock get_events (planned workouts + cancelled notes)
     client.get_events.return_value = [
         {
             "id": 1,
@@ -73,6 +74,14 @@ def mock_client():
             "name": "Tempo 45min",
             "load": 45,
             "type": "Ride",
+        },
+        # Note: Cancelled session (TSS lost should be parsed)
+        {
+            "id": 4,
+            "start_date_local": "2026-01-28T10:00:00",
+            "category": "NOTE",
+            "name": "[ANNULÉE] Intervals VO2",
+            "description": "❌ SÉANCE ANNULÉE\nRaison: Fatigue\n\n--- Description originale ---\nIntervals VO2 5x3min (50min, 50 TSS)",
         },
     ]
 
@@ -204,11 +213,13 @@ def test_evaluate_weekly_deficit_calculates_correctly(mock_client):
         week_id="S078", check_date=date(2026, 1, 30), client=mock_client
     )
 
-    # Planned: 60 + 55 = 115 TSS (before check_date)
+    # Planned workouts (before check_date): 60 + 55 = 115 TSS
+    # Lost TSS (cancelled note 28/01): 50 TSS
+    # Total planned: 115 + 50 = 165 TSS
     # Completed: 60 TSS
-    # Deficit: 115 - 60 = 55 TSS
+    # Deficit: 165 - 60 = 105 TSS
     assert result is not None
-    assert result["deficit"] == 55
+    assert result["deficit"] == 105
 
 
 def test_evaluate_weekly_deficit_with_zero_completed(mock_client):
@@ -220,10 +231,12 @@ def test_evaluate_weekly_deficit_with_zero_completed(mock_client):
     )
 
     assert result is not None
-    # Planned: 60 + 55 = 115 TSS
+    # Planned workouts: 60 + 55 = 115 TSS
+    # Lost TSS (note): 50 TSS
+    # Total planned: 165 TSS
     # Completed: 0 TSS
-    # Deficit: 115 TSS
-    assert result["deficit"] == 115
+    # Deficit: 165 TSS
+    assert result["deficit"] == 165
 
 
 def test_evaluate_weekly_deficit_with_surplus(mock_client):
@@ -288,6 +301,64 @@ def test_identify_cancelled_sessions_two_missed():
     assert len(cancelled) == 1
     assert cancelled[0]["name"] == "Session 2"
     assert cancelled[0]["tss"] == 55
+
+
+def test_parse_cancelled_notes_single_note():
+    """Parse une note annulée avec TSS."""
+    events = [
+        {
+            "category": "NOTE",
+            "name": "[ANNULÉE] SS030-Ride-Sweet Spot 2x10-v1",
+            "description": "❌ SÉANCE ANNULÉE\nRaison: Fatigue\n\n--- Description originale ---\nSweet Spot 2x10min (60min, 60 TSS)",
+        }
+    ]
+
+    lost_tss = _parse_cancelled_notes_tss(events)
+
+    assert lost_tss == 60.0
+
+
+def test_parse_cancelled_notes_multiple_notes():
+    """Parse plusieurs notes annulées."""
+    events = [
+        {
+            "category": "NOTE",
+            "name": "[ANNULÉE] Session 1",
+            "description": "❌ SÉANCE ANNULÉE\n...\n(60min, 60 TSS)",
+        },
+        {
+            "category": "NOTE",
+            "name": "[SAUTÉE] Session 2",
+            "description": "⏭️ SÉANCE SAUTÉE\n...\n(45min, 45 TSS)",
+        },
+        {
+            "category": "NOTE",
+            "name": "[REMPLACÉE] Session 3",
+            "description": "🔄 SÉANCE REMPLACÉE\n...\n(90min, 85 TSS)",
+        },
+        {
+            "category": "WORKOUT",  # Should be ignored
+            "name": "Normal workout",
+            "load": 50,
+        },
+    ]
+
+    lost_tss = _parse_cancelled_notes_tss(events)
+
+    # 60 + 45 + 85 = 190 TSS
+    assert lost_tss == 190.0
+
+
+def test_parse_cancelled_notes_no_notes():
+    """Aucune note annulée."""
+    events = [
+        {"category": "WORKOUT", "name": "Session 1", "load": 60},
+        {"category": "NOTE", "name": "Regular note", "description": "Just a note"},
+    ]
+
+    lost_tss = _parse_cancelled_notes_tss(events)
+
+    assert lost_tss == 0.0
 
 
 def test_identify_available_rest_days_sunday_free():
