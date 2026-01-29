@@ -28,6 +28,35 @@ from cyclisme_training_logs.api.intervals_client import IntervalsClient
 logger = logging.getLogger(__name__)
 
 
+def _parse_event_planned_tss(event: dict) -> float:
+    r"""
+    Parse le TSS prévu depuis la description d'un événement (workout ou note).
+
+    Le TSS est stocké dans la description au format: "(XXXmin, YYY TSS)".
+    Fonctionne pour WORKOUT et NOTE.
+
+    Args:
+        event: Événement Intervals.icu
+
+    Returns:
+        TSS prévu extrait de la description, ou 0 si non trouvé
+
+    Examples:
+        >>> event = {"description": "Endurance Base (75min, 56 TSS)\\n\\nWarmup..."}
+        >>> _parse_event_planned_tss(event)
+        56.0
+    """
+    description = event.get("description", "")
+
+    # Pattern: "(60min, 60 TSS)" ou "(90min, 85 TSS)"
+    match = re.search(r"\((\d+)min, (\d+) TSS\)", description)
+
+    if match:
+        return float(match.group(2))
+
+    return 0.0
+
+
 def _parse_cancelled_notes_tss(events: list[dict]) -> float:
     r"""
     Parse les notes de séances annulées/sautées/remplacées pour extraire TSS perdu.
@@ -151,28 +180,32 @@ def evaluate_weekly_deficit(
         logger.debug(f"  Complétées: {len(completed_activities)} activités")
 
         # 4. Calculer déficit
-        # 4a. TSS planifié depuis workouts passés
-        past_workouts = [
+        # 4a. TSS planifié = parser TOUS les événements passés (workouts + notes)
+        # depuis leurs descriptions "(XXmin, YY TSS)"
+        past_events = [
             e
-            for e in planned_workouts
+            for e in all_events
             if date.fromisoformat(e["start_date_local"].split("T")[0]) < check_date
         ]
-        planned_tss = sum(e.get("load", 0) for e in past_workouts)
 
-        # 4b. Ajouter TSS perdu des séances annulées (notes)
-        lost_tss = _parse_cancelled_notes_tss(notes)
-        planned_tss += lost_tss
+        planned_tss = 0.0
+        for event in past_events:
+            event_tss = _parse_event_planned_tss(event)
+            if event_tss > 0:
+                planned_tss += event_tss
+                event_date = event["start_date_local"][:10]
+                event_name = event["name"][:40]
+                logger.debug(
+                    f"  {event_date} | {event['category']:8} | {event_tss:3.0f} TSS | {event_name}"
+                )
 
-        # 4c. TSS complété
+        # 4b. TSS complété
         completed_tss = sum(a.get("icu_training_load", 0) for a in completed_activities)
 
-        # 4d. Calculer déficit
+        # 4c. Calculer déficit
         deficit = planned_tss - completed_tss
 
-        logger.info(f"  TSS planifié (workouts): {planned_tss - lost_tss:.0f}")
-        if lost_tss > 0:
-            logger.info(f"  TSS planifié (notes annulées): +{lost_tss:.0f}")
-        logger.info(f"  TSS planifié (total): {planned_tss:.0f}")
+        logger.info(f"  TSS planifié (total jours passés): {planned_tss:.0f}")
         logger.info(f"  TSS complété: {completed_tss:.0f}")
         logger.info(f"  Déficit: {deficit:.0f} TSS")
 
