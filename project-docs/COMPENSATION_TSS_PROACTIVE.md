@@ -231,6 +231,7 @@ cyclisme_training_logs/
 ├── workflows/
 │   └── proactive_compensation.py        # Core logic
 │       ├── evaluate_weekly_deficit()    # Détection déficit
+│       ├── _parse_cancelled_notes_tss() # Parse TSS notes annulées (FIX 29/01)
 │       ├── _collect_compensation_context()  # Collecte contexte
 │       ├── generate_compensation_prompt()   # Prompt AI
 │       ├── parse_ai_compensation_response() # Parsing JSON
@@ -247,6 +248,57 @@ cyclisme_training_logs/
     └── run() → Appel compensation après servo
 ```
 
+### 🔧 Fix Critique : Parsing Notes Annulées (29 Jan 2026)
+
+**Problème Identifié** :
+Quand `update-session` remplace une séance par une note (repos/annulation), le TSS original était perdu :
+
+```python
+# Avant fix
+planned_events = client.get_events()  # Contient NOTE (TSS=0)
+planned_tss = sum(e["load"] for e in planned_events)  # ← TSS perdu !
+```
+
+**Solution Implémentée** :
+Parser les notes avec tags `[ANNULÉE]`, `[SAUTÉE]`, `[REMPLACÉE]` pour récupérer TSS depuis description :
+
+```python
+# update-session crée notes avec description:
+"❌ SÉANCE ANNULÉE\n...\n(60min, 60 TSS)"
+                              ↑
+# Regex: r'\((\d+)min, (\d+) TSS\)'
+
+def _parse_cancelled_notes_tss(events):
+    """Parse TSS perdu depuis notes annulées."""
+    lost_tss = 0
+    for event in events:
+        if event["category"] == "NOTE":
+            if any(tag in event["name"] for tag in ["[ANNULÉE]", "[SAUTÉE]", "[REMPLACÉE]"]):
+                match = re.search(r'\((\d+)min, (\d+) TSS\)', event["description"])
+                if match:
+                    lost_tss += float(match.group(2))
+    return lost_tss
+```
+
+**Résultat** :
+```python
+# Après fix
+all_events = client.get_events()  # Workouts + notes
+workouts_tss = sum(e["load"] for e in workouts)
+lost_tss = _parse_cancelled_notes_tss(all_events)  # ← TSS récupéré !
+total_planned_tss = workouts_tss + lost_tss
+```
+
+**Tests Ajoutés** :
+- `test_parse_cancelled_notes_single_note()` : Parse 1 note (60 TSS)
+- `test_parse_cancelled_notes_multiple_notes()` : Parse 3 notes (190 TSS total)
+- `test_parse_cancelled_notes_no_notes()` : Aucune note (0 TSS)
+
+**Impact** :
+- ✅ Déficit TSS maintenant correct même après `update-session`
+- ✅ Compatible avec workflow existant (pas de breaking change)
+- ✅ 3 tests supplémentaires (24 tests total vs 21)
+
 ### Tests
 
 ```bash
@@ -261,7 +313,7 @@ poetry run pytest tests/workflows/test_proactive_compensation.py \
 ```
 
 **Résultats** :
-- ✅ 21 tests unitaires passing
+- ✅ 24 tests unitaires passing (+3 tests parsing notes)
 - ✅ Coverage proactive_compensation.py : 90%
 - ✅ Coverage compensation_strategies.py : 100%
 - ✅ Coverage total : 93%
@@ -324,25 +376,32 @@ Le système inclut des limites de sécurité :
 | Métrique | Cible | Réalisé | Status |
 |----------|-------|---------|--------|
 | Nouveaux modules | 2 fichiers | 2 | ✅ |
-| Tests unitaires | ≥15 tests | 21 tests | ✅ |
+| Tests unitaires | ≥15 tests | 24 tests | ✅ |
 | Coverage nouveaux | ≥80% | 93% | ✅ |
-| Tests passing | 100% | 100% (21/21) | ✅ |
+| Tests passing | 100% | 100% (24/24) | ✅ |
 | Intégration daily-sync | ✅ | ✅ | ✅ |
 | AI providers compatible | ✅ | ✅ | ✅ |
+| Fix notes annulées | - | ✅ | ✅ |
 
 ### Livrables
 
+**Initial (29 Jan 2026 matin):**
 - ✅ `proactive_compensation.py` : Core logic (145 lignes)
 - ✅ `compensation_strategies.py` : 6 stratégies (63 lignes)
 - ✅ `daily_sync.py` : Intégration (modifié)
 - ✅ `test_proactive_compensation.py` : 21 tests unitaires
 - ✅ Documentation utilisateur (ce fichier)
 
+**Fix Critique (29 Jan 2026 après-midi):**
+- ✅ `_parse_cancelled_notes_tss()` : Parsing TSS notes annulées
+- ✅ +3 tests unitaires (24 total)
+- ✅ Fix déficit calculation avec `update-session`
+
 ---
 
 **Préparé par** : Claude Code (Dev)
 **Pour** : Stéphane Jouve (PO/MOA)
 **Date** : 29 Janvier 2026
-**Sprint** : S080 - Compensation TSS Proactive
+**Sprint** : S080 - Compensation TSS Proactive + Fix
 
-**Status** : ✅ COMPLÉTÉ
+**Status** : ✅ COMPLÉTÉ (avec fix critique parsing notes)

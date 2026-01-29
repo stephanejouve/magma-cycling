@@ -14,16 +14,79 @@ Architecture:
 
 Author: Claude Code
 Created: 2026-01-29 (Sprint S080)
+Updated: 2026-01-29 (Fix: Parse cancelled notes TSS)
 """
 
 import json
 import logging
+import re
 from datetime import date, timedelta
 from typing import Any
 
 from cyclisme_training_logs.api.intervals_client import IntervalsClient
 
 logger = logging.getLogger(__name__)
+
+
+def _parse_cancelled_notes_tss(events: list[dict]) -> float:
+    r"""
+    Parse les notes de séances annulées/sautées/remplacées pour extraire TSS perdu.
+
+    Quand update-session remplace une séance par une note, le TSS original est
+    sauvegardé dans la description de la note au format "(XXXmin, YYY TSS)".
+    Cette fonction parse ces notes pour récupérer le TSS perdu.
+
+    Args:
+        events: Liste d'événements Intervals.icu (incluant notes)
+
+    Returns:
+        Total TSS perdu des séances annulées/sautées/remplacées
+
+    Examples:
+        >>> events = [
+        ...     {
+        ...         "category": "NOTE",
+        ...         "name": "[ANNULÉE] SS030-Ride-Sweet Spot 2x10-v1",
+        ...         "description": "❌ SÉANCE ANNULÉE\n...\n(60min, 60 TSS)"
+        ...     }
+        ... ]
+        >>> _parse_cancelled_notes_tss(events)
+        60.0
+
+    Notes:
+        - Détecte notes avec tags: [ANNULÉE], [SAUTÉE], [REMPLACÉE]
+        - Regex: r'\((\d+)min, (\d+) TSS\)' dans description
+        - Ignore notes sans TSS parsable
+    """
+    lost_tss = 0.0
+    cancelled_tags = ["[ANNULÉE]", "[SAUTÉE]", "[REMPLACÉE]"]
+
+    for event in events:
+        # Filtrer uniquement les notes avec tags cancelled
+        if event.get("category") != "NOTE":
+            continue
+
+        event_name = event.get("name", "")
+        if not any(tag in event_name for tag in cancelled_tags):
+            continue
+
+        # Parser TSS depuis description
+        description = event.get("description", "")
+
+        # Pattern: "(60min, 60 TSS)" ou "(90min, 85 TSS)"
+        match = re.search(r"\((\d+)min, (\d+) TSS\)", description)
+
+        if match:
+            tss = float(match.group(2))
+            lost_tss += tss
+            logger.debug(f"  Parsed cancelled note: {event_name[:50]}... → {tss} TSS")
+        else:
+            logger.warning(f"  Could not parse TSS from note: {event_name}")
+
+    if lost_tss > 0:
+        logger.info(f"  TSS perdu (notes annulées) : {lost_tss:.0f}")
+
+    return lost_tss
 
 
 def evaluate_weekly_deficit(
@@ -68,16 +131,16 @@ def evaluate_weekly_deficit(
 
         logger.info(f"Évaluation déficit TSS - Semaine {week_id} ({week_start} → {week_end})")
 
-        # 2. Charger planning semaine depuis Intervals.icu
+        # 2. Charger planning semaine depuis Intervals.icu (tous événements)
         # GET /api/v1/athlete/{id}/events?oldest={week_start}&newest={week_end}
-        planned_events = client.get_events(
-            oldest=week_start.isoformat(), newest=week_end.isoformat()
-        )
+        all_events = client.get_events(oldest=week_start.isoformat(), newest=week_end.isoformat())
 
-        # Filtrer événements type WORKOUT uniquement
-        planned_events = [e for e in planned_events if e.get("category") == "WORKOUT"]
+        # Séparer workouts et notes
+        planned_workouts = [e for e in all_events if e.get("category") == "WORKOUT"]
+        notes = [e for e in all_events if e.get("category") == "NOTE"]
 
-        logger.debug(f"  Planning: {len(planned_events)} séances planifiées")
+        logger.debug(f"  Planning: {len(planned_workouts)} séances planifiées")
+        logger.debug(f"  Notes: {len(notes)} notes (possibles annulations)")
 
         # 3. Charger activités complétées
         # GET /api/v1/athlete/{id}/activities?oldest={week_start}&newest={check_date}
@@ -88,18 +151,28 @@ def evaluate_weekly_deficit(
         logger.debug(f"  Complétées: {len(completed_activities)} activités")
 
         # 4. Calculer déficit
-        # Filtrer événements passés (avant check_date)
-        past_events = [
+        # 4a. TSS planifié depuis workouts passés
+        past_workouts = [
             e
-            for e in planned_events
+            for e in planned_workouts
             if date.fromisoformat(e["start_date_local"].split("T")[0]) < check_date
         ]
+        planned_tss = sum(e.get("load", 0) for e in past_workouts)
 
-        planned_tss = sum(e.get("load", 0) for e in past_events)
+        # 4b. Ajouter TSS perdu des séances annulées (notes)
+        lost_tss = _parse_cancelled_notes_tss(notes)
+        planned_tss += lost_tss
+
+        # 4c. TSS complété
         completed_tss = sum(a.get("icu_training_load", 0) for a in completed_activities)
+
+        # 4d. Calculer déficit
         deficit = planned_tss - completed_tss
 
-        logger.info(f"  TSS planifié (passé): {planned_tss:.0f}")
+        logger.info(f"  TSS planifié (workouts): {planned_tss - lost_tss:.0f}")
+        if lost_tss > 0:
+            logger.info(f"  TSS planifié (notes annulées): +{lost_tss:.0f}")
+        logger.info(f"  TSS planifié (total): {planned_tss:.0f}")
         logger.info(f"  TSS complété: {completed_tss:.0f}")
         logger.info(f"  Déficit: {deficit:.0f} TSS")
 
@@ -115,7 +188,7 @@ def evaluate_weekly_deficit(
             week_id=week_id,
             check_date=check_date,
             deficit=deficit,
-            planned_events=planned_events,
+            planned_events=all_events,  # Passer tous événements (workouts + notes)
             completed_activities=completed_activities,
             client=client,
         )
@@ -168,10 +241,13 @@ def _collect_compensation_context(
     """
     logger.debug("Collecte contexte compensation...")
 
+    # Filtrer workouts uniquement (exclure notes)
+    workouts_only = [e for e in planned_events if e.get("category") == "WORKOUT"]
+
     # 1. Séances restantes cette semaine
     remaining_sessions = [
         e
-        for e in planned_events
+        for e in workouts_only
         if date.fromisoformat(e["start_date_local"].split("T")[0]) >= check_date
     ]
 
@@ -179,7 +255,7 @@ def _collect_compensation_context(
 
     # 2. Raisons annulations (analyse activités manquantes)
     cancelled_sessions = _identify_cancelled_sessions(
-        planned_events, completed_activities, check_date
+        workouts_only, completed_activities, check_date
     )
 
     logger.debug(f"  Séances annulées: {len(cancelled_sessions)}")
@@ -240,7 +316,10 @@ def _collect_compensation_context(
     days_until_sunday = (6 - check_date.weekday()) % 7
 
     # 8. Calculer déficit en pourcentage
-    total_planned_tss = sum(e.get("load", 0) for e in planned_events)
+    # Inclure TSS workouts + TSS perdu (notes annulées)
+    workouts_tss = sum(e.get("load", 0) for e in workouts_only)
+    lost_tss = _parse_cancelled_notes_tss(planned_events)
+    total_planned_tss = workouts_tss + lost_tss
     deficit_pct = (deficit / total_planned_tss * 100) if total_planned_tss > 0 else 0
 
     context = {
