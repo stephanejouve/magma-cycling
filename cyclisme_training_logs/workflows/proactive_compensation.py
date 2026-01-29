@@ -297,22 +297,28 @@ def _collect_compensation_context(
     # GET /api/v1/athlete/{id}/wellness (date la plus récente)
     try:
         # Get wellness for check_date (or most recent before)
-        wellness_data = []
+        wellness_data = {}
         for i in range(3):  # Try up to 3 days back
             wellness_date = check_date - timedelta(days=i)
             wellness = client.get_wellness(wellness_date.isoformat())
             if wellness:
-                wellness_data = wellness
+                # wellness peut être dict ou list[dict]
+                if isinstance(wellness, list):
+                    wellness_data = wellness[0] if wellness else {}
+                else:
+                    wellness_data = wellness
                 logger.debug(f"  Wellness récupéré: {wellness_date}")
                 break
 
-        # Extract metrics
+        # Extract metrics (avec fallback si wellness vide)
         athlete_state = {
-            "tsb": wellness_data.get("ctl", 0) - wellness_data.get("atl", 0),  # Form
-            "sleep_hours": wellness_data.get("sleepSecs", 0) / 3600,
-            "hrv": wellness_data.get("hrv", 0),
-            "rpe": wellness_data.get("rpe", 0),
-            "weight": wellness_data.get("weight", 0),
+            "tsb": (
+                wellness_data.get("ctl", 0) - wellness_data.get("atl", 0) if wellness_data else 0
+            ),
+            "sleep_hours": wellness_data.get("sleepSecs", 0) / 3600 if wellness_data else 0,
+            "hrv": wellness_data.get("hrv", 0) if wellness_data else 0,
+            "rpe": wellness_data.get("rpe", 0) if wellness_data else 0,
+            "weight": wellness_data.get("weight", 0) if wellness_data else 0,
         }
 
         logger.debug(f"  TSB: {athlete_state['tsb']:+.1f}")
@@ -418,7 +424,9 @@ def _identify_cancelled_sessions(
     return cancelled
 
 
-def _identify_available_rest_days(remaining_sessions: list[dict], check_date: date) -> list[str]:
+def _identify_available_rest_days(
+    remaining_sessions: list[dict], check_date: date
+) -> list[dict[str, any]]:
     """
     Identifie jours repos prévus dans séances restantes.
 
@@ -429,12 +437,15 @@ def _identify_available_rest_days(remaining_sessions: list[dict], check_date: da
         check_date: Date actuelle
 
     Returns:
-        Liste noms jours repos (ex: ["Dimanche"])
+        Liste de dicts avec infos complètes sur jours repos:
+        - day_name: Nom du jour (ex: "Dimanche")
+        - date: Date ISO (ex: "2026-02-01")
+        - weekday: Numéro jour semaine (0=lundi, 6=dimanche)
 
     Examples:
         >>> rest_days = _identify_available_rest_days(remaining_sessions, date(2026, 1, 30))
         >>> rest_days
-        ['Dimanche']
+        [{'day_name': 'Dimanche', 'date': '2026-02-01', 'weekday': 6}]
 
     Notes:
         - Ne considère que les jours entre check_date et dimanche
@@ -447,15 +458,35 @@ def _identify_available_rest_days(remaining_sessions: list[dict], check_date: da
         session_date = date.fromisoformat(session_date_str)
         planned_weekdays.add(session_date.weekday())
 
-    # Jours restants jusqu'à dimanche
+    # Jours restants jusqu'à dimanche (inclus)
     current_weekday = check_date.weekday()
-    remaining_weekdays = set(range(current_weekday, 7))  # 0=lundi, 6=dimanche
+    # Si on est dimanche (6), on veut quand même considérer dimanche
+    if current_weekday == 6:
+        remaining_weekdays = {6}
+    else:
+        remaining_weekdays = set(range(current_weekday + 1, 7))  # Demain jusqu'à dimanche
 
     # Jours repos = jours restants sans séance prévue
     rest_weekdays = remaining_weekdays - planned_weekdays
 
     day_names = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
-    rest_days = [day_names[i] for i in sorted(rest_weekdays)]
+
+    # Construire liste avec infos complètes
+    rest_days = []
+    for weekday in sorted(rest_weekdays):
+        # Calculer la date correspondante
+        days_ahead = weekday - current_weekday
+        if days_ahead <= 0:
+            days_ahead += 7  # Semaine prochaine
+        rest_date = check_date + timedelta(days=days_ahead)
+
+        rest_days.append(
+            {
+                "day_name": day_names[weekday],
+                "date": rest_date.isoformat(),
+                "weekday": weekday,
+            }
+        )
 
     return rest_days
 
@@ -559,7 +590,7 @@ def generate_compensation_prompt(context: dict[str, Any]) -> str:
 **Séances restantes (jours restants: {days_left}):**
 {remaining_workouts}
 
-**Jours repos disponibles:** {', '.join(rest_days) if rest_days else 'Aucun'}
+**Jours repos disponibles:** {', '.join([f"{r['day_name']} ({r['date']})" for r in rest_days]) if rest_days else 'Aucun'}
 
 ## Métriques Athlète
 
