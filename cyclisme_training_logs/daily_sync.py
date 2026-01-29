@@ -53,6 +53,12 @@ from cyclisme_training_logs.insert_analysis import WorkoutHistoryManager
 from cyclisme_training_logs.planning.calendar import TrainingCalendar, WorkoutType
 from cyclisme_training_logs.planning.intervals_sync import IntervalsSync
 from cyclisme_training_logs.prepare_analysis import PromptGenerator
+from cyclisme_training_logs.workflows.proactive_compensation import (
+    evaluate_weekly_deficit,
+    format_compensation_section,
+    generate_compensation_prompt,
+    parse_ai_compensation_response,
+)
 
 
 def calculate_current_week_info(target_date: date | None = None) -> tuple[str, date]:
@@ -768,6 +774,7 @@ Réponds maintenant."""
         planning_changes: dict,
         analyses: dict[int, str] | None = None,
         servo_result: dict | None = None,
+        compensation_result: dict | None = None,
     ) -> Path:
         """
         Generate markdown daily report.
@@ -778,6 +785,7 @@ Réponds maintenant."""
             planning_changes: Dict with planning changes
             analyses: Dict of AI analyses by activity ID
             servo_result: Servo mode recommendations (if triggered)
+            compensation_result: TSS proactive compensation (if deficit detected)
 
         Returns:
             Path to generated report file
@@ -884,6 +892,16 @@ Réponds maintenant."""
                     f.write(
                         "✅ **Aucune modification recommandée** - Planning maintenu tel quel\n\n"
                     )
+
+            # Section 4: TSS Proactive Compensation (if deficit detected)
+            if compensation_result:
+                context = compensation_result.get("context")
+                recommendations = compensation_result.get("recommendations")
+
+                if context and recommendations:
+                    f.write("---\n\n")
+                    compensation_section = format_compensation_section(context, recommendations)
+                    f.write(compensation_section)
 
             f.write("---\n\n")
             f.write(
@@ -1118,6 +1136,56 @@ Réponds maintenant."""
             else:
                 print("  ✅ Aucun signal d'alerte - planning maintenu")
 
+        # 2c. TSS Proactive Compensation (if week specified and AI analysis enabled)
+        compensation_result = None
+        if week_id and self.enable_ai_analysis:
+            print("\n🔍 Évaluation déficit TSS hebdomadaire...")
+
+            # Evaluate weekly deficit
+            deficit_context = evaluate_weekly_deficit(
+                week_id=week_id, check_date=check_date, client=self.client, threshold_tss=50
+            )
+
+            if deficit_context:
+                deficit = deficit_context["deficit"]
+                print(f"\n⚠️  Déficit TSS détecté: -{deficit:.0f} TSS")
+                print(f"   Semaine {week_id}, {deficit_context['days_remaining']} jours restants")
+
+                # Generate compensation prompt
+                prompt = generate_compensation_prompt(deficit_context)
+
+                # Call AI analyzer
+                try:
+                    print("🤖 Demande recommandations compensation au coach AI...")
+                    ai_response = self.ai_analyzer.analyze_session(prompt)
+
+                    if ai_response:
+                        print(f"  ✅ Réponse reçue ({len(ai_response)} caractères)")
+
+                        # Parse AI response
+                        recommendations = parse_ai_compensation_response(ai_response)
+
+                        if recommendations:
+                            print(f"✅ Recommandations générées: {recommendations['strategy']}")
+                            print(
+                                f"   Compensation totale: +{recommendations['total_compensated']} TSS"
+                            )
+
+                            compensation_result = {
+                                "context": deficit_context,
+                                "recommendations": recommendations,
+                                "ai_response": ai_response,
+                            }
+                        else:
+                            print("  ⚠️  Échec parsing recommandations AI")
+                    else:
+                        print("  ⚠️  Pas de réponse du coach AI")
+
+                except Exception as e:
+                    print(f"  ❌ Erreur génération recommandations: {e}")
+            else:
+                print("  ✅ Déficit < seuil (50 TSS) - Pas d'intervention")
+
         # 3. Check planning changes (if week specified)
         planning_changes = {"status": None, "diff": None}
         if week_id and start_date:
@@ -1126,7 +1194,12 @@ Réponds maintenant."""
 
         # 4. Generate report
         report_file = self.generate_report(
-            check_date, new_activities, planning_changes, analyses, servo_result
+            check_date,
+            new_activities,
+            planning_changes,
+            analyses,
+            servo_result,
+            compensation_result,
         )
 
         print(f"\n📝 Rapport généré: {report_file}")
