@@ -130,7 +130,7 @@ def sample_context():
         ],
         "days_remaining": 2,
         "athlete_state": {"tsb": 5, "sleep_hours": 8, "hrv": 65, "rpe": 6, "weight": 72},
-        "rest_days": ["Dimanche"],
+        "rest_days": [{"day_name": "Dimanche", "date": "2026-02-01", "weekday": 6}],
         "indoor_sessions": [{"name": "Sweet Spot", "load": 55}],
         "weather": {
             "avg_temp_celsius": 10,
@@ -417,11 +417,12 @@ def test_identify_available_rest_days_sunday_free():
 
     rest_days = _identify_available_rest_days(remaining_sessions, date(2026, 1, 30))
 
-    # Friday=4, available days: [4, 5, 6]
-    # Planned: [5]
-    # Free: [4, 6] = Vendredi, Dimanche
-    assert "Dimanche" in rest_days
-    assert "Vendredi" in rest_days
+    # New format: list of dicts with day_name, date, weekday
+    # Friday=4, planned: [5], free: [6] = Dimanche (pas Vendredi car c'est aujourd'hui)
+    assert len(rest_days) == 1
+    assert rest_days[0]["day_name"] == "Dimanche"
+    assert rest_days[0]["date"] == "2026-02-01"
+    assert rest_days[0]["weekday"] == 6
 
 
 def test_get_weather_forecast_returns_dict():
