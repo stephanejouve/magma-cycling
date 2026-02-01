@@ -447,7 +447,7 @@ class WorkoutUploader:
         return workouts
 
     def upload_workout(self, workout: dict) -> bool:
-        """Upload un workout sur Intervals.icu."""
+        """Upload un workout sur Intervals.icu with duplicate detection."""
         try:
             # Déterminer l'heure de début selon le jour de la semaine
             workout_date = datetime.strptime(workout["date"], "%Y-%m-%d")
@@ -455,6 +455,23 @@ class WorkoutUploader:
 
             # Samedi (5) → 09:00, autres jours → 17:00
             start_time = "09:00:00" if day_of_week == 5 else "17:00:00"
+
+            if self.api is None:
+                print("  ❌ Erreur : API non initialisée")
+                return False
+
+            # Check for existing workout on this date (duplicate detection)
+            existing_events = self.api.get_events(oldest=workout["date"], newest=workout["date"])
+
+            # Look for existing WORKOUT on same date with same week prefix
+            week_prefix = workout["name"].split("-")[0]  # Extract SXXX from name
+            existing_workout = None
+            for event in existing_events:
+                if event.get("category") == "WORKOUT" and event.get("name", "").startswith(
+                    week_prefix
+                ):
+                    existing_workout = event
+                    break
 
             event_data = {
                 "category": "WORKOUT",
@@ -464,21 +481,42 @@ class WorkoutUploader:
                 "start_date_local": f"{workout['date']}T{start_time}",
             }
 
-            if self.api is None:
-                print("  ❌ Erreur : API non initialisée")
-                return False
+            # Calculate hash for comparison
+            new_hash = calculate_description_hash(workout["description"])
 
-            response = self.api.create_event(event_data)
+            if existing_workout:
+                existing_hash = calculate_description_hash(existing_workout.get("description", ""))
 
-            if response:
-                # Store hash and event_id for sync tracking
-                workout["description_hash"] = calculate_description_hash(workout["description"])
-                workout["intervals_id"] = response.get("id")
-                print(f"  ✅ Uploadé : {workout['name']} ({workout['date']})")
-                return True
+                if existing_hash == new_hash:
+                    # Identical content - skip
+                    print(f"  ⏭️  Ignoré (identique) : {workout['name']} ({workout['date']})")
+                    workout["description_hash"] = new_hash
+                    workout["intervals_id"] = existing_workout.get("id")
+                    return True
+                else:
+                    # Different content - update
+                    response = self.api.update_event(existing_workout.get("id"), event_data)
+                    if response:
+                        workout["description_hash"] = new_hash
+                        workout["intervals_id"] = response.get("id")
+                        print(f"  🔄 Mis à jour : {workout['name']} ({workout['date']})")
+                        return True
+                    else:
+                        print(f"  ❌ Échec mise à jour : {workout['name']}")
+                        return False
             else:
-                print(f"  ❌ Échec : {workout['name']}")
-                return False
+                # No existing workout - create new
+                response = self.api.create_event(event_data)
+
+                if response:
+                    # Store hash and event_id for sync tracking
+                    workout["description_hash"] = new_hash
+                    workout["intervals_id"] = response.get("id")
+                    print(f"  ✅ Créé : {workout['name']} ({workout['date']})")
+                    return True
+                else:
+                    print(f"  ❌ Échec création : {workout['name']}")
+                    return False
 
         except Exception as e:
             print(f"  ❌ Erreur upload {workout['name']} : {e}")
