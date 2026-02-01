@@ -549,7 +549,7 @@ class DailySync:
                 if sleep_secs:
                     metrics["sleep_hours"] = sleep_secs / 3600.0
 
-                # Feel (1-4 scale)
+                # Feel (Intervals.icu 1-5 scale: 1=Excellent, 5=Poor)
                 metrics["feel"] = activity.get("feel")
             except Exception as e:
                 print(f"     ⚠️  Erreur extraction wellness: {e}")

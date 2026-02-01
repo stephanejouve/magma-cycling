@@ -217,7 +217,7 @@ class PromptGenerator:
             "has_weather": activity.get("has_weather", False),
             "description": activity.get("description", ""),
             "tags": activity.get("tags", []),
-            "feel": activity.get("feel"),  # 1-4 scale for "How did it feel?"
+            "feel": activity.get("feel"),  # 1-5 scale Intervals.icu (1=Excellent, 5=Poor)
             "is_strava": is_strava,
             "source": activity.get("source", "Unknown"),
         }
@@ -225,10 +225,10 @@ class PromptGenerator:
         return data
 
     def _format_feel_value(self, feel_value):
-        """Format the 'feel' value (1-4 scale) into readable text.
+        """Format the 'feel' value (Intervals.icu 1-5 scale) into readable text.
 
         Args:
-            feel_value: Numeric value 1-4 or None
+            feel_value: Numeric value 1-5 or None (1=Excellent, 5=Poor)
 
         Returns:
             Formatted string with emoji
@@ -237,10 +237,11 @@ class PromptGenerator:
             return "_Non renseigné_"
 
         feel_map = {
-            1: "😣 Difficile (1/4)",
-            2: "😐 Moyen (2/4)",
-            3: "🙂 Bon (3/4)",
-            4: "😊 Excellent (4/4)",
+            1: "😊 Excellent (1/5)",
+            2: "🙂 Bien (2/5)",
+            3: "😐 Moyen (3/5)",
+            4: "😕 Passable (4/5)",
+            5: "😣 Mauvais (5/5)",
         }
 
         return feel_map.get(feel_value, f"_Valeur inconnue: {feel_value}_")
@@ -702,7 +703,7 @@ En tant qu'assistant coach, analyse cette séance avec un regard factuel et tech
 2. Évaluer qualité via découplage (<7.5% = validé)
 3. Contextualiser avec TSB pré-séance et sommeil
 4. Identifier patterns (Sweet-Spot, Endurance, VO2, etc.)
-5. **Intégrer le feedback athlète** (section "Feedback Athlète") s'il est présent - ressenti général (1-4) et notes textuelles (avec système de fallback: description activité en priorité, wellness comments si vide)
+5. **Intégrer le feedback athlète** (section "Feedback Athlète") s'il est présent - ressenti général (1-5, 1=Excellent 5=Mauvais) et notes textuelles (avec système de fallback: description activité en priorité, wellness comments si vide)
 6. Recommandations concrètes basées sur les données ET le ressenti
 
 **Gestion des données manquantes (activités Strava) :**
