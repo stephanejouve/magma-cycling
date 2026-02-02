@@ -223,7 +223,7 @@ class DailySync:
         self.servo_criteria = {
             "decoupling_threshold": 7.5,  # Découplage >7.5%
             "sleep_threshold_hours": 7.0,  # Sommeil <7h
-            "feel_threshold": 2,  # Feel ≤2/4 (Difficile/Moyen)
+            "feel_threshold": 4,  # Feel ≥4/5 (Passable/Mauvais) - Intervals.icu scale
             "tsb_threshold": -10,  # TSB <-10
         }
 
@@ -574,30 +574,96 @@ class DailySync:
 
         return metrics
 
-    def should_trigger_servo(self, metrics: dict) -> tuple[bool, list[str]]:
+    def _is_low_effort_social_ride(self, activity: dict, metrics: dict) -> bool:
+        """
+        Detect false positive scenarios for decoupling alerts.
+
+        Identifies social/accompaniment rides with frequent stops that
+        generate artificially high decoupling values.
+
+        Detection criteria:
+        - Very low TSS (<30)
+        - Very low avg power vs normalized power ratio (<0.5)
+        - Keywords in notes: accompagnement, arrêts, attendre, partage, échange
+
+        Args:
+            activity: Activity dict with power metrics and notes
+            metrics: Extracted metrics dict
+
+        Returns:
+            True if this is likely a low-effort social ride (false positive)
+        """
+        # Criterion 1: Very low TSS
+        tss = activity.get("icu_training_load", 0)
+        if tss >= 30:
+            return False
+
+        # Criterion 2: Very low power ratio (indicates frequent stops)
+        avg_power = activity.get("average_watts", 0)
+        normalized_power = activity.get("np", 0)
+        if normalized_power > 0:
+            power_ratio = avg_power / normalized_power
+            if power_ratio < 0.5:  # Avg power < 50% of NP = many stops
+                return True
+
+        # Criterion 3: Keywords in notes/description
+        description = activity.get("description", "").lower()
+        keywords = [
+            "accompagnement",
+            "accompagner",
+            "arrêts",
+            "arrêt",
+            "attendre",
+            "attente",
+            "partage",
+            "partagé",
+            "échange",
+            "échangé",
+            "initiation",
+            "découvrir",
+            "pied à terre",
+            "mise à terre",
+        ]
+
+        if any(keyword in description for keyword in keywords):
+            return True
+
+        return False
+
+    def should_trigger_servo(
+        self, metrics: dict, activity: dict | None = None
+    ) -> tuple[bool, list[str]]:
         """
         Evaluate if servo mode should be triggered based on metrics.
 
         Uses same criteria as workflow_coach servo-mode:
-        - Découplage >7.5%
+        - Découplage >7.5% (with false positive detection for social rides)
         - Sommeil <7h
-        - Feel ≤2/4 (Difficile/Moyen)
+        - Feel ≥4/5 (Passable/Mauvais) - Intervals.icu scale
         - TSB <-10
 
         Args:
             metrics: Dict with extracted metrics
+            activity: Activity dict (optional, for false positive detection)
 
         Returns:
             Tuple of (should_trigger, reasons)
         """
         reasons = []
 
-        # Criterion 1: Decoupling
+        # Criterion 1: Decoupling (with false positive detection)
         if metrics.get("decoupling") is not None:
             if metrics["decoupling"] > self.servo_criteria["decoupling_threshold"]:
-                reasons.append(
-                    f"Découplage élevé ({metrics['decoupling']:.1f}% > {self.servo_criteria['decoupling_threshold']}%)"
-                )
+                # Check for false positive scenarios
+                if activity and self._is_low_effort_social_ride(activity, metrics):
+                    print(
+                        f"     ℹ️  Découplage élevé ({metrics['decoupling']:.1f}%) ignoré "
+                        "(sortie sociale/accompagnement avec arrêts détectée)"
+                    )
+                else:
+                    reasons.append(
+                        f"Découplage élevé ({metrics['decoupling']:.1f}% > {self.servo_criteria['decoupling_threshold']}%)"
+                    )
 
         # Criterion 2: Sleep
         if metrics.get("sleep_hours") is not None:
@@ -606,12 +672,18 @@ class DailySync:
                     f"Sommeil insuffisant ({metrics['sleep_hours']:.1f}h < {self.servo_criteria['sleep_threshold_hours']}h)"
                 )
 
-        # Criterion 3: Feel (subjective)
+        # Criterion 3: Feel (subjective) - Intervals.icu 1-5 scale
         if metrics.get("feel") is not None:
-            if metrics["feel"] <= self.servo_criteria["feel_threshold"]:
-                feel_labels = {1: "Difficile", 2: "Moyen", 3: "Bon", 4: "Excellent"}
+            if metrics["feel"] >= self.servo_criteria["feel_threshold"]:
+                feel_labels = {
+                    1: "Excellent",
+                    2: "Bien",
+                    3: "Moyen",
+                    4: "Passable",
+                    5: "Mauvais",
+                }
                 feel_label = feel_labels.get(metrics["feel"], "Unknown")
-                reasons.append(f"Ressenti négatif ({feel_label} - {metrics['feel']}/4)")
+                reasons.append(f"Ressenti négatif ({feel_label} - {metrics['feel']}/5)")
 
         # Criterion 4: TSB
         if metrics.get("tsb") is not None:
@@ -1127,7 +1199,7 @@ Réponds maintenant."""
             )
 
             # Check if servo should trigger
-            should_trigger, reasons = self.should_trigger_servo(metrics)
+            should_trigger, reasons = self.should_trigger_servo(metrics, latest_activity)
 
             if should_trigger:
                 print("\n⚠️  Conditions détectées pour ajustement planning:")
