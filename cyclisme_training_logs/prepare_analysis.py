@@ -717,6 +717,7 @@ En tant qu'assistant coach, analyse cette séance avec un regard factuel et tech
 **Fournis ton analyse dans ce format EXACT (markdown) :**
 
 ### {act['name']}
+ID : {act['id']}
 Date : {act['date']}
 
 #### Métriques Pré-séance

@@ -352,12 +352,15 @@ class DailySync:
 
         return {"status": status, "diff": status.diff}
 
-    def _extract_existing_analysis(self, activity_name: str, activity_date_str: str) -> str | None:
+    def _extract_existing_analysis(
+        self, activity_name: str, activity_id: str, activity_date_str: str
+    ) -> str | None:
         """
         Check if analysis already exists in workouts-history.md and extract it.
 
         Args:
             activity_name: Name of the activity
+            activity_id: Activity ID (e.g., i122040268)
             activity_date_str: Date in format DD/MM/YYYY
 
         Returns:
@@ -374,9 +377,13 @@ class DailySync:
             # Look for the activity entry
             import re
 
-            # Pattern: ### ACTIVITY_NAME\nDate : DATE
+            # Pattern: ### ACTIVITY_NAME\nID : ACTIVITY_ID\nDate : DATE
+            # This ensures we match the exact activity even if multiple activities
+            # have the same name on the same day
             pattern = (
-                rf"###\s*{re.escape(activity_name)}\s*\nDate\s*:\s*{re.escape(activity_date_str)}"
+                rf"###\s*{re.escape(activity_name)}\s*\n"
+                rf"ID\s*:\s*{re.escape(activity_id)}\s*\n"
+                rf"Date\s*:\s*{re.escape(activity_date_str)}"
             )
             match = re.search(pattern, history_content)
 
@@ -431,7 +438,9 @@ class DailySync:
             activity_date_str = activity_date.strftime("%d/%m/%Y")
 
             # Check if analysis already exists
-            existing_analysis = self._extract_existing_analysis(activity_name, activity_date_str)
+            existing_analysis = self._extract_existing_analysis(
+                activity_name, activity_id, activity_date_str
+            )
 
             if existing_analysis:
                 print("     ✅ Analyse existante trouvée dans workouts-history.md")

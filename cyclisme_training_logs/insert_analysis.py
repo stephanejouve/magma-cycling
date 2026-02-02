@@ -290,14 +290,32 @@ class WorkoutHistoryManager:
 
         workout_name = match.group(1).strip()
 
+        # Extraire l'ID de l'activité
+        id_match = re.search(r"ID\s*:\s*(.+?)\s*\n", analysis_text)
+        if not id_match:
+            # Fallback: old format without ID (backward compatibility)
+            activity_id = None
+        else:
+            activity_id = id_match.group(1).strip()
+
         # Extraire la date
         date = AnalysisParser.extract_date_from_analysis(analysis_text)
         if not date:
             return False
 
         # Chercher dans le contenu existant
-        # Pattern : ### NOM\nDate : DATE
-        pattern = rf"###\s*{re.escape(workout_name)}\s*\nDate\s*:\s*{re.escape(date)}"
+        if activity_id:
+            # New format: Pattern includes ID to differentiate same-name activities
+            # Pattern : ### NOM\nID : ACTIVITY_ID\nDate : DATE
+            pattern = (
+                rf"###\s*{re.escape(workout_name)}\s*\n"
+                rf"ID\s*:\s*{re.escape(activity_id)}\s*\n"
+                rf"Date\s*:\s*{re.escape(date)}"
+            )
+        else:
+            # Old format fallback: Pattern without ID (backward compatibility)
+            # Pattern : ### NOM\nDate : DATE
+            pattern = rf"###\s*{re.escape(workout_name)}\s*\nDate\s*:\s*{re.escape(date)}"
 
         if re.search(pattern, content):
             return True
