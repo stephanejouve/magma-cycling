@@ -229,6 +229,10 @@ class EndOfWeekWorkflow:
             if not self._step5_upload_workouts():
                 return False
 
+            # Step 5b: Save planning JSON with uploaded workouts data
+            if not self.dry_run:
+                self._step5b_save_planning_json()
+
             # Step 6: Archive and commit (optional)
             if self.archive and not self.dry_run:
                 self._step6_archive_and_commit()
@@ -702,6 +706,138 @@ class EndOfWeekWorkflow:
         except Exception as e:
             print(f"  ❌ Erreur upload : {e}")
             return False
+
+    def _step5b_save_planning_json(self):
+        """Step 5b: Save planning JSON with real uploaded workout data."""
+        print("\n" + "=" * 80)
+        print("💾 STEP 5b/6: Sauvegarde Planning JSON")
+        print("=" * 80)
+        print()
+
+        try:
+            if not self.workouts_file:
+                print("  ⚠️  Pas de fichier workouts - JSON template déjà créé")
+                return
+
+            # Import dependencies
+            import json
+            import re
+
+            from cyclisme_training_logs.api.intervals_client import IntervalsClient
+            from cyclisme_training_logs.config import get_intervals_config
+
+            # Parse workouts file to extract metadata
+            print("  📄 Parsing fichier workouts...")
+            workouts_text = self.workouts_file.read_text(encoding="utf-8")
+
+            workout_metadata = {}
+            for match in re.finditer(
+                r"=== WORKOUT (S\d+-\d+-\w+-\w+-V\d+) ===\s*\n\s*(.+?)\((\d+)min, (\d+) TSS\)",
+                workouts_text,
+            ):
+                workout_id = match.group(1)
+                name_desc = match.group(2).strip()
+                duration = int(match.group(3))
+                tss = int(match.group(4))
+                workout_metadata[workout_id] = {
+                    "name_full": name_desc,
+                    "duration_min": duration,
+                    "tss_planned": tss,
+                }
+
+            print(f"     ✓ {len(workout_metadata)} workouts parsés")
+
+            # Get uploaded events from Intervals.icu
+            print("  🌐 Récupération events Intervals.icu...")
+            config = get_intervals_config()
+            client = IntervalsClient(athlete_id=config.athlete_id, api_key=config.api_key)
+
+            events = client.get_events(
+                oldest=self.next_start_date.isoformat(),
+                newest=self.next_end_date.isoformat(),
+            )
+
+            workouts = [
+                e
+                for e in events
+                if e.get("category") == "WORKOUT" and e.get("name", "").startswith(self.week_next)
+            ]
+            workouts_sorted = sorted(workouts, key=lambda x: x.get("start_date_local", ""))
+
+            print(f"     ✓ {len(workouts_sorted)} workouts uploadés")
+
+            # Build planning data structure
+            planning_data = {
+                "week_id": self.week_next,
+                "start_date": self.next_start_date.isoformat(),
+                "end_date": self.next_end_date.isoformat(),
+                "created_at": datetime.now().isoformat(),
+                "last_updated": datetime.now().isoformat(),
+                "version": 1,
+                "athlete_id": config.athlete_id,
+                "tss_target": 0,
+                "planned_sessions": [],
+            }
+
+            tss_total = 0
+
+            for workout in workouts_sorted:
+                workout_name = workout.get("name", "")
+                # Parse: S079-01-END-RepriseDouceLundi-V001
+                match = re.match(r"(S\d+-\d+)-(\w+)-(.+?)-(V\d+)", workout_name)
+                if not match:
+                    print(f"     ⚠️  Format invalide: {workout_name}")
+                    continue
+
+                session_id = match.group(1)  # S079-01
+                workout_type = match.group(2)  # END
+                workout_name_part = match.group(3)  # RepriseDouceLundi
+                version = match.group(4)  # V001
+
+                # Get metadata from parsing
+                meta = workout_metadata.get(workout_name, {})
+                tss = meta.get("tss_planned", 0)
+                duration = meta.get("duration_min", 0)
+                description = meta.get("name_full", workout_name_part)
+
+                tss_total += tss
+
+                workout_date = workout.get("start_date_local", "").split("T")[0]
+
+                session = {
+                    "session_id": session_id,
+                    "date": workout_date,
+                    "name": workout_name_part,
+                    "type": workout_type,
+                    "version": version,
+                    "tss_planned": tss,
+                    "duration_min": duration,
+                    "description": description,
+                    "status": "pending",
+                    "intervals_id": workout.get("id"),
+                    "description_hash": None,
+                }
+                planning_data["planned_sessions"].append(session)
+
+            planning_data["tss_target"] = tss_total
+
+            # Save JSON file
+            json_file = self.planning_dir / f"week_planning_{self.week_next}.json"
+            with open(json_file, "w", encoding="utf-8") as f:
+                json.dump(planning_data, f, indent=2, ensure_ascii=False)
+
+            print()
+            print(f"  ✅ Planning JSON créé: {json_file}")
+            print(f"     • {len(planning_data['planned_sessions'])} sessions")
+            print(f"     • TSS total: {tss_total}")
+
+        except Exception as e:
+            print(f"  ⚠️  Erreur sauvegarde JSON (non bloquant): {e}")
+            if "--verbose" in sys.argv:
+                import traceback
+
+                traceback.print_exc()
+            # Non-blocking: continue workflow even if JSON save fails
 
     def _step6_archive_and_commit(self):
         """Step 6: Archive and commit (optional)."""
