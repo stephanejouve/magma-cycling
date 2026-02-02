@@ -3063,6 +3063,68 @@ cyclisme_training_logs/
 
 ---
 
+## 🔧 Dette Technique / Refactoring
+
+### DRY Violation: Intervals.icu Scales
+
+**Problème identifié :** 02/02/2026
+
+**Description :**
+L'échelle Feel d'Intervals.icu (1-5) est dupliquée à plusieurs endroits:
+- `prepare_analysis.py`: Mapping Feel pour format d'analyse AI
+- `daily_sync.py`: Seuils et labels Feel pour auto-servo
+
+**Impact :**
+- Bug récent: Fix échelle Feel dans `prepare_analysis.py` (commit 28c1cda) mais oublié dans `daily_sync.py` → nécessité d'un 2ème commit (23e075b)
+- Risque: Toute modification de l'échelle nécessite N modifications synchronisées
+- Violation principe DRY (Don't Repeat Yourself)
+
+**Solution proposée :**
+Créer un module centralisé `cyclisme_training_logs/intervals_scales.py`:
+
+```python
+class IntervalsFeelScale:
+    """Intervals.icu Feel scale (1-5)."""
+
+    EXCELLENT = 1
+    GOOD = 2
+    AVERAGE = 3
+    BELOW_AVERAGE = 4
+    POOR = 5
+
+    LABELS = {1: "Excellent", 2: "Bien", 3: "Moyen", 4: "Passable", 5: "Mauvais"}
+    LABELS_WITH_EMOJI = {1: "😊 Excellent (1/5)", 2: "🙂 Bien (2/5)", ...}
+    ALERT_THRESHOLD = 4  # ≥4 = alerte
+
+    @staticmethod
+    def format(value, with_emoji=False): ...
+
+    @staticmethod
+    def should_alert(value): ...
+```
+
+**Bénéfices :**
+- ✅ 1 seul endroit à modifier si Intervals change l'échelle
+- ✅ Impossible d'oublier un endroit lors d'un fix
+- ✅ Tests centralisés
+- ✅ Cohérence garantie
+
+**Priorité :** P2 (Dette technique, non bloquant)
+**Effort estimé :** 2-3h
+**Sprint cible :** Post-S080 (R10 ou R11)
+
+**Même pattern applicable à:**
+- Autres échelles Intervals.icu (RPE, Wellness, etc.)
+- Constantes training zones (Z1-Z7)
+- Seuils TSS/CTL/ATL/TSB
+
+**Référence commits:**
+- 28c1cda: Fix Feel scale in prepare_analysis.py
+- 23e075b: Fix Feel scale in daily_sync.py (oublié initialement)
+- f1d942c: Add activity ID to prevent duplicate analysis
+
+---
+
 ## ✅ Statut Global
 
 **Projet :** ✅ Production-Ready
