@@ -848,6 +848,118 @@ Réponds maintenant."""
             traceback.print_exc()
             return None
 
+    def _extract_session_id(self, activity_name: str) -> tuple[str, str] | None:
+        """
+        Extract week_id and session_id from activity name.
+
+        Args:
+            activity_name: Activity name (e.g., "S079-02-INT-SweetSpotModere-V001")
+
+        Returns:
+            Tuple of (week_id, session_id) or None if no match
+            Example: ("S079", "S079-02")
+        """
+        import re
+
+        # Pattern: S079-02-INT-SweetSpotModere-V001
+        pattern = r"^(S\d{3})-(\d{2})"
+        match = re.match(pattern, activity_name)
+
+        if match:
+            week_id = match.group(1)
+            session_num = match.group(2)
+            session_id = f"{week_id}-{session_num}"
+            return week_id, session_id
+
+        return None
+
+    def update_completed_sessions(self, activities: list[dict]):
+        """
+        Automatically update session status to 'completed' in local planning JSON.
+
+        For each completed activity with a paired_event_id:
+        1. Extract session_id from activity name
+        2. Load corresponding week planning JSON
+        3. Update session status to 'completed'
+        4. Save updated JSON
+
+        Args:
+            activities: List of completed activities from Intervals.icu
+        """
+        if not activities:
+            return
+
+        print("\n🔄 Mise à jour automatique des statuts de sessions...")
+
+        updated_weeks = {}  # Track which weeks need saving
+
+        for activity in activities:
+            # Only process activities paired with planned events
+            if not activity.get("paired_event_id"):
+                continue
+
+            activity_name = activity.get("name", "")
+
+            # Extract session info from name
+            session_info = self._extract_session_id(activity_name)
+            if not session_info:
+                print(f"  ⚠️  Impossible d'extraire session_id de: {activity_name}")
+                continue
+
+            week_id, session_id = session_info
+
+            # Load planning JSON if not already loaded
+            if week_id not in updated_weeks:
+                planning_file = Path(
+                    f"/Users/stephanejouve/training-logs/data/week_planning/week_planning_{week_id}.json"
+                )
+
+                if not planning_file.exists():
+                    print(f"  ⚠️  Planning introuvable: {planning_file}")
+                    continue
+
+                with open(planning_file) as f:
+                    planning_data = json.load(f)
+
+                updated_weeks[week_id] = {
+                    "file": planning_file,
+                    "data": planning_data,
+                    "modified": False,
+                }
+
+            # Find and update session
+            planning_data = updated_weeks[week_id]["data"]
+            session_found = False
+
+            for session in planning_data.get("planned_sessions", []):
+                if session["session_id"] == session_id:
+                    # Only update if not already completed
+                    if session["status"] != "completed":
+                        session["status"] = "completed"
+                        updated_weeks[week_id]["modified"] = True
+                        print(f"  ✅ {session_id} marqué comme 'completed'")
+                        session_found = True
+                    else:
+                        print(f"  ℹ️  {session_id} déjà marqué 'completed'")
+                        session_found = True
+                    break
+
+            if not session_found:
+                print(f"  ⚠️  Session {session_id} introuvable dans {week_id}")
+
+        # Save modified planning files
+        for week_id, week_data in updated_weeks.items():
+            if week_data["modified"]:
+                planning_data = week_data["data"]
+                planning_data["last_updated"] = datetime.now().isoformat()
+
+                with open(week_data["file"], "w") as f:
+                    json.dump(planning_data, f, indent=2, ensure_ascii=False)
+
+                print(f"  💾 Planning {week_id} sauvegardé")
+
+        print("  ✅ Mise à jour automatique terminée")
+
     def generate_report(
         self,
         check_date: date,
@@ -1164,6 +1276,10 @@ Réponds maintenant."""
         # Mark as analyzed
         for activity in new_activities:
             self.tracker.mark_analyzed(activity, datetime.now())
+
+        # 1b. Auto-update session statuses in local planning JSON
+        if new_activities:
+            self.update_completed_sessions(new_activities)
 
         # 2. Generate AI analyses (if enabled)
         analyses = {}
