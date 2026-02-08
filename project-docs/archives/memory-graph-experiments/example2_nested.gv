@@ -1,0 +1,53 @@
+digraph memory_graph {
+	graph [fontname="Times-Roman" fontsize=14]
+	node [fontname="Times-Roman" fontsize=14 shape=plaintext]
+	edge [fontname="Times-Roman" fontsize=14]
+	node4345558144 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="lightcoral" PORT="table">
+    <TR><TD BORDER="0"><font color="#505050">0</font></TD><TD BORDER="1"> END </TD></TR>
+    <TR><TD BORDER="0"><font color="#505050">1</font></TD><TD BORDER="1"> INT </TD></TR>
+    <TR><TD BORDER="0"><font color="#505050">2</font></TD><TD BORDER="1"> REC </TD></TR>
+    <TR><TD BORDER="0"><font color="#505050">3</font></TD><TD BORDER="1"> VO2 </TD></TR>
+</TABLE>
+> xlabel=list]
+	node4347264192 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="lightcoral" PORT="table">
+    <TR><TD BORDER="0"><font color="#505050">0</font></TD><TD BORDER="1"> END </TD></TR>
+    <TR><TD BORDER="0"><font color="#505050">1</font></TD><TD BORDER="1"> INT </TD></TR>
+    <TR><TD BORDER="0"><font color="#505050">2</font></TD><TD BORDER="1"> REC </TD></TR>
+</TABLE>
+> xlabel=list]
+	node4350745600 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="#60a5ff" PORT="table">
+    <TR><TD BORDER="1" STYLE="ROUNDED"> type </TD><TD BORDER="1"> END </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> duration </TD><TD BORDER="1"> 90 </TD></TR>
+</TABLE>
+> xlabel=dict]
+	node4350744640 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="#60a5ff" PORT="table">
+    <TR><TD BORDER="1" STYLE="ROUNDED"> type </TD><TD BORDER="1"> END </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> duration </TD><TD BORDER="1"> 60 </TD></TR>
+</TABLE>
+> xlabel=dict]
+	node4350744448 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="#60a5ff" PORT="table">
+    <TR><TD BORDER="1" STYLE="ROUNDED"> monday </TD><TD BORDER="1" STYLE="ROUNDED"> wednesday </TD><TD BORDER="1" STYLE="ROUNDED"> friday </TD></TR>
+    <TR><TD BORDER="1" PORT="ref0"> </TD><TD BORDER="1" PORT="ref1"> </TD><TD BORDER="1" PORT="ref2"> </TD></TR>
+</TABLE>
+> xlabel=dict]
+	node4350744448:ref0 -> node4350745600:table [style=solid]
+	node4350744448:ref1 -> node4350745600:table [style=solid]
+	node4350744448:ref2 -> node4350744640:table [style=solid]
+	node4345812864 [label=<
+<TABLE BORDER="3" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="#60a5ff" PORT="table">
+    <TR><TD BORDER="1" STYLE="ROUNDED"> workouts_week1 </TD><TD BORDER="1" STYLE="ROUNDED"> workouts_week2 </TD><TD BORDER="1" STYLE="ROUNDED"> workouts_week3 </TD><TD BORDER="1" STYLE="ROUNDED"> session_template </TD><TD BORDER="1" STYLE="ROUNDED"> week_planning </TD></TR>
+    <TR><TD BORDER="1" PORT="ref0"> </TD><TD BORDER="1" PORT="ref1"> </TD><TD BORDER="1" PORT="ref2"> </TD><TD BORDER="1" PORT="ref3"> </TD><TD BORDER="1" PORT="ref4"> </TD></TR>
+</TABLE>
+> xlabel=dict]
+	node4345812864:ref0 -> node4345558144:table [style=solid]
+	node4345812864:ref1 -> node4345558144:table [style=solid]
+	node4345812864:ref2 -> node4347264192:table [style=solid]
+	node4345812864:ref3 -> node4350745600:table [style=solid]
+	node4345812864:ref4 -> node4350744448:table [style=solid]
+subgraph { rank=same; node4345558144 -> node4347264192 -> node4350745600 -> node4350744448[weight=10, style=invis]; }
+}
