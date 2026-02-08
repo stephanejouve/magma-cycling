@@ -385,7 +385,7 @@ Valid statuses:
                 print("   Skipping sync with Intervals.icu")
                 sys.exit(0)
 
-            with open(planning_file) as f:
+            with open(planning_file, encoding="utf-8") as f:
                 planning = json.load(f)
 
             session_date = None

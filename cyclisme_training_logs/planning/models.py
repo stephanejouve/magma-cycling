@@ -13,7 +13,7 @@ Key Features:
 Examples:
     Load planning from JSON::
 
-        with open("week_planning_S079.json") as f:
+        with open("week_planning_S079.json", encoding="utf-8") as f:
             data = json.load(f)
 
         # Automatic validation and deep copy protection

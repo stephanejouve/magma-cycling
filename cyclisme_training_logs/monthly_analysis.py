@@ -93,7 +93,7 @@ class MonthlyAnalyzer:
 
         for planning_file in sorted(self.planning_dir.glob("week_planning_S*.json")):
             try:
-                with open(planning_file) as f:
+                with open(planning_file, encoding="utf-8") as f:
                     planning = json.load(f)
 
                 week_start = datetime.strptime(planning["start_date"], "%Y-%m-%d")
@@ -115,7 +115,7 @@ class MonthlyAnalyzer:
 
         for week_file in week_files:
             try:
-                with open(week_file) as f:
+                with open(week_file, encoding="utf-8") as f:
                     data = json.load(f)
                     weekly_data.append(data)
             except Exception as e:
@@ -224,7 +224,7 @@ class MonthlyAnalyzer:
 
 ### Sessions
 - **Total planifié :** {stats['total_sessions']} sessions
-- **Complétées :** {stats['completed']} ({stats['completed']/stats['total_sessions']*100:.1f}%)
+- **Complétées :** {stats['completed']} ({stats['completed'] / stats['total_sessions'] * 100:.1f}%)
 - **Modifiées :** {stats['modified']}
 - **Sautées :** {stats['skipped']}
 - **Annulées :** {stats['cancelled']}
@@ -338,10 +338,10 @@ Sois concret, direct et orienté action. Utilise des emojis pour la lisibilité.
 
     def run(self) -> str:
         """Execute monthly analysis and return report."""
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
 
         print(f"  📊 ANALYSE MENSUELLE - {self.month_date.strftime('%B %Y')}")
-        print(f"{'='*70}\n")
+        print(f"{'=' * 70}\n")
 
         # Find weeks
         print(f"🔍 Recherche des semaines pour {self.month}...")
@@ -431,9 +431,9 @@ def main():
             args.output.write_text(report, encoding="utf-8")
             print(f"\n✅ Rapport sauvegardé : {args.output}")
         else:
-            print(f"\n{'='*70}")
+            print(f"\n{'=' * 70}")
             print(report)
-            print(f"{'='*70}")
+            print(f"{'=' * 70}")
 
     except Exception as e:
         print(f"\n❌ Erreur : {e}")

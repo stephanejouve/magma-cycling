@@ -985,7 +985,7 @@ class WorkflowCoach:
             return None
 
         try:
-            with open(config_path) as f:
+            with open(config_path, encoding="utf-8") as f:
                 config = json.load(f)
 
             athlete_id = config.get("athlete_id")
@@ -1333,7 +1333,7 @@ class WorkflowCoach:
 
         # Load API credentials
         try:
-            with open(config_path) as f:
+            with open(config_path, encoding="utf-8") as f:
                 config = json.load(f)
             athlete_id = config.get("athlete_id")
             api_key = config.get("api_key")
@@ -1879,7 +1879,7 @@ class WorkflowCoach:
         try:
             feedback_file = Path(".athlete_feedback") / "last_feedback.json"
             if feedback_file.exists():
-                with open(feedback_file) as f:
+                with open(feedback_file, encoding="utf-8") as f:
                     feedback = json.load(f)
                     metrics["rpe"] = feedback.get("rpe")
         except Exception:

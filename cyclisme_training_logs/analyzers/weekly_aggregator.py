@@ -417,7 +417,7 @@ class WeeklyAggregator(DataAggregator):
         feedback = {}
         for feedback_file in feedback_dir.glob("*.json"):
             try:
-                with open(feedback_file) as f:
+                with open(feedback_file, encoding="utf-8") as f:
                     data = json.load(f)
                     activity_id = feedback_file.stem
                     feedback[activity_id] = data

@@ -280,7 +280,7 @@ def load_config(config_file):
     if not config_path.exists():
         return None
 
-    with open(config_path) as f:
+    with open(config_path, encoding="utf-8") as f:
         return json.load(f)
 
 

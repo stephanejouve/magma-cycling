@@ -140,7 +140,7 @@ class PIDDailyEvaluator:
         print(f"\n📥 Loading adherence data ({start_date} → {end_date})")
 
         records = []
-        with open(self.adherence_file) as f:
+        with open(self.adherence_file, encoding="utf-8") as f:
             for line in f:
                 try:
                     record = json.loads(line.strip())
@@ -187,7 +187,7 @@ class PIDDailyEvaluator:
         print(f"   📁 Found {len(workout_files)} weekly files")
 
         for workout_file in workout_files:
-            with open(workout_file) as f:
+            with open(workout_file, encoding="utf-8") as f:
                 content = f.read()
 
             # Extract all découplage values from the file
@@ -508,7 +508,7 @@ class PIDDailyEvaluator:
 
         if not self.dry_run:
             self.evaluation_log.parent.mkdir(parents=True, exist_ok=True)
-            with open(self.evaluation_log, "a") as f:
+            with open(self.evaluation_log, "a", encoding="utf-8") as f:
                 f.write(json.dumps(log_entry) + "\n")
             print(f"\n📝 Evaluation logged to {self.evaluation_log}")
         else:
