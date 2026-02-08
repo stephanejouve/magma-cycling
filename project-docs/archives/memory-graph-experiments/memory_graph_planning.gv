@@ -1,0 +1,158 @@
+digraph memory_graph {
+	graph [fontname="Times-Roman" fontsize=14]
+	node [fontname="Times-Roman" fontsize=14 shape=plaintext]
+	edge [fontname="Times-Roman" fontsize=14]
+	node140293588569104 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" CELLPADDING="0" BGCOLOR="seagreen3" PORT="table">
+    <TR><TD BORDER="0"> </TD></TR>
+</TABLE>
+> xlabel=type]
+	node4435326704 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="white" PORT="table">
+    <TR><TD BORDER="1"> /Users/stephanejouve/training-logs/data/we... </TD></TR>
+</TABLE>
+> xlabel=PosixPath]
+	node4432517760 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="seagreen1" PORT="table">
+    <TR><TD BORDER="1" STYLE="ROUNDED"> mode </TD><TD BORDER="1"> r </TD></TR>
+</TABLE>
+> xlabel=TextIOWrapper]
+	node4435983360 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="#60a5ff" PORT="table">
+    <TR><TD BORDER="1" STYLE="ROUNDED"> session_id </TD><TD BORDER="1"> S079-01 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> date </TD><TD BORDER="1"> 2026-02-02 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> name </TD><TD BORDER="1"> RepriseDouceLundi </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> type </TD><TD BORDER="1"> END </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> version </TD><TD BORDER="1"> V001 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> tss_planned </TD><TD BORDER="1"> 48 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> duration_min </TD><TD BORDER="1"> 65 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> description </TD><TD BORDER="1"> Reprise Endurance Douce </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> status </TD><TD BORDER="1"> skipped </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> intervals_id </TD><TD BORDER="1"> 90818477 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> description_hash </TD><TD BORDER="1"> None </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> skip_reason </TD><TD BORDER="1"> Late from work </TD></TR>
+</TABLE>
+> xlabel=dict]
+	node4435983680 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="#60a5ff" PORT="table">
+    <TR><TD BORDER="1" STYLE="ROUNDED"> session_id </TD><TD BORDER="1"> S079-02 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> date </TD><TD BORDER="1"> 2026-02-03 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> name </TD><TD BORDER="1"> SweetSpotModere </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> type </TD><TD BORDER="1"> INT </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> version </TD><TD BORDER="1"> V001 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> tss_planned </TD><TD BORDER="1"> 71 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> duration_min </TD><TD BORDER="1"> 68 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> description </TD><TD BORDER="1"> Sweet Spot Modéré 3x8 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> status </TD><TD BORDER="1"> completed </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> intervals_id </TD><TD BORDER="1"> 90818478 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> description_hash </TD><TD BORDER="1"> None </TD></TR>
+</TABLE>
+> xlabel=dict]
+	node4435761344 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="#60a5ff" PORT="table">
+    <TR><TD BORDER="1" STYLE="ROUNDED"> session_id </TD><TD BORDER="1"> S079-03 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> date </TD><TD BORDER="1"> 2026-02-04 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> name </TD><TD BORDER="1"> TechniqueCadence </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> type </TD><TD BORDER="1"> CAD </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> version </TD><TD BORDER="1"> V001 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> tss_planned </TD><TD BORDER="1"> 42 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> duration_min </TD><TD BORDER="1"> 50 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> description </TD><TD BORDER="1"> Technique Cadence </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> status </TD><TD BORDER="1"> completed </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> intervals_id </TD><TD BORDER="1"> 90818480 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> description_hash </TD><TD BORDER="1"> None </TD></TR>
+</TABLE>
+> xlabel=dict]
+	node4435981184 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="#60a5ff" PORT="table">
+    <TR><TD BORDER="1" STYLE="ROUNDED"> session_id </TD><TD BORDER="1"> S079-04 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> date </TD><TD BORDER="1"> 2026-02-05 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> name </TD><TD BORDER="1"> EnduranceProgressive </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> type </TD><TD BORDER="1"> END </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> version </TD><TD BORDER="1"> V001 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> tss_planned </TD><TD BORDER="1"> 58 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> duration_min </TD><TD BORDER="1"> 75 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> description </TD><TD BORDER="1"> Endurance Progressive </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> status </TD><TD BORDER="1"> completed </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> intervals_id </TD><TD BORDER="1"> 90818482 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> description_hash </TD><TD BORDER="1"> None </TD></TR>
+</TABLE>
+> xlabel=dict]
+	node4435983232 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="#60a5ff" PORT="table">
+    <TR><TD BORDER="1" STYLE="ROUNDED"> session_id </TD><TD BORDER="1"> S079-05 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> date </TD><TD BORDER="1"> 2026-02-06 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> name </TD><TD BORDER="1"> ActivationLegere </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> type </TD><TD BORDER="1"> REC </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> version </TD><TD BORDER="1"> V001 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> tss_planned </TD><TD BORDER="1"> 32 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> duration_min </TD><TD BORDER="1"> 45 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> description </TD><TD BORDER="1"> Activation Légère </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> status </TD><TD BORDER="1"> completed </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> intervals_id </TD><TD BORDER="1"> 90818483 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> description_hash </TD><TD BORDER="1"> None </TD></TR>
+</TABLE>
+> xlabel=dict]
+	node4435983104 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="#60a5ff" PORT="table">
+    <TR><TD BORDER="1" STYLE="ROUNDED"> session_id </TD><TD BORDER="1"> S079-06 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> date </TD><TD BORDER="1"> 2026-02-07 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> name </TD><TD BORDER="1"> EnduranceLongue </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> type </TD><TD BORDER="1"> END </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> version </TD><TD BORDER="1"> V001 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> tss_planned </TD><TD BORDER="1"> 68 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> duration_min </TD><TD BORDER="1"> 90 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> description </TD><TD BORDER="1"> Endurance Longue </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> status </TD><TD BORDER="1"> completed </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> intervals_id </TD><TD BORDER="1"> 90818484 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> description_hash </TD><TD BORDER="1"> None </TD></TR>
+</TABLE>
+> xlabel=dict]
+	node4430542208 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="lightcoral" PORT="table">
+    <TR><TD BORDER="0"><font color="#505050">0</font></TD><TD BORDER="0"><font color="#505050">1</font></TD><TD BORDER="0"><font color="#505050">2</font></TD><TD BORDER="0"><font color="#505050">3</font></TD><TD BORDER="0"><font color="#505050">4</font></TD><TD BORDER="0"><font color="#505050">5</font></TD></TR>
+    <TR><TD BORDER="1" PORT="ref0"> </TD><TD BORDER="1" PORT="ref1"> </TD><TD BORDER="1" PORT="ref2"> </TD><TD BORDER="1" PORT="ref3"> </TD><TD BORDER="1" PORT="ref4"> </TD><TD BORDER="1" PORT="ref5"> </TD></TR>
+</TABLE>
+> xlabel=list]
+	node4430542208:ref0 -> node4435983360:table [style=solid]
+	node4430542208:ref1 -> node4435983680:table [style=solid]
+	node4430542208:ref2 -> node4435761344:table [style=solid]
+	node4430542208:ref3 -> node4435981184:table [style=solid]
+	node4430542208:ref4 -> node4435983232:table [style=solid]
+	node4430542208:ref5 -> node4435983104:table [style=solid]
+	node4433003776 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="#60a5ff" PORT="table">
+    <TR><TD BORDER="1" STYLE="ROUNDED"> week_id </TD><TD BORDER="1" STYLE="ROUNDED"> start_date </TD><TD BORDER="1" STYLE="ROUNDED"> end_date </TD><TD BORDER="1" STYLE="ROUNDED"> created_at </TD><TD BORDER="1" STYLE="ROUNDED"> last_updated </TD><TD BORDER="1" STYLE="ROUNDED"> version </TD><TD BORDER="1" STYLE="ROUNDED"> athlete_id </TD><TD BORDER="1" STYLE="ROUNDED"> tss_target </TD><TD BORDER="1" STYLE="ROUNDED"> planned_sessions </TD></TR>
+    <TR><TD BORDER="1"> S079 </TD><TD BORDER="1"> 2026-02-02 </TD><TD BORDER="1"> 2026-02-08 </TD><TD BORDER="1"> 2026-02-01T20:00:00.000000 </TD><TD BORDER="1"> 2026-02-07T21:30:11.182043 </TD><TD BORDER="1"> 1 </TD><TD BORDER="1"> i151223 </TD><TD BORDER="1"> 319 </TD><TD BORDER="1" PORT="ref0"> </TD></TR>
+</TABLE>
+> xlabel=dict]
+	node4433003776:ref0 -> node4430542208:table [style=solid]
+	node4435868672 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="lightcoral" PORT="table">
+    <TR><TD BORDER="0"><font color="#505050">0</font></TD><TD BORDER="0"><font color="#505050">1</font></TD><TD BORDER="0"><font color="#505050">2</font></TD><TD BORDER="0"><font color="#505050">3</font></TD><TD BORDER="0"><font color="#505050">4</font></TD><TD BORDER="0"><font color="#505050">5</font></TD></TR>
+    <TR><TD BORDER="1" PORT="ref0"> </TD><TD BORDER="1" PORT="ref1"> </TD><TD BORDER="1" PORT="ref2"> </TD><TD BORDER="1" PORT="ref3"> </TD><TD BORDER="1" PORT="ref4"> </TD><TD BORDER="1" PORT="ref5"> </TD></TR>
+</TABLE>
+> xlabel=list]
+	node4435868672:ref0 -> node4435983360:table [style=solid]
+	node4435868672:ref1 -> node4435983680:table [style=solid]
+	node4435868672:ref2 -> node4435761344:table [style=solid]
+	node4435868672:ref3 -> node4435981184:table [style=solid]
+	node4435868672:ref4 -> node4435983232:table [style=solid]
+	node4435868672:ref5 -> node4435983104:table [style=solid]
+	node4430780544 [label=<
+<TABLE BORDER="3" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="#60a5ff" PORT="table">
+    <TR><TD BORDER="1" STYLE="ROUNDED"> Path </TD><TD BORDER="1" STYLE="ROUNDED"> planning_file </TD><TD BORDER="1" STYLE="ROUNDED"> f </TD><TD BORDER="1" STYLE="ROUNDED"> planning_data </TD><TD BORDER="1" STYLE="ROUNDED"> week_id </TD><TD BORDER="1" STYLE="ROUNDED"> tss_target </TD><TD BORDER="1" STYLE="ROUNDED"> sessions </TD><TD BORDER="1" STYLE="ROUNDED"> first_session </TD><TD BORDER="1" STYLE="ROUNDED"> last_session </TD><TD BORDER="1" STYLE="ROUNDED"> sessions_copy </TD></TR>
+    <TR><TD BORDER="1" PORT="ref0"> </TD><TD BORDER="1" PORT="ref1"> </TD><TD BORDER="1" PORT="ref2"> </TD><TD BORDER="1" PORT="ref3"> </TD><TD BORDER="1"> S079 </TD><TD BORDER="1"> 319 </TD><TD BORDER="1" PORT="ref4"> </TD><TD BORDER="1" PORT="ref5"> </TD><TD BORDER="1" PORT="ref6"> </TD><TD BORDER="1" PORT="ref7"> </TD></TR>
+</TABLE>
+> xlabel=dict]
+	node4430780544:ref0 -> node140293588569104:table [style=solid]
+	node4430780544:ref1 -> node4435326704:table [style=solid]
+	node4430780544:ref2 -> node4432517760:table [style=solid]
+	node4430780544:ref3 -> node4433003776:table [style=solid]
+	node4430780544:ref4 -> node4430542208:table [style=solid]
+	node4430780544:ref5 -> node4435983360:table [style=solid]
+	node4430780544:ref6 -> node4435983104:table [style=solid]
+	node4430780544:ref7 -> node4435868672:table [style=solid]
+subgraph { rank=same; node140293588569104 -> node4435326704 -> node4432517760 -> node4433003776 -> node4435868672[weight=10, style=invis]; }
+subgraph { rank=same; node4435983360 -> node4435983680 -> node4435761344 -> node4435981184 -> node4435983232 -> node4435983104[weight=10, style=invis]; }
+}
