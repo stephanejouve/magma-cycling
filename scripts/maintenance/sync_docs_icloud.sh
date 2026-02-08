@@ -117,12 +117,15 @@ INCLUDE_PATTERNS=(
     --include='architecture/**'
     --include='workflows/'
     --include='workflows/**'
+    --include='archives/'
+    --include='archives/claude-code/'
+    --include='archives/claude-code/**'
 )
 
 # Files/directories to exclude
 EXCLUDE_PATTERNS=(
-    # Exclude technical/historical content
-    --exclude='archives/'
+    # Exclude technical/historical content (but keep archives/claude-code/)
+    --exclude='archives/memory-graph-experiments/'
     --exclude='logs/'
     --exclude='audits/'
     --exclude='prompts/'
@@ -133,9 +136,8 @@ EXCLUDE_PATTERNS=(
     --exclude='__pycache__'
     --exclude='.gitkeep'
 
-    # Exclude very large files
+    # Exclude very large files (but allow .tar.gz in archives/claude-code/)
     --exclude='*.jsonl'
-    --exclude='*.tar.gz'
     --exclude='*.zip'
     --exclude='*.json'
 )
