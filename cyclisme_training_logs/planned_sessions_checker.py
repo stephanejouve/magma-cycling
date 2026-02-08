@@ -424,7 +424,7 @@ def main():
 
             # Récupérer activités pour cette semaine
             activities = checker.api.get_activities(
-                oldest=planning["start_date"], newest=planning["end_date"]
+                oldest=planning.start_date, newest=planning.end_date
             )
 
             # Réconcilier
@@ -433,7 +433,7 @@ def main():
 
             # Afficher résumé
             print(f"\n✅ {week_id} : Réconciliation effectuée")
-            print(f"   Sessions planifiées   : {len(planning['planned_sessions'])}")
+            print(f"   Sessions planifiées   : {len(planning.planned_sessions)}")
             print(f"   Sessions exécutées    : {len(reconciliation['matched'])}")
             print(f"   Repos planifiés       : {len(reconciliation['rest_days'])}")
             print(f"   Séances annulées      : {len(reconciliation['cancelled'])}")

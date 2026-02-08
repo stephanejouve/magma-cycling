@@ -729,8 +729,8 @@ class WorkflowCoach:
         try:
             planning = load_week_planning(week_id, planning_dir)
             print(f"✅ Planning chargé: {week_id}")
-            print(f"   Période: {planning['start_date']} → {planning['end_date']}")
-            print(f"   Sessions: {len(planning['planned_sessions'])}")
+            print(f"   Période: {planning.start_date} → {planning.end_date}")
+            print(f"   Sessions: {len(planning.planned_sessions)}")
         except FileNotFoundError:
             print(f"❌ Fichier planning non trouvé: week_planning_{week_id}.json")
             print(f"   Vérifier: {planning_dir}")
@@ -742,9 +742,7 @@ class WorkflowCoach:
         # 2. Récupérer activités réalisées depuis API
         print("\n🔍 Récupération activités depuis Intervals.icu...")
         try:
-            activities = api.get_activities(
-                oldest=planning["start_date"], newest=planning["end_date"]
-            )
+            activities = api.get_activities(oldest=planning.start_date, newest=planning.end_date)
             print(f"✅ {len(activities)} activité(s) trouvée(s)")
         except Exception as e:
             print(f"❌ Erreur récupération activités: {e}")
