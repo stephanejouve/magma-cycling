@@ -103,7 +103,7 @@ class WeeklyAnalysis:
         config_path = Path.home() / ".intervals_config.json"
         self.api: IntervalsClient | None
         if config_path.exists():
-            with open(config_path) as f:
+            with open(config_path, encoding="utf-8") as f:
                 config = json.load(f)
                 self.api = IntervalsClient(
                     athlete_id=config.get("athlete_id"), api_key=config.get("api_key")

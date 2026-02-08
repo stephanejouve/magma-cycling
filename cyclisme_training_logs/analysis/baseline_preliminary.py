@@ -96,7 +96,7 @@ class BaselineAnalyzer:
             return
 
         seen_dates = {}
-        with open(self.adherence_file) as f:
+        with open(self.adherence_file, encoding="utf-8") as f:
             for line in f:
                 record = json.loads(line)
                 record_date = datetime.strptime(record["date"], "%Y-%m-%d").date()
@@ -643,7 +643,7 @@ class BaselineAnalyzer:
         print(f"   📁 Found {len(workout_files)} weekly files")
 
         for workout_file in workout_files:
-            with open(workout_file) as f:
+            with open(workout_file, encoding="utf-8") as f:
                 content = f.read()
 
             for pattern in patterns:
@@ -1056,7 +1056,7 @@ class BaselineAnalyzer:
         """
         output_file = self.output_dir / "baseline_preliminary.json"
 
-        with open(output_file, "w") as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             json.dump(results, f, indent=2, default=str)
 
         print(f"\n📄 JSON dataset: {output_file}")
@@ -1075,7 +1075,7 @@ class BaselineAnalyzer:
 
         report = self._format_markdown_report(results)
 
-        with open(output_file, "w") as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             f.write(report)
 
         print(f"📄 Markdown report: {output_file}")

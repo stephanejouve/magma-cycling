@@ -810,7 +810,7 @@ class TrainingIntelligence:
             "adaptations": {aid: serialize_obj(a) for aid, a in self.adaptations.items()},
         }
 
-        with open(file_path, "w") as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             json.dump(state, f, indent=2)
 
     @classmethod
@@ -829,7 +829,7 @@ class TrainingIntelligence:
             ...     Path("/tmp/intelligence_state.json")
             ... )
         """
-        with open(file_path) as f:
+        with open(file_path, encoding="utf-8") as f:
             state = json.load(f)
 
         intelligence = cls()

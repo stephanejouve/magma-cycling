@@ -560,7 +560,7 @@ def load_json_config(config_file: str) -> dict | None:
         # OLD (duplicated):
         config_path = Path.home() / ".intervals_config.json"
         if config_path.exists():
-            with open(config_path) as f:
+            with open(config_path, encoding="utf-8") as f:
                 config = json.load(f)
 
         # NEW (centralized):
@@ -575,7 +575,7 @@ def load_json_config(config_file: str) -> dict | None:
         return None
 
     try:
-        with open(config_path) as f:
+        with open(config_path, encoding="utf-8") as f:
             return json.load(f)
     except Exception as e:
         # Log error but don't crash - allow caller to handle

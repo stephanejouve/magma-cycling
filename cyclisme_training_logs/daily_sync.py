@@ -115,14 +115,14 @@ class ActivityTracker:
     def _load(self) -> dict:
         """Load tracking data from file."""
         if self.tracking_file.exists():
-            with open(self.tracking_file) as f:
+            with open(self.tracking_file, encoding="utf-8") as f:
                 return json.load(f)
         return {}
 
     def _save(self):
         """Save tracking data to file."""
         self.tracking_file.parent.mkdir(parents=True, exist_ok=True)
-        with open(self.tracking_file, "w") as f:
+        with open(self.tracking_file, "w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=2)
 
     def is_analyzed(self, activity_id: int, activity_date: date) -> bool:
@@ -994,7 +994,7 @@ Réponds maintenant."""
         """
         report_file = self.reports_dir / f"daily_report_{check_date.isoformat()}.md"
 
-        with open(report_file, "w") as f:
+        with open(report_file, "w", encoding="utf-8") as f:
             f.write(f"# Rapport Quotidien - {check_date.strftime('%d/%m/%Y')}\n\n")
             f.write(f"**Généré le**: {datetime.now().strftime('%d/%m/%Y à %H:%M')}\n\n")
             f.write("---\n\n")

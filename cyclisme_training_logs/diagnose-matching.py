@@ -17,7 +17,7 @@ def load_credentials():
     """Load credentials depuis .intervals_config.json."""
     config_path = Path.home() / ".intervals_config.json"
 
-    with open(config_path) as f:
+    with open(config_path, encoding="utf-8") as f:
         config = json.load(f)
     return config["athlete_id"], config["api_key"]
 
