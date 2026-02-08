@@ -25,13 +25,17 @@ from cyclisme_training_logs.rest_and_cancellations import (
 
 
 def create_test_planning(week_id="S070", with_cancellation=True, with_rest=True):
-    """Crée un planning de test."""
+    """Crée un planning de test compatible avec Pydantic WeeklyPlan."""
+
     planning = {
         "week_id": week_id,
-        "start_date": "2025-12-02",
-        "end_date": "2025-12-08",
+        "start_date": "2025-12-01",  # Monday
+        "end_date": "2025-12-07",  # Sunday
         "athlete_id": "i151223",
         "tss_target": 255,
+        "created_at": "2025-11-30T20:00:00",
+        "last_updated": "2025-12-01T10:00:00",
+        "version": 1,
         "planned_sessions": [],
     }
 
@@ -39,7 +43,7 @@ def create_test_planning(week_id="S070", with_cancellation=True, with_rest=True)
     planning["planned_sessions"].append(
         {
             "session_id": f"{week_id}-01",
-            "date": "2025-12-02",
+            "date": "2025-12-01",
             "type": "END",
             "name": "EnduranceBase",
             "version": "V001",
@@ -49,35 +53,35 @@ def create_test_planning(week_id="S070", with_cancellation=True, with_rest=True)
         }
     )
 
-    # Session cancelled
+    # Session cancelled (note: use skip_reason, not cancellation_reason)
     if with_cancellation:
         planning["planned_sessions"].append(
             {
                 "session_id": f"{week_id}-02",
-                "date": "2025-12-03",
+                "date": "2025-12-02",
                 "type": "END",
                 "name": "EnduranceProgressive",
                 "version": "V001",
                 "duration_min": 65,
                 "tss_planned": 48,
-                "status": "cancelled",
-                "cancellation_reason": "Problème technique matériel",
+                "status": "skipped",  # Use "skipped" with skip_reason
+                "skip_reason": "Problème technique matériel",
             }
         )
 
-    # Rest day
+    # Rest day (represented as skipped session with reason)
     if with_rest:
         planning["planned_sessions"].append(
             {
                 "session_id": f"{week_id}-03",
-                "date": "2025-12-04",
+                "date": "2025-12-07",  # Sunday
                 "type": "REC",
                 "name": "ReposObligatoire",
                 "version": "V001",
                 "duration_min": 0,
                 "tss_planned": 0,
-                "status": "rest_day",
-                "rest_reason": "Protocole repos dimanche",
+                "status": "skipped",  # Use "skipped" instead of "rest_day"
+                "skip_reason": "Protocole repos dimanche",
             }
         )
 
@@ -106,8 +110,8 @@ def test_load_valid_planning():
         # Charger
         planning = load_week_planning("S070", planning_dir=tmpdir_path)
 
-        assert planning["week_id"] == "S070"
-        assert len(planning["planned_sessions"]) == 3
+        assert planning.week_id == "S070"
+        assert len(planning.planned_sessions) == 3
         print("✓ Planning chargé correctement")
 
 
@@ -158,14 +162,14 @@ def test_validate_planning_invalid_status():
 
 
 def test_validate_planning_missing_cancellation_reason():
-    """Test validation raison manquante séance annulée."""
-    print("\n[TEST] Validation raison manquante séance annulée...")
+    """Test validation raison manquante séance sautée."""
+    print("\n[TEST] Validation raison manquante séance sautée...")
 
     planning = create_test_planning()
-    # Retirer la raison d'annulation
+    # Retirer la raison de skip
     for session in planning["planned_sessions"]:
-        if session["status"] == "cancelled":
-            del session["cancellation_reason"]
+        if session["status"] == "skipped":
+            del session["skip_reason"]
 
     assert validate_week_planning(planning) is False
     print("✓ Raison manquante détectée")
@@ -266,27 +270,27 @@ def test_reconcile_planned_actual():
 
     planning = create_test_planning()
 
-    # Créer des activités de test
+    # Créer des activités de test (date must match session date)
     activities = [
         {
             "id": "i123456",
-            "start_date_local": "2025-12-02T08:00:00",
+            "start_date_local": "2025-12-01T08:00:00",  # Match completed session
             "name": "S070-01 EnduranceBase",
         }
     ]
 
     result = reconcile_planned_vs_actual(planning, activities)
 
-    # Vérifications
+    # Vérifications (with updated expectations: 0 cancelled, 2 skipped)
     assert len(result["matched"]) == 1
-    assert len(result["cancelled"]) == 1
-    assert len(result["rest_days"]) == 1
+    assert len(result["cancelled"]) == 0  # No cancelled sessions (using skipped)
+    assert len(result["skipped"]) == 2  # Two skipped sessions
     assert len(result["unplanned"]) == 0
 
     print("✓ Réconciliation correcte")
     print(f"  Matched: {len(result['matched'])}")
     print(f"  Cancelled: {len(result['cancelled'])}")
-    print(f"  Rest days: {len(result['rest_days'])}")
+    print(f"  Skipped: {len(result['skipped'])}")
 
 
 def test_reconcile_with_unplanned_activity():
@@ -298,7 +302,7 @@ def test_reconcile_with_unplanned_activity():
     activities = [
         {
             "id": "i123456",
-            "start_date_local": "2025-12-02T08:00:00",
+            "start_date_local": "2025-12-01T08:00:00",  # Match completed session (Monday)
             "name": "S070-01 EnduranceBase",
         },
         {

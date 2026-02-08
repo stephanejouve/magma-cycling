@@ -2,6 +2,11 @@
 """
 Track rest days and canceled sessions with impact analysis.
 
+Migration Note (2026-02-08):
+    - load_week_planning() migré vers Pydantic WeeklyPlan
+    - Validation automatique via Pydantic (plus besoin de validate_week_planning manuel)
+    - Protection anti-shallow copy garantie
+
 Suivi jours de repos et séances annulées avec analyse impact sur métriques
 forme (CTL/ATL/TSB). Documentation raisons cancellation et recommandations
 adaptations planning.
@@ -56,6 +61,10 @@ import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+from pydantic import ValidationError
+
+from cyclisme_training_logs.planning.models import WeeklyPlan
 
 # Configuration du logging
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
@@ -200,20 +209,33 @@ def check_pre_session_veto(
 # ============================================================================
 
 
-def load_week_planning(week_id: str, planning_dir: Path | None = None) -> dict:
+def load_week_planning(week_id: str, planning_dir: Path | None = None) -> WeeklyPlan:
     """
-    Charge la configuration hebdomadaire depuis week_planning.json.
+    Charge la configuration hebdomadaire avec protection Pydantic.
+
+    Migration Note (2026-02-08):
+        Fonction migrée pour retourner WeeklyPlan (Pydantic) au lieu de dict.
+        - Validation automatique par Pydantic
+        - Protection anti-shallow copy
+        - Type hints pour IntelliSense
+        - Backward compatibility: Les appelants doivent accéder via .planned_sessions
 
     Args:
         week_id: Identifiant semaine (ex: "S070")
         planning_dir: Répertoire contenant les plannings (legacy, use data repo config)
 
     Returns:
-        Dict contenant sessions planifiées avec statuts
+        WeeklyPlan: Instance Pydantic validée avec protection anti-aliasing
 
     Raises:
         FileNotFoundError: Si fichier planning absent
-        ValueError: Si format JSON invalide
+        ValidationError: Si format JSON invalide ou données incohérentes
+
+    Examples:
+        >>> plan = load_week_planning("S080")
+        >>> print(f"Week {plan.week_id}: {len(plan.planned_sessions)} sessions")
+        >>> for session in plan.planned_sessions:
+        ...     print(f"  {session.session_id}: {session.status}")
     """
     if planning_dir is None:
         # Use data repo config if available
@@ -235,24 +257,27 @@ def load_week_planning(week_id: str, planning_dir: Path | None = None) -> dict:
         )
 
     try:
-        with open(planning_file, encoding="utf-8") as f:
-            planning = json.load(f)
+        # ✅ Chargement sécurisé avec validation Pydantic automatique
+        plan = WeeklyPlan.from_json(planning_file)
+    except ValidationError as e:
+        raise ValueError(f"Planning invalide (erreur de validation): {e}") from e
     except json.JSONDecodeError as e:
         raise ValueError(f"Format JSON invalide: {e}") from e
 
-    # Validation basique
-    if not validate_week_planning(planning):
-        raise ValueError("Planning invalide (vérifier la structure)")
-
-    logger.info(f"Planning chargé: {week_id} ({len(planning['planned_sessions'])} sessions)")
-    return planning
+    logger.info(f"Planning chargé: {week_id} ({len(plan.planned_sessions)} sessions)")
+    return plan
 
 
-def validate_week_planning(planning: dict) -> bool:
+def validate_week_planning(planning: dict | WeeklyPlan) -> bool:
     """
     Validate structure et cohérence planning hebdomadaire.
 
-    Checks:
+    Migration Note (2026-02-08):
+        - Accepte maintenant dict OU WeeklyPlan (backward compatibility)
+        - Si WeeklyPlan: validation déjà faite par Pydantic, retourne True directement
+        - Si dict: validation manuelle (legacy support)
+
+    Checks (pour dict seulement):
     - Champs obligatoires présents
     - Statuts valides
     - Dates cohérentes (semaine 7 jours)
@@ -260,13 +285,29 @@ def validate_week_planning(planning: dict) -> bool:
     - Pas de doublons session_id
 
     Args:
-        planning: Dict du planning à valider
+        planning: Dict OU WeeklyPlan du planning à valider
 
     Returns:
         True si valide, False sinon.
-    """
-    # Champs obligatoires
 
+    Examples:
+        >>> plan = load_week_planning("S080")  # WeeklyPlan
+        >>> validate_week_planning(plan)  # True (déjà validé)
+        True
+
+        >>> raw_dict = json.load(open("plan.json"))
+        >>> validate_week_planning(raw_dict)  # Validation manuelle
+        True
+    """
+    # ✅ Si c'est déjà un WeeklyPlan, Pydantic l'a déjà validé
+    if isinstance(planning, WeeklyPlan):
+        logger.debug(f"Planning {planning.week_id} déjà validé par Pydantic")
+        return True
+
+    # ❌ Legacy: validation manuelle pour dict
+    logger.warning("Validation manuelle d'un dict (legacy). Recommandé: utiliser WeeklyPlan")
+
+    # Champs obligatoires
     required_fields = ["week_id", "start_date", "end_date", "planned_sessions"]
     for field in required_fields:
         if field not in planning:
@@ -297,6 +338,11 @@ def validate_week_planning(planning: dict) -> bool:
         # Valider raison pour cancelled
         if status == "cancelled" and "cancellation_reason" not in session:
             logger.error(f"Session {session['session_id']}: raison obligatoire pour cancelled")
+            return False
+
+        # Valider raison pour skipped
+        if status == "skipped" and "skip_reason" not in session:
+            logger.error(f"Session {session['session_id']}: raison obligatoire pour skipped")
             return False
 
         # Valider type
@@ -653,13 +699,13 @@ Date : {date_str}
 
 
 def reconcile_planned_vs_actual(
-    week_planning: dict, intervals_activities: list[dict]
+    week_planning: WeeklyPlan | dict, intervals_activities: list[dict]
 ) -> dict[str, list]:
     """
     Compare planning hebdomadaire vs activités réelles Intervals.icu.
 
     Args:
-        week_planning: Planning semaine depuis JSON
+        week_planning: Planning semaine (WeeklyPlan ou dict legacy)
         intervals_activities: Activités récupérées API
 
     Returns:
@@ -677,6 +723,14 @@ def reconcile_planned_vs_actual(
         "unplanned": [],
     }
 
+    # Normaliser accès (support WeeklyPlan et dict)
+    if isinstance(week_planning, WeeklyPlan):
+        week_id = week_planning.week_id
+        planned_sessions = week_planning.planned_sessions
+    else:
+        week_id = week_planning["week_id"]
+        planned_sessions = week_planning["planned_sessions"]
+
     # Index activités par date
     activities_by_date: dict[str, list[dict[str, Any]]] = {}
     for activity in intervals_activities:
@@ -685,12 +739,35 @@ def reconcile_planned_vs_actual(
             activities_by_date[date] = []
         activities_by_date[date].append(activity)
 
+    # Helper pour accéder champs session (support Session et dict)
+    def get_session_field(session, field: str):
+        """Get field from Session object or dict."""
+        from cyclisme_training_logs.planning.models import Session
+
+        if isinstance(session, Session):
+            # Map field names: dict key → Session attribute
+            field_map = {"date": "session_date", "type": "session_type"}
+            attr_name = field_map.get(field, field)
+            return getattr(session, attr_name)
+        return session[field]
+
+    def set_session_field(session, field: str, value):
+        """Set field on Session object or dict."""
+        from cyclisme_training_logs.planning.models import Session
+
+        if isinstance(session, Session):
+            field_map = {"date": "session_date", "type": "session_type"}
+            attr_name = field_map.get(field, field)
+            setattr(session, attr_name, value)
+        else:
+            session[field] = value
+
     # Traiter chaque session planifiée
     planned_dates = set()
-    for session in week_planning["planned_sessions"]:
-        session_date = session["date"]
+    for session in planned_sessions:
+        session_date = get_session_field(session, "date")
         planned_dates.add(session_date)
-        status = session["status"]
+        status = get_session_field(session, "status")
 
         if status == "rest_day":
             result["rest_days"].append(session)
@@ -709,8 +786,8 @@ def reconcile_planned_vs_actual(
                 for activity in activities_by_date[session_date]:
                     # Heuristique : comparer noms ou IDs
                     activity_name = activity.get("name", "").upper()
-                    session_id = session["session_id"].upper()
-                    session_name = session["name"].upper()
+                    session_id = get_session_field(session, "session_id").upper()
+                    session_name = get_session_field(session, "name").upper()
 
                     if session_id in activity_name or session_name in activity_name:
                         matched_activity = activity
@@ -728,13 +805,15 @@ def reconcile_planned_vs_actual(
                 # Planifiée comme completed mais pas d'activité
                 # Traiter comme skipped plutôt que cancelled
                 logger.warning(
-                    f"Session {session['session_id']} marquée completed "
+                    f"Session {get_session_field(session, 'session_id')} marquée completed "
                     f"mais aucune activité trouvée le {session_date} "
                     f"→ Reclassée comme SKIPPED"
                 )
                 # Marquer comme sautée avec contexte (modification directe pour persistence)
-                session["status"] = "skipped"
-                session["skip_reason"] = "Planifiée completed mais activité introuvable"
+                set_session_field(
+                    session, "skip_reason", "Planifiée completed mais activité introuvable"
+                )
+                set_session_field(session, "status", "skipped")
                 result["skipped"].append(session)
 
     # Activités restantes = non planifiées
@@ -745,9 +824,9 @@ def reconcile_planned_vs_actual(
 
     # Log résumé
     logger.info("=" * 70)
-    logger.info(f"Réconciliation {week_planning['week_id']}")
+    logger.info(f"Réconciliation {week_id}")
     logger.info("=" * 70)
-    logger.info(f"Sessions planifiées : {len(week_planning['planned_sessions'])}")
+    logger.info(f"Sessions planifiées : {len(planned_sessions)}")
     logger.info(f"Sessions exécutées : {len(result['matched'])}")
     logger.info(f"Repos planifiés : {len(result['rest_days'])}")
     logger.info(f"Séances annulées : {len(result['cancelled'])}")

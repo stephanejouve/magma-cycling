@@ -34,11 +34,12 @@ Metadata:
 import argparse
 import json
 import sys
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 import markdown2
 import sib_api_v3_sdk
+from pydantic import ValidationError
 from sib_api_v3_sdk.rest import ApiException
 
 from cyclisme_training_logs.ai_providers import AIProviderFactory
@@ -52,6 +53,7 @@ from cyclisme_training_logs.config.athlete_profile import AthleteProfile
 from cyclisme_training_logs.insert_analysis import WorkoutHistoryManager
 from cyclisme_training_logs.planning.calendar import TrainingCalendar, WorkoutType
 from cyclisme_training_logs.planning.intervals_sync import IntervalsSync
+from cyclisme_training_logs.planning.models import WeeklyPlan
 from cyclisme_training_logs.prepare_analysis import PromptGenerator
 from cyclisme_training_logs.workflows.proactive_compensation import (
     evaluate_weekly_deficit,
@@ -308,8 +310,12 @@ class DailySync:
             print(f"  ⚠️  Planning {week_id} introuvable")
             return {"status": None, "diff": None}
 
-        with open(planning_file) as f:
-            planning_data = json.load(f)
+        try:
+            # ✅ Chargement sécurisé avec validation Pydantic
+            plan = WeeklyPlan.from_json(planning_file)
+        except (ValidationError, json.JSONDecodeError) as e:
+            print(f"  ⚠️  Erreur chargement planning {week_id}: {e}")
+            return {"status": None, "diff": None}
 
         # Create minimal calendar for sync check
         profile = AthleteProfile.from_env()
@@ -323,23 +329,23 @@ class DailySync:
             "REC": WorkoutType.RECOVERY,
         }
 
-        for session_data in planning_data["planned_sessions"]:
-            session_date = date.fromisoformat(session_data["date"])
+        for session in plan.planned_sessions:
+            session_date = session.session_date
 
             # Skip rest days
             if session_date.weekday() == 6:  # Sunday
                 continue
 
-            session = calendar.add_session(
+            cal_session = calendar.add_session(
                 session_date=session_date,
-                workout_type=workout_type_map.get(session_data["type"], WorkoutType.ENDURANCE),
-                planned_tss=session_data["tss_planned"],
-                duration_min=session_data["duration_min"],
+                workout_type=workout_type_map.get(session.session_type, WorkoutType.ENDURANCE),
+                planned_tss=session.tss_planned,
+                duration_min=session.duration_min,
             )
 
             # Add description hash for content change detection
-            session.description = session_data.get("description", "")
-            session.description_hash = session_data.get("description_hash")
+            cal_session.description = session.description or ""
+            cal_session.description_hash = session.description_hash
 
         # Check sync
         sync = IntervalsSync()
@@ -918,24 +924,27 @@ Réponds maintenant."""
                     print(f"  ⚠️  Planning introuvable: {planning_file}")
                     continue
 
-                with open(planning_file) as f:
-                    planning_data = json.load(f)
-
-                updated_weeks[week_id] = {
-                    "file": planning_file,
-                    "data": planning_data,
-                    "modified": False,
-                }
+                try:
+                    # ✅ Chargement sécurisé avec Pydantic
+                    plan = WeeklyPlan.from_json(planning_file)
+                    updated_weeks[week_id] = {
+                        "file": planning_file,
+                        "plan": plan,
+                        "modified": False,
+                    }
+                except (ValidationError, json.JSONDecodeError) as e:
+                    print(f"  ⚠️  Erreur chargement planning {week_id}: {e}")
+                    continue
 
             # Find and update session
-            planning_data = updated_weeks[week_id]["data"]
+            plan = updated_weeks[week_id]["plan"]
             session_found = False
 
-            for session in planning_data.get("planned_sessions", []):
-                if session["session_id"] == session_id:
+            for session in plan.planned_sessions:
+                if session.session_id == session_id:
                     # Only update if not already completed
-                    if session["status"] != "completed":
-                        session["status"] = "completed"
+                    if session.status != "completed":
+                        session.status = "completed"
                         updated_weeks[week_id]["modified"] = True
                         print(f"  ✅ {session_id} marqué comme 'completed'")
                         session_found = True
@@ -950,11 +959,11 @@ Réponds maintenant."""
         # Save modified planning files
         for week_id, week_data in updated_weeks.items():
             if week_data["modified"]:
-                planning_data = week_data["data"]
-                planning_data["last_updated"] = datetime.now().isoformat()
+                plan = week_data["plan"]
+                plan.last_updated = datetime.now(UTC)
 
-                with open(week_data["file"], "w") as f:
-                    json.dump(planning_data, f, indent=2, ensure_ascii=False)
+                # ✅ Sauvegarde atomique avec Pydantic
+                plan.to_json(week_data["file"])
 
                 print(f"  💾 Planning {week_id} sauvegardé")
 
