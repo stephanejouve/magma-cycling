@@ -878,8 +878,12 @@ class EndOfWeekWorkflow:
         print("=" * 80)
 
 
-def parse_args():
-    """Parse command line arguments."""
+def parse_args(args=None):
+    """Parse command line arguments.
+
+    Args:
+        args: Optional list of arguments (for testing). If None, uses sys.argv.
+    """
     parser = argparse.ArgumentParser(
         description="End-of-Week Workflow - Automatisation transition hebdomadaire",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -960,7 +964,7 @@ Workflow complet:
         help="Mode verbose (affiche détails erreurs)",
     )
 
-    return parser.parse_args()
+    return parser.parse_args(args)
 
 
 def main():

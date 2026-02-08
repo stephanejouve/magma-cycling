@@ -1,0 +1,33 @@
+digraph memory_graph {
+	graph [fontname="Times-Roman" fontsize=14]
+	node [fontname="Times-Roman" fontsize=14 shape=plaintext]
+	edge [fontname="Times-Roman" fontsize=14]
+	node4418242576 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="white" PORT="table">
+    <TR><TD BORDER="1"> 2026-02-09 </TD></TR>
+</TABLE>
+> xlabel=date]
+	node4439385232 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="seagreen1" PORT="table">
+    <TR><TD BORDER="1" STYLE="ROUNDED"> session_id </TD><TD BORDER="1" STYLE="ROUNDED"> session_date </TD><TD BORDER="1" STYLE="ROUNDED"> name </TD><TD BORDER="1" STYLE="ROUNDED"> session_type </TD><TD BORDER="1" STYLE="ROUNDED"> version </TD><TD BORDER="1" STYLE="ROUNDED"> tss_planned </TD><TD BORDER="1" STYLE="ROUNDED"> duration_min </TD><TD BORDER="1" STYLE="ROUNDED"> description </TD><TD BORDER="1" STYLE="ROUNDED"> status </TD><TD BORDER="1" STYLE="ROUNDED"> intervals_id </TD><TD BORDER="1" STYLE="ROUNDED"> description_hash </TD><TD BORDER="1" STYLE="ROUNDED"> skip_reason </TD></TR>
+    <TR><TD BORDER="1"> S080-01 </TD><TD BORDER="1" PORT="ref0"> </TD><TD BORDER="1"> EnduranceDouce </TD><TD BORDER="1"> END </TD><TD BORDER="1"> V001 </TD><TD BORDER="1"> 50 </TD><TD BORDER="1"> 60 </TD><TD BORDER="1">  </TD><TD BORDER="1"> pending </TD><TD BORDER="1"> None </TD><TD BORDER="1"> None </TD><TD BORDER="1"> None </TD></TR>
+</TABLE>
+> xlabel=Session]
+	node4439385232:ref0 -> node4418242576:table [style=solid]
+	node4439384832 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="seagreen1" PORT="table">
+    <TR><TD BORDER="1" STYLE="ROUNDED"> session_id </TD><TD BORDER="1" STYLE="ROUNDED"> session_date </TD><TD BORDER="1" STYLE="ROUNDED"> name </TD><TD BORDER="1" STYLE="ROUNDED"> session_type </TD><TD BORDER="1" STYLE="ROUNDED"> version </TD><TD BORDER="1" STYLE="ROUNDED"> tss_planned </TD><TD BORDER="1" STYLE="ROUNDED"> duration_min </TD><TD BORDER="1" STYLE="ROUNDED"> description </TD><TD BORDER="1" STYLE="ROUNDED"> status </TD><TD BORDER="1" STYLE="ROUNDED"> intervals_id </TD><TD BORDER="1" STYLE="ROUNDED"> description_hash </TD><TD BORDER="1" STYLE="ROUNDED"> skip_reason </TD></TR>
+    <TR><TD BORDER="1"> S080-01 </TD><TD BORDER="1" PORT="ref0"> </TD><TD BORDER="1"> EnduranceDouce </TD><TD BORDER="1"> END </TD><TD BORDER="1"> V001 </TD><TD BORDER="1"> 100 </TD><TD BORDER="1"> 60 </TD><TD BORDER="1">  </TD><TD BORDER="1"> cancelled </TD><TD BORDER="1"> None </TD><TD BORDER="1"> None </TD><TD BORDER="1"> None </TD></TR>
+</TABLE>
+> xlabel=Session]
+	node4439384832:ref0 -> node4418242576:table [style=solid]
+	node4433229824 [label=<
+<TABLE BORDER="3" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="#60a5ff" PORT="table">
+    <TR><TD BORDER="1" STYLE="ROUNDED"> original </TD><TD BORDER="1" STYLE="ROUNDED"> copy </TD></TR>
+    <TR><TD BORDER="1" PORT="ref0"> </TD><TD BORDER="1" PORT="ref1"> </TD></TR>
+</TABLE>
+> xlabel=dict]
+	node4433229824:ref0 -> node4439385232:table [style=solid]
+	node4433229824:ref1 -> node4439384832:table [style=solid]
+subgraph { rank=same; node4439385232 -> node4439384832[weight=10, style=invis]; }
+}
