@@ -254,9 +254,11 @@ class TestEndOfWeekWorkflowSteps:
                     dry_run=True,
                 )
 
-    @patch("cyclisme_training_logs.workflows.end_of_week.WeeklyAnalysis")
+    @patch("cyclisme_training_logs.workflows.workflow_weekly.run_weekly_analysis")
     @patch("pathlib.Path.exists")
-    def test_step1_analyze_completed_week_file_exists(self, mock_exists, mock_wa_class, workflow):
+    def test_step1_analyze_completed_week_file_exists(
+        self, mock_exists, mock_run_analysis, workflow
+    ):
         """Test step 1: analyze completed week when file already exists."""
         mock_exists.return_value = True
 
@@ -264,35 +266,35 @@ class TestEndOfWeekWorkflowSteps:
             result = workflow._step1_analyze_completed_week()
 
         assert result is True
-        mock_wa_class.assert_not_called()  # Shouldn't run analysis if file exists
+        mock_run_analysis.assert_not_called()  # Shouldn't run analysis if file exists
 
-    @patch("cyclisme_training_logs.workflows.end_of_week.WeeklyAnalysis")
+    @patch("cyclisme_training_logs.workflows.workflow_weekly.run_weekly_analysis")
     @patch("pathlib.Path.exists")
-    def test_step1_analyze_completed_week_run_analysis(self, mock_exists, mock_wa_class, workflow):
+    def test_step1_analyze_completed_week_run_analysis(
+        self, mock_exists, mock_run_analysis, workflow
+    ):
         """Test step 1: run analysis when file doesn't exist."""
         # First call: file doesn't exist, second call: file created
         mock_exists.side_effect = [False, True]
 
-        mock_wa = Mock()
-        mock_wa_class.return_value = mock_wa
-
-        result = workflow._step1_analyze_completed_week()
+        with patch.object(workflow, "_load_existing_reports"):
+            result = workflow._step1_analyze_completed_week()
 
         assert result is True
-        mock_wa_class.assert_called_once_with("S075", "2026-01-05")
-        mock_wa.run.assert_called_once()
+        # run_weekly_analysis is called with week, start_date, data_dir, ai_analysis
+        mock_run_analysis.assert_called_once()
+        call_args = mock_run_analysis.call_args
+        assert call_args[1]["week"] == "S075"
+        assert call_args[1]["ai_analysis"] is False
 
-    @patch("cyclisme_training_logs.workflows.end_of_week.WeeklyAnalysis")
+    @patch("cyclisme_training_logs.workflows.workflow_weekly.run_weekly_analysis")
     @patch("pathlib.Path.exists")
     def test_step1_analyze_completed_week_analysis_fails(
-        self, mock_exists, mock_wa_class, workflow
+        self, mock_exists, mock_run_analysis, workflow
     ):
         """Test step 1: analysis fails (file not created)."""
         # File doesn't exist before or after
         mock_exists.return_value = False
-
-        mock_wa = Mock()
-        mock_wa_class.return_value = mock_wa
 
         result = workflow._step1_analyze_completed_week()
 
@@ -305,7 +307,7 @@ class TestEndOfWeekWorkflowSteps:
         assert result is True
         assert workflow_dry_run.reports != {}  # Should have mock reports
 
-    @patch("cyclisme_training_logs.workflows.end_of_week.PIDDailyEvaluator")
+    @patch("cyclisme_training_logs.scripts.pid_daily_evaluation.PIDDailyEvaluator")
     def test_step1b_pid_evaluation_success(self, mock_pid_class, workflow):
         """Test step 1b: PID evaluation (success)."""
         mock_evaluator = Mock()
@@ -318,7 +320,7 @@ class TestEndOfWeekWorkflowSteps:
         mock_pid_class.assert_called_once_with(dry_run=False)
         mock_evaluator.run_daily_evaluation.assert_called_once_with(days_back=7)
 
-    @patch("cyclisme_training_logs.workflows.end_of_week.PIDDailyEvaluator")
+    @patch("cyclisme_training_logs.scripts.pid_daily_evaluation.PIDDailyEvaluator")
     def test_step1b_pid_evaluation_with_test_recommendation(self, mock_pid_class, workflow):
         """Test step 1b: PID evaluation with test recommendation."""
         mock_evaluator = Mock()
@@ -337,7 +339,7 @@ class TestEndOfWeekWorkflowSteps:
 
         assert result is True
 
-    @patch("cyclisme_training_logs.workflows.end_of_week.PIDDailyEvaluator")
+    @patch("cyclisme_training_logs.scripts.pid_daily_evaluation.PIDDailyEvaluator")
     def test_step1b_pid_evaluation_exception_non_blocking(self, mock_pid_class, workflow):
         """Test step 1b: exception is non-blocking (returns True)."""
         mock_pid_class.side_effect = Exception("PID error")
@@ -442,7 +444,7 @@ class TestEndOfWeekWorkflowSteps:
             assert result is True
             mock_input.assert_not_called()  # No user prompt in auto mode
 
-    @patch("cyclisme_training_logs.workflows.end_of_week.WorkoutUploader")
+    @patch("cyclisme_training_logs.upload_workouts.WorkoutUploader")
     def test_step4_validate_workouts_success(self, mock_uploader_class, workflow):
         """Test step 4: validate workouts (success)."""
         workflow.workouts_file = Path("/tmp/test_workouts.txt")
@@ -457,7 +459,7 @@ class TestEndOfWeekWorkflowSteps:
 
         assert result is True
 
-    @patch("cyclisme_training_logs.workflows.end_of_week.WorkoutUploader")
+    @patch("cyclisme_training_logs.upload_workouts.WorkoutUploader")
     def test_step4_validate_workouts_no_file(self, mock_uploader_class, workflow):
         """Test step 4: no workouts file set."""
         workflow.workouts_file = None
@@ -466,7 +468,7 @@ class TestEndOfWeekWorkflowSteps:
 
         assert result is False
 
-    @patch("cyclisme_training_logs.workflows.end_of_week.WorkoutUploader")
+    @patch("cyclisme_training_logs.upload_workouts.WorkoutUploader")
     def test_step4_validate_workouts_invalid(self, mock_uploader_class, workflow):
         """Test step 4: validation fails (empty workouts)."""
         workflow.workouts_file = Path("/tmp/test_workouts.txt")
@@ -485,7 +487,7 @@ class TestEndOfWeekWorkflowSteps:
 
         assert result is True
 
-    @patch("cyclisme_training_logs.workflows.end_of_week.WorkoutUploader")
+    @patch("cyclisme_training_logs.upload_workouts.WorkoutUploader")
     def test_step5_upload_workouts_auto_mode_success(self, mock_uploader_class, workflow):
         """Test step 5: upload in auto mode (success)."""
         workflow.auto = True
@@ -500,7 +502,7 @@ class TestEndOfWeekWorkflowSteps:
 
         assert result is True
 
-    @patch("cyclisme_training_logs.workflows.end_of_week.WorkoutUploader")
+    @patch("cyclisme_training_logs.upload_workouts.WorkoutUploader")
     def test_step5_upload_workouts_auto_mode_partial_failure(self, mock_uploader_class, workflow):
         """Test step 5: upload in auto mode (partial failure)."""
         workflow.auto = True
@@ -683,10 +685,10 @@ class TestParseArgs:
         assert args.archive is True
 
     def test_parse_args_auto_transition(self):
-        """Test parsing with --auto-transition flag."""
-        args = parse_args(["--auto-transition"])
+        """Test parsing with --auto-calculate flag."""
+        args = parse_args(["--auto-calculate"])
 
-        assert args.auto_transition is True
+        assert args.auto_calculate is True
         assert args.week_completed is None
         assert args.week_next is None
 
@@ -707,7 +709,7 @@ class TestMain:
         mock_args = Mock()
         mock_args.week_completed = "S075"
         mock_args.week_next = "S076"
-        mock_args.auto_transition = False
+        mock_args.auto_calculate = False
         mock_args.provider = "clipboard"
         mock_args.dry_run = False
         mock_args.auto = False
@@ -718,19 +720,18 @@ class TestMain:
         mock_workflow.run.return_value = True
         mock_workflow_class.return_value = mock_workflow
 
-        with patch("sys.exit") as mock_exit:
-            main()
-            mock_exit.assert_called_once_with(0)
+        exit_code = main()
+        assert exit_code == 0
 
     @patch("cyclisme_training_logs.workflows.end_of_week.parse_args")
     @patch("cyclisme_training_logs.workflows.end_of_week.calculate_weekly_transition")
     @patch("cyclisme_training_logs.workflows.end_of_week.EndOfWeekWorkflow")
     def test_main_auto_transition(self, mock_workflow_class, mock_transition, mock_parse_args):
-        """Test main() with --auto-transition."""
+        """Test main() with --auto-calculate."""
         mock_args = Mock()
         mock_args.week_completed = None
         mock_args.week_next = None
-        mock_args.auto_transition = True
+        mock_args.auto_calculate = True
         mock_args.provider = "clipboard"
         mock_args.dry_run = False
         mock_args.auto = False
@@ -749,10 +750,9 @@ class TestMain:
         mock_workflow.run.return_value = True
         mock_workflow_class.return_value = mock_workflow
 
-        with patch("sys.exit") as mock_exit:
-            main()
-            mock_exit.assert_called_once_with(0)
-            mock_workflow_class.assert_called_once()
+        exit_code = main()
+        assert exit_code == 0
+        mock_workflow_class.assert_called_once()
 
     @patch("cyclisme_training_logs.workflows.end_of_week.parse_args")
     @patch("cyclisme_training_logs.workflows.end_of_week.EndOfWeekWorkflow")
@@ -761,7 +761,7 @@ class TestMain:
         mock_args = Mock()
         mock_args.week_completed = "S075"
         mock_args.week_next = "S076"
-        mock_args.auto_transition = False
+        mock_args.auto_calculate = False
         mock_args.provider = "clipboard"
         mock_args.dry_run = False
         mock_args.auto = False
@@ -772,9 +772,8 @@ class TestMain:
         mock_workflow.run.return_value = False
         mock_workflow_class.return_value = mock_workflow
 
-        with patch("sys.exit") as mock_exit:
-            main()
-            mock_exit.assert_called_once_with(1)
+        exit_code = main()
+        assert exit_code == 1
 
 
 # =============================================================================

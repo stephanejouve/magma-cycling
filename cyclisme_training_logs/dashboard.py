@@ -88,19 +88,26 @@ def print_ftp_progression(intelligence_path: Path | None) -> None:
     if intelligence_path and intelligence_path.exists():
         # Try to load intelligence
         try:
+            from cyclisme_training_logs.config import create_intervals_client
             from cyclisme_training_logs.intelligence import TrainingIntelligence
 
             intelligence = TrainingIntelligence.load_from_file(intelligence_path)
 
+            # Get current FTP from athlete profile
+            try:
+                api = create_intervals_client()
+                athlete = api.get_athlete()
+                current_ftp = athlete.get("ftp", athlete.get("power", 220))
+                target_ftp = athlete.get("ftpTarget", 260) if "ftpTarget" in athlete else 260
+            except Exception:
+                # Fallback to default values if API fails
+                current_ftp = 220
+                target_ftp = 260
+
             # Get PID correction
             result = intelligence.get_pid_correction(
-                current_ftp=220,  # TODO: Get from athlete profile or latest test
-                target_ftp=260,  # TODO: Get from goals
-                dt=1.0,
+                current_ftp=current_ftp, target_ftp=target_ftp, dt=1.0
             )
-
-            current_ftp = 220
-            target_ftp = 260
             gap = result["correction"]["error"]
             tss_adj = result["correction"]["tss_adjustment"]
             recommendation = result["recommendation"]

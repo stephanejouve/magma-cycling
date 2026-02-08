@@ -1,0 +1,152 @@
+digraph memory_graph {
+	graph [fontname="Times-Roman" fontsize=14]
+	node [fontname="Times-Roman" fontsize=14 shape=plaintext]
+	edge [fontname="Times-Roman" fontsize=14]
+	node4433228928 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="#60a5ff" PORT="table">
+    <TR><TD BORDER="1" STYLE="ROUNDED"> session_id </TD><TD BORDER="1"> S080-01 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> date </TD><TD BORDER="1"> 2026-02-09 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> name </TD><TD BORDER="1"> Session1 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> type </TD><TD BORDER="1"> END </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> tss_planned </TD><TD BORDER="1"> 50 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> status </TD><TD BORDER="1"> pending </TD></TR>
+</TABLE>
+> xlabel=dict]
+	node4439320320 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="#60a5ff" PORT="table">
+    <TR><TD BORDER="1" STYLE="ROUNDED"> session_id </TD><TD BORDER="1"> S080-02 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> date </TD><TD BORDER="1"> 2026-02-10 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> name </TD><TD BORDER="1"> Session2 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> type </TD><TD BORDER="1"> INT </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> tss_planned </TD><TD BORDER="1"> 70 </TD></TR>
+    <TR><TD BORDER="1" STYLE="ROUNDED"> status </TD><TD BORDER="1"> pending </TD></TR>
+</TABLE>
+> xlabel=dict]
+	node4421379648 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="lightcoral" PORT="table">
+    <TR><TD BORDER="0"><font color="#505050">0</font></TD><TD BORDER="0"><font color="#505050">1</font></TD></TR>
+    <TR><TD BORDER="1" PORT="ref0"> </TD><TD BORDER="1" PORT="ref1"> </TD></TR>
+</TABLE>
+> xlabel=list]
+	node4421379648:ref0 -> node4433228928:table [style=solid]
+	node4421379648:ref1 -> node4439320320:table [style=solid]
+	node4439320448 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="#60a5ff" PORT="table">
+    <TR><TD BORDER="1" STYLE="ROUNDED"> week_id </TD><TD BORDER="1" STYLE="ROUNDED"> planned_sessions </TD></TR>
+    <TR><TD BORDER="1"> S080 </TD><TD BORDER="1" PORT="ref0"> </TD></TR>
+</TABLE>
+> xlabel=dict]
+	node4439320448:ref0 -> node4421379648:table [style=solid]
+	node4430595648 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="lightcoral" PORT="table">
+    <TR><TD BORDER="0"><font color="#505050">0</font></TD><TD BORDER="0"><font color="#505050">1</font></TD></TR>
+    <TR><TD BORDER="1" PORT="ref0"> </TD><TD BORDER="1" PORT="ref1"> </TD></TR>
+</TABLE>
+> xlabel=list]
+	node4430595648:ref0 -> node4433228928:table [style=solid]
+	node4430595648:ref1 -> node4439320320:table [style=solid]
+	node4418242576 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="white" PORT="table">
+    <TR><TD BORDER="1"> 2026-02-09 </TD></TR>
+</TABLE>
+> xlabel=date]
+	node4416716720 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="white" PORT="table">
+    <TR><TD BORDER="1"> 2026-02-15 </TD></TR>
+</TABLE>
+> xlabel=date]
+	node4433423904 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="white" PORT="table">
+    <TR><TD BORDER="1"> 2026-02-08 17:35:35.031052+00:00 </TD></TR>
+</TABLE>
+> xlabel=datetime]
+	node4433423664 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="white" PORT="table">
+    <TR><TD BORDER="1"> 2026-02-08 17:35:35.031320+00:00 </TD></TR>
+</TABLE>
+> xlabel=datetime]
+	node4416715728 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="white" PORT="table">
+    <TR><TD BORDER="1"> 2026-02-09 </TD></TR>
+</TABLE>
+> xlabel=date]
+	node4439384272 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="seagreen1" PORT="table">
+    <TR><TD BORDER="1" STYLE="ROUNDED"> session_id </TD><TD BORDER="1" STYLE="ROUNDED"> session_date </TD><TD BORDER="1" STYLE="ROUNDED"> name </TD><TD BORDER="1" STYLE="ROUNDED"> session_type </TD><TD BORDER="1" STYLE="ROUNDED"> version </TD><TD BORDER="1" STYLE="ROUNDED"> tss_planned </TD><TD BORDER="1" STYLE="ROUNDED"> duration_min </TD><TD BORDER="1" STYLE="ROUNDED"> description </TD><TD BORDER="1" STYLE="ROUNDED"> status </TD><TD BORDER="1" STYLE="ROUNDED"> intervals_id </TD><TD BORDER="1" STYLE="ROUNDED"> description_hash </TD><TD BORDER="1" STYLE="ROUNDED"> skip_reason </TD></TR>
+    <TR><TD BORDER="1"> S080-01 </TD><TD BORDER="1" PORT="ref0"> </TD><TD BORDER="1"> Session1 </TD><TD BORDER="1"> END </TD><TD BORDER="1"> V001 </TD><TD BORDER="1"> 50 </TD><TD BORDER="1"> 60 </TD><TD BORDER="1">  </TD><TD BORDER="1"> pending </TD><TD BORDER="1"> None </TD><TD BORDER="1"> None </TD><TD BORDER="1"> None </TD></TR>
+</TABLE>
+> xlabel=Session]
+	node4439384272:ref0 -> node4416715728:table [style=solid]
+	node4433212592 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="white" PORT="table">
+    <TR><TD BORDER="1"> 2026-02-10 </TD></TR>
+</TABLE>
+> xlabel=date]
+	node4439391392 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="seagreen1" PORT="table">
+    <TR><TD BORDER="1" STYLE="ROUNDED"> session_id </TD><TD BORDER="1" STYLE="ROUNDED"> session_date </TD><TD BORDER="1" STYLE="ROUNDED"> name </TD><TD BORDER="1" STYLE="ROUNDED"> session_type </TD><TD BORDER="1" STYLE="ROUNDED"> version </TD><TD BORDER="1" STYLE="ROUNDED"> tss_planned </TD><TD BORDER="1" STYLE="ROUNDED"> duration_min </TD><TD BORDER="1" STYLE="ROUNDED"> description </TD><TD BORDER="1" STYLE="ROUNDED"> status </TD><TD BORDER="1" STYLE="ROUNDED"> intervals_id </TD><TD BORDER="1" STYLE="ROUNDED"> description_hash </TD><TD BORDER="1" STYLE="ROUNDED"> skip_reason </TD></TR>
+    <TR><TD BORDER="1"> S080-02 </TD><TD BORDER="1" PORT="ref0"> </TD><TD BORDER="1"> Session2 </TD><TD BORDER="1"> INT </TD><TD BORDER="1"> V001 </TD><TD BORDER="1"> 70 </TD><TD BORDER="1"> 65 </TD><TD BORDER="1">  </TD><TD BORDER="1"> pending </TD><TD BORDER="1"> None </TD><TD BORDER="1"> None </TD><TD BORDER="1"> None </TD></TR>
+</TABLE>
+> xlabel=Session]
+	node4439391392:ref0 -> node4433212592:table [style=solid]
+	node4439677056 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="lightcoral" PORT="table">
+    <TR><TD BORDER="0"><font color="#505050">0</font></TD><TD BORDER="0"><font color="#505050">1</font></TD></TR>
+    <TR><TD BORDER="1" PORT="ref0"> </TD><TD BORDER="1" PORT="ref1"> </TD></TR>
+</TABLE>
+> xlabel=list]
+	node4439677056:ref0 -> node4439384272:table [style=solid]
+	node4439677056:ref1 -> node4439391392:table [style=solid]
+	node4439390352 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="seagreen1" PORT="table">
+    <TR><TD BORDER="1" STYLE="ROUNDED"> week_id </TD><TD BORDER="1" STYLE="ROUNDED"> start_date </TD><TD BORDER="1" STYLE="ROUNDED"> end_date </TD><TD BORDER="1" STYLE="ROUNDED"> created_at </TD><TD BORDER="1" STYLE="ROUNDED"> last_updated </TD><TD BORDER="1" STYLE="ROUNDED"> version </TD><TD BORDER="1" STYLE="ROUNDED"> athlete_id </TD><TD BORDER="1" STYLE="ROUNDED"> tss_target </TD><TD BORDER="1" STYLE="ROUNDED"> planned_sessions </TD></TR>
+    <TR><TD BORDER="1"> S080 </TD><TD BORDER="1" PORT="ref0"> </TD><TD BORDER="1" PORT="ref1"> </TD><TD BORDER="1" PORT="ref2"> </TD><TD BORDER="1" PORT="ref3"> </TD><TD BORDER="1"> 1 </TD><TD BORDER="1"> i151223 </TD><TD BORDER="1"> 350 </TD><TD BORDER="1" PORT="ref4"> </TD></TR>
+</TABLE>
+> xlabel=WeeklyPlan]
+	node4439390352:ref0 -> node4418242576:table [style=solid]
+	node4439390352:ref1 -> node4416716720:table [style=solid]
+	node4439390352:ref2 -> node4433423904:table [style=solid]
+	node4439390352:ref3 -> node4433423664:table [style=solid]
+	node4439390352:ref4 -> node4439677056:table [style=solid]
+	node4439390512 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="seagreen1" PORT="table">
+    <TR><TD BORDER="1" STYLE="ROUNDED"> session_id </TD><TD BORDER="1" STYLE="ROUNDED"> session_date </TD><TD BORDER="1" STYLE="ROUNDED"> name </TD><TD BORDER="1" STYLE="ROUNDED"> session_type </TD><TD BORDER="1" STYLE="ROUNDED"> version </TD><TD BORDER="1" STYLE="ROUNDED"> tss_planned </TD><TD BORDER="1" STYLE="ROUNDED"> duration_min </TD><TD BORDER="1" STYLE="ROUNDED"> description </TD><TD BORDER="1" STYLE="ROUNDED"> status </TD><TD BORDER="1" STYLE="ROUNDED"> intervals_id </TD><TD BORDER="1" STYLE="ROUNDED"> description_hash </TD><TD BORDER="1" STYLE="ROUNDED"> skip_reason </TD></TR>
+    <TR><TD BORDER="1"> S080-01 </TD><TD BORDER="1" PORT="ref0"> </TD><TD BORDER="1"> Session1 </TD><TD BORDER="1"> END </TD><TD BORDER="1"> V001 </TD><TD BORDER="1"> 50 </TD><TD BORDER="1"> 60 </TD><TD BORDER="1">  </TD><TD BORDER="1"> pending </TD><TD BORDER="1"> None </TD><TD BORDER="1"> None </TD><TD BORDER="1"> None </TD></TR>
+</TABLE>
+> xlabel=Session]
+	node4439390512:ref0 -> node4416715728:table [style=solid]
+	node4439390592 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="seagreen1" PORT="table">
+    <TR><TD BORDER="1" STYLE="ROUNDED"> session_id </TD><TD BORDER="1" STYLE="ROUNDED"> session_date </TD><TD BORDER="1" STYLE="ROUNDED"> name </TD><TD BORDER="1" STYLE="ROUNDED"> session_type </TD><TD BORDER="1" STYLE="ROUNDED"> version </TD><TD BORDER="1" STYLE="ROUNDED"> tss_planned </TD><TD BORDER="1" STYLE="ROUNDED"> duration_min </TD><TD BORDER="1" STYLE="ROUNDED"> description </TD><TD BORDER="1" STYLE="ROUNDED"> status </TD><TD BORDER="1" STYLE="ROUNDED"> intervals_id </TD><TD BORDER="1" STYLE="ROUNDED"> description_hash </TD><TD BORDER="1" STYLE="ROUNDED"> skip_reason </TD></TR>
+    <TR><TD BORDER="1"> S080-02 </TD><TD BORDER="1" PORT="ref0"> </TD><TD BORDER="1"> Session2 </TD><TD BORDER="1"> INT </TD><TD BORDER="1"> V001 </TD><TD BORDER="1"> 70 </TD><TD BORDER="1"> 65 </TD><TD BORDER="1">  </TD><TD BORDER="1"> pending </TD><TD BORDER="1"> None </TD><TD BORDER="1"> None </TD><TD BORDER="1"> None </TD></TR>
+</TABLE>
+> xlabel=Session]
+	node4439390592:ref0 -> node4433212592:table [style=solid]
+	node4439890688 [label=<
+<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="lightcoral" PORT="table">
+    <TR><TD BORDER="0"><font color="#505050">0</font></TD><TD BORDER="0"><font color="#505050">1</font></TD></TR>
+    <TR><TD BORDER="1" PORT="ref0"> </TD><TD BORDER="1" PORT="ref1"> </TD></TR>
+</TABLE>
+> xlabel=list]
+	node4439890688:ref0 -> node4439390512:table [style=solid]
+	node4439890688:ref1 -> node4439390592:table [style=solid]
+	node4439320064 [label=<
+<TABLE BORDER="3" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="#60a5ff" PORT="table">
+    <TR><TD BORDER="1" STYLE="ROUNDED"> dict_planning </TD><TD BORDER="1" STYLE="ROUNDED"> dict_backup </TD><TD BORDER="1" STYLE="ROUNDED"> dict_session_0 </TD><TD BORDER="1" STYLE="ROUNDED"> dict_backup_0 </TD><TD BORDER="1" STYLE="ROUNDED"> pydantic_plan </TD><TD BORDER="1" STYLE="ROUNDED"> pydantic_backup </TD><TD BORDER="1" STYLE="ROUNDED"> pydantic_session_0 </TD><TD BORDER="1" STYLE="ROUNDED"> pydantic_backup_0 </TD></TR>
+    <TR><TD BORDER="1" PORT="ref0"> </TD><TD BORDER="1" PORT="ref1"> </TD><TD BORDER="1" PORT="ref2"> </TD><TD BORDER="1" PORT="ref3"> </TD><TD BORDER="1" PORT="ref4"> </TD><TD BORDER="1" PORT="ref5"> </TD><TD BORDER="1" PORT="ref6"> </TD><TD BORDER="1" PORT="ref7"> </TD></TR>
+</TABLE>
+> xlabel=dict]
+	node4439320064:ref0 -> node4439320448:table [style=solid]
+	node4439320064:ref1 -> node4430595648:table [style=solid]
+	node4439320064:ref2 -> node4433228928:table [style=solid]
+	node4439320064:ref3 -> node4433228928:table [style=solid]
+	node4439320064:ref4 -> node4439390352:table [style=solid]
+	node4439320064:ref5 -> node4439890688:table [style=solid]
+	node4439320064:ref6 -> node4439384272:table [style=solid]
+	node4439320064:ref7 -> node4439390512:table [style=solid]
+subgraph { rank=same; node4439320448 -> node4430595648 -> node4439390352 -> node4439890688[weight=10, style=invis]; }
+subgraph { rank=same; node4421379648 -> node4418242576 -> node4416716720 -> node4433423904 -> node4433423664 -> node4439677056[weight=10, style=invis]; }
+subgraph { rank=same; node4433228928 -> node4439320320 -> node4439384272 -> node4439391392[weight=10, style=invis]; }
+subgraph { rank=same; node4416715728 -> node4433212592[weight=10, style=invis]; }
+subgraph { rank=same; node4439390512 -> node4439390592[weight=10, style=invis]; }
+}

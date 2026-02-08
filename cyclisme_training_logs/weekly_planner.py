@@ -818,6 +818,11 @@ Le but est que je puisse **copier-coller directement** chaque bloc dans Interval
                     }
                 )
 
+        # Get athlete_id from config
+        from cyclisme_training_logs.config import get_intervals_config
+
+        intervals_config = get_intervals_config()
+
         planning = {
             "week_id": self.week_number,
             "start_date": self.start_date.strftime("%Y-%m-%d"),
@@ -825,7 +830,7 @@ Le but est que je puisse **copier-coller directement** chaque bloc dans Interval
             "created_at": datetime.now(UTC).isoformat(),
             "last_updated": datetime.now(UTC).isoformat(),
             "version": 1,
-            "athlete_id": "i151223",  # TODO: Get from config
+            "athlete_id": intervals_config.athlete_id,
             "tss_target": sum(w.get("tss_planned", 0) for w in workouts_data),
             "planned_sessions": workouts_data,
         }
