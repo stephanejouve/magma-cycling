@@ -7,11 +7,14 @@ Supporte tous les providers: Claude API, Mistral API, OpenAI, Ollama, Clipboard.
 """
 import argparse
 import json
+import logging
 import subprocess
 import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 # Ajouter le répertoire parent au PYTHONPATH
 sys.path.insert(0, str(Path(__file__).parent))
@@ -243,6 +246,46 @@ class WeeklyPlanner:
             context["intelligence"] = f"[Erreur lecture intelligence.json: {e}]"
 
         return context
+
+    def _load_available_zwift_workouts(self) -> str:
+        """Load available Zwift workouts from cache for diversity.
+
+        Returns:
+            Formatted section describing available workouts
+        """
+        try:
+            from cyclisme_training_logs.external.zwift_client import ZwiftWorkoutClient
+
+            client = ZwiftWorkoutClient()
+            stats = client.get_cache_stats()
+
+            if stats["total_workouts"] == 0:
+                return ""
+
+            # Build section
+            section = "\n\n## 🎨 Workouts Externes Disponibles (Diversité)\n\n"
+            section += "**Source:** Cache Zwift (whatsonzwift.com)\n"
+            section += f"**Total disponible:** {stats['total_workouts']} workouts\n\n"
+
+            if stats.get("by_category"):
+                section += "**Par catégorie:**\n"
+                for category, count in sorted(
+                    stats["by_category"].items(), key=lambda x: x[1], reverse=True
+                ):
+                    section += f"  - {category}: {count} workout(s)\n"
+
+            section += "\n**Instructions:**\n"
+            section += "- Ces workouts peuvent être utilisés pour introduire de la DIVERSITÉ\n"
+            section += "- Utiliser la commande: `poetry run search-zwift-workouts --type [TYPE] --tss [TSS]`\n"
+            section += "- Le système track automatiquement l'usage pour éviter répétitions (fenêtre 21 jours)\n"
+            section += "- Privilégier ces workouts pour varier des structures habituelles\n"
+            section += "- Format Wahoo-compatible garanti (explicit power % on every line)\n\n"
+
+            return section
+
+        except Exception as e:
+            logger.warning(f"Could not load Zwift workouts: {e}")
+            return ""
 
     def generate_planning_prompt(self) -> str:
         """Generate le prompt complet pour l'assistant IA."""
@@ -674,6 +717,8 @@ Cooldown
 - Directement copiable dans Intervals.icu
 - Syntaxe validée : durée + % FTP + cadence
 
+---
+{self._load_available_zwift_workouts()}
 ---
 
 ## Commence Maintenant la Planification !
