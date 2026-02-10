@@ -343,6 +343,7 @@ trains --week-id S076                       # Servo-mode ajustements
 | **Phase 0-1** | R1-R5 | [Historique des Features](#-historique-des-features-timeline-reconstituée) | ✅ Complétés (28 Déc - 04 Jan) |
 | **Phase 2** | R6-R9 | [Sprints Complétés - Détails](#-sprints-complétés---détails-r6-r9) | ✅ Complétés (05-25 Jan) |
 | **Pause** | S078-S079 | [Pause Stratégique](#pause-stratégique---s078-s079-) | 📅 27 Jan - 09 Fév |
+| **Phase 2.5** | S1-S5 | [Workout Diversity Integration](#phase-25-workout-diversity-integration-) | ✅ S1-S3 (9-10 Fév) \| 🔜 S4-S5 |
 | **Milestone** | S080 | [Sprint S080 Tests](#sprint-s080---ftp-tests--baseline-validation-) | 🎯 10-16 Fév |
 | **Phase 3** | R10-R13 | [Post-S080 Sprints](#phase-3-post-s080-sprints---training-intelligence-) | 🚀 17 Fév+ (Planifiés) |
 
@@ -685,6 +686,142 @@ Augmenter coverage workflow_coach.py de 19% à 27-29% (+8-10%) avec tests AI wor
 - 2-3 semaines = trop court sprints complexes (R10-R11)
 - Infrastructure opérationnelle (aucun besoin urgent)
 - Repos cognitif avant phase importante
+
+---
+
+## Phase 2.5: Workout Diversity Integration 🏋️
+
+**Dates** : 9-10 fév 2026
+**Status** : ✅ Sprints S1-S3 Complétés | 🔜 S4-S5 Planifiés
+
+### Contexte Utilisateur
+
+**Besoin exprimé :** "sortir de la routine sur 8 semaines où l'on enchaîne des sweet spot de la cadence de la force une récup, et d'introduire plus de fun en fouinant dans la base d'exercice"
+
+**Objectif :** Intégrer recherche et diversité workouts Zwift pour briser la monotonie de cycles répétitifs.
+
+---
+
+### Sprint S1 - Zwift Search Integration ✅
+
+**Dates** : 9 fév 2026
+**Status** : ✅ Complété
+**Commit** : `cf1aefc`
+
+**Objectif :** Intégrer recherche workouts Zwift externes
+
+**Features :**
+- ✅ HTTP client whatsonzwift.com
+- ✅ Parsing HTML workouts
+- ✅ Search by category/name
+- ✅ ZwiftWorkout & ZwiftWorkoutSegment models (Pydantic)
+
+**Fichiers Créés :**
+- `cyclisme_training_logs/external/zwift_client.py`
+- `cyclisme_training_logs/external/zwift_models.py`
+- `cyclisme_training_logs/scripts/search_zwift_workouts.py`
+
+---
+
+### Sprint S2 - Caching, Seeding & Diversity ✅
+
+**Dates** : 9-10 fév 2026
+**Status** : ✅ Complété
+**Commits** : `58a2fcc`, `3d3bae4`, `bd8855a`, `35f071d`
+
+**Objectif :** Infrastructure diversité workouts
+
+#### Phase 1 - Caching & Seeding
+- ✅ SQLite cache local (`~/data/cache/zwift_workouts.db`)
+- ✅ Seed data structure (`zwift_seed_data.py`)
+- ✅ CLI tools (`seed-zwift-workouts`, `search-zwift-workouts`)
+
+#### Phase 2 - Diversity Tracking
+- ✅ `WorkoutDiversityTracker` class
+- ✅ `WorkoutUsage` tracking (intelligence.json)
+- ✅ Rotation window (21 days default)
+- ✅ Diversity metrics & reporting
+
+#### Tests & Documentation
+- ✅ Comprehensive test coverage (10 unit tests)
+- ✅ Sphinx documentation (external package)
+
+**Fichiers Créés :**
+- `cyclisme_training_logs/external/zwift_seed_data.py`
+- `cyclisme_training_logs/intelligence/workout_diversity.py`
+- `cyclisme_training_logs/scripts/seed_zwift_workouts.py`
+- `tests/test_workout_diversity.py`
+
+---
+
+### Sprint S3 - Varied Workouts Library ✅
+
+**Dates** : 10 fév 2026
+**Status** : ✅ Complété
+**Commit** : `5cc11fe`
+
+**Objectif :** Briser routine 8 semaines avec bibliothèque variée
+
+**Workouts Ajoutés :** 20 workouts Build Me Up collection
+- **Durées :** 30-95 minutes
+- **TSS :** 13-114
+- **Catégories :** FTP (9), VO2 (1), Sprints (3), Tempo (1), Recovery (2), Mixed (2), Intervals (2)
+
+**Impact :**
+- Avant : 4 workouts baseline
+- Après : 24 workouts total
+- Rotation possible 21+ jours sans répétition
+
+**Validation :**
+```bash
+poetry run seed-zwift-workouts --collection build-me-up
+✅ 20 workouts seeded
+
+poetry run search-zwift-workouts
+✅ Search working across all categories
+```
+
+---
+
+### Sprint S4 - Workflow Integration 🚀
+
+**Dates** : À planifier (Post-S080, 17 fév+)
+**Status** : 🔜 À venir
+**Priority** : P1
+
+**Objectif :** Intégrer DiversityTracker dans workflows production
+
+**Tâches :**
+- [ ] `weekly_planner.py` integration (filter workouts via diversity)
+- [ ] `workflow_coach.py` integration (record workout usage)
+- [ ] `end_of_week.py` integration (diversity reports)
+
+**Tests Requis :**
+- [ ] Recording usage après workout
+- [ ] Filtering workouts for diversity
+- [ ] Diversity report generation
+
+**Durée Estimée :** 2-3 heures
+
+**Commit SHA :** `[ROADMAP@eeea982]`
+
+---
+
+### Sprint S5 - Enrichissement (Optionnel) 📈
+
+**Dates** : À planifier (Post-S4)
+**Status** : 💡 Idée
+**Priority** : P2
+
+**Objectif :** Améliorer bibliothèque et UX
+
+**Tâches :**
+- [ ] Autres collections Zwift (+20 workouts minimum)
+- [ ] Amélioration search/filters (TSS range, durée, multi-catégorie)
+- [ ] Dashboard diversité (graphiques, heatmaps)
+- [ ] Export Wahoo enrichment
+
+**Durée Estimée :** 4-6 heures (peut être split)
 
 ---
 
