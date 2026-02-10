@@ -595,9 +595,9 @@ def generate_compensation_prompt(context: dict[str, Any]) -> str:
 ## Métriques Athlète
 
 - **TSB (Form):** {athlete['tsb']:+.1f}
-- **Sommeil:** {athlete['sleep_hours']:.1f}h
-- **HRV:** {athlete['hrv']:.0f}
-- **RPE récent:** {athlete['rpe']:.1f}/10
+- **Sommeil:** {athlete['sleep_hours']:.1f if athlete['sleep_hours'] is not None else 'N/A'}h
+- **HRV:** {athlete['hrv']:.0f if athlete['hrv'] is not None else 'N/A'}
+- **RPE récent:** {athlete['rpe']:.1f if athlete['rpe'] is not None else 'N/A'}/10
 
 ## Contexte Météo
 
