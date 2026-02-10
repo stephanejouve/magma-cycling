@@ -11,6 +11,7 @@ from cyclisme_training_logs.external.zwift_models import (
     ZwiftWorkout,
     ZwiftWorkoutSegment,
 )
+from cyclisme_training_logs.external.zwift_scraper import ZwiftWorkoutScraper
 
 __all__ = [
     "ZwiftWorkoutClient",
@@ -18,4 +19,5 @@ __all__ = [
     "ZwiftWorkoutSegment",
     "WorkoutSearchCriteria",
     "ZwiftWorkoutConverter",
+    "ZwiftWorkoutScraper",
 ]

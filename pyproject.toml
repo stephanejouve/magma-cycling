@@ -78,6 +78,8 @@ generate-report = "cyclisme_training_logs.reports.cli:main"
 
 # === External Data Sources ===
 search-zwift-workouts = "cyclisme_training_logs.scripts.search_zwift_workouts:main"
+populate-zwift-cache = "cyclisme_training_logs.scripts.populate_zwift_cache:main"
+seed-zwift-workouts = "cyclisme_training_logs.scripts.seed_zwift_workouts:main"
 
 # === Debug & Validation ===
 check-sources = "cyclisme_training_logs.check_activity_sources:main"
