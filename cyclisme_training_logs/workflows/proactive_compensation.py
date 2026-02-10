@@ -577,6 +577,11 @@ def generate_compensation_prompt(context: dict[str, Any]) -> str:
     else:
         remaining_workouts = "  Aucune séance restante"
 
+    # Formater les métriques athlète (gérer les None)
+    sleep_str = f"{athlete['sleep_hours']:.1f}" if athlete["sleep_hours"] is not None else "N/A"
+    hrv_str = f"{athlete['hrv']:.0f}" if athlete["hrv"] is not None else "N/A"
+    rpe_str = f"{athlete['rpe']:.1f}" if athlete["rpe"] is not None else "N/A"
+
     # Construire prompt
     prompt = f"""# Compensation TSS Proactive
 
@@ -595,9 +600,9 @@ def generate_compensation_prompt(context: dict[str, Any]) -> str:
 ## Métriques Athlète
 
 - **TSB (Form):** {athlete['tsb']:+.1f}
-- **Sommeil:** {athlete['sleep_hours']:.1f if athlete['sleep_hours'] is not None else 'N/A'}h
-- **HRV:** {athlete['hrv']:.0f if athlete['hrv'] is not None else 'N/A'}
-- **RPE récent:** {athlete['rpe']:.1f if athlete['rpe'] is not None else 'N/A'}/10
+- **Sommeil:** {sleep_str}h
+- **HRV:** {hrv_str}
+- **RPE récent:** {rpe_str}/10
 
 ## Contexte Météo
 
