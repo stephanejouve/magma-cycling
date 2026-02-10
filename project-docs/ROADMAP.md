@@ -1,5 +1,9 @@
 # Roadmap - Cyclisme Training Logs
 
+> ⚠️ **Claude Code:** Ce fichier fait ~3000 lignes (36607 tokens > limite 25000)
+> **NE PAS LIRE entièrement** - Utiliser Grep + offset/limit
+> Voir guidelines: [CLAUDE_CODE_GUIDELINES.md](CLAUDE_CODE_GUIDELINES.md)
+
 **Projet :** Système d'analyse et planification d'entraînement cyclisme
 **Période :** Novembre 2025 - Aujourd'hui
 **Version actuelle :** v3.0.0
