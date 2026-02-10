@@ -152,9 +152,93 @@ biomechanics_intervals
 
 Extraction métriques biomécaniques depuis API Intervals.icu.
 
+workout_diversity
+-----------------
+
+.. automodule:: cyclisme_training_logs.intelligence.workout_diversity
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module Sprint Zwift Integration S2 pour tracking diversité workouts externes.
+
+Dataclasses
+~~~~~~~~~~~
+
+.. autoclass:: cyclisme_training_logs.intelligence.workout_diversity.WorkoutUsage
+   :members:
+   :undoc-members:
+
+Main Class
+~~~~~~~~~~
+
+.. autoclass:: cyclisme_training_logs.intelligence.workout_diversity.WorkoutDiversityTracker
+   :members:
+   :undoc-members:
+   :special-members: __init__
+
+Exemples
+~~~~~~~~
+
+Enregistrer Usage
+^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+    from cyclisme_training_logs.intelligence.workout_diversity import (
+        WorkoutDiversityTracker,
+        WorkoutUsage
+    )
+    from datetime import date
+
+    tracker = WorkoutDiversityTracker()
+
+    usage = WorkoutUsage(
+        workout_url="https://whatsonzwift.com/workouts/flat-out-fast",
+        workout_name="Flat Out Fast",
+        date_used=date.today().isoformat(),
+        session_id="S081-02",
+        source="whatsonzwift.com",
+        category="FTP",
+        tss=56
+    )
+
+    tracker.record_workout_usage(usage)
+
+Vérifier Diversité
+^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+    # Vérifier si récemment utilisé (21 jours)
+    is_recent = tracker.is_recently_used(
+        "https://whatsonzwift.com/workouts/flat-out-fast"
+    )
+
+    if is_recent:
+        print("⚠️ Workout utilisé récemment - éviter pour diversité")
+
+Rapport Diversité
+^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+    # Générer rapport sur 30 jours
+    report = tracker.get_diversity_report(days=30)
+
+    print(f"Sessions: {report['total_sessions']}")
+    print(f"Workouts uniques: {report['unique_workouts']}")
+    print(f"Taux répétition: {report['repetition_rate']:.1%}")
+    print(f"Diversité OK: {report['diversity_ok']}")  # <= 40%
+
+    # Workouts les plus utilisés
+    for workout in report['most_used']:
+        print(f"  - {workout['name']}: {workout['count']}x")
+
 Voir Aussi
 ----------
 
+- :doc:`external` - Zwift Workout Integration (Sprint S2)
 - :doc:`planning` - Planning Manager (Sprint R3)
 - :doc:`utils` - Metrics Advanced (Sprint R2)
 - `GUIDE_INTELLIGENCE.md <../../project-docs/guides/GUIDE_INTELLIGENCE.md>`_ - Guide complet
