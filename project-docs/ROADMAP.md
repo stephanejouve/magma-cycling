@@ -1102,6 +1102,72 @@ Jan-Fév 2026 : Consolidation terrain (pause sprint)
 
 ---
 
+### Proposition: Test History Tracking & Contextual Servo (Backlog)
+
+**Focus:** Système de tracking historique des tests pour améliorer contexte auto-servo
+
+**Status:** 📋 Backlog (Identifié 11 Fév 2026)
+
+**Priorité:** P2 (Important pour semaines de tests)
+
+#### Contexte
+
+**Problème identifié:**
+- Auto-servo utilise référence temporelle hardcodée obsolète (`sem42/2025`)
+- Pas de contexte chiffré des derniers tests lors semaine de tests
+- Comparabilité historique difficile sans valeurs de référence
+
+**Solution proposée:**
+
+1. **Test History Storage**
+   - Fichier `~/training-logs/data/test_history.json`
+   - Stocker: Date, FTP, VO2max 5min, P1min, P5s, conditions (TSB, sommeil, découplage)
+   - Auto-update après chaque semaine de tests (TST)
+
+2. **Detection Semaine Tests**
+   ```python
+   def is_test_week(remaining_sessions) -> bool:
+       return any("TST" in s.get("code", "") for s in remaining_sessions)
+   ```
+
+3. **Injection Contextuelle Prompt Servo**
+   ```python
+   if is_test_week(remaining_sessions):
+       test_context = load_last_test_results()
+       servo_prompt += format_test_reference_context(test_context)
+   ```
+
+4. **Prompt Enrichi**
+   ```
+   Derniers tests (2025-10-15):
+   - FTP: 240W
+   - VO2max 5min: 300W
+   - Puissance 1min: 350W
+   - Sprint 5s: 580W
+   - Conditions: TSB +2, sommeil 7.5h, découplage 5.2%
+
+   RÈGLE: Maintenir conditions physiologiques comparables
+   ```
+
+#### Bénéfices
+
+- ✅ Contexte automatique lors semaines tests
+- ✅ Comparabilité year-over-year
+- ✅ AI éclairé sur conditions optimales historiques
+- ✅ Suppression références temporelles hardcodées
+
+#### Effort Estimé
+
+- **Développement:** 2-4h
+- **Tests:** 1h (unit tests + integration)
+- **Documentation:** 30min
+
+**Dépendances:** Aucune
+
+**Refs:** daily_report_2026-02-11.md, commit 740cc64
+
+---
+
 ### Proposition: Code Reusability & Utilities (Backlog)
 
 **Focus :** Éliminer duplications et créer bibliothèque utilitaires partagés

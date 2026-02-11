@@ -800,7 +800,6 @@ Critères de décision:
 5. Utilise UNIQUEMENT les valeurs de métriques fournies ci-dessus
 6. Si une métrique est "Non disponible", ne PAS inventer de valeur
 7. Justifier les recommandations avec les métriques RÉELLES
-8. **Semaines tests:** Maintenir conditions identiques avec protocole précédent (sem42/2025)
 
 **Format JSON si modification recommandée** :
 ```json
