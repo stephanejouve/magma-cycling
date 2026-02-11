@@ -3002,7 +3002,7 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
 
         supplementary_prompt = f"""# ASSERVISSEMENT PLANNING - Demande Coach AI.
 
-Contexte : Tu viens d'analyser la séance du jour.
+Contexte : Tu viens d'analyser la séance du jour (DÉJÀ RÉALISÉE).
 
 ## Métriques de la séance analysée
 - TSB pré-séance : {tsb_str}
@@ -3031,7 +3031,7 @@ Si modification planning nécessaire, utilise ces templates prédéfinis :
 
 ## Instructions
 
-Basé sur l'analyse de la séance du jour et les métriques réelles ci-dessus, **recommandes-tu des ajustements au planning restant ?**
+Basé sur l'analyse de la séance du jour et les métriques réelles ci-dessus, **recommandes-tu des ajustements au planning FUTUR ?**
 
 Critères de décision:
 - HRV < -10% → Envisager allégement
@@ -3039,10 +3039,15 @@ Critères de décision:
 - Découplage > 7.5% → Fatigue cardiaque
 - Sommeil < 7h → Vulnérabilité accrue
 
-**IMPORTANT:**
-- Utilise UNIQUEMENT les valeurs de métriques fournies ci-dessus
-- Si une métrique est "Non disponible", ne PAS inventer de valeur
-- Justifier les recommandations avec les métriques RÉELLES
+**RÈGLES STRICTES:**
+1. **NE MODIFIER QUE LES SÉANCES FUTURES** (listées dans "Planning Restant" ci-dessus)
+2. **NE JAMAIS modifier une séance de type TEST (TST)** - Préserver comparabilité historique
+3. **Semaine de tests:** NE RIEN MODIFIER sauf fatigue critique (TSB < -15, découplage > 15%, RPE > 9)
+4. **Séance du jour:** DÉJÀ réalisée, impossible à modifier rétroactivement
+5. Utilise UNIQUEMENT les valeurs de métriques fournies ci-dessus
+6. Si une métrique est "Non disponible", ne PAS inventer de valeur
+7. Justifier les recommandations avec les métriques RÉELLES
+8. **Semaines tests:** Maintenir conditions identiques avec protocole précédent (sem42/2025)
 
 **Format JSON si modification recommandée** :
 ```json
