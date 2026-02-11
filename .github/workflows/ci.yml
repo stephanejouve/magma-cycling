@@ -97,15 +97,17 @@ jobs:
         run: |
           poetry run pytest tests/config/ tests/intelligence/ tests/planning/ tests/test_ai_providers/ tests/utils/ tests/workflows/test_insert_analysis.py -v --cov=cyclisme_training_logs --cov-report=xml --cov-report=term
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          file: ./coverage.xml
-          flags: unittests
-          name: codecov-${{ matrix.python-version }}
-          fail_ci_if_error: false
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      # TEMPORARILY DISABLED: Codecov free quota exceeded (2026-02-11)
+      # Re-enable after quota reset or upgrade
+      # - name: Upload coverage to Codecov
+      #   uses: codecov/codecov-action@v4
+      #   with:
+      #     file: ./coverage.xml
+      #     flags: unittests
+      #     name: codecov-${{ matrix.python-version }}
+      #     fail_ci_if_error: false
+      #   env:
+      #     CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   lint:
     name: Code Quality Checks
