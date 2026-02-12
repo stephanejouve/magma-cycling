@@ -51,6 +51,92 @@ feat(R9.F): Add pattern analysis [ROADMAP@b0a8b9e]
 
 ---
 
+## 🔄 Règle Spéciale: Commits Modifiant ROADMAP
+
+### Principe de Séparation
+
+**Règle:** Quand vous modifiez `ROADMAP.md`, **commitez-le séparément** du code d'implémentation.
+
+**Pourquoi?**
+- Facilite le tracking des versions successives du ROADMAP
+- Permet aux commits suivants de référencer la nouvelle version `[ROADMAP@SHA]`
+- Évite la circularité `[ROADMAP modified]`
+
+### Workflow Recommandé
+
+**✅ BON (2 commits séparés):**
+
+```bash
+# Commit 1: Modifier SEULEMENT le ROADMAP
+git add project-docs/ROADMAP.md
+git commit -m "docs(roadmap): Add Test History Tracking proposal to backlog"
+# → SHA: abc1234
+# → Nouvelle version ROADMAP créée
+
+# Commit 2: Implémenter les changements de code
+git add cyclisme_training_logs/
+git commit -m "feat(servo): Implement test history tracking [ROADMAP@abc1234]"
+# → Référence la nouvelle version!
+```
+
+**❌ MOINS OPTIMAL (1 commit mixte):**
+
+```bash
+# Tout dans 1 commit
+git add project-docs/ROADMAP.md cyclisme_training_logs/
+git commit -m "feat(servo): Implement feature [ROADMAP modified]"
+# → Tag spécial car ROADMAP inclus
+```
+
+### Tags Spéciaux
+
+**`[ROADMAP@<sha>]`**
+- Commit implémente une feature **basée sur** une version ROADMAP existante
+- Référence le SHA du dernier commit ayant modifié ROADMAP.md
+
+**`[ROADMAP modified]`**
+- Commit **modifie le ROADMAP** lui-même (+ potentiellement du code)
+- Utilisé quand ROADMAP et code sont dans le même commit
+- Tag spécial car auto-référence impossible (circularité Git)
+
+### Exemples Workflow
+
+**Scénario 1: Planification puis implémentation**
+
+```bash
+# Étape 1: Ajouter proposition au ROADMAP
+git add project-docs/ROADMAP.md
+git commit -m "docs(roadmap): Add Sprint R14 PID improvements"
+# → SHA: xyz5678
+
+# Étape 2-N: Implémenter en référençant ROADMAP
+git commit -m "feat(R14): Improve PID controller [ROADMAP@xyz5678]"
+git commit -m "test(R14): Add PID calibration tests [ROADMAP@xyz5678]"
+git commit -m "docs(R14): Update guide [ROADMAP@xyz5678]"
+```
+
+**Scénario 2: Documentation a posteriori**
+
+```bash
+# Développement terminé
+git commit -m "feat(servo): Add auto-detection [ROADMAP@abc1234]"
+
+# Puis documenter dans ROADMAP
+git add project-docs/ROADMAP.md
+git commit -m "docs(roadmap): Document servo auto-detection feature"
+```
+
+### Quand utiliser `[ROADMAP modified]`?
+
+**Cas acceptables:**
+- Commit de correction typo dans ROADMAP + code
+- Refactoring mineur touchant ROADMAP + implémentation
+- Urgence nécessitant commit atomique
+
+**Dans tous les autres cas:** Préférer 2 commits séparés.
+
+---
+
 ## 📝 Exemples
 
 ### Exemple 1: Feature Sprint
