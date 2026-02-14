@@ -635,7 +635,6 @@ def generate_compensation_prompt(context: dict[str, Any]) -> str:
 - **Anaérobie + Neuro (>120%)**: 5%
 
 ### Gestion CTL Âge 50+
-- **CTL actuel: {athlete['ctl']:.1f}**, **ATL: {athlete['atl']:.1f}**
 - FTP 220W → CTL minimum 55-65
 - FTP 240W → CTL minimum 65-75
 - FTP 260W → CTL minimum 70-80
