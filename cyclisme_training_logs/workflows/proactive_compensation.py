@@ -616,9 +616,43 @@ def generate_compensation_prompt(context: dict[str, Any]) -> str:
 
 ---
 
+## MÉTHODOLOGIE ENTRAÎNEMENT (PEAKS COACHING / HUNTER ALLEN)
+
+### Principes Fondamentaux
+- **Méthode Traditionnelle** (distribution équilibrée) > Polarisée pour Masters 50+
+- **Sweet-Spot (88-93% FTP)** = zone optimale développement FTP ("biggest bang for your buck")
+- **CTL Masters 50+**: Maintenir 90% du max, éviter drops >10 points
+- **Adaptation physiologique**: 6-8 semaines délai avant effet mesurable
+- **"Testing is training"**: Tests intégrables dans semaines normales, pas bloquer semaines entières
+
+### Distribution Intensité Recommandée (Budget 8-12h/semaine)
+- **Récupération**: 10%
+- **Endurance (56-75% FTP)**: 25%
+- **Tempo (76-91% FTP)**: 35% ← ZONE PRINCIPALE
+- **Sweet-Spot (88-93% FTP)**: Inclus dans Tempo ci-dessus, prioriser en phase reconstruction
+- **FTP (94-105%)**: 15%
+- **VO2 max (106-120%)**: 10%
+- **Anaérobie + Neuro (>120%)**: 5%
+
+### Gestion CTL Âge 50+
+- **CTL actuel: {athlete['ctl']:.1f}**, **ATL: {athlete['atl']:.1f}**
+- FTP 220W → CTL minimum 55-65
+- FTP 240W → CTL minimum 65-75
+- FTP 260W → CTL minimum 70-80
+- **Alerte si drop >10 points en 4 semaines** (récupération lente âge 50+)
+- **Semaines récup**: Tous les 3 semaines maximum (Masters 50+)
+
+### Validation Séances
+- **Tempo/Sweet-Spot**: Découplage cardio <7.5% requis
+- **VO2/AC**: TSB >+5 et sommeil >7h minimum
+- **Éviter "junk miles"**: Toute séance doit avoir zone(s) cible précise(s)
+- **Discipline outdoor**: Si >2 échecs surcharge IF, basculer indoor pour cette zone
+
+---
+
 ## Mission
 
-Proposer une stratégie de compensation **réaliste et intelligente** pour récupérer le déficit de -{deficit:.0f} TSS.
+Proposer une stratégie de compensation **réaliste et intelligente** pour récupérer le déficit de -{deficit:.0f} TSS, en respectant les principes méthodologiques ci-dessus.
 
 ## 6 Stratégies Disponibles
 

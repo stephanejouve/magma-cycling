@@ -36,6 +36,7 @@ import json
 import sys
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 import markdown2
 import sib_api_v3_sdk
@@ -858,6 +859,116 @@ Réponds maintenant."""
             traceback.print_exc()
             return None
 
+    def analyze_ctl_peaks(self) -> dict[str, Any] | None:
+        """
+        Analyze CTL/ATL/TSB metrics according to Peaks Coaching principles.
+
+        Checks current CTL against recommended thresholds for Masters 50+ athletes
+        and generates alerts if critical conditions detected.
+
+        Returns:
+            Dict with analysis results and alerts, or None if failed
+            {
+                "ctl_current": float,
+                "atl_current": float,
+                "tsb_current": float,
+                "ftp_current": int,
+                "ctl_minimum_for_ftp": float,
+                "ctl_optimal_for_ftp": float,
+                "alerts": list[str],
+                "recommendations": list[str]
+            }
+        """
+        try:
+            # Get athlete profile for FTP
+            athlete = self.client.get_athlete()
+            ftp_current = athlete.get("ftp", 220)  # Default 220W if missing
+
+            # Get latest wellness for CTL/ATL/TSB
+            from datetime import date, timedelta
+
+            today = date.today()
+            yesterday = today - timedelta(days=1)
+
+            wellness_data = self.client.get_wellness(
+                oldest=yesterday.isoformat(), newest=today.isoformat()
+            )
+
+            if not wellness_data:
+                print("  ⚠️  Pas de données wellness récentes")
+                return None
+
+            # Get most recent wellness
+            wellness = wellness_data[-1] if wellness_data else None
+            if not wellness:
+                return None
+
+            ctl_current = wellness.get("ctl", 0)
+            atl_current = wellness.get("atl", 0)
+            tsb_current = wellness.get("tsb", 0)
+
+            # Calculate thresholds according to Peaks Coaching
+            # FTP 220W → CTL minimum 55-65
+            # FTP 240W → CTL minimum 65-75
+            # FTP 260W → CTL minimum 70-80
+            ctl_minimum = (ftp_current / 220) * 55
+            ctl_optimal = (ftp_current / 220) * 70
+
+            alerts = []
+            recommendations = []
+
+            # Check 1: CTL too low for FTP target
+            if ctl_current < ctl_minimum:
+                deficit = ctl_minimum - ctl_current
+                alerts.append(
+                    f"CTL critique: {ctl_current:.1f} < {ctl_minimum:.0f} minimum pour FTP {ftp_current}W"
+                )
+                weeks_to_rebuild = deficit / 2.5  # +2.5 CTL/week sustainable
+                recommendations.append(
+                    f"Reconstruction base nécessaire: {weeks_to_rebuild:.0f} semaines minimum"
+                )
+                recommendations.append(
+                    "Focus: Tempo (35% TSS) + Sweet-Spot (20% TSS), 350-400 TSS/semaine charge"
+                )
+
+            # Check 2: CTL drop >10 points (Masters 50+ critical)
+            # TODO: Implement 30-day history check for CTL drops
+            # For now, just check if CTL is significantly below optimal
+            if ctl_current < (ctl_optimal * 0.85):
+                alerts.append(
+                    f"CTL sous-optimal: {ctl_current:.1f} < 85% de {ctl_optimal:.0f} optimal"
+                )
+                recommendations.append(
+                    "Citation Hunter Allen: 'At 60 years young, CTL drops take months to rebuild'"
+                )
+                recommendations.append("Maintenir CTL à 90% du maximum en permanence (Masters 50+)")
+
+            # Check 3: TSB critical (form)
+            if tsb_current < -15:
+                alerts.append(f"TSB critique: {tsb_current:+.1f} (fatigue excessive)")
+                recommendations.append("Semaine récupération recommandée: 250-280 TSS")
+            elif tsb_current > +15:
+                alerts.append(f"TSB élevé: {tsb_current:+.1f} (déconditionnement possible)")
+                recommendations.append("Augmenter volume progressivement: +2-3 CTL points/semaine")
+
+            return {
+                "ctl_current": ctl_current,
+                "atl_current": atl_current,
+                "tsb_current": tsb_current,
+                "ftp_current": ftp_current,
+                "ctl_minimum_for_ftp": ctl_minimum,
+                "ctl_optimal_for_ftp": ctl_optimal,
+                "alerts": alerts,
+                "recommendations": recommendations,
+            }
+
+        except Exception as e:
+            print(f"  ❌ Erreur analyse CTL Peaks: {e}")
+            import traceback
+
+            traceback.print_exc()
+            return None
+
     def _extract_session_id(self, activity_name: str) -> tuple[str, str] | None:
         """
         Extract week_id and session_id from activity name.
@@ -981,6 +1092,7 @@ Réponds maintenant."""
         analyses: dict[int, str] | None = None,
         servo_result: dict | None = None,
         compensation_result: dict | None = None,
+        ctl_analysis: dict | None = None,
     ) -> Path:
         """
         Generate markdown daily report.
@@ -992,6 +1104,7 @@ Réponds maintenant."""
             analyses: Dict of AI analyses by activity ID
             servo_result: Servo mode recommendations (if triggered)
             compensation_result: TSS proactive compensation (if deficit detected)
+            ctl_analysis: CTL analysis according to Peaks Coaching principles
 
         Returns:
             Path to generated report file
@@ -1108,6 +1221,48 @@ Réponds maintenant."""
                     f.write("---\n\n")
                     compensation_section = format_compensation_section(context, recommendations)
                     f.write(compensation_section)
+
+            # Section 5: CTL Analysis (Peaks Coaching)
+            if ctl_analysis:
+                f.write("---\n\n")
+                f.write("## 📈 Analyse CTL (Peaks Coaching)\n\n")
+
+                ctl = ctl_analysis["ctl_current"]
+                atl = ctl_analysis["atl_current"]
+                tsb = ctl_analysis["tsb_current"]
+                ftp = ctl_analysis["ftp_current"]
+                ctl_min = ctl_analysis["ctl_minimum_for_ftp"]
+                ctl_opt = ctl_analysis["ctl_optimal_for_ftp"]
+
+                f.write("**Métriques Actuelles:**\n")
+                f.write(f"- CTL (Fitness): {ctl:.1f}\n")
+                f.write(f"- ATL (Fatigue): {atl:.1f}\n")
+                f.write(f"- TSB (Form): {tsb:+.1f}\n")
+                f.write(f"- FTP: {ftp}W\n\n")
+
+                f.write(f"**Seuils Peaks Coaching (FTP {ftp}W):**\n")
+                f.write(f"- CTL minimum: {ctl_min:.0f}\n")
+                f.write(f"- CTL optimal: {ctl_opt:.0f}\n\n")
+
+                alerts = ctl_analysis.get("alerts", [])
+                recommendations = ctl_analysis.get("recommendations", [])
+
+                if alerts:
+                    f.write(f"**⚠️  {len(alerts)} Alerte(s):**\n\n")
+                    for alert in alerts:
+                        f.write(f"- {alert}\n")
+                    f.write("\n")
+
+                if recommendations:
+                    f.write("**💡 Recommandations:**\n\n")
+                    for rec in recommendations:
+                        f.write(f"- {rec}\n")
+                    f.write("\n")
+
+                if not alerts:
+                    f.write(
+                        "✅ **CTL dans les normes** pour FTP actuel et principes Masters 50+\n\n"
+                    )
 
             f.write("---\n\n")
             f.write(
@@ -1396,6 +1551,19 @@ Réponds maintenant."""
             else:
                 print("  ✅ Déficit < seuil (50 TSS) - Pas d'intervention")
 
+        # 2d. CTL Analysis (Peaks Coaching principles)
+        ctl_analysis = None
+        if self.enable_ai_analysis:
+            print("\n🔍 Analyse CTL selon principes Peaks Coaching...")
+            ctl_analysis = self.analyze_ctl_peaks()
+
+            if ctl_analysis and ctl_analysis.get("alerts"):
+                print(f"\n⚠️  {len(ctl_analysis['alerts'])} alerte(s) CTL détectée(s)")
+                for alert in ctl_analysis["alerts"]:
+                    print(f"   • {alert}")
+            else:
+                print("  ✅ CTL dans les normes Peaks Coaching")
+
         # 3. Check planning changes (if week specified)
         planning_changes = {"status": None, "diff": None}
         if week_id and start_date:
@@ -1410,6 +1578,7 @@ Réponds maintenant."""
             analyses,
             servo_result,
             compensation_result,
+            ctl_analysis,
         )
 
         print(f"\n📝 Rapport généré: {report_file}")

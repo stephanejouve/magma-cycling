@@ -324,6 +324,66 @@ class WeeklyPlanner:
 
 ---
 
+## MÉTHODOLOGIE PEAKS COACHING (HUNTER ALLEN) - PRINCIPES OBLIGATOIRES
+
+### Distribution Intensité Hebdomadaire (Méthode Traditionnelle)
+**PRIORITAIRE pour Masters 50+ avec budget 8-12h/semaine :**
+- **Récupération** : 10% TSS total
+- **Endurance (56-75% FTP)** : 25%
+- **Tempo (76-91% FTP)** : 35% ← **ZONE PRINCIPALE**
+- **Sweet-Spot (88-93% FTP)** : Inclus dans Tempo, **PRIORISER en phase reconstruction CTL**
+- **FTP (94-105%)** : 15%
+- **VO2 max (106-120%)** : 10%
+- **Anaérobie + Neuro (>120%)** : 5%
+
+**Rationale** : Méthode Traditionnelle > Polarisée pour Masters 50+. Polarisée = psychologiquement insoutenable long terme (ennui Z1-Z2 + souffrance constante VO2/AC), taux abandon élevé.
+
+### Sweet-Spot : Zone Optimale FTP
+**"Biggest bang for your training buck"** - Hunter Allen
+- **88-93% FTP** (chevauche haut Tempo + bas FTP)
+- Plus haut effet entraînement pour améliorer FTP avec sustainability psychologique
+- Formats : 2x20min, 3x15min, 4x12min, continu 40-60min
+- Découplage <7.5% = validation qualité
+
+### Gestion CTL Masters 50+
+**Citation Hunter Allen** : *"When you are 60 years young and your CTL drops from 80 down to 50, it's a long fight for months to get it back to 80!"*
+
+**Règles Critiques** :
+- **Maintenir CTL à 90% du maximum** en permanence (éviter variations >15 points)
+- **CTL cible selon FTP** :
+  - FTP 220W → CTL minimum 55-65
+  - FTP 240W → CTL minimum 65-75
+  - FTP 260W → CTL minimum 70-80
+- **Alerte si drop >10 points en 4 semaines** (récupération lente âge 50+)
+- **Progression CTL** : +2 à +3 points/semaine soutenable (max +4)
+- **Semaines récup** : Tous les 3 semaines MAXIMUM (Masters 50+), jamais >3 semaines charge consécutives
+
+### Volume TSS Recommandé
+- **Semaines charge** : 350-400 TSS
+- **Semaines récup** : 250-280 TSS
+- **Ratio** : 3:1 (3 charge, 1 récup) ou 2:1 si fatigue accumulée
+
+### Tests & Power Profiling
+**"Testing is training and training is testing"** - Dr. Andrew Coggan
+- **Ne JAMAIS bloquer semaine entière tests uniquement**
+- Tests multiples même journée = OK (ordre : 5s → 1min → 5min → 20min)
+- Pré-requis : TSB +10 minimum, sommeil >7h, fraîcheur optimale
+- Fréquence : Tous les 8 semaines (comme FTP)
+
+### Adaptation Physiologique
+**Délai effet mesurable : 6-8 semaines**
+- Cycle minimum = 6 semaines même stimulus
+- Test FTP après 6-8 semaines stimulation appropriée
+- Ne pas changer méthode avant 6 semaines (attendre délai adaptation)
+
+### Éviter "Junk Miles"
+**Junk Miles = Volume sans objectif structuré**
+- TOUTE séance doit avoir zone(s) cible précise(s)
+- Pas de "sortie libre" ou "selon envie" sauf semaine récup totale
+- Si outdoor = >2 échecs discipline IF, basculer indoor cette zone
+
+---
+
 ## Concepts d'Entraînement
 
 {self.context_files.get('cycling_concepts', '[Concepts non chargés]')}
