@@ -55,6 +55,10 @@ from cyclisme_training_logs.insert_analysis import WorkoutHistoryManager
 from cyclisme_training_logs.planning.calendar import TrainingCalendar, WorkoutType
 from cyclisme_training_logs.planning.intervals_sync import IntervalsSync
 from cyclisme_training_logs.planning.models import WeeklyPlan
+from cyclisme_training_logs.planning.peaks_phases import (
+    determine_training_phase,
+    format_phase_recommendation,
+)
 from cyclisme_training_logs.prepare_analysis import PromptGenerator
 from cyclisme_training_logs.workflows.proactive_compensation import (
     evaluate_weekly_deficit,
@@ -951,6 +955,13 @@ Réponds maintenant."""
                 alerts.append(f"TSB élevé: {tsb_current:+.1f} (déconditionnement possible)")
                 recommendations.append("Augmenter volume progressivement: +2-3 CTL points/semaine")
 
+            # Determine training phase (Peaks Coaching algorithm)
+            # TODO: Get FTP target from athlete profile or config
+            ftp_target = 260  # Default target for now
+            phase_rec = determine_training_phase(
+                ctl_current=ctl_current, ftp_current=ftp_current, ftp_target=ftp_target
+            )
+
             return {
                 "ctl_current": ctl_current,
                 "atl_current": atl_current,
@@ -960,6 +971,7 @@ Réponds maintenant."""
                 "ctl_optimal_for_ftp": ctl_optimal,
                 "alerts": alerts,
                 "recommendations": recommendations,
+                "phase_recommendation": phase_rec,
             }
 
         except Exception as e:
@@ -1263,6 +1275,12 @@ Réponds maintenant."""
                     f.write(
                         "✅ **CTL dans les normes** pour FTP actuel et principes Masters 50+\n\n"
                     )
+
+                # Phase recommendation
+                phase_rec = ctl_analysis.get("phase_recommendation")
+                if phase_rec:
+                    f.write("---\n\n")
+                    f.write(format_phase_recommendation(phase_rec))
 
             f.write("---\n\n")
             f.write(
