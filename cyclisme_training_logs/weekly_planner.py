@@ -200,6 +200,7 @@ class WeeklyPlanner:
             "project_prompt": self.references_dir / "project_prompt_v2_1_revised.md",
             "cycling_concepts": self.references_dir / "cycling_training_concepts.md",
             "documentation": self.project_root / "Documentation_Complète_du_Suivi_v1_5.md",
+            "planning_preferences": self.project_root / "project-docs" / "PLANNING_PREFERENCES.md",
         }
 
         for key, filepath in files_to_load.items():
@@ -337,6 +338,14 @@ class WeeklyPlanner:
 - **Anaérobie + Neuro (>120%)** : 5%
 
 **Rationale** : Méthode Traditionnelle > Polarisée pour Masters 50+. Polarisée = psychologiquement insoutenable long terme (ennui Z1-Z2 + souffrance constante VO2/AC), taux abandon élevé.
+
+---
+
+## PRÉFÉRENCES PLANNING ATHLÈTE (PRIORITAIRE)
+
+{self.context_files.get('planning_preferences', '[Préférences non chargées]')}
+
+---
 
 ### Sweet-Spot : Zone Optimale FTP
 **"Biggest bang for your training buck"** - Hunter Allen

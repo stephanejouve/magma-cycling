@@ -9,13 +9,18 @@
 
 ## 🗓️ Organisation Hebdomadaire
 
-### Jour de Repos Préféré: **MERCREDI**
+### Jour Léger Préféré: **MERCREDI**
 
 **Rationale**:
 - **Pratique**: Permet de remonter/déposer matériel vélo (entretien, maintenance)
 - **Physiologique**: Coupure en milieu de semaine après lundi-mardi
 - **CTL**: Maximise jours actifs (dimanche disponible pour sortie endurance)
 - **Récupération**: Position milieu semaine optimale pour Masters 50+
+
+**Format mercredi**:
+- **Priorité 1**: Repos complet (0 TSS) si besoin maintenance vélo
+- **Priorité 2**: Séance courte/légère (20-40 TSS, recovery/endurance facile) si forme OK
+- **Flexibility**: Adapter selon sensation, TSB, et besoins logistiques
 
 **❌ À éviter**: Dimanche comme jour repos systématique
 - Historique: Anciens plannings laissaient souvent dimanche libre
@@ -27,7 +32,7 @@
 ```
 Lundi:    Séance qualité (Tempo/Sweet-Spot)           50-55 TSS
 Mardi:    Séance qualité ou endurance                 45-55 TSS
-Mercredi: REPOS ou Recovery active (maintenance)      0-30 TSS  ← JOUR LIBRE
+Mercredi: REPOS ou séance courte (maintenance)        0-40 TSS  ← JOUR LÉGER
 Jeudi:    Séance endurance ou qualité                 50-60 TSS
 Vendredi: Séance qualité (Tempo/Sweet-Spot)           48-55 TSS
 Samedi:   Sortie longue endurance                     60-80 TSS
