@@ -619,6 +619,163 @@ class PIDDailyEvaluator:
 
         return recommendation
 
+    def monitor_ctl_progression_vs_peaks(self) -> dict[str, Any] | None:
+        """
+        Monitor CTL progression vs Peaks Coaching targets (Sprint R10).
+
+        Checks:
+        - Current CTL vs minimum/optimal for FTP
+        - Weekly CTL progression rate
+        - Weeks to reach target CTL
+        - Phase recommendation (Peaks algorithm)
+
+        Returns:
+            Dict with CTL monitoring results or None if failed
+        """
+        print(f"\n{'=' * 60}")
+        print("📈 CTL Progression Monitoring (Peaks Coaching)")
+        print(f"{'=' * 60}")
+
+        try:
+            # Get current wellness for CTL
+            wellness_data = self.client.get_wellness(
+                date.today().isoformat(), date.today().isoformat()
+            )
+            if not wellness_data:
+                print("  ⚠️  No wellness data available")
+                return None
+
+            wellness = wellness_data[0]
+            ctl_current = wellness.get("ctl", 0)
+            atl_current = wellness.get("atl", 0)
+            tsb_current = wellness.get("tsb", 0)
+
+            # Get athlete FTP
+            athlete = self.client.get_athlete()
+            ftp_current = athlete.get("ftp", 220)
+
+            # Calculate Peaks Coaching thresholds
+            # FTP 220W → CTL minimum ~55, optimal ~70
+            # FTP 230W → CTL minimum ~57, optimal ~73
+            ctl_minimum = (ftp_current / 220) * 55
+            ctl_optimal = (ftp_current / 220) * 70
+
+            # Calculate CTL progression rate (last 7 days)
+            week_ago = date.today() - timedelta(days=7)
+            wellness_week_ago = self.client.get_wellness(week_ago.isoformat(), week_ago.isoformat())
+
+            if wellness_week_ago:
+                ctl_week_ago = wellness_week_ago[0].get("ctl", ctl_current)
+                ctl_weekly_change = ctl_current - ctl_week_ago
+            else:
+                ctl_weekly_change = 0
+
+            # Estimate weeks to reach targets
+            if ctl_weekly_change > 0:
+                weeks_to_minimum = max(0, (ctl_minimum - ctl_current) / ctl_weekly_change)
+                weeks_to_optimal = max(0, (ctl_optimal - ctl_current) / ctl_weekly_change)
+            else:
+                weeks_to_minimum = float("inf")
+                weeks_to_optimal = float("inf")
+
+            # Determine status
+            if ctl_current < 50:
+                status = "CRITICAL"
+                status_emoji = "🚨"
+                message = "CTL critique < 50 - Reconstruction base urgente"
+            elif ctl_current < ctl_minimum:
+                status = "LOW"
+                status_emoji = "⚠️"
+                message = f"CTL sous minimum Peaks ({ctl_minimum:.0f})"
+            elif ctl_current < (ctl_optimal * 0.85):
+                status = "SUBOPTIMAL"
+                status_emoji = "📊"
+                message = f"CTL sous-optimal (< 85% de {ctl_optimal:.0f})"
+            else:
+                status = "OPTIMAL"
+                status_emoji = "✅"
+                message = "CTL dans la zone optimale Peaks"
+
+            print(f"\n{status_emoji} Status: {status}")
+            print(f"   {message}")
+            print("\n📊 Métriques Actuelles:")
+            print(f"   CTL: {ctl_current:.1f}")
+            print(f"   ATL: {atl_current:.1f}")
+            print(f"   TSB: {tsb_current:+.1f}")
+            print(f"   FTP: {ftp_current}W")
+            print(f"\n🎯 Seuils Peaks (FTP {ftp_current}W):")
+            print(f"   CTL minimum: {ctl_minimum:.0f}")
+            print(f"   CTL optimal: {ctl_optimal:.0f}")
+            print("\n📈 Progression:")
+            print(f"   Changement 7 jours: {ctl_weekly_change:+.1f} points")
+
+            if weeks_to_minimum < float("inf"):
+                print(f"   Semaines → minimum: {weeks_to_minimum:.1f} semaines")
+            if weeks_to_optimal < float("inf"):
+                print(f"   Semaines → optimal: {weeks_to_optimal:.1f} semaines")
+
+            # Determine Peaks phase
+            # Conservative target for Sprint R10
+            ftp_target = 230
+            from cyclisme_training_logs.planning.peaks_phases import determine_training_phase
+
+            phase_rec = determine_training_phase(
+                ctl_current=ctl_current,
+                ftp_current=ftp_current,
+                ftp_target=ftp_target,
+                athlete_age=54,
+            )
+
+            print(f"\n🎯 Phase Peaks Coaching: {phase_rec.phase.value.upper()}")
+            print(f"   TSS recommandé: {phase_rec.weekly_tss_load} TSS/semaine (charge)")
+            print(f"   TSS recovery: {phase_rec.weekly_tss_recovery} TSS/semaine")
+
+            # Recommendations
+            recommendations = []
+            if status == "CRITICAL":
+                recommendations.append("🚨 PEAKS OVERRIDE actif (CTL < 50)")
+                recommendations.append("Focus Tempo (35%) + Sweet-Spot (20%)")
+                recommendations.append(f"Target: {phase_rec.weekly_tss_load} TSS/semaine")
+            elif status == "LOW":
+                recommendations.append("Reconstruction base progressive")
+                recommendations.append(f"Maintenir {phase_rec.weekly_tss_load} TSS/semaine")
+                recommendations.append(f"CTL target: {ctl_minimum:.0f} minimum")
+            elif status == "SUBOPTIMAL":
+                recommendations.append("PID peut devenir actif si CTL ≥ 50")
+                recommendations.append("Continuer progression régulière")
+            else:
+                recommendations.append("Maintenir CTL à 90% du maximum (Masters 50+)")
+                recommendations.append("PID autonome recommandé")
+
+            if recommendations:
+                print("\n💡 Recommandations:")
+                for rec in recommendations:
+                    print(f"   • {rec}")
+
+            return {
+                "ctl_current": ctl_current,
+                "atl_current": atl_current,
+                "tsb_current": tsb_current,
+                "ftp_current": ftp_current,
+                "ctl_minimum": ctl_minimum,
+                "ctl_optimal": ctl_optimal,
+                "ctl_weekly_change": ctl_weekly_change,
+                "weeks_to_minimum": weeks_to_minimum if weeks_to_minimum < float("inf") else None,
+                "weeks_to_optimal": weeks_to_optimal if weeks_to_optimal < float("inf") else None,
+                "status": status,
+                "message": message,
+                "phase": phase_rec.phase.value,
+                "weekly_tss_recommended": phase_rec.weekly_tss_load,
+                "recommendations": recommendations,
+            }
+
+        except Exception as e:
+            print(f"  ❌ Erreur monitoring CTL: {e}")
+            import traceback
+
+            traceback.print_exc()
+            return None
+
     def run_daily_evaluation(self, days_back: int = 7) -> dict[str, Any]:
         """
         Run daily evaluation (collect + learn, no PID).
@@ -641,6 +798,9 @@ class PIDDailyEvaluator:
 
         # Create learnings
         self.create_intelligence_learnings(metrics, start_date, end_date)
+
+        # NEW Sprint R10: Monitor CTL progression vs Peaks targets
+        ctl_monitoring = self.monitor_ctl_progression_vs_peaks()
 
         # Check test opportunity
         print(f"\n{'=' * 60}")
@@ -716,12 +876,21 @@ class PIDDailyEvaluator:
         print(f"   Learnings: {len(self.intelligence.learnings)}")
         print(f"   Patterns: {len(self.intelligence.patterns)}")
         print(f"   Adaptations: {len(self.intelligence.adaptations)}")
+
+        # Sprint R10: Display CTL status summary
+        if ctl_monitoring:
+            print(f"   CTL Status: {ctl_monitoring['status']}")
+            print(f"   CTL Current: {ctl_monitoring['ctl_current']:.1f}")
+            if ctl_monitoring.get("weeks_to_optimal"):
+                print(f"   Weeks → Optimal: {ctl_monitoring['weeks_to_optimal']:.1f} semaines")
+
         print(f"{'=' * 70}\n")
 
         return {
             "status": "SUCCESS",
             "metrics": metrics,
             "test_recommendation": test_recommendation,
+            "ctl_monitoring": ctl_monitoring,  # NEW Sprint R10
         }
 
     def run_cycle_evaluation(

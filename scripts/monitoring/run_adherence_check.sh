@@ -36,4 +36,5 @@ fi
 
 # Run the adherence check using Poetry
 # Output goes to launchd stdout/stderr (configured in .plist)
-$POETRY_CMD run python scripts/monitoring/check_workout_adherence.py
+# Sprint R10: Check weekly adherence and send alerts if <85%
+$POETRY_CMD run python scripts/monitoring/check_workout_adherence.py --weekly-alert
