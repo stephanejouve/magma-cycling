@@ -52,6 +52,7 @@ from cyclisme_training_logs.config import (
 )
 from cyclisme_training_logs.config.athlete_profile import AthleteProfile
 from cyclisme_training_logs.insert_analysis import WorkoutHistoryManager
+from cyclisme_training_logs.intelligence.discrete_pid_controller import DiscretePIDController
 from cyclisme_training_logs.planning.calendar import TrainingCalendar, WorkoutType
 from cyclisme_training_logs.planning.intervals_sync import IntervalsSync
 from cyclisme_training_logs.planning.models import WeeklyPlan
@@ -60,6 +61,10 @@ from cyclisme_training_logs.planning.peaks_phases import (
     format_phase_recommendation,
 )
 from cyclisme_training_logs.prepare_analysis import PromptGenerator
+from cyclisme_training_logs.workflows.pid_peaks_integration import (
+    compute_integrated_correction,
+    format_integrated_recommendation,
+)
 from cyclisme_training_logs.workflows.proactive_compensation import (
     evaluate_weekly_deficit,
     format_compensation_section,
@@ -870,6 +875,8 @@ Réponds maintenant."""
         Checks current CTL against recommended thresholds for Masters 50+ athletes
         and generates alerts if critical conditions detected.
 
+        NEW: Integrates PID + Peaks hierarchical recommendation system.
+
         Returns:
             Dict with analysis results and alerts, or None if failed
             {
@@ -880,7 +887,9 @@ Réponds maintenant."""
                 "ctl_minimum_for_ftp": float,
                 "ctl_optimal_for_ftp": float,
                 "alerts": list[str],
-                "recommendations": list[str]
+                "recommendations": list[str],
+                "phase_recommendation": PhaseRecommendation,
+                "pid_peaks_recommendation": IntegratedRecommendation (NEW)
             }
         """
         try:
@@ -957,10 +966,79 @@ Réponds maintenant."""
 
             # Determine training phase (Peaks Coaching algorithm)
             # TODO: Get FTP target from athlete profile or config
-            ftp_target = 260  # Default target for now
+            ftp_target = 230  # Conservative target (Sprint R10)
             phase_rec = determine_training_phase(
                 ctl_current=ctl_current, ftp_current=ftp_current, ftp_target=ftp_target
             )
+
+            # NEW: Initialize PID controller with calibrated gains (Sprint R10)
+            print("\n🎛️  Initialisation PID Controller (Sprint R10 calibration)...")
+            pid_controller = DiscretePIDController(
+                kp=0.008,  # Proportional gain (Masters 50+ adjusted)
+                ki=0.001,  # Integral gain (Masters 50+ adjusted)
+                kd=0.12,  # Derivative gain (Masters 50+ adjusted)
+                setpoint=ftp_target,
+                dead_band=3.0,  # ±3W natural FTP variation
+            )
+
+            # Load PID state from previous runs (if available)
+            state_file = Path("/tmp/sprint_r10_pid_initialization.json")
+            if state_file.exists():
+                try:
+                    import json
+
+                    with open(state_file) as f:
+                        state_data = json.load(f)
+                        pid_state = state_data.get("pid_state", {})
+
+                        # Restore PID internal state
+                        pid_controller.integral = pid_state.get("integral", 0.0)
+                        pid_controller.prev_error = pid_state.get("prev_error", 0.0)
+                        pid_controller.prev_ftp = pid_state.get("prev_ftp", 0)
+                        pid_controller.cycle_count = pid_state.get("cycle_count", 0)
+
+                        print(
+                            f"  ✅ État PID restauré: integral={pid_controller.integral:.2f}, "
+                            f"cycles={pid_controller.cycle_count}"
+                        )
+                except Exception as e:
+                    print(f"  ⚠️  Erreur restauration état PID: {e}")
+
+            # NEW: Compute integrated PID + Peaks recommendation
+            print("🔄 Calcul recommandation intégrée PID + Peaks...")
+
+            # Calculate recent adherence and quality metrics
+            # TODO: Extract from recent week data (for now use defaults)
+            adherence_rate = 0.85  # Target adherence
+            avg_coupling = 0.065  # Target quality (découplage)
+            tss_completion = 0.90  # Target completion
+
+            try:
+                pid_peaks_rec = compute_integrated_correction(
+                    ctl_current=ctl_current,
+                    ftp_current=ftp_current,
+                    ftp_target=ftp_target,
+                    athlete_age=54,  # Masters 50+
+                    pid_controller=pid_controller,
+                    adherence_rate=adherence_rate,
+                    avg_cardiovascular_coupling=avg_coupling,
+                    tss_completion_rate=tss_completion,
+                )
+
+                print(
+                    f"  ✅ Recommandation: {pid_peaks_rec.tss_per_week} TSS/semaine "
+                    f"(mode: {pid_peaks_rec.mode.value})"
+                )
+
+                if pid_peaks_rec.override_active:
+                    print(f"  🚨 OVERRIDE ACTIF: {pid_peaks_rec.mode.value}")
+
+            except Exception as e:
+                print(f"  ⚠️  Erreur calcul PID+Peaks: {e}")
+                import traceback
+
+                traceback.print_exc()
+                pid_peaks_rec = None
 
             return {
                 "ctl_current": ctl_current,
@@ -972,6 +1050,7 @@ Réponds maintenant."""
                 "alerts": alerts,
                 "recommendations": recommendations,
                 "phase_recommendation": phase_rec,
+                "pid_peaks_recommendation": pid_peaks_rec,  # NEW
             }
 
         except Exception as e:
@@ -1281,6 +1360,18 @@ Réponds maintenant."""
                 if phase_rec:
                     f.write("---\n\n")
                     f.write(format_phase_recommendation(phase_rec))
+
+                # PID + Peaks integrated recommendation (NEW)
+                pid_peaks_rec = ctl_analysis.get("pid_peaks_recommendation")
+                if pid_peaks_rec:
+                    f.write("---\n\n")
+                    f.write("## 🎛️ Recommandation Intégrée PID + Peaks (Sprint R10)\n\n")
+                    f.write(
+                        "*Architecture hiérarchique multi-niveaux: Peaks Coaching (stratégique) → "
+                        "PID Discret (tactique) → Daily execution (opérationnel)*\n\n"
+                    )
+                    formatted_rec = format_integrated_recommendation(pid_peaks_rec)
+                    f.write(formatted_rec)
 
             f.write("---\n\n")
             f.write(
