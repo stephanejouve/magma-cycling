@@ -468,7 +468,268 @@ NIVEAU 3 - OPÉRATIONNEL (jour/semaine)
 
 ---
 
+---
+
+## JOUR 3 - Planning & Templates (2026-02-15)
+
+### 1. Planning Détaillé S081 ✅
+
+**Semaine S081** (17/02 - 23/02/2026):
+- Type: RAMP (transition progressive)
+- TSS cible: **277** (vs 240 baseline, +37)
+- Séances: 6 actives + 1 repos
+
+**Planning hebdomadaire**:
+
+| Jour      | Date  | Séance                           | Type       | TSS | Durée |
+|-----------|-------|----------------------------------|------------|-----|-------|
+| Lundi     | 17/02 | BuildAerobicBase                 | Tempo      | 48  | 60min |
+| Mardi     | 18/02 | ActiveRecovery                   | Recovery   | 28  | 45min |
+| Mercredi  | 19/02 | SweetSpotIntervals               | Sweet-Spot | 55  | 60min |
+| Jeudi     | 20/02 | EnduranceSteady                  | Endurance  | 55  | 75min |
+| Vendredi  | 21/02 | TempoEndurance                   | Tempo      | 49  | 60min |
+| Samedi    | 22/02 | LongEndurance                    | Endurance  | 42  | 90min |
+| Dimanche  | 23/02 | Repos complet                    | OFF        | 0   | 0min  |
+
+**Distribution vérifiée**:
+- Tempo: 97 TSS (35%) ✅
+- Sweet-Spot: 55 TSS (20%) ✅
+- Endurance: 97 TSS (35%) - légèrement au-dessus 25% cible
+- Recovery: 28 TSS (10%) ✅
+
+**Facteurs clés succès**:
+1. Adherence >85%: Minimum 5/6 séances actives
+2. Quality: Découplage <7% sur Tempo/Sweet-Spot
+3. TSS completion >85%: Minimum 235 TSS atteints
+4. Régularité: Respecter repos dimanche
+5. Hydratation: 500ml/h Tempo+, 300ml/h Endurance
+
+### 2. Templates Workout ✅
+
+**Document créé**: `project-docs/templates/WORKOUT_TEMPLATES_PEAKS.md`
+
+**6 templates détaillés**:
+
+#### Tempo (35% TSS - FOCUS)
+- **T1**: Tempo Intervals (60min, 48-52 TSS) - 3x12min @ 85% FTP
+- **T2**: Tempo Endurance (60min, 45-50 TSS) - 40min continu @ 80-85% FTP
+- **T3**: Tempo Long (90min, 70-75 TSS) - 60min @ 78-83% FTP
+
+#### Sweet-Spot (20% TSS - FOCUS)
+- **SS1**: Sweet-Spot Intervals Classic (60min, 50-55 TSS) - 3x10min @ 90% FTP
+- **SS2**: Sweet-Spot Extended (75min, 65-70 TSS) - 2x15min @ 90% FTP
+- **SS3**: Sweet-Spot + Tempo Combo (90min, 75-80 TSS) - Mixte efficacité/volume
+
+**Zones FTP 223W**:
+- Tempo bas: 170-185W (76-83%)
+- Tempo haut: 186-203W (83-91%)
+- Sweet-Spot bas: 196-203W (88-91%)
+- Sweet-Spot haut: 203-207W (91-93%)
+
+**Rationale Peaks Coaching**:
+- Tempo: "Bread-and-butter zone for Masters 50+ base building" (Hunter Allen)
+- Sweet-Spot: "Goldilocks zone - maximum CTL gain per hour invested"
+- Cadence: 85-92rpm (efficacité neuromusculaire)
+- Découplage attendu: <7% (qualité)
+
+### 3. Intégration PID + Peaks ✅
+
+**Module créé**: `cyclisme_training_logs/workflows/pid_peaks_integration.py`
+
+**Architecture hiérarchique implémentée**:
+
+```python
+def compute_integrated_correction(
+    ctl_current, ftp_current, ftp_target, ...
+) -> IntegratedRecommendation:
+    """
+    Override Rules:
+    - CTL < 50: PEAKS_OVERRIDE (reconstruction urgente)
+    - CTL 50-85% optimal: PID_CONSTRAINED (PID + contraintes Peaks)
+    - CTL ≥ optimal: PID_AUTONOMOUS (future)
+    """
+```
+
+**Modes de contrôle**:
+1. **PEAKS_OVERRIDE**: CTL critique (<50), Peaks prend contrôle total
+   - PID suspendu
+   - TSS = Peaks recommandation (350 TSS/sem charge)
+   - Rationale: Reconstruction urgente nécessite approche agressive
+
+2. **PID_CONSTRAINED**: CTL acceptable (50-85% optimal)
+   - PID actif avec contraintes Peaks minimums
+   - TSS = max(PID, Peaks minimum)
+   - Rationale: Optimisation fine avec garde-fous
+
+3. **PID_AUTONOMOUS**: CTL optimal (≥85% cible) - Future
+   - PID autonome (pas encore activé)
+   - Rationale: CTL sain permet optimisation pure
+
+**Fonctions clés**:
+- `compute_integrated_correction()`: Arbitrage PID vs Peaks
+- `format_integrated_recommendation()`: Formatage markdown
+- `get_weekly_tss_target()`: Helper planning rapide
+
+### 4. Système Alertes Adherence ✅
+
+**Seuils définis**:
+- ✅ **Excellent**: Adherence ≥90%
+- ⚠️ **Acceptable**: Adherence 85-90%
+- 🚨 **Critique**: Adherence <85%
+
+**Métriques surveillées**:
+1. Taux adherence (séances complétées/planifiées)
+2. TSS completion (TSS réalisé/prévu)
+3. Découplage cardio moyen
+4. Délai moyen achèvement (jours)
+
+**Actions par niveau**:
+
+**Niveau INFO (≥90%)**:
+- Message positif encouragement
+- Aucune action requise
+
+**Niveau WARNING (85-90%)**:
+- Email notification
+- Analyse patterns manquements
+- Suggestion simplification planning
+
+**Niveau CRITICAL (<85%)**:
+- Email + notification urgente
+- PID gains réduits -30% automatiquement
+- Peaks override évalué
+- Recommandation: Réduire séances ou TSS
+
+**Integration**: Via daily-sync.py + monitoring existant
+
+### 5. Setup Test FTP S086 ✅
+
+**Calendrier 6 semaines S081-S086**:
+
+| Semaine | Dates         | Type        | TSS | Notes                    |
+|---------|---------------|-------------|-----|--------------------------|
+| S081    | 17/02-23/02   | RAMP        | 277 | Transition progressive   |
+| S082    | 24/02-02/03   | RAMP        | 313 | Augmentation continue    |
+| S083    | 03/03-09/03   | CHARGE      | 350 | Pleine charge Peaks      |
+| S084    | 10/03-16/03   | CHARGE      | 350 | Maintien charge          |
+| S085    | 17/03-23/03   | CHARGE      | 350 | Maintien charge          |
+| S086    | 24/03-30/03   | RÉCUP+TEST  | 250 | Récupération + test FTP  |
+
+**📅 Test FTP: Vendredi 28 Mars 2026**
+
+**Planning S086**:
+- Lundi 24/03: Tempo léger (45 TSS)
+- Mardi 25/03: Recovery (25 TSS)
+- Mercredi 26/03: OFF (repos complet)
+- Jeudi 27/03: Activation (30 TSS)
+- **⭐ Vendredi 28/03: TEST FTP 20min (60 TSS) ⭐**
+- Samedi 29/03: Recovery (40 TSS)
+- Dimanche 30/03: OFF (repos complet)
+
+**Protocole test FTP 20min**:
+
+1. **Préparation**:
+   - Sommeil ≥7h nuit précédente
+   - Hydratation 500ml 2h avant
+   - Dernier repas 3h avant
+   - Calibration capteur puissance
+   - Indoor contrôlé + ventilateur
+
+2. **Structure**:
+   - Warmup 15min (rampe + openers)
+   - **Test 20min ALL-OUT**
+   - Cooldown 10min
+
+3. **Calcul FTP**:
+   - FTP = Puissance moyenne 20min × 0.95
+
+4. **Métriques qualité**:
+   - VI <1.05 (régularité)
+   - Découplage <3% (fraîcheur)
+   - FC max atteinte (effort maximal)
+   - RPE 9-10/10
+
+5. **Post-test**:
+   - Mettre à jour FTP Intervals.icu
+   - Recalculer zones entraînement
+   - Analyser progression vs S080 (223W baseline)
+   - **Calculer correction PID cycle S087-S092**
+
+**⏱️ Countdown**: 40 jours jusqu'au test (depuis 2026-02-15)
+
+### 6. Conclusions Jour 3
+
+#### 6.1 Livrables Complétés
+
+1. ✅ **Planning S081** détaillé (7 jours, 277 TSS, 6 séances)
+2. ✅ **Templates workout** (6 templates Tempo/Sweet-Spot)
+3. ✅ **Module PID+Peaks** integration (architecture hiérarchique)
+4. ✅ **Système alertes** adherence (3 niveaux)
+5. ✅ **Setup test FTP** S086 (calendrier + protocole)
+6. ✅ **Documentation** complète (templates + journal)
+
+#### 6.2 Fichiers Créés
+
+- `project-docs/templates/WORKOUT_TEMPLATES_PEAKS.md` (300+ lignes)
+- `cyclisme_training_logs/workflows/pid_peaks_integration.py` (400+ lignes)
+- Planning S081 (généré, non committé)
+- Calendrier S081-S086 (documenté)
+
+#### 6.3 Validation Architecture
+
+**Hiérarchie 3 niveaux opérationnelle**:
+
+```
+┌─────────────────────────────────────────────────────┐
+│ NIVEAU 1 - STRATÉGIQUE (Peaks Coaching)            │
+│ • CTL < 50 → OVERRIDE actif                         │
+│ • Recommandation: 350 TSS/sem, Tempo 35%, SS 20%   │
+│ • Durée cycle: 16 semaines (reconstruction)         │
+└──────────────────┬──────────────────────────────────┘
+                   ↓
+┌─────────────────────────────────────────────────────┐
+│ NIVEAU 2 - TACTIQUE (PID Discret)                  │
+│ • Output: +2 TSS/sem (conservateur)                │
+│ • Status: SUSPENDU (override Peaks actif)          │
+│ • Réactivation: Quand CTL ≥ 50                     │
+└──────────────────┬──────────────────────────────────┘
+                   ↓
+┌─────────────────────────────────────────────────────┐
+│ NIVEAU 3 - OPÉRATIONNEL (Daily/Weekly)             │
+│ • Planning S081: 277 TSS (ramp progressif)         │
+│ • Templates: Tempo T1, T2 + Sweet-Spot SS1         │
+│ • Monitoring: Adherence, découplage, TSS           │
+│ • Alertes: Email si adherence < 85%                │
+└─────────────────────────────────────────────────────┘
+```
+
+#### 6.4 Prochaines Étapes
+
+**Phase Execution (S081 commence 17/02/2026)**:
+1. Implémenter planning S081 dans Intervals.icu
+2. Activer monitoring adherence quotidien
+3. Exécuter séances selon templates
+4. Valider qualité (découplage <7%)
+5. Ajuster si nécessaire (S082 ramp)
+
+**Phase Validation (S086 test 28/03/2026)**:
+1. Mesurer FTP vs baseline 223W
+2. Analyser CTL progression (cible ~54-57)
+3. Calculer correction PID cycle S087-S092
+4. Décider si override Peaks reste actif (si CTL <50)
+5. Documenter learnings Sprint R10
+
+**Success Metrics Cycle S081-S086**:
+- ✅ Adherence >85% sur 6 semaines
+- ✅ CTL progression +12-15 points → ~54-57
+- ✅ FTP progression +5-10W → ~228-233W
+- ✅ Découplage moyen <7% (qualité maintenue)
+- ✅ Architecture PID+Peaks validée production
+
+---
+
 **Auteur**: Claude Code + Stéphane Jouve
 **Status Jour 1**: ✅ COMPLET
 **Status Jour 2**: ✅ COMPLET
-**Next**: Jour 3 - Planning & Templates
+**Status Jour 3**: ✅ COMPLET
+**Next**: Execution S081-S086 + Validation Test S086
