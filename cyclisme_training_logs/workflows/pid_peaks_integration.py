@@ -158,10 +158,16 @@ def compute_integrated_correction(
             f"→ Peaks recommande: {peaks_tss_suggestion} TSS/semaine\n"
         )
 
-        if pid_tss_suggestion:
+        # Only show PID if it's giving reasonable values (> 100 TSS/week)
+        # Values < 100 indicate PID is not yet calibrated properly
+        if pid_tss_suggestion and pid_tss_suggestion >= 100:
             rationale += (
                 f"→ PID suggérait: {pid_tss_suggestion} TSS/semaine (ignoré)\n"
-                f"→ Écart: +{peaks_tss_suggestion - pid_tss_suggestion} TSS/semaine Peaks vs PID"
+                f"→ Écart: +{peaks_tss_suggestion - pid_tss_suggestion} TSS/semaine Peaks vs PID\n"
+            )
+        elif pid_tss_suggestion and pid_tss_suggestion < 100:
+            rationale += (
+                f"→ PID non calibré ({pid_tss_suggestion} TSS/semaine) - Sprint R10 en cours\n"
             )
 
     elif ctl_current < (phase_rec.ctl_target * 0.85):
