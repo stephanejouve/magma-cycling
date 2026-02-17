@@ -207,14 +207,24 @@ def evaluate_weekly_deficit(
 
         logger.info(f"  TSS planifié (total jours passés): {planned_tss:.0f}")
         logger.info(f"  TSS complété: {completed_tss:.0f}")
-        logger.info(f"  Déficit: {deficit:.0f} TSS")
+        logger.info(f"  Déficit brut: {deficit:.0f} TSS")
 
         # 5. Décision intervention
-        if abs(deficit) < threshold_tss:
-            logger.info(f"  ✅ Déficit < seuil ({threshold_tss} TSS) - Pas d'intervention")
+        # Un déficit positif signifie: planned > completed (vrai manque)
+        # Un déficit négatif signifie: completed > planned (surplus, pas de compensation)
+        if deficit <= 0:
+            logger.info(f"  ✅ Surplus TSS ({-deficit:.0f}) ou équilibre - Pas d'intervention")
             return None
 
-        logger.info(f"  ⚠️  Déficit > seuil ({threshold_tss} TSS) - Intervention nécessaire")
+        if deficit < threshold_tss:
+            logger.info(
+                f"  ✅ Déficit ({deficit:.0f} TSS) < seuil ({threshold_tss} TSS) - Pas d'intervention"
+            )
+            return None
+
+        logger.info(
+            f"  ⚠️  Déficit ({deficit:.0f} TSS) > seuil ({threshold_tss} TSS) - Intervention nécessaire"
+        )
 
         # 6. Collecter contexte complet
         context = _collect_compensation_context(
@@ -779,7 +789,7 @@ def format_compensation_section(context: dict[str, Any], recommendations: dict[s
     section = f"""
 ## 🎯 Compensation TSS Proactive
 
-**Semaine {week_id} - Déficit détecté: -{deficit:.0f} TSS**
+**Semaine {week_id} - Déficit détecté: {deficit:.0f} TSS**
 
 **Jours restants:** {days_left}
 
@@ -804,11 +814,19 @@ def format_compensation_section(context: dict[str, Any], recommendations: dict[s
     total = recommendations["total_compensated"]
     remaining_deficit = deficit - total
 
+    # Format remaining deficit with proper sign handling
+    if remaining_deficit > 0:
+        deficit_display = f"{remaining_deficit:.0f} TSS restant"
+    elif remaining_deficit < 0:
+        deficit_display = f"Sur-compensation de {-remaining_deficit:.0f} TSS"
+    else:
+        deficit_display = "Déficit comblé ✅"
+
     section += f"""
 ---
 
 **Compensation totale:** +{total} TSS
-**Déficit résiduel:** -{remaining_deficit:.0f} TSS
+**Déficit résiduel:** {deficit_display}
 
 **Justification globale:**
 {recommendations.get('overall_rationale', 'N/A')}
