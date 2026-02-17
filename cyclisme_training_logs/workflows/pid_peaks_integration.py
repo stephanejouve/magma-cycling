@@ -317,7 +317,12 @@ def format_integrated_recommendation(rec: IntegratedRecommendation) -> str:
     return "\n".join(output)
 
 
-def get_weekly_tss_target(ctl_current: float, ftp_current: int, week_type: str = "charge") -> int:
+def get_weekly_tss_target(
+    ctl_current: float,
+    ftp_current: int,
+    week_type: str = "charge",
+    ftp_target: int | None = None,
+) -> int:
     """
     Get weekly TSS target based on current CTL and phase.
 
@@ -327,18 +332,25 @@ def get_weekly_tss_target(ctl_current: float, ftp_current: int, week_type: str =
         ctl_current: Current CTL
         ftp_current: Current FTP (W)
         week_type: "charge" or "recovery"
+        ftp_target: Target FTP (W). If None, loads from AthleteProfile.from_env()
 
     Returns:
         TSS target for the week
 
     Examples:
-        >>> get_weekly_tss_target(42.4, 223, "charge")
+        >>> get_weekly_tss_target(42.4, 223, "charge", ftp_target=230)
         350
-        >>> get_weekly_tss_target(42.4, 223, "recovery")
+        >>> get_weekly_tss_target(42.4, 223, "recovery", ftp_target=230)
         250
     """
+    # Load ftp_target from config if not provided
+    if ftp_target is None:
+        from cyclisme_training_logs.config.athlete_profile import AthleteProfile
+
+        profile = AthleteProfile.from_env()
+        ftp_target = profile.ftp_target
+
     # Determine phase
-    ftp_target = 230  # Conservative default
     phase_rec = determine_training_phase(
         ctl_current=ctl_current, ftp_current=ftp_current, ftp_target=ftp_target
     )
