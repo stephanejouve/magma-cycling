@@ -920,36 +920,43 @@ Réponds maintenant."""
             atl_current = wellness.get("atl", 0)
             tsb_current = wellness.get("tsb", 0)
 
-            # Calculate thresholds according to Peaks Coaching
-            # FTP 220W → CTL minimum 55-65
-            # FTP 240W → CTL minimum 65-75
-            # FTP 260W → CTL minimum 70-80
-            ctl_minimum = (ftp_current / 220) * 55
-            ctl_optimal = (ftp_current / 220) * 70
+            # Determine training phase (Peaks Coaching algorithm)
+            # Use integrated peaks_phases module for consistency
+            # TODO: Get FTP target from athlete profile or config
+            ftp_target = 230  # Conservative target (Sprint R10)
+            phase_rec = determine_training_phase(
+                ctl_current=ctl_current, ftp_current=ftp_current, ftp_target=ftp_target
+            )
+
+            # Calculate thresholds using Peaks module for consistency
+            # This ensures all CTL calculations use the same logic
+            ctl_minimum = (ftp_current / 220) * 55  # Minimum threshold (FTP current)
+            ctl_target = phase_rec.ctl_target  # Target for FTP goal (from phase_rec)
 
             alerts = []
             recommendations = []
 
-            # Check 1: CTL too low for FTP target
+            # Check 1: CTL too low for current FTP minimum
             if ctl_current < ctl_minimum:
-                deficit = ctl_minimum - ctl_current
+                deficit_to_minimum = ctl_minimum - ctl_current
+                weeks_to_minimum = deficit_to_minimum / 2.5  # +2.5 CTL/week sustainable
                 alerts.append(
                     f"CTL critique: {ctl_current:.1f} < {ctl_minimum:.0f} minimum pour FTP {ftp_current}W"
                 )
-                weeks_to_rebuild = deficit / 2.5  # +2.5 CTL/week sustainable
                 recommendations.append(
-                    f"Reconstruction base nécessaire: {weeks_to_rebuild:.0f} semaines minimum"
+                    f"Phase 1: Atteindre CTL minimum ({ctl_minimum:.0f}) en {weeks_to_minimum:.0f} semaines"
+                )
+                recommendations.append(
+                    f"Phase 2: Atteindre CTL optimal ({ctl_target:.0f} pour FTP {ftp_target}W) en {phase_rec.weeks_to_rebuild} semaines total"
                 )
                 recommendations.append(
                     "Focus: Tempo (35% TSS) + Sweet-Spot (20% TSS), 350-400 TSS/semaine charge"
                 )
 
-            # Check 2: CTL drop >10 points (Masters 50+ critical)
-            # TODO: Implement 30-day history check for CTL drops
-            # For now, just check if CTL is significantly below optimal
-            if ctl_current < (ctl_optimal * 0.85):
+            # Check 2: CTL below 85% of target (suboptimal but not critical)
+            elif ctl_current < (ctl_target * 0.85):
                 alerts.append(
-                    f"CTL sous-optimal: {ctl_current:.1f} < 85% de {ctl_optimal:.0f} optimal"
+                    f"CTL sous-optimal: {ctl_current:.1f} < 85% de {ctl_target:.0f} optimal"
                 )
                 recommendations.append(
                     "Citation Hunter Allen: 'At 60 years young, CTL drops take months to rebuild'"
@@ -963,13 +970,6 @@ Réponds maintenant."""
             elif tsb_current > +15:
                 alerts.append(f"TSB élevé: {tsb_current:+.1f} (déconditionnement possible)")
                 recommendations.append("Augmenter volume progressivement: +2-3 CTL points/semaine")
-
-            # Determine training phase (Peaks Coaching algorithm)
-            # TODO: Get FTP target from athlete profile or config
-            ftp_target = 230  # Conservative target (Sprint R10)
-            phase_rec = determine_training_phase(
-                ctl_current=ctl_current, ftp_current=ftp_current, ftp_target=ftp_target
-            )
 
             # NEW: Initialize PID controller with calibrated gains (Sprint R10)
             print("\n🎛️  Initialisation PID Controller (Sprint R10 calibration)...")
@@ -1045,8 +1045,9 @@ Réponds maintenant."""
                 "atl_current": atl_current,
                 "tsb_current": tsb_current,
                 "ftp_current": ftp_current,
+                "ftp_target": ftp_target,
                 "ctl_minimum_for_ftp": ctl_minimum,
-                "ctl_optimal_for_ftp": ctl_optimal,
+                "ctl_optimal_for_ftp": ctl_target,  # Optimal for FTP target (not current)
                 "alerts": alerts,
                 "recommendations": recommendations,
                 "phase_recommendation": phase_rec,
@@ -1322,6 +1323,7 @@ Réponds maintenant."""
                 atl = ctl_analysis["atl_current"]
                 tsb = ctl_analysis["tsb_current"]
                 ftp = ctl_analysis["ftp_current"]
+                ftp_target = ctl_analysis["ftp_target"]
                 ctl_min = ctl_analysis["ctl_minimum_for_ftp"]
                 ctl_opt = ctl_analysis["ctl_optimal_for_ftp"]
 
@@ -1329,11 +1331,12 @@ Réponds maintenant."""
                 f.write(f"- CTL (Fitness): {ctl:.1f}\n")
                 f.write(f"- ATL (Fatigue): {atl:.1f}\n")
                 f.write(f"- TSB (Form): {tsb:+.1f}\n")
-                f.write(f"- FTP: {ftp}W\n\n")
+                f.write(f"- FTP actuel: {ftp}W\n")
+                f.write(f"- FTP cible: {ftp_target}W\n\n")
 
-                f.write(f"**Seuils Peaks Coaching (FTP {ftp}W):**\n")
-                f.write(f"- CTL minimum: {ctl_min:.0f}\n")
-                f.write(f"- CTL optimal: {ctl_opt:.0f}\n\n")
+                f.write("**Seuils Peaks Coaching:**\n")
+                f.write(f"- CTL minimum (FTP {ftp}W): {ctl_min:.0f}\n")
+                f.write(f"- CTL optimal (FTP {ftp_target}W): {ctl_opt:.0f}\n\n")
 
                 alerts = ctl_analysis.get("alerts", [])
                 recommendations = ctl_analysis.get("recommendations", [])
