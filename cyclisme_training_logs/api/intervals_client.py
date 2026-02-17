@@ -78,6 +78,33 @@ class IntervalsClient:
         response.raise_for_status()
         return response.json()
 
+    def update_athlete(self, athlete_data: dict[str, Any]) -> dict[str, Any]:
+        """
+        Update athlete profile information.
+
+        Mettre à jour les informations du profil athlète.
+
+        Args:
+            athlete_data: Dictionary with fields to update (e.g., {"ftp": 223})
+                Common fields: ftp, weight, max_hr, resting_hr, fthr, etc.
+
+        Returns:
+            Updated athlete profile data
+
+        Raises:
+            requests.HTTPError: If API request fails
+
+        Example:
+            >>> client.update_athlete({"ftp": 223})
+            >>> client.update_athlete({"ftp": 223, "weight": 75})
+        """
+        url = f"{self.BASE_URL}/athlete/{self.athlete_id}"
+
+        response = self.session.put(url, json=athlete_data)
+        response.raise_for_status()
+        logger.info(f"Updated athlete profile: {athlete_data}")
+        return response.json()
+
     def get_activities(
         self, oldest: str | None = None, newest: str | None = None
     ) -> list[dict[str, Any]]:
