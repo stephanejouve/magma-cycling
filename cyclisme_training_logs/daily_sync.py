@@ -893,9 +893,10 @@ Réponds maintenant."""
             }
         """
         try:
-            # Get athlete profile for FTP
-            athlete = self.client.get_athlete()
-            ftp_current = athlete.get("ftp", 220)  # Default 220W if missing
+            # Load athlete profile from env for FTP values
+            athlete_profile = AthleteProfile.from_env()
+            ftp_current = athlete_profile.ftp
+            ftp_target = athlete_profile.ftp_target
 
             # Get latest wellness for CTL/ATL/TSB
             from datetime import date, timedelta
@@ -921,9 +922,7 @@ Réponds maintenant."""
             tsb_current = wellness.get("tsb", 0)
 
             # Determine training phase (Peaks Coaching algorithm)
-            # Use integrated peaks_phases module for consistency
-            # TODO: Get FTP target from athlete profile or config
-            ftp_target = 230  # Conservative target (Sprint R10)
+            # FTP values loaded from AthleteProfile (.env configuration)
             phase_rec = determine_training_phase(
                 ctl_current=ctl_current, ftp_current=ftp_current, ftp_target=ftp_target
             )

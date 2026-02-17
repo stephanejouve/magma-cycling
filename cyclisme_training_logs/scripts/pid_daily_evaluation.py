@@ -650,12 +650,16 @@ class PIDDailyEvaluator:
             atl_current = wellness.get("atl", 0)
             tsb_current = wellness.get("tsb", 0)
 
-            # Get athlete FTP
-            athlete = self.client.get_athlete()
-            ftp_current = athlete.get("ftp", 220)
+            # Load athlete profile from env for FTP and age
+            from cyclisme_training_logs.config.athlete_profile import AthleteProfile
+
+            athlete_profile = AthleteProfile.from_env()
+            ftp_current = athlete_profile.ftp
+            ftp_target = athlete_profile.ftp_target
+            athlete_age = athlete_profile.age
 
             # Calculate Peaks Coaching thresholds
-            # FTP 220W → CTL minimum ~55, optimal ~70
+            # FTP 223W → CTL minimum ~55, optimal ~70
             # FTP 230W → CTL minimum ~57, optimal ~73
             ctl_minimum = (ftp_current / 220) * 55
             ctl_optimal = (ftp_current / 220) * 70
@@ -714,16 +718,14 @@ class PIDDailyEvaluator:
             if weeks_to_optimal < float("inf"):
                 print(f"   Semaines → optimal: {weeks_to_optimal:.1f} semaines")
 
-            # Determine Peaks phase
-            # Conservative target for Sprint R10
-            ftp_target = 230
+            # Determine Peaks phase (using loaded athlete profile)
             from cyclisme_training_logs.planning.peaks_phases import determine_training_phase
 
             phase_rec = determine_training_phase(
                 ctl_current=ctl_current,
                 ftp_current=ftp_current,
                 ftp_target=ftp_target,
-                athlete_age=54,
+                athlete_age=athlete_age,
             )
 
             print(f"\n🎯 Phase Peaks Coaching: {phase_rec.phase.value.upper()}")

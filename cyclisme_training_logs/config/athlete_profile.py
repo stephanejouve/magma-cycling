@@ -36,7 +36,8 @@ class AthleteProfile(BaseModel):
         category: Competition category (affects training zones and load recommendations)
         recovery_capacity: Recovery ability (affects overtraining thresholds)
         sleep_dependent: Whether performance is strongly sleep-dependent
-        ftp: Functional Threshold Power in watts
+        ftp: Current Functional Threshold Power in watts
+        ftp_target: Target FTP in watts (goal for training cycle)
         weight: Athlete weight in kg
         profil_fibres: Muscle fiber profile type (affects optimal cadence and power profile)
         cadence_offset: Personal cadence offset adjustment in rpm (default: 0)
@@ -59,7 +60,8 @@ class AthleteProfile(BaseModel):
         description="Recovery ability level"
     )
     sleep_dependent: bool = Field(description="Whether performance is strongly sleep-dependent")
-    ftp: int = Field(gt=0, description="Functional Threshold Power in watts")
+    ftp: int = Field(gt=0, description="Functional Threshold Power in watts (current)")
+    ftp_target: int = Field(gt=0, description="Target FTP in watts (goal for training cycle)")
     weight: float = Field(gt=0, description="Athlete weight in kg")
 
     # Biomechanics fields (Grappe integration)
@@ -84,7 +86,8 @@ class AthleteProfile(BaseModel):
             ATHLETE_CATEGORY: Competition category (junior/senior/master)
             ATHLETE_RECOVERY_CAPACITY: Recovery ability (normal/good/exceptional)
             ATHLETE_SLEEP_DEPENDENT: Sleep dependency (true/false)
-            ATHLETE_FTP: Functional Threshold Power in watts (int)
+            ATHLETE_FTP: Current Functional Threshold Power in watts (int)
+            ATHLETE_FTP_TARGET: Target FTP in watts for training cycle (int)
             ATHLETE_WEIGHT: Weight in kg (float)
             ATHLETE_PROFIL_FIBRES: Fiber profile (explosif/mixte/endurant, default: mixte)
             ATHLETE_CADENCE_OFFSET: Cadence offset in rpm (int, default: 0)
@@ -107,6 +110,7 @@ class AthleteProfile(BaseModel):
             recovery = os.getenv("ATHLETE_RECOVERY_CAPACITY", "").lower()
             sleep_dep_str = os.getenv("ATHLETE_SLEEP_DEPENDENT", "false").lower()
             ftp = int(os.getenv("ATHLETE_FTP", "0"))
+            ftp_target = int(os.getenv("ATHLETE_FTP_TARGET", "0"))
             weight = float(os.getenv("ATHLETE_WEIGHT", "0"))
 
             # Biomechanics fields (optional, with defaults)
@@ -125,6 +129,8 @@ class AthleteProfile(BaseModel):
                 raise ValueError("ATHLETE_RECOVERY_CAPACITY environment variable is required")
             if ftp == 0:
                 raise ValueError("ATHLETE_FTP environment variable is required")
+            if ftp_target == 0:
+                raise ValueError("ATHLETE_FTP_TARGET environment variable is required")
             if weight == 0:
                 raise ValueError("ATHLETE_WEIGHT environment variable is required")
 
@@ -134,6 +140,7 @@ class AthleteProfile(BaseModel):
                 recovery_capacity=recovery,  # type: ignore
                 sleep_dependent=sleep_dependent,
                 ftp=ftp,
+                ftp_target=ftp_target,
                 weight=weight,
                 profil_fibres=profil_fibres,  # type: ignore
                 cadence_offset=cadence_offset,
