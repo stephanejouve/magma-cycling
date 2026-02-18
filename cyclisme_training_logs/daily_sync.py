@@ -1295,6 +1295,49 @@ Réponds maintenant."""
 
         print("  ✅ Mise à jour automatique terminée")
 
+    def _backup_existing_report(self, report_file: Path) -> Path | None:
+        """
+        Backup existing report before overwriting.
+
+        Creates timestamped backup in backups/ subdirectory.
+        Automatically cleans backups older than 30 days.
+
+        Args:
+            report_file: Path to report file
+
+        Returns:
+            Path to backup file if created, None if no existing report
+        """
+        if not report_file.exists():
+            return None
+
+        # Create backups directory
+        backups_dir = report_file.parent / "backups"
+        backups_dir.mkdir(exist_ok=True)
+
+        # Generate timestamped backup filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_name = f"{report_file.stem}.{timestamp}{report_file.suffix}"
+        backup_file = backups_dir / backup_name
+
+        # Copy existing report to backup
+        import shutil
+
+        shutil.copy2(report_file, backup_file)
+
+        print(f"  💾 Backup créé: {backup_file.name}")
+
+        # Cleanup old backups (>30 days)
+        from datetime import timedelta
+
+        cutoff_date = datetime.now() - timedelta(days=30)
+        for old_backup in backups_dir.glob("daily_report_*.md"):
+            if old_backup.stat().st_mtime < cutoff_date.timestamp():
+                old_backup.unlink()
+                print(f"  🗑️  Backup nettoyé: {old_backup.name}")
+
+        return backup_file
+
     def generate_report(
         self,
         check_date: date,
@@ -1321,6 +1364,9 @@ Réponds maintenant."""
             Path to generated report file
         """
         report_file = self.reports_dir / f"daily_report_{check_date.isoformat()}.md"
+
+        # Backup existing report before overwriting
+        self._backup_existing_report(report_file)
 
         with open(report_file, "w", encoding="utf-8") as f:
             f.write(f"# Rapport Quotidien - {check_date.strftime('%d/%m/%Y')}\n\n")
