@@ -246,6 +246,8 @@ class DailySync:
         When multiple imports create different activity IDs for the same physical
         session (e.g., Wahoo + Zwift), keep only the best one.
 
+        Tolerance: ±30 seconds on start_time (human starts instruments sequentially)
+
         Priority:
         1. Activity with paired_event_id (linked to planned workout)
         2. Source priority: Zwift > others
@@ -260,27 +262,67 @@ class DailySync:
         if not activities:
             return []
 
-        # Group by start_time
-        by_start_time = {}
+        from datetime import datetime
+
+        # Parse start times
+        activities_with_time = []
         for activity in activities:
-            start_time = activity.get("start_date_local", "")
-            if start_time not in by_start_time:
-                by_start_time[start_time] = []
-            by_start_time[start_time].append(activity)
+            start_str = activity.get("start_date_local", "")
+            if start_str:
+                try:
+                    # Parse ISO format: 2026-02-17T17:30:00
+                    start_dt = datetime.fromisoformat(start_str.replace("Z", "+00:00"))
+                    activities_with_time.append((start_dt, activity))
+                except (ValueError, AttributeError):
+                    # If parsing fails, keep activity (no duplicate detection)
+                    activities_with_time.append((None, activity))
+
+        # Sort by start time
+        activities_with_time.sort(key=lambda x: x[0] if x[0] else datetime.min)
+
+        # Group by proximity (±30 seconds tolerance)
+        groups = []
+        current_group = []
+        last_time = None
+
+        for start_dt, activity in activities_with_time:
+            if start_dt is None:
+                # Can't group, add as single
+                if current_group:
+                    groups.append(current_group)
+                    current_group = []
+                groups.append([activity])
+                last_time = None
+                continue
+
+            if last_time is None or abs((start_dt - last_time).total_seconds()) <= 30:
+                # Within tolerance, add to current group
+                current_group.append(activity)
+                last_time = start_dt
+            else:
+                # Too far, start new group
+                if current_group:
+                    groups.append(current_group)
+                current_group = [activity]
+                last_time = start_dt
+
+        # Don't forget last group
+        if current_group:
+            groups.append(current_group)
 
         # Detect and resolve duplicates
         deduplicated = []
-        for start_time, group in by_start_time.items():
+        for group in groups:
             if len(group) == 1:
                 # No duplicate
                 deduplicated.append(group[0])
             else:
-                # Multiple activities with same start_time = DUPLICATE
+                # Multiple activities within ±30s = DUPLICATE
                 ids = [a["id"] for a in group]
-                print(
-                    f"  ⚠️  Doublon détecté ({len(group)} activités, même heure: {start_time[:16]})"
-                )
+                start_times = [a.get("start_date_local", "")[:19] for a in group]
+                print(f"  ⚠️  Doublon détecté ({len(group)} activités, ±30s)")
                 print(f"     IDs: {', '.join(str(i) for i in ids)}")
+                print(f"     Start times: {', '.join(start_times)}")
 
                 # Apply priority rules
                 # Priority 1: paired_event_id present
