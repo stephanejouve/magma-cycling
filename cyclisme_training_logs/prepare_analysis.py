@@ -198,6 +198,7 @@ class PromptGenerator:
         is_strava = activity.get("source") == "STRAVA"
 
         data = {
+            "id": activity.get("id", "Non spécifié"),
             "name": activity.get("name", "Séance"),
             "type": activity.get("type", "Cyclisme"),
             "date": date.strftime("%d/%m/%Y"),
