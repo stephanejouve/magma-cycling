@@ -52,7 +52,9 @@ from cyclisme_training_logs.config import (
 )
 from cyclisme_training_logs.config.athlete_profile import AthleteProfile
 from cyclisme_training_logs.insert_analysis import WorkoutHistoryManager
-from cyclisme_training_logs.intelligence.discrete_pid_controller import DiscretePIDController
+from cyclisme_training_logs.intelligence.discrete_pid_controller import (
+    DiscretePIDController,
+)
 from cyclisme_training_logs.planning.calendar import TrainingCalendar, WorkoutType
 from cyclisme_training_logs.planning.intervals_sync import IntervalsSync
 from cyclisme_training_logs.planning.models import WeeklyPlan
@@ -61,6 +63,10 @@ from cyclisme_training_logs.planning.peaks_phases import (
     format_phase_recommendation,
 )
 from cyclisme_training_logs.prepare_analysis import PromptGenerator
+from cyclisme_training_logs.utils.hot_reload import (
+    hot_reload_if_needed,
+    mark_modules_loaded,
+)
 from cyclisme_training_logs.workflows.pid_peaks_integration import (
     compute_integrated_correction,
     format_integrated_recommendation,
@@ -1873,6 +1879,14 @@ Réponds maintenant."""
 
 def main():
     """CLI entry point."""
+    # Establish baseline for hot-reload detection (first run only)
+    mark_modules_loaded()
+
+    # Hot-reload modules if source files changed (prevents cache issues in daemons)
+    reloaded = hot_reload_if_needed(verbose=False)
+    if reloaded:
+        print(f"♻️  Hot-reloaded {len(reloaded)} modified module(s)")
+
     parser = argparse.ArgumentParser(description="Daily sync checker for training activities")
 
     parser.add_argument(

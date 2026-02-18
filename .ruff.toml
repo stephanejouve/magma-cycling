@@ -1,0 +1,11 @@
+# Ruff configuration for cyclisme-training-logs
+
+# Line length (match black's default)
+line-length = 120
+
+[lint]
+# Ignore specific rules
+ignore = [
+    "B007",  # Loop control variable not used (false positive)
+    "E501",  # Line too long (handled by black)
+]
