@@ -239,6 +239,81 @@ class DailySync:
             "tsb_threshold": -10,  # TSB <-10
         }
 
+    def _detect_duplicate_activities(self, activities: list[dict]) -> list[dict]:
+        """
+        Detect and remove duplicate activities based on start_time.
+
+        When multiple imports create different activity IDs for the same physical
+        session (e.g., Wahoo + Zwift), keep only the best one.
+
+        Priority:
+        1. Activity with paired_event_id (linked to planned workout)
+        2. Source priority: Zwift > others
+        3. Highest TSS (usually more accurate)
+
+        Args:
+            activities: List of activities to deduplicate
+
+        Returns:
+            Deduplicated list of activities
+        """
+        if not activities:
+            return []
+
+        # Group by start_time
+        by_start_time = {}
+        for activity in activities:
+            start_time = activity.get("start_date_local", "")
+            if start_time not in by_start_time:
+                by_start_time[start_time] = []
+            by_start_time[start_time].append(activity)
+
+        # Detect and resolve duplicates
+        deduplicated = []
+        for start_time, group in by_start_time.items():
+            if len(group) == 1:
+                # No duplicate
+                deduplicated.append(group[0])
+            else:
+                # Multiple activities with same start_time = DUPLICATE
+                ids = [a["id"] for a in group]
+                print(
+                    f"  ⚠️  Doublon détecté ({len(group)} activités, même heure: {start_time[:16]})"
+                )
+                print(f"     IDs: {', '.join(str(i) for i in ids)}")
+
+                # Apply priority rules
+                # Priority 1: paired_event_id present
+                with_event = [a for a in group if a.get("paired_event_id")]
+                if with_event:
+                    selected = with_event[0]
+                    print(
+                        f"     → Sélection: {selected['id']} (paired_event_id: {selected.get('paired_event_id')})"
+                    )
+                else:
+                    # Priority 2: Source = Zwift
+                    zwift = [a for a in group if "zwift" in str(a.get("source", "")).lower()]
+                    if zwift:
+                        selected = zwift[0]
+                        print(f"     → Sélection: {selected['id']} (source Zwift)")
+                    else:
+                        # Priority 3: Highest TSS
+                        selected = max(group, key=lambda a: a.get("icu_training_load", 0))
+                        print(
+                            f"     → Sélection: {selected['id']} (TSS le plus élevé: {selected.get('icu_training_load')})"
+                        )
+
+                deduplicated.append(selected)
+
+                # Log ignored duplicates
+                ignored = [a for a in group if a != selected]
+                for ign in ignored:
+                    print(
+                        f"     ✗ Ignoré: {ign['id']} (TSS: {ign.get('icu_training_load')}, source: {ign.get('source', 'N/A')})"
+                    )
+
+        return deduplicated
+
     def check_activities(self, check_date: date) -> list[dict]:
         """
         Check for new completed activities on given date.
@@ -267,6 +342,9 @@ class DailySync:
             if not act.get("icu_ignore_time", False)  # Not ignored
             and act.get("type") in ["Ride", "VirtualRide"]  # Cycling activities only
         ]
+
+        # Detect and remove duplicates (same start_time)
+        completed_activities = self._detect_duplicate_activities(completed_activities)
 
         # Filter new activities (not yet analyzed)
         # Use activity ID (not event ID) for tracking
