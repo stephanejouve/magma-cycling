@@ -55,6 +55,7 @@ jobs:
           ATHLETE_RECOVERY_CAPACITY=exceptional
           ATHLETE_SLEEP_DEPENDENT=true
           ATHLETE_FTP=240
+          ATHLETE_FTP_TARGET=240
           ATHLETE_WEIGHT=72.5
           # Intervals.icu API (both formats for compatibility)
           INTERVALS_ATHLETE_ID=test_athlete
@@ -86,6 +87,7 @@ jobs:
           ATHLETE_RECOVERY_CAPACITY: exceptional
           ATHLETE_SLEEP_DEPENDENT: "true"
           ATHLETE_FTP: 240
+          ATHLETE_FTP_TARGET: 240
           ATHLETE_WEIGHT: 72.5
           INTERVALS_ATHLETE_ID: test_athlete
           INTERVALS_API_KEY: test_key
