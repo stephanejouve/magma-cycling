@@ -248,6 +248,167 @@ class WeeklyPlanner:
 
         return context
 
+    def load_previous_week_workouts(self) -> str:
+        """
+        Load detailed workout analyses from previous week.
+
+        Extracts workout analyses from workouts-history.md for the previous week
+        to provide detailed feedback on execution, decoupling, adherence, and
+        athlete feedback for better planning decisions.
+
+        Returns:
+            Formatted section with detailed workout analyses or empty string if unavailable
+
+        Examples:
+            >>> planner = WeeklyPlanner("S082", datetime(2026, 2, 24), Path("."))
+            >>> analyses = planner.load_previous_week_workouts()
+            >>> "S081-01" in analyses  # Previous week workouts
+            True
+        """
+        print("\n📝 Chargement analyses détaillées semaine précédente...")
+
+        try:
+            # Get data repo path
+            from cyclisme_training_logs.config import get_data_config
+
+            config = get_data_config()
+            history_file = config.data_repo_path / "workouts-history.md"
+
+            if not history_file.exists():
+                print(f"  ⚠️ workouts-history.md non trouvé : {history_file}")
+                return ""
+
+            content = history_file.read_text(encoding="utf-8")
+
+            # Extract previous week workouts
+            prev_week = self._previous_week_number()
+            prev_week_pattern = f"{prev_week}-"  # e.g., "S081-"
+
+            # Split by ### headers (each workout)
+            sections = content.split("###")
+
+            # Filter workouts from previous week
+            prev_week_workouts = []
+            for section in sections:
+                if prev_week_pattern in section[:50]:  # Check in first 50 chars (title area)
+                    # Keep only up to next ### or end
+                    prev_week_workouts.append("###" + section)
+
+            if not prev_week_workouts:
+                print(f"  ℹ️  Aucune analyse trouvée pour {prev_week}")
+                return ""
+
+            # Format section
+            section = f"\n## 📊 Analyses Détaillées Semaine {prev_week}\n\n"
+            section += (
+                f"**{len(prev_week_workouts)} séance(s) analysée(s)** - "
+                f"Retour d'expérience pour planification {self.week_number}\n\n"
+            )
+            section += "---\n\n"
+            section += "\n\n".join(prev_week_workouts[:7])  # Max 7 workouts (1 week)
+
+            print(f"  ✅ {len(prev_week_workouts)} analyse(s) chargée(s) pour {prev_week}")
+            return section
+
+        except Exception as e:
+            print(f"  ⚠️ Erreur chargement analyses : {e}")
+            return ""
+
+    def load_periodization_context(self) -> dict | None:
+        """
+        Load periodization context (macro/micro-cycle position).
+
+        Provides strategic context about training phase, CTL progression,
+        and PID controller state for coherent weekly planning aligned
+        with long-term objectives.
+
+        Returns:
+            Dict with periodization context or None if unavailable
+
+        Examples:
+            >>> context = planner.load_periodization_context()
+            >>> context['phase']  # "RECONSTRUCTION_BASE"
+            >>> context['weekly_tss_load']  # 350
+        """
+        print("\n🎯 Chargement contexte périodisation...")
+
+        try:
+            from cyclisme_training_logs.config.athlete_profile import AthleteProfile
+            from cyclisme_training_logs.planning.peaks_phases import determine_training_phase
+            from cyclisme_training_logs.workflows.pid_peaks_integration import (
+                ControlMode,
+                compute_integrated_correction,
+            )
+
+            # Load athlete profile
+            profile = AthleteProfile.from_env()
+
+            # Extract CTL from current metrics
+            ctl_current = self.current_metrics.get("ctl", 0)
+
+            if ctl_current == 0:
+                print("  ⚠️ CTL non disponible, contexte périodisation ignoré")
+                return None
+
+            # Determine training phase
+            phase_rec = determine_training_phase(
+                ctl_current=ctl_current,
+                ftp_current=profile.ftp,
+                ftp_target=profile.ftp_target,
+                athlete_age=profile.age,
+            )
+
+            # Compute PID integration status
+            integrated = compute_integrated_correction(
+                ctl_current=ctl_current,
+                ftp_current=profile.ftp,
+                ftp_target=profile.ftp_target,
+                athlete_age=profile.age,
+            )
+
+            # Determine PID status
+            if integrated.override_active:
+                pid_status = "Override Peaks (CTL < 50 - reconstruction urgente)"
+            elif integrated.mode == ControlMode.PID_CONSTRAINED:
+                pid_status = "Actif avec contraintes Peaks"
+            else:
+                pid_status = "Actif (autonome)"
+
+            # Format phase label
+            phase_labels = {
+                "reconstruction_base": "RECONSTRUCTION BASE",
+                "consolidation": "CONSOLIDATION",
+                "development_ftp": "DÉVELOPPEMENT FTP",
+            }
+            phase_label = phase_labels.get(phase_rec.phase.value, phase_rec.phase.value.upper())
+
+            context = {
+                "phase": phase_label,
+                "phase_raw": phase_rec.phase.value,
+                "ctl_current": ctl_current,
+                "ctl_target": phase_rec.ctl_target,
+                "ctl_deficit": phase_rec.ctl_deficit,
+                "ftp_current": profile.ftp,
+                "ftp_target": profile.ftp_target,
+                "weeks_to_target": (
+                    phase_rec.weeks_to_rebuild if phase_rec.weeks_to_rebuild > 0 else 0
+                ),
+                "pid_status": pid_status,
+                "pid_override_active": integrated.override_active,
+                "weekly_tss_load": phase_rec.weekly_tss_load,
+                "weekly_tss_recovery": phase_rec.weekly_tss_recovery,
+                "recovery_week_frequency": phase_rec.recovery_week_frequency,
+                "intensity_distribution": phase_rec.intensity_distribution,
+                "rationale": phase_rec.rationale,
+            }
+
+            print(f"  ✅ Phase {phase_label}, CTL {ctl_current:.1f} → {phase_rec.ctl_target:.0f}")
+            return context
+
+        except Exception as e:
+            print(f"  ⚠️ Impossible de charger contexte périodisation : {e}")
+            return None
+
     def _load_available_zwift_workouts(self) -> str:
         """Load available Zwift workouts from cache for diversity.
 
@@ -296,6 +457,10 @@ class WeeklyPlanner:
         date_start_str = self.start_date.strftime("%d/%m/%Y")
         date_end_str = self.end_date.strftime("%d/%m/%Y")
 
+        # Load periodization context and previous week workouts
+        periodization_context = self.load_periodization_context()
+        previous_week_workouts = self.load_previous_week_workouts()
+
         prompt = f"""# Planification Hebdomadaire Cyclisme - {self.week_number}.
 
 ## Contexte Athlète
@@ -323,8 +488,49 @@ class WeeklyPlanner:
 
 {self.previous_week_bilan}
 
----
+{previous_week_workouts}
 
+---
+"""
+        # Add periodization context if available
+        if periodization_context:
+            pc = periodization_context
+            prompt += f"""
+## 🎯 Contexte Périodisation (Stratégie Macro-Cycle)
+
+### Phase Actuelle : {pc['phase']}
+
+**Objectifs Cycle** :
+- CTL actuel : {pc['ctl_current']:.1f}
+- CTL cible : {pc['ctl_target']:.0f}
+- Déficit CTL : {pc['ctl_deficit']:.1f} points
+- FTP actuel : {pc['ftp_current']}W
+- FTP cible : {pc['ftp_target']}W
+
+**Progression** :
+- Durée reconstruction estimée : {pc['weeks_to_target']} semaines
+- TSS semaines charge : {pc['weekly_tss_load']} TSS
+- TSS semaines récupération : {pc['weekly_tss_recovery']} TSS
+- Fréquence récupération : Tous les {pc['recovery_week_frequency']} semaines
+
+**Distribution Intensité Recommandée pour Phase {pc['phase']}** :
+"""
+            for zone, percentage in pc["intensity_distribution"].items():
+                focus_marker = " ← **FOCUS**" if percentage >= 0.20 else ""
+                prompt += f"- **{zone}** : {percentage * 100:.0f}%{focus_marker}\n"
+
+            prompt += f"""
+**État PID Controller** : {pc['pid_status']}
+
+**Rationale Phase** :
+{pc['rationale']}
+
+**➡️ CRITIQUE pour Planification** : Les workouts de la semaine {self.week_number} doivent être alignés avec la phase {pc['phase']}. Respecter la distribution intensité recommandée ci-dessus et l'objectif TSS hebdomadaire ({pc['weekly_tss_load']} TSS semaine charge, {pc['weekly_tss_recovery']} TSS semaine récup).
+
+---
+"""
+
+        prompt += """
 ## MÉTHODOLOGIE PEAKS COACHING (HUNTER ALLEN) - PRINCIPES OBLIGATOIRES
 
 ### Distribution Intensité Hebdomadaire (Méthode Traditionnelle)
