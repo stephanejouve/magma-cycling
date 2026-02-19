@@ -249,6 +249,7 @@ class TestAthleteProfileIntegration:
             recovery_capacity="normal",
             sleep_dependent=False,
             ftp=320,
+            ftp_target=340,
             weight=68.0,
             profil_fibres="explosif",
             cadence_offset=5,  # Prefers 5 rpm higher
@@ -277,6 +278,7 @@ class TestAthleteProfileIntegration:
             recovery_capacity="exceptional",
             sleep_dependent=True,
             ftp=250,
+            ftp_target=270,
             weight=73.0,
             profil_fibres="endurant",
             cadence_offset=-3,  # Prefers 3 rpm lower
@@ -317,6 +319,7 @@ class TestFullWorkflowIntegration:
             recovery_capacity="good",
             sleep_dependent=False,
             ftp=280,
+            ftp_target=300,
             weight=70.0,
             profil_fibres="mixte",
             cadence_offset=0,
@@ -396,6 +399,7 @@ class TestFullWorkflowIntegration:
             recovery_capacity="normal",
             sleep_dependent=False,
             ftp=280,
+            ftp_target=300,
             weight=70.0,
             profil_fibres="mixte",
         )
@@ -425,6 +429,7 @@ class TestFullWorkflowIntegration:
             recovery_capacity="normal",
             sleep_dependent=False,
             ftp=220,
+            ftp_target=260,
             weight=70.0,
             profil_fibres="mixte",
         )

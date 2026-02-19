@@ -101,11 +101,12 @@ class TestAthleteProfileMethods:
     def test_is_master_athlete(self):
         """Test is_master_athlete method."""
         master = AthleteProfile(
-            age=54,
+            age=52,
             category="master",
             recovery_capacity="exceptional",
             sleep_dependent=True,
             ftp=240,
+            ftp_target=260,
             weight=72.5,
         )
         assert master.is_master_athlete() is True
@@ -116,6 +117,7 @@ class TestAthleteProfileMethods:
             recovery_capacity="normal",
             sleep_dependent=False,
             ftp=280,
+            ftp_target=300,
             weight=70.0,
         )
         assert senior.is_master_athlete() is False
@@ -123,11 +125,12 @@ class TestAthleteProfileMethods:
     def test_has_exceptional_recovery(self):
         """Test has_exceptional_recovery method."""
         exceptional = AthleteProfile(
-            age=54,
+            age=52,
             category="master",
             recovery_capacity="exceptional",
             sleep_dependent=True,
             ftp=240,
+            ftp_target=260,
             weight=72.5,
         )
         assert exceptional.has_exceptional_recovery() is True
@@ -138,6 +141,7 @@ class TestAthleteProfileMethods:
             recovery_capacity="normal",
             sleep_dependent=False,
             ftp=280,
+            ftp_target=300,
             weight=70.0,
         )
         assert normal.has_exceptional_recovery() is False
@@ -145,11 +149,12 @@ class TestAthleteProfileMethods:
     def test_get_power_to_weight_ratio(self):
         """Test power-to-weight ratio calculation."""
         profile = AthleteProfile(
-            age=54,
+            age=52,
             category="master",
             recovery_capacity="exceptional",
             sleep_dependent=True,
             ftp=240,
+            ftp_target=260,
             weight=72.5,
         )
 
@@ -161,14 +166,15 @@ class TestAthleteProfileMethods:
         # Valid creation
 
         profile = AthleteProfile(
-            age=54,
+            age=52,
             category="master",
             recovery_capacity="exceptional",
             sleep_dependent=True,
             ftp=240,
+            ftp_target=260,
             weight=72.5,
         )
-        assert profile.age == 54
+        assert profile.age == 52
 
         # Invalid age (negative)
         with pytest.raises(ValueError):
@@ -178,17 +184,19 @@ class TestAthleteProfileMethods:
                 recovery_capacity="exceptional",
                 sleep_dependent=True,
                 ftp=240,
+                ftp_target=260,
                 weight=72.5,
             )
 
         # Invalid FTP (zero)
         with pytest.raises(ValueError):
             AthleteProfile(
-                age=54,
+                age=52,
                 category="master",
                 recovery_capacity="exceptional",
                 sleep_dependent=True,
                 ftp=0,
+                ftp_target=260,
                 weight=72.5,
             )
 
@@ -204,6 +212,7 @@ class TestAthleteProfileBiomechanics:
             recovery_capacity="normal",
             sleep_dependent=False,
             ftp=280,
+            ftp_target=300,
             weight=70.0,
         )
 
@@ -218,6 +227,7 @@ class TestAthleteProfileBiomechanics:
             recovery_capacity="normal",
             sleep_dependent=False,
             ftp=320,
+            ftp_target=340,
             weight=68.0,
             profil_fibres="explosif",
         )
@@ -232,6 +242,7 @@ class TestAthleteProfileBiomechanics:
             recovery_capacity="exceptional",
             sleep_dependent=True,
             ftp=250,
+            ftp_target=270,
             weight=73.0,
             profil_fibres="endurant",
         )
@@ -247,6 +258,7 @@ class TestAthleteProfileBiomechanics:
                 recovery_capacity="normal",
                 sleep_dependent=False,
                 ftp=280,
+                ftp_target=300,
                 weight=70.0,
                 profil_fibres="invalid",  # type: ignore
             )
@@ -259,6 +271,7 @@ class TestAthleteProfileBiomechanics:
             recovery_capacity="normal",
             sleep_dependent=False,
             ftp=280,
+            ftp_target=300,
             weight=70.0,
             cadence_offset=10,
         )
@@ -273,6 +286,7 @@ class TestAthleteProfileBiomechanics:
             recovery_capacity="normal",
             sleep_dependent=False,
             ftp=280,
+            ftp_target=300,
             weight=70.0,
             cadence_offset=-5,
         )
@@ -288,6 +302,7 @@ class TestAthleteProfileBiomechanics:
                 recovery_capacity="normal",
                 sleep_dependent=False,
                 ftp=280,
+                ftp_target=300,
                 weight=70.0,
                 cadence_offset=20,  # Above max 15
             )
@@ -301,6 +316,7 @@ class TestAthleteProfileBiomechanics:
                 recovery_capacity="normal",
                 sleep_dependent=False,
                 ftp=280,
+                ftp_target=300,
                 weight=70.0,
                 cadence_offset=-20,  # Below min -15
             )

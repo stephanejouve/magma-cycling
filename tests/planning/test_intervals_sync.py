@@ -23,6 +23,7 @@ def athlete_profile():
         recovery_capacity="good",
         sleep_dependent=True,
         ftp=240,
+        ftp_target=260,
         weight=72.5,
     )
 
