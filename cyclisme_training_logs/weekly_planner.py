@@ -1103,14 +1103,9 @@ Le but est que je puisse **copier-coller directement** chaque bloc dans Interval
                 # ✅ Validation automatique par Pydantic (validate_assignment=True)
                 try:
                     # IMPORTANT: Définir skip_reason AVANT de changer le statut
-                    # (validator Pydantic vérifie que skip_reason est présent si status='skipped')
-                    if reason:
-                        if status == "cancelled":
-                            # Note: cancellation_reason/date not in Session model yet
-                            # Keep backward compatibility for now
-                            pass
-                        elif status == "skipped":
-                            session.skip_reason = reason  # Défini AVANT statut
+                    # (validator Pydantic vérifie que skip_reason est présent pour skipped/cancelled/replaced)
+                    if reason and status in ("skipped", "cancelled", "replaced"):
+                        session.skip_reason = reason  # Défini AVANT statut
 
                     session.status = status  # Type-checked et validé!
 
