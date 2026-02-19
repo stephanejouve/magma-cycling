@@ -99,6 +99,7 @@ class TestTrainingCalendar:
             recovery_capacity="good",
             sleep_dependent=True,
             ftp=220,
+            ftp_target=240,
             weight=83.8,
         )
 
@@ -111,6 +112,7 @@ class TestTrainingCalendar:
             recovery_capacity="good",
             sleep_dependent=False,
             ftp=250,
+            ftp_target=270,
             weight=75.0,
         )
 

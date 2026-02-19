@@ -80,6 +80,7 @@ class TestTrainingPlan:
             recovery_capacity="good",
             sleep_dependent=True,
             ftp=220,
+            ftp_target=240,
             weight=83.8,
         )
 
@@ -184,6 +185,7 @@ class TestPlanningManager:
             recovery_capacity="good",
             sleep_dependent=True,
             ftp=220,
+            ftp_target=240,
             weight=83.8,
         )
 
