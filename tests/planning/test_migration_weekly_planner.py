@@ -174,7 +174,8 @@ class TestWeeklyPlannerMigration:
         # Backup sécurisé
         backup = plan.backup_sessions()
 
-        # Modifier original
+        # Modifier original (set skip_reason before changing status to cancelled)
+        plan.planned_sessions[0].skip_reason = "Test cancellation"
         plan.planned_sessions[0].status = "cancelled"
 
         # ✅ Backup N'EST PAS affecté (deep copy protection)
