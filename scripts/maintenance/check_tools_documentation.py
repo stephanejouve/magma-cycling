@@ -21,6 +21,57 @@ import sys
 import tomllib  # Python 3.11+
 from pathlib import Path
 
+# Production tools that MUST be documented
+PRODUCTION_TOOLS = {
+    # Core workflows
+    "workflow-coach",
+    "daily-sync",
+    "end-of-week",
+    # Analysis
+    "weekly-analysis",
+    "monthly-analysis",
+    "dashboard",
+    "stats",
+    # Session management
+    "update-session",
+    "shift-sessions",
+    "weekly-planner",
+    "planned-checker",
+    # Data sync
+    "upload-workouts",
+    "sync-intervals",
+    # Reports
+    "generate-report",
+    "organize-report",
+}
+
+# Debug/maintenance tools (documentation optional)
+DEBUG_PATTERNS = [
+    "check-",
+    "validate-",
+    "cleanup-",
+    "backfill-",
+    "normalize-",
+    "format-",
+    "clear-",
+    "project-clean",
+    "seed-",
+    "populate-",
+    "search-",
+]
+
+
+def is_debug_tool(tool_name: str) -> bool:
+    """Check if tool is debug/maintenance (documentation optional).
+
+    Args:
+        tool_name: Tool script name
+
+    Returns:
+        True if debug/maintenance tool
+    """
+    return any(tool_name.startswith(pattern) for pattern in DEBUG_PATTERNS)
+
 
 def load_poetry_scripts(pyproject_path: Path) -> dict[str, str]:
     """Load all scripts from pyproject.toml.
@@ -76,7 +127,9 @@ def find_documented_tools(docs_dir: Path) -> set[str]:
     return documented
 
 
-def check_documentation(project_root: Path, verbose: bool = False) -> tuple[list[str], list[str]]:
+def check_documentation(
+    project_root: Path, verbose: bool = False
+) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
     """Check which tools are missing documentation.
 
     Args:
@@ -84,7 +137,9 @@ def check_documentation(project_root: Path, verbose: bool = False) -> tuple[list
         verbose: Print detailed info
 
     Returns:
-        Tuple of (undocumented_tools, documented_tools)
+        Tuple of (undocumented_dict, documented_dict) where each dict has:
+        - 'production': List of production tools
+        - 'debug': List of debug/maintenance tools
     """
     pyproject_path = project_root / "pyproject.toml"
     docs_dir = project_root / "docs"
@@ -98,19 +153,28 @@ def check_documentation(project_root: Path, verbose: bool = False) -> tuple[list
         module_name = extract_module_from_script(script_path)
         tools[script_name] = module_name
 
-    # Find undocumented tools
-    undocumented = []
-    documented_tools = []
+    # Categorize tools
+    undocumented = {"production": [], "debug": []}
+    documented_tools = {"production": [], "debug": []}
 
     for script_name, module_name in tools.items():
+        # Determine category
+        is_debug = is_debug_tool(script_name)
+        category = "debug" if is_debug else "production"
+
+        # Check if documented
         if module_name in documented:
-            documented_tools.append(script_name)
+            documented_tools[category].append(script_name)
             if verbose:
-                print(f"✅ {script_name:30} → {module_name} (documented)")
+                emoji = "✅" if not is_debug else "💡"
+                label = "documented" if not is_debug else "documented (debug)"
+                print(f"{emoji} {script_name:30} → {module_name} ({label})")
         else:
-            undocumented.append(script_name)
+            undocumented[category].append(script_name)
             if verbose:
-                print(f"❌ {script_name:30} → {module_name} (MISSING DOC)")
+                emoji = "❌" if not is_debug else "⚠️"
+                label = "MISSING DOC" if not is_debug else "optional doc"
+                print(f"{emoji} {script_name:30} → {module_name} ({label})")
 
     return undocumented, documented_tools
 
@@ -184,20 +248,40 @@ def main():
 
     undocumented, documented = check_documentation(project_root, verbose=args.verbose)
 
-    print("\n📊 Summary:")
-    print(f"   Documented tools:   {len(documented)}")
-    print(f"   Undocumented tools: {len(undocumented)}")
+    # Calculate totals
+    total_prod_documented = len(documented["production"])
+    total_prod_undocumented = len(undocumented["production"])
+    total_debug_documented = len(documented["debug"])
+    total_debug_undocumented = len(undocumented["debug"])
 
-    if undocumented:
-        print("\n⚠️  Undocumented tools:")
-        for tool in undocumented:
+    print("\n📊 Summary:")
+    print("\n   🚀 Production Tools:")
+    print(f"      Documented:   {total_prod_documented}")
+    print(f"      Undocumented: {total_prod_undocumented}")
+    print("\n   🔧 Debug/Maintenance Tools:")
+    print(f"      Documented:   {total_debug_documented}")
+    print(f"      Undocumented: {total_debug_undocumented} (optional)")
+
+    # Show undocumented production tools (priority)
+    if undocumented["production"]:
+        print("\n❌ Undocumented PRODUCTION tools (must be documented):")
+        for tool in undocumented["production"]:
             print(f"   - {tool}")
 
-        if args.generate:
+    # Show undocumented debug tools (optional)
+    if undocumented["debug"] and args.verbose:
+        print("\n⚠️  Undocumented DEBUG tools (documentation optional):")
+        for tool in undocumented["debug"]:
+            print(f"   - {tool}")
+
+    # Generate skeletons if requested
+    if args.generate:
+        all_undocumented = undocumented["production"] + undocumented["debug"]
+        if all_undocumented:
             print("\n📝 Generating documentation skeletons...")
             scripts = load_poetry_scripts(project_root / "pyproject.toml")
 
-            for tool in undocumented:
+            for tool in all_undocumented:
                 if tool in scripts:
                     module_name = extract_module_from_script(scripts[tool])
                     skeleton = generate_doc_skeleton(tool, module_name, docs_dir)
@@ -208,11 +292,16 @@ def main():
 
             print("\n💡 Add these sections to docs/modules/tools.rst or create separate files")
 
-        if args.fail:
-            print(f"\n❌ Documentation check failed: {len(undocumented)} tools missing docs")
-            return 1
-    else:
-        print("\n✅ All tools are documented!")
+    # Only fail on undocumented production tools
+    if args.fail and undocumented["production"]:
+        print(
+            f"\n❌ Documentation check failed: {total_prod_undocumented} "
+            f"production tools missing docs"
+        )
+        return 1
+
+    if not undocumented["production"]:
+        print("\n✅ All production tools are documented!")
 
     return 0
 
