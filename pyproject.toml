@@ -99,6 +99,7 @@ analyze-baseline = "cyclisme_training_logs.analysis.baseline_preliminary:main"
 cleanup-archives = "scripts.maintenance.cleanup_old_archives:main"
 project-clean = "scripts.maintenance.project_cleaner:main"
 clear-week-planning = "scripts.maintenance.clear_week_planning:main"
+check-tools-docs = "scripts.maintenance.check_tools_documentation:main"
 format-planning = "scripts.maintenance.format_planning:main"
 
 [build-system]

@@ -3,9 +3,9 @@ Cyclisme Training Logs - API Documentation
 
 Documentation auto-générée depuis les docstrings Google Style du code source.
 
-**Version :** 2.1.0 (Sprint R4)
+**Version :** 2.2.0
 
-**Dernière mise à jour :** 2026-01-01
+**Dernière mise à jour :** 2026-02-19
 
 .. toctree::
    :maxdepth: 2
@@ -18,6 +18,7 @@ Documentation auto-générée depuis les docstrings Google Style du code source.
    :caption: Planning (Sprint R3):
 
    modules/planning
+   modules/tools
 
 .. toctree::
    :maxdepth: 2
