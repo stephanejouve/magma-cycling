@@ -625,6 +625,14 @@ class DailySync:
             # Load periodization context for strategic coherence
             periodization_context = self.prompt_generator.load_periodization_context(wellness_pre)
 
+            # Get planned workout if available (for adherence tracking)
+            planned_workout = None
+            try:
+                activity_datetime = date.fromisoformat(activity_date_str)
+                planned_workout = self.client.get_planned_workout(activity_id, activity_datetime)
+            except Exception:
+                pass  # No planned workout available
+
             # Generate complete prompt
             prompt = self.prompt_generator.generate_prompt(
                 activity_data=activity_data,
@@ -633,7 +641,7 @@ class DailySync:
                 athlete_context=athlete_context,
                 recent_workouts=recent_workouts,
                 athlete_feedback=None,  # No feedback in automated mode
-                planned_workout=None,  # Could be added later
+                planned_workout=planned_workout,
                 cycling_concepts=None,
                 periodization_context=periodization_context,
             )
@@ -643,6 +651,43 @@ class DailySync:
 
             if analysis:
                 print(f"     ✅ Analyse générée ({len(analysis)} caractères)")
+
+                # Capture adherence data if planned workout exists
+                if planned_workout:
+                    try:
+                        from cyclisme_training_logs.analyzers.adherence_storage import (
+                            AdherenceStorage,
+                        )
+                        from cyclisme_training_logs.analyzers.adherence_tracker import (
+                            AdherenceTracker,
+                        )
+
+                        tracker = AdherenceTracker()
+                        adherence_data = tracker.calculate_session_adherence(
+                            activity, planned_workout
+                        )
+
+                        # Extract week ID from activity name (e.g., "S082-01-END-..." -> "S082")
+                        week_id = None
+                        if "-" in activity_name:
+                            parts = activity_name.split("-")
+                            if parts[0].startswith("S") and len(parts[0]) == 4:
+                                week_id = parts[0]
+
+                        if week_id and adherence_data.get("has_plan"):
+                            storage = AdherenceStorage()
+                            storage.save_session_adherence(
+                                activity_id=activity_id,
+                                week_id=week_id,
+                                date=activity_date_str,
+                                adherence_data=adherence_data,
+                            )
+                            print(
+                                f"     📊 Adhérence capturée: TSS {adherence_data.get('tss_adherence', 0):.0%}"
+                            )
+
+                    except Exception as e:
+                        print(f"     ⚠️  Impossible de capturer adhérence : {e}")
 
                 # Insert analysis into workouts-history.md
                 print("     📝 Insertion dans workouts-history.md...")
