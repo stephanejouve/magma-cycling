@@ -70,6 +70,14 @@ repos:
               project-docs/archives/.*
           )$
 
+      - id: check-tools-docs
+        name: Check tools documentation
+        entry: poetry run check-tools-docs
+        args: ['--verbose']  # Warning only (change to --fail to make it blocking)
+        language: system
+        files: ^(pyproject\.toml|docs/modules/tools\.rst|cyclisme_training_logs/.*\.py)$
+        pass_filenames: false
+
   # Trailing whitespace & EOF
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
