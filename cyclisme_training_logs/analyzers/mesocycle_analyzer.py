@@ -367,7 +367,22 @@ _L'analyse méso-cycle sera disponible au prochain cycle avec plus de données._
 
         report += """
 ---
+"""
 
+        # Add adherence analysis
+        try:
+            from cyclisme_training_logs.analyzers.adherence_tracker import (
+                generate_adherence_report,
+            )
+
+            adherence_report = generate_adherence_report(current_weeks)
+            report += adherence_report
+            report += "\n---\n"
+
+        except Exception as e:
+            print(f"  ⚠️ Impossible de générer analyse adhérence : {e}")
+
+        report += """
 ### 💡 Insights Stratégiques
 
 """
