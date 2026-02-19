@@ -103,18 +103,27 @@ class Session(BaseModel):
     tss_planned: int = Field(ge=0, le=500, description="Planned Training Stress Score")
     duration_min: int = Field(ge=0, le=600, description="Planned duration in minutes")
     description: str = Field(default="", description="Workout description")
-    status: Literal["pending", "completed", "skipped", "cancelled"] = Field(
-        default="pending", description="Session status"
-    )
+    status: Literal[
+        "pending",
+        "planned",
+        "completed",
+        "skipped",
+        "cancelled",
+        "rest_day",
+        "replaced",
+        "modified",
+    ] = Field(default="pending", description="Session status")
     intervals_id: int | None = Field(default=None, description="Intervals.icu event ID")
     description_hash: str | None = Field(default=None, description="SHA256 hash for sync")
-    skip_reason: str | None = Field(default=None, description="Reason if skipped")
+    skip_reason: str | None = Field(
+        default=None, alias="reason", description="Reason if skipped/cancelled/replaced"
+    )
 
     @model_validator(mode="after")
     def validate_skip_reason(self) -> "Session":
-        """Ensure skip_reason is set when status is skipped."""
-        if self.status == "skipped" and not self.skip_reason:
-            raise ValueError("skip_reason required when status is 'skipped'")
+        """Ensure skip_reason is set when status requires a reason."""
+        if self.status in ("skipped", "cancelled", "replaced") and not self.skip_reason:
+            raise ValueError(f"skip_reason required when status is '{self.status}'")
         return self
 
     def model_copy_deep(self) -> "Session":
