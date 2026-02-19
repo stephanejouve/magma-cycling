@@ -71,6 +71,7 @@ from cyclisme_training_logs.ai_providers import AIProviderFactory
 from cyclisme_training_logs.config import get_ai_config, get_data_config
 from cyclisme_training_logs.core.timeline_injector import TimelineInjector
 from cyclisme_training_logs.planned_sessions_checker import PlannedSessionsChecker
+from cyclisme_training_logs.planning.session_formatter import format_remaining_sessions_compact
 from cyclisme_training_logs.rest_and_cancellations import (
     generate_cancelled_session_entry,
     generate_rest_day_entry,
@@ -78,6 +79,8 @@ from cyclisme_training_logs.rest_and_cancellations import (
     reconcile_planned_vs_actual,
     validate_week_planning,
 )
+from cyclisme_training_logs.utils.ai_response_parser import parse_ai_modifications
+from cyclisme_training_logs.utils.date_helpers import extract_day_number
 from cyclisme_training_logs.workflow_state import WorkflowState
 
 logger = logging.getLogger(__name__)
@@ -296,41 +299,22 @@ class WorkflowCoach:
     def format_remaining_sessions_compact(self, remaining_sessions: list) -> str:
         """Format compact planning pour prompt AI (cible ~150 tokens).
 
+        Note:
+            Refactored 2026-02-19: Delegates to planning.session_formatter module.
+
         Args:
             remaining_sessions: Liste de sessions futures
 
         Returns:
             str: Planning formaté pour inclusion dans prompt.
         """
-        if not remaining_sessions:
-            return ""
-
-        lines = [f"\n## PLANNING RESTANT ({len(remaining_sessions)} séances)\n"]
-
-        for session in remaining_sessions:
-            date = session["date"]
-            session_id = session["session_id"]
-            name = session["name"]
-            workout_type = session["type"]
-            tss = session.get("tss_planned", 0)
-
-            # Construct workout code
-            workout_code = f"{session_id}-{workout_type}-{name}-{session.get('version', 'V001')}"
-
-            if session.get("status") == "rest_day":
-                lines.append(f"{date}: REPOS")
-            else:
-                lines.append(f"{date}: {workout_code} ({tss} TSS)")
-
-        return "\n".join(lines)
+        return format_remaining_sessions_compact(remaining_sessions)
 
     def parse_ai_modifications(self, ai_response: str) -> list:
         """Parse modifications planning depuis réponse AI (fix Issue #3).
 
-        Gère plusieurs formats:
-        - JSON plain: {"modifications": [...]}
-        - Markdown: ```json...```
-        - Multi-lignes avec whitespace variable
+        Note:
+            Refactored 2026-02-19: Delegates to utils.ai_response_parser module.
 
         Args:
             ai_response: Texte réponse AI complet
@@ -338,67 +322,13 @@ class WorkflowCoach:
         Returns:
             list: Modifications à appliquer (vide si aucune)
         """
-        import re
-
-        logger.debug(f"Parsing AI response: {ai_response[:200]}...")
-
-        if not ai_response or not ai_response.strip():
-            logger.warning("Empty AI response")
-            return []
-
-        # Clean response text
-        text = ai_response.strip()
-
-        # Strategy 1: Try to extract from markdown code block
-        json_match = re.search(r"```json\s*\n?(\{.*?\})\s*\n?```", text, re.DOTALL | re.MULTILINE)
-
-        if json_match:
-            logger.debug("Found JSON in markdown code block")
-            json_str = json_match.group(1)
-        else:
-            # Strategy 2: Try to find JSON object directly (without markdown)
-            json_match = re.search(
-                r'\{[^{}]*"modifications"[^{}]*\[[^\]]*\][^{}]*\}', text, re.DOTALL | re.MULTILINE
-            )
-
-            if json_match:
-                logger.debug("Found JSON without markdown")
-                json_str = json_match.group(0)
-            else:
-                # Strategy 3: Look for any JSON-like structure with "modifications" key
-                json_match = re.search(r'\{.*?"modifications".*?\}', text, re.DOTALL | re.MULTILINE)
-
-                if json_match:
-                    logger.debug("Found JSON-like structure with modifications key")
-                    json_str = json_match.group(0)
-                else:
-                    logger.info(
-                        "No JSON modifications found in response (normal if no changes needed)"
-                    )
-                    return []
-
-        # Parse JSON
-        try:
-            data = json.loads(json_str)
-            logger.debug(f"JSON parsed successfully: {list(data.keys())}")
-        except json.JSONDecodeError as e:
-            logger.error(f"JSON parse error: {e}")
-            logger.error(f"Failed JSON: {json_str[:200]}")
-            print(f"⚠️  JSON modifications invalide : {e}")
-            return []
-
-        # Extract modifications list
-        modifications = data.get("modifications", [])
-
-        if not isinstance(modifications, list):
-            logger.error(f"'modifications' is not a list: {type(modifications)}")
-            return []
-
-        logger.info(f"✅ Parsed {len(modifications)} modification(s)")
-        return modifications
+        return parse_ai_modifications(ai_response)
 
     def _extract_day_number(self, date_str: str, week_id: str) -> int:
         """Extrait numéro jour (1-7) depuis date.
+
+        Note:
+            Refactored 2026-02-19: Delegates to utils.date_helpers module.
 
         Args:
             date_str: "2025-12-18"
@@ -408,22 +338,7 @@ class WorkflowCoach:
             int: Numéro jour 1-7
         """
         config = get_data_config()
-
-        planning_file = config.week_planning_dir / f"week_planning_{week_id}.json"
-
-        try:
-            with open(planning_file, encoding="utf-8") as f:
-                planning = json.load(f)
-
-            start_date = datetime.strptime(planning["start_date"], "%Y-%m-%d").date()
-            target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
-
-            delta = (target_date - start_date).days
-            return delta + 1  # Jour 1-7
-
-        except Exception as e:
-            print(f"⚠️  Erreur extraction day_number : {e}")
-            return 1  # Fallback
+        return extract_day_number(date_str, week_id, config.week_planning_dir)
 
     def _get_workout_id_intervals(self, date: str):
         """Récupère ID workout Intervals.icu pour une date.
