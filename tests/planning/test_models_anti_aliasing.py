@@ -36,7 +36,8 @@ class TestSessionAntiAliasing:
         # Create deep copy
         copy = original.model_copy_deep()
 
-        # Modify copy
+        # Modify copy (set skip_reason before changing status to cancelled)
+        copy.skip_reason = "Test cancellation"
         copy.status = "cancelled"
         copy.tss_planned = 100
 
@@ -61,7 +62,8 @@ class TestSessionAntiAliasing:
         session1 = Session(**data)
         session2 = Session(**data)
 
-        # Modify one
+        # Modify one (set skip_reason before changing status to cancelled)
+        session1.skip_reason = "Test cancellation"
         session1.status = "cancelled"
 
         # ✅ Other should be unchanged (different instances)
@@ -109,7 +111,8 @@ class TestWeeklyPlanAntiAliasing:
         # Create backup
         backup = sample_plan.backup_sessions()
 
-        # Modify original
+        # Modify original (set skip_reason before changing status to cancelled)
+        sample_plan.planned_sessions[0].skip_reason = "Test cancellation"
         sample_plan.planned_sessions[0].status = "cancelled"
         sample_plan.planned_sessions[0].tss_planned = 250  # Within validation limit
 
@@ -122,7 +125,8 @@ class TestWeeklyPlanAntiAliasing:
         # Create backup
         backup = sample_plan.backup_sessions()
 
-        # Modify plan
+        # Modify plan (set skip_reason before changing status to cancelled)
+        sample_plan.planned_sessions[0].skip_reason = "Test cancellation"
         sample_plan.planned_sessions[0].status = "cancelled"
 
         # Restore from backup
@@ -148,7 +152,8 @@ class TestWeeklyPlanAntiAliasing:
         sessions_list = sample_plan.planned_sessions
         naive_backup = sessions_list.copy()  # Shallow copy!
 
-        # Modify through original list
+        # Modify through original list (set skip_reason before changing status)
+        sessions_list[0].skip_reason = "Test cancellation"
         sessions_list[0].status = "cancelled"
 
         # ❌ BUG: Naive backup is ALSO modified (aliasing!)
@@ -241,6 +246,32 @@ class TestValidationProtection:
                 tss_planned=50,
                 duration_min=60,
                 status="skipped",  # Skipped but no reason!
+            )
+
+    def test_skip_reason_required_when_cancelled(self):
+        """Test that skip_reason is required when status is cancelled."""
+        with pytest.raises(ValidationError, match="skip_reason required"):
+            Session(
+                session_id="S080-01",
+                session_date=date(2026, 2, 9),
+                name="Test",
+                session_type="END",
+                tss_planned=50,
+                duration_min=60,
+                status="cancelled",  # Cancelled but no reason!
+            )
+
+    def test_skip_reason_required_when_replaced(self):
+        """Test that skip_reason is required when status is replaced."""
+        with pytest.raises(ValidationError, match="skip_reason required"):
+            Session(
+                session_id="S080-01",
+                session_date=date(2026, 2, 9),
+                name="Test",
+                session_type="END",
+                tss_planned=50,
+                duration_min=60,
+                status="replaced",  # Replaced but no reason!
             )
 
     def test_session_date_within_week_boundaries(self):
