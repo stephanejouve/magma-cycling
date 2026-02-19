@@ -622,6 +622,9 @@ class DailySync:
             # Format activity data for prompt generation
             activity_data = self.prompt_generator.format_activity_data(activity)
 
+            # Load periodization context for strategic coherence
+            periodization_context = self.prompt_generator.load_periodization_context(wellness_pre)
+
             # Generate complete prompt
             prompt = self.prompt_generator.generate_prompt(
                 activity_data=activity_data,
@@ -632,6 +635,7 @@ class DailySync:
                 athlete_feedback=None,  # No feedback in automated mode
                 planned_workout=None,  # Could be added later
                 cycling_concepts=None,
+                periodization_context=periodization_context,
             )
 
             # Get AI analysis
