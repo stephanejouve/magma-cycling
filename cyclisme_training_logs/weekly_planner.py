@@ -409,6 +409,30 @@ class WeeklyPlanner:
             print(f"  ⚠️ Impossible de charger contexte périodisation : {e}")
             return None
 
+    def _load_mesocycle_context(self) -> str:
+        """
+        Load mesocycle enriched context if applicable (every 6 weeks).
+
+        Returns:
+            Markdown formatted mesocycle report or empty string
+
+        Examples:
+            >>> planner = WeeklyPlanner("S078", datetime(2026, 2, 10), Path("."))
+            >>> context = planner._load_mesocycle_context()
+            >>> "MÉSO-CYCLE" in context  # At cycle end
+            True
+        """
+        try:
+            from cyclisme_training_logs.analyzers.mesocycle_analyzer import (
+                generate_mesocycle_context,
+            )
+
+            return generate_mesocycle_context(self.week_number)
+
+        except Exception as e:
+            print(f"  ⚠️ Erreur chargement contexte méso-cycle : {e}")
+            return ""
+
     def _load_available_zwift_workouts(self) -> str:
         """Load available Zwift workouts from cache for diversity.
 
@@ -460,6 +484,9 @@ class WeeklyPlanner:
         # Load periodization context and previous week workouts
         periodization_context = self.load_periodization_context()
         previous_week_workouts = self.load_previous_week_workouts()
+
+        # Load mesocycle enriched context (every 6 weeks)
+        mesocycle_context = self._load_mesocycle_context()
 
         prompt = f"""# Planification Hebdomadaire Cyclisme - {self.week_number}.
 
@@ -529,6 +556,11 @@ class WeeklyPlanner:
 
 ---
 """
+
+        # Add mesocycle enriched context if available (every 6 weeks)
+        if mesocycle_context:
+            prompt += mesocycle_context
+            prompt += "\n---\n"
 
         prompt += """
 ## MÉTHODOLOGIE PEAKS COACHING (HUNTER ALLEN) - PRINCIPES OBLIGATOIRES
