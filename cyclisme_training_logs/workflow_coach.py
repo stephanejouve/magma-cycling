@@ -71,6 +71,7 @@ from cyclisme_training_logs.ai_providers import AIProviderFactory
 from cyclisme_training_logs.config import get_ai_config, get_data_config
 from cyclisme_training_logs.core.timeline_injector import TimelineInjector
 from cyclisme_training_logs.planned_sessions_checker import PlannedSessionsChecker
+from cyclisme_training_logs.planning.control_tower import planning_tower
 from cyclisme_training_logs.planning.session_formatter import format_remaining_sessions_compact
 from cyclisme_training_logs.rest_and_cancellations import (
     generate_cancelled_session_entry,
@@ -269,29 +270,42 @@ class WorkflowCoach:
 
         Returns:
             list: Séances futures (date >= aujourd'hui)
+
+        Note:
+            Migré vers Control Tower (2026-02-20).
+            Utilise planning_tower.read_week() pour lecture centralisée.
         """
-        config = get_data_config()
-
-        planning_file = config.week_planning_dir / f"week_planning_{week_id}.json"
-
-        if not planning_file.exists():
-            print(f"⚠️  Planning {week_id} non trouvé: {planning_file}")
-            return []
-
         try:
-            with open(planning_file, encoding="utf-8") as f:
-                planning = json.load(f)
+            # 🚦 READ-ONLY ACCESS via Control Tower
+            plan = planning_tower.read_week(week_id)
 
             today = datetime.now().date()
 
             remaining = []
-            for session in planning.get("planned_sessions", []):
-                session_date = datetime.strptime(session["date"], "%Y-%m-%d").date()
+            # Convert Session objects to dict for backward compatibility
+            for session in plan.planned_sessions:
+                session_date = session.session_date
                 if session_date >= today:
-                    remaining.append(session)
+                    # Convert Session to dict
+                    remaining.append(
+                        {
+                            "session_id": session.session_id,
+                            "date": str(session.session_date),
+                            "name": session.name,
+                            "type": session.session_type,
+                            "version": session.version,
+                            "tss_planned": session.tss_planned,
+                            "duration_min": session.duration_min,
+                            "description": session.description,
+                            "status": session.status,
+                        }
+                    )
 
             return remaining
 
+        except FileNotFoundError:
+            print(f"⚠️  Planning {week_id} non trouvé")
+            return []
         except Exception as e:
             print(f"⚠️  Erreur lecture planning : {e}")
             return []
@@ -438,60 +452,62 @@ class WorkflowCoach:
 
         Returns:
             bool: True si succès.
+
+        Note:
+            Migré vers Control Tower (2026-02-20).
+            Utilise planning_tower.modify_week() pour backup + audit automatiques.
         """
-        config = get_data_config()
-
-        planning_file = config.week_planning_dir / f"week_planning_{week_id}.json"
-
         try:
-            # Load planning
-            with open(planning_file, encoding="utf-8") as f:
-                planning = json.load(f)
+            # 🚦 MODIFY VIA CONTROL TOWER (automatic backup + audit)
+            with planning_tower.modify_week(
+                week_id,
+                requesting_script="workflow-coach",
+                reason=f"AI Coach modification: {old_workout} → {new_workout['code']} ({reason})",
+            ) as plan:
+                # Find session to modify
+                session_found = False
+                for session in plan.planned_sessions:
+                    if str(session.session_date) == date:
+                        # Save to history
+                        timestamp = datetime.now().isoformat()
 
-            # Find session to modify
-            for i, session in enumerate(planning["planned_sessions"]):
-                if session["date"] == date:
-                    # Save to history
-                    timestamp = datetime.now().isoformat()
-
-                    history_entry = {
-                        "timestamp": timestamp,
-                        "action": "modified_by_ai_coach",
-                        "previous_workout": old_workout,
-                        "previous_tss": session["tss_planned"],
-                        "new_workout": new_workout["code"],
-                        "new_tss": new_workout["tss"],
-                        "reason": reason,
-                    }
-
-                    # Update session
-                    planning["planned_sessions"][i].update(
-                        {
-                            "session_id": new_workout.get("session_id", session["session_id"]),
-                            "name": new_workout.get("name", session["name"]),
-                            "type": new_workout["type"],
-                            "tss_planned": new_workout["tss"],
-                            "description": new_workout["description"],
-                            "status": "modified",
+                        history_entry = {
+                            "timestamp": timestamp,
+                            "action": "modified_by_ai_coach",
+                            "previous_workout": old_workout,
+                            "previous_tss": session.tss_planned,
+                            "new_workout": new_workout["code"],
+                            "new_tss": new_workout["tss"],
+                            "reason": reason,
                         }
-                    )
 
-                    if "history" not in planning["planned_sessions"][i]:
-                        planning["planned_sessions"][i]["history"] = []
-                    planning["planned_sessions"][i]["history"].append(history_entry)
+                        # Update session fields
+                        session.session_id = new_workout.get("session_id", session.session_id)
+                        session.name = new_workout.get("name", session.name)
+                        session.session_type = new_workout["type"]
+                        session.tss_planned = new_workout["tss"]
+                        session.description = new_workout["description"]
+                        session.status = "modified"
 
-                    break
+                        # Add history (if field exists)
+                        if not hasattr(session, "history") or session.history is None:
+                            session.history = []
+                        session.history.append(history_entry)
 
-            # Update metadata
-            planning["last_updated"] = datetime.now().isoformat()
-            planning["version"] = planning.get("version", 1) + 1
+                        session_found = True
+                        break
 
-            # Save
-            with open(planning_file, "w", encoding="utf-8") as f:
-                json.dump(planning, f, indent=2, ensure_ascii=False)
+                if not session_found:
+                    print(f"⚠️  Session non trouvée pour date {date}")
+                    return False
+
+                # Auto-saved by Control Tower with backup + audit log
 
             return True
 
+        except FileNotFoundError:
+            print(f"⚠️  Planning {week_id} non trouvé")
+            return False
         except Exception as e:
             print(f"⚠️  Erreur mise à jour planning : {e}")
             return False
@@ -790,17 +806,34 @@ class WorkflowCoach:
         if updated_count > 0:
             print("\n\n💾 Sauvegarde planning mis à jour...")
 
-            # Incrémenter version
-            planning["version"] = planning.get("version", 1) + 1
-            planning["last_updated"] = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+            # Update metadata (planning is WeeklyPlan object)
+            planning.last_updated = datetime.now().isoformat() + "Z"
 
-            # Sauvegarder
+            # Sauvegarder via Pydantic (planning is WeeklyPlan object)
             planning_file = planning_dir / f"week_planning_{week_id}.json"
             try:
-                with open(planning_file, "w", encoding="utf-8") as f:
-                    json.dump(planning, f, indent=2, ensure_ascii=False)
+                # ✅ Sauvegarde via Pydantic.to_json()
+                planning.to_json(planning_file)
                 print(f"✅ Planning sauvegardé: {planning_file.name}")
-                print(f"   Version: {planning['version']}")
+                print(f"   Version: {planning.version}")
+
+                # 📋 LOG TO AUDIT (reconciliation interactive)
+                from cyclisme_training_logs.planning.audit_log import (
+                    OperationStatus,
+                    OperationType,
+                    audit_log,
+                )
+
+                audit_log.log_operation(
+                    operation=OperationType.MODIFY,
+                    week_id=week_id,
+                    status=OperationStatus.SUCCESS,
+                    tool="workflow-coach",
+                    description=f"Interactive reconciliation: {updated_count} sessions updated",
+                    reason="Batch reconciliation of skipped/cancelled sessions",
+                    files_modified=[f"week_planning_{week_id}.json"],
+                    file_timestamp=planning.last_updated,
+                )
             except Exception as e:
                 print(f"❌ Erreur sauvegarde: {e}")
                 return

@@ -47,9 +47,10 @@ Garantir que TOUS les scripts qui modifient des fichiers de planning passent par
    - Workflow fin de semaine
    - Status: ❌ À MIGRER
 
-8. **cyclisme_training_logs/workflow_coach.py**
+8. **cyclisme_training_logs/workflow_coach.py** ✅
    - Coach workflow principal
-   - Status: ❌ À MIGRER
+   - Status: ✅ MIGRÉ (commit à venir)
+   - Permission: ✅ | Backup: ✅ | Audit: ✅ | Read-only: ✅
 
 ### Priorité BASSE (principalement lecture)
 
@@ -195,9 +196,9 @@ finally:
 ## 📊 Progression
 
 - Scripts à migrer: 9
-- Scripts migrés: 5 ✅
+- Scripts migrés: 6 ✅
 - Scripts en cours: 0
-- % complété: 56%
+- % complété: 67%
 
 ### ✅ Scripts Migrés
 
@@ -238,6 +239,16 @@ finally:
    - Audit log: ✅ (CREATE operation logged)
    - Pydantic validation: ✅
    - Methods migrated: update_session_status(), save_planning_json()
+   - Tests: Syntax validated
+   - Commit: 388c159
+
+6. **workflow_coach.py** - ✅ MIGRÉ (2026-02-21)
+   - Mode: Read + Write (planning_tower.read_week + modify_week)
+   - Permission system: ✅
+   - Backup automatique: ✅
+   - Audit log: ✅ (manual log for interactive reconcile_week)
+   - Session → dict conversion: ✅
+   - Methods migrated: load_remaining_sessions(), update_planning_json(), reconcile_week()
    - Tests: Syntax validated
    - Commit: À venir
 
