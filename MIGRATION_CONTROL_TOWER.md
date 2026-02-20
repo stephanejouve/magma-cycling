@@ -26,9 +26,10 @@ Garantir que TOUS les scripts qui modifient des fichiers de planning passent par
    - Crée les plannings hebdomadaires
    - Status: ❌ À MIGRER
 
-4. **cyclisme_training_logs/daily_sync.py**
+4. **cyclisme_training_logs/daily_sync.py** ✅
    - Synchronise avec Intervals.icu
-   - Status: ❌ À MIGRER
+   - Status: ✅ MIGRÉ (commit à venir)
+   - Permission: ✅ | Backup: ✅ | Audit: ✅ | Read-only: ✅
 
 5. **cyclisme_training_logs/rest_and_cancellations.py** ✅
    - Gère les repos/annulations
@@ -193,9 +194,9 @@ finally:
 ## 📊 Progression
 
 - Scripts à migrer: 9
-- Scripts migrés: 3 ✅
+- Scripts migrés: 4 ✅
 - Scripts en cours: 0
-- % complété: 33%
+- % complété: 44%
 
 ### ✅ Scripts Migrés
 
@@ -217,6 +218,16 @@ finally:
    - Mode: Read-only (planning_tower.read_week)
    - Bug fix: WeeklyPlan object access corrected
    - Deprecated: planning_dir parameter
+   - Tests: Syntax validated
+   - Commit: 3aa6fa0
+
+4. **daily_sync.py** - ✅ MIGRÉ (2026-02-20)
+   - Mode: Read + Write (planning_tower.read_week + modify_week)
+   - Permission system: ✅
+   - Backup automatique: ✅
+   - Audit log: ✅
+   - Optimization: Batch updates per week
+   - Removed: Hardcoded paths
    - Tests: Syntax validated
    - Commit: À venir
 
