@@ -5,6 +5,7 @@ End-of-Week Workflow Orchestrator.
 Workflow automatisé complet pour transition hebdomadaire :
 1. Analyse semaine écoulée (weekly-analysis)
 1b. Évaluation PID & Training Intelligence (pid-daily-evaluation)
+1c. Analyse mensuelle automatique (si transition de mois)
 2. Génération planning semaine suivante (weekly-planner)
 3. Appel AI provider pour génération workouts
 4. Validation notation (format-planning intégré)
@@ -215,6 +216,10 @@ class EndOfWeekWorkflow:
             if not self._step1b_pid_evaluation():
                 return False
 
+            # Step 1c: Monthly analysis if month transition
+            if not self._step1c_monthly_analysis_if_month_end():
+                return False
+
             # Step 2: Generate planning prompt for next week
             if not self._step2_generate_planning_prompt():
                 return False
@@ -257,7 +262,7 @@ class EndOfWeekWorkflow:
     def _step1_analyze_completed_week(self) -> bool:
         """Step 1: Analyze completed week with weekly-analysis."""
         print("\n" + "=" * 80)
-        print(f"📊 STEP 1/6: Analyse Semaine {self.week_completed}")
+        print(f"📊 STEP 1/7: Analyse Semaine {self.week_completed}")
         print("=" * 80)
         print()
 
@@ -351,7 +356,7 @@ class EndOfWeekWorkflow:
     def _step1b_pid_evaluation(self) -> bool:
         """Step 1b: PID evaluation and intelligence learning."""
         print("\n" + "=" * 80)
-        print("🧠 STEP 1b/6: Évaluation PID & Training Intelligence")
+        print("🧠 STEP 1b/7: Évaluation PID & Training Intelligence")
         print("=" * 80)
         print()
 
@@ -403,10 +408,70 @@ class EndOfWeekWorkflow:
             # Non-blocking: continue workflow even if PID evaluation fails
             return True
 
+    def _step1c_monthly_analysis_if_month_end(self) -> bool:
+        """Step 1c: Generate monthly analysis if month transition detected."""
+        # Detect month transition
+        completed_month = self.completed_start_date.strftime("%Y-%m")
+        next_month = self.next_start_date.strftime("%Y-%m")
+
+        if completed_month == next_month:
+            # No month transition - skip
+            return True
+
+        # Month transition detected!
+        print("\n" + "=" * 80)
+        print(f"📊 STEP 1c/7: Analyse Mensuelle Automatique - {completed_month}")
+        print("=" * 80)
+        print()
+        print(f"  🎯 Transition de mois détectée: {completed_month} → {next_month}")
+        print(f"  📅 Génération rapport mensuel pour {completed_month}")
+        print()
+
+        if self.dry_run:
+            print("🔍 DRY-RUN: Simulation analyse mensuelle")
+            return True
+
+        try:
+            # Import monthly analyzer
+            from cyclisme_training_logs.monthly_analysis import MonthlyAnalyzer
+
+            # Generate monthly report
+            analyzer = MonthlyAnalyzer(
+                month=completed_month, provider=self.provider, no_ai=(self.provider == "clipboard")
+            )
+
+            report = analyzer.run()
+
+            if not report:
+                print()
+                print("  ⚠️  Rapport vide - aucune donnée disponible")
+                return True
+
+            # Save report to file
+            report_file = self.reports_dir / f"monthly_report_{completed_month}.md"
+            report_file.write_text(report, encoding="utf-8")
+
+            print()
+            print("  ✅ Rapport mensuel généré et sauvegardé")
+            print(f"  📁 {report_file}")
+            print()
+
+            return True
+
+        except Exception as e:
+            print()
+            print(f"  ⚠️  Erreur génération rapport mensuel (non bloquant) : {e}")
+            if "--verbose" in sys.argv:
+                import traceback
+
+                traceback.print_exc()
+            # Non-blocking: continue workflow even if monthly analysis fails
+            return True
+
     def _step2_generate_planning_prompt(self) -> bool:
         """Step 2: Generate planning prompt for next week."""
         print("\n" + "=" * 80)
-        print(f"✍️  STEP 2/6: Génération Prompt Planning {self.week_next}")
+        print(f"✍️  STEP 2/7: Génération Prompt Planning {self.week_next}")
         print("=" * 80)
         print()
 
@@ -442,7 +507,7 @@ class EndOfWeekWorkflow:
     def _step3_get_ai_workouts(self) -> bool:
         """Step 3: Get workouts from AI provider."""
         print("\n" + "=" * 80)
-        print(f"🤖 STEP 3/6: Génération Workouts via {self.provider.upper()}")
+        print(f"🤖 STEP 3/7: Génération Workouts via {self.provider.upper()}")
         print("=" * 80)
         print()
 
@@ -595,7 +660,7 @@ class EndOfWeekWorkflow:
     def _step4_validate_workouts(self) -> bool:
         """Step 4: Validate workouts notation with format-planning logic."""
         print("\n" + "=" * 80)
-        print("🔍 STEP 4/6: Validation Notation Workouts")
+        print("🔍 STEP 4/7: Validation Notation Workouts")
         print("=" * 80)
         print()
 
@@ -634,7 +699,7 @@ class EndOfWeekWorkflow:
     def _step5_upload_workouts(self) -> bool:
         """Step 5: Upload workouts to Intervals.icu."""
         print("\n" + "=" * 80)
-        print("📤 STEP 5/6: Upload Workouts vers Intervals.icu")
+        print("📤 STEP 5/7: Upload Workouts vers Intervals.icu")
         print("=" * 80)
         print()
 
@@ -712,7 +777,7 @@ class EndOfWeekWorkflow:
     def _step5b_save_planning_json(self):
         """Step 5b: Save planning JSON with real uploaded workout data."""
         print("\n" + "=" * 80)
-        print("💾 STEP 5b/6: Sauvegarde Planning JSON")
+        print("💾 STEP 5b/7: Sauvegarde Planning JSON")
         print("=" * 80)
         print()
 
@@ -856,7 +921,7 @@ class EndOfWeekWorkflow:
     def _step6_archive_and_commit(self):
         """Step 6: Archive and commit (optional)."""
         print("\n" + "=" * 80)
-        print("📦 STEP 6/6: Archivage et Commit")
+        print("📦 STEP 6/7: Archivage et Commit")
         print("=" * 80)
         print()
 
@@ -918,6 +983,8 @@ Exemples:
 
 Workflow complet:
   1. Analyse semaine écoulée (weekly-analysis)
+  1b. Évaluation PID & Training Intelligence (pid-daily-evaluation)
+  1c. Analyse mensuelle automatique (si transition de mois)
   2. Génération planning semaine suivante (weekly-planner)
   3. Appel AI provider pour génération workouts
   4. Validation notation (format-planning intégré)
