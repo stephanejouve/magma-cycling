@@ -292,12 +292,14 @@ class WorkoutUploader:
 
         workouts = []
         for workout_name, workout_content in matches:
-            day_match = re.search(r"-(\d{2})-", workout_name)
+            # Support format standard (S081-05) et double séance (S081-06a, S081-06b)
+            day_match = re.search(r"-(\d{2})([a-z]?)-", workout_name)
             if not day_match:
                 print(f"⚠️ Format invalide : {workout_name}")
                 continue
 
             day_num = int(day_match.group(1))
+            suffix = day_match.group(2)  # 'a', 'b', ou vide ''
 
             # Si single workout, utiliser start_date directement
             if single_workout_mode:
@@ -319,13 +321,17 @@ class WorkoutUploader:
                 {
                     "filename": workout_name.strip(),
                     "day": day_num,
+                    "suffix": suffix,  # 'a', 'b', ou '' pour double séance
                     "date": workout_date.strftime("%Y-%m-%d"),
                     "name": workout_display_name,  # ← FIX: Utiliser le nom du délimiteur
                     "description": workout_content.strip(),
                 }
             )
 
-            print(f"  ✅ Jour {day_num:02d} ({workout_date.strftime('%d/%m')}) : {workout_name}")
+            suffix_display = f"/{suffix}" if suffix else ""
+            print(
+                f"  ✅ Jour {day_num:02d}{suffix_display} ({workout_date.strftime('%d/%m')}) : {workout_name}"
+            )
 
         print(f"\n📊 Total : {len(workouts)} workout(s) détectés")
 
@@ -450,12 +456,19 @@ class WorkoutUploader:
     def upload_workout(self, workout: dict) -> bool:
         """Upload un workout sur Intervals.icu with duplicate detection."""
         try:
-            # Déterminer l'heure de début selon le jour de la semaine
+            # Déterminer l'heure de début selon le jour de la semaine et le suffixe
             workout_date = datetime.strptime(workout["date"], "%Y-%m-%d")
             day_of_week = workout_date.weekday()  # 0=Lundi, 5=Samedi, 6=Dimanche
+            suffix = workout.get("suffix", "")
 
-            # Samedi (5) → 09:00, autres jours → 17:00
-            start_time = "09:00:00" if day_of_week == 5 else "17:00:00"
+            # Gestion double séance (a/b)
+            if suffix == "a":
+                start_time = "09:00:00"  # Matin
+            elif suffix == "b":
+                start_time = "15:00:00"  # Après-midi
+            else:
+                # Samedi (5) → 09:00, autres jours → 17:00
+                start_time = "09:00:00" if day_of_week == 5 else "17:00:00"
 
             if self.api is None:
                 print("  ❌ Erreur : API non initialisée")
@@ -464,15 +477,27 @@ class WorkoutUploader:
             # Check for existing workout on this date (duplicate detection)
             existing_events = self.api.get_events(oldest=workout["date"], newest=workout["date"])
 
-            # Look for existing WORKOUT on same date with same week prefix
-            week_prefix = workout["name"].split("-")[0]  # Extract SXXX from name
+            # Look for existing WORKOUT on same date
+            # Pour doubles séances (a/b), matcher le nom exact
+            # Pour séances simples, matcher le préfixe semaine+jour (ex: S081-05)
+            workout_name = workout["name"]
+            session_id = "-".join(workout_name.split("-")[:2])  # Ex: S081-06a → S081-06a
+
             existing_workout = None
             for event in existing_events:
-                if event.get("category") == "WORKOUT" and event.get("name", "").startswith(
-                    week_prefix
-                ):
-                    existing_workout = event
-                    break
+                if event.get("category") == "WORKOUT":
+                    event_name = event.get("name", "")
+                    # Matcher le nom exact pour les doubles séances
+                    if suffix:
+                        if event_name == workout_name:
+                            existing_workout = event
+                            break
+                    else:
+                        # Pour séances simples, matcher le session_id (SXXX-NN)
+                        event_session_id = "-".join(event_name.split("-")[:2])
+                        if event_session_id == session_id:
+                            existing_workout = event
+                            break
 
             event_data = {
                 "category": "WORKOUT",
