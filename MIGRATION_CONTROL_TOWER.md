@@ -39,9 +39,11 @@ Garantir que TOUS les scripts qui modifient des fichiers de planning passent par
 
 ### Priorité MOYENNE (lisent et écrivent potentiellement)
 
-6. **cyclisme_training_logs/planned_sessions_checker.py**
+6. **cyclisme_training_logs/planned_sessions_checker.py** ✅
    - Vérifie les sessions planifiées
-   - Status: ❌ À VÉRIFIER (lecture seule?)
+   - Status: ✅ LECTURE SEULE (indirectement migré)
+   - Utilise: load_week_planning() et reconcile_planned_vs_actual() de rest_and_cancellations.py (déjà migrés)
+   - Aucune modification requise
 
 7. **cyclisme_training_logs/workflows/end_of_week.py** ✅
    - Workflow fin de semaine
@@ -55,9 +57,11 @@ Garantir que TOUS les scripts qui modifient des fichiers de planning passent par
 
 ### Priorité BASSE (principalement lecture)
 
-9. **cyclisme_training_logs/monthly_analysis.py**
+9. **cyclisme_training_logs/monthly_analysis.py** ✅
    - Analyse mensuelle
-   - Status: ℹ️ LECTURE SEULE (utiliser read_week())
+   - Status: ✅ LECTURE SEULE (aucune modification requise)
+   - Utilise: json.load() pour lecture directe (pas de risque)
+   - Migration optionnelle: Pourrait utiliser read_week() pour cohérence
 
 ## 🔧 Patterns de Migration
 
@@ -197,9 +201,9 @@ finally:
 ## 📊 Progression
 
 - Scripts à migrer: 9
-- Scripts migrés: 7 ✅
+- Scripts migrés: 9 ✅
 - Scripts en cours: 0
-- % complété: 78%
+- % complété: 100% 🎉
 
 ### ✅ Scripts Migrés
 
@@ -260,7 +264,18 @@ finally:
    - Field corrections: date → session_date, type → session_type
    - Methods migrated: _step5b_save_planning_json()
    - Tests: Syntax validated
-   - Commit: À venir
+   - Commit: 463903a
+
+8. **planned_sessions_checker.py** - ✅ INDIRECTEMENT MIGRÉ (2026-02-21)
+   - Mode: Read-only
+   - Status: Utilise load_week_planning() de rest_and_cancellations.py (déjà migré)
+   - Aucune modification requise
+
+9. **monthly_analysis.py** - ✅ LECTURE SEULE (2026-02-21)
+   - Mode: Read-only (json.load)
+   - Status: Aucune modification de planning
+   - Migration optionnelle: Pourrait utiliser read_week() pour cohérence
+   - Aucune modification requise
 
 ## 🚀 Ordre de Migration Recommandé
 
