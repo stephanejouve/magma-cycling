@@ -46,6 +46,8 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from cyclisme_training_logs.config import get_data_config, get_week_config
+from cyclisme_training_logs.planning.audit_log import OperationStatus, OperationType, audit_log
+from cyclisme_training_logs.planning.models import WeeklyPlan
 
 
 def calculate_week_start_date(week_id: str) -> date:
@@ -720,7 +722,6 @@ class EndOfWeekWorkflow:
                 return
 
             # Import dependencies
-            import json
             import re
 
             from cyclisme_training_logs.api.intervals_client import IntervalsClient
@@ -806,9 +807,9 @@ class EndOfWeekWorkflow:
 
                 session = {
                     "session_id": session_id,
-                    "date": workout_date,
+                    "session_date": workout_date,  # 🔧 Renamed: date → session_date
                     "name": workout_name_part,
-                    "type": workout_type,
+                    "session_type": workout_type,  # 🔧 Renamed: type → session_type
                     "version": version,
                     "tss_planned": tss,
                     "duration_min": duration,
@@ -821,10 +822,23 @@ class EndOfWeekWorkflow:
 
             planning_data["tss_target"] = tss_total
 
-            # Save JSON file
+            # 🚦 CONTROL TOWER: Create planning via WeeklyPlan model
             json_file = self.planning_dir / f"week_planning_{self.week_next}.json"
-            with open(json_file, "w", encoding="utf-8") as f:
-                json.dump(planning_data, f, indent=2, ensure_ascii=False)
+
+            # Validate and create planning object
+            plan = WeeklyPlan(**planning_data)
+            plan.to_json(json_file)
+
+            # 📝 AUDIT LOG: Manual log for CREATE operation (no backup needed)
+            audit_log.log_operation(
+                operation=OperationType.CREATE,
+                week_id=self.week_next,
+                status=OperationStatus.SUCCESS,
+                tool="end-of-week",
+                description=f"Created planning for {self.week_next} ({len(planning_data['planned_sessions'])} sessions, {tss_total} TSS)",
+                backup_path=None,  # No backup for CREATE
+                username="end-of-week-workflow",
+            )
 
             print()
             print(f"  ✅ Planning JSON créé: {json_file}")
