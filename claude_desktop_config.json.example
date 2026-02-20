@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "cyclisme-training": {
+      "command": "poetry",
+      "args": ["run", "mcp-server"],
+      "cwd": "/Users/stephanejouve/cyclisme-training-logs",
+      "env": {}
+    }
+  }
+}
