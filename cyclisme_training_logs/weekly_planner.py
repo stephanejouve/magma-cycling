@@ -22,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from pydantic import ValidationError  # noqa: E402
 
 from cyclisme_training_logs.config import create_intervals_client  # noqa: E402
+from cyclisme_training_logs.planning.control_tower import planning_tower  # noqa: E402
 from cyclisme_training_logs.planning.models import WeeklyPlan  # noqa: E402
 
 
@@ -1080,61 +1081,54 @@ Le but est que je puisse **copier-coller directement** chaque bloc dans Interval
             bool: True si succès, False si erreur
 
         Note:
-            Utilise WeeklyPlan (Pydantic) pour validation automatique et
-            protection contre shallow copy. Migration: 08-02-2026.
+            Migré vers Control Tower (2026-02-20).
+            Utilise planning_tower.modify_week() pour backup + audit automatiques.
         """
-        json_file = self.planning_dir / f"week_planning_{self.week_number}.json"
-
-        if not json_file.exists():
-            print(f"⚠️ Planning JSON non trouvé : {json_file}")
-            return False
-
         try:
-            # ✅ Chargement sécurisé avec Pydantic (validation auto)
-            plan = WeeklyPlan.from_json(json_file)
-        except (FileNotFoundError, ValidationError) as e:
-            print(f"⚠️ Erreur de chargement du planning : {e}")
-            return False
+            # 🚦 MODIFY VIA CONTROL TOWER (automatic backup + audit)
+            with planning_tower.modify_week(
+                self.week_number,
+                requesting_script="weekly-planner",
+                reason=f"Update session {session_id} to {status}: {reason or 'N/A'}",
+            ) as plan:
+                # Trouver et mettre à jour la séance
+                session_found = False
+                for session in plan.planned_sessions:
+                    if session.session_id == session_id:
+                        # ✅ Validation automatique par Pydantic (validate_assignment=True)
+                        try:
+                            # IMPORTANT: Définir skip_reason AVANT de changer le statut
+                            # (validator Pydantic vérifie que skip_reason est présent pour skipped/cancelled/replaced)
+                            if reason and status in ("skipped", "cancelled", "replaced"):
+                                session.skip_reason = reason  # Défini AVANT statut
 
-        # Trouver et mettre à jour la séance
-        session_found = False
-        for session in plan.planned_sessions:
-            if session.session_id == session_id:
-                # ✅ Validation automatique par Pydantic (validate_assignment=True)
-                try:
-                    # IMPORTANT: Définir skip_reason AVANT de changer le statut
-                    # (validator Pydantic vérifie que skip_reason est présent pour skipped/cancelled/replaced)
-                    if reason and status in ("skipped", "cancelled", "replaced"):
-                        session.skip_reason = reason  # Défini AVANT statut
+                            session.status = status  # Type-checked et validé!
 
-                    session.status = status  # Type-checked et validé!
+                        except ValidationError as e:
+                            print(f"⚠️ Valeur invalide pour le statut : {e}")
+                            return False
 
-                except ValidationError as e:
-                    print(f"⚠️ Valeur invalide pour le statut : {e}")
+                        session_found = True
+                        break
+
+                if not session_found:
+                    print(f"⚠️ Séance {session_id} non trouvée dans le planning")
                     return False
 
-                session_found = True
-                break
+                # Auto-saved by Control Tower with backup + audit log
 
-        if not session_found:
-            print(f"⚠️ Séance {session_id} non trouvée dans le planning")
+            print(f"✅ Séance {session_id} mise à jour : {status}")
+            if reason:
+                print(f"   Raison : {reason}")
+
+            return True
+
+        except FileNotFoundError:
+            print(f"⚠️ Planning JSON non trouvé pour {self.week_number}")
             return False
-
-        # Mettre à jour last_updated
-        plan.last_updated = datetime.now(UTC)
-
-        # ✅ Sauvegarde atomique via Pydantic
-        try:
-            plan.to_json(json_file)
         except Exception as e:
-            print(f"⚠️ Erreur de sauvegarde : {e}")
+            print(f"⚠️ Erreur mise à jour planning : {e}")
             return False
-
-        print(f"✅ Séance {session_id} mise à jour : {status}")
-        if reason:
-            print(f"   Raison : {reason}")
-
-        return True
 
     def save_planning_json(self, workouts_data: list | None = None):
         """
@@ -1142,9 +1136,11 @@ Le but est que je puisse **copier-coller directement** chaque bloc dans Interval
 
         Args:
             workouts_data: Liste des workouts générés (optionnel, créera template si None).
-        """
-        json_file = self.planning_dir / f"week_planning_{self.week_number}.json"
 
+        Note:
+            Migré vers Control Tower (2026-02-20).
+            Crée un nouveau planning via WeeklyPlan.to_json() avec audit log.
+        """
         # Si pas de workouts fournis, créer template basique
         if workouts_data is None:
             workouts_data = []
@@ -1170,7 +1166,7 @@ Le but est que je puisse **copier-coller directement** chaque bloc dans Interval
 
         intervals_config = get_intervals_config()
 
-        planning = {
+        planning_dict = {
             "week_id": self.week_number,
             "start_date": self.start_date.strftime("%Y-%m-%d"),
             "end_date": self.end_date.strftime("%Y-%m-%d"),
@@ -1182,8 +1178,30 @@ Le but est que je puisse **copier-coller directement** chaque bloc dans Interval
             "planned_sessions": workouts_data,
         }
 
-        with open(json_file, "w", encoding="utf-8") as f:
-            json.dump(planning, f, indent=2, ensure_ascii=False)
+        # ✅ Créer WeeklyPlan via Pydantic pour validation
+        plan = WeeklyPlan(**planning_dict)
+
+        # Sauvegarder via Pydantic
+        json_file = self.planning_dir / f"week_planning_{self.week_number}.json"
+        plan.to_json(json_file)
+
+        # 📋 LOG TO AUDIT (création de planning)
+        from cyclisme_training_logs.planning.audit_log import (
+            OperationStatus,
+            OperationType,
+            audit_log,
+        )
+
+        audit_log.log_operation(
+            operation=OperationType.CREATE,
+            week_id=self.week_number,
+            status=OperationStatus.SUCCESS,
+            tool="weekly-planner",
+            description=f"Created planning for {self.week_number}",
+            reason="New week planning template created",
+            files_modified=[f"week_planning_{self.week_number}.json"],
+            file_timestamp=planning_dict["created_at"],
+        )
 
         print(f"\n📄 Planning JSON sauvegardé : {json_file}")
         return json_file

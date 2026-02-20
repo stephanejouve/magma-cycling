@@ -22,9 +22,10 @@ Garantir que TOUS les scripts qui modifient des fichiers de planning passent par
    - Status: ✅ MIGRÉ (commit à venir)
    - Permission: ✅ | Backup: ✅ | Audit: ✅
 
-3. **cyclisme_training_logs/weekly_planner.py**
+3. **cyclisme_training_logs/weekly_planner.py** ✅
    - Crée les plannings hebdomadaires
-   - Status: ❌ À MIGRER
+   - Status: ✅ MIGRÉ (commit à venir)
+   - Permission: ✅ | Backup: ✅ | Audit: ✅ | Create: ✅
 
 4. **cyclisme_training_logs/daily_sync.py** ✅
    - Synchronise avec Intervals.icu
@@ -194,9 +195,9 @@ finally:
 ## 📊 Progression
 
 - Scripts à migrer: 9
-- Scripts migrés: 4 ✅
+- Scripts migrés: 5 ✅
 - Scripts en cours: 0
-- % complété: 44%
+- % complété: 56%
 
 ### ✅ Scripts Migrés
 
@@ -228,6 +229,15 @@ finally:
    - Audit log: ✅
    - Optimization: Batch updates per week
    - Removed: Hardcoded paths
+   - Tests: Syntax validated
+   - Commit: bc6b2a1
+
+5. **weekly_planner.py** - ✅ MIGRÉ (2026-02-20)
+   - Mode: Create + Write (WeeklyPlan.to_json + modify_week)
+   - Permission system: ✅
+   - Audit log: ✅ (CREATE operation logged)
+   - Pydantic validation: ✅
+   - Methods migrated: update_session_status(), save_planning_json()
    - Tests: Syntax validated
    - Commit: À venir
 
