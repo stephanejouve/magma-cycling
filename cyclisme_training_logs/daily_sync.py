@@ -34,7 +34,7 @@ Metadata:
 import argparse
 import json
 import sys
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -56,8 +56,8 @@ from cyclisme_training_logs.intelligence.discrete_pid_controller import (
     DiscretePIDController,
 )
 from cyclisme_training_logs.planning.calendar import TrainingCalendar, WorkoutType
+from cyclisme_training_logs.planning.control_tower import planning_tower
 from cyclisme_training_logs.planning.intervals_sync import IntervalsSync
-from cyclisme_training_logs.planning.models import WeeklyPlan
 from cyclisme_training_logs.planning.peaks_phases import (
     determine_training_phase,
     format_phase_recommendation,
@@ -437,18 +437,12 @@ class DailySync:
         """
         print(f"\n🔍 Vérification modifications planning {week_id}...")
 
-        # Load week planning
-        planning_file = Path(
-            f"/Users/stephanejouve/training-logs/data/week_planning/week_planning_{week_id}.json"
-        )
-
-        if not planning_file.exists():
+        try:
+            # 🚦 READ-ONLY ACCESS via Control Tower
+            plan = planning_tower.read_week(week_id)
+        except FileNotFoundError:
             print(f"  ⚠️  Planning {week_id} introuvable")
             return {"status": None, "diff": None}
-
-        try:
-            # ✅ Chargement sécurisé avec validation Pydantic
-            plan = WeeklyPlan.from_json(planning_file)
         except (ValidationError, json.JSONDecodeError) as e:
             print(f"  ⚠️  Erreur chargement planning {week_id}: {e}")
             return {"status": None, "diff": None}
@@ -1266,9 +1260,9 @@ Réponds maintenant."""
 
         For each completed activity with a paired_event_id:
         1. Extract session_id from activity name
-        2. Load corresponding week planning JSON
+        2. Load corresponding week planning via Control Tower
         3. Update session status to 'completed'
-        4. Save updated JSON
+        4. Save updated JSON (automatic via Control Tower)
 
         Args:
             activities: List of completed activities from Intervals.icu
@@ -1278,7 +1272,8 @@ Réponds maintenant."""
 
         print("\n🔄 Mise à jour automatique des statuts de sessions...")
 
-        updated_weeks = {}  # Track which weeks need saving
+        # Group activities by week_id for efficient batch updates
+        activities_by_week = {}
 
         for activity in activities:
             # Only process activities paired with planned events
@@ -1295,58 +1290,45 @@ Réponds maintenant."""
 
             week_id, session_id = session_info
 
-            # Load planning JSON if not already loaded
-            if week_id not in updated_weeks:
-                planning_file = Path(
-                    f"/Users/stephanejouve/training-logs/data/week_planning/week_planning_{week_id}.json"
-                )
+            if week_id not in activities_by_week:
+                activities_by_week[week_id] = []
 
-                if not planning_file.exists():
-                    print(f"  ⚠️  Planning introuvable: {planning_file}")
-                    continue
+            activities_by_week[week_id].append((session_id, activity_name))
 
-                try:
-                    # ✅ Chargement sécurisé avec Pydantic
-                    plan = WeeklyPlan.from_json(planning_file)
-                    updated_weeks[week_id] = {
-                        "file": planning_file,
-                        "plan": plan,
-                        "modified": False,
-                    }
-                except (ValidationError, json.JSONDecodeError) as e:
-                    print(f"  ⚠️  Erreur chargement planning {week_id}: {e}")
-                    continue
+        # Update each week via Control Tower (one permission/backup per week)
+        for week_id, session_updates in activities_by_week.items():
+            try:
+                # 🚦 MODIFY VIA CONTROL TOWER (automatic backup + audit)
+                session_ids = ", ".join([sid for sid, _ in session_updates])
+                with planning_tower.modify_week(
+                    week_id,
+                    requesting_script="daily-sync",
+                    reason=f"Mark sessions completed from Intervals.icu: {session_ids}",
+                ) as plan:
+                    # Update all sessions for this week
+                    for session_id, activity_name in session_updates:
+                        session_found = False
 
-            # Find and update session
-            plan = updated_weeks[week_id]["plan"]
-            session_found = False
+                        for session in plan.planned_sessions:
+                            if session.session_id == session_id:
+                                # Only update if not already completed
+                                if session.status != "completed":
+                                    session.status = "completed"
+                                    print(f"  ✅ {session_id} marqué comme 'completed'")
+                                else:
+                                    print(f"  ℹ️  {session_id} déjà marqué 'completed'")
+                                session_found = True
+                                break
 
-            for session in plan.planned_sessions:
-                if session.session_id == session_id:
-                    # Only update if not already completed
-                    if session.status != "completed":
-                        session.status = "completed"
-                        updated_weeks[week_id]["modified"] = True
-                        print(f"  ✅ {session_id} marqué comme 'completed'")
-                        session_found = True
-                    else:
-                        print(f"  ℹ️  {session_id} déjà marqué 'completed'")
-                        session_found = True
-                    break
+                        if not session_found:
+                            print(f"  ⚠️  Session {session_id} introuvable dans {week_id}")
 
-            if not session_found:
-                print(f"  ⚠️  Session {session_id} introuvable dans {week_id}")
+                    # Auto-saved by Control Tower with backup + audit log
 
-        # Save modified planning files
-        for week_id, week_data in updated_weeks.items():
-            if week_data["modified"]:
-                plan = week_data["plan"]
-                plan.last_updated = datetime.now(UTC)
-
-                # ✅ Sauvegarde atomique avec Pydantic
-                plan.to_json(week_data["file"])
-
-                print(f"  💾 Planning {week_id} sauvegardé")
+            except FileNotFoundError:
+                print(f"  ⚠️  Planning {week_id} introuvable")
+            except Exception as e:
+                print(f"  ⚠️  Erreur mise à jour planning {week_id}: {e}")
 
         print("  ✅ Mise à jour automatique terminée")
 
