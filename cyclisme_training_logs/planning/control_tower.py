@@ -38,6 +38,8 @@ class PlanningControlTower:
 
     Acts as a "control tower" that intercepts all write operations
     to planning files and automatically creates backups.
+
+    All scripts MUST request permission before modifying planning files.
     """
 
     def __init__(self):
@@ -49,16 +51,84 @@ class PlanningControlTower:
         # Track active modifications (for atomic operations)
         self._active_modifications: set[str] = set()
 
+        # Track which script is currently holding the lock
+        self._lock_holders: dict[str, str] = {}  # {week_id: script_name}
+
+    def request_permission(self, week_id: str, requesting_script: str, reason: str = "") -> bool:
+        """
+        Request permission to modify planning files.
+
+        ALL scripts MUST call this before any modification.
+
+        Args:
+            week_id: Week identifier (e.g., "S081")
+            requesting_script: Name of script requesting permission
+            reason: Why this modification is needed
+
+        Returns:
+            True if permission granted, False if denied
+
+        Raises:
+            RuntimeError: If week is already locked by another script
+
+        Example:
+            >>> if not planning_tower.request_permission("S081", "daily-sync", "Update session status"):
+            ...     print("Permission denied - week locked")
+            ...     return
+        """
+        # Check if already locked
+        if week_id in self._lock_holders:
+            current_holder = self._lock_holders[week_id]
+            if current_holder != requesting_script:
+                raise RuntimeError(
+                    f"❌ Control Tower: Permission DENIED\n"
+                    f"   Week {week_id} is locked by: {current_holder}\n"
+                    f"   Requesting script: {requesting_script}\n"
+                    f"   Wait for {current_holder} to complete."
+                )
+
+        # Grant permission and acquire lock
+        self._lock_holders[week_id] = requesting_script
+        print(f"✅ Control Tower: Permission GRANTED to {requesting_script}")
+        print(f"   Week: {week_id}")
+        if reason:
+            print(f"   Reason: {reason}")
+
+        return True
+
+    def release_permission(self, week_id: str, script_name: str):
+        """
+        Release permission lock on a week.
+
+        Args:
+            week_id: Week identifier
+            script_name: Script releasing the lock
+
+        Example:
+            >>> planning_tower.release_permission("S081", "daily-sync")
+        """
+        if week_id in self._lock_holders and self._lock_holders[week_id] == script_name:
+            del self._lock_holders[week_id]
+            print(f"🔓 Control Tower: Lock released by {script_name}")
+
     @contextmanager
     def modify_week(
-        self, week_id: str, auto_save: bool = True
+        self,
+        week_id: str,
+        auto_save: bool = True,
+        requesting_script: str = "unknown",
+        reason: str = "",
     ) -> Generator[WeeklyPlan, None, None]:
         """
         Context manager for safe week modification with automatic backup.
 
+        REQUIRES PERMISSION: Automatically requests permission from Control Tower.
+
         Args:
             week_id: Week identifier (e.g., "S081")
             auto_save: Automatically save changes on exit (default: True)
+            requesting_script: Name of script making modification
+            reason: Why this modification is needed
 
         Yields:
             WeeklyPlan instance for modification
@@ -68,17 +138,15 @@ class PlanningControlTower:
             RuntimeError: If week is already being modified (concurrent access)
 
         Example:
-            >>> with planning_tower.modify_week("S081") as plan:
-            ...     # Automatic backup created here
+            >>> with planning_tower.modify_week(
+            ...     "S081",
+            ...     requesting_script="daily-sync",
+            ...     reason="Update session status from Intervals.icu"
+            ... ) as plan:
             ...     plan.planned_sessions[0].status = "completed"
-            ...     # Automatic save & validation on exit
         """
-        # Check for concurrent modification
-        if week_id in self._active_modifications:
-            raise RuntimeError(
-                f"Week {week_id} is already being modified. "
-                "Wait for current operation to complete."
-            )
+        # 🚦 REQUEST PERMISSION from Control Tower
+        self.request_permission(week_id, requesting_script, reason)
 
         planning_file = self.planning_dir / f"week_planning_{week_id}.json"
 
@@ -106,21 +174,60 @@ class PlanningControlTower:
             # Save if auto_save enabled
             if auto_save:
                 # Update timestamp
-                plan.last_updated = datetime.now().isoformat() + "Z"
+                file_timestamp = datetime.now().isoformat() + "Z"
+                plan.last_updated = file_timestamp
 
                 # Save to file
                 plan.to_json(planning_file)
                 print(f"💾 Control Tower: Saved {week_id}")
 
+                # 📋 LOG TO AUDIT
+                from cyclisme_training_logs.planning.audit_log import (
+                    OperationStatus,
+                    OperationType,
+                    audit_log,
+                )
+
+                audit_log.log_operation(
+                    operation=OperationType.MODIFY,
+                    week_id=week_id,
+                    status=OperationStatus.SUCCESS,
+                    tool=requesting_script,
+                    description=f"Modified {week_id} planning",
+                    reason=reason or "User requested",
+                    files_modified=[f"week_planning_{week_id}.json"],
+                    file_timestamp=file_timestamp,
+                    backup_path=backups.get("json") if backups else None,
+                )
+
         except Exception as e:
-            # On error, offer rollback
+            # On error, log failure and offer rollback
             print(f"❌ Control Tower: Error modifying {week_id}: {e}")
             print(f"   Backups available in: {self.backup_system.backup_dir}")
+
+            # 📋 LOG FAILURE
+            from cyclisme_training_logs.planning.audit_log import (
+                OperationStatus,
+                OperationType,
+                audit_log,
+            )
+
+            audit_log.log_operation(
+                operation=OperationType.MODIFY,
+                week_id=week_id,
+                status=OperationStatus.FAILED,
+                tool=requesting_script,
+                description=f"Failed to modify {week_id}",
+                reason=reason or "User requested",
+                error=e,
+            )
+
             raise
 
         finally:
-            # Release lock
+            # Release lock and permission
             self._active_modifications.discard(week_id)
+            self.release_permission(week_id, requesting_script)
 
     def read_week(self, week_id: str) -> WeeklyPlan:
         """
@@ -249,31 +356,43 @@ class PlanningControlTower:
 planning_tower = PlanningControlTower()
 
 
-# Convenience decorator for functions that modify planning
-def requires_planning_backup(week_id_param: str = "week_id"):
+# Decorator for functions that modify planning files
+def requires_tower_permission(week_id_param: str = "week_id", reason_param: str | None = None):
     """
-    Decorator to automatically backup planning before function execution.
+    Decorator to enforce Control Tower permission before planning modifications.
+
+    🚦 MANDATORY for all functions that modify planning files.
 
     Args:
         week_id_param: Name of parameter containing week_id
+        reason_param: Optional parameter name containing modification reason
 
     Example:
-        @requires_planning_backup()
-        def modify_session(week_id: str, session_id: str, new_date: str):
-            # Automatic backup created before this runs
-            with planning_tower.modify_week(week_id) as plan:
+        @requires_tower_permission()
+        def update_session_status(week_id: str, session_id: str, status: str):
+            # Permission requested automatically
+            # Backup created automatically
+            # Audit logged automatically
+            with planning_tower.modify_week(
+                week_id,
+                requesting_script="update_session_status",
+                reason=f"Update {session_id} to {status}"
+            ) as plan:
                 # ... modifications
     """
+    import functools
+    import inspect
 
     def decorator(func):
+        @functools.wraps(func)
         def wrapper(*args, **kwargs):
             # Extract week_id from args/kwargs
+            week_id = None
+
             if week_id_param in kwargs:
                 week_id = kwargs[week_id_param]
             else:
                 # Try to find in function signature
-                import inspect
-
                 sig = inspect.signature(func)
                 params = list(sig.parameters.keys())
 
@@ -281,16 +400,41 @@ def requires_planning_backup(week_id_param: str = "week_id"):
                     idx = params.index(week_id_param)
                     if idx < len(args):
                         week_id = args[idx]
-                    else:
-                        raise ValueError(f"Cannot find {week_id_param} in function arguments")
-                else:
-                    raise ValueError(f"Parameter {week_id_param} not found in function signature")
 
-            # Create backup
-            planning_tower.backup_week(week_id)
+            if not week_id:
+                raise ValueError(
+                    f"Cannot extract {week_id_param} from function arguments. "
+                    f"Function: {func.__name__}"
+                )
 
-            # Execute function
-            return func(*args, **kwargs)
+            # Extract reason if specified
+            reason = "Function call"
+            if reason_param and reason_param in kwargs:
+                reason = kwargs[reason_param]
+
+            # Get function name as script identifier
+            script_name = func.__module__ + "." + func.__name__
+
+            print(f"\n🚦 Control Tower: {script_name} requesting permission...")
+            print(f"   Week: {week_id}")
+            print(f"   Reason: {reason}")
+
+            # Request permission (will raise if denied)
+            planning_tower.request_permission(week_id, script_name, reason)
+
+            try:
+                # Execute function
+                result = func(*args, **kwargs)
+
+                # Release permission on success
+                planning_tower.release_permission(week_id, script_name)
+
+                return result
+
+            except Exception:
+                # Release permission on error
+                planning_tower.release_permission(week_id, script_name)
+                raise
 
         return wrapper
 
