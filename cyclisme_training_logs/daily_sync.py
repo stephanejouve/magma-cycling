@@ -1254,15 +1254,70 @@ Réponds maintenant."""
 
         return None
 
+    def _find_matching_activity(
+        self, workout: dict, activities: list[dict], tolerance_hours: int = 24
+    ) -> dict | None:
+        """
+        Find activity matching a planned workout using intelligent matching.
+
+        Matching criteria (in order):
+        1. paired_event_id matches workout id (explicit pairing)
+        2. Session code in activity name (e.g., "S077-03")
+        3. Temporal tolerance (±24h by default)
+
+        Args:
+            workout: Planned workout from events API
+            activities: List of completed activities
+            tolerance_hours: Time tolerance in hours
+
+        Returns:
+            Matching activity or None
+        """
+        from datetime import datetime
+
+        workout_id = workout.get("id")
+        workout_date = datetime.fromisoformat(workout["start_date_local"].replace("Z", "+00:00"))
+        workout_name = workout.get("name", "").upper()
+
+        # Extract session code (e.g., "S077-03")
+        workout_code = None
+        if "-" in workout_name:
+            parts = workout_name.split("-")
+            if len(parts) >= 2:
+                workout_code = f"{parts[0]}-{parts[1]}"  # "S077-03"
+
+        for activity in activities:
+            # Method 1: Explicit pairing via paired_event_id
+            if activity.get("paired_event_id") == workout_id:
+                return activity
+
+            # Method 2: Session code matching + temporal tolerance
+            if workout_code:
+                activity_name = activity.get("name", "").upper()
+                activity_date = datetime.fromisoformat(
+                    activity["start_date_local"].replace("Z", "+00:00")
+                )
+
+                # Check temporal tolerance
+                time_diff = abs((activity_date - workout_date).total_seconds() / 3600)
+                if time_diff > tolerance_hours:
+                    continue
+
+                # Check if session code is in activity name
+                if workout_code in activity_name:
+                    return activity
+
+        return None
+
     def update_completed_sessions(self, activities: list[dict]):
         """
         Automatically update session status to 'completed' in local planning JSON.
 
-        For each completed activity with a paired_event_id:
-        1. Extract session_id from activity name
-        2. Load corresponding week planning via Control Tower
-        3. Update session status to 'completed'
-        4. Save updated JSON (automatic via Control Tower)
+        Enhanced with intelligent matching:
+        1. Load planned workouts (events) from Intervals.icu
+        2. Match activities to workouts using intelligent criteria
+        3. Update session status from 'uploaded'/'pending' to 'completed'
+        4. Save via Control Tower (automatic backup + audit)
 
         Args:
             activities: List of completed activities from Intervals.icu
@@ -1272,28 +1327,55 @@ Réponds maintenant."""
 
         print("\n🔄 Mise à jour automatique des statuts de sessions...")
 
-        # Group activities by week_id for efficient batch updates
+        # Determine date range from activities
+        if not activities:
+            return
+
+        from datetime import datetime, timedelta
+
+        activity_dates = [
+            datetime.fromisoformat(a["start_date_local"].replace("Z", "+00:00")).date()
+            for a in activities
+        ]
+        oldest = min(activity_dates)
+        newest = max(activity_dates)
+
+        # Expand range by 1 day for tolerance
+        oldest = (oldest - timedelta(days=1)).isoformat()
+        newest = (newest + timedelta(days=1)).isoformat()
+
+        # Get planned workouts (events) from Intervals.icu
+        try:
+            events = self.intervals_client.get_events(oldest=oldest, newest=newest)
+            workouts = [e for e in events if e.get("category") == "WORKOUT"]
+            print(f"  ℹ️  {len(workouts)} workout(s) planifié(s) trouvé(s) sur Intervals.icu")
+        except Exception as e:
+            print(f"  ⚠️  Erreur récupération workouts planifiés: {e}")
+            return
+
+        # Group matched sessions by week_id for efficient batch updates
         activities_by_week = {}
 
-        for activity in activities:
-            # Only process activities paired with planned events
-            if not activity.get("paired_event_id"):
-                continue
+        for workout in workouts:
+            workout_name = workout.get("name", "")
 
-            activity_name = activity.get("name", "")
-
-            # Extract session info from name
-            session_info = self._extract_session_id(activity_name)
+            # Extract session info from workout name
+            session_info = self._extract_session_id(workout_name)
             if not session_info:
-                print(f"  ⚠️  Impossible d'extraire session_id de: {activity_name}")
                 continue
 
             week_id, session_id = session_info
 
-            if week_id not in activities_by_week:
-                activities_by_week[week_id] = []
+            # Find matching activity using intelligent matching
+            matched_activity = self._find_matching_activity(workout, activities)
 
-            activities_by_week[week_id].append((session_id, activity_name))
+            if matched_activity:
+                activity_name = matched_activity.get("name", "")
+
+                if week_id not in activities_by_week:
+                    activities_by_week[week_id] = []
+
+                activities_by_week[week_id].append((session_id, activity_name))
 
         # Update each week via Control Tower (one permission/backup per week)
         for week_id, session_updates in activities_by_week.items():
