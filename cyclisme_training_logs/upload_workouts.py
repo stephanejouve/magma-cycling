@@ -65,6 +65,8 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
+from cyclisme_training_logs.planning.backup import auto_backup
+
 # Ajouter le répertoire parent au PYTHONPATH
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -654,6 +656,18 @@ def main():
     if not args.week_id.startswith("S") or len(args.week_id) != 4:
         print(f"❌ Format semaine invalide : {args.week_id}")
         sys.exit(1)
+
+    # 🔒 AUTOMATIC BACKUP before any upload
+    if not args.dry_run:
+        try:
+            backups = auto_backup(args.week_id)
+            if backups:
+                print("🔒 Backup créé:")
+                for file_type, backup_path in backups.items():
+                    print(f"   {file_type}: {backup_path.name}")
+        except Exception as e:
+            print(f"⚠️  Avertissement: backup échoué: {e}")
+            print("   Continuer quand même...")
 
     # Calculate start date automatically if not provided
     if args.start_date:

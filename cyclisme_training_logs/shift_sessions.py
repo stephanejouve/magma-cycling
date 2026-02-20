@@ -29,6 +29,7 @@ from pathlib import Path
 
 from cyclisme_training_logs.api.intervals_client import IntervalsClient
 from cyclisme_training_logs.config import create_intervals_client, get_data_config
+from cyclisme_training_logs.planning.backup import auto_backup
 from cyclisme_training_logs.planning.models import Session, WeeklyPlan
 
 
@@ -52,6 +53,13 @@ class SessionShifter:
 
         if not self.planning_file.exists():
             raise FileNotFoundError(f"Planning file not found: {self.planning_file}")
+
+        # 🔒 AUTOMATIC BACKUP before any modification
+        backups = auto_backup(week_id)
+        if backups:
+            print("🔒 Backup créé:")
+            for file_type, backup_path in backups.items():
+                print(f"   {file_type}: {backup_path.name}")
 
         # Load planning
         self.plan = WeeklyPlan.from_json(self.planning_file)

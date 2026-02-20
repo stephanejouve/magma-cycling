@@ -93,7 +93,10 @@ class Session(BaseModel):
         - No shared references between instances
     """
 
-    session_id: str = Field(pattern=r"^S\d{3}-\d{2}$", description="Session ID (e.g., S079-01)")
+    session_id: str = Field(
+        pattern=r"^S\d{3}-\d{2}[a-z]?$",
+        description="Session ID (e.g., S079-01, S081-06a for double sessions)",
+    )
     session_date: date = Field(alias="date", description="Planned session date")
     name: str = Field(min_length=1, description="Session name")
     session_type: str = Field(
