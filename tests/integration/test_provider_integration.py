@@ -7,6 +7,8 @@ Tests real integration between providers, factory, and config.
 import os
 from unittest.mock import patch
 
+import pytest
+
 from cyclisme_training_logs.ai_providers.base import AIProvider
 from cyclisme_training_logs.ai_providers.factory import AIProviderFactory
 from cyclisme_training_logs.config import get_ai_config, reset_ai_config
@@ -23,6 +25,9 @@ class TestProviderIntegration:
         """Reset config after each test."""
         reset_ai_config()
 
+    @pytest.mark.skipif(
+        os.environ.get("CI") == "true", reason="Clipboard not available in CI environment"
+    )
     def test_full_provider_lifecycle_clipboard(self):
         """Test complete lifecycle: config → factory → provider → analysis."""
         # Get config
