@@ -109,6 +109,7 @@ class Session(BaseModel):
     status: Literal[
         "pending",
         "planned",
+        "uploaded",
         "completed",
         "skipped",
         "cancelled",
