@@ -36,9 +36,7 @@ Metadata:
     Version: 2.1.0
 """
 import argparse
-import json
 import sys
-from datetime import datetime
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -53,7 +51,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from cyclisme_training_logs.api.intervals_client import IntervalsClient  # noqa: E402
 from cyclisme_training_logs.config import create_intervals_client  # noqa: E402
-from cyclisme_training_logs.weekly_planner import WeeklyPlanner  # noqa: E402
+from cyclisme_training_logs.planning.control_tower import planning_tower  # noqa: E402
 
 # Statuses that should remove the event from Intervals.icu
 STATUSES_TO_DELETE = ["cancelled", "skipped", "replaced"]
@@ -311,10 +309,6 @@ Valid statuses:
     )
 
     parser.add_argument(
-        "--start-date", type=str, help="Week start date (YYYY-MM-DD) - optional if JSON exists"
-    )
-
-    parser.add_argument(
         "--sync", action="store_true", help="Synchronize change with Intervals.icu calendar"
     )
 
@@ -325,43 +319,43 @@ Valid statuses:
         parser.error(f"Status '{args.status}' requires --reason")
 
     try:
-        # Parse start date if provided
-        if args.start_date:
-            start_date = datetime.strptime(args.start_date, "%Y-%m-%d")
-        else:
-            start_date = datetime.now()
-
-        # Get data repository configuration
-        from cyclisme_training_logs.config import get_data_config
-
-        try:
-            data_config = get_data_config()
-            planning_dir = data_config.week_planning_dir
-        except FileNotFoundError:
-            # Fallback to legacy path
-            project_root = Path(__file__).parent.parent
-            planning_dir = project_root / "data" / "week_planning"
-
-        # Create planner instance
-        project_root = Path(__file__).parent.parent
-        planner = WeeklyPlanner(args.week_id, start_date, project_root)
-
         print(f"\n📝 Updating session {args.session}")
         print(f"   Week: {args.week_id}")
         print(f"   Status: {args.status}")
         if args.reason:
             print(f"   Reason: {args.reason}")
 
-        # Update local JSON
-        success = planner.update_session_status(
-            session_id=args.session, status=args.status, reason=args.reason
-        )
+        # 🚦 UPDATE VIA CONTROL TOWER (automatic backup + audit)
+        try:
+            with planning_tower.modify_week(
+                args.week_id,
+                requesting_script="update-session-status",
+                reason=f"Update {args.session} to {args.status}: {args.reason or 'N/A'}",
+            ) as plan:
+                # Find and update session
+                session_found = False
+                for session in plan.planned_sessions:
+                    if session.session_id == args.session:
+                        # Set skip_reason BEFORE status (Pydantic validator requirement)
+                        if args.reason and args.status in ("skipped", "cancelled", "replaced"):
+                            session.skip_reason = args.reason
 
-        if not success:
-            print("\n❌ Failed to update local planning JSON")
+                        session.status = args.status
+                        session_found = True
+                        break
+
+                if not session_found:
+                    print(f"\n❌ Session {args.session} not found in planning")
+                    sys.exit(1)
+
+                print(f"\n✅ Session {args.session} updated to: {args.status}")
+                if args.reason:
+                    print(f"   Reason: {args.reason}")
+                # Auto-saved by Control Tower with backup + audit log
+
+        except Exception as e:
+            print(f"\n❌ Failed to update via Control Tower: {e}")
             sys.exit(1)
-
-        print("\n✅ Local planning JSON updated successfully")
 
         # Sync with Intervals.icu if requested (Sprint R9.B Phase 2 - centralized)
         if args.sync:
@@ -376,24 +370,29 @@ Valid statuses:
                 print("   Skipping sync with Intervals.icu")
                 sys.exit(0)
 
-            # Get session date from planning
-            planning_file = planning_dir / f"week_planning_{args.week_id}.json"
-
-            if not planning_file.exists():
+            # Get session date from planning (read-only via Control Tower)
+            try:
+                plan = planning_tower.read_week(args.week_id)
+            except FileNotFoundError:
                 print("\n⚠️  Warning: Could not find planning file to get session date")
-                print(f"   Expected: {planning_file}")
+                print(f"   Week: {args.week_id}")
                 print("   Skipping sync with Intervals.icu")
                 sys.exit(0)
 
-            with open(planning_file, encoding="utf-8") as f:
-                planning = json.load(f)
-
             session_date = None
             session_info = None
-            for session in planning.get("planned_sessions", []):
-                if session.get("session_id") == args.session:
-                    session_date = session.get("date")
-                    session_info = session
+            for session in plan.planned_sessions:
+                if session.session_id == args.session:
+                    session_date = str(session.session_date)
+                    # Convert Session model to dict for compatibility with sync function
+                    session_info = {
+                        "name": session.name,
+                        "type": session.session_type,
+                        "version": session.version,
+                        "description": session.description,
+                        "tss_planned": session.tss_planned,
+                        "duration_min": session.duration_min,
+                    }
                     break
 
             if not session_date:
