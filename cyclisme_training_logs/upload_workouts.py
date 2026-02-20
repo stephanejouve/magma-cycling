@@ -224,7 +224,8 @@ class WorkoutUploader:
 
         # CRITICAL: Check for warmup/cooldown presence
         # Skip validation for rest days (REPOS, ReposComplet, etc.)
-        is_rest_day = re.search(r"(?i)-REC-Repos", workout_id)
+        # Match both formats: -REC-Repos* (old) and -REPOS (new)
+        is_rest_day = re.search(r"(?i)(-REC-Repos|-REPOS)", workout_id)
 
         if not is_rest_day:
             # Look for section markers, not just word mentions

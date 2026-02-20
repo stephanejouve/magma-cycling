@@ -215,6 +215,7 @@ Cooldown
 
         # Mock API
         mock_api = Mock()
+        mock_api.get_events.return_value = []  # No existing workouts
         mock_api.create_event.return_value = {"id": "event_123"}
         uploader.api = mock_api
 
