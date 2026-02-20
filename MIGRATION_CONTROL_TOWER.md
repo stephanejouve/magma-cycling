@@ -12,16 +12,17 @@ Garantir que TOUS les scripts qui modifient des fichiers de planning passent par
 
 ### Priorité HAUTE (modifient directement planning JSON)
 
-1. **cyclisme_training_logs/weekly_planner.py**
-   - Crée les plannings hebdomadaires
-   - Status: ❌ À MIGRER
+1. **cyclisme_training_logs/update_session_status.py** ✅
+   - Met à jour le statut des sessions
+   - Status: ✅ MIGRÉ (commit a7bfd34)
+   - Permission: ✅ | Backup: ✅ | Audit: ✅
 
 2. **cyclisme_training_logs/shift_sessions.py**
    - Décale/swap les sessions
    - Status: ⚠️ PARTIELLEMENT MIGRÉ (backup seulement, pas de permission)
 
-3. **cyclisme_training_logs/update_session_status.py**
-   - Met à jour le statut des sessions
+3. **cyclisme_training_logs/weekly_planner.py**
+   - Crée les plannings hebdomadaires
    - Status: ❌ À MIGRER
 
 4. **cyclisme_training_logs/daily_sync.py**
@@ -190,9 +191,18 @@ finally:
 ## 📊 Progression
 
 - Scripts à migrer: 9
-- Scripts migrés: 0
+- Scripts migrés: 1 ✅
 - Scripts en cours: 0
-- % complété: 0%
+- % complété: 11%
+
+### ✅ Scripts Migrés
+
+1. **update_session_status.py** - ✅ MIGRÉ (2026-02-20)
+   - Permission system: ✅
+   - Backup automatique: ✅
+   - Audit log: ✅
+   - Tests: ✅
+   - Commit: a7bfd34
 
 ## 🚀 Ordre de Migration Recommandé
 
