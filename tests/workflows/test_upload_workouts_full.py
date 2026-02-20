@@ -374,6 +374,7 @@ class TestUploadWorkout:
         """Test successful workout upload."""
         # Given: Uploader with mocked API
         mock_api_instance = Mock()
+        mock_api_instance.get_events.return_value = []  # No existing workouts
         mock_api_instance.create_event.return_value = {"id": "123"}
         mock_client_class.return_value = mock_api_instance
 
@@ -466,6 +467,7 @@ class TestUploadAll:
         """Test batch upload all workouts."""
         # Given: Uploader with mocked API
         mock_api_instance = Mock()
+        mock_api_instance.get_events.return_value = []  # No existing workouts
         mock_api_instance.create_event.return_value = {"id": "123"}
         mock_client_class.return_value = mock_api_instance
 
@@ -506,6 +508,7 @@ class TestUploadAll:
         """Test batch upload with some failures."""
         # Given: API fails on second upload
         mock_api_instance = Mock()
+        mock_api_instance.get_events.return_value = []  # No existing workouts
         mock_api_instance.create_event.side_effect = [
             {"id": "123"},  # First success
             Exception("API Error"),  # Second fails
@@ -562,6 +565,7 @@ class TestIntegrationUploadWorkflow:
         """Test complete workflow: parse → validate → upload."""
         # Given: Mock API and workout file
         mock_api_instance = Mock()
+        mock_api_instance.get_events.return_value = []  # No existing workouts
         mock_api_instance.create_event.return_value = {"id": "123"}
         mock_client_class.return_value = mock_api_instance
 

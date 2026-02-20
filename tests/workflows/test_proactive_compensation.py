@@ -584,7 +584,7 @@ def test_format_compensation_section_includes_all_data(sample_context, sample_re
 
     assert "Compensation TSS Proactive" in section
     assert "S078" in section
-    assert "-60" in section
+    assert "60 TSS" in section  # Deficit shown as "60 TSS" not "-60"
     assert "COMBINED" in section
     assert "Action 1" in section
     assert "Action 2" in section
