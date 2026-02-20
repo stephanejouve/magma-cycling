@@ -37,6 +37,9 @@ class TestWorkflowAIIntegration:
 
             assert default_provider in ["clipboard", "ollama"]
 
+    @pytest.mark.skipif(
+        os.environ.get("CI") == "true", reason="Clipboard not available in CI environment"
+    )
     def test_workflow_provider_initialization(self):
         """Test provider initialization sequence as workflow would do."""
         config = get_ai_config()

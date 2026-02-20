@@ -68,7 +68,7 @@ jobs:
           EOF
 
           # Create test data directory structure
-          mkdir -p ${{ github.workspace }}/test-data/week_planning
+          mkdir -p ${{ github.workspace }}/test-data/data/week_planning
           mkdir -p ${{ github.workspace }}/test-data/data
 
           # Create .config.json (required by proactive_compensation and other tests)
@@ -101,7 +101,7 @@ jobs:
           EOF
 
           # Create S072 planning file (required by tests)
-          cat > ${{ github.workspace }}/test-data/week_planning/week_planning_S072.json << 'EOF'
+          cat > ${{ github.workspace }}/test-data/data/week_planning/week_planning_S072.json << 'EOF'
           {
             "week": "S072",
             "start_date": "2025-12-15",
