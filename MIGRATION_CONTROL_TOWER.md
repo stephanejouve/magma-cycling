@@ -17,9 +17,10 @@ Garantir que TOUS les scripts qui modifient des fichiers de planning passent par
    - Status: ✅ MIGRÉ (commit a7bfd34)
    - Permission: ✅ | Backup: ✅ | Audit: ✅
 
-2. **cyclisme_training_logs/shift_sessions.py**
+2. **cyclisme_training_logs/shift_sessions.py** ✅
    - Décale/swap les sessions
-   - Status: ⚠️ PARTIELLEMENT MIGRÉ (backup seulement, pas de permission)
+   - Status: ✅ MIGRÉ (commit à venir)
+   - Permission: ✅ | Backup: ✅ | Audit: ✅
 
 3. **cyclisme_training_logs/weekly_planner.py**
    - Crée les plannings hebdomadaires
@@ -191,9 +192,9 @@ finally:
 ## 📊 Progression
 
 - Scripts à migrer: 9
-- Scripts migrés: 1 ✅
+- Scripts migrés: 2 ✅
 - Scripts en cours: 0
-- % complété: 11%
+- % complété: 22%
 
 ### ✅ Scripts Migrés
 
@@ -203,6 +204,13 @@ finally:
    - Audit log: ✅
    - Tests: ✅
    - Commit: a7bfd34
+
+2. **shift_sessions.py** - ✅ MIGRÉ (2026-02-20)
+   - Permission system: ✅
+   - Backup automatique: ✅
+   - Audit log: ✅
+   - Tests: ✅ (dry-run tested)
+   - Commit: À venir
 
 ## 🚀 Ordre de Migration Recommandé
 

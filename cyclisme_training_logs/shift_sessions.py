@@ -29,40 +29,54 @@ from pathlib import Path
 
 from cyclisme_training_logs.api.intervals_client import IntervalsClient
 from cyclisme_training_logs.config import create_intervals_client, get_data_config
-from cyclisme_training_logs.planning.backup import auto_backup
+from cyclisme_training_logs.planning.control_tower import planning_tower
 from cyclisme_training_logs.planning.models import Session, WeeklyPlan
 
 
 class SessionShifter:
-    """Shift and reorganize planned sessions."""
+    """Shift and reorganize planned sessions.
 
-    def __init__(self, week_id: str, planning_dir: Path | None = None):
+    Can work with Control Tower (preferred) or standalone (legacy).
+    """
+
+    def __init__(
+        self, week_id: str, plan: WeeklyPlan | None = None, planning_dir: Path | None = None
+    ):
         """Initialize shifter.
 
         Args:
             week_id: Week identifier (e.g., "S081")
-            planning_dir: Planning directory (default: from config)
+            plan: WeeklyPlan instance (if using Control Tower)
+            planning_dir: Planning directory (legacy mode only)
+
+        Note:
+            Prefer passing `plan` from Control Tower context.
+            Legacy mode (plan=None) is deprecated and will be removed.
         """
         self.week_id = week_id
 
-        if planning_dir is None:
-            data_config = get_data_config()
-            planning_dir = Path(data_config.training_logs_repo) / "data" / "week_planning"
+        if plan is not None:
+            # 🚦 CONTROL TOWER MODE (preferred)
+            # Plan is managed by Control Tower (backup + audit already done)
+            self.plan = plan
+            self.planning_file = None  # Not used in Control Tower mode
+        else:
+            # ⚠️ LEGACY MODE (deprecated)
+            # Direct file access - will be removed in future version
+            print("⚠️  Warning: Using legacy mode (bypassing Control Tower)")
+            print("   This mode is deprecated and will be removed")
 
-        self.planning_file = planning_dir / f"week_planning_{week_id}.json"
+            if planning_dir is None:
+                data_config = get_data_config()
+                planning_dir = data_config.week_planning_dir
 
-        if not self.planning_file.exists():
-            raise FileNotFoundError(f"Planning file not found: {self.planning_file}")
+            self.planning_file = planning_dir / f"week_planning_{week_id}.json"
 
-        # 🔒 AUTOMATIC BACKUP before any modification
-        backups = auto_backup(week_id)
-        if backups:
-            print("🔒 Backup créé:")
-            for file_type, backup_path in backups.items():
-                print(f"   {file_type}: {backup_path.name}")
+            if not self.planning_file.exists():
+                raise FileNotFoundError(f"Planning file not found: {self.planning_file}")
 
-        # Load planning
-        self.plan = WeeklyPlan.from_json(self.planning_file)
+            # Load planning (legacy)
+            self.plan = WeeklyPlan.from_json(self.planning_file)
 
         # Track modified sessions for sync
         self.modified_sessions: list[tuple[Session, date]] = []  # (session, old_date)
@@ -400,11 +414,32 @@ class SessionShifter:
 
         Returns:
             True if saved successfully
+
+        Note:
+            In Control Tower mode, plan is auto-saved by context manager.
+            This method only handles sync in that case.
         """
         if dry_run:
             print("\n🔍 DRY RUN - Changes not saved")
             return False
 
+        # 🚦 CONTROL TOWER MODE
+        if self.planning_file is None:
+            print("\n💡 Control Tower mode - plan will be auto-saved by context manager")
+
+            # Only handle sync if requested
+            if sync:
+                try:
+                    client = create_intervals_client()
+                    self.sync_session_changes(client)
+                except Exception as e:
+                    print(f"\n⚠️  Warning: Sync with Intervals.icu failed: {e}")
+                    # Don't fail the whole operation if sync fails
+                    return True
+
+            return True
+
+        # ⚠️ LEGACY MODE (deprecated)
         try:
             # Update timestamp
             self.plan.last_updated = datetime.now(UTC)
@@ -536,41 +571,29 @@ Examples:
         help="Synchronize changes with Intervals.icu (update event dates)",
     )
     parser.add_argument("--dry-run", action="store_true", help="Preview changes without saving")
-    parser.add_argument(
-        "--planning-dir", type=Path, help="Planning directory (default: from config)"
-    )
 
     args = parser.parse_args()
 
     try:
-        # Initialize shifter
-        shifter = SessionShifter(week_id=args.week_id, planning_dir=args.planning_dir)
-
-        print(f"\n{'🔍 DRY RUN MODE' if args.dry_run else '🔧 SHIFT SESSIONS'}")
-        print("=" * 70)
-
-        # Display current state
-        shifter.display_summary()
-
-        # Perform operation
+        # Build operation description for audit log
+        operation_parts = []
         if args.insert_rest_day:
-            shifter.insert_rest_day(args.insert_rest_day)
-
+            operation_parts.append(f"insert rest day {args.insert_rest_day}")
         elif args.swap:
-            shifter.swap_sessions(session1_id=args.swap[0], session2_id=args.swap[1])
-
+            operation_parts.append(f"swap {args.swap[0]} ↔ {args.swap[1]}")
         elif args.swap_days:
-            shifter.swap_sessions(day1=args.swap_days[0], day2=args.swap_days[1])
-
+            operation_parts.append(f"swap days {args.swap_days[0]} ↔ {args.swap_days[1]}")
         elif args.remove_session:
-            shifter.remove_session(args.remove_session)
-
-        elif args.from_session or args.from_day:
-            shifter.shift_sessions(
-                from_session_id=args.from_session,
-                from_day=args.from_day,
-                shift_days=args.shift_days,
-                renumber=args.renumber,
+            operation_parts.append(f"remove {args.remove_session}")
+        elif args.from_session:
+            operation_parts.append(
+                f"shift from {args.from_session} by {args.shift_days} days"
+                + (" (renumber)" if args.renumber else "")
+            )
+        elif args.from_day:
+            operation_parts.append(
+                f"shift from day {args.from_day} by {args.shift_days} days"
+                + (" (renumber)" if args.renumber else "")
             )
         else:
             print(
@@ -579,16 +602,59 @@ Examples:
             )
             return 1
 
-        # Display final state
-        shifter.display_summary()
+        operation_description = ", ".join(operation_parts)
 
-        # Save
-        shifter.save(dry_run=args.dry_run, sync=args.sync)
+        print(f"\n{'🔍 DRY RUN MODE' if args.dry_run else '🔧 SHIFT SESSIONS'}")
+        print("=" * 70)
 
+        # 🚦 USE CONTROL TOWER for permission + backup + audit
+        with planning_tower.modify_week(
+            args.week_id,
+            requesting_script="shift-sessions",
+            reason=operation_description,
+            auto_save=not args.dry_run,  # Only save if not dry-run
+        ) as plan:
+            # Create shifter in Control Tower mode
+            shifter = SessionShifter(week_id=args.week_id, plan=plan)
+
+            # Display current state
+            shifter.display_summary()
+
+            # Perform operation
+            if args.insert_rest_day:
+                shifter.insert_rest_day(args.insert_rest_day)
+
+            elif args.swap:
+                shifter.swap_sessions(session1_id=args.swap[0], session2_id=args.swap[1])
+
+            elif args.swap_days:
+                shifter.swap_sessions(day1=args.swap_days[0], day2=args.swap_days[1])
+
+            elif args.remove_session:
+                shifter.remove_session(args.remove_session)
+
+            elif args.from_session or args.from_day:
+                shifter.shift_sessions(
+                    from_session_id=args.from_session,
+                    from_day=args.from_day,
+                    shift_days=args.shift_days,
+                    renumber=args.renumber,
+                )
+
+            # Display final state
+            shifter.display_summary()
+
+            # Handle sync (save will be automatic via Control Tower)
+            if not args.dry_run and args.sync:
+                shifter.save(dry_run=False, sync=True)
+
+        # Success messages
         if args.dry_run:
             print("\n💡 Run without --dry-run to apply changes")
         elif args.sync:
             print("\n✅ Changes saved and synced with Intervals.icu")
+        else:
+            print("\n✅ Changes saved")
 
         return 0
 
