@@ -30,9 +30,10 @@ Garantir que TOUS les scripts qui modifient des fichiers de planning passent par
    - Synchronise avec Intervals.icu
    - Status: ❌ À MIGRER
 
-5. **cyclisme_training_logs/rest_and_cancellations.py**
+5. **cyclisme_training_logs/rest_and_cancellations.py** ✅
    - Gère les repos/annulations
-   - Status: ❌ À MIGRER
+   - Status: ✅ MIGRÉ (commit à venir)
+   - Read-only: ✅ (via planning_tower.read_week())
 
 ### Priorité MOYENNE (lisent et écrivent potentiellement)
 
@@ -192,9 +193,9 @@ finally:
 ## 📊 Progression
 
 - Scripts à migrer: 9
-- Scripts migrés: 2 ✅
+- Scripts migrés: 3 ✅
 - Scripts en cours: 0
-- % complété: 22%
+- % complété: 33%
 
 ### ✅ Scripts Migrés
 
@@ -210,6 +211,13 @@ finally:
    - Backup automatique: ✅
    - Audit log: ✅
    - Tests: ✅ (dry-run tested)
+   - Commit: 921ee22
+
+3. **rest_and_cancellations.py** - ✅ MIGRÉ (2026-02-20)
+   - Mode: Read-only (planning_tower.read_week)
+   - Bug fix: WeeklyPlan object access corrected
+   - Deprecated: planning_dir parameter
+   - Tests: Syntax validated
    - Commit: À venir
 
 ## 🚀 Ordre de Migration Recommandé
