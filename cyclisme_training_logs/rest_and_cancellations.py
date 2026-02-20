@@ -56,7 +56,6 @@ Metadata:
     Priority: P2
     Version: v2
 """
-import json
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -64,6 +63,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from cyclisme_training_logs.planning.control_tower import planning_tower
 from cyclisme_training_logs.planning.models import WeeklyPlan
 
 # Configuration du logging
@@ -213,16 +213,18 @@ def load_week_planning(week_id: str, planning_dir: Path | None = None) -> Weekly
     """
     Charge la configuration hebdomadaire avec protection Pydantic.
 
-    Migration Note (2026-02-08):
-        Fonction migrée pour retourner WeeklyPlan (Pydantic) au lieu de dict.
+    Migration Note (2026-02-20):
+        Fonction migrée vers Control Tower (read-only access).
+        - Utilise planning_tower.read_week() au lieu de WeeklyPlan.from_json()
         - Validation automatique par Pydantic
         - Protection anti-shallow copy
         - Type hints pour IntelliSense
         - Backward compatibility: Les appelants doivent accéder via .planned_sessions
+        - planning_dir parameter deprecated (Control Tower uses config)
 
     Args:
         week_id: Identifiant semaine (ex: "S070")
-        planning_dir: Répertoire contenant les plannings (legacy, use data repo config)
+        planning_dir: Répertoire contenant les plannings (DEPRECATED - ignored)
 
     Returns:
         WeeklyPlan: Instance Pydantic validée avec protection anti-aliasing
@@ -237,32 +239,22 @@ def load_week_planning(week_id: str, planning_dir: Path | None = None) -> Weekly
         >>> for session in plan.planned_sessions:
         ...     print(f"  {session.session_id}: {session.status}")
     """
-    if planning_dir is None:
-        # Use data repo config if available
-        from cyclisme_training_logs.config import get_data_config
-
-        try:
-            config = get_data_config()
-            planning_dir = config.week_planning_dir
-        except FileNotFoundError:
-            # Fallback to legacy path
-            planning_dir = Path.cwd() / "data" / "week_planning"
-
-    planning_file = planning_dir / f"week_planning_{week_id}.json"
-
-    if not planning_file.exists():
-        raise FileNotFoundError(
-            f"Planning non trouvé: {planning_file}\n"
-            f"Créer le fichier ou utiliser le mode standard (sans planning)"
+    if planning_dir is not None:
+        logger.warning(
+            "planning_dir parameter is deprecated and ignored. "
+            "Control Tower uses data repo config."
         )
 
     try:
-        # ✅ Chargement sécurisé avec validation Pydantic automatique
-        plan = WeeklyPlan.from_json(planning_file)
+        # 🚦 READ-ONLY ACCESS via Control Tower (no backup needed)
+        plan = planning_tower.read_week(week_id)
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"Planning non trouvé pour {week_id}\n"
+            f"Créer le fichier ou utiliser le mode standard (sans planning)"
+        )
     except ValidationError as e:
         raise ValueError(f"Planning invalide (erreur de validation): {e}") from e
-    except json.JSONDecodeError as e:
-        raise ValueError(f"Format JSON invalide: {e}") from e
 
     logger.info(f"Planning chargé: {week_id} ({len(plan.planned_sessions)} sessions)")
     return plan
@@ -902,10 +894,28 @@ def process_week_with_rest_handling(
     markdown_entries = []
 
     # Traiter par ordre chronologique
-    all_sessions = sorted(planning["planned_sessions"], key=lambda x: x["date"])
+    # Note: planning is a WeeklyPlan object, access via .planned_sessions
+    all_sessions = sorted(planning.planned_sessions, key=lambda x: x.session_date)
 
     for session in all_sessions:
-        status = session["status"]
+        status = session.status
+
+        # Convert Session object to dict for compatibility with markdown generators
+        # (markdown generators expect dict format)
+        session_dict = {
+            "session_id": session.session_id,
+            "date": str(session.session_date),
+            "type": session.session_type,
+            "name": session.name,
+            "status": session.status,
+            "tss_planned": session.tss_planned,
+            "duration_planned": session.duration_min * 60,  # Convert to seconds
+            "version": session.version,
+            "rest_reason": getattr(session, "rest_reason", None),
+            "cancellation_reason": getattr(session, "cancellation_reason", None),
+            "skip_reason": getattr(session, "skip_reason", None),
+            "physiological_notes": getattr(session, "physiological_notes", ""),
+        }
 
         # Récupérer métriques (simulation pour l'exemple)
         # En production, récupérer depuis API Intervals.icu wellness
@@ -914,7 +924,7 @@ def process_week_with_rest_handling(
 
         if status == "rest_day":
             entry = generate_rest_day_entry(
-                session_data=session,
+                session_data=session_dict,
                 metrics_pre=metrics_pre,
                 metrics_post=metrics_post,
                 athlete_feedback={
@@ -925,24 +935,26 @@ def process_week_with_rest_handling(
                 },
             )
             markdown_entries.append(entry)
-            logger.info(f"✓ Repos : {session['session_id']}")
+            logger.info(f"✓ Repos : {session.session_id}")
 
         elif status == "cancelled":
             entry = generate_cancelled_session_entry(
-                session_data=session, metrics_pre=metrics_pre, reason=session["cancellation_reason"]
+                session_data=session_dict,
+                metrics_pre=metrics_pre,
+                reason=session.cancellation_reason or "Non spécifiée",
             )
             markdown_entries.append(entry)
-            logger.info(f"✗ Annulée : {session['session_id']}")
+            logger.info(f"✗ Annulée : {session.session_id}")
 
         elif status == "skipped":
             # Nouvelle gestion séances sautées
             entry = generate_skipped_session_entry(
-                session_data=session,
+                session_data=session_dict,
                 metrics_pre=metrics_pre,
-                reason=session.get("skip_reason", "Séance planifiée non exécutée"),
+                reason=session.skip_reason or "Séance planifiée non exécutée",
             )
             markdown_entries.append(entry)
-            logger.info(f"⏭️  Sautée : {session['session_id']}")
+            logger.info(f"⏭️  Sautée : {session.session_id}")
 
         elif status == "completed":
             # Chercher dans les matched
@@ -950,17 +962,17 @@ def process_week_with_rest_handling(
                 (
                     m
                     for m in reconciliation["matched"]
-                    if m["session"]["session_id"] == session["session_id"]
+                    if m["session"].session_id == session.session_id
                 ),
                 None,
             )
             if matched:
-                logger.info(f"✓ Exécutée : {session['session_id']}")
+                logger.info(f"✓ Exécutée : {session.session_id}")
                 # Ici intégration avec analyse standard (à implémenter)
                 # Pour l'instant, on log juste
             else:
                 logger.warning(
-                    f"⚠ Session {session['session_id']} marquée completed "
+                    f"⚠ Session {session.session_id} marquée completed "
                     f"mais pas d'activité trouvée"
                 )
 
@@ -977,8 +989,9 @@ def process_week_with_rest_handling(
     logger.info(f"{'=' * 70}")
 
     # Calculer TSS
-    tss_completed = sum(m["session"].get("tss_planned", 0) for m in reconciliation["matched"])
-    tss_planned = sum(s.get("tss_planned", 0) for s in all_sessions if s["status"] != "rest_day")
+    # Note: m["session"] is a Session object (from WeeklyPlan.planned_sessions)
+    tss_completed = sum(m["session"].tss_planned for m in reconciliation["matched"])
+    tss_planned = sum(s.tss_planned for s in all_sessions if s.status != "rest_day")
     tss_completion = (tss_completed / tss_planned * 100) if tss_planned > 0 else 0
 
     logger.info(f"\nSessions planifiées : {len(all_sessions)}")
