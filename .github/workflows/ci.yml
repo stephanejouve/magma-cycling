@@ -71,6 +71,35 @@ jobs:
           mkdir -p ${{ github.workspace }}/test-data/week_planning
           mkdir -p ${{ github.workspace }}/test-data/data
 
+          # Create .config.json (required by proactive_compensation and other tests)
+          cat > ${{ github.workspace }}/test-data/.config.json << 'EOF'
+          {
+            "athlete_id": "test_athlete",
+            "name": "Test User",
+            "week_reference": {
+              "seasons": {
+                "2024-2025": {
+                  "s001_date": "2024-08-05",
+                  "description": "Test Season 2024-2025",
+                  "global_week_start": 1,
+                  "global_week_end": 74
+                },
+                "2026": {
+                  "s001_date": "2026-01-05",
+                  "description": "Test Season 2026",
+                  "global_week_start": 75,
+                  "global_week_end": null
+                }
+              },
+              "active_season": "2026"
+            },
+            "intervals_config": {
+              "athlete_id": "test_athlete",
+              "base_url": "https://intervals.icu/api/v1"
+            }
+          }
+          EOF
+
           # Create S072 planning file (required by tests)
           cat > ${{ github.workspace }}/test-data/week_planning/week_planning_S072.json << 'EOF'
           {
