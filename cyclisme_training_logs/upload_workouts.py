@@ -511,6 +511,18 @@ class WorkoutUploader:
             new_hash = calculate_description_hash(workout["description"])
 
             if existing_workout:
+                # PROTECTION: Ne jamais écraser un workout déjà réalisé
+                if existing_workout.get("paired_activity_id"):
+                    activity_id = existing_workout.get("paired_activity_id")
+                    print(
+                        f"  🔒 Protégé (réalisé) : {workout['name']} ({workout['date']}) [Activity: {activity_id}]"
+                    )
+                    workout["description_hash"] = calculate_description_hash(
+                        existing_workout.get("description", "")
+                    )
+                    workout["intervals_id"] = existing_workout.get("id")
+                    return True
+
                 existing_hash = calculate_description_hash(existing_workout.get("description", ""))
 
                 if existing_hash == new_hash:
