@@ -226,6 +226,47 @@ async def list_tools() -> list[Tool]:
                 "required": ["week_id"],
             },
         ),
+        Tool(
+            name="modify-session-details",
+            description="Modify detailed information of a training session (name, type, description, TSS, duration)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "week_id": {
+                        "type": "string",
+                        "description": "Week ID (e.g., S081)",
+                        "pattern": "^S\\d{3}$",
+                    },
+                    "session_id": {
+                        "type": "string",
+                        "description": "Session ID (e.g., S081-06a)",
+                        "pattern": "^S\\d{3}-\\d{2}[a-z]?$",
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Session name (e.g., 'SweetSpotCourt', 'EnduranceLongue')",
+                    },
+                    "type": {
+                        "type": "string",
+                        "description": "Session type",
+                        "enum": ["END", "INT", "REC", "RACE"],
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Detailed session description (workout structure, objectives, etc.)",
+                    },
+                    "tss_planned": {
+                        "type": "number",
+                        "description": "Planned Training Stress Score",
+                    },
+                    "duration_min": {
+                        "type": "number",
+                        "description": "Planned duration in minutes",
+                    },
+                },
+                "required": ["week_id", "session_id"],
+            },
+        ),
     ]
 
 
@@ -247,6 +288,8 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             return await handle_get_metrics(arguments)
         elif name == "get-week-details":
             return await handle_get_week_details(arguments)
+        elif name == "modify-session-details":
+            return await handle_modify_session_details(arguments)
         else:
             raise ValueError(f"Unknown tool: {name}")
 
@@ -561,6 +604,98 @@ async def handle_get_week_details(args: dict) -> list[TextContent]:
             TextContent(
                 type="text",
                 text=json.dumps({"error": f"Error reading planning: {str(e)}"}, indent=2),
+            )
+        ]
+
+
+async def handle_modify_session_details(args: dict) -> list[TextContent]:
+    """Modify detailed information of a training session."""
+    from cyclisme_training_logs.planning.control_tower import planning_tower
+
+    week_id = args["week_id"]
+    session_id = args["session_id"]
+
+    # Extract optional fields
+    name = args.get("name")
+    session_type = args.get("type")
+    description = args.get("description")
+    tss_planned = args.get("tss_planned")
+    duration_min = args.get("duration_min")
+
+    # Build modification summary
+    modifications = []
+    if name:
+        modifications.append(f"name={name}")
+    if session_type:
+        modifications.append(f"type={session_type}")
+    if description:
+        modifications.append("description updated")
+    if tss_planned is not None:
+        modifications.append(f"TSS={tss_planned}")
+    if duration_min is not None:
+        modifications.append(f"duration={duration_min}min")
+
+    modification_summary = ", ".join(modifications) if modifications else "no changes"
+
+    try:
+        # Suppress all output to prevent JSON protocol pollution
+        with suppress_stdout_stderr():
+            # Modify via Control Tower
+            with planning_tower.modify_week(
+                week_id,
+                requesting_script="mcp-server",
+                reason=f"MCP: Modify {session_id} details - {modification_summary}",
+            ) as plan:
+                session_found = False
+                for session in plan.planned_sessions:
+                    if session.session_id == session_id:
+                        # Update fields if provided
+                        if name:
+                            session.name = name
+                        if session_type:
+                            session.session_type = session_type
+                        if description:
+                            session.description = description
+                        if tss_planned is not None:
+                            session.tss_planned = tss_planned
+                        if duration_min is not None:
+                            session.duration_min = duration_min
+
+                        session_found = True
+                        break
+
+                if not session_found:
+                    raise ValueError(f"Session {session_id} not found in {week_id}")
+
+        result = {
+            "status": "success",
+            "week_id": week_id,
+            "session_id": session_id,
+            "modifications": modifications,
+            "message": f"Session {session_id} updated successfully",
+        }
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    except FileNotFoundError:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps({"error": f"Planning file not found for week {week_id}"}, indent=2),
+            )
+        ]
+    except ValueError as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps({"error": str(e)}, indent=2),
+            )
+        ]
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps({"error": f"Error modifying session: {str(e)}"}, indent=2),
             )
         ]
 
