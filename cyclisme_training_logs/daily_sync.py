@@ -379,6 +379,19 @@ class DailySync:
         Returns:
             List of new completed activities (from activities API, not events)
         """
+        # Suppress output if not in verbose mode (for MCP usage)
+        if not self.verbose:
+            import contextlib
+            import os
+
+            with open(os.devnull, "w") as devnull:
+                with contextlib.redirect_stdout(devnull), contextlib.redirect_stderr(devnull):
+                    return self._check_activities_internal(check_date)
+        else:
+            return self._check_activities_internal(check_date)
+
+    def _check_activities_internal(self, check_date: date) -> list[dict]:
+        """Internal implementation with prints."""
         print(f"\n🔍 Vérification activités du {check_date.strftime('%d/%m/%Y')}...")
 
         # Get all activities for the date (includes both planned and unplanned)
