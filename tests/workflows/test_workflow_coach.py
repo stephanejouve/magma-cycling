@@ -251,6 +251,10 @@ class TestPlanningModifications:
         planning_tower.planning_dir = tmp_path
         planning_tower.backup_system.planning_dir = tmp_path
 
+        # Create required files for DataRepoConfig validation
+        workouts_history = tmp_path / "workouts-history.md"
+        workouts_history.touch()
+
         yield tmp_path
 
         # Restore original path
@@ -1463,6 +1467,10 @@ class TestRemainingSessionsLoading:
         # Override with tmp_path
         planning_tower.planning_dir = tmp_path
         planning_tower.backup_system.planning_dir = tmp_path
+
+        # Create required files for DataRepoConfig validation
+        workouts_history = tmp_path / "workouts-history.md"
+        workouts_history.touch()
 
         yield tmp_path
 
