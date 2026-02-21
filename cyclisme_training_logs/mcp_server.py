@@ -923,6 +923,13 @@ async def handle_modify_session_details(args: dict) -> list[TextContent]:
                 session_found = False
                 for session in plan.planned_sessions:
                     if session.session_id == session_id:
+                        # 🛡️ PROTECTION: Refuse to modify completed sessions
+                        if session.status == "completed":
+                            raise ValueError(
+                                f"⛔ PROTECTION: Cannot modify session {session_id} - "
+                                f"Status is 'completed'. Completed sessions are protected from modification."
+                            )
+
                         # Update fields if provided
                         if name:
                             session.name = name
@@ -1097,6 +1104,22 @@ async def handle_delete_session(args: dict) -> list[TextContent]:
                 session_found = False
                 for i, session in enumerate(plan.planned_sessions):
                     if session.session_id == session_id:
+                        # 🛡️ PROTECTION 1: Refuse to delete completed sessions
+                        if session.status == "completed":
+                            raise ValueError(
+                                f"⛔ PROTECTION: Cannot delete session {session_id} - "
+                                f"Status is 'completed'. Completed sessions are protected from deletion."
+                            )
+
+                        # 🛡️ PROTECTION 2: Warn about deleting synced sessions
+                        if session.intervals_id:
+                            raise ValueError(
+                                f"⛔ PROTECTION: Cannot delete session {session_id} - "
+                                f"Has intervals_id={session.intervals_id}. "
+                                f"Session is synced with Intervals.icu. "
+                                f"Delete from Intervals.icu first or use force parameter."
+                            )
+
                         plan.planned_sessions.pop(i)
                         session_found = True
                         break
@@ -1274,6 +1297,18 @@ async def handle_swap_sessions(args: dict) -> list[TextContent]:
                 if not session_2:
                     raise ValueError(f"Session {session_id_2} not found in {week_id}")
 
+                # 🛡️ PROTECTION: Refuse to swap if either session is completed
+                if session_1.status == "completed":
+                    raise ValueError(
+                        f"⛔ PROTECTION: Cannot swap session {session_id_1} - "
+                        f"Status is 'completed'. Completed sessions are protected from modification."
+                    )
+                if session_2.status == "completed":
+                    raise ValueError(
+                        f"⛔ PROTECTION: Cannot swap session {session_id_2} - "
+                        f"Status is 'completed'. Completed sessions are protected from modification."
+                    )
+
                 # Swap dates
                 temp_date = session_1.session_date
                 session_1.session_date = session_2.session_date
@@ -1443,6 +1478,7 @@ async def handle_sync_week_to_intervals(args: dict) -> list[TextContent]:
             to_create = []
             to_update = []
             to_skip_completed = []
+            warnings = []
             errors = []
 
             # Process each session
@@ -1469,15 +1505,35 @@ async def handle_sync_week_to_intervals(args: dict) -> list[TextContent]:
                 if session.intervals_id:
                     # Check if event exists remotely
                     if session.intervals_id in remote_workouts:
-                        # Event exists - update if needed
+                        # Event exists - check for conflicts
                         remote_event = remote_workouts[session.intervals_id]
 
+                        # 🛡️ VALIDATION: Detect if remote was manually modified
+                        remote_name = remote_event.get("name", "")
+                        remote_desc = remote_event.get("description", "")
+                        local_name = session.name
+                        local_desc = session.description
+
+                        has_remote_changes = remote_name != local_name or remote_desc != local_desc
+
+                        if has_remote_changes and not force_update:
+                            # Remote has been manually modified - warn about conflict
+                            warnings.append(
+                                {
+                                    "session_id": session.session_id,
+                                    "intervals_id": session.intervals_id,
+                                    "type": "remote_modification_detected",
+                                    "message": f"⚠️ Remote event {session.intervals_id} has been manually modified in Intervals.icu",
+                                    "local_name": local_name,
+                                    "remote_name": remote_name,
+                                    "suggestion": "Use force_update=true to overwrite remote changes",
+                                }
+                            )
+                            # Skip this session unless force_update
+                            continue
+
                         # Check if update needed
-                        needs_update = (
-                            force_update
-                            or remote_event.get("name") != session.name
-                            or remote_event.get("description") != session.description
-                        )
+                        needs_update = force_update or has_remote_changes
 
                         if needs_update:
                             to_update.append(
@@ -1551,14 +1607,23 @@ async def handle_sync_week_to_intervals(args: dict) -> list[TextContent]:
                         errors.append(f"Error updating {item['session_id']}: {str(e)}")
 
         # Build result
+        # Determine status based on warnings and errors
+        if errors:
+            status = "partial_success"
+        elif warnings:
+            status = "success_with_warnings"
+        else:
+            status = "success"
+
         result = {
-            "status": "success" if not errors else "partial_success",
+            "status": status,
             "week_id": week_id,
             "dry_run": dry_run,
             "summary": {
                 "to_create": len(to_create),
                 "to_update": len(to_update),
                 "skipped_completed": len(to_skip_completed),
+                "warnings": len(warnings),
                 "created": created_count if not dry_run else 0,
                 "updated": updated_count if not dry_run else 0,
                 "errors": len(errors),
@@ -1577,6 +1642,7 @@ async def handle_sync_week_to_intervals(args: dict) -> list[TextContent]:
                 ],
                 "skipped_completed": to_skip_completed,
             },
+            "warnings": warnings if warnings else None,
             "errors": errors if errors else None,
             "message": f"Sync {'preview' if dry_run else 'completed'} for {week_id}",
         }
