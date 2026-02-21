@@ -719,7 +719,7 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="create-remote-note",
-            description="Create a NOTE (calendar note) directly on Intervals.icu (category=NOTE, type=null)",
+            description="Create a NOTE (calendar note) directly on Intervals.icu (category=NOTE, type=null). NOTE: Name MUST start with one of the allowed prefixes: [ANNULÉE], [SAUTÉE], or [REMPLACÉE]",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -730,7 +730,8 @@ async def list_tools() -> list[Tool]:
                     },
                     "name": {
                         "type": "string",
-                        "description": "Note title",
+                        "description": "Note title - MUST start with [ANNULÉE], [SAUTÉE], or [REMPLACÉE] prefix followed by session details (e.g., '[ANNULÉE] S081-04-INT-TempoSoutenu')",
+                        "pattern": "^\\[(ANNULÉE|SAUTÉE|REMPLACÉE)\\] .+",
                     },
                     "description": {
                         "type": "string",
@@ -3144,6 +3145,24 @@ async def handle_create_remote_note(args: dict) -> list[TextContent]:
     date = args["date"]
     name = args["name"]
     description = args["description"]
+
+    # Validate required prefix
+    ALLOWED_PREFIXES = ["[ANNULÉE]", "[SAUTÉE]", "[REMPLACÉE]"]
+    if not any(name.startswith(prefix) for prefix in ALLOWED_PREFIXES):
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(
+                    {
+                        "success": False,
+                        "error": f"Invalid NOTE name. Name must start with one of: {', '.join(ALLOWED_PREFIXES)}",
+                        "provided_name": name,
+                        "allowed_prefixes": ALLOWED_PREFIXES,
+                    },
+                    indent=2,
+                ),
+            )
+        ]
 
     try:
         with suppress_stdout_stderr():
