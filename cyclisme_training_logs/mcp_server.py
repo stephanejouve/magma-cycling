@@ -368,20 +368,22 @@ async def handle_daily_sync(args: dict) -> list[TextContent]:
 
     # Suppress all output to prevent JSON protocol pollution
     with suppress_stdout_stderr():
-        # Run sync
-        new_activities = sync.check_activities(check_date)
+        # Run sync - returns (new_activities, completed_activities)
+        new_activities, completed_activities = sync.check_activities(check_date)
 
-        # Mark as analyzed
+        # Mark new activities as analyzed
         for activity in new_activities:
             sync.tracker.mark_analyzed(activity, datetime.now())
 
-        # Auto-update session statuses
-        if new_activities:
-            sync.update_completed_sessions(new_activities)
+        # Auto-update session statuses using ALL completed activities (not just new ones)
+        # This ensures status updates even for activities analyzed in previous runs
+        if completed_activities:
+            sync.update_completed_sessions(completed_activities)
 
     result = {
         "date": check_date.isoformat(),
-        "activities_found": len(new_activities),
+        "completed_activities": len(completed_activities),
+        "new_activities": len(new_activities),
         "status": "completed",
         "message": f"Sync completed for {check_date.isoformat()}",
     }

@@ -365,7 +365,7 @@ class DailySync:
 
         return deduplicated
 
-    def check_activities(self, check_date: date) -> list[dict]:
+    def check_activities(self, check_date: date) -> tuple[list[dict], list[dict]]:
         """
         Check for new completed activities on given date.
 
@@ -377,7 +377,9 @@ class DailySync:
             check_date: Date to check
 
         Returns:
-            List of new completed activities (from activities API, not events)
+            Tuple of (new_activities, completed_activities):
+            - new_activities: List of new activities to analyze
+            - completed_activities: All completed activities on this date
         """
         # Suppress output if not in verbose mode (for MCP usage)
         if not self.verbose:
@@ -390,7 +392,7 @@ class DailySync:
         else:
             return self._check_activities_internal(check_date)
 
-    def _check_activities_internal(self, check_date: date) -> list[dict]:
+    def _check_activities_internal(self, check_date: date) -> tuple[list[dict], list[dict]]:
         """Internal implementation with prints."""
         print(f"\n🔍 Vérification activités du {check_date.strftime('%d/%m/%Y')}...")
 
@@ -437,7 +439,8 @@ class DailySync:
         print(f"  📋 {planned_count} planifiée(s), {unplanned_count} non planifiée(s)")
         print(f"  🆕 {len(new_activities)} nouvelle(s) activité(s) à analyser")
 
-        return new_activities
+        # Return both new activities (for analysis) and all completed activities (for status updates)
+        return new_activities, completed_activities
 
     def check_planning_changes(self, week_id: str, start_date: date, end_date: date) -> dict:
         """
@@ -1850,16 +1853,17 @@ Réponds maintenant."""
         print("DAILY SYNC - Vérification Quotidienne")
         print("=" * 80)
 
-        # 1. Check activities
-        new_activities = self.check_activities(check_date)
+        # 1. Check activities - returns (new_activities, completed_activities)
+        new_activities, completed_activities = self.check_activities(check_date)
 
-        # Mark as analyzed
+        # Mark new activities as analyzed
         for activity in new_activities:
             self.tracker.mark_analyzed(activity, datetime.now())
 
         # 1b. Auto-update session statuses in local planning JSON
-        if new_activities:
-            self.update_completed_sessions(new_activities)
+        # Use ALL completed activities (not just new ones) to ensure status updates
+        if completed_activities:
+            self.update_completed_sessions(completed_activities)
 
         # 2. Generate AI analyses (if enabled)
         analyses = {}
