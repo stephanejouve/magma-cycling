@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "cyclisme-training": {
+      "command": "/Users/stephanejouve/cyclisme-training-logs/mcp-server-wrapper.sh",
+      "env": {
+        "MCP_DEV_MODE": "1"
+      }
+    }
+  }
+}

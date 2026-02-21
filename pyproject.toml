@@ -44,6 +44,7 @@ pydeps = "^3.0.1"
 pre-commit = "^4.5.1"
 isort = "^7.0.0"
 memory-graph = "^0.3.65"
+watchdog = "^6.0.0"
 
 [tool.poetry.scripts]
 # === MCP Server ===
