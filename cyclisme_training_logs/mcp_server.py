@@ -363,6 +363,7 @@ async def handle_daily_sync(args: dict) -> list[TextContent]:
         reports_dir=reports_dir,
         enable_ai_analysis=False,
         enable_auto_servo=False,
+        verbose=False,  # Disable prints to prevent MCP protocol pollution
     )
 
     # Suppress all output to prevent JSON protocol pollution
