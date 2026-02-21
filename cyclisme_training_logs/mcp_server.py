@@ -267,6 +267,177 @@ async def list_tools() -> list[Tool]:
                 "required": ["week_id", "session_id"],
             },
         ),
+        Tool(
+            name="create-session",
+            description="Create a new training session in a weekly plan",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "week_id": {
+                        "type": "string",
+                        "description": "Week ID (e.g., S081)",
+                        "pattern": "^S\\d{3}$",
+                    },
+                    "session_date": {
+                        "type": "string",
+                        "description": "Session date (YYYY-MM-DD)",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Session name (default: 'NewSession')",
+                        "default": "NewSession",
+                    },
+                    "type": {
+                        "type": "string",
+                        "description": "Session type (default: END)",
+                        "enum": ["END", "INT", "REC", "RACE"],
+                        "default": "END",
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Workout description (default: 'À définir')",
+                        "default": "À définir",
+                    },
+                    "tss_planned": {
+                        "type": "integer",
+                        "description": "Planned TSS (default: 0)",
+                        "default": 0,
+                    },
+                    "duration_min": {
+                        "type": "integer",
+                        "description": "Duration in minutes (default: 0)",
+                        "default": 0,
+                    },
+                },
+                "required": ["week_id", "session_date"],
+            },
+        ),
+        Tool(
+            name="delete-session",
+            description="Delete a training session from a weekly plan",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "week_id": {
+                        "type": "string",
+                        "description": "Week ID (e.g., S081)",
+                        "pattern": "^S\\d{3}$",
+                    },
+                    "session_id": {
+                        "type": "string",
+                        "description": "Session ID to delete (e.g., S081-06a)",
+                        "pattern": "^S\\d{3}-\\d{2}[a-z]?$",
+                    },
+                },
+                "required": ["week_id", "session_id"],
+            },
+        ),
+        Tool(
+            name="duplicate-session",
+            description="Duplicate an existing session to a new date",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "week_id": {
+                        "type": "string",
+                        "description": "Week ID (e.g., S081)",
+                        "pattern": "^S\\d{3}$",
+                    },
+                    "source_session_id": {
+                        "type": "string",
+                        "description": "Session ID to duplicate (e.g., S081-01)",
+                        "pattern": "^S\\d{3}-\\d{2}[a-z]?$",
+                    },
+                    "target_date": {
+                        "type": "string",
+                        "description": "Target date for duplicated session (YYYY-MM-DD)",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    },
+                },
+                "required": ["week_id", "source_session_id", "target_date"],
+            },
+        ),
+        Tool(
+            name="swap-sessions",
+            description="Swap the dates of two sessions",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "week_id": {
+                        "type": "string",
+                        "description": "Week ID (e.g., S081)",
+                        "pattern": "^S\\d{3}$",
+                    },
+                    "session_id_1": {
+                        "type": "string",
+                        "description": "First session ID (e.g., S081-01)",
+                        "pattern": "^S\\d{3}-\\d{2}[a-z]?$",
+                    },
+                    "session_id_2": {
+                        "type": "string",
+                        "description": "Second session ID (e.g., S081-02)",
+                        "pattern": "^S\\d{3}-\\d{2}[a-z]?$",
+                    },
+                },
+                "required": ["week_id", "session_id_1", "session_id_2"],
+            },
+        ),
+        Tool(
+            name="attach-workout",
+            description="Attach a workout file (.zwo, .mrc, .erg) to a training session",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "session_id": {
+                        "type": "string",
+                        "description": "Session ID (e.g., S081-01)",
+                        "pattern": "^S\\d{3}-\\d{2}[a-z]?$",
+                    },
+                    "workout_name": {
+                        "type": "string",
+                        "description": "Workout name (e.g., 'FlatOutFast', 'ClimbControl')",
+                    },
+                    "workout_type": {
+                        "type": "string",
+                        "description": "Workout type code (e.g., 'TST', 'INT', 'END')",
+                        "default": "WKT",
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "Workout file content (XML for .zwo, text for .mrc/.erg)",
+                    },
+                    "version": {
+                        "type": "string",
+                        "description": "Version (default: V001)",
+                        "pattern": "^V\\d{3}$",
+                        "default": "V001",
+                    },
+                    "extension": {
+                        "type": "string",
+                        "description": "File extension (default: zwo)",
+                        "enum": ["zwo", "mrc", "erg"],
+                        "default": "zwo",
+                    },
+                },
+                "required": ["session_id", "workout_name", "content"],
+            },
+        ),
+        Tool(
+            name="get-workout",
+            description="Get the workout file content for a training session",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "session_id": {
+                        "type": "string",
+                        "description": "Session ID (e.g., S081-01)",
+                        "pattern": "^S\\d{3}-\\d{2}[a-z]?$",
+                    },
+                },
+                "required": ["session_id"],
+            },
+        ),
     ]
 
 
@@ -290,6 +461,18 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             return await handle_get_week_details(arguments)
         elif name == "modify-session-details":
             return await handle_modify_session_details(arguments)
+        elif name == "create-session":
+            return await handle_create_session(arguments)
+        elif name == "delete-session":
+            return await handle_delete_session(arguments)
+        elif name == "duplicate-session":
+            return await handle_duplicate_session(arguments)
+        elif name == "swap-sessions":
+            return await handle_swap_sessions(arguments)
+        elif name == "attach-workout":
+            return await handle_attach_workout(arguments)
+        elif name == "get-workout":
+            return await handle_get_workout(arguments)
         else:
             raise ValueError(f"Unknown tool: {name}")
 
@@ -696,6 +879,445 @@ async def handle_modify_session_details(args: dict) -> list[TextContent]:
             TextContent(
                 type="text",
                 text=json.dumps({"error": f"Error modifying session: {str(e)}"}, indent=2),
+            )
+        ]
+
+
+async def handle_create_session(args: dict) -> list[TextContent]:
+    """Create a new training session."""
+    from datetime import datetime
+
+    from cyclisme_training_logs.planning.control_tower import planning_tower
+    from cyclisme_training_logs.planning.models import Session
+
+    week_id = args["week_id"]
+    session_date_str = args["session_date"]
+    session_date = datetime.strptime(session_date_str, "%Y-%m-%d").date()
+
+    # Extract optional fields with defaults
+    name = args.get("name", "NewSession")
+    session_type = args.get("type", "END")
+    description = args.get("description", "À définir")
+    tss_planned = args.get("tss_planned", 0)
+    duration_min = args.get("duration_min", 0)
+
+    try:
+        # Suppress all output to prevent JSON protocol pollution
+        with suppress_stdout_stderr():
+            # Modify via Control Tower
+            with planning_tower.modify_week(
+                week_id,
+                requesting_script="mcp-server",
+                reason=f"MCP: Create new session on {session_date_str} - {name}",
+            ) as plan:
+                # Generate session_id
+                # Find day of week (Monday=0, Sunday=6)
+                day_num = session_date.weekday()
+                day_index = day_num + 1  # Convert to 1-based (Monday=1, Sunday=7)
+
+                # Find existing sessions on this date
+                existing_sessions = [
+                    s for s in plan.planned_sessions if s.session_date == session_date
+                ]
+
+                if not existing_sessions:
+                    # First session for this day
+                    session_id = f"{week_id}-{day_index:02d}"
+                else:
+                    # Multiple sessions - add letter suffix
+                    # Find next available letter (a, b, c, etc.)
+                    existing_suffixes = []
+                    for s in existing_sessions:
+                        # Extract suffix from session_id (e.g., "S081-06a" -> "a")
+                        if len(s.session_id.split("-")[1]) > 2:
+                            suffix = s.session_id.split("-")[1][2]
+                            existing_suffixes.append(suffix)
+
+                    if not existing_suffixes:
+                        # First session has no suffix, second gets 'a'
+                        session_id = f"{week_id}-{day_index:02d}a"
+                    else:
+                        # Find next letter
+                        next_letter = chr(ord(max(existing_suffixes)) + 1)
+                        session_id = f"{week_id}-{day_index:02d}{next_letter}"
+
+                # Create new session
+                new_session = Session(
+                    session_id=session_id,
+                    date=session_date,
+                    name=name,
+                    type=session_type,
+                    version="V001",
+                    tss_planned=tss_planned,
+                    duration_min=duration_min,
+                    description=description,
+                    status="planned",
+                )
+
+                # Add to plan (insert in chronological order)
+                plan.planned_sessions.append(new_session)
+                plan.planned_sessions.sort(key=lambda s: (s.session_date, s.session_id))
+
+        result = {
+            "status": "success",
+            "week_id": week_id,
+            "session_id": session_id,
+            "session_date": session_date_str,
+            "name": name,
+            "type": session_type,
+            "message": f"Session {session_id} created successfully",
+        }
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    except FileNotFoundError:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps({"error": f"Planning file not found for week {week_id}"}, indent=2),
+            )
+        ]
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps({"error": f"Error creating session: {str(e)}"}, indent=2),
+            )
+        ]
+
+
+async def handle_delete_session(args: dict) -> list[TextContent]:
+    """Delete a training session."""
+    from cyclisme_training_logs.planning.control_tower import planning_tower
+
+    week_id = args["week_id"]
+    session_id = args["session_id"]
+
+    try:
+        # Suppress all output to prevent JSON protocol pollution
+        with suppress_stdout_stderr():
+            # Modify via Control Tower
+            with planning_tower.modify_week(
+                week_id,
+                requesting_script="mcp-server",
+                reason=f"MCP: Delete session {session_id}",
+            ) as plan:
+                # Find and remove session
+                session_found = False
+                for i, session in enumerate(plan.planned_sessions):
+                    if session.session_id == session_id:
+                        plan.planned_sessions.pop(i)
+                        session_found = True
+                        break
+
+                if not session_found:
+                    raise ValueError(f"Session {session_id} not found in {week_id}")
+
+        result = {
+            "status": "success",
+            "week_id": week_id,
+            "session_id": session_id,
+            "message": f"Session {session_id} deleted successfully",
+        }
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    except FileNotFoundError:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps({"error": f"Planning file not found for week {week_id}"}, indent=2),
+            )
+        ]
+    except ValueError as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps({"error": str(e)}, indent=2),
+            )
+        ]
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps({"error": f"Error deleting session: {str(e)}"}, indent=2),
+            )
+        ]
+
+
+async def handle_duplicate_session(args: dict) -> list[TextContent]:
+    """Duplicate an existing session to a new date."""
+    from datetime import datetime
+
+    from cyclisme_training_logs.planning.control_tower import planning_tower
+    from cyclisme_training_logs.planning.models import Session
+
+    week_id = args["week_id"]
+    source_session_id = args["source_session_id"]
+    target_date_str = args["target_date"]
+    target_date = datetime.strptime(target_date_str, "%Y-%m-%d").date()
+
+    try:
+        # Suppress all output to prevent JSON protocol pollution
+        with suppress_stdout_stderr():
+            # Modify via Control Tower
+            with planning_tower.modify_week(
+                week_id,
+                requesting_script="mcp-server",
+                reason=f"MCP: Duplicate {source_session_id} to {target_date_str}",
+            ) as plan:
+                # Find source session
+                source_session = None
+                for session in plan.planned_sessions:
+                    if session.session_id == source_session_id:
+                        source_session = session
+                        break
+
+                if not source_session:
+                    raise ValueError(f"Source session {source_session_id} not found in {week_id}")
+
+                # Generate new session_id for target date
+                day_num = target_date.weekday()
+                day_index = day_num + 1
+
+                existing_sessions = [
+                    s for s in plan.planned_sessions if s.session_date == target_date
+                ]
+
+                if not existing_sessions:
+                    new_session_id = f"{week_id}-{day_index:02d}"
+                else:
+                    existing_suffixes = []
+                    for s in existing_sessions:
+                        if len(s.session_id.split("-")[1]) > 2:
+                            suffix = s.session_id.split("-")[1][2]
+                            existing_suffixes.append(suffix)
+
+                    if not existing_suffixes:
+                        new_session_id = f"{week_id}-{day_index:02d}a"
+                    else:
+                        next_letter = chr(ord(max(existing_suffixes)) + 1)
+                        new_session_id = f"{week_id}-{day_index:02d}{next_letter}"
+
+                # Create duplicate session
+                new_session = Session(
+                    session_id=new_session_id,
+                    date=target_date,
+                    name=source_session.name,
+                    type=source_session.session_type,
+                    version=source_session.version,
+                    tss_planned=source_session.tss_planned,
+                    duration_min=source_session.duration_min,
+                    description=source_session.description,
+                    status="planned",  # Reset status
+                    # Don't copy intervals_id, description_hash, skip_reason
+                )
+
+                # Add to plan
+                plan.planned_sessions.append(new_session)
+                plan.planned_sessions.sort(key=lambda s: (s.session_date, s.session_id))
+
+        result = {
+            "status": "success",
+            "week_id": week_id,
+            "source_session_id": source_session_id,
+            "new_session_id": new_session_id,
+            "target_date": target_date_str,
+            "message": f"Session duplicated successfully: {source_session_id} -> {new_session_id}",
+        }
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    except FileNotFoundError:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps({"error": f"Planning file not found for week {week_id}"}, indent=2),
+            )
+        ]
+    except ValueError as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps({"error": str(e)}, indent=2),
+            )
+        ]
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps({"error": f"Error duplicating session: {str(e)}"}, indent=2),
+            )
+        ]
+
+
+async def handle_swap_sessions(args: dict) -> list[TextContent]:
+    """Swap the dates of two sessions."""
+    from cyclisme_training_logs.planning.control_tower import planning_tower
+
+    week_id = args["week_id"]
+    session_id_1 = args["session_id_1"]
+    session_id_2 = args["session_id_2"]
+
+    try:
+        # Suppress all output to prevent JSON protocol pollution
+        with suppress_stdout_stderr():
+            # Modify via Control Tower
+            with planning_tower.modify_week(
+                week_id,
+                requesting_script="mcp-server",
+                reason=f"MCP: Swap sessions {session_id_1} <-> {session_id_2}",
+            ) as plan:
+                # Find both sessions
+                session_1 = None
+                session_2 = None
+
+                for session in plan.planned_sessions:
+                    if session.session_id == session_id_1:
+                        session_1 = session
+                    elif session.session_id == session_id_2:
+                        session_2 = session
+
+                if not session_1:
+                    raise ValueError(f"Session {session_id_1} not found in {week_id}")
+                if not session_2:
+                    raise ValueError(f"Session {session_id_2} not found in {week_id}")
+
+                # Swap dates
+                temp_date = session_1.session_date
+                session_1.session_date = session_2.session_date
+                session_2.session_date = temp_date
+
+                # Re-sort sessions
+                plan.planned_sessions.sort(key=lambda s: (s.session_date, s.session_id))
+
+        result = {
+            "status": "success",
+            "week_id": week_id,
+            "session_id_1": session_id_1,
+            "session_id_2": session_id_2,
+            "message": f"Sessions swapped successfully: {session_id_1} <-> {session_id_2}",
+        }
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    except FileNotFoundError:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps({"error": f"Planning file not found for week {week_id}"}, indent=2),
+            )
+        ]
+    except ValueError as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps({"error": str(e)}, indent=2),
+            )
+        ]
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps({"error": f"Error swapping sessions: {str(e)}"}, indent=2),
+            )
+        ]
+
+
+async def handle_attach_workout(args: dict) -> list[TextContent]:
+    """Attach a workout file to a session."""
+    from cyclisme_training_logs.config import get_data_config
+
+    session_id = args["session_id"]
+    workout_name = args["workout_name"]
+    workout_type = args.get("workout_type", "WKT")
+    content = args["content"]
+    version = args.get("version", "V001")
+    extension = args.get("extension", "zwo")
+
+    try:
+        # Suppress all output to prevent JSON protocol pollution
+        with suppress_stdout_stderr():
+            # Get workouts directory
+            config = get_data_config()
+            workouts_dir = config.data_repo_path / "workouts"
+            workouts_dir.mkdir(parents=True, exist_ok=True)
+
+            # Build filename: {session_id}-{type}-{name}-{version}.{ext}
+            filename = f"{session_id}-{workout_type}-{workout_name}-{version}.{extension}"
+            file_path = workouts_dir / filename
+
+            # Write workout file
+            file_path.write_text(content, encoding="utf-8")
+
+        result = {
+            "status": "success",
+            "session_id": session_id,
+            "filename": filename,
+            "path": str(file_path),
+            "message": f"Workout attached successfully: {filename}",
+        }
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps({"error": f"Error attaching workout: {str(e)}"}, indent=2),
+            )
+        ]
+
+
+async def handle_get_workout(args: dict) -> list[TextContent]:
+    """Get workout file content for a session."""
+    from cyclisme_training_logs.config import get_data_config
+
+    session_id = args["session_id"]
+
+    try:
+        # Suppress all output to prevent JSON protocol pollution
+        with suppress_stdout_stderr():
+            # Get workouts directory
+            config = get_data_config()
+            workouts_dir = config.data_repo_path / "workouts"
+
+            # Find workout file(s) for this session
+            # Pattern: {session_id}-*.{zwo,mrc,erg}
+            workout_files = list(workouts_dir.glob(f"{session_id}-*"))
+
+            if not workout_files:
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps(
+                            {"error": f"No workout file found for session {session_id}"}, indent=2
+                        ),
+                    )
+                ]
+
+            # If multiple files, return the first one (or could return all)
+            workout_file = workout_files[0]
+
+            # Read workout content
+            content = workout_file.read_text(encoding="utf-8")
+
+        result = {
+            "status": "success",
+            "session_id": session_id,
+            "filename": workout_file.name,
+            "extension": workout_file.suffix[1:],  # Remove leading dot
+            "content": content,
+            "message": f"Workout retrieved: {workout_file.name}",
+        }
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps({"error": f"Error retrieving workout: {str(e)}"}, indent=2),
             )
         ]
 
