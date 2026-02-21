@@ -28,6 +28,8 @@ Claude Desktop config (~/.config/claude/claude_desktop_config.json):
 """
 
 import json
+import sys
+from contextlib import redirect_stdout
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -241,15 +243,17 @@ async def handle_weekly_planner(args: dict) -> list[TextContent]:
 
     start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
 
-    planner = WeeklyPlanner(week_number=week_id, start_date=start_date, project_root=Path.cwd())
+    # Redirect stdout to stderr to prevent JSON protocol pollution
+    with redirect_stdout(sys.stderr):
+        planner = WeeklyPlanner(week_number=week_id, start_date=start_date, project_root=Path.cwd())
 
-    # Collect metrics
-    planner.current_metrics = planner.collect_current_metrics()
-    planner.previous_week_bilan = planner.load_previous_week_bilan()
-    planner.context_files = planner.load_context_files()
+        # Collect metrics
+        planner.current_metrics = planner.collect_current_metrics()
+        planner.previous_week_bilan = planner.load_previous_week_bilan()
+        planner.context_files = planner.load_context_files()
 
-    # Generate prompt
-    prompt = planner.generate_planning_prompt()
+        # Generate prompt
+        prompt = planner.generate_planning_prompt()
 
     result = {
         "week_id": week_id,
@@ -280,8 +284,10 @@ async def handle_monthly_analysis(args: dict) -> list[TextContent]:
     provider = args.get("provider", "mistral_api")
     no_ai = args.get("no_ai", False)
 
-    analyzer = MonthlyAnalyzer(month=month, provider=provider, no_ai=no_ai)
-    report = analyzer.run()
+    # Redirect stdout to stderr to prevent JSON protocol pollution
+    with redirect_stdout(sys.stderr):
+        analyzer = MonthlyAnalyzer(month=month, provider=provider, no_ai=no_ai)
+        report = analyzer.run()
 
     if not report:
         return [
@@ -326,16 +332,18 @@ async def handle_daily_sync(args: dict) -> list[TextContent]:
         enable_auto_servo=False,
     )
 
-    # Run sync
-    new_activities = sync.check_activities(check_date)
+    # Redirect stdout to stderr to prevent JSON protocol pollution
+    with redirect_stdout(sys.stderr):
+        # Run sync
+        new_activities = sync.check_activities(check_date)
 
-    # Mark as analyzed
-    for activity in new_activities:
-        sync.tracker.mark_analyzed(activity, datetime.now())
+        # Mark as analyzed
+        for activity in new_activities:
+            sync.tracker.mark_analyzed(activity, datetime.now())
 
-    # Auto-update session statuses
-    if new_activities:
-        sync.update_completed_sessions(new_activities)
+        # Auto-update session statuses
+        if new_activities:
+            sync.update_completed_sessions(new_activities)
 
     result = {
         "date": check_date.isoformat(),
@@ -356,25 +364,27 @@ async def handle_update_session(args: dict) -> list[TextContent]:
     new_status = args["status"]
     reason = args.get("reason")
 
-    # Update via Control Tower
-    with planning_tower.modify_week(
-        week_id,
-        requesting_script="mcp-server",
-        reason=f"MCP: Update {session_id} to {new_status}: {reason or 'N/A'}",
-    ) as plan:
-        session_found = False
-        for session in plan.planned_sessions:
-            if session.session_id == session_id:
-                # Set skip_reason BEFORE status (Pydantic validator)
-                if reason and new_status in ("skipped", "cancelled", "replaced"):
-                    session.skip_reason = reason
+    # Redirect stdout to stderr to prevent JSON protocol pollution
+    with redirect_stdout(sys.stderr):
+        # Update via Control Tower
+        with planning_tower.modify_week(
+            week_id,
+            requesting_script="mcp-server",
+            reason=f"MCP: Update {session_id} to {new_status}: {reason or 'N/A'}",
+        ) as plan:
+            session_found = False
+            for session in plan.planned_sessions:
+                if session.session_id == session_id:
+                    # Set skip_reason BEFORE status (Pydantic validator)
+                    if reason and new_status in ("skipped", "cancelled", "replaced"):
+                        session.skip_reason = reason
 
-                session.status = new_status
-                session_found = True
-                break
+                    session.status = new_status
+                    session_found = True
+                    break
 
-        if not session_found:
-            raise ValueError(f"Session {session_id} not found in {week_id}")
+            if not session_found:
+                raise ValueError(f"Session {session_id} not found in {week_id}")
 
     result = {
         "week_id": week_id,
