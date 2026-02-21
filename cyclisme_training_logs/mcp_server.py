@@ -911,98 +911,87 @@ async def handle_monthly_analysis(args: dict) -> list[TextContent]:
 
 async def handle_daily_sync(args: dict) -> list[TextContent]:
     """Sync with Intervals.icu."""
-    import traceback
-
     from cyclisme_training_logs.daily_sync import DailySync
 
-    try:
-        check_date_str = args.get("date")
+    check_date_str = args.get("date")
 
-        if check_date_str:
-            check_date = datetime.strptime(check_date_str, "%Y-%m-%d").date()
-        else:
-            check_date = date.today()
+    if check_date_str:
+        check_date = datetime.strptime(check_date_str, "%Y-%m-%d").date()
+    else:
+        check_date = date.today()
 
-        # Setup paths
-        from cyclisme_training_logs.config import get_data_config
+    # Setup paths
+    from cyclisme_training_logs.config import get_data_config
 
-        config = get_data_config()
-        tracking_file = config.data_repo_path / "activities_tracking.json"
-        reports_dir = config.data_repo_path / "daily-reports"
+    config = get_data_config()
+    tracking_file = config.data_repo_path / "activities_tracking.json"
+    reports_dir = config.data_repo_path / "daily-reports"
 
-        sync = DailySync(
-            tracking_file=tracking_file,
-            reports_dir=reports_dir,
-            enable_ai_analysis=False,
-            enable_auto_servo=False,
-            verbose=False,  # Disable prints to prevent MCP protocol pollution
-        )
+    sync = DailySync(
+        tracking_file=tracking_file,
+        reports_dir=reports_dir,
+        enable_ai_analysis=False,
+        enable_auto_servo=False,
+        verbose=False,  # Disable prints to prevent MCP protocol pollution
+    )
 
-        # Suppress all output to prevent JSON protocol pollution
-        with suppress_stdout_stderr():
-            # Run sync - returns (new_activities, completed_activities)
-            new_activities, completed_activities = sync.check_activities(check_date)
+    # Suppress all output to prevent JSON protocol pollution
+    with suppress_stdout_stderr():
+        # Run sync - returns (new_activities, completed_activities)
+        new_activities, completed_activities = sync.check_activities(check_date)
 
-            # Mark new activities as analyzed
-            if new_activities:
-                for activity in new_activities:
-                    if activity is None:
-                        continue
-                    sync.tracker.mark_analyzed(activity, datetime.now())
-
-            # Auto-update session statuses using ALL completed activities (not just new ones)
-            # This ensures status updates even for activities analyzed in previous runs
-            activity_to_session_map = {}
-            if completed_activities:
-                activity_to_session_map = sync.update_completed_sessions(completed_activities)
-
-        # Enrich result with activity details
-        activities_details = []
-        if completed_activities:
-            for activity in completed_activities:
+        # Mark new activities as analyzed
+        if new_activities:
+            for activity in new_activities:
                 if activity is None:
                     continue
-                activity_id = activity.get("id")
-                activity_detail = {
-                    "activity_id": activity_id,
-                    "name": activity.get("name"),
-                    "type": activity.get("type"),
-                    "start_time": activity.get("start_date_local"),
-                    "tss": activity.get("icu_training_load"),
-                    "intensity_factor": activity.get("icu_intensity"),
-                    "duration_min": (
-                        round(activity.get("moving_time", 0) / 60)
-                        if activity.get("moving_time")
-                        else None
-                    ),
-                    "distance_km": (
-                        round(activity.get("distance", 0) / 1000, 1)
-                        if activity.get("distance")
-                        else None
-                    ),
-                    "average_watts": activity.get("average_watts"),
-                    "session_id": activity_to_session_map.get(activity_id),  # From matching
-                }
-                activities_details.append(activity_detail)
+                sync.tracker.mark_analyzed(activity, datetime.now())
 
-        result = {
-            "date": check_date.isoformat(),
-            "completed_activities": len(completed_activities) if completed_activities else 0,
-            "new_activities": len(new_activities) if new_activities else 0,
-            "activities": activities_details,  # Detailed activity info with session mapping
-            "status": "completed",
-            "message": f"Sync completed for {check_date.isoformat()}",
-        }
+        # Auto-update session statuses using ALL completed activities (not just new ones)
+        # This ensures status updates even for activities analyzed in previous runs
+        activity_to_session_map = {}
+        if completed_activities:
+            activity_to_session_map = sync.update_completed_sessions(completed_activities)
 
-        return [TextContent(type="text", text=json.dumps(result, indent=2))]
-    except Exception as e:
-        error_result = {
-            "error": str(e),
-            "traceback": traceback.format_exc(),
-            "tool": "daily-sync",
-            "arguments": args,
-        }
-        return [TextContent(type="text", text=json.dumps(error_result, indent=2))]
+    # Enrich result with activity details
+    activities_details = []
+    if completed_activities:
+        for activity in completed_activities:
+            if activity is None:
+                continue
+            activity_id = activity.get("id")
+            activity_detail = {
+                "activity_id": activity_id,
+                "name": activity.get("name"),
+                "type": activity.get("type"),
+                "start_time": activity.get("start_date_local"),
+                "tss": activity.get("icu_training_load"),
+                "intensity_factor": activity.get("icu_intensity"),
+                "duration_min": (
+                    round(activity.get("moving_time", 0) / 60)
+                    if activity.get("moving_time")
+                    else None
+                ),
+                "distance_km": (
+                    round(activity.get("distance", 0) / 1000, 1)
+                    if activity.get("distance")
+                    else None
+                ),
+                "average_watts": activity.get("average_watts"),
+                "session_id": activity_to_session_map.get(activity_id),  # From matching
+            }
+            activities_details.append(activity_detail)
+
+    result = {
+        "date": check_date.isoformat(),
+        "completed_activities": len(completed_activities) if completed_activities else 0,
+        "new_activities": len(new_activities) if new_activities else 0,
+        "activities": activities_details,  # Detailed activity info with session mapping
+        "status": "completed",
+        "message": f"Sync completed for {check_date.isoformat()}",
+    }
+
+    return [TextContent(type="text", text=json.dumps(result, indent=2))]
 
 
 async def handle_update_session(args: dict) -> list[TextContent]:
