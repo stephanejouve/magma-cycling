@@ -523,6 +523,174 @@ async def list_tools() -> list[Tool]:
                 "required": ["start_date", "end_date"],
             },
         ),
+        Tool(
+            name="get-activity-details",
+            description="Get complete details for a completed activity from Intervals.icu (TSS, IF, power curves, streams)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "activity_id": {
+                        "type": "string",
+                        "description": "Activity ID (format: i107424849 or numeric)",
+                    },
+                    "include_streams": {
+                        "type": "boolean",
+                        "description": "Include time-series data (watts, HR, cadence, etc.) - default: false",
+                        "default": False,
+                    },
+                },
+                "required": ["activity_id"],
+            },
+        ),
+        Tool(
+            name="update-remote-session",
+            description="Update an existing workout event on Intervals.icu (PROTECTION: cannot update completed sessions)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "event_id": {
+                        "type": "integer",
+                        "description": "Intervals.icu event ID to update",
+                    },
+                    "updates": {
+                        "type": "object",
+                        "description": "Fields to update (name, description, start_date_local, type, etc.)",
+                    },
+                },
+                "required": ["event_id", "updates"],
+            },
+        ),
+        Tool(
+            name="get-athlete-profile",
+            description="Get current athlete profile from Intervals.icu (FTP, weight, CTL, ATL, TSB, zones)",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+            },
+        ),
+        Tool(
+            name="update-athlete-profile",
+            description="Update athlete profile on Intervals.icu (FTP, weight, max_hr, resting_hr, etc.)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "updates": {
+                        "type": "object",
+                        "description": "Fields to update (ftp, weight, max_hr, resting_hr, fthr, etc.)",
+                    },
+                },
+                "required": ["updates"],
+            },
+        ),
+        Tool(
+            name="validate-week-consistency",
+            description="Validate week planning consistency (no conflicts, TSS coherent, sessions well-formed)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "week_id": {
+                        "type": "string",
+                        "description": "Week ID (e.g., S081)",
+                        "pattern": "^S\\d{3}$",
+                    },
+                },
+                "required": ["week_id"],
+            },
+        ),
+        Tool(
+            name="get-recommendations",
+            description="Get PID and Peaks system recommendations for a week",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "week_id": {
+                        "type": "string",
+                        "description": "Week ID (e.g., S081)",
+                        "pattern": "^S\\d{3}$",
+                    },
+                },
+                "required": ["week_id"],
+            },
+        ),
+        Tool(
+            name="analyze-session-adherence",
+            description="Analyze adherence between planned session and completed activity (TSS, IF, duration comparison)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "session_id": {
+                        "type": "string",
+                        "description": "Session ID (e.g., S081-04)",
+                    },
+                    "activity_id": {
+                        "type": "string",
+                        "description": "Activity ID (format: i107424849)",
+                    },
+                },
+                "required": ["session_id", "activity_id"],
+            },
+        ),
+        Tool(
+            name="get-training-statistics",
+            description="Get aggregated training statistics for a date range (TSS, compliance, intensity distribution)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "start_date": {
+                        "type": "string",
+                        "description": "Start date in YYYY-MM-DD format",
+                    },
+                    "end_date": {
+                        "type": "string",
+                        "description": "End date in YYYY-MM-DD format",
+                    },
+                },
+                "required": ["start_date", "end_date"],
+            },
+        ),
+        Tool(
+            name="export-week-to-json",
+            description="Export week planning to JSON file for backup",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "week_id": {
+                        "type": "string",
+                        "description": "Week ID (e.g., S081)",
+                        "pattern": "^S\\d{3}$",
+                    },
+                    "output_path": {
+                        "type": "string",
+                        "description": "Output file path (optional, defaults to /tmp/)",
+                    },
+                },
+                "required": ["week_id"],
+            },
+        ),
+        Tool(
+            name="restore-week-from-backup",
+            description="Restore week planning from JSON backup file (PROTECTION: requires confirmation)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "week_id": {
+                        "type": "string",
+                        "description": "Week ID (e.g., S081)",
+                        "pattern": "^S\\d{3}$",
+                    },
+                    "backup_path": {
+                        "type": "string",
+                        "description": "Path to backup JSON file",
+                    },
+                    "confirm": {
+                        "type": "boolean",
+                        "description": "Confirmation required for restore (default: false)",
+                        "default": False,
+                    },
+                },
+                "required": ["week_id", "backup_path", "confirm"],
+            },
+        ),
     ]
 
 
@@ -566,6 +734,26 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             return await handle_delete_remote_session(arguments)
         elif name == "list-remote-events":
             return await handle_list_remote_events(arguments)
+        elif name == "get-activity-details":
+            return await handle_get_activity_details(arguments)
+        elif name == "update-remote-session":
+            return await handle_update_remote_session(arguments)
+        elif name == "get-athlete-profile":
+            return await handle_get_athlete_profile(arguments)
+        elif name == "update-athlete-profile":
+            return await handle_update_athlete_profile(arguments)
+        elif name == "validate-week-consistency":
+            return await handle_validate_week_consistency(arguments)
+        elif name == "get-recommendations":
+            return await handle_get_recommendations(arguments)
+        elif name == "analyze-session-adherence":
+            return await handle_analyze_session_adherence(arguments)
+        elif name == "get-training-statistics":
+            return await handle_get_training_statistics(arguments)
+        elif name == "export-week-to-json":
+            return await handle_export_week_to_json(arguments)
+        elif name == "restore-week-from-backup":
+            return await handle_restore_week_from_backup(arguments)
         else:
             raise ValueError(f"Unknown tool: {name}")
 
@@ -2055,6 +2243,644 @@ async def handle_list_remote_events(args: dict) -> list[TextContent]:
                         "start_date": start_date,
                         "end_date": end_date,
                     },
+                    indent=2,
+                ),
+            )
+        ]
+
+
+async def handle_get_activity_details(args: dict) -> list[TextContent]:
+    """Get complete details for a completed activity from Intervals.icu."""
+    from cyclisme_training_logs.config import create_intervals_client
+
+    activity_id = args["activity_id"]
+    include_streams = args.get("include_streams", False)
+
+    try:
+        with suppress_stdout_stderr():
+            client = create_intervals_client()
+
+            # Get activity details
+            activity = client.get_activity(activity_id)
+
+            # Format result
+            result = {
+                "id": activity.get("id"),
+                "name": activity.get("name"),
+                "start_date_local": activity.get("start_date_local"),
+                "type": activity.get("type"),
+                "moving_time": activity.get("moving_time"),
+                "distance": activity.get("distance"),
+                "total_elevation_gain": activity.get("total_elevation_gain"),
+                "icu_training_load": activity.get("icu_training_load"),  # TSS
+                "icu_intensity": activity.get("icu_intensity"),  # IF
+                "average_watts": activity.get("average_watts"),
+                "weighted_average_watts": activity.get("weighted_average_watts"),
+                "average_heartrate": activity.get("average_heartrate"),
+                "average_cadence": activity.get("average_cadence"),
+                "description": activity.get("description", ""),
+                "paired_event_id": activity.get("paired_event_id"),
+            }
+
+            # Include streams if requested
+            if include_streams:
+                streams = client.get_activity_streams(activity_id)
+                result["streams"] = [
+                    {"type": s["type"], "data_points": len(s["data"])} for s in streams
+                ]
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(
+                    {
+                        "error": f"Failed to get activity details: {str(e)}",
+                        "activity_id": activity_id,
+                    },
+                    indent=2,
+                ),
+            )
+        ]
+
+
+async def handle_update_remote_session(args: dict) -> list[TextContent]:
+    """Update an existing workout event on Intervals.icu."""
+    from cyclisme_training_logs.config import create_intervals_client
+    from cyclisme_training_logs.planning.control_tower import planning_tower
+
+    event_id = args["event_id"]
+    updates = args["updates"]
+
+    try:
+        with suppress_stdout_stderr():
+            # PROTECTION: Check if this event belongs to a completed session
+            planning_dir = Path("planning")
+            if planning_dir.exists():
+                for week_file in planning_dir.glob("S???-planning.yaml"):
+                    try:
+                        week_id = week_file.stem.replace("-planning", "")
+                        plan = planning_tower.read_week(week_id)
+                        for session in plan.planned_sessions:
+                            if session.intervals_id == event_id and session.status == "completed":
+                                return [
+                                    TextContent(
+                                        type="text",
+                                        text=json.dumps(
+                                            {
+                                                "error": "Cannot update completed session",
+                                                "event_id": event_id,
+                                                "session_id": session.session_id,
+                                                "message": f"🛡️ PROTECTION: Session {session.session_id} is COMPLETED",
+                                            },
+                                            indent=2,
+                                        ),
+                                    )
+                                ]
+                    except Exception:
+                        continue
+
+            # Update on Intervals.icu
+            client = create_intervals_client()
+            updated_event = client.update_event(event_id, updates)
+
+            if updated_event:
+                result = {
+                    "success": True,
+                    "event_id": event_id,
+                    "updated_fields": list(updates.keys()),
+                    "message": f"✅ Event {event_id} updated successfully",
+                }
+            else:
+                result = {
+                    "success": False,
+                    "event_id": event_id,
+                    "message": f"❌ Failed to update event {event_id}",
+                }
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(
+                    {"error": f"Update error: {str(e)}", "event_id": event_id},
+                    indent=2,
+                ),
+            )
+        ]
+
+
+async def handle_get_athlete_profile(args: dict) -> list[TextContent]:
+    """Get current athlete profile from Intervals.icu."""
+    from cyclisme_training_logs.config import create_intervals_client
+
+    try:
+        with suppress_stdout_stderr():
+            client = create_intervals_client()
+            athlete = client.get_athlete()
+
+            # Format result with key metrics
+            result = {
+                "name": athlete.get("name"),
+                "ftp": athlete.get("ftp"),
+                "weight": athlete.get("weight"),
+                "max_hr": athlete.get("max_hr"),
+                "resting_hr": athlete.get("resting_hr"),
+                "fthr": athlete.get("fthr"),
+                "ctl": athlete.get("ctl"),
+                "atl": athlete.get("atl"),
+                "ramp_rate": athlete.get("ramp_rate"),
+                "weight_class": athlete.get("weight_class"),
+                "power_zones": athlete.get("power_zones"),
+                "hr_zones": athlete.get("hr_zones"),
+            }
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps({"error": f"Failed to get athlete profile: {str(e)}"}, indent=2),
+            )
+        ]
+
+
+async def handle_update_athlete_profile(args: dict) -> list[TextContent]:
+    """Update athlete profile on Intervals.icu."""
+    from cyclisme_training_logs.config import create_intervals_client
+
+    updates = args["updates"]
+
+    try:
+        with suppress_stdout_stderr():
+            client = create_intervals_client()
+            updated_athlete = client.update_athlete(updates)
+
+            result = {
+                "success": True,
+                "updated_fields": list(updates.keys()),
+                "message": "✅ Athlete profile updated successfully",
+                "current_values": {field: updated_athlete.get(field) for field in updates.keys()},
+            }
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(
+                    {"error": f"Failed to update athlete profile: {str(e)}", "updates": updates},
+                    indent=2,
+                ),
+            )
+        ]
+
+
+async def handle_validate_week_consistency(args: dict) -> list[TextContent]:
+    """Validate week planning consistency."""
+    from cyclisme_training_logs.planning.control_tower import planning_tower
+
+    week_id = args["week_id"]
+
+    try:
+        with suppress_stdout_stderr():
+            plan = planning_tower.read_week(week_id)
+
+            errors = []
+            warnings = []
+
+            # Check for date conflicts (multiple sessions on same day without a/b suffix)
+            dates_seen = {}
+            for session in plan.planned_sessions:
+                date_str = str(session.session_date)
+                if date_str in dates_seen:
+                    # Check if both have proper a/b suffixes
+                    prev_session = dates_seen[date_str]
+                    if not (
+                        session.session_id.endswith(("a", "b"))
+                        and prev_session.session_id.endswith(("a", "b"))
+                    ):
+                        errors.append(
+                            f"Date conflict: {date_str} has multiple sessions without proper a/b suffix"
+                        )
+                dates_seen[date_str] = session
+
+            # Check TSS coherence (not too high for a single day)
+            for session in plan.planned_sessions:
+                if session.planned_tss and session.planned_tss > 300:
+                    warnings.append(
+                        f"{session.session_id}: Very high TSS ({session.planned_tss}) - verify if intentional"
+                    )
+
+            # Check for empty descriptions
+            for session in plan.planned_sessions:
+                if not session.description or session.description.strip() == "":
+                    errors.append(f"{session.session_id}: Empty workout description")
+
+            # Check week TSS total
+            total_tss = sum(
+                s.planned_tss or 0 for s in plan.planned_sessions if s.status != "cancelled"
+            )
+            if total_tss > 800:
+                warnings.append(f"Very high weekly TSS ({total_tss}) - verify training load")
+            elif total_tss < 200:
+                warnings.append(f"Low weekly TSS ({total_tss}) - is this a recovery week?")
+
+            result = {
+                "week_id": week_id,
+                "valid": len(errors) == 0,
+                "total_sessions": len(plan.planned_sessions),
+                "total_tss": total_tss,
+                "errors": errors,
+                "warnings": warnings,
+                "message": (
+                    "✅ Week planning is valid"
+                    if len(errors) == 0
+                    else "❌ Week planning has errors"
+                ),
+            }
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(
+                    {"error": f"Validation error: {str(e)}", "week_id": week_id},
+                    indent=2,
+                ),
+            )
+        ]
+
+
+async def handle_get_recommendations(args: dict) -> list[TextContent]:
+    """Get PID and Peaks system recommendations for a week."""
+    week_id = args["week_id"]
+
+    try:
+        with suppress_stdout_stderr():
+            # Load recommendations from project docs if available
+            rec_file = Path("project-docs") / "recommendations" / f"{week_id}_recommendations.json"
+
+            if rec_file.exists():
+                recommendations = json.loads(rec_file.read_text())
+                result = {
+                    "week_id": week_id,
+                    "found": True,
+                    "recommendations": recommendations,
+                }
+            else:
+                # Try to find in planning notes
+                from cyclisme_training_logs.planning.control_tower import planning_tower
+
+                plan = planning_tower.read_week(week_id)
+
+                result = {
+                    "week_id": week_id,
+                    "found": False,
+                    "message": f"No recommendations file found for {week_id}",
+                    "planning_notes": plan.notes if hasattr(plan, "notes") else None,
+                }
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(
+                    {"error": f"Failed to get recommendations: {str(e)}", "week_id": week_id},
+                    indent=2,
+                ),
+            )
+        ]
+
+
+async def handle_analyze_session_adherence(args: dict) -> list[TextContent]:
+    """Analyze adherence between planned session and completed activity."""
+    from cyclisme_training_logs.config import create_intervals_client
+    from cyclisme_training_logs.planning.control_tower import planning_tower
+
+    session_id = args["session_id"]
+    activity_id = args["activity_id"]
+
+    try:
+        with suppress_stdout_stderr():
+            # Get planned session
+            week_id = "-".join(session_id.split("-")[:1])  # Extract S081 from S081-04
+            plan = planning_tower.read_week(week_id)
+
+            planned_session = None
+            for session in plan.planned_sessions:
+                if session.session_id == session_id:
+                    planned_session = session
+                    break
+
+            if not planned_session:
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps(
+                            {"error": f"Session {session_id} not found in week {week_id}"},
+                            indent=2,
+                        ),
+                    )
+                ]
+
+            # Get completed activity
+            client = create_intervals_client()
+            activity = client.get_activity(activity_id)
+
+            # Calculate adherence metrics
+            planned_tss = planned_session.planned_tss or 0
+            actual_tss = activity.get("icu_training_load", 0)
+            tss_adherence = (actual_tss / planned_tss * 100) if planned_tss > 0 else 0
+
+            planned_duration = planned_session.planned_duration or 0
+            actual_duration = activity.get("moving_time", 0) / 60  # Convert to minutes
+            duration_adherence = (
+                (actual_duration / planned_duration * 100) if planned_duration > 0 else 0
+            )
+
+            # Determine adherence quality
+            if 90 <= tss_adherence <= 110:
+                adherence_quality = "excellent"
+            elif 80 <= tss_adherence <= 120:
+                adherence_quality = "good"
+            elif 70 <= tss_adherence <= 130:
+                adherence_quality = "moderate"
+            else:
+                adherence_quality = "poor"
+
+            result = {
+                "session_id": session_id,
+                "activity_id": activity_id,
+                "planned": {
+                    "tss": planned_tss,
+                    "duration_minutes": planned_duration,
+                    "description": planned_session.description[:100],
+                },
+                "actual": {
+                    "tss": actual_tss,
+                    "duration_minutes": round(actual_duration, 1),
+                    "if": activity.get("icu_intensity"),
+                    "average_watts": activity.get("average_watts"),
+                },
+                "adherence": {
+                    "tss_percent": round(tss_adherence, 1),
+                    "duration_percent": round(duration_adherence, 1),
+                    "quality": adherence_quality,
+                },
+                "message": f"Adherence: {adherence_quality} (TSS: {tss_adherence:.1f}%, Duration: {duration_adherence:.1f}%)",
+            }
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(
+                    {
+                        "error": f"Adherence analysis error: {str(e)}",
+                        "session_id": session_id,
+                        "activity_id": activity_id,
+                    },
+                    indent=2,
+                ),
+            )
+        ]
+
+
+async def handle_get_training_statistics(args: dict) -> list[TextContent]:
+    """Get aggregated training statistics for a date range."""
+    from cyclisme_training_logs.config import create_intervals_client
+
+    start_date = args["start_date"]
+    end_date = args["end_date"]
+
+    try:
+        with suppress_stdout_stderr():
+            client = create_intervals_client()
+
+            # Get activities and wellness data
+            activities = client.get_activities(oldest=start_date, newest=end_date)
+            wellness = client.get_wellness(oldest=start_date, newest=end_date)
+
+            # Calculate statistics
+            total_activities = len(activities)
+            total_tss = sum(a.get("icu_training_load", 0) for a in activities)
+            total_duration = sum(a.get("moving_time", 0) for a in activities) / 3600  # Hours
+            total_distance = sum(a.get("distance", 0) for a in activities) / 1000  # Km
+
+            avg_tss = total_tss / total_activities if total_activities > 0 else 0
+
+            # Intensity distribution (Z1-Z5)
+            intensity_distribution = {
+                "z1": sum(1 for a in activities if (a.get("icu_intensity") or 0) < 0.55),
+                "z2": sum(1 for a in activities if 0.55 <= (a.get("icu_intensity") or 0) < 0.75),
+                "z3": sum(1 for a in activities if 0.75 <= (a.get("icu_intensity") or 0) < 0.85),
+                "z4": sum(1 for a in activities if 0.85 <= (a.get("icu_intensity") or 0) < 0.95),
+                "z5": sum(1 for a in activities if (a.get("icu_intensity") or 0) >= 0.95),
+            }
+
+            # CTL progression
+            ctl_start = wellness[0].get("ctl") if wellness else None
+            ctl_end = wellness[-1].get("ctl") if wellness else None
+            ctl_change = (ctl_end - ctl_start) if (ctl_start and ctl_end) else None
+
+            result = {
+                "period": {"start": start_date, "end": end_date},
+                "summary": {
+                    "total_activities": total_activities,
+                    "total_tss": round(total_tss, 1),
+                    "total_duration_hours": round(total_duration, 1),
+                    "total_distance_km": round(total_distance, 1),
+                    "average_tss_per_session": round(avg_tss, 1),
+                },
+                "intensity_distribution": intensity_distribution,
+                "fitness": {
+                    "ctl_start": round(ctl_start, 1) if ctl_start else None,
+                    "ctl_end": round(ctl_end, 1) if ctl_end else None,
+                    "ctl_change": round(ctl_change, 1) if ctl_change else None,
+                },
+            }
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(
+                    {
+                        "error": f"Failed to get training statistics: {str(e)}",
+                        "start_date": start_date,
+                        "end_date": end_date,
+                    },
+                    indent=2,
+                ),
+            )
+        ]
+
+
+async def handle_export_week_to_json(args: dict) -> list[TextContent]:
+    """Export week planning to JSON file for backup."""
+    from cyclisme_training_logs.planning.control_tower import planning_tower
+
+    week_id = args["week_id"]
+    output_path = args.get("output_path", f"/tmp/{week_id}_backup.json")
+
+    try:
+        with suppress_stdout_stderr():
+            plan = planning_tower.read_week(week_id)
+
+            # Convert to dict
+            plan_dict = {
+                "week_id": plan.week_id,
+                "start_date": str(plan.start_date),
+                "end_date": str(plan.end_date),
+                "planned_sessions": [
+                    {
+                        "session_id": s.session_id,
+                        "name": s.name,
+                        "session_date": str(s.session_date),
+                        "category": s.category,
+                        "status": s.status,
+                        "planned_tss": s.planned_tss,
+                        "planned_duration": s.planned_duration,
+                        "description": s.description,
+                        "intervals_id": s.intervals_id,
+                    }
+                    for s in plan.planned_sessions
+                ],
+            }
+
+            # Write to file
+            output_file = Path(output_path)
+            output_file.write_text(json.dumps(plan_dict, indent=2))
+
+            result = {
+                "success": True,
+                "week_id": week_id,
+                "backup_path": str(output_file),
+                "message": f"✅ Week {week_id} exported to {output_file}",
+            }
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(
+                    {"error": f"Export error: {str(e)}", "week_id": week_id},
+                    indent=2,
+                ),
+            )
+        ]
+
+
+async def handle_restore_week_from_backup(args: dict) -> list[TextContent]:
+    """Restore week planning from JSON backup file."""
+    from datetime import date as date_type
+
+    from cyclisme_training_logs.planning.control_tower import planning_tower
+    from cyclisme_training_logs.planning.models import Session, WeeklyPlan
+
+    week_id = args["week_id"]
+    backup_path = args["backup_path"]
+    confirm = args.get("confirm", False)
+
+    if not confirm:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(
+                    {
+                        "error": "Restore requires explicit confirmation",
+                        "week_id": week_id,
+                        "message": "Set confirm=true to proceed with restore",
+                        "warning": "This will OVERWRITE current planning",
+                    },
+                    indent=2,
+                ),
+            )
+        ]
+
+    try:
+        with suppress_stdout_stderr():
+            # Read backup file
+            backup_file = Path(backup_path)
+            if not backup_file.exists():
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps(
+                            {"error": f"Backup file not found: {backup_path}"},
+                            indent=2,
+                        ),
+                    )
+                ]
+
+            backup_data = json.loads(backup_file.read_text())
+
+            # Reconstruct WeeklyPlan
+            sessions = [
+                Session(
+                    session_id=s["session_id"],
+                    name=s["name"],
+                    session_date=date_type.fromisoformat(s["session_date"]),
+                    category=s["category"],
+                    status=s["status"],
+                    planned_tss=s.get("planned_tss"),
+                    planned_duration=s.get("planned_duration"),
+                    description=s["description"],
+                    intervals_id=s.get("intervals_id"),
+                )
+                for s in backup_data["planned_sessions"]
+            ]
+
+            plan = WeeklyPlan(
+                week_id=backup_data["week_id"],
+                start_date=date_type.fromisoformat(backup_data["start_date"]),
+                end_date=date_type.fromisoformat(backup_data["end_date"]),
+                planned_sessions=sessions,
+            )
+
+            # Save via Control Tower
+            def restore_plan(existing_plan):
+                return plan
+
+            planning_tower.modify_week(
+                week_id=week_id,
+                modification_function=restore_plan,
+                requesting_script="restore-week-from-backup MCP tool",
+                reason=f"Restored from backup: {backup_path}",
+            )
+
+            result = {
+                "success": True,
+                "week_id": week_id,
+                "restored_sessions": len(sessions),
+                "message": f"✅ Week {week_id} restored from {backup_file.name}",
+            }
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(
+                    {"error": f"Restore error: {str(e)}", "week_id": week_id},
                     indent=2,
                 ),
             )
