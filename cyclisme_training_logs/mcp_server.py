@@ -938,13 +938,37 @@ async def handle_daily_sync(args: dict) -> list[TextContent]:
 
         # Auto-update session statuses using ALL completed activities (not just new ones)
         # This ensures status updates even for activities analyzed in previous runs
+        activity_to_session_map = {}
         if completed_activities:
-            sync.update_completed_sessions(completed_activities)
+            activity_to_session_map = sync.update_completed_sessions(completed_activities)
+
+    # Enrich result with activity details
+    activities_details = []
+    for activity in completed_activities:
+        activity_id = activity.get("id")
+        activity_detail = {
+            "activity_id": activity_id,
+            "name": activity.get("name"),
+            "type": activity.get("type"),
+            "start_time": activity.get("start_date_local"),
+            "tss": activity.get("icu_training_load"),
+            "intensity_factor": activity.get("icu_intensity"),
+            "duration_min": (
+                round(activity.get("moving_time", 0) / 60) if activity.get("moving_time") else None
+            ),
+            "distance_km": (
+                round(activity.get("distance", 0) / 1000, 1) if activity.get("distance") else None
+            ),
+            "average_watts": activity.get("average_watts"),
+            "session_id": activity_to_session_map.get(activity_id),  # From matching
+        }
+        activities_details.append(activity_detail)
 
     result = {
         "date": check_date.isoformat(),
         "completed_activities": len(completed_activities),
         "new_activities": len(new_activities),
+        "activities": activities_details,  # Detailed activity info with session mapping
         "status": "completed",
         "message": f"Sync completed for {check_date.isoformat()}",
     }
