@@ -22,6 +22,7 @@ Created: 2026-02-20
 """
 
 import shutil
+import sys
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
@@ -73,7 +74,7 @@ class PlanningControlTower:
 
         Example:
             >>> if not planning_tower.request_permission("S081", "daily-sync", "Update session status"):
-            ...     print("Permission denied - week locked")
+            ...     print("Permission denied - week locked", file=sys.stderr)
             ...     return
         """
         # Check if already locked
@@ -89,10 +90,10 @@ class PlanningControlTower:
 
         # Grant permission and acquire lock
         self._lock_holders[week_id] = requesting_script
-        print(f"✅ Control Tower: Permission GRANTED to {requesting_script}")
-        print(f"   Week: {week_id}")
+        print(f"✅ Control Tower: Permission GRANTED to {requesting_script}", file=sys.stderr)
+        print(f"   Week: {week_id}", file=sys.stderr)
         if reason:
-            print(f"   Reason: {reason}")
+            print(f"   Reason: {reason}", file=sys.stderr)
 
         return True
 
@@ -109,7 +110,7 @@ class PlanningControlTower:
         """
         if week_id in self._lock_holders and self._lock_holders[week_id] == script_name:
             del self._lock_holders[week_id]
-            print(f"🔓 Control Tower: Lock released by {script_name}")
+            print(f"🔓 Control Tower: Lock released by {script_name}", file=sys.stderr)
 
     @contextmanager
     def modify_week(
@@ -157,12 +158,12 @@ class PlanningControlTower:
         self._active_modifications.add(week_id)
 
         # 🔒 AUTOMATIC BACKUP before loading
-        print(f"🔒 Control Tower: Backup {week_id}...")
+        print(f"🔒 Control Tower: Backup {week_id}...", file=sys.stderr)
         backups = self.backup_system.backup_week_files(week_id)
 
         if backups:
             for file_type, backup_path in backups.items():
-                print(f"   ✅ {file_type}: {backup_path.name}")
+                print(f"   ✅ {file_type}: {backup_path.name}", file=sys.stderr)
 
         try:
             # Load planning
@@ -179,7 +180,7 @@ class PlanningControlTower:
 
                 # Save to file
                 plan.to_json(planning_file)
-                print(f"💾 Control Tower: Saved {week_id}")
+                print(f"💾 Control Tower: Saved {week_id}", file=sys.stderr)
 
                 # 📋 LOG TO AUDIT
                 from cyclisme_training_logs.planning.audit_log import (
@@ -202,8 +203,8 @@ class PlanningControlTower:
 
         except Exception as e:
             # On error, log failure and offer rollback
-            print(f"❌ Control Tower: Error modifying {week_id}: {e}")
-            print(f"   Backups available in: {self.backup_system.backup_dir}")
+            print(f"❌ Control Tower: Error modifying {week_id}: {e}", file=sys.stderr)
+            print(f"   Backups available in: {self.backup_system.backup_dir}", file=sys.stderr)
 
             # 📋 LOG FAILURE
             from cyclisme_training_logs.planning.audit_log import (
@@ -241,7 +242,7 @@ class PlanningControlTower:
 
         Example:
             >>> plan = planning_tower.read_week("S081")
-            >>> print(plan.tss_target)
+            >>> print(plan.tss_target, file=sys.stderr)
         """
         planning_file = self.planning_dir / f"week_planning_{week_id}.json"
 
@@ -277,7 +278,7 @@ class PlanningControlTower:
 
         Example:
             >>> backups = planning_tower.list_backups("S081")
-            >>> print(f"Latest: {backups[0]}")
+            >>> print(f"Latest: {backups[0]}", file=sys.stderr)
         """
         return self.backup_system.list_backups(week_id)
 
@@ -296,12 +297,12 @@ class PlanningControlTower:
             >>> tower.restore_backup(Path("backups/week_planning_S081_20260220.json"))
         """
         if confirm:
-            print(f"⚠️  Restore backup: {backup_path.name}")
-            print("   This will overwrite current planning file.")
+            print(f"⚠️  Restore backup: {backup_path.name}", file=sys.stderr)
+            print("   This will overwrite current planning file.", file=sys.stderr)
             response = input("   Continue? (yes/no): ")
 
             if response.lower() != "yes":
-                print("   Cancelled.")
+                print("   Cancelled.", file=sys.stderr)
                 return None
 
         return self.backup_system.restore_backup(backup_path, dry_run=False)
@@ -347,7 +348,7 @@ class PlanningControlTower:
         # Copy backup to snapshot
         shutil.copy2(json_backup, snapshot_path)
 
-        print(f"📸 Snapshot créé: {snapshot_name}")
+        print(f"📸 Snapshot créé: {snapshot_name}", file=sys.stderr)
 
         return snapshot_path
 
@@ -415,9 +416,9 @@ def requires_tower_permission(week_id_param: str = "week_id", reason_param: str 
             # Get function name as script identifier
             script_name = func.__module__ + "." + func.__name__
 
-            print(f"\n🚦 Control Tower: {script_name} requesting permission...")
-            print(f"   Week: {week_id}")
-            print(f"   Reason: {reason}")
+            print(f"\n🚦 Control Tower: {script_name} requesting permission...", file=sys.stderr)
+            print(f"   Week: {week_id}", file=sys.stderr)
+            print(f"   Reason: {reason}", file=sys.stderr)
 
             # Request permission (will raise if denied)
             planning_tower.request_permission(week_id, script_name, reason)

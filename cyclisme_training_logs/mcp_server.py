@@ -463,6 +463,25 @@ async def list_tools() -> list[Tool]:
                 "required": ["week_id"],
             },
         ),
+        Tool(
+            name="validate-workout",
+            description="Validate Intervals.icu workout format syntax and optionally fix common errors",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "workout_text": {
+                        "type": "string",
+                        "description": "Workout description in Intervals.icu format",
+                    },
+                    "auto_fix": {
+                        "type": "boolean",
+                        "description": "Automatically fix common formatting issues (default: false)",
+                        "default": False,
+                    },
+                },
+                "required": ["workout_text"],
+            },
+        ),
     ]
 
 
@@ -500,6 +519,8 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             return await handle_get_workout(arguments)
         elif name == "sync-week-to-intervals":
             return await handle_sync_week_to_intervals(arguments)
+        elif name == "validate-workout":
+            return await handle_validate_workout(arguments)
         else:
             raise ValueError(f"Unknown tool: {name}")
 
@@ -704,11 +725,28 @@ async def handle_update_session(args: dict) -> list[TextContent]:
                 client = create_intervals_client()
 
                 # Prepare event data
+                # Determine start time based on day and session suffix
+                day_of_week = session_date.weekday()  # 0=Monday, 5=Saturday
+                session_day_part = session_id.split("-")[-1]  # e.g., "04" or "06a"
+
+                # Check if session has letter suffix (double session)
+                session_suffix = session_day_part[-1] if session_day_part[-1].isalpha() else None
+
+                # Double session (a/b)
+                if session_suffix == "a":
+                    start_time = "09:00:00"  # Morning
+                elif session_suffix == "b":
+                    start_time = "15:00:00"  # Afternoon
+                else:
+                    # Saturday → 09:00, other days → 17:00
+                    start_time = "09:00:00" if day_of_week == 5 else "17:00:00"
+
                 event_data = {
                     "category": "WORKOUT",
+                    "type": "VirtualRide",
                     "name": session_name,
                     "description": session_description,
-                    "start_date_local": str(session_date),
+                    "start_date_local": f"{session_date}T{start_time}",
                 }
 
                 if intervals_id:
@@ -1495,11 +1533,28 @@ async def handle_sync_week_to_intervals(args: dict) -> list[TextContent]:
                     continue
 
                 # Prepare event data
+                # Determine start time based on day and session suffix
+                day_of_week = session.session_date.weekday()  # 0=Monday, 5=Saturday
+                session_day_part = session.session_id.split("-")[-1]  # e.g., "04" or "06a"
+
+                # Check if session has letter suffix (double session)
+                session_suffix = session_day_part[-1] if session_day_part[-1].isalpha() else None
+
+                # Double session (a/b)
+                if session_suffix == "a":
+                    start_time = "09:00:00"  # Morning
+                elif session_suffix == "b":
+                    start_time = "15:00:00"  # Afternoon
+                else:
+                    # Saturday → 09:00, other days → 17:00
+                    start_time = "09:00:00" if day_of_week == 5 else "17:00:00"
+
                 event_data = {
                     "category": "WORKOUT",
+                    "type": "VirtualRide",
                     "name": session.name,
                     "description": session.description,
-                    "start_date_local": str(session.session_date),
+                    "start_date_local": f"{session.session_date}T{start_time}",
                 }
 
                 if session.intervals_id:
@@ -1573,7 +1628,20 @@ async def handle_sync_week_to_intervals(args: dict) -> list[TextContent]:
                 for item in to_create:
                     try:
                         created = client.create_event(item["event_data"])
-                        if created and "id" in created:
+
+                        # Debug: Log what we got back
+                        if created is None:
+                            errors.append(
+                                f"Failed to create {item['session_id']}: API returned None "
+                                f"(check logs for HTTP errors)"
+                            )
+                        elif "id" not in created:
+                            errors.append(
+                                f"Failed to create {item['session_id']}: Response missing 'id' field. "
+                                f"Got keys: {list(created.keys())}, "
+                                f"Response preview: {str(created)[:200]}"
+                            )
+                        else:
                             new_intervals_id = created["id"]
 
                             # Save intervals_id back to planning
@@ -1588,8 +1656,6 @@ async def handle_sync_week_to_intervals(args: dict) -> list[TextContent]:
                                         break
 
                             created_count += 1
-                        else:
-                            errors.append(f"Failed to create {item['session_id']}: No ID returned")
 
                     except Exception as e:
                         errors.append(f"Error creating {item['session_id']}: {str(e)}")
@@ -1661,6 +1727,71 @@ async def handle_sync_week_to_intervals(args: dict) -> list[TextContent]:
             TextContent(
                 type="text",
                 text=json.dumps({"error": f"Sync error: {str(e)}"}, indent=2),
+            )
+        ]
+
+
+async def handle_validate_workout(args: dict) -> list[TextContent]:
+    """Validate Intervals.icu workout format."""
+    from cyclisme_training_logs.intervals_format_validator import IntervalsFormatValidator
+
+    workout_text = args["workout_text"]
+    auto_fix = args.get("auto_fix", False)
+
+    try:
+        # Suppress all output to prevent JSON protocol pollution
+        with suppress_stdout_stderr():
+            validator = IntervalsFormatValidator()
+            is_valid, errors, warnings = validator.validate_workout(workout_text)
+
+            result = {
+                "valid": is_valid,
+                "errors": errors,
+                "warnings": warnings,
+            }
+
+            # Si auto_fix demandé et qu'il y a des warnings
+            if auto_fix and (errors or warnings):
+                corrected_text = validator.fix_repetition_format(workout_text)
+
+                # Revalider le texte corrigé
+                is_valid_after, errors_after, warnings_after = validator.validate_workout(
+                    corrected_text
+                )
+
+                result["auto_fixed"] = True
+                result["corrected_workout"] = corrected_text
+                result["valid_after_fix"] = is_valid_after
+                result["errors_after_fix"] = errors_after
+                result["warnings_after_fix"] = warnings_after
+
+                if is_valid_after:
+                    result["message"] = "Workout corrected and validated successfully"
+                else:
+                    result["message"] = (
+                        "Some errors remain after auto-fix (manual correction needed)"
+                    )
+            else:
+                result["auto_fixed"] = False
+                if is_valid:
+                    result["message"] = "Workout format is valid"
+                else:
+                    result["message"] = (
+                        "Workout format has errors (use auto_fix:true to attempt automatic correction)"
+                    )
+
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(result, indent=2),
+            )
+        ]
+
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps({"error": f"Validation error: {str(e)}"}, indent=2),
             )
         ]
 
