@@ -74,13 +74,13 @@ class WeeklyPlanner:
         """Initialize l'API Intervals.icu (Sprint R9.B Phase 2 - centralized)."""
         try:
             self.api = create_intervals_client()
-            print("✅ API Intervals.icu connectée")
+            print("✅ API Intervals.icu connectée", file=sys.stderr)
         except ValueError as e:
-            print(f"⚠️ API non disponible : {e}")
-            print("   Les métriques seront approximatives")
+            print(f"⚠️ API non disponible : {e}", file=sys.stderr)
+            print("   Les métriques seront approximatives", file=sys.stderr)
         except Exception as e:
-            print(f"⚠️ API non disponible : {e}")
-            print("   Les métriques seront approximatives")
+            print(f"⚠️ API non disponible : {e}", file=sys.stderr)
+            print("   Les métriques seront approximatives", file=sys.stderr)
 
     def _previous_week_number(self) -> str:
         """Calculate le numéro de la semaine précédente."""
@@ -102,10 +102,10 @@ class WeeklyPlanner:
 
     def collect_current_metrics(self) -> dict:
         """Collect les métriques actuelles depuis API."""
-        print("\n📊 Collecte des métriques actuelles...")
+        print("\n📊 Collecte des métriques actuelles...", file=sys.stderr)
 
         if not self.api:
-            print("  ⚠️ API non disponible, métriques approximatives")
+            print("  ⚠️ API non disponible, métriques approximatives", file=sys.stderr)
             return self._mock_current_metrics()
 
         try:
@@ -138,11 +138,11 @@ class WeeklyPlanner:
                 )
                 return metrics
             else:
-                print("  ⚠️ Aucune donnée wellness disponible")
+                print("  ⚠️ Aucune donnée wellness disponible", file=sys.stderr)
                 return self._mock_current_metrics()
 
         except Exception as e:
-            print(f"  ⚠️ Erreur collecte métriques : {e}")
+            print(f"  ⚠️ Erreur collecte métriques : {e}", file=sys.stderr)
             return self._mock_current_metrics()
 
     def _mock_current_metrics(self) -> dict:
@@ -160,7 +160,7 @@ class WeeklyPlanner:
 
     def load_previous_week_bilan(self) -> str:
         """Load le bilan de la semaine précédente."""
-        print("\n📄 Chargement bilan semaine précédente...")
+        print("\n📄 Chargement bilan semaine précédente...", file=sys.stderr)
 
         prev_week = self._previous_week_number()
         prev_week_dir = self.weekly_reports_dir / prev_week
@@ -175,25 +175,28 @@ class WeeklyPlanner:
         if bilan_file.exists():
             bilan_content = bilan_file.read_text(encoding="utf-8")
             content_parts.append(f"## Bilan Final {prev_week}\n\n{bilan_content}")
-            print(f"  ✅ Bilan {prev_week} chargé ({len(bilan_content)} chars)")
+            print(f"  ✅ Bilan {prev_week} chargé ({len(bilan_content)} chars)", file=sys.stderr)
         else:
-            print(f"  ⚠️ Bilan {prev_week} non trouvé : {bilan_file}")
+            print(f"  ⚠️ Bilan {prev_week} non trouvé : {bilan_file}", file=sys.stderr)
             content_parts.append(f"[Bilan {prev_week} non disponible]")
 
         # Load transition (contains TSS, TSB, recommendations for next week)
         if transition_file.exists():
             transition_content = transition_file.read_text(encoding="utf-8")
             content_parts.append(f"\n\n{transition_content}")
-            print(f"  ✅ Transition {prev_week} chargée ({len(transition_content)} chars)")
+            print(
+                f"  ✅ Transition {prev_week} chargée ({len(transition_content)} chars)",
+                file=sys.stderr,
+            )
         else:
-            print(f"  ⚠️ Transition {prev_week} non trouvée : {transition_file}")
+            print(f"  ⚠️ Transition {prev_week} non trouvée : {transition_file}", file=sys.stderr)
             content_parts.append(f"\n\n[Transition {prev_week} non disponible]")
 
         return "\n".join(content_parts)
 
     def load_context_files(self) -> dict[str, str]:
         """Load les fichiers de contexte."""
-        print("\n📚 Chargement fichiers contexte...")
+        print("\n📚 Chargement fichiers contexte...", file=sys.stderr)
 
         context = {}
 
@@ -208,12 +211,12 @@ class WeeklyPlanner:
             try:
                 if filepath.exists():
                     context[key] = filepath.read_text(encoding="utf-8")
-                    print(f"  ✅ {filepath.name}")
+                    print(f"  ✅ {filepath.name}", file=sys.stderr)
                 else:
-                    print(f"  ⚠️ Non trouvé : {filepath.name}")
+                    print(f"  ⚠️ Non trouvé : {filepath.name}", file=sys.stderr)
                     context[key] = f"[{filepath.name} non trouvé]"
             except Exception as e:
-                print(f"  ⚠️ Erreur {filepath.name} : {e}")
+                print(f"  ⚠️ Erreur {filepath.name} : {e}", file=sys.stderr)
                 context[key] = f"[Erreur lecture {filepath.name}]"
 
         # Charger protocoles si disponibles
@@ -223,9 +226,9 @@ class WeeklyPlanner:
             for protocol_file in protocols_dir.glob("*.md"):
                 try:
                     protocols.append(protocol_file.read_text(encoding="utf-8"))
-                    print(f"  ✅ {protocol_file.name}")
+                    print(f"  ✅ {protocol_file.name}", file=sys.stderr)
                 except Exception as e:
-                    print(f"  ⚠️ Erreur {protocol_file.name} : {e}")
+                    print(f"  ⚠️ Erreur {protocol_file.name} : {e}", file=sys.stderr)
 
             if protocols:
                 context["protocols"] = "\n\n---\n\n".join(protocols)
@@ -239,12 +242,12 @@ class WeeklyPlanner:
                 context["intelligence"] = json.dumps(
                     intelligence_data, indent=2, ensure_ascii=False
                 )
-                print("  ✅ intelligence.json")
+                print("  ✅ intelligence.json", file=sys.stderr)
             else:
-                print("  ⚠️ Non trouvé : intelligence.json")
+                print("  ⚠️ Non trouvé : intelligence.json", file=sys.stderr)
                 context["intelligence"] = "[Aucune recommandation d'adaptation disponible]"
         except Exception as e:
-            print(f"  ⚠️ Erreur intelligence.json : {e}")
+            print(f"  ⚠️ Erreur intelligence.json : {e}", file=sys.stderr)
             context["intelligence"] = f"[Erreur lecture intelligence.json: {e}]"
 
         return context
@@ -266,7 +269,7 @@ class WeeklyPlanner:
             >>> "S081-01" in analyses  # Previous week workouts
             True
         """
-        print("\n📝 Chargement analyses détaillées semaine précédente...")
+        print("\n📝 Chargement analyses détaillées semaine précédente...", file=sys.stderr)
 
         try:
             # Get data repo path
@@ -276,7 +279,7 @@ class WeeklyPlanner:
             history_file = config.data_repo_path / "workouts-history.md"
 
             if not history_file.exists():
-                print(f"  ⚠️ workouts-history.md non trouvé : {history_file}")
+                print(f"  ⚠️ workouts-history.md non trouvé : {history_file}", file=sys.stderr)
                 return ""
 
             content = history_file.read_text(encoding="utf-8")
@@ -296,7 +299,7 @@ class WeeklyPlanner:
                     prev_week_workouts.append("###" + section)
 
             if not prev_week_workouts:
-                print(f"  ℹ️  Aucune analyse trouvée pour {prev_week}")
+                print(f"  ℹ️  Aucune analyse trouvée pour {prev_week}", file=sys.stderr)
                 return ""
 
             # Format section
@@ -308,11 +311,14 @@ class WeeklyPlanner:
             section += "---\n\n"
             section += "\n\n".join(prev_week_workouts[:7])  # Max 7 workouts (1 week)
 
-            print(f"  ✅ {len(prev_week_workouts)} analyse(s) chargée(s) pour {prev_week}")
+            print(
+                f"  ✅ {len(prev_week_workouts)} analyse(s) chargée(s) pour {prev_week}",
+                file=sys.stderr,
+            )
             return section
 
         except Exception as e:
-            print(f"  ⚠️ Erreur chargement analyses : {e}")
+            print(f"  ⚠️ Erreur chargement analyses : {e}", file=sys.stderr)
             return ""
 
     def load_periodization_context(self) -> dict | None:
@@ -331,7 +337,7 @@ class WeeklyPlanner:
             >>> context['phase']  # "RECONSTRUCTION_BASE"
             >>> context['weekly_tss_load']  # 350
         """
-        print("\n🎯 Chargement contexte périodisation...")
+        print("\n🎯 Chargement contexte périodisation...", file=sys.stderr)
 
         try:
             from cyclisme_training_logs.config.athlete_profile import AthleteProfile
@@ -348,7 +354,7 @@ class WeeklyPlanner:
             ctl_current = self.current_metrics.get("ctl", 0)
 
             if ctl_current == 0:
-                print("  ⚠️ CTL non disponible, contexte périodisation ignoré")
+                print("  ⚠️ CTL non disponible, contexte périodisation ignoré", file=sys.stderr)
                 return None
 
             # Determine training phase
@@ -403,11 +409,14 @@ class WeeklyPlanner:
                 "rationale": phase_rec.rationale,
             }
 
-            print(f"  ✅ Phase {phase_label}, CTL {ctl_current:.1f} → {phase_rec.ctl_target:.0f}")
+            print(
+                f"  ✅ Phase {phase_label}, CTL {ctl_current:.1f} → {phase_rec.ctl_target:.0f}",
+                file=sys.stderr,
+            )
             return context
 
         except Exception as e:
-            print(f"  ⚠️ Impossible de charger contexte périodisation : {e}")
+            print(f"  ⚠️ Impossible de charger contexte périodisation : {e}", file=sys.stderr)
             return None
 
     def _load_mesocycle_context(self) -> str:
@@ -431,7 +440,7 @@ class WeeklyPlanner:
             return generate_mesocycle_context(self.week_number)
 
         except Exception as e:
-            print(f"  ⚠️ Erreur chargement contexte méso-cycle : {e}")
+            print(f"  ⚠️ Erreur chargement contexte méso-cycle : {e}", file=sys.stderr)
             return ""
 
     def _load_available_zwift_workouts(self) -> str:
@@ -476,7 +485,7 @@ class WeeklyPlanner:
 
     def generate_planning_prompt(self) -> str:
         """Generate le prompt complet pour l'assistant IA."""
-        print("\n✍️ Génération du prompt de planification...")
+        print("\n✍️ Génération du prompt de planification...", file=sys.stderr)
 
         next_week = self._next_week_number()
         date_start_str = self.start_date.strftime("%d/%m/%Y")
@@ -1065,7 +1074,7 @@ Le but est que je puisse **copier-coller directement** chaque bloc dans Interval
             subprocess.run(["pbcopy"], input=text.encode("utf-8"), check=True)
             return True
         except Exception as e:
-            print(f"⚠️ Erreur copie presse-papier : {e}")
+            print(f"⚠️ Erreur copie presse-papier : {e}", file=sys.stderr)
             return False
 
     def update_session_status(self, session_id: str, status: str, reason: str | None = None):
@@ -1105,29 +1114,29 @@ Le but est que je puisse **copier-coller directement** chaque bloc dans Interval
                             session.status = status  # Type-checked et validé!
 
                         except ValidationError as e:
-                            print(f"⚠️ Valeur invalide pour le statut : {e}")
+                            print(f"⚠️ Valeur invalide pour le statut : {e}", file=sys.stderr)
                             return False
 
                         session_found = True
                         break
 
                 if not session_found:
-                    print(f"⚠️ Séance {session_id} non trouvée dans le planning")
+                    print(f"⚠️ Séance {session_id} non trouvée dans le planning", file=sys.stderr)
                     return False
 
                 # Auto-saved by Control Tower with backup + audit log
 
-            print(f"✅ Séance {session_id} mise à jour : {status}")
+            print(f"✅ Séance {session_id} mise à jour : {status}", file=sys.stderr)
             if reason:
-                print(f"   Raison : {reason}")
+                print(f"   Raison : {reason}", file=sys.stderr)
 
             return True
 
         except FileNotFoundError:
-            print(f"⚠️ Planning JSON non trouvé pour {self.week_number}")
+            print(f"⚠️ Planning JSON non trouvé pour {self.week_number}", file=sys.stderr)
             return False
         except Exception as e:
-            print(f"⚠️ Erreur mise à jour planning : {e}")
+            print(f"⚠️ Erreur mise à jour planning : {e}", file=sys.stderr)
             return False
 
     def save_planning_json(self, workouts_data: list | None = None):
@@ -1203,18 +1212,18 @@ Le but est que je puisse **copier-coller directement** chaque bloc dans Interval
             file_timestamp=planning_dict["created_at"],
         )
 
-        print(f"\n📄 Planning JSON sauvegardé : {json_file}")
+        print(f"\n📄 Planning JSON sauvegardé : {json_file}", file=sys.stderr)
         return json_file
 
     def run(self):
         """Execute le workflow complet."""
-        print("=" * 70)
+        print("=" * 70, file=sys.stderr)
 
-        print(f"📅 PLANIFICATION HEBDOMADAIRE {self.week_number}")
+        print(f"📅 PLANIFICATION HEBDOMADAIRE {self.week_number}", file=sys.stderr)
         print(
             f"Période : {self.start_date.strftime('%d/%m/%Y')} → {self.end_date.strftime('%d/%m/%Y')}"
         )
-        print("=" * 70)
+        print("=" * 70, file=sys.stderr)
 
         # Étape 1 : Collecter métriques
         self.current_metrics = self.collect_current_metrics()
@@ -1232,44 +1241,44 @@ Le but est que je puisse **copier-coller directement** chaque bloc dans Interval
         self.save_planning_json()
 
         # Étape 5 : Copier dans presse-papier
-        print("\n📋 Copie dans le presse-papier...")
+        print("\n📋 Copie dans le presse-papier...", file=sys.stderr)
         if self.copy_to_clipboard(prompt):
-            print("  ✅ Prompt copié (Cmd+V pour coller)")
+            print("  ✅ Prompt copié (Cmd+V pour coller)", file=sys.stderr)
         else:
-            print("  ⚠️ Copie manuelle nécessaire")
-            print("\n" + "=" * 70)
-            print(prompt)
-            print("=" * 70)
+            print("  ⚠️ Copie manuelle nécessaire", file=sys.stderr)
+            print("\n" + "=" * 70, file=sys.stderr)
+            print(prompt, file=sys.stderr)
+            print("=" * 70, file=sys.stderr)
 
         # Instructions
-        print("\n" + "=" * 70)
-        print("📝 PROCHAINES ÉTAPES (MÉTHODE RECOMMANDÉE) :")
-        print("=" * 70)
-        print()
-        print("1. Choisir votre assistant IA (Claude, Mistral, OpenAI, Ollama)")
-        print("2. Coller le prompt (Cmd+V)")
-        print("3. Attendre que l'IA génère les 7 entraînements")
-        print("4. Copier la réponse COMPLÈTE de l'IA")
-        print()
-        print("5. Sauvegarder dans un fichier :")
+        print("\n" + "=" * 70, file=sys.stderr)
+        print("📝 PROCHAINES ÉTAPES (MÉTHODE RECOMMANDÉE) :", file=sys.stderr)
+        print("=" * 70, file=sys.stderr)
+        print(file=sys.stderr)
+        print("1. Choisir votre assistant IA (Claude, Mistral, OpenAI, Ollama)", file=sys.stderr)
+        print("2. Coller le prompt (Cmd+V)", file=sys.stderr)
+        print("3. Attendre que l'IA génère les 7 entraînements", file=sys.stderr)
+        print("4. Copier la réponse COMPLÈTE de l'IA", file=sys.stderr)
+        print(file=sys.stderr)
+        print("5. Sauvegarder dans un fichier :", file=sys.stderr)
         workouts_file = self.planning_dir / f"{self.week_number}_workouts.txt"
-        print(f"   pbpaste > {workouts_file}")
-        print()
-        print("6. Uploader depuis le fichier (PLUS FIABLE que clipboard) :")
-        print(f"   poetry run upload-workouts --week-id {self.week_number} \\")
-        print(f"     --start-date {self.start_date.strftime('%Y-%m-%d')} \\")
-        print(f"     --file {workouts_file}")
-        print()
-        print("💡 Pourquoi utiliser --file ?")
-        print("   • Clipboard volatile (peut être écrasé)")
-        print("   • Fichier = traçabilité et possibilité de rejouer")
-        print("   • Moins d'erreurs de manipulation")
-        print()
-        print("💡 Tip: Utilisez 'workflow-coach' pour automatisation complète")
-        print()
-        print("=" * 70)
-        print(f"✅ Planification {self.week_number} prête !")
-        print("=" * 70)
+        print(f"   pbpaste > {workouts_file}", file=sys.stderr)
+        print(file=sys.stderr)
+        print("6. Uploader depuis le fichier (PLUS FIABLE que clipboard) :", file=sys.stderr)
+        print(f"   poetry run upload-workouts --week-id {self.week_number} \\", file=sys.stderr)
+        print(f"     --start-date {self.start_date.strftime('%Y-%m-%d')} \\", file=sys.stderr)
+        print(f"     --file {workouts_file}", file=sys.stderr)
+        print(file=sys.stderr)
+        print("💡 Pourquoi utiliser --file ?", file=sys.stderr)
+        print("   • Clipboard volatile (peut être écrasé)", file=sys.stderr)
+        print("   • Fichier = traçabilité et possibilité de rejouer", file=sys.stderr)
+        print("   • Moins d'erreurs de manipulation", file=sys.stderr)
+        print(file=sys.stderr)
+        print("💡 Tip: Utilisez 'workflow-coach' pour automatisation complète", file=sys.stderr)
+        print(file=sys.stderr)
+        print("=" * 70, file=sys.stderr)
+        print(f"✅ Planification {self.week_number} prête !", file=sys.stderr)
+        print("=" * 70, file=sys.stderr)
 
 
 def main():
@@ -1291,22 +1300,22 @@ def main():
 
     # Validation format semaine
     if not args.week_id.startswith("S") or len(args.week_id) != 4:
-        print(f"❌ Format semaine invalide : {args.week_id}")
-        print("   Utiliser le format SXXX (ex: S072)")
+        print(f"❌ Format semaine invalide : {args.week_id}", file=sys.stderr)
+        print("   Utiliser le format SXXX (ex: S072)", file=sys.stderr)
         sys.exit(1)
 
     # Parsing date
     try:
         start_date = datetime.strptime(args.start_date, "%Y-%m-%d")
     except ValueError:
-        print(f"❌ Format date invalide : {args.start_date}")
-        print("   Utiliser le format YYYY-MM-DD (ex: 2024-11-24)")
+        print(f"❌ Format date invalide : {args.start_date}", file=sys.stderr)
+        print("   Utiliser le format YYYY-MM-DD (ex: 2024-11-24)", file=sys.stderr)
         sys.exit(1)
 
     # Vérifier que c'est un lundi
     if start_date.weekday() != 0:
-        print(f"⚠️ Attention : {args.start_date} n'est pas un lundi")
-        print(f"   Jour détecté : {start_date.strftime('%A')}")
+        print(f"⚠️ Attention : {args.start_date} n'est pas un lundi", file=sys.stderr)
+        print(f"   Jour détecté : {start_date.strftime('%A')}", file=sys.stderr)
         response = input("Continuer quand même ? (o/n) : ")
         if response.lower() != "o":
             sys.exit(0)
@@ -1318,7 +1327,7 @@ def main():
         project_root = Path(__file__).parent.parent
 
     if not project_root.exists():
-        print(f"❌ Répertoire projet non trouvé : {project_root}")
+        print(f"❌ Répertoire projet non trouvé : {project_root}", file=sys.stderr)
         sys.exit(1)
 
     # Exécuter planification
