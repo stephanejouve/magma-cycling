@@ -1328,7 +1328,7 @@ Réponds maintenant."""
 
         return None
 
-    def update_completed_sessions(self, activities: list[dict]):
+    def update_completed_sessions(self, activities: list[dict]) -> dict:
         """
         Automatically update session status to 'completed' in local planning JSON.
 
@@ -1340,9 +1340,12 @@ Réponds maintenant."""
 
         Args:
             activities: List of completed activities from Intervals.icu
+
+        Returns:
+            Dict mapping activity_id → session_id for successfully matched activities
         """
         if not activities:
-            return
+            return {}
 
         print("\n🔄 Mise à jour automatique des statuts de sessions...")
 
@@ -1374,6 +1377,7 @@ Réponds maintenant."""
 
         # Group matched sessions by week_id for efficient batch updates
         activities_by_week = {}
+        activity_to_session_map = {}  # Track activity_id → session_id mapping
 
         for workout in workouts:
             workout_name = workout.get("name", "")
@@ -1390,11 +1394,16 @@ Réponds maintenant."""
 
             if matched_activity:
                 activity_name = matched_activity.get("name", "")
+                activity_id = matched_activity.get("id")
 
                 if week_id not in activities_by_week:
                     activities_by_week[week_id] = []
 
                 activities_by_week[week_id].append((session_id, activity_name))
+
+                # Store mapping for return value
+                if activity_id:
+                    activity_to_session_map[activity_id] = session_id
 
         # Update each week via Control Tower (one permission/backup per week)
         for week_id, session_updates in activities_by_week.items():
@@ -1432,6 +1441,8 @@ Réponds maintenant."""
                 print(f"  ⚠️  Erreur mise à jour planning {week_id}: {e}")
 
         print("  ✅ Mise à jour automatique terminée")
+
+        return activity_to_session_map
 
     def _backup_existing_report(self, report_file: Path) -> Path | None:
         """
