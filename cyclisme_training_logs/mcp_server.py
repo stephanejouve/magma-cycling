@@ -438,6 +438,31 @@ async def list_tools() -> list[Tool]:
                 "required": ["session_id"],
             },
         ),
+        Tool(
+            name="sync-week-to-intervals",
+            description="Synchronize a week's planning to Intervals.icu (PROTECTION: never modifies completed sessions)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "week_id": {
+                        "type": "string",
+                        "description": "Week ID (e.g., S081)",
+                        "pattern": "^S\\d{3}$",
+                    },
+                    "dry_run": {
+                        "type": "boolean",
+                        "description": "Preview changes without applying (default: false)",
+                        "default": False,
+                    },
+                    "force_update": {
+                        "type": "boolean",
+                        "description": "Force update all sessions even if unchanged (default: false)",
+                        "default": False,
+                    },
+                },
+                "required": ["week_id"],
+            },
+        ),
     ]
 
 
@@ -473,6 +498,8 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             return await handle_attach_workout(arguments)
         elif name == "get-workout":
             return await handle_get_workout(arguments)
+        elif name == "sync-week-to-intervals":
+            return await handle_sync_week_to_intervals(arguments)
         else:
             raise ValueError(f"Unknown tool: {name}")
 
@@ -619,12 +646,22 @@ async def handle_daily_sync(args: dict) -> list[TextContent]:
 
 async def handle_update_session(args: dict) -> list[TextContent]:
     """Update session status."""
+    from cyclisme_training_logs.config import create_intervals_client
     from cyclisme_training_logs.planning.control_tower import planning_tower
 
     week_id = args["week_id"]
     session_id = args["session_id"]
     new_status = args["status"]
     reason = args.get("reason")
+    sync_to_intervals = args.get("sync", False)
+
+    # Track if we found session and its old status
+    session_found = False
+    old_status = None
+    intervals_id = None
+    session_date = None
+    session_name = None
+    session_description = None
 
     # Suppress all output to prevent JSON protocol pollution
     with suppress_stdout_stderr():
@@ -634,9 +671,21 @@ async def handle_update_session(args: dict) -> list[TextContent]:
             requesting_script="mcp-server",
             reason=f"MCP: Update {session_id} to {new_status}: {reason or 'N/A'}",
         ) as plan:
-            session_found = False
             for session in plan.planned_sessions:
                 if session.session_id == session_id:
+                    old_status = session.status
+                    intervals_id = session.intervals_id
+                    session_date = session.session_date
+                    session_name = session.name
+                    session_description = session.description
+
+                    # PROTECTION: Never modify completed sessions in Intervals.icu
+                    if sync_to_intervals and old_status == "completed":
+                        raise ValueError(
+                            f"Cannot sync session {session_id}: "
+                            f"Status is 'completed'. Refusing to modify completed sessions."
+                        )
+
                     # Set skip_reason BEFORE status (Pydantic validator)
                     if reason and new_status in ("skipped", "cancelled", "replaced"):
                         session.skip_reason = reason
@@ -648,12 +697,54 @@ async def handle_update_session(args: dict) -> list[TextContent]:
             if not session_found:
                 raise ValueError(f"Session {session_id} not found in {week_id}")
 
+        # Sync to Intervals.icu if requested
+        sync_result = None
+        if sync_to_intervals and session_found:
+            try:
+                client = create_intervals_client()
+
+                # Prepare event data
+                event_data = {
+                    "category": "WORKOUT",
+                    "name": session_name,
+                    "description": session_description,
+                    "start_date_local": str(session_date),
+                }
+
+                if intervals_id:
+                    # Update existing event
+                    client.update_event(intervals_id, event_data)
+                    sync_result = f"Updated Intervals.icu event {intervals_id}"
+                else:
+                    # Create new event
+                    created = client.create_event(event_data)
+                    if created and "id" in created:
+                        new_intervals_id = created["id"]
+                        # Save intervals_id back to planning
+                        with planning_tower.modify_week(
+                            week_id,
+                            requesting_script="mcp-server",
+                            reason=f"MCP: Save Intervals.icu ID {new_intervals_id} for {session_id}",
+                        ) as plan:
+                            for session in plan.planned_sessions:
+                                if session.session_id == session_id:
+                                    session.intervals_id = new_intervals_id
+                                    break
+                        sync_result = f"Created Intervals.icu event {new_intervals_id}"
+                    else:
+                        sync_result = "Failed to create Intervals.icu event"
+
+            except Exception as e:
+                sync_result = f"Sync error: {str(e)}"
+
     result = {
         "week_id": week_id,
         "session_id": session_id,
         "status": new_status,
         "reason": reason,
         "message": f"Session {session_id} updated to {new_status}",
+        "synced": sync_to_intervals,
+        "sync_result": sync_result if sync_to_intervals else None,
     }
 
     return [TextContent(type="text", text=json.dumps(result, indent=2))]
@@ -1318,6 +1409,192 @@ async def handle_get_workout(args: dict) -> list[TextContent]:
             TextContent(
                 type="text",
                 text=json.dumps({"error": f"Error retrieving workout: {str(e)}"}, indent=2),
+            )
+        ]
+
+
+async def handle_sync_week_to_intervals(args: dict) -> list[TextContent]:
+    """Synchronize week planning to Intervals.icu."""
+    from cyclisme_training_logs.config import create_intervals_client
+    from cyclisme_training_logs.planning.control_tower import planning_tower
+
+    week_id = args["week_id"]
+    dry_run = args.get("dry_run", False)
+    force_update = args.get("force_update", False)
+
+    try:
+        # Suppress all output to prevent JSON protocol pollution
+        with suppress_stdout_stderr():
+            # Read local planning
+            plan = planning_tower.read_week(week_id)
+
+            # Create Intervals.icu client
+            client = create_intervals_client()
+
+            # Get remote events for this week
+            start_date = str(plan.start_date)
+            end_date = str(plan.end_date)
+            remote_events = client.get_events(oldest=start_date, newest=end_date)
+
+            # Filter to workouts only
+            remote_workouts = {e["id"]: e for e in remote_events if e.get("category") == "WORKOUT"}
+
+            # Track changes
+            to_create = []
+            to_update = []
+            to_skip_completed = []
+            errors = []
+
+            # Process each session
+            for session in plan.planned_sessions:
+                # PROTECTION: Never modify completed sessions
+                if session.status == "completed":
+                    to_skip_completed.append(
+                        {
+                            "session_id": session.session_id,
+                            "name": session.name,
+                            "reason": "Session completed - protected from sync",
+                        }
+                    )
+                    continue
+
+                # Prepare event data
+                event_data = {
+                    "category": "WORKOUT",
+                    "name": session.name,
+                    "description": session.description,
+                    "start_date_local": str(session.session_date),
+                }
+
+                if session.intervals_id:
+                    # Check if event exists remotely
+                    if session.intervals_id in remote_workouts:
+                        # Event exists - update if needed
+                        remote_event = remote_workouts[session.intervals_id]
+
+                        # Check if update needed
+                        needs_update = (
+                            force_update
+                            or remote_event.get("name") != session.name
+                            or remote_event.get("description") != session.description
+                        )
+
+                        if needs_update:
+                            to_update.append(
+                                {
+                                    "session_id": session.session_id,
+                                    "intervals_id": session.intervals_id,
+                                    "name": session.name,
+                                    "event_data": event_data,
+                                }
+                            )
+                    else:
+                        # intervals_id set but event doesn't exist remotely
+                        # Create new event
+                        to_create.append(
+                            {
+                                "session_id": session.session_id,
+                                "name": session.name,
+                                "event_data": event_data,
+                            }
+                        )
+                else:
+                    # No intervals_id - create new event
+                    to_create.append(
+                        {
+                            "session_id": session.session_id,
+                            "name": session.name,
+                            "event_data": event_data,
+                        }
+                    )
+
+            # Apply changes if not dry run
+            created_count = 0
+            updated_count = 0
+
+            if not dry_run:
+                # Create new events
+                for item in to_create:
+                    try:
+                        created = client.create_event(item["event_data"])
+                        if created and "id" in created:
+                            new_intervals_id = created["id"]
+
+                            # Save intervals_id back to planning
+                            with planning_tower.modify_week(
+                                week_id,
+                                requesting_script="mcp-server",
+                                reason=f"MCP: Sync - Save Intervals.icu ID {new_intervals_id} for {item['session_id']}",
+                            ) as plan:
+                                for session in plan.planned_sessions:
+                                    if session.session_id == item["session_id"]:
+                                        session.intervals_id = new_intervals_id
+                                        break
+
+                            created_count += 1
+                        else:
+                            errors.append(f"Failed to create {item['session_id']}: No ID returned")
+
+                    except Exception as e:
+                        errors.append(f"Error creating {item['session_id']}: {str(e)}")
+
+                # Update existing events
+                for item in to_update:
+                    try:
+                        updated = client.update_event(item["intervals_id"], item["event_data"])
+                        if updated:
+                            updated_count += 1
+                        else:
+                            errors.append(f"Failed to update {item['session_id']}")
+
+                    except Exception as e:
+                        errors.append(f"Error updating {item['session_id']}: {str(e)}")
+
+        # Build result
+        result = {
+            "status": "success" if not errors else "partial_success",
+            "week_id": week_id,
+            "dry_run": dry_run,
+            "summary": {
+                "to_create": len(to_create),
+                "to_update": len(to_update),
+                "skipped_completed": len(to_skip_completed),
+                "created": created_count if not dry_run else 0,
+                "updated": updated_count if not dry_run else 0,
+                "errors": len(errors),
+            },
+            "details": {
+                "to_create": [
+                    {"session_id": item["session_id"], "name": item["name"]} for item in to_create
+                ],
+                "to_update": [
+                    {
+                        "session_id": item["session_id"],
+                        "intervals_id": item["intervals_id"],
+                        "name": item["name"],
+                    }
+                    for item in to_update
+                ],
+                "skipped_completed": to_skip_completed,
+            },
+            "errors": errors if errors else None,
+            "message": f"Sync {'preview' if dry_run else 'completed'} for {week_id}",
+        }
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    except FileNotFoundError:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps({"error": f"Planning file not found for week {week_id}"}, indent=2),
+            )
+        ]
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps({"error": f"Sync error: {str(e)}"}, indent=2),
             )
         ]
 
