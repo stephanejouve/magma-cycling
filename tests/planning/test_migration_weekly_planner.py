@@ -25,6 +25,10 @@ class TestWeeklyPlannerMigration:
         """Mock Control Tower to use tmp_path for planning."""
         from cyclisme_training_logs.planning.control_tower import planning_tower
 
+        # Create required files for DataRepoConfig validation
+        workouts_history = tmp_path / "workouts-history.md"
+        workouts_history.touch()
+
         # Save original path
         original_planning_dir = planning_tower.planning_dir
 
