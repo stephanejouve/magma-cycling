@@ -482,6 +482,25 @@ async def list_tools() -> list[Tool]:
                 "required": ["workout_text"],
             },
         ),
+        Tool(
+            name="delete-remote-session",
+            description="Delete a workout event directly on Intervals.icu (WARNING: permanent deletion)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "event_id": {
+                        "type": "integer",
+                        "description": "Intervals.icu event ID to delete (e.g., 94494673)",
+                    },
+                    "confirm": {
+                        "type": "boolean",
+                        "description": "Confirmation required for deletion (default: false)",
+                        "default": False,
+                    },
+                },
+                "required": ["event_id", "confirm"],
+            },
+        ),
     ]
 
 
@@ -521,6 +540,8 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             return await handle_sync_week_to_intervals(arguments)
         elif name == "validate-workout":
             return await handle_validate_workout(arguments)
+        elif name == "delete-remote-session":
+            return await handle_delete_remote_session(arguments)
         else:
             raise ValueError(f"Unknown tool: {name}")
 
@@ -1792,6 +1813,159 @@ async def handle_validate_workout(args: dict) -> list[TextContent]:
             TextContent(
                 type="text",
                 text=json.dumps({"error": f"Validation error: {str(e)}"}, indent=2),
+            )
+        ]
+
+
+async def handle_delete_remote_session(args: dict) -> list[TextContent]:
+    """Delete a workout event from Intervals.icu and update local planning via Control Tower."""
+    from cyclisme_training_logs.config import create_intervals_client
+    from cyclisme_training_logs.planning.control_tower import planning_tower
+
+    event_id = args["event_id"]
+    confirm = args.get("confirm", False)
+
+    # Safety check: require explicit confirmation
+    if not confirm:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(
+                    {
+                        "error": "Deletion requires explicit confirmation",
+                        "event_id": event_id,
+                        "message": "Set confirm=true to proceed with deletion",
+                        "warning": "This action is PERMANENT and cannot be undone",
+                    },
+                    indent=2,
+                ),
+            )
+        ]
+
+    try:
+        # Suppress all output to prevent JSON protocol pollution
+        with suppress_stdout_stderr():
+            # 🛡️ PROTECTION: Find session associated with this event
+            # Search through all weeks to find if this intervals_id is associated with a session
+            found_week_id = None
+            found_session = None
+
+            planning_dir = Path("planning")
+            if planning_dir.exists():
+                for week_file in planning_dir.glob("S???-planning.yaml"):
+                    try:
+                        week_id = week_file.stem.replace("-planning", "")
+                        plan = planning_tower.read_week(week_id)
+                        for session in plan.planned_sessions:
+                            if session.intervals_id == event_id:
+                                # Found matching session - check if completed
+                                if session.status == "completed":
+                                    return [
+                                        TextContent(
+                                            type="text",
+                                            text=json.dumps(
+                                                {
+                                                    "error": "Cannot delete completed session",
+                                                    "event_id": event_id,
+                                                    "session_id": session.session_id,
+                                                    "session_name": session.name,
+                                                    "status": session.status,
+                                                    "message": f"🛡️ PROTECTION: Session {session.session_id} is COMPLETED and cannot be deleted from Intervals.icu",
+                                                    "reason": "Completed sessions are protected to preserve training history",
+                                                },
+                                                indent=2,
+                                            ),
+                                        )
+                                    ]
+                                # Session exists but not completed - store for later modification
+                                found_week_id = week_id
+                                found_session = session
+                                break
+                    except Exception:
+                        # Skip weeks that can't be read
+                        continue
+
+                    if found_session:
+                        break
+
+            # Create Intervals.icu client
+            client = create_intervals_client()
+
+            # Attempt deletion on Intervals.icu
+            success = client.delete_event(event_id)
+
+            if not success:
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps(
+                            {
+                                "success": False,
+                                "event_id": event_id,
+                                "message": f"❌ Failed to delete event {event_id} from Intervals.icu (check logs for details)",
+                            },
+                            indent=2,
+                        ),
+                    )
+                ]
+
+            # If we found a local session, update it via Control Tower to remove intervals_id
+            local_update_status = None
+            if found_week_id and found_session:
+                try:
+                    # Use Control Tower to modify the planning
+                    def remove_intervals_id(plan):
+                        for session in plan.planned_sessions:
+                            if session.intervals_id == event_id:
+                                session.intervals_id = None
+                                break
+                        return plan
+
+                    planning_tower.modify_week(
+                        week_id=found_week_id,
+                        modification_function=remove_intervals_id,
+                        requesting_script="delete-remote-session MCP tool",
+                        reason=f"Removed intervals_id after deleting event {event_id}",
+                    )
+
+                    local_update_status = {
+                        "updated": True,
+                        "week_id": found_week_id,
+                        "session_id": found_session.session_id,
+                        "message": f"🔄 Local planning updated: intervals_id removed from {found_session.session_id}",
+                    }
+                except Exception as e:
+                    local_update_status = {
+                        "updated": False,
+                        "error": str(e),
+                        "message": f"⚠️ Event deleted from Intervals.icu but failed to update local planning: {e}",
+                    }
+
+            result = {
+                "success": True,
+                "event_id": event_id,
+                "message": f"✅ Event {event_id} deleted successfully from Intervals.icu",
+                "local_planning_update": local_update_status,
+            }
+
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(result, indent=2),
+            )
+        ]
+
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(
+                    {
+                        "error": f"Delete error: {str(e)}",
+                        "event_id": event_id,
+                    },
+                    indent=2,
+                ),
             )
         ]
 
