@@ -29,8 +29,9 @@ Claude Desktop config (~/.config/claude/claude_desktop_config.json):
 
 import json
 import sys
-from contextlib import redirect_stdout
+from contextlib import contextmanager
 from datetime import date, datetime, timedelta
+from io import StringIO
 from pathlib import Path
 
 from mcp.server import Server
@@ -39,6 +40,21 @@ from mcp.types import (
     TextContent,
     Tool,
 )
+
+
+@contextmanager
+def suppress_stdout_stderr():
+    """Suppress all stdout/stderr to prevent MCP protocol pollution."""
+    old_stdout = sys.stdout
+    old_stderr = sys.stderr
+    try:
+        sys.stdout = StringIO()
+        sys.stderr = StringIO()
+        yield
+    finally:
+        sys.stdout = old_stdout
+        sys.stderr = old_stderr
+
 
 # Initialize MCP server
 server = Server("cyclisme-training-logs")
@@ -243,8 +259,8 @@ async def handle_weekly_planner(args: dict) -> list[TextContent]:
 
     start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
 
-    # Redirect stdout to stderr to prevent JSON protocol pollution
-    with redirect_stdout(sys.stderr):
+    # Suppress all output to prevent JSON protocol pollution
+    with suppress_stdout_stderr():
         planner = WeeklyPlanner(week_number=week_id, start_date=start_date, project_root=Path.cwd())
 
         # Collect metrics
@@ -284,8 +300,8 @@ async def handle_monthly_analysis(args: dict) -> list[TextContent]:
     provider = args.get("provider", "mistral_api")
     no_ai = args.get("no_ai", False)
 
-    # Redirect stdout to stderr to prevent JSON protocol pollution
-    with redirect_stdout(sys.stderr):
+    # Suppress all output to prevent JSON protocol pollution
+    with suppress_stdout_stderr():
         analyzer = MonthlyAnalyzer(month=month, provider=provider, no_ai=no_ai)
         report = analyzer.run()
 
@@ -332,8 +348,8 @@ async def handle_daily_sync(args: dict) -> list[TextContent]:
         enable_auto_servo=False,
     )
 
-    # Redirect stdout to stderr to prevent JSON protocol pollution
-    with redirect_stdout(sys.stderr):
+    # Suppress all output to prevent JSON protocol pollution
+    with suppress_stdout_stderr():
         # Run sync
         new_activities = sync.check_activities(check_date)
 
@@ -364,8 +380,8 @@ async def handle_update_session(args: dict) -> list[TextContent]:
     new_status = args["status"]
     reason = args.get("reason")
 
-    # Redirect stdout to stderr to prevent JSON protocol pollution
-    with redirect_stdout(sys.stderr):
+    # Suppress all output to prevent JSON protocol pollution
+    with suppress_stdout_stderr():
         # Update via Control Tower
         with planning_tower.modify_week(
             week_id,

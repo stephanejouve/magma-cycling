@@ -200,6 +200,7 @@ class DailySync:
         reports_dir: Path,
         enable_ai_analysis: bool = False,
         enable_auto_servo: bool = False,
+        verbose: bool = True,
     ):
         """
         Initialize daily sync.
@@ -209,6 +210,7 @@ class DailySync:
             reports_dir: Directory for daily reports
             enable_ai_analysis: Enable automatic AI analysis of activities
             enable_auto_servo: Enable automatic servo mode for planning adjustments
+            verbose: Enable console output (disable for MCP/API usage)
         """
         self.client = create_intervals_client()
         self.tracker = ActivityTracker(tracking_file)
@@ -216,6 +218,7 @@ class DailySync:
         self.reports_dir.mkdir(parents=True, exist_ok=True)
         self.enable_ai_analysis = enable_ai_analysis
         self.enable_auto_servo = enable_auto_servo
+        self.verbose = verbose
 
         # Initialize AI analyzer if enabled
         self.ai_analyzer = None
