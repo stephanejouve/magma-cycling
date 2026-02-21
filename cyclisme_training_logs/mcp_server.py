@@ -691,6 +691,32 @@ async def list_tools() -> list[Tool]:
                 "required": ["week_id", "backup_path", "confirm"],
             },
         ),
+        Tool(
+            name="analyze-training-patterns",
+            description="META TOOL: Comprehensive analysis loading all relevant data (planning, activities, wellness, adherence) for AI coach analysis",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "week_id": {
+                        "type": "string",
+                        "description": "Week ID to analyze (e.g., S081)",
+                        "pattern": "^S\\d{3}$",
+                    },
+                    "depth": {
+                        "type": "string",
+                        "description": "Analysis depth: 'quick' (current week only), 'standard' (current + prev week), 'comprehensive' (current + prev + context)",
+                        "enum": ["quick", "standard", "comprehensive"],
+                        "default": "standard",
+                    },
+                    "include_recommendations": {
+                        "type": "boolean",
+                        "description": "Include PID/Peaks recommendations if available (default: true)",
+                        "default": True,
+                    },
+                },
+                "required": ["week_id"],
+            },
+        ),
     ]
 
 
@@ -754,6 +780,8 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             return await handle_export_week_to_json(arguments)
         elif name == "restore-week-from-backup":
             return await handle_restore_week_from_backup(arguments)
+        elif name == "analyze-training-patterns":
+            return await handle_analyze_training_patterns(arguments)
         else:
             raise ValueError(f"Unknown tool: {name}")
 
@@ -2881,6 +2909,203 @@ async def handle_restore_week_from_backup(args: dict) -> list[TextContent]:
                 type="text",
                 text=json.dumps(
                     {"error": f"Restore error: {str(e)}", "week_id": week_id},
+                    indent=2,
+                ),
+            )
+        ]
+
+
+async def handle_analyze_training_patterns(args: dict) -> list[TextContent]:
+    """META TOOL: Load all relevant data for comprehensive AI coach analysis."""
+    from cyclisme_training_logs.config import create_intervals_client
+    from cyclisme_training_logs.planning.control_tower import planning_tower
+
+    week_id = args["week_id"]
+    depth = args.get("depth", "standard")
+    include_recommendations = args.get("include_recommendations", True)
+
+    try:
+        with suppress_stdout_stderr():
+            client = create_intervals_client()
+
+            # 1. Load current week planning
+            current_plan = planning_tower.read_week(week_id)
+
+            # 2. Load activities for the week
+            activities_data = []
+            for session in current_plan.planned_sessions:
+                if session.status == "completed" and session.intervals_id:
+                    try:
+                        # Try to find the paired activity
+                        events = client.get_events(
+                            oldest=str(session.session_date), newest=str(session.session_date)
+                        )
+                        for event in events:
+                            if event.get("id") == session.intervals_id and event.get(
+                                "paired_activity_id"
+                            ):
+                                activity = client.get_activity(event["paired_activity_id"])
+                                activities_data.append(
+                                    {
+                                        "session_id": session.session_id,
+                                        "activity_id": event["paired_activity_id"],
+                                        "planned_tss": session.planned_tss,
+                                        "actual_tss": activity.get("icu_training_load"),
+                                        "actual_if": activity.get("icu_intensity"),
+                                        "actual_duration": activity.get("moving_time", 0) / 60,
+                                        "date": str(session.session_date),
+                                    }
+                                )
+                    except Exception:
+                        pass
+
+            # 3. Load wellness data for the week
+            wellness_data = client.get_wellness(
+                oldest=str(current_plan.start_date), newest=str(current_plan.end_date)
+            )
+
+            # 4. Calculate week statistics
+            completed_sessions = [
+                s for s in current_plan.planned_sessions if s.status == "completed"
+            ]
+            planned_sessions = [s for s in current_plan.planned_sessions if s.status == "planned"]
+            cancelled_sessions = [
+                s for s in current_plan.planned_sessions if s.status == "cancelled"
+            ]
+
+            planned_tss = sum(
+                s.planned_tss or 0 for s in current_plan.planned_sessions if s.status != "cancelled"
+            )
+            actual_tss = sum(a["actual_tss"] or 0 for a in activities_data)
+
+            compliance_rate = (
+                (len(completed_sessions) / len(current_plan.planned_sessions) * 100)
+                if current_plan.planned_sessions
+                else 0
+            )
+
+            # Base result structure
+            result = {
+                "week_id": week_id,
+                "period": {
+                    "start": str(current_plan.start_date),
+                    "end": str(current_plan.end_date),
+                },
+                "planning": {
+                    "total_sessions": len(current_plan.planned_sessions),
+                    "completed": len(completed_sessions),
+                    "planned": len(planned_sessions),
+                    "cancelled": len(cancelled_sessions),
+                    "planned_tss": planned_tss,
+                    "actual_tss": actual_tss,
+                    "tss_adherence_percent": (
+                        round(actual_tss / planned_tss * 100, 1) if planned_tss > 0 else 0
+                    ),
+                    "compliance_rate_percent": round(compliance_rate, 1),
+                },
+                "sessions": [
+                    {
+                        "session_id": s.session_id,
+                        "name": s.name,
+                        "date": str(s.session_date),
+                        "category": s.category,
+                        "status": s.status,
+                        "planned_tss": s.planned_tss,
+                        "planned_duration": s.planned_duration,
+                        "description": s.description[:100] if s.description else "",
+                        "intervals_id": s.intervals_id,
+                    }
+                    for s in current_plan.planned_sessions
+                ],
+                "activities": activities_data,
+                "wellness": (
+                    [
+                        {
+                            "date": w.get("id"),
+                            "ctl": w.get("ctl"),
+                            "atl": w.get("atl"),
+                            "tsb": w.get("tsb"),
+                            "ramp_rate": w.get("ramp_rate"),
+                        }
+                        for w in wellness_data
+                    ]
+                    if wellness_data
+                    else []
+                ),
+            }
+
+            # 5. Add previous week context for 'standard' and 'comprehensive'
+            if depth in ["standard", "comprehensive"]:
+                try:
+                    prev_week_num = int(week_id[1:]) - 1
+                    prev_week_id = f"S{prev_week_num:03d}"
+                    prev_plan = planning_tower.read_week(prev_week_id)
+
+                    prev_completed = [
+                        s for s in prev_plan.planned_sessions if s.status == "completed"
+                    ]
+                    prev_tss = sum(s.planned_tss or 0 for s in prev_completed)
+
+                    result["previous_week"] = {
+                        "week_id": prev_week_id,
+                        "completed_sessions": len(prev_completed),
+                        "total_tss": prev_tss,
+                    }
+                except Exception:
+                    result["previous_week"] = None
+
+            # 6. Add comprehensive context
+            if depth == "comprehensive":
+                try:
+                    # Load recommendations if available
+                    if include_recommendations:
+                        rec_file = (
+                            Path("project-docs")
+                            / "recommendations"
+                            / f"{week_id}_recommendations.json"
+                        )
+                        if rec_file.exists():
+                            result["recommendations"] = json.loads(rec_file.read_text())
+
+                    # Add athlete profile
+                    athlete = client.get_athlete()
+                    result["athlete_profile"] = {
+                        "ftp": athlete.get("ftp"),
+                        "weight": athlete.get("weight"),
+                        "ctl": athlete.get("ctl"),
+                        "atl": athlete.get("atl"),
+                    }
+
+                    # Add last 4 weeks CTL trend
+                    four_weeks_ago = str(current_plan.start_date - timedelta(days=28))
+                    historical_wellness = client.get_wellness(
+                        oldest=four_weeks_ago, newest=str(current_plan.end_date)
+                    )
+                    if historical_wellness:
+                        result["ctl_trend"] = [
+                            {"date": w.get("id"), "ctl": w.get("ctl")}
+                            for w in historical_wellness[-28:]  # Last 4 weeks
+                        ]
+                except Exception as e:
+                    result["comprehensive_data_warning"] = (
+                        f"Some comprehensive data unavailable: {str(e)}"
+                    )
+
+            result["analysis_depth"] = depth
+            result["message"] = f"✅ Loaded {depth} analysis data for {week_id}"
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(
+                    {
+                        "error": f"Analysis error: {str(e)}",
+                        "week_id": week_id,
+                        "depth": depth,
+                    },
                     indent=2,
                 ),
             )
