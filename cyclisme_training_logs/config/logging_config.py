@@ -92,7 +92,7 @@ def setup_logging(
         format=log_format,
         datefmt="%Y-%m-%d %H:%M:%S",
         force=force,
-        handlers=[logging.StreamHandler(sys.stdout)],
+        handlers=[logging.StreamHandler(sys.stderr)],
     )
 
     # Log configuration (only at DEBUG level)
