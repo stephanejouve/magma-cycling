@@ -2116,11 +2116,10 @@ async def handle_delete_remote_session(args: dict) -> list[TextContent]:
             found_week_id = None
             found_session = None
 
-            planning_dir = Path("planning")
-            if planning_dir.exists():
-                for week_file in planning_dir.glob("S???-planning.yaml"):
+            if planning_tower.planning_dir.exists():
+                for week_file in planning_tower.planning_dir.glob("week_planning_S???.json"):
                     try:
-                        week_id = week_file.stem.replace("-planning", "")
+                        week_id = week_file.stem.replace("week_planning_", "")
                         plan = planning_tower.read_week(week_id)
                         for session in plan.planned_sessions:
                             if session.intervals_id == event_id:
@@ -2175,24 +2174,32 @@ async def handle_delete_remote_session(args: dict) -> list[TextContent]:
                     )
                 ]
 
-            # If we found a local session, update it via Control Tower to remove intervals_id
+            # WRITE-BACK: If we found a local session, update it via Control Tower to remove intervals_id
             local_update_status = None
             if found_week_id and found_session:
                 try:
-                    # Use Control Tower to modify the planning
-                    def remove_intervals_id(plan):
+                    from cyclisme_training_logs.planning.models import Session
+
+                    # Use Control Tower context manager to modify the planning
+                    with planning_tower.modify_week(
+                        week_id=found_week_id,
+                        requesting_script="delete-remote-session",
+                        reason=f"Write-back: removed intervals_id after deleting event {event_id}",
+                    ) as plan:
+                        updated_sessions = []
                         for session in plan.planned_sessions:
                             if session.intervals_id == event_id:
-                                session.intervals_id = None
-                                break
-                        return plan
+                                # Remove intervals_id and reset to planned if it was uploaded
+                                session_dict = session.model_dump()
+                                session_dict["intervals_id"] = None
+                                if session_dict["status"] == "uploaded":
+                                    session_dict["status"] = "planned"
+                                updated_session = Session(**session_dict)
+                                updated_sessions.append(updated_session)
+                            else:
+                                updated_sessions.append(session)
 
-                    planning_tower.modify_week(
-                        week_id=found_week_id,
-                        modification_function=remove_intervals_id,
-                        requesting_script="delete-remote-session MCP tool",
-                        reason=f"Removed intervals_id after deleting event {event_id}",
-                    )
+                        plan.planned_sessions = updated_sessions
 
                     local_update_status = {
                         "updated": True,
@@ -2361,38 +2368,50 @@ async def handle_get_activity_details(args: dict) -> list[TextContent]:
 
 
 async def handle_update_remote_session(args: dict) -> list[TextContent]:
-    """Update an existing workout event on Intervals.icu."""
+    """Update an existing workout event on Intervals.icu with write-back to local planning."""
+    from datetime import datetime
+
     from cyclisme_training_logs.config import create_intervals_client
     from cyclisme_training_logs.planning.control_tower import planning_tower
+    from cyclisme_training_logs.planning.models import Session
 
     event_id = args["event_id"]
     updates = args["updates"]
 
     try:
         with suppress_stdout_stderr():
-            # PROTECTION: Check if this event belongs to a completed session
-            planning_dir = Path("planning")
-            if planning_dir.exists():
-                for week_file in planning_dir.glob("S???-planning.yaml"):
+            # Find which week/session this event belongs to
+            target_week_id = None
+            target_session = None
+
+            if planning_tower.planning_dir.exists():
+                for week_file in planning_tower.planning_dir.glob("week_planning_S???.json"):
                     try:
-                        week_id = week_file.stem.replace("-planning", "")
+                        week_id = week_file.stem.replace("week_planning_", "")
                         plan = planning_tower.read_week(week_id)
                         for session in plan.planned_sessions:
-                            if session.intervals_id == event_id and session.status == "completed":
-                                return [
-                                    TextContent(
-                                        type="text",
-                                        text=json.dumps(
-                                            {
-                                                "error": "Cannot update completed session",
-                                                "event_id": event_id,
-                                                "session_id": session.session_id,
-                                                "message": f"🛡️ PROTECTION: Session {session.session_id} is COMPLETED",
-                                            },
-                                            indent=2,
-                                        ),
-                                    )
-                                ]
+                            if session.intervals_id == event_id:
+                                # PROTECTION: Check if completed
+                                if session.status == "completed":
+                                    return [
+                                        TextContent(
+                                            type="text",
+                                            text=json.dumps(
+                                                {
+                                                    "error": "Cannot update completed session",
+                                                    "event_id": event_id,
+                                                    "session_id": session.session_id,
+                                                    "message": f"🛡️ PROTECTION: Session {session.session_id} is COMPLETED",
+                                                },
+                                                indent=2,
+                                            ),
+                                        )
+                                    ]
+                                target_week_id = week_id
+                                target_session = session
+                                break
+                        if target_week_id:
+                            break
                     except Exception:
                         continue
 
@@ -2401,11 +2420,55 @@ async def handle_update_remote_session(args: dict) -> list[TextContent]:
             updated_event = client.update_event(event_id, updates)
 
             if updated_event:
+                # WRITE-BACK: Update local planning if we found the session
+                if target_week_id and target_session:
+                    with planning_tower.modify_week(
+                        target_week_id,
+                        requesting_script="update-remote-session",
+                        reason=f"Write-back from Intervals.icu update: {list(updates.keys())}",
+                    ) as plan:
+                        # Find and update the session
+                        updated_sessions = []
+                        for session in plan.planned_sessions:
+                            if session.session_id == target_session.session_id:
+                                # Map Intervals.icu fields to local planning fields
+                                session_dict = session.model_dump()
+
+                                if "name" in updates:
+                                    session_dict["name"] = (
+                                        updates["name"]
+                                        .split("-")[-1]
+                                        .replace("-V001", "")
+                                        .replace("-V002", "")
+                                        .replace("-V003", "")
+                                    )
+
+                                if "start_date_local" in updates:
+                                    # Extract date from datetime string (YYYY-MM-DDTHH:MM:SS)
+                                    date_str = updates["start_date_local"].split("T")[0]
+                                    session_dict["session_date"] = datetime.strptime(
+                                        date_str, "%Y-%m-%d"
+                                    ).date()
+
+                                if "description" in updates:
+                                    session_dict["description"] = updates["description"]
+
+                                updated_session = Session(**session_dict)
+                                updated_sessions.append(updated_session)
+                            else:
+                                updated_sessions.append(session)
+
+                        plan.planned_sessions = updated_sessions
+
                 result = {
                     "success": True,
                     "event_id": event_id,
                     "updated_fields": list(updates.keys()),
-                    "message": f"✅ Event {event_id} updated successfully",
+                    "local_planning_updated": target_week_id is not None,
+                    "week_id": target_week_id,
+                    "session_id": target_session.session_id if target_session else None,
+                    "message": f"✅ Event {event_id} updated successfully"
+                    + (" (+ local planning)" if target_week_id else ""),
                 }
             else:
                 result = {
@@ -3139,8 +3202,12 @@ async def handle_analyze_training_patterns(args: dict) -> list[TextContent]:
 
 
 async def handle_create_remote_note(args: dict) -> list[TextContent]:
-    """Create a NOTE (calendar note) directly on Intervals.icu."""
+    """Create a NOTE (calendar note) directly on Intervals.icu with write-back to local planning."""
+    import re
+
     from cyclisme_training_logs.config import create_intervals_client
+    from cyclisme_training_logs.planning.control_tower import planning_tower
+    from cyclisme_training_logs.planning.models import Session
 
     date = args["date"]
     name = args["name"]
@@ -3180,12 +3247,63 @@ async def handle_create_remote_note(args: dict) -> list[TextContent]:
             created_event = client.create_event(event_data)
 
             if created_event and "id" in created_event:
+                # WRITE-BACK: Update local planning
+                # Extract session_id from name (e.g., "[ANNULÉE] S081-04-INT-TempoSoutenu" → "S081-04")
+                session_id_match = re.search(r"S\d{3}-\d{2}[a-z]?", name)
+                if session_id_match:
+                    session_id = session_id_match.group()
+                    week_id = session_id.split("-")[0]  # Extract S081 from S081-04
+
+                    try:
+                        # Determine status from prefix
+                        status_map = {
+                            "[ANNULÉE]": "cancelled",
+                            "[SAUTÉE]": "skipped",
+                            "[REMPLACÉE]": "replaced",
+                        }
+                        new_status = next(
+                            (
+                                status
+                                for prefix, status in status_map.items()
+                                if name.startswith(prefix)
+                            ),
+                            "cancelled",
+                        )
+
+                        # Update local planning
+                        with planning_tower.modify_week(
+                            week_id,
+                            requesting_script="create-remote-note",
+                            reason=f"Write-back from NOTE creation: {new_status} session {session_id}",
+                        ) as plan:
+                            updated_sessions = []
+                            for session in plan.planned_sessions:
+                                if session.session_id == session_id:
+                                    session_dict = session.model_dump()
+                                    session_dict["status"] = new_status
+                                    session_dict["reason"] = description[:100]  # First 100 chars
+                                    # Note: We don't update intervals_id because NOTE is separate from session
+                                    updated_session = Session(**session_dict)
+                                    updated_sessions.append(updated_session)
+                                else:
+                                    updated_sessions.append(session)
+
+                            plan.planned_sessions = updated_sessions
+
+                        local_update_msg = (
+                            f" (+ local planning {week_id}/{session_id} → {new_status})"
+                        )
+                    except Exception as e:
+                        local_update_msg = f" (local planning update failed: {str(e)})"
+                else:
+                    local_update_msg = " (no session_id found in name, local planning not updated)"
+
                 result = {
                     "success": True,
                     "event_id": created_event["id"],
                     "date": date,
                     "name": name,
-                    "message": f"✅ NOTE created successfully on Intervals.icu (ID: {created_event['id']})",
+                    "message": f"✅ NOTE created successfully on Intervals.icu (ID: {created_event['id']}){local_update_msg}",
                 }
             else:
                 result = {
