@@ -276,6 +276,8 @@ class DailySync:
         # Parse start times
         activities_with_time = []
         for activity in activities:
+            if activity is None:
+                continue
             start_str = activity.get("start_date_local", "")
             if start_str:
                 try:
@@ -405,7 +407,8 @@ class DailySync:
         completed_activities = [
             act
             for act in all_activities
-            if not act.get("icu_ignore_time", False)  # Not ignored
+            if act is not None  # Skip None entries
+            and not act.get("icu_ignore_time", False)  # Not ignored
             and act.get("type") in ["Ride", "VirtualRide"]  # Cycling activities only
         ]
 
@@ -1306,6 +1309,9 @@ Réponds maintenant."""
                 workout_code = f"{parts[0]}-{parts[1]}"  # "S077-03"
 
         for activity in activities:
+            if activity is None:
+                continue
+
             # Method 1: Explicit pairing via paired_event_id
             if activity.get("paired_event_id") == workout_id:
                 return activity
@@ -1313,6 +1319,8 @@ Réponds maintenant."""
             # Method 2: Session code matching + temporal tolerance
             if workout_code:
                 activity_name = activity.get("name", "").upper()
+                if "start_date_local" not in activity:
+                    continue
                 activity_date = datetime.fromisoformat(
                     activity["start_date_local"].replace("Z", "+00:00")
                 )
@@ -1351,14 +1359,20 @@ Réponds maintenant."""
 
         # Determine date range from activities
         if not activities:
-            return
+            return {}
 
         from datetime import datetime, timedelta
 
         activity_dates = [
             datetime.fromisoformat(a["start_date_local"].replace("Z", "+00:00")).date()
             for a in activities
+            if a is not None and "start_date_local" in a
         ]
+
+        # If no valid dates found, return empty mapping
+        if not activity_dates:
+            return {}
+
         oldest = min(activity_dates)
         newest = max(activity_dates)
 
@@ -1373,7 +1387,7 @@ Réponds maintenant."""
             print(f"  ℹ️  {len(workouts)} workout(s) planifié(s) trouvé(s) sur Intervals.icu")
         except Exception as e:
             print(f"  ⚠️  Erreur récupération workouts planifiés: {e}")
-            return
+            return {}
 
         # Group matched sessions by week_id for efficient batch updates
         activities_by_week = {}
