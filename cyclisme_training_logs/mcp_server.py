@@ -501,6 +501,28 @@ async def list_tools() -> list[Tool]:
                 "required": ["event_id", "confirm"],
             },
         ),
+        Tool(
+            name="list-remote-events",
+            description="List all events from Intervals.icu for a date range (workouts, notes, etc.)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "start_date": {
+                        "type": "string",
+                        "description": "Start date in YYYY-MM-DD format",
+                    },
+                    "end_date": {
+                        "type": "string",
+                        "description": "End date in YYYY-MM-DD format",
+                    },
+                    "category": {
+                        "type": "string",
+                        "description": "Filter by category (WORKOUT, NOTE, etc.) - optional",
+                    },
+                },
+                "required": ["start_date", "end_date"],
+            },
+        ),
     ]
 
 
@@ -542,6 +564,8 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             return await handle_validate_workout(arguments)
         elif name == "delete-remote-session":
             return await handle_delete_remote_session(arguments)
+        elif name == "list-remote-events":
+            return await handle_list_remote_events(arguments)
         else:
             raise ValueError(f"Unknown tool: {name}")
 
@@ -1963,6 +1987,73 @@ async def handle_delete_remote_session(args: dict) -> list[TextContent]:
                     {
                         "error": f"Delete error: {str(e)}",
                         "event_id": event_id,
+                    },
+                    indent=2,
+                ),
+            )
+        ]
+
+
+async def handle_list_remote_events(args: dict) -> list[TextContent]:
+    """List all events from Intervals.icu for a date range."""
+    from cyclisme_training_logs.config import create_intervals_client
+
+    start_date = args["start_date"]
+    end_date = args["end_date"]
+    category_filter = args.get("category")
+
+    try:
+        # Suppress all output to prevent JSON protocol pollution
+        with suppress_stdout_stderr():
+            # Create Intervals.icu client
+            client = create_intervals_client()
+
+            # Fetch events
+            events = client.get_events(oldest=start_date, newest=end_date)
+
+            # Filter by category if specified
+            if category_filter:
+                events = [e for e in events if e.get("category") == category_filter]
+
+            # Format results with relevant fields
+            formatted_events = []
+            for event in events:
+                formatted_event = {
+                    "id": event.get("id"),
+                    "category": event.get("category"),
+                    "name": event.get("name"),
+                    "description": event.get("description", "")[:100],  # First 100 chars
+                    "start_date_local": event.get("start_date_local"),
+                    "type": event.get("type"),
+                }
+                formatted_events.append(formatted_event)
+
+            result = {
+                "start_date": start_date,
+                "end_date": end_date,
+                "total_events": len(formatted_events),
+                "events": formatted_events,
+            }
+
+            if category_filter:
+                result["filtered_by"] = category_filter
+
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(result, indent=2),
+            )
+        ]
+
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(
+                    {
+                        "error": f"Failed to list remote events: {str(e)}",
+                        "start_date": start_date,
+                        "end_date": end_date,
                     },
                     indent=2,
                 ),
