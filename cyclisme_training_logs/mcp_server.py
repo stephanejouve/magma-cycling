@@ -717,6 +717,29 @@ async def list_tools() -> list[Tool]:
                 "required": ["week_id"],
             },
         ),
+        Tool(
+            name="create-remote-note",
+            description="Create a NOTE (calendar note) directly on Intervals.icu (category=NOTE, type=null)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "date": {
+                        "type": "string",
+                        "description": "Date for the note (YYYY-MM-DD)",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Note title",
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "Note content/description",
+                    },
+                },
+                "required": ["date", "name", "description"],
+            },
+        ),
     ]
 
 
@@ -782,6 +805,8 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             return await handle_restore_week_from_backup(arguments)
         elif name == "analyze-training-patterns":
             return await handle_analyze_training_patterns(arguments)
+        elif name == "create-remote-note":
+            return await handle_create_remote_note(arguments)
         else:
             raise ValueError(f"Unknown tool: {name}")
 
@@ -3105,6 +3130,61 @@ async def handle_analyze_training_patterns(args: dict) -> list[TextContent]:
                         "error": f"Analysis error: {str(e)}",
                         "week_id": week_id,
                         "depth": depth,
+                    },
+                    indent=2,
+                ),
+            )
+        ]
+
+
+async def handle_create_remote_note(args: dict) -> list[TextContent]:
+    """Create a NOTE (calendar note) directly on Intervals.icu."""
+    from cyclisme_training_logs.config import create_intervals_client
+
+    date = args["date"]
+    name = args["name"]
+    description = args["description"]
+
+    try:
+        with suppress_stdout_stderr():
+            client = create_intervals_client()
+
+            # Create NOTE event (category=NOTE, type=null, no workout)
+            event_data = {
+                "category": "NOTE",
+                "name": name,
+                "description": description,
+                "start_date_local": f"{date}T00:00:00",  # Notes at midnight
+            }
+
+            # Create event on Intervals.icu
+            created_event = client.create_event(event_data)
+
+            if created_event and "id" in created_event:
+                result = {
+                    "success": True,
+                    "event_id": created_event["id"],
+                    "date": date,
+                    "name": name,
+                    "message": f"✅ NOTE created successfully on Intervals.icu (ID: {created_event['id']})",
+                }
+            else:
+                result = {
+                    "success": False,
+                    "message": "❌ Failed to create NOTE - no ID returned from Intervals.icu",
+                }
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(
+                    {
+                        "error": f"Failed to create NOTE: {str(e)}",
+                        "date": date,
+                        "name": name,
                     },
                     indent=2,
                 ),
