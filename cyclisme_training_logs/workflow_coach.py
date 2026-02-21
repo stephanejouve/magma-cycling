@@ -468,31 +468,14 @@ class WorkflowCoach:
                 session_found = False
                 for session in plan.planned_sessions:
                     if str(session.session_date) == date:
-                        # Save to history
-                        timestamp = datetime.now().isoformat()
-
-                        history_entry = {
-                            "timestamp": timestamp,
-                            "action": "modified_by_ai_coach",
-                            "previous_workout": old_workout,
-                            "previous_tss": session.tss_planned,
-                            "new_workout": new_workout["code"],
-                            "new_tss": new_workout["tss"],
-                            "reason": reason,
-                        }
-
                         # Update session fields
+                        # (History tracked by Control Tower audit log)
                         session.session_id = new_workout.get("session_id", session.session_id)
                         session.name = new_workout.get("name", session.name)
                         session.session_type = new_workout["type"]
                         session.tss_planned = new_workout["tss"]
                         session.description = new_workout["description"]
                         session.status = "modified"
-
-                        # Add history (if field exists)
-                        if not hasattr(session, "history") or session.history is None:
-                            session.history = []
-                        session.history.append(history_entry)
 
                         session_found = True
                         break

@@ -7,8 +7,8 @@ Usage:
     python3 cyclisme_training_logs/test_rest_and_cancellations.py  # Run sans pytest
 """
 import json
-import tempfile
-from pathlib import Path
+
+import pytest
 
 # Import du module à tester
 from cyclisme_training_logs.rest_and_cancellations import (
@@ -18,6 +18,30 @@ from cyclisme_training_logs.rest_and_cancellations import (
     reconcile_planned_vs_actual,
     validate_week_planning,
 )
+
+# ============================================================================
+# FIXTURES
+# ============================================================================
+
+
+@pytest.fixture
+def mock_control_tower(tmp_path):
+    """Mock Control Tower to use tmp_path for planning."""
+    from cyclisme_training_logs.planning.control_tower import planning_tower
+
+    # Save original path
+    original_planning_dir = planning_tower.planning_dir
+
+    # Override with tmp_path
+    planning_tower.planning_dir = tmp_path
+    planning_tower.backup_system.planning_dir = tmp_path
+
+    yield tmp_path
+
+    # Restore original path
+    planning_tower.planning_dir = original_planning_dir
+    planning_tower.backup_system.planning_dir = original_planning_dir
+
 
 # ============================================================================
 # HELPERS
@@ -93,41 +117,35 @@ def create_test_planning(week_id="S070", with_cancellation=True, with_rest=True)
 # ============================================================================
 
 
-def test_load_valid_planning():
+def test_load_valid_planning(mock_control_tower):
     """Test chargement planning valide."""
     print("\n[TEST] Chargement planning valide...")
 
-    # Créer un planning temporaire
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir_path = Path(tmpdir)
-        planning_data = create_test_planning()
+    planning_data = create_test_planning()
 
-        # Écrire le fichier
-        planning_file = tmpdir_path / "week_planning_S070.json"
-        with open(planning_file, "w", encoding="utf-8") as f:
-            json.dump(planning_data, f, indent=2)
+    # Écrire le fichier
+    planning_file = mock_control_tower / "week_planning_S070.json"
+    with open(planning_file, "w", encoding="utf-8") as f:
+        json.dump(planning_data, f, indent=2)
 
-        # Charger
-        planning = load_week_planning("S070", planning_dir=tmpdir_path)
+    # Charger (Control Tower now uses mock_control_tower via fixture)
+    planning = load_week_planning("S070")
 
-        assert planning.week_id == "S070"
-        assert len(planning.planned_sessions) == 3
-        print("✓ Planning chargé correctement")
+    assert planning.week_id == "S070"
+    assert len(planning.planned_sessions) == 3
+    print("✓ Planning chargé correctement")
 
 
-def test_load_missing_planning():
+def test_load_missing_planning(mock_control_tower):
     """Test gestion planning absent."""
     print("\n[TEST] Gestion planning absent...")
 
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir_path = Path(tmpdir)
-
-        try:
-            load_week_planning("S999", planning_dir=tmpdir_path)
-            raise AssertionError("Devrait lever FileNotFoundError")
-        except FileNotFoundError as e:
-            assert "Planning non trouvé" in str(e)
-            print("✓ FileNotFoundError levée correctement")
+    try:
+        load_week_planning("S999")
+        raise AssertionError("Devrait lever FileNotFoundError")
+    except FileNotFoundError as e:
+        assert "Planning non trouvé" in str(e)
+        print("✓ FileNotFoundError levée correctement")
 
 
 def test_validate_planning_valid():
