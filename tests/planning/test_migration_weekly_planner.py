@@ -9,7 +9,7 @@ Created: 2026-02-08
 """
 
 import json
-from datetime import UTC, datetime
+from datetime import datetime
 
 import pytest
 
@@ -21,7 +21,25 @@ class TestWeeklyPlannerMigration:
     """Test migration de weekly_planner.py vers Pydantic."""
 
     @pytest.fixture
-    def temp_planning_file(self, tmp_path):
+    def mock_config(self, tmp_path):
+        """Mock Control Tower to use tmp_path for planning."""
+        from cyclisme_training_logs.planning.control_tower import planning_tower
+
+        # Save original path
+        original_planning_dir = planning_tower.planning_dir
+
+        # Override with tmp_path
+        planning_tower.planning_dir = tmp_path
+        planning_tower.backup_system.planning_dir = tmp_path
+
+        yield tmp_path
+
+        # Restore original path
+        planning_tower.planning_dir = original_planning_dir
+        planning_tower.backup_system.planning_dir = original_planning_dir
+
+    @pytest.fixture
+    def temp_planning_file(self, tmp_path, mock_config):
         """Créer un fichier planning temporaire pour tests."""
         planning_data = {
             "week_id": "S080",
@@ -69,7 +87,7 @@ class TestWeeklyPlannerMigration:
         return planning_file
 
     @pytest.fixture
-    def planner(self, tmp_path):
+    def planner(self, tmp_path, mock_config):
         """Créer instance WeeklyPlanner pour tests."""
         planner = WeeklyPlanner(
             week_number="S080",
@@ -123,35 +141,49 @@ class TestWeeklyPlannerMigration:
 
         assert success is False
 
-    def test_update_missing_file_returns_false(self, planner, tmp_path):
+    def test_update_missing_file_returns_false(self, tmp_path):
         """Vérifie que tenter de modifier un fichier inexistant retourne False."""
-        # Fichier qui n'existe pas
-        planner.planning_dir = tmp_path / "nonexistent"
+        from cyclisme_training_logs.planning.control_tower import planning_tower
 
-        success = planner.update_session_status("S080-01", "completed")
+        # Point Control Tower to nonexistent directory
+        nonexistent_dir = tmp_path / "nonexistent"
+        original_dir = planning_tower.planning_dir
 
-        assert success is False
+        try:
+            planning_tower.planning_dir = nonexistent_dir
+            planning_tower.backup_system.planning_dir = nonexistent_dir
+
+            planner = WeeklyPlanner(
+                week_number="S080",
+                start_date=datetime(2026, 2, 9),
+                project_root=tmp_path,
+            )
+            success = planner.update_session_status("S080-01", "completed")
+
+            assert success is False
+        finally:
+            planning_tower.planning_dir = original_dir
+            planning_tower.backup_system.planning_dir = original_dir
 
     def test_last_updated_is_modified(self, planner, temp_planning_file):
         """Vérifie que last_updated est mis à jour."""
         # Charger et modifier le timestamp initial pour être dans le passé
         plan_before = WeeklyPlan.from_json(temp_planning_file)
-        plan_before.last_updated = datetime(2026, 2, 1, 12, 0, 0, tzinfo=UTC)  # Passé UTC
+        old_timestamp_str = "2026-02-01T12:00:00Z"
+        plan_before.last_updated = old_timestamp_str
         plan_before.to_json(temp_planning_file)
-
-        initial_timestamp = plan_before.last_updated
 
         # Attendre un peu pour avoir un timestamp différent
         import time
 
-        time.sleep(0.1)
+        time.sleep(0.2)
 
         # Mettre à jour
         planner.update_session_status("S080-01", "completed")
 
-        # Vérifier nouveau timestamp
+        # Vérifier nouveau timestamp (string comparison)
         plan_after = WeeklyPlan.from_json(temp_planning_file)
-        assert plan_after.last_updated > initial_timestamp
+        assert str(plan_after.last_updated) > old_timestamp_str
 
     def test_pydantic_protection_prevents_corruption(self, temp_planning_file):
         """

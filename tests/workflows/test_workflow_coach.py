@@ -13,9 +13,11 @@ Test Categories:
 """
 
 import json
+from datetime import date
 from pathlib import Path
 from unittest.mock import Mock, mock_open, patch
 
+import pytest
 import requests
 
 from cyclisme_training_logs.workflow_coach import WorkflowCoach
@@ -237,34 +239,62 @@ class TestInitialization:
 class TestPlanningModifications:
     """Test planning modification methods."""
 
-    @patch("cyclisme_training_logs.workflow_coach.get_data_config")
-    @patch("builtins.open", new_callable=mock_open)
-    @patch("json.load")
-    @patch("json.dump")
-    def test_update_planning_json_success(self, mock_dump, mock_json_load, mock_file, mock_config):
-        """Test _update_planning_json updates planning file successfully."""
-        # Mock config
-        mock_config_obj = Mock()
-        mock_config_obj.week_planning_dir = Path("/fake/path")
-        mock_config.return_value = mock_config_obj
+    @pytest.fixture
+    def mock_config(self, tmp_path):
+        """Mock Control Tower to use tmp_path for planning."""
+        from cyclisme_training_logs.planning.control_tower import planning_tower
 
-        # Mock planning data
+        # Save original path
+        original_planning_dir = planning_tower.planning_dir
+
+        # Override with tmp_path
+        planning_tower.planning_dir = tmp_path
+        planning_tower.backup_system.planning_dir = tmp_path
+
+        yield tmp_path
+
+        # Restore original path
+        planning_tower.planning_dir = original_planning_dir
+        planning_tower.backup_system.planning_dir = original_planning_dir
+
+    @pytest.fixture
+    def temp_planning_file(self, tmp_path, mock_config):
+        """Create temporary planning file for tests."""
         planning_data = {
             "week_id": "S072",
             "start_date": "2025-12-15",
+            "end_date": "2025-12-21",
+            "created_at": "2025-12-01T20:00:00Z",
+            "last_updated": "2025-12-01T20:00:00Z",
+            "version": 1,
+            "athlete_id": "i151223",
+            "tss_target": 350,
             "planned_sessions": [
                 {
-                    "date": "2025-12-18",
                     "session_id": "S072-03",
+                    "date": "2025-12-18",
                     "name": "Tempo",
                     "type": "TEMPO",
+                    "version": "V001",
                     "tss_planned": 75,
+                    "duration_min": 60,
                     "description": "Original tempo session",
+                    "status": "planned",
+                    "intervals_id": None,
+                    "description_hash": None,
                 }
             ],
-            "version": 1,
         }
-        mock_json_load.return_value = planning_data
+
+        planning_file = tmp_path / "week_planning_S072.json"
+        with open(planning_file, "w", encoding="utf-8") as f:
+            json.dump(planning_data, f, indent=2)
+
+        return planning_file
+
+    def test_update_planning_json_success(self, temp_planning_file, tmp_path, mock_config):
+        """Test _update_planning_json updates planning file successfully."""
+        from cyclisme_training_logs.planning.models import WeeklyPlan
 
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
 
@@ -284,8 +314,12 @@ class TestPlanningModifications:
         )
 
         assert result is True
-        # Verify json.dump was called (file was written)
-        assert mock_dump.called
+
+        # Verify file was updated with Pydantic
+        plan = WeeklyPlan.from_json(temp_planning_file)
+        assert plan.planned_sessions[0].session_type == "RECOVERY"
+        assert plan.planned_sessions[0].tss_planned == 50
+        assert "Lightened recovery session" in plan.planned_sessions[0].description
 
     @patch("cyclisme_training_logs.workflow_coach.get_data_config")
     @patch("builtins.open", side_effect=FileNotFoundError())
@@ -1418,15 +1452,27 @@ class TestWorkoutTemplatesLoading:
 class TestRemainingSessionsLoading:
     """Test load_remaining_sessions method."""
 
-    @patch("cyclisme_training_logs.workflow_coach.get_data_config")
-    @patch("pathlib.Path.exists", return_value=False)
-    @patch("builtins.print")
-    def test_load_remaining_sessions_file_not_found(self, mock_print, mock_exists, mock_config):
-        """Test load_remaining_sessions when planning file doesn't exist."""
-        mock_config_obj = Mock()
-        mock_config_obj.week_planning_dir = Path("/fake/path")
-        mock_config.return_value = mock_config_obj
+    @pytest.fixture
+    def mock_config(self, tmp_path):
+        """Mock Control Tower to use tmp_path for planning."""
+        from cyclisme_training_logs.planning.control_tower import planning_tower
 
+        # Save original path
+        original_planning_dir = planning_tower.planning_dir
+
+        # Override with tmp_path
+        planning_tower.planning_dir = tmp_path
+        planning_tower.backup_system.planning_dir = tmp_path
+
+        yield tmp_path
+
+        # Restore original path
+        planning_tower.planning_dir = original_planning_dir
+        planning_tower.backup_system.planning_dir = original_planning_dir
+
+    @patch("builtins.print")
+    def test_load_remaining_sessions_file_not_found(self, mock_print, tmp_path, mock_config):
+        """Test load_remaining_sessions when planning file doesn't exist."""
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
         remaining = coach.load_remaining_sessions("S099")
 
@@ -1434,32 +1480,61 @@ class TestRemainingSessionsLoading:
         # Should print warning
         assert mock_print.called
 
-    @patch("cyclisme_training_logs.workflow_coach.get_data_config")
-    @patch("pathlib.Path.exists", return_value=True)
-    @patch("builtins.open", new_callable=mock_open)
-    @patch("json.load")
-    def test_load_remaining_sessions_success(
-        self, mock_json_load, mock_file, mock_exists, mock_config
-    ):
+    def test_load_remaining_sessions_success(self, tmp_path, mock_config):
         """Test load_remaining_sessions successfully loads future sessions."""
-        from datetime import datetime, timedelta
 
-        mock_config_obj = Mock()
-        mock_config_obj.week_planning_dir = Path("/fake/path")
-        mock_config.return_value = mock_config_obj
+        # Use current week that includes today (2026-02-21)
+        # Week 2026-02-16 (Monday) to 2026-02-22 (Sunday)
+        week_start = date(2026, 2, 16)  # Monday
+        week_end = date(2026, 2, 22)  # Sunday
 
-        # Create planning with past and future sessions
-        today = datetime.now().date()
-        past_date = (today - timedelta(days=2)).strftime("%Y-%m-%d")
-        future_date = (today + timedelta(days=2)).strftime("%Y-%m-%d")
+        # Today is 2026-02-21 (Saturday)
+        # past_date: before today, future_date: after today
+        past_date = "2026-02-17"  # Tuesday - past
+        future_date = "2026-02-22"  # Sunday - future
 
-        mock_json_load.return_value = {
+        planning_data = {
             "week_id": "S072",
+            "start_date": week_start.strftime("%Y-%m-%d"),
+            "end_date": week_end.strftime("%Y-%m-%d"),
+            "created_at": "2025-12-01T20:00:00Z",
+            "last_updated": "2025-12-01T20:00:00Z",
+            "version": 1,
+            "athlete_id": "i151223",
+            "tss_target": 350,
             "planned_sessions": [
-                {"date": past_date, "session_id": "S072-01", "name": "Past", "type": "TEMPO"},
-                {"date": future_date, "session_id": "S072-03", "name": "Future", "type": "VO2"},
+                {
+                    "session_id": "S072-01",
+                    "date": past_date,
+                    "name": "Past",
+                    "type": "TEMPO",
+                    "version": "V001",
+                    "tss_planned": 60,
+                    "duration_min": 60,
+                    "description": "Past session",
+                    "status": "completed",
+                    "intervals_id": None,
+                    "description_hash": None,
+                },
+                {
+                    "session_id": "S072-03",
+                    "date": future_date,
+                    "name": "Future",
+                    "type": "VO2",
+                    "version": "V001",
+                    "tss_planned": 75,
+                    "duration_min": 65,
+                    "description": "Future session",
+                    "status": "planned",
+                    "intervals_id": None,
+                    "description_hash": None,
+                },
             ],
         }
+
+        planning_file = tmp_path / "week_planning_S072.json"
+        with open(planning_file, "w", encoding="utf-8") as f:
+            json.dump(planning_data, f, indent=2)
 
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
         remaining = coach.load_remaining_sessions("S072")

@@ -29,7 +29,25 @@ class TestUpdateSessionStatusLocal:
     """Test local JSON updates without Intervals.icu sync."""
 
     @pytest.fixture
-    def temp_planning_file(self, tmp_path):
+    def mock_config(self, tmp_path):
+        """Mock Control Tower to use tmp_path for planning."""
+        from cyclisme_training_logs.planning.control_tower import planning_tower
+
+        # Save original path
+        original_planning_dir = planning_tower.planning_dir
+
+        # Override with tmp_path
+        planning_tower.planning_dir = tmp_path
+        planning_tower.backup_system.planning_dir = tmp_path
+
+        yield tmp_path
+
+        # Restore original path
+        planning_tower.planning_dir = original_planning_dir
+        planning_tower.backup_system.planning_dir = original_planning_dir
+
+    @pytest.fixture
+    def temp_planning_file(self, tmp_path, mock_config):
         """Create temporary planning file for tests."""
         planning_data = {
             "week_id": "S999",
@@ -76,7 +94,7 @@ class TestUpdateSessionStatusLocal:
 
         return planning_file
 
-    def test_update_session_to_completed(self, temp_planning_file, tmp_path):
+    def test_update_session_to_completed(self, temp_planning_file, tmp_path, mock_config):
         """Test updating session status to completed."""
         from cyclisme_training_logs.weekly_planner import WeeklyPlanner
 
@@ -97,7 +115,9 @@ class TestUpdateSessionStatusLocal:
         plan = WeeklyPlan.from_json(temp_planning_file)
         assert plan.planned_sessions[0].status == "completed"
 
-    def test_update_session_to_cancelled_with_reason(self, temp_planning_file, tmp_path):
+    def test_update_session_to_cancelled_with_reason(
+        self, temp_planning_file, tmp_path, mock_config
+    ):
         """Test updating session to cancelled with reason."""
         from cyclisme_training_logs.weekly_planner import WeeklyPlanner
 
@@ -118,7 +138,7 @@ class TestUpdateSessionStatusLocal:
         assert plan.planned_sessions[0].status == "cancelled"
         assert plan.planned_sessions[0].skip_reason == "Fatigue"
 
-    def test_update_session_to_skipped(self, temp_planning_file, tmp_path):
+    def test_update_session_to_skipped(self, temp_planning_file, tmp_path, mock_config):
         """Test updating session to skipped."""
         from cyclisme_training_logs.weekly_planner import WeeklyPlanner
 
@@ -139,7 +159,7 @@ class TestUpdateSessionStatusLocal:
         assert plan.planned_sessions[1].status == "skipped"
         assert plan.planned_sessions[1].skip_reason == "Weather"
 
-    def test_update_nonexistent_session_fails(self, tmp_path):
+    def test_update_nonexistent_session_fails(self, temp_planning_file, tmp_path, mock_config):
         """Test that updating nonexistent session returns False."""
         from cyclisme_training_logs.weekly_planner import WeeklyPlanner
 
@@ -155,7 +175,7 @@ class TestUpdateSessionStatusLocal:
 
         assert success is False
 
-    def test_last_updated_is_modified(self, temp_planning_file, tmp_path):
+    def test_last_updated_is_modified(self, temp_planning_file, tmp_path, mock_config):
         """Test that last_updated timestamp is updated."""
         from cyclisme_training_logs.weekly_planner import WeeklyPlanner
 
