@@ -149,8 +149,8 @@ async def list_tools() -> list[Tool]:
                     },
                     "session_id": {
                         "type": "string",
-                        "description": "Session ID (e.g., S082-03)",
-                        "pattern": "^S\\d{3}-\\d{2}$",
+                        "description": "Session ID (e.g., S082-03, S081-06a)",
+                        "pattern": "^S\\d{3}-\\d{2}[a-z]?$",
                     },
                     "status": {
                         "type": "string",
