@@ -211,6 +211,21 @@ async def list_tools() -> list[Tool]:
                 "required": [],
             },
         ),
+        Tool(
+            name="get-week-details",
+            description="Get detailed information about a specific week planning including all sessions",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "week_id": {
+                        "type": "string",
+                        "description": "Week ID (e.g., S081)",
+                        "pattern": "^S\\d{3}$",
+                    }
+                },
+                "required": ["week_id"],
+            },
+        ),
     ]
 
 
@@ -230,6 +245,8 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             return await handle_list_weeks(arguments)
         elif name == "get-metrics":
             return await handle_get_metrics(arguments)
+        elif name == "get-week-details":
+            return await handle_get_week_details(arguments)
         else:
             raise ValueError(f"Unknown tool: {name}")
 
@@ -485,6 +502,64 @@ async def handle_get_metrics(args: dict) -> list[TextContent]:
         result = {"error": "No wellness data found"}
 
     return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+
+async def handle_get_week_details(args: dict) -> list[TextContent]:
+    """Get detailed information about a specific week planning."""
+    from cyclisme_training_logs.planning.control_tower import planning_tower
+
+    week_id = args["week_id"]
+
+    try:
+        # Suppress all output to prevent JSON protocol pollution
+        with suppress_stdout_stderr():
+            # Read planning via Control Tower
+            plan = planning_tower.read_week(week_id)
+
+        # Convert to dict for JSON serialization
+        result = {
+            "week_id": plan.week_id,
+            "start_date": str(plan.start_date),
+            "end_date": str(plan.end_date),
+            "athlete_id": plan.athlete_id,
+            "tss_target": plan.tss_target,
+            "created_at": str(plan.created_at),
+            "last_updated": str(plan.last_updated),
+            "version": plan.version,
+            "sessions": [
+                {
+                    "session_id": session.session_id,
+                    "date": str(session.session_date),
+                    "name": session.name,
+                    "type": session.session_type,
+                    "version": session.version,
+                    "tss_planned": session.tss_planned,
+                    "duration_min": session.duration_min,
+                    "description": session.description,
+                    "status": session.status,
+                    "intervals_id": session.intervals_id,
+                    "skip_reason": session.skip_reason,
+                }
+                for session in plan.planned_sessions
+            ],
+        }
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    except FileNotFoundError:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps({"error": f"Planning file not found for week {week_id}"}, indent=2),
+            )
+        ]
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps({"error": f"Error reading planning: {str(e)}"}, indent=2),
+            )
+        ]
 
 
 async def main():
