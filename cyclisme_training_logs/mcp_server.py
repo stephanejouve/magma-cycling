@@ -952,6 +952,8 @@ async def handle_daily_sync(args: dict) -> list[TextContent]:
     # Enrich result with activity details
     activities_details = []
     for activity in completed_activities:
+        if activity is None:
+            continue
         activity_id = activity.get("id")
         activity_detail = {
             "activity_id": activity_id,
