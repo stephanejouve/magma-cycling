@@ -2420,6 +2420,42 @@ async def handle_get_activity_details(args: dict) -> list[TextContent]:
             # Get activity details
             activity = client.get_activity(activity_id)
 
+            # Get power metrics (calculate from streams if API doesn't provide)
+            average_watts = activity.get("average_watts")
+            weighted_average_watts = activity.get("weighted_average_watts")
+
+            # If power metrics are missing but activity has power data, calculate from streams
+            if average_watts is None or weighted_average_watts is None:
+                try:
+                    streams = client.get_activity_streams(activity_id)
+                    watts_stream = next((s for s in streams if s["type"] == "watts"), None)
+
+                    if watts_stream and watts_stream["data"]:
+                        watts_data = watts_stream["data"]
+
+                        # Calculate average watts (excluding zeros for stopped periods)
+                        if average_watts is None:
+                            non_zero_watts = [w for w in watts_data if w > 0]
+                            if non_zero_watts:
+                                average_watts = round(sum(non_zero_watts) / len(non_zero_watts), 1)
+
+                        # Calculate Normalized Power (NP) using 30s rolling average
+                        if weighted_average_watts is None and len(watts_data) > 30:
+                            # 30-second rolling average (assuming 1Hz sampling)
+                            rolling_avgs = []
+                            for i in range(len(watts_data) - 29):
+                                window = watts_data[i : i + 30]
+                                rolling_avgs.append(sum(window) / 30)
+
+                            # NP formula: (average of 4th power)^(1/4)
+                            if rolling_avgs:
+                                fourth_powers = [p**4 for p in rolling_avgs]
+                                avg_fourth = sum(fourth_powers) / len(fourth_powers)
+                                weighted_average_watts = round(avg_fourth ** (1 / 4), 1)
+                except Exception:
+                    # Silently fail - use API values (None) if calculation fails
+                    pass
+
             # Format result
             result = {
                 "id": activity.get("id"),
@@ -2431,8 +2467,8 @@ async def handle_get_activity_details(args: dict) -> list[TextContent]:
                 "total_elevation_gain": activity.get("total_elevation_gain"),
                 "icu_training_load": activity.get("icu_training_load"),  # TSS
                 "icu_intensity": activity.get("icu_intensity"),  # IF
-                "average_watts": activity.get("average_watts"),
-                "weighted_average_watts": activity.get("weighted_average_watts"),
+                "average_watts": average_watts,
+                "weighted_average_watts": weighted_average_watts,
                 "average_heartrate": activity.get("average_heartrate"),
                 "average_cadence": activity.get("average_cadence"),
                 "description": activity.get("description", ""),

@@ -682,5 +682,139 @@ async def test_backfill_activities_with_date_range(mock_intervals_client, tmp_pa
         assert result_json["end_date"] == "2026-02-22"
 
 
+@pytest.mark.asyncio
+async def test_get_activity_details_calculates_power_from_streams(mock_intervals_client):
+    """Test that power metrics are calculated from streams when API returns null."""
+    # Mock activity with null power metrics
+    mock_intervals_client.get_activity = Mock(
+        return_value={
+            "id": "i123456",
+            "name": "Test Activity",
+            "start_date_local": "2026-02-22T10:00:00",
+            "type": "VirtualRide",
+            "moving_time": 3600,
+            "distance": 30000,
+            "total_elevation_gain": 500,
+            "icu_training_load": 100,
+            "icu_intensity": 80,
+            "average_watts": None,  # API returns null
+            "weighted_average_watts": None,  # API returns null
+            "average_heartrate": 150,
+            "average_cadence": 90,
+        }
+    )
+
+    # Mock watts stream with realistic data (60 minutes at varying power)
+    # Simulate intervals: 30s @ 200W, 30s @ 100W
+    watts_data = [200] * 30 + [100] * 30
+    watts_data = watts_data * 60  # Repeat for 60 minutes
+
+    mock_intervals_client.get_activity_streams = Mock(
+        return_value=[{"type": "watts", "data": watts_data}]
+    )
+
+    with patch(
+        "cyclisme_training_logs.config.create_intervals_client",
+        return_value=mock_intervals_client,
+    ):
+        from cyclisme_training_logs.mcp_server import handle_get_activity_details
+
+        result = await handle_get_activity_details(
+            {"activity_id": "i123456", "include_streams": False}
+        )
+
+        result_json = json.loads(result[0].text)
+
+        # Verify power metrics were calculated
+        assert result_json["average_watts"] is not None
+        assert result_json["weighted_average_watts"] is not None
+
+        # Average should be around 150W (200W + 100W) / 2
+        assert 145 <= result_json["average_watts"] <= 155
+
+        # NP should be higher due to variability
+        assert result_json["weighted_average_watts"] > result_json["average_watts"]
+
+
+@pytest.mark.asyncio
+async def test_get_activity_details_uses_api_values_when_present(mock_intervals_client):
+    """Test that API-provided power metrics are used when available."""
+    # Mock activity with valid power metrics from API
+    mock_intervals_client.get_activity = Mock(
+        return_value={
+            "id": "i123456",
+            "name": "Test Activity",
+            "start_date_local": "2026-02-22T10:00:00",
+            "type": "VirtualRide",
+            "moving_time": 3600,
+            "distance": 30000,
+            "icu_training_load": 100,
+            "icu_intensity": 80,
+            "average_watts": 180.5,  # API provides value
+            "weighted_average_watts": 190.3,  # API provides value
+            "average_heartrate": 150,
+        }
+    )
+
+    with patch(
+        "cyclisme_training_logs.config.create_intervals_client",
+        return_value=mock_intervals_client,
+    ):
+        from cyclisme_training_logs.mcp_server import handle_get_activity_details
+
+        result = await handle_get_activity_details(
+            {"activity_id": "i123456", "include_streams": False}
+        )
+
+        result_json = json.loads(result[0].text)
+
+        # Verify API values are used as-is
+        assert result_json["average_watts"] == 180.5
+        assert result_json["weighted_average_watts"] == 190.3
+
+        # Verify get_activity_streams was NOT called
+        mock_intervals_client.get_activity_streams.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_get_activity_details_handles_missing_watts_stream(mock_intervals_client):
+    """Test graceful handling when watts stream is not available."""
+    # Mock activity with null power metrics
+    mock_intervals_client.get_activity = Mock(
+        return_value={
+            "id": "i123456",
+            "name": "Test Activity",
+            "type": "Run",  # Running activity without power
+            "moving_time": 3600,
+            "average_watts": None,
+            "weighted_average_watts": None,
+        }
+    )
+
+    # Mock streams without watts (e.g., only HR and cadence)
+    mock_intervals_client.get_activity_streams = Mock(
+        return_value=[
+            {"type": "heartrate", "data": [150] * 3600},
+            {"type": "cadence", "data": [85] * 3600},
+        ]
+    )
+
+    with patch(
+        "cyclisme_training_logs.config.create_intervals_client",
+        return_value=mock_intervals_client,
+    ):
+        from cyclisme_training_logs.mcp_server import handle_get_activity_details
+
+        result = await handle_get_activity_details(
+            {"activity_id": "i123456", "include_streams": False}
+        )
+
+        result_json = json.loads(result[0].text)
+
+        # Should not crash, return null for power metrics
+        assert result_json["average_watts"] is None
+        assert result_json["weighted_average_watts"] is None
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
