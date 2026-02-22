@@ -11,6 +11,9 @@ import pytest
 
 from cyclisme_training_logs.utils.date_helpers import extract_day_number
 
+# Apply mock_data_repo fixture to all tests in this module
+pytestmark = pytest.mark.usefixtures("mock_data_repo")
+
 
 class TestExtractDayNumber:
     """Test extract_day_number function."""

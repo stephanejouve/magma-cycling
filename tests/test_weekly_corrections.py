@@ -5,10 +5,15 @@ Test des 5 correctifs appliqués à weekly_analysis.py.
 import sys
 from pathlib import Path
 
+import pytest
+
 # Ajouter le répertoire parent au PYTHONPATH
 sys.path.insert(0, str(Path(__file__).parent))
 
 from cyclisme_training_logs.weekly_analysis import WeeklyAnalysis  # noqa: E402
+
+# Apply mock_data_repo fixture to all tests in this module
+pytestmark = pytest.mark.usefixtures("mock_data_repo")
 
 
 def test_correctifs():

@@ -4,7 +4,12 @@ Test du parser de réponse Claude pour weekly_analysis.py.
 
 Ce script teste le parsing d'une réponse Claude simulée.
 """
+import pytest
+
 from cyclisme_training_logs.weekly_analysis import WeeklyAnalysis
+
+# Apply mock_data_repo fixture to all tests in this module
+pytestmark = pytest.mark.usefixtures("mock_data_repo")
 
 
 def test_parser():
