@@ -352,6 +352,176 @@ class PlanningControlTower:
 
         return snapshot_path
 
+    def sync_from_remote(
+        self,
+        week_id: str,
+        intervals_client,
+        strategy: str = "merge",
+        requesting_script: str = "sync-remote-to-local",
+    ) -> dict:
+        """
+        Synchronize local planning from Intervals.icu events.
+
+        Handles cases where remote sessions have been split or modified
+        without local write-back (e.g., S081-07 → S081-07a, S081-07b).
+
+        Args:
+            week_id: Week identifier (e.g., "S081")
+            intervals_client: IntervalsClient instance
+            strategy: "merge" (preserve local data) or "replace" (overwrite)
+            requesting_script: Name of script requesting sync
+
+        Returns:
+            dict with sync stats: {
+                "sessions_added": [],
+                "sessions_updated": [],
+                "sessions_removed": [],
+                "intervals_ids_fixed": []
+            }
+        """
+        import re
+        from datetime import datetime
+
+        from cyclisme_training_logs.planning.models import Session, WeeklyPlan
+
+        # Load existing planning to get date range
+        planning_file = self.planning_dir / f"week_planning_{week_id}.json"
+        if not planning_file.exists():
+            raise FileNotFoundError(f"Planning file not found: {planning_file}")
+
+        existing_plan = WeeklyPlan.from_json(planning_file)
+        start_date = existing_plan.start_date
+        end_date = existing_plan.end_date
+
+        # Fetch all events for this week from Intervals.icu
+        events = intervals_client.get_events(oldest=start_date, newest=end_date)
+
+        # Parse events to extract session information
+        remote_sessions = {}
+        for event in events:
+            name = event.get("name", "")
+            intervals_id = event["id"]
+
+            # Parse session ID from event name
+            # Format: S081-07a-INT-TempoSoutenu-V001
+            # Or: [ANNULÉE] S081-04-INT-TempoSoutenu-V001
+            match = re.search(r"(S\d{3}-\d{2}[a-z]?)-(\w+)-([^-]+)-V(\d{3})", name)
+            if not match:
+                continue
+
+            session_id = match.group(1)
+            session_type = match.group(2)
+            session_name = match.group(3)
+            version = match.group(4)
+
+            # Extract date from event
+            event_date_str = event.get("start_date_local", "")
+            if event_date_str:
+                event_date = datetime.fromisoformat(event_date_str.replace("Z", "")).date()
+            else:
+                continue
+
+            # Determine status from category
+            category = event.get("category", "")
+            if category == "NOTE":
+                if "[ANNULÉE]" in name:
+                    status = "cancelled"
+                elif "[SAUTÉE]" in name:
+                    status = "cancelled"
+                else:
+                    status = "planned"
+            else:
+                status = "planned"  # Will be updated by daily-sync
+
+            # Extract description
+            description = event.get("description", "")
+
+            remote_sessions[session_id] = {
+                "session_id": session_id,
+                "session_date": event_date,
+                "name": session_name,
+                "session_type": session_type,
+                "version": f"V{version}",
+                "intervals_id": intervals_id,
+                "status": status,
+                "description": description,
+            }
+
+        # Sync with local planning
+        stats = {
+            "sessions_added": [],
+            "sessions_updated": [],
+            "sessions_removed": [],
+            "intervals_ids_fixed": [],
+        }
+
+        with self.modify_week(
+            week_id,
+            requesting_script=requesting_script,
+            reason="Sync from Intervals.icu remote events",
+        ) as plan:
+            # Build session ID → session mapping
+            local_sessions = {s.session_id: s for s in plan.planned_sessions}
+
+            # Add or update sessions from remote
+            for session_id, remote_data in remote_sessions.items():
+                if session_id in local_sessions:
+                    # Update existing session
+                    local_session = local_sessions[session_id]
+
+                    # Fix intervals_id if different
+                    if local_session.intervals_id != remote_data["intervals_id"]:
+                        stats["intervals_ids_fixed"].append(
+                            {
+                                "session_id": session_id,
+                                "old_id": local_session.intervals_id,
+                                "new_id": remote_data["intervals_id"],
+                            }
+                        )
+                        local_session.intervals_id = remote_data["intervals_id"]
+
+                    # Update name if changed
+                    if local_session.name != remote_data["name"]:
+                        stats["sessions_updated"].append(session_id)
+                        local_session.name = remote_data["name"]
+
+                    # Update description if empty locally
+                    if not local_session.description and remote_data["description"]:
+                        local_session.description = remote_data["description"]
+
+                else:
+                    # Add new session from remote
+                    new_session = Session(
+                        session_id=session_id,
+                        session_date=remote_data["session_date"],
+                        name=remote_data["name"],
+                        session_type=remote_data["session_type"],
+                        version=remote_data["version"],
+                        tss_planned=0,  # Will be calculated if needed
+                        duration_min=0,
+                        description=remote_data["description"],
+                        status=remote_data["status"],
+                        intervals_id=remote_data["intervals_id"],
+                        description_hash=None,
+                        skip_reason=None,
+                    )
+                    plan.planned_sessions.append(new_session)
+                    stats["sessions_added"].append(session_id)
+
+            # Handle strategy for sessions that exist locally but not remotely
+            if strategy == "replace":
+                sessions_to_remove = [
+                    s for s in plan.planned_sessions if s.session_id not in remote_sessions
+                ]
+                for session in sessions_to_remove:
+                    plan.planned_sessions.remove(session)
+                    stats["sessions_removed"].append(session.session_id)
+
+            # Sort sessions by date
+            plan.planned_sessions.sort(key=lambda s: (s.session_date, s.session_id))
+
+        return stats
+
 
 # Global instance (singleton)
 planning_tower = PlanningControlTower()

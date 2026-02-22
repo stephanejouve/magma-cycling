@@ -8,6 +8,8 @@ Tools provided:
 - weekly-planner: Generate weekly training plans
 - monthly-analysis: Monthly training analysis and insights
 - daily-sync: Sync with Intervals.icu
+- sync-remote-to-local: Sync local planning from remote events (fixes desync)
+- backfill-activities: Backfill historical activity data into sessions
 - update-session: Update session status
 - list-weeks: List available weekly plannings
 - get-metrics: Get current training metrics
@@ -747,6 +749,55 @@ async def list_tools() -> list[Tool]:
             description="[DEV] Reload MCP server modules to pick up code changes without restarting Claude Desktop",
             inputSchema={"type": "object", "properties": {}, "required": []},
         ),
+        Tool(
+            name="sync-remote-to-local",
+            description="Sync local planning from Intervals.icu remote events (fixes desync from pre-write-back operations)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "week_id": {
+                        "type": "string",
+                        "description": "Week ID (e.g., S081)",
+                        "pattern": "^S\\d{3}$",
+                    },
+                    "strategy": {
+                        "type": "string",
+                        "description": "Sync strategy: 'merge' (preserve local) or 'replace' (overwrite)",
+                        "enum": ["merge", "replace"],
+                        "default": "merge",
+                    },
+                },
+                "required": ["week_id"],
+            },
+        ),
+        Tool(
+            name="backfill-activities",
+            description="Backfill historical activity data into local planning sessions (matches activities to sessions)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "week_id": {
+                        "type": "string",
+                        "description": "Week ID to backfill (e.g., S081). Mutually exclusive with start_date/end_date.",
+                        "pattern": "^S\\d{3}$",
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "description": "Start date (YYYY-MM-DD). Used with end_date instead of week_id.",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    },
+                    "end_date": {
+                        "type": "string",
+                        "description": "End date (YYYY-MM-DD). Used with start_date instead of week_id.",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    },
+                },
+                "oneOf": [
+                    {"required": ["week_id"]},
+                    {"required": ["start_date", "end_date"]},
+                ],
+            },
+        ),
     ]
 
 
@@ -814,6 +865,10 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             return await handle_analyze_training_patterns(arguments)
         elif name == "create-remote-note":
             return await handle_create_remote_note(arguments)
+        elif name == "sync-remote-to-local":
+            return await handle_sync_remote_to_local(arguments)
+        elif name == "backfill-activities":
+            return await handle_backfill_activities(arguments)
         elif name == "reload-server":
             return await handle_reload_server(arguments)
         else:
@@ -3367,6 +3422,243 @@ async def handle_create_remote_note(args: dict) -> list[TextContent]:
                     },
                     indent=2,
                 ),
+            )
+        ]
+
+
+async def handle_sync_remote_to_local(args: dict) -> list[TextContent]:
+    """
+    Sync local planning from Intervals.icu remote events.
+
+    Handles desync cases from pre-write-back operations (e.g., S081-07 → S081-07a, S081-07b).
+    """
+    try:
+        with suppress_stdout_stderr():
+            from cyclisme_training_logs.config import create_intervals_client
+            from cyclisme_training_logs.planning.control_tower import planning_tower
+
+            week_id = args["week_id"]
+            strategy = args.get("strategy", "merge")
+
+            # Create Intervals.icu client
+            client = create_intervals_client()
+
+            # Sync from remote
+            stats = planning_tower.sync_from_remote(
+                week_id=week_id,
+                intervals_client=client,
+                strategy=strategy,
+                requesting_script="mcp:sync-remote-to-local",
+            )
+
+            # Build response
+            result = {
+                "week_id": week_id,
+                "strategy": strategy,
+                "stats": stats,
+                "message": f"Synced {week_id} from Intervals.icu",
+            }
+
+            # Add details about changes
+            changes = []
+            if stats["sessions_added"]:
+                changes.append(
+                    f"✅ Added {len(stats['sessions_added'])} sessions: {', '.join(stats['sessions_added'])}"
+                )
+            if stats["sessions_updated"]:
+                changes.append(
+                    f"🔄 Updated {len(stats['sessions_updated'])} sessions: {', '.join(stats['sessions_updated'])}"
+                )
+            if stats["intervals_ids_fixed"]:
+                changes.append(
+                    f"🔧 Fixed {len(stats['intervals_ids_fixed'])} intervals_id mismatches"
+                )
+                for fix in stats["intervals_ids_fixed"]:
+                    changes.append(f"  - {fix['session_id']}: {fix['old_id']} → {fix['new_id']}")
+            if stats["sessions_removed"]:
+                changes.append(
+                    f"🗑️ Removed {len(stats['sessions_removed'])} sessions: {', '.join(stats['sessions_removed'])}"
+                )
+
+            if not changes:
+                changes.append("ℹ️ No changes needed - local planning already in sync")
+
+            result["changes"] = changes
+
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(result, indent=2),
+                )
+            ]
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(
+                    {
+                        "error": str(e),
+                        "week_id": args.get("week_id"),
+                    },
+                    indent=2,
+                ),
+            )
+        ]
+
+
+async def handle_backfill_activities(args: dict) -> list[TextContent]:
+    """
+    Backfill historical activity data into local planning sessions.
+
+    Matches activities to planned sessions and updates session status to completed.
+    """
+    with suppress_stdout_stderr():
+        from datetime import datetime
+
+        from cyclisme_training_logs.config import create_intervals_client, get_data_config
+        from cyclisme_training_logs.daily_sync import DailySync
+        from cyclisme_training_logs.planning.models import WeeklyPlan
+
+        # Determine date range
+        if "week_id" in args:
+            week_id = args["week_id"]
+
+            # Load week planning to get date range
+            data_config = get_data_config()
+            planning_file = data_config.week_planning_dir / f"week_planning_{week_id}.json"
+
+            if not planning_file.exists():
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps(
+                            {"error": f"Planning file not found for {week_id}"}, indent=2
+                        ),
+                    )
+                ]
+
+            plan = WeeklyPlan.from_json(planning_file)
+            start_date = plan.start_date
+            end_date = plan.end_date
+            date_source = f"week {week_id}"
+
+        else:
+            start_date = datetime.fromisoformat(args["start_date"]).date()
+            end_date = datetime.fromisoformat(args["end_date"]).date()
+            date_source = f"{start_date} to {end_date}"
+
+        # Create Intervals.icu client
+        client = create_intervals_client()
+
+        # Fetch all activities in date range
+        activities = client.get_activities(oldest=start_date, newest=end_date)
+
+        if not activities:
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "message": f"No activities found for {date_source}",
+                            "start_date": str(start_date),
+                            "end_date": str(end_date),
+                            "activities_count": 0,
+                        },
+                        indent=2,
+                    ),
+                )
+            ]
+
+        # Create DailySync instance (reuses matching logic)
+        data_config = get_data_config()
+
+        # Use temporary tracking file for backfill (won't duplicate analysis)
+        tracking_file = data_config.data_repo_path / ".backfill_tracking.json"
+        reports_dir = data_config.data_repo_path / "reports"
+        reports_dir.mkdir(exist_ok=True)
+
+        sync = DailySync(
+            tracking_file=tracking_file,
+            reports_dir=reports_dir,
+            verbose=False,
+        )
+
+        # Use update_completed_sessions to match and update (matches via workouts)
+        activity_to_session_map = sync.update_completed_sessions(activities)
+
+        # For backfill, also try direct matching from activity names
+        # (for activities where workout event no longer exists)
+        import re
+
+        from cyclisme_training_logs.planning.control_tower import planning_tower
+
+        for activity in activities:
+            activity_id = activity["id"]
+
+            # Skip if already matched
+            if activity_id in activity_to_session_map:
+                continue
+
+            # Try to extract session_id from activity name
+            # Format: S081-01-END-EnduranceBase-V001
+            name = activity.get("name", "")
+            match = re.search(r"(S\d{3}-\d{2}[a-z]?)", name)
+
+            if not match:
+                continue
+
+            session_id = match.group(1)
+            week_id = session_id.split("-")[0]
+
+            # Try to update session status in local planning
+            try:
+                with planning_tower.modify_week(
+                    week_id,
+                    requesting_script="mcp:backfill-activities",
+                    reason=f"Backfill {session_id} from activity {activity_id}",
+                ) as plan:
+                    for session in plan.planned_sessions:
+                        if session.session_id == session_id:
+                            if session.status != "completed":
+                                session.status = "completed"
+                                activity_to_session_map[activity_id] = session_id
+                            break
+            except Exception:
+                # Week planning might not exist for old weeks
+                pass
+
+        # Build response
+        matched_count = len(activity_to_session_map)
+        unmatched_count = len(activities) - matched_count
+
+        result = {
+            "message": f"Backfilled {matched_count}/{len(activities)} activities for {date_source}",
+            "start_date": str(start_date),
+            "end_date": str(end_date),
+            "total_activities": len(activities),
+            "matched_activities": matched_count,
+            "unmatched_activities": unmatched_count,
+            "matches": [],
+        }
+
+        # Add details about matches
+        for activity_id, session_id in activity_to_session_map.items():
+            # Find activity details
+            activity = next((a for a in activities if a["id"] == activity_id), None)
+            if activity:
+                result["matches"].append(
+                    {
+                        "activity_id": activity_id,
+                        "activity_name": activity.get("name", ""),
+                        "session_id": session_id,
+                        "date": activity.get("start_date_local", "")[:10],
+                    }
+                )
+
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(result, indent=2),
             )
         ]
 
