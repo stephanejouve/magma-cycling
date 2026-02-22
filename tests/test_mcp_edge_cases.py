@@ -38,8 +38,6 @@ def test_update_completed_sessions_returns_dict_not_none():
     from pathlib import Path
     from unittest.mock import Mock, patch
 
-    from cyclisme_training_logs.daily_sync import DailySync
-
     # Create DailySync with temp files
     with tempfile.TemporaryDirectory() as tmpdir:
         tracking_file = Path(tmpdir) / "tracking.json"
@@ -49,18 +47,31 @@ def test_update_completed_sessions_returns_dict_not_none():
         mock_client = Mock()
         mock_client.get_events.return_value = []  # Empty events → early return
 
+        mock_data_config = Mock()
+        mock_data_config.week_planning_dir = Path(tmpdir) / "planning"
+        mock_data_config.week_planning_dir.mkdir()
+
         with patch(
-            "cyclisme_training_logs.daily_sync.create_intervals_client", return_value=mock_client
+            "cyclisme_training_logs.config.create_intervals_client",
+            return_value=mock_client,
         ):
-            sync = DailySync(tracking_file=tracking_file, reports_dir=reports_dir)
+            with patch(
+                "cyclisme_training_logs.config.config_base.get_data_config",
+                return_value=mock_data_config,
+            ):
+                from cyclisme_training_logs.daily_sync import DailySync
 
-            # Test with empty activities list
-            result = sync.update_completed_sessions([])
+                sync = DailySync(
+                    tracking_file=tracking_file, reports_dir=reports_dir, verbose=False
+                )
 
-            # MUST return dict, not None
-            assert result is not None, "BUG: update_completed_sessions() returned None"
-            assert isinstance(result, dict), f"Expected dict, got {type(result)}"
-            assert result == {}, f"Expected empty dict, got {result}"
+                # Test with empty activities list
+                result = sync.update_completed_sessions([])
+
+                # MUST return dict, not None
+                assert result is not None, "BUG: update_completed_sessions() returned None"
+                assert isinstance(result, dict), f"Expected dict, got {type(result)}"
+                assert result == {}, f"Expected empty dict, got {result}"
 
 
 def test_update_completed_sessions_exception_returns_dict():
@@ -73,8 +84,6 @@ def test_update_completed_sessions_exception_returns_dict():
     from pathlib import Path
     from unittest.mock import Mock, patch
 
-    from cyclisme_training_logs.daily_sync import DailySync
-
     with tempfile.TemporaryDirectory() as tmpdir:
         tracking_file = Path(tmpdir) / "tracking.json"
         reports_dir = Path(tmpdir) / "reports"
@@ -83,16 +92,29 @@ def test_update_completed_sessions_exception_returns_dict():
         mock_client = Mock()
         mock_client.get_events.side_effect = Exception("API Error")
 
+        mock_data_config = Mock()
+        mock_data_config.week_planning_dir = Path(tmpdir) / "planning"
+        mock_data_config.week_planning_dir.mkdir()
+
         with patch(
-            "cyclisme_training_logs.daily_sync.create_intervals_client", return_value=mock_client
+            "cyclisme_training_logs.config.create_intervals_client",
+            return_value=mock_client,
         ):
-            sync = DailySync(tracking_file=tracking_file, reports_dir=reports_dir)
+            with patch(
+                "cyclisme_training_logs.config.config_base.get_data_config",
+                return_value=mock_data_config,
+            ):
+                from cyclisme_training_logs.daily_sync import DailySync
 
-            # Should return {}, not None, even on error
-            result = sync.update_completed_sessions([{"id": "i123"}])
+                sync = DailySync(
+                    tracking_file=tracking_file, reports_dir=reports_dir, verbose=False
+                )
 
-            assert result is not None, "BUG: Returned None on exception"
-            assert isinstance(result, dict), f"Expected dict on error, got {type(result)}"
+                # Should return {}, not None, even on error
+                result = sync.update_completed_sessions([{"id": "i123"}])
+
+                assert result is not None, "BUG: Returned None on exception"
+                assert isinstance(result, dict), f"Expected dict on error, got {type(result)}"
 
 
 # ========================================
