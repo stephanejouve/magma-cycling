@@ -111,31 +111,165 @@ Pour ces changements, utiliser **watchdog auto-restart** ou relancer Claude Desk
 
 ---
 
+## 🌐 Méthode 3 : HTTP/SSE Transport (Recommandé pour Dev)
+
+### Vue d'ensemble
+
+Le transport HTTP/SSE résout le problème fondamental du stdio : **la reconnexion automatique**.
+
+**Avantages vs Watchdog + stdio:**
+- ✅ Claude Desktop reconnecte **automatiquement** (pas besoin de restart)
+- ✅ Serveur peut redémarrer sans casser la connexion
+- ✅ Watchdog fonctionne parfaitement avec HTTP
+- ✅ Logs plus clairs (voir le serveur démarrer/arrêter)
+- ✅ Debug plus facile (possibilité de tester avec curl)
+- ✅ Compatible multi-client (plusieurs Claude Desktop peuvent se connecter)
+
+### Configuration
+
+**1. Activer HTTP dans `.env`:**
+
+```bash
+# Transport mode: "stdio" (default) or "http"
+MCP_TRANSPORT=http
+MCP_HTTP_HOST=localhost
+MCP_HTTP_PORT=3000
+MCP_DEV_MODE=1
+```
+
+**2. Claude Desktop config:**
+
+```json
+{
+  "mcpServers": {
+    "cyclisme-training": {
+      "url": "http://localhost:3000/sse"
+    }
+  }
+}
+```
+
+Exemple complet : voir `claude_desktop_config_http.json.example`
+
+**3. Démarrer le serveur:**
+
+Option A - **Manuel** (contrôle total):
+```bash
+poetry run mcp-server
+# [MCP] Starting HTTP/SSE server on localhost:3000
+```
+
+Option B - **Automatique avec watchdog** (recommandé):
+```json
+{
+  "mcpServers": {
+    "cyclisme-training": {
+      "command": "/path/to/mcp-server-wrapper.sh",
+      "env": {
+        "MCP_DEV_MODE": "1",
+        "MCP_TRANSPORT": "http",
+        "MCP_HTTP_HOST": "localhost",
+        "MCP_HTTP_PORT": "3000"
+      }
+    }
+  }
+}
+```
+
+### Fonctionnement
+
+**Architecture HTTP/SSE:**
+- Serveur HTTP écoute sur `localhost:3000` (Uvicorn/Starlette)
+- **GET `/sse`** → Établit connexion Server-Sent Events (stream persistant)
+- **POST `/messages/`** → Reçoit les requêtes JSON-RPC du client
+- Claude Desktop maintient une connexion SSE ouverte pour recevoir les réponses
+
+**Flow de reconnexion automatique:**
+1. Watchdog détecte changement dans `*.py`
+2. Watchdog tue et redémarre le processus Python
+3. Serveur HTTP redémarre sur le même port
+4. Claude Desktop détecte la déconnexion
+5. Claude Desktop reconnecte automatiquement à `/sse`
+6. ✅ **Pas besoin de relancer Claude Desktop**
+
+### Test manuel
+
+**Vérifier que le serveur HTTP répond:**
+```bash
+# Test connexion SSE
+curl http://localhost:3000/sse
+
+# Devrait retourner un stream SSE (Ctrl+C pour quitter)
+# Format: event: endpoint\ndata: {...}\n\n
+```
+
+**Vérifier l'endpoint messages:**
+```bash
+# Test POST endpoint (nécessite session_id valide)
+curl -X POST http://localhost:3000/messages/
+```
+
+### Logs
+
+**Démarrage du serveur:**
+```
+[MCP] Starting HTTP/SSE server on localhost:3000
+INFO:     Started server process [12345]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://localhost:3000 (Press CTRL+C to quit)
+```
+
+**Watchdog redémarre le serveur:**
+```
+[watchmedo] Restarting server on change: cyclisme_training_logs/mcp_server.py
+[MCP] Starting HTTP/SSE server on localhost:3000
+INFO:     Started server process [12346]
+...
+```
+
+Claude Desktop affiche brièvement "Reconnecting..." puis se connecte automatiquement.
+
+---
+
 ## 📊 Comparaison
 
-| Aspect | Watchdog Auto-Restart | reload-server |
-|--------|----------------------|---------------|
-| **Activation** | Automatique sur fichier modifié | Manuel via MCP tool |
-| **Handlers MCP** | ✅ Rechargés | ❌ Non rechargés |
-| **Tool definitions** | ✅ Rechargés | ❌ Non rechargés |
-| **Modules métier** | ✅ Rechargés | ✅ Rechargés |
-| **Transparence** | ✅ Invisible pour Claude | ⚠️ Visible (appel outil) |
-| **Délai** | ~1s après modif | Instantané après appel |
+| Aspect | HTTP/SSE + Watchdog | Stdio + Watchdog | reload-server |
+|--------|---------------------|------------------|---------------|
+| **Activation** | Automatique sur fichier modifié | Automatique sur fichier modifié | Manuel via MCP tool |
+| **Reconnexion** | ✅ **Automatique** | ❌ Nécessite restart Claude | N/A |
+| **Handlers MCP** | ✅ Rechargés | ⚠️ Rechargés mais connexion cassée | ❌ Non rechargés |
+| **Tool definitions** | ✅ Rechargés | ⚠️ Rechargés mais connexion cassée | ❌ Non rechargés |
+| **Modules métier** | ✅ Rechargés | ✅ Rechargés | ✅ Rechargés |
+| **Stabilité** | ✅ Stable | ⚠️ Pipes cassés au restart | ✅ Stable |
+| **Debug** | 🔧 Logs + curl/browser | 🔧 Via logs seulement | 🔧 Via logs |
+| **Overhead** | Très faible | Minimal | Minimal |
+| **Production** | ⚠️ Dev uniquement | ✅ Recommandé | ✅ OK |
+| **Délai** | ~1-2s (redémarrage + reconnexion) | ~1s (mais nécessite restart manuel) | Instantané |
 
 ---
 
 ## 🎯 Cas d'usage
 
-### Watchdog (Recommandé pour)
-- ✅ Développement intensif avec modifications fréquentes
-- ✅ Modification des handlers MCP
-- ✅ Ajout/modification de tools
+### HTTP/SSE + Watchdog (⭐ Recommandé pour Dev)
+- ✅ **Développement intensif** avec modifications très fréquentes
+- ✅ Modification des handlers MCP, tools, et tout le code
+- ✅ **Zéro restart Claude Desktop** pendant le dev
 - ✅ Changements structurels
+- ✅ Expérience dev optimale (cycle test < 5s)
+- ⚠️ Dev uniquement (pas production)
 
-### reload-server (Utile pour)
-- ✅ Petit fix dans un module métier
+### Stdio + Watchdog (Production)
+- ✅ Mode production (stable, minimal overhead)
+- ✅ Intégration Claude Desktop standard
+- ✅ Pas de port HTTP exposé
+- ⚠️ Nécessite restart Claude Desktop après chaque changement (dev pénible)
+
+### reload-server (Fallback)
+- ✅ Petit fix dans un module métier sans changer handlers
 - ✅ Mode production avec MCP_DEV_MODE=0
 - ✅ Debug ponctuel sans relancer Claude Desktop
+- ⚠️ Limité (ne recharge pas handlers ni tools)
 
 ---
 
@@ -174,6 +308,43 @@ async def handle_reload_server(args: dict):
 
 ## 🐛 Troubleshooting
 
+### HTTP/SSE : Claude Desktop ne se connecte pas
+
+**Cause** : Serveur HTTP pas démarré ou mauvais port
+
+**Solution** :
+```bash
+# Vérifier si serveur écoute sur le port
+lsof -ti:3000 || echo "Port 3000 libre (serveur pas démarré)"
+
+# Vérifier les logs serveur
+tail -f /tmp/mcp-server-debug.log
+
+# Tester la connexion manuellement
+curl http://localhost:3000/sse
+```
+
+### HTTP/SSE : Port déjà utilisé
+
+**Erreur** : `[Errno 48] address already in use`
+
+**Solution** :
+```bash
+# Trouver et tuer le processus sur le port
+lsof -ti:3000 | xargs kill -9
+
+# Ou utiliser un autre port dans .env
+MCP_HTTP_PORT=3001
+```
+
+### HTTP/SSE : Reconnexion lente après restart
+
+**Cause** : Délai de retry SSE côté client
+
+**Normal** : Claude Desktop attend 2-5s avant de reconnecter (comportement SSE standard)
+
+**Solution** : Aucune action nécessaire, c'est le comportement attendu
+
 ### Watchdog ne détecte pas les changements
 
 **Cause** : MCP_DEV_MODE non activé
@@ -196,7 +367,7 @@ cat ~/Library/Application\ Support/Claude/claude_desktop_config.json | grep MCP_
 
 **Cause** : Limitation technique (fonctions async déjà enregistrées)
 
-**Solution** : Utiliser watchdog auto-restart pour ces modifications
+**Solution** : Utiliser HTTP/SSE + watchdog pour hot reload complet
 
 ---
 
@@ -210,4 +381,4 @@ cat ~/Library/Application\ Support/Claude/claude_desktop_config.json | grep MCP_
 ---
 
 **Créé par** : Claude Code
-**Dernière mise à jour** : 21 Février 2026
+**Dernière mise à jour** : 22 Février 2026 (ajout HTTP/SSE transport)

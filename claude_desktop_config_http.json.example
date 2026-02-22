@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "cyclisme-training": {
+      "url": "http://localhost:3000/sse"
+    }
+  }
+}
