@@ -210,7 +210,6 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {},
-                "required": [],
             },
         ),
         Tool(
@@ -747,7 +746,7 @@ async def list_tools() -> list[Tool]:
         Tool(
             name="reload-server",
             description="[DEV] Reload MCP server modules to pick up code changes without restarting Claude Desktop",
-            inputSchema={"type": "object", "properties": {}, "required": []},
+            inputSchema={"type": "object", "properties": {}},
         ),
         Tool(
             name="sync-remote-to-local",
