@@ -17,8 +17,6 @@ Test Categories:
 from pathlib import Path
 from unittest.mock import Mock, mock_open, patch
 
-import pytest
-
 from cyclisme_training_logs.workflow_coach import WorkflowCoach
 
 
@@ -147,25 +145,40 @@ class TestMarkdownHelpers:
         assert "Tempo Session" in markdown or "ANNULÉE" in markdown
         assert "Fatigue excessive" in markdown or "2026-01-07" in markdown
 
-    @pytest.mark.skip(
-        reason="Obsolete: _insert_to_history now uses TimelineInjector instead of direct open(). "
-        "Mock builtins.open is never called. Needs rewrite to mock TimelineInjector.inject_chronologically()"
-    )
-    @patch("builtins.open", new_callable=mock_open, read_data="## 2026-01-11\n\nPrevious entry\n")
-    @patch("pathlib.Path.exists", return_value=True)
-    def test_insert_to_history_writes_markdown(self, mock_exists, mock_file):
-        """Test _insert_to_history writes markdown to history."""
+    @patch("cyclisme_training_logs.workflow_coach.TimelineInjector")
+    def test_insert_to_history_writes_markdown(self, mock_timeline_injector_class):
+        """Test _insert_to_history calls TimelineInjector.inject_chronologically."""
+        from cyclisme_training_logs.core.timeline_injector import InjectionResult
+
+        # Setup mock injector instance
+        mock_injector = Mock()
+        mock_timeline_injector_class.return_value = mock_injector
+
+        # Mock inject_chronologically to return success
+        mock_injector.inject_chronologically.return_value = InjectionResult(
+            success=True, line_number=10, duplicate_found=False
+        )
+
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
-        coach.data_repo_path = Path("/fake/path")
 
         markdowns = [("2026-01-12", "# Test Session\n\nGreat workout!")]
 
         result = coach._insert_to_history(markdowns)
 
-        # Should write to file
-        assert mock_file.called
-        # Result should be True for successful write
-        assert result is True or result is False  # Method returns boolean
+        # Should create TimelineInjector with correct history_file path
+        assert mock_timeline_injector_class.called
+        call_args = mock_timeline_injector_class.call_args
+        assert "history_file" in call_args.kwargs or len(call_args.args) > 0
+        assert call_args.kwargs.get("check_duplicates", False) is True
+
+        # Should call inject_chronologically with workout entry and date
+        assert mock_injector.inject_chronologically.called
+        inject_call = mock_injector.inject_chronologically.call_args
+        assert inject_call.kwargs.get("workout_entry") == "# Test Session\n\nGreat workout!"
+        assert inject_call.kwargs.get("workout_date").isoformat() == "2026-01-12"
+
+        # Result should be True for successful injection
+        assert result is True
 
     @patch("builtins.print")
     def test_preview_markdowns_displays_content(self, mock_print):
