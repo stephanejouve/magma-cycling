@@ -237,15 +237,16 @@ Claude Desktop affiche brièvement "Reconnecting..." puis se connecte automatiqu
 | Aspect | HTTP/SSE + Watchdog | Stdio + Watchdog | reload-server |
 |--------|---------------------|------------------|---------------|
 | **Activation** | Automatique sur fichier modifié | Automatique sur fichier modifié | Manuel via MCP tool |
-| **Reconnexion** | ✅ **Automatique** | ❌ Nécessite restart Claude | N/A |
-| **Handlers MCP** | ✅ Rechargés | ⚠️ Rechargés mais connexion cassée | ❌ Non rechargés |
-| **Tool definitions** | ✅ Rechargés | ⚠️ Rechargés mais connexion cassée | ❌ Non rechargés |
+| **Reconnexion** | 🚧 **En développement** (incompatibilité mcp-remote) | ❌ Nécessite restart Claude | N/A |
+| **Handlers MCP** | 🚧 Rechargés (si proxy compatible) | ✅ Rechargés | ❌ Non rechargés |
+| **Tool definitions** | 🚧 Rechargés (si proxy compatible) | ✅ Rechargés | ❌ Non rechargés |
 | **Modules métier** | ✅ Rechargés | ✅ Rechargés | ✅ Rechargés |
-| **Stabilité** | ✅ Stable | ⚠️ Pipes cassés au restart | ✅ Stable |
+| **Stabilité** | 🚧 À valider | ✅ Stable et éprouvé | ✅ Stable |
 | **Debug** | 🔧 Logs + curl/browser | 🔧 Via logs seulement | 🔧 Via logs |
 | **Overhead** | Très faible | Minimal | Minimal |
-| **Production** | ⚠️ Dev uniquement | ✅ Recommandé | ✅ OK |
-| **Délai** | ~1-2s (redémarrage + reconnexion) | ~1s (mais nécessite restart manuel) | Instantané |
+| **Production** | ⚠️ Dev uniquement | ✅ **Recommandé** | ✅ OK |
+| **Délai** | ~1-2s (théorique) | ✅ **~3-5s** (validé) | Instantané |
+| **Statut** | 🚧 En développement | ✅ **Production ready** | ✅ Stable |
 
 ---
 
@@ -380,5 +381,46 @@ cat ~/Library/Application\ Support/Claude/claude_desktop_config.json | grep MCP_
 
 ---
 
+## 🔬 Statut HTTP/SSE (Février 2026)
+
+### Résultats de tests
+
+**✅ Ce qui fonctionne:**
+- Transport HTTP/SSE implémenté (`mcp-http-transport` v0.1.0)
+- Endpoint SSE `/sse` retourne session_id correctement
+- Endpoint POST `/messages/` accepte requêtes (HTTP 202)
+- Package publié sur PyPI
+
+**❌ Incompatibilité actuelle:**
+- `mcp-remote` (proxy Node.js officiel) : erreurs SSE headers
+- Version Node.js v20.5.1 insuffisante (requis: v20.18.1+)
+- Nécessite debugging approfondi du protocole SSE
+
+**🎯 Recommandation actuelle (Février 2026):**
+
+**Pour développement immédiat:** Utiliser **stdio + watchdog**
+- ✅ Fonctionne 100%
+- ✅ Cycle dev: 3-5 secondes (très acceptable)
+- ⚠️ Nécessite restart Claude Desktop après modifications
+
+**Pour la communauté:**
+- Package `mcp-http-transport` disponible sur PyPI
+- Package `mcp-stdio-proxy` (Python) en développement comme alternative à `mcp-remote`
+- Contributions bienvenues pour fix compatibilité SSE
+
+### Packages publiés
+
+1. **mcp-http-transport** (PyPI)
+   - Transport HTTP/SSE pour serveurs MCP
+   - `pip install mcp-http-transport`
+   - GitHub: https://github.com/stephanejouve/mcp-http-transport
+
+2. **mcp-stdio-proxy** (en développement)
+   - Proxy Python stdio ↔ HTTP/SSE
+   - Alternative pure Python à `mcp-remote`
+   - À venir sur PyPI
+
+---
+
 **Créé par** : Claude Code
-**Dernière mise à jour** : 22 Février 2026 (ajout HTTP/SSE transport)
+**Dernière mise à jour** : 22 Février 2026 (tests HTTP/SSE, stdio+watchdog validé)
