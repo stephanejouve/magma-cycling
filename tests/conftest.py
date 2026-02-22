@@ -1,59 +1,35 @@
 """
-Pytest configuration and fixtures for MCP tests.
+Pytest configuration and fixtures.
 
-Provides global fixtures to mock data repo configuration,
-preventing FileNotFoundError on CI where data repo doesn't exist.
+Provides optional fixtures - NOT applied automatically.
+Tests must request fixtures explicitly to avoid conflicts.
 """
 
 import json
 from datetime import date, timedelta
-from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
 
 
-def pytest_configure(config):
-    """Register custom markers."""
-    config.addinivalue_line(
-        "markers",
-        "needs_data_repo: mark test as needing mock data repo (deselect with '-m \"not needs_data_repo\"')",
-    )
-
-
-@pytest.fixture(autouse=True)
-def mock_data_repo_for_planning_tower(request, monkeypatch, tmp_path):
+@pytest.fixture
+def mock_data_repo(tmp_path):
     """
-    Conditional auto-use fixture to mock get_data_config.
+    Optional fixture to mock get_data_config and create mock data repo structure.
 
-    This prevents FileNotFoundError when importing modules that create
-    planning_tower global instance (which calls get_data_config).
+    Usage in tests:
+        def test_something(mock_data_repo):
+            # Data repo mocks are active
+            ...
 
-    Applied automatically ONLY to tests in specific directories:
-    - tests/test_mcp_*.py
-    - tests/workflows/test_proactive_compensation.py
-    - tests/test_weekly_*.py
-    - tests/utils/test_date_helpers.py
+    This fixture:
+    - Creates real Path objects for all data repo directories
+    - Mocks get_data_config() in all import locations
+    - Mocks calculate_week_start_date() for week calculations
+    - Creates workouts-history.md and .config.json files
 
-    Other tests are skipped to avoid mock conflicts.
+    NOT applied automatically - prevents breaking existing tests.
     """
-    # Get test file path
-    test_file = Path(request.node.fspath)
-    test_name = test_file.name
-
-    # Apply only to specific test files that need it
-    needs_mock = test_name.startswith("test_mcp_") or test_name in [
-        "test_proactive_compensation.py",
-        "test_weekly_parser.py",
-        "test_weekly_corrections.py",
-        "test_date_helpers.py",
-        "test_workflow_coach_steps.py",
-    ]
-
-    if not needs_mock:
-        # Skip this fixture for tests that don't need it
-        yield None
-        return
     # Create mock data_repo structure with REAL Path objects (not Mocks)
     # This prevents "TypeError: unsupported operand type(s) for /: 'Mock' and 'str'"
     data_repo_path = tmp_path / "data"
