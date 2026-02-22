@@ -945,6 +945,168 @@ def reset_email_config():
 
 
 # ============================================================================
+# Withings API Configuration
+# ============================================================================
+
+
+class WithingsConfig:
+    """Configuration for Withings API.
+
+    Manages OAuth credentials and API settings for Withings health data integration.
+
+    Attributes:
+        client_id: Withings OAuth client ID
+        client_secret: Withings OAuth client secret
+        redirect_uri: OAuth callback URI
+        credentials_path: Path to stored OAuth credentials JSON
+
+    Examples:
+        >>> config = get_withings_config()
+        >>> print(config.is_configured())
+        True
+        >>> if config.has_valid_credentials():
+        ...     # Use Withings API
+        ...     pass
+    """
+
+    def __init__(self):
+        """Initialize Withings configuration from environment variables."""
+        self.client_id = os.getenv("WITHINGS_CLIENT_ID")
+        self.client_secret = os.getenv("WITHINGS_CLIENT_SECRET")
+        self.redirect_uri = os.getenv("WITHINGS_REDIRECT_URI", "http://localhost:8080/callback")
+
+        # Credentials storage path
+        data_config = get_data_config()
+        self.credentials_path = data_config.data_repo_path / ".withings_credentials.json"
+
+    def is_configured(self) -> bool:
+        """Check if Withings API credentials are properly configured.
+
+        Returns:
+            True if both client_id and client_secret are set
+
+        Examples:
+            >>> config = get_withings_config()
+            >>> if config.is_configured():
+            ...     # Initialize client
+            ...     pass
+            ... else:
+            ...     print("Set WITHINGS_CLIENT_ID and WITHINGS_CLIENT_SECRET")
+        """
+        return bool(self.client_id and self.client_secret)
+
+    def has_valid_credentials(self) -> bool:
+        """Check if stored OAuth credentials exist and are valid.
+
+        Returns:
+            True if credentials file exists and tokens are not expired
+
+        Examples:
+            >>> config = get_withings_config()
+            >>> if not config.has_valid_credentials():
+            ...     # Need to run OAuth flow
+            ...     print("Run setup_withings.py to authenticate")
+        """
+        if not self.credentials_path.exists():
+            return False
+
+        try:
+            with open(self.credentials_path, encoding="utf-8") as f:
+                creds = json.load(f)
+
+            # Check if required fields exist
+            if not all(k in creds for k in ["access_token", "refresh_token", "token_expiry"]):
+                return False
+
+            # Check if token is expired (within 5 minutes buffer)
+            import time
+
+            token_expiry = creds.get("token_expiry", 0)
+            return token_expiry > (time.time() + 300)
+
+        except Exception:
+            return False
+
+
+# Global Withings config instance
+_withings_config_instance: WithingsConfig | None = None
+
+
+def get_withings_config() -> WithingsConfig:
+    """Get singleton instance of Withings config.
+
+    Returns:
+        WithingsConfig instance
+
+    Examples:
+        >>> config = get_withings_config()
+        >>> print(config.client_id)
+        'c5e8820a701242a8...'
+    """
+    global _withings_config_instance
+
+    if _withings_config_instance is None:
+        _withings_config_instance = WithingsConfig()
+    return _withings_config_instance
+
+
+def reset_withings_config():
+    """Reset Withings config singleton (useful for tests).
+
+    Examples:
+        >>> reset_withings_config()
+        >>> config = get_withings_config()  # Creates new instance
+    """
+    global _withings_config_instance
+
+    _withings_config_instance = None
+
+
+def create_withings_client():
+    """Factory function for creating configured WithingsClient.
+
+    This is the preferred way to create a WithingsClient instance as it
+    centralizes credential loading and validation.
+
+    Returns:
+        WithingsClient: Configured client ready to use
+
+    Raises:
+        ValueError: If Withings credentials are not configured
+        ImportError: If WithingsClient module is not available
+
+    Examples:
+        >>> from cyclisme_training_logs.config import create_withings_client
+        >>> client = create_withings_client()
+        >>> if client.is_authenticated():
+        ...     sleep = client.get_last_night_sleep()
+        ... else:
+        ...     url = client.get_authorization_url()
+        ...     print(f"Authorize at: {url}")
+
+    Note:
+        Follows the same pattern as create_intervals_client() for consistency.
+        The client will automatically load existing credentials if available.
+    """
+    from cyclisme_training_logs.api.withings_client import WithingsClient
+
+    config = get_withings_config()
+
+    if not config.is_configured():
+        raise ValueError(
+            "Withings API not configured. "
+            "Set WITHINGS_CLIENT_ID and WITHINGS_CLIENT_SECRET environment variables."
+        )
+
+    return WithingsClient(
+        client_id=config.client_id,
+        client_secret=config.client_secret,
+        redirect_uri=config.redirect_uri,
+        credentials_path=config.credentials_path,
+    )
+
+
+# ============================================================================
 
 __all__ = [
     # Data repo config
@@ -960,6 +1122,12 @@ __all__ = [
     "IntervalsConfig",
     "get_intervals_config",
     "reset_intervals_config",
+    "create_intervals_client",
+    # Withings config
+    "WithingsConfig",
+    "get_withings_config",
+    "reset_withings_config",
+    "create_withings_client",
     # Week reference config
     "WeekReferenceConfig",
     "get_week_config",
@@ -968,4 +1136,6 @@ __all__ = [
     "EmailConfig",
     "get_email_config",
     "reset_email_config",
+    # Utilities
+    "load_json_config",
 ]
