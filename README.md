@@ -1,7 +1,7 @@
 # Cyclisme Training Logs
 
 [![CI](https://github.com/stephanejouve/cyclisme-training-logs/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/stephanejouve/cyclisme-training-logs/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/stephanejouve/cyclisme-training-logs/branch/main/graph/badge.svg)](https://codecov.io/gh/stephanejouve/cyclisme-training-logs)
+[![codecov](https://codecov.io/gh/stephanejouve/cyclisme-training-logs/branch/main/graph/badge.svg?token=K39R7YEOPN)](https://codecov.io/gh/stephanejouve/cyclisme-training-logs)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Poetry](https://img.shields.io/badge/poetry-managed-blue)](https://python-poetry.org/)
 [![Architecture Review](https://img.shields.io/badge/Architecture%20Review-10%2F10-brightgreen)](project-docs/ARCHITECTURE_REVIEW_20260104.md)
