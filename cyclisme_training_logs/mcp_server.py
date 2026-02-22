@@ -42,8 +42,7 @@ from mcp.types import (
     TextContent,
     Tool,
 )
-
-from cyclisme_training_logs.mcp_transport import MCPTransportManager
+from mcp_http_transport import MCPTransportManager
 
 
 @contextmanager

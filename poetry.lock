@@ -437,7 +437,6 @@ files = [
     {file = "click-8.3.1-py3-none-any.whl", hash = "sha256:981153a64e25f12d547d3426c367a4857371575ee7ad18df2a6183ab0545b2a6"},
     {file = "click-8.3.1.tar.gz", hash = "sha256:12ff4785d337a1bb490bb7e9c2b1ee5da3112e94a8622f26a6c77f5d2fc6842a"},
 ]
-markers = {main = "sys_platform != \"emscripten\""}
 
 [package.dependencies]
 colorama = {version = "*", markers = "platform_system == \"Windows\""}
@@ -1470,6 +1469,26 @@ uvicorn = {version = ">=0.31.1", markers = "sys_platform != \"emscripten\""}
 cli = ["python-dotenv (>=1.0.0)", "typer (>=0.16.0)"]
 rich = ["rich (>=13.9.4)"]
 ws = ["websockets (>=15.0.1)"]
+
+[[package]]
+name = "mcp-http-transport"
+version = "0.1.0"
+description = "HTTP/SSE transport for MCP servers with hot reload support"
+optional = false
+python-versions = ">=3.11"
+groups = ["main"]
+files = [
+    {file = "mcp_http_transport-0.1.0-py3-none-any.whl", hash = "sha256:ec71642ca2ad0d76c3d525667add72f72d00d4199654c57c7ae21e617e08f229"},
+    {file = "mcp_http_transport-0.1.0.tar.gz", hash = "sha256:afbfd5f22e45531014e64b538d01b3b8711142d9dd9150de4cc362b90ed63f38"},
+]
+
+[package.dependencies]
+mcp = ">=1.0.0"
+starlette = ">=0.27.0"
+uvicorn = ">=0.23.0"
+
+[package.extras]
+dev = ["black (>=23.0.0)", "mypy (>=1.0.0)", "pytest (>=7.0.0)", "pytest-asyncio (>=0.21.0)", "pytest-mock (>=3.10.0)", "ruff (>=0.1.0)"]
 
 [[package]]
 name = "mdurl"
@@ -3230,7 +3249,6 @@ description = "The lightning-fast ASGI server."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
-markers = "sys_platform != \"emscripten\""
 files = [
     {file = "uvicorn-0.41.0-py3-none-any.whl", hash = "sha256:29e35b1d2c36a04b9e180d4007ede3bcb32a85fbdfd6c6aeb3f26839de088187"},
     {file = "uvicorn-0.41.0.tar.gz", hash = "sha256:09d11cf7008da33113824ee5a1c6422d89fbc2ff476540d69a34c87fab8b571a"},
@@ -3342,4 +3360,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "d8a95d1cbd70a7438805f885abb2500126edfbd99f9988d223479dae998db604"
+content-hash = "bf5fd3d8429f4c73ff8a722fc6a32603ca62d353e9729c97a9ef2f682d26c44f"
