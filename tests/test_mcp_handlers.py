@@ -8,7 +8,7 @@ Tests the critical MCP handlers to prevent regressions like:
 """
 
 import json
-from datetime import date
+from datetime import date, datetime
 from unittest.mock import Mock, patch
 
 import pytest
@@ -377,6 +377,299 @@ async def test_daily_sync_handler_full_flow(mock_intervals_client, mock_weekly_p
                 activity = result_json["activities"][0]
                 assert "activity_id" in activity
                 assert "session_id" in activity  # Can be None, but key should exist
+
+
+# Test: sync-remote-to-local MCP tool
+
+
+@pytest.mark.asyncio
+async def test_sync_remote_to_local_handler_returns_json(mock_intervals_client, tmp_path):
+    """
+    Test that sync-remote-to-local handler returns valid JSON response.
+
+    Tests the MCP interface (black-box) - verifies JSON structure, not implementation.
+    """
+    # Create test planning file
+    from cyclisme_training_logs.planning.models import Session, WeeklyPlan
+
+    planning_dir = tmp_path / "data" / "week_planning"
+    planning_dir.mkdir(parents=True)
+
+    test_session = Session(
+        session_id="S081-06",
+        session_date=date(2026, 2, 21),
+        name="EnduranceLongue",
+        session_type="END",
+        tss_planned=70,
+        duration_min=90,
+        description="Endurance de base",
+        status="pending",
+    )
+
+    test_plan = WeeklyPlan(
+        week_id="S081",
+        start_date=date(2026, 2, 16),
+        end_date=date(2026, 2, 22),
+        created_at=datetime.now(),
+        last_updated=datetime.now(),
+        version=1,
+        athlete_id="test_athlete",
+        tss_target=0,
+        planned_sessions=[test_session],
+    )
+
+    planning_file = planning_dir / "week_planning_S081.json"
+    test_plan.to_json(planning_file)
+
+    # Mock remote events
+    mock_intervals_client.get_events = Mock(
+        return_value=[
+            {
+                "id": 93703927,
+                "name": "S081-06-END-EnduranceLongue-V001",
+                "category": "WORKOUT",
+                "start_date_local": "2026-02-21T16:30:00",
+                "description": "Endurance longue",
+            }
+        ]
+    )
+
+    # Patch dependencies
+    with (
+        patch(
+            "cyclisme_training_logs.config.create_intervals_client",
+            return_value=mock_intervals_client,
+        ),
+        patch("cyclisme_training_logs.config.get_data_config") as mock_get_config,
+        patch(
+            "cyclisme_training_logs.planning.control_tower.planning_tower.planning_dir",
+            planning_dir,
+        ),
+    ):
+        # Mock data config
+        mock_config = Mock()
+        mock_config.week_planning_dir = planning_dir
+        mock_get_config.return_value = mock_config
+
+        # Import and call handler
+        from cyclisme_training_logs.mcp_server import handle_sync_remote_to_local
+
+        args = {"week_id": "S081", "strategy": "merge"}
+
+        result = await handle_sync_remote_to_local(args)
+
+        # Verify JSON response structure
+        assert len(result) == 1
+        result_text = result[0].text
+        result_json = json.loads(result_text)
+
+        # Should not have error
+        assert "error" not in result_json
+
+        # Verify response structure (black-box testing)
+        assert "week_id" in result_json
+        assert result_json["week_id"] == "S081"
+        assert "strategy" in result_json
+        assert "stats" in result_json
+        assert "changes" in result_json
+
+        # Verify stats structure
+        stats = result_json["stats"]
+        assert "sessions_added" in stats
+        assert "sessions_updated" in stats
+        assert "intervals_ids_fixed" in stats
+        assert "sessions_removed" in stats
+
+        # Verify changes is a list
+        assert isinstance(result_json["changes"], list)
+
+
+@pytest.mark.asyncio
+async def test_sync_remote_to_local_planning_not_found():
+    """
+    Test that sync-remote-to-local returns error for non-existent week.
+
+    Tests error handling in MCP interface.
+    """
+    with (
+        patch("cyclisme_training_logs.config.create_intervals_client"),
+        patch("cyclisme_training_logs.config.get_data_config") as mock_get_config,
+    ):
+        # Mock data config with non-existent directory
+        mock_config = Mock()
+        mock_config.week_planning_dir = Mock()
+        mock_config.week_planning_dir.__truediv__ = Mock(
+            return_value=Mock(exists=Mock(return_value=False))
+        )
+        mock_get_config.return_value = mock_config
+
+        from cyclisme_training_logs.mcp_server import handle_sync_remote_to_local
+
+        args = {"week_id": "S999"}
+
+        result = await handle_sync_remote_to_local(args)
+
+        # Should return error in JSON
+        result_text = result[0].text
+        result_json = json.loads(result_text)
+
+        # Error should be present
+        assert "error" in result_json or "Planning file not found" in str(result_json)
+
+
+# Test: backfill-activities MCP tool
+
+
+@pytest.mark.asyncio
+async def test_backfill_activities_handler_returns_json(mock_intervals_client, tmp_path):
+    """
+    Test that backfill-activities handler returns valid JSON response.
+
+    Tests the MCP interface (black-box) - verifies JSON structure, not implementation.
+    """
+    # Create test planning file
+    from cyclisme_training_logs.planning.models import Session, WeeklyPlan
+
+    planning_dir = tmp_path / "data" / "week_planning"
+    planning_dir.mkdir(parents=True)
+
+    test_session = Session(
+        session_id="S081-01",
+        session_date=date(2026, 2, 16),
+        name="EnduranceBase",
+        session_type="END",
+        tss_planned=50,
+        duration_min=60,
+        description="Test session",
+        status="pending",
+    )
+
+    test_plan = WeeklyPlan(
+        week_id="S081",
+        start_date=date(2026, 2, 16),
+        end_date=date(2026, 2, 22),
+        created_at=datetime.now(),
+        last_updated=datetime.now(),
+        version=1,
+        athlete_id="test_athlete",
+        tss_target=0,
+        planned_sessions=[test_session],
+    )
+
+    planning_file = planning_dir / "week_planning_S081.json"
+    test_plan.to_json(planning_file)
+
+    # Mock activities
+    mock_intervals_client.get_activities = Mock(
+        return_value=[
+            {
+                "id": "i125641351",
+                "name": "S081-01-END-EnduranceBase-V001",
+                "start_date_local": "2026-02-16T10:00:00",
+                "type": "VirtualRide",
+            }
+        ]
+    )
+
+    # Mock events (for matching)
+    mock_intervals_client.get_events = Mock(return_value=[])
+
+    # Patch dependencies
+    with (
+        patch(
+            "cyclisme_training_logs.config.create_intervals_client",
+            return_value=mock_intervals_client,
+        ),
+        patch("cyclisme_training_logs.config.get_data_config") as mock_get_config,
+    ):
+        # Mock data config
+        mock_config = Mock()
+        mock_config.week_planning_dir = planning_dir
+        mock_config.data_repo_path = tmp_path
+        mock_get_config.return_value = mock_config
+
+        # Create reports dir
+        (tmp_path / "reports").mkdir()
+
+        # Import and call handler
+        from cyclisme_training_logs.mcp_server import handle_backfill_activities
+
+        args = {"week_id": "S081"}
+
+        result = await handle_backfill_activities(args)
+
+        # Verify JSON response structure
+        assert len(result) == 1
+        result_text = result[0].text
+        result_json = json.loads(result_text)
+
+        # Should not have error
+        assert "error" not in result_json
+
+        # Verify response structure (black-box testing)
+        assert "message" in result_json
+        assert "start_date" in result_json
+        assert "end_date" in result_json
+        assert "total_activities" in result_json
+        assert "matched_activities" in result_json
+        assert "unmatched_activities" in result_json
+        assert "matches" in result_json
+
+        # Verify data types
+        assert isinstance(result_json["total_activities"], int)
+        assert isinstance(result_json["matched_activities"], int)
+        assert isinstance(result_json["unmatched_activities"], int)
+        assert isinstance(result_json["matches"], list)
+
+        # Verify math
+        assert (
+            result_json["matched_activities"] + result_json["unmatched_activities"]
+            == result_json["total_activities"]
+        )
+
+
+@pytest.mark.asyncio
+async def test_backfill_activities_with_date_range(mock_intervals_client, tmp_path):
+    """
+    Test backfill-activities with start_date/end_date instead of week_id.
+
+    Tests alternative input format.
+    """
+    # Mock activities
+    mock_intervals_client.get_activities = Mock(return_value=[])
+    mock_intervals_client.get_events = Mock(return_value=[])
+
+    with (
+        patch(
+            "cyclisme_training_logs.config.create_intervals_client",
+            return_value=mock_intervals_client,
+        ),
+        patch("cyclisme_training_logs.config.get_data_config") as mock_get_config,
+    ):
+        # Mock data config
+        mock_config = Mock()
+        mock_config.data_repo_path = tmp_path
+        mock_get_config.return_value = mock_config
+
+        # Create reports dir
+        (tmp_path / "reports").mkdir()
+
+        from cyclisme_training_logs.mcp_server import handle_backfill_activities
+
+        args = {"start_date": "2026-02-16", "end_date": "2026-02-22"}
+
+        result = await handle_backfill_activities(args)
+
+        # Verify JSON response
+        result_text = result[0].text
+        result_json = json.loads(result_text)
+
+        # Should not have error
+        assert "error" not in result_json
+
+        # Verify dates in response
+        assert result_json["start_date"] == "2026-02-16"
+        assert result_json["end_date"] == "2026-02-22"
 
 
 if __name__ == "__main__":
