@@ -611,19 +611,29 @@ async def test_backfill_activities_handler_returns_json(mock_intervals_client, t
         assert "start_date" in result_json
         assert "end_date" in result_json
         assert "total_activities" in result_json
-        assert "matched_activities" in result_json
-        assert "unmatched_activities" in result_json
-        assert "matches" in result_json
+        assert "updated" in result_json
+        assert "already_completed" in result_json
+        assert "unmatched" in result_json
+        assert "details" in result_json
 
         # Verify data types
         assert isinstance(result_json["total_activities"], int)
-        assert isinstance(result_json["matched_activities"], int)
-        assert isinstance(result_json["unmatched_activities"], int)
-        assert isinstance(result_json["matches"], list)
+        assert isinstance(result_json["updated"], int)
+        assert isinstance(result_json["already_completed"], int)
+        assert isinstance(result_json["unmatched"], int)
+        assert isinstance(result_json["details"], dict)
+
+        # Verify details structure
+        assert "updated_sessions" in result_json["details"]
+        assert "already_completed_sessions" in result_json["details"]
+        assert "unmatched_activities" in result_json["details"]
+        assert isinstance(result_json["details"]["updated_sessions"], list)
+        assert isinstance(result_json["details"]["already_completed_sessions"], list)
+        assert isinstance(result_json["details"]["unmatched_activities"], list)
 
         # Verify math
         assert (
-            result_json["matched_activities"] + result_json["unmatched_activities"]
+            result_json["updated"] + result_json["already_completed"] + result_json["unmatched"]
             == result_json["total_activities"]
         )
 
