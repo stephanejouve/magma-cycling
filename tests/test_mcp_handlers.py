@@ -90,7 +90,7 @@ async def test_daily_sync_empty_activities_returns_dict(mock_intervals_client, t
     reports_dir.mkdir()
 
     with patch(
-        "cyclisme_training_logs.config.config_base.create_intervals_client",
+        "cyclisme_training_logs.config.create_intervals_client",
         return_value=mock_intervals_client,
     ):
         from cyclisme_training_logs.daily_sync import DailySync
@@ -125,7 +125,7 @@ async def test_daily_sync_api_error_returns_dict(tmp_path):
     mock_client.get_events.side_effect = Exception("API error")
 
     with patch(
-        "cyclisme_training_logs.config.config_base.create_intervals_client",
+        "cyclisme_training_logs.config.create_intervals_client",
         return_value=mock_client,
     ):
         from cyclisme_training_logs.daily_sync import DailySync

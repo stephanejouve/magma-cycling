@@ -52,7 +52,7 @@ def test_update_completed_sessions_returns_dict_not_none():
         mock_data_config.week_planning_dir.mkdir()
 
         with patch(
-            "cyclisme_training_logs.config.config_base.create_intervals_client",
+            "cyclisme_training_logs.config.create_intervals_client",
             return_value=mock_client,
         ):
             with patch(
@@ -97,7 +97,7 @@ def test_update_completed_sessions_exception_returns_dict():
         mock_data_config.week_planning_dir.mkdir()
 
         with patch(
-            "cyclisme_training_logs.config.config_base.create_intervals_client",
+            "cyclisme_training_logs.config.create_intervals_client",
             return_value=mock_client,
         ):
             with patch(
