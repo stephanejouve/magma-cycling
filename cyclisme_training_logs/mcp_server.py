@@ -2424,10 +2424,24 @@ async def handle_get_activity_details(args: dict) -> list[TextContent]:
             average_watts = activity.get("average_watts")
             weighted_average_watts = activity.get("weighted_average_watts")
 
-            # If power metrics are missing but activity has power data, calculate from streams
-            if average_watts is None or weighted_average_watts is None:
+            # Fetch streams once if needed (for power calculation or decoupling)
+            streams = None
+            need_streams = (
+                average_watts is None
+                or weighted_average_watts is None
+                or activity.get("average_heartrate")
+                is not None  # Has HR data, can calculate decoupling
+            )
+
+            if need_streams:
                 try:
                     streams = client.get_activity_streams(activity_id)
+                except Exception:
+                    streams = None
+
+            # Calculate power metrics from streams if API doesn't provide them
+            if (average_watts is None or weighted_average_watts is None) and streams:
+                try:
                     watts_stream = next((s for s in streams if s["type"] == "watts"), None)
 
                     if watts_stream and watts_stream["data"]:
@@ -2456,6 +2470,84 @@ async def handle_get_activity_details(args: dict) -> list[TextContent]:
                     # Silently fail - use API values (None) if calculation fails
                     pass
 
+            # Calculate cardiovascular decoupling (Pw:HR drift) from streams if available
+            cardiovascular_decoupling = None
+            if streams:
+                try:
+                    watts_stream = next((s for s in streams if s["type"] == "watts"), None)
+                    hr_stream = next((s for s in streams if s["type"] == "heartrate"), None)
+
+                    if (
+                        watts_stream
+                        and hr_stream
+                        and watts_stream["data"]
+                        and hr_stream["data"]
+                        and len(watts_stream["data"]) > 60
+                        and weighted_average_watts is not None
+                    ):
+                        watts_data = watts_stream["data"]
+                        hr_data = hr_stream["data"]
+
+                        # Ensure both streams have the same length
+                        min_len = min(len(watts_data), len(hr_data))
+                        watts_data = watts_data[:min_len]
+                        hr_data = hr_data[:min_len]
+
+                        # Split into two halves
+                        midpoint = min_len // 2
+
+                        # First half
+                        watts_half1 = watts_data[:midpoint]
+                        hr_half1 = hr_data[:midpoint]
+
+                        # Second half
+                        watts_half2 = watts_data[midpoint:]
+                        hr_half2 = hr_data[midpoint:]
+
+                        # Calculate NP for each half
+                        # Note: Guaranteed len(watts) >= 30 because we check len(watts_data) > 60
+                        def calc_np(watts):
+                            rolling_avgs = []
+                            for i in range(len(watts) - 29):
+                                window = watts[i : i + 30]
+                                rolling_avgs.append(sum(window) / 30)
+                            fourth_powers = [p**4 for p in rolling_avgs]
+                            avg_fourth = sum(fourth_powers) / len(fourth_powers)
+                            return avg_fourth ** (1 / 4)
+
+                        np_half1 = calc_np(watts_half1)
+                        np_half2 = calc_np(watts_half2)
+
+                        # Calculate average HR for each half (exclude zeros)
+                        hr_half1_valid = [hr for hr in hr_half1 if hr > 0]
+                        hr_half2_valid = [hr for hr in hr_half2 if hr > 0]
+
+                        avg_hr_half1 = (
+                            sum(hr_half1_valid) / len(hr_half1_valid) if hr_half1_valid else None
+                        )
+                        avg_hr_half2 = (
+                            sum(hr_half2_valid) / len(hr_half2_valid) if hr_half2_valid else None
+                        )
+
+                        # Calculate Pw:HR ratios
+                        if (
+                            np_half1
+                            and np_half2
+                            and avg_hr_half1
+                            and avg_hr_half2
+                            and avg_hr_half1 > 0
+                        ):
+                            ratio_half1 = np_half1 / avg_hr_half1
+                            ratio_half2 = np_half2 / avg_hr_half2
+
+                            # Decoupling % = (ratio_2 - ratio_1) / ratio_1 * 100
+                            cardiovascular_decoupling = round(
+                                ((ratio_half2 - ratio_half1) / ratio_half1) * 100, 1
+                            )
+                except Exception:
+                    # Silently fail - decoupling calculation is optional
+                    pass
+
             # Format result
             result = {
                 "id": activity.get("id"),
@@ -2471,6 +2563,7 @@ async def handle_get_activity_details(args: dict) -> list[TextContent]:
                 "weighted_average_watts": weighted_average_watts,
                 "average_heartrate": activity.get("average_heartrate"),
                 "average_cadence": activity.get("average_cadence"),
+                "cardiovascular_decoupling": cardiovascular_decoupling,
                 "description": activity.get("description", ""),
                 "paired_event_id": activity.get("paired_event_id"),
             }
