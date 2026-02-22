@@ -18,9 +18,6 @@ from cyclisme_training_logs.planning.models import Session, WeeklyPlan
 # Configure pytest-asyncio
 pytest_plugins = ("pytest_asyncio",)
 
-# Apply mock_data_repo fixture to all tests in this module
-pytestmark = pytest.mark.usefixtures("mock_data_repo")
-
 
 # Fixtures
 
