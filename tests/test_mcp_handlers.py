@@ -344,7 +344,7 @@ async def test_daily_sync_handler_full_flow(mock_intervals_client, mock_weekly_p
     ]
 
     with patch(
-        "cyclisme_training_logs.config.create_intervals_client",
+        "cyclisme_training_logs.daily_sync.create_intervals_client",
         return_value=mock_intervals_client,
     ):
         with patch("cyclisme_training_logs.planning.control_tower.planning_tower") as mock_tower:
