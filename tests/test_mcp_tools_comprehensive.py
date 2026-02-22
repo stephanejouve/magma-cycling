@@ -100,7 +100,7 @@ class TestDailySyncComprehensive:
             mock_intervals_client.get_activities.return_value = []
 
             with patch(
-                "cyclisme_training_logs.daily_sync.create_intervals_client",
+                "cyclisme_training_logs.config.config_base.create_intervals_client",
                 return_value=mock_intervals_client,
             ):
                 sync = DailySync(tracking_file=tracking_file, reports_dir=reports_dir)
@@ -138,7 +138,7 @@ class TestDailySyncComprehensive:
             mock_intervals_client.get_events.return_value = []
 
             with patch(
-                "cyclisme_training_logs.daily_sync.create_intervals_client",
+                "cyclisme_training_logs.config.config_base.create_intervals_client",
                 return_value=mock_intervals_client,
             ):
                 sync = DailySync(tracking_file=tracking_file, reports_dir=reports_dir)
@@ -182,7 +182,7 @@ class TestDailySyncComprehensive:
             reports_dir.mkdir()
 
             with patch(
-                "cyclisme_training_logs.daily_sync.create_intervals_client",
+                "cyclisme_training_logs.config.config_base.create_intervals_client",
                 return_value=mock_intervals_client,
             ):
                 sync = DailySync(tracking_file=tracking_file, reports_dir=reports_dir)
@@ -213,7 +213,7 @@ class TestDailySyncComprehensive:
             mock_intervals_client.get_events.return_value = []
 
             with patch(
-                "cyclisme_training_logs.daily_sync.create_intervals_client",
+                "cyclisme_training_logs.config.config_base.create_intervals_client",
                 return_value=mock_intervals_client,
             ):
                 sync = DailySync(tracking_file=tracking_file, reports_dir=reports_dir)
@@ -240,7 +240,7 @@ class TestDailySyncComprehensive:
             mock_intervals_client.get_events.return_value = []
 
             with patch(
-                "cyclisme_training_logs.daily_sync.create_intervals_client",
+                "cyclisme_training_logs.config.config_base.create_intervals_client",
                 return_value=mock_intervals_client,
             ):
                 sync = DailySync(tracking_file=tracking_file, reports_dir=reports_dir)
@@ -275,10 +275,12 @@ class TestAnalyzeSessionAdherenceComprehensive:
         }
 
         with patch(
-            "cyclisme_training_logs.mcp_server.create_intervals_client",
+            "cyclisme_training_logs.config.create_intervals_client",
             return_value=mock_intervals_client,
         ):
-            with patch("cyclisme_training_logs.mcp_server.planning_tower") as mock_tower:
+            with patch(
+                "cyclisme_training_logs.planning.control_tower.planning_tower"
+            ) as mock_tower:
                 mock_tower.read_week.return_value = sample_weekly_plan
 
                 args = {"session_id": "S081-06", "activity_id": "i126850020"}
@@ -305,10 +307,12 @@ class TestAnalyzeSessionAdherenceComprehensive:
         }
 
         with patch(
-            "cyclisme_training_logs.mcp_server.create_intervals_client",
+            "cyclisme_training_logs.config.create_intervals_client",
             return_value=mock_intervals_client,
         ):
-            with patch("cyclisme_training_logs.mcp_server.planning_tower") as mock_tower:
+            with patch(
+                "cyclisme_training_logs.planning.control_tower.planning_tower"
+            ) as mock_tower:
                 mock_tower.read_week.return_value = sample_weekly_plan
 
                 args = {"session_id": "S081-06", "activity_id": "i126850020"}
@@ -335,10 +339,12 @@ class TestAnalyzeSessionAdherenceComprehensive:
         }
 
         with patch(
-            "cyclisme_training_logs.mcp_server.create_intervals_client",
+            "cyclisme_training_logs.config.create_intervals_client",
             return_value=mock_intervals_client,
         ):
-            with patch("cyclisme_training_logs.mcp_server.planning_tower") as mock_tower:
+            with patch(
+                "cyclisme_training_logs.planning.control_tower.planning_tower"
+            ) as mock_tower:
                 mock_tower.read_week.return_value = sample_weekly_plan
 
                 args = {"session_id": "S081-06", "activity_id": "i126850020"}
@@ -357,7 +363,7 @@ class TestAnalyzeSessionAdherenceComprehensive:
         empty_plan = Mock(spec=WeeklyPlan)
         empty_plan.planned_sessions = []
 
-        with patch("cyclisme_training_logs.mcp_server.planning_tower") as mock_tower:
+        with patch("cyclisme_training_logs.planning.control_tower.planning_tower") as mock_tower:
             mock_tower.read_week.return_value = empty_plan
 
             args = {"session_id": "S999-99", "activity_id": "i126850020"}
@@ -398,10 +404,12 @@ class TestAnalyzeSessionAdherenceComprehensive:
         }
 
         with patch(
-            "cyclisme_training_logs.mcp_server.create_intervals_client",
+            "cyclisme_training_logs.config.create_intervals_client",
             return_value=mock_intervals_client,
         ):
-            with patch("cyclisme_training_logs.mcp_server.planning_tower") as mock_tower:
+            with patch(
+                "cyclisme_training_logs.planning.control_tower.planning_tower"
+            ) as mock_tower:
                 mock_tower.read_week.return_value = plan
 
                 args = {"session_id": "S081-07", "activity_id": "i126850020"}
@@ -430,7 +438,7 @@ class TestUpdateAthleteProfileComprehensive:
         mock_intervals_client.update_athlete.return_value = {"ftp": 223}
 
         with patch(
-            "cyclisme_training_logs.mcp_server.create_intervals_client",
+            "cyclisme_training_logs.config.create_intervals_client",
             return_value=mock_intervals_client,
         ):
             args = {"updates": {"ftp": 223}}
@@ -455,7 +463,7 @@ class TestUpdateAthleteProfileComprehensive:
         }
 
         with patch(
-            "cyclisme_training_logs.mcp_server.create_intervals_client",
+            "cyclisme_training_logs.config.create_intervals_client",
             return_value=mock_intervals_client,
         ):
             args = {"updates": {"ftp": 223, "weight": 75.5, "max_hr": 185, "resting_hr": 45}}
@@ -476,7 +484,7 @@ class TestUpdateAthleteProfileComprehensive:
         mock_intervals_client.update_athlete.return_value = {"weight": 74.0}
 
         with patch(
-            "cyclisme_training_logs.mcp_server.create_intervals_client",
+            "cyclisme_training_logs.config.create_intervals_client",
             return_value=mock_intervals_client,
         ):
             args = {"updates": {"weight": 74.0}}
@@ -499,7 +507,7 @@ class TestUpdateAthleteProfileComprehensive:
         }
 
         with patch(
-            "cyclisme_training_logs.mcp_server.create_intervals_client",
+            "cyclisme_training_logs.config.create_intervals_client",
             return_value=mock_intervals_client,
         ):
             args = {"updates": {"max_hr": 190, "resting_hr": 42, "fthr": 170}}
@@ -518,7 +526,7 @@ class TestUpdateAthleteProfileComprehensive:
         mock_intervals_client.update_athlete.return_value = {}
 
         with patch(
-            "cyclisme_training_logs.mcp_server.create_intervals_client",
+            "cyclisme_training_logs.config.create_intervals_client",
             return_value=mock_intervals_client,
         ):
             args = {"updates": {}}
@@ -553,7 +561,7 @@ class TestUpdateAthleteProfileComprehensive:
         mock_intervals_client.update_athlete.return_value = {"lthr": 165}
 
         with patch(
-            "cyclisme_training_logs.mcp_server.create_intervals_client",
+            "cyclisme_training_logs.config.create_intervals_client",
             return_value=mock_intervals_client,
         ):
             args = {"updates": {"lthr": 165}}  # Less common field
