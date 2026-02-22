@@ -50,9 +50,10 @@ def test_update_completed_sessions_returns_dict_not_none():
         mock_client.get_events.return_value = []  # Empty events → early return
 
         with patch(
-            "cyclisme_training_logs.daily_sync.create_intervals_client", return_value=mock_client
+            "cyclisme_training_logs.config.config_base.create_intervals_client",
+            return_value=mock_client,
         ):
-            sync = DailySync(tracking_file=tracking_file, reports_dir=reports_dir)
+            sync = DailySync(tracking_file=tracking_file, reports_dir=reports_dir, verbose=False)
 
             # Test with empty activities list
             result = sync.update_completed_sessions([])
@@ -84,9 +85,10 @@ def test_update_completed_sessions_exception_returns_dict():
         mock_client.get_events.side_effect = Exception("API Error")
 
         with patch(
-            "cyclisme_training_logs.daily_sync.create_intervals_client", return_value=mock_client
+            "cyclisme_training_logs.config.config_base.create_intervals_client",
+            return_value=mock_client,
         ):
-            sync = DailySync(tracking_file=tracking_file, reports_dir=reports_dir)
+            sync = DailySync(tracking_file=tracking_file, reports_dir=reports_dir, verbose=False)
 
             # Should return {}, not None, even on error
             result = sync.update_completed_sessions([{"id": "i123"}])
