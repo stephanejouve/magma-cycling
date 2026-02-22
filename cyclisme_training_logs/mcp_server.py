@@ -2505,18 +2505,15 @@ async def handle_get_activity_details(args: dict) -> list[TextContent]:
                         hr_half2 = hr_data[midpoint:]
 
                         # Calculate NP for each half
+                        # Note: Guaranteed len(watts) >= 30 because we check len(watts_data) > 60
                         def calc_np(watts):
-                            if len(watts) < 30:
-                                return None
                             rolling_avgs = []
                             for i in range(len(watts) - 29):
                                 window = watts[i : i + 30]
                                 rolling_avgs.append(sum(window) / 30)
-                            if rolling_avgs:
-                                fourth_powers = [p**4 for p in rolling_avgs]
-                                avg_fourth = sum(fourth_powers) / len(fourth_powers)
-                                return avg_fourth ** (1 / 4)
-                            return None
+                            fourth_powers = [p**4 for p in rolling_avgs]
+                            avg_fourth = sum(fourth_powers) / len(fourth_powers)
+                            return avg_fourth ** (1 / 4)
 
                         np_half1 = calc_np(watts_half1)
                         np_half2 = calc_np(watts_half2)

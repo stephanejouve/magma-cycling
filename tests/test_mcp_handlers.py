@@ -953,5 +953,168 @@ async def test_get_activity_details_no_decoupling_for_short_activity(
         assert result_json["cardiovascular_decoupling"] is None
 
 
+@pytest.mark.asyncio
+async def test_get_activity_details_handles_stream_fetch_exception(
+    mock_intervals_client,
+):
+    """Test graceful handling when get_activity_streams raises an exception."""
+    mock_intervals_client.get_activity = Mock(
+        return_value={
+            "id": "i123456",
+            "name": "Test Activity",
+            "type": "VirtualRide",
+            "moving_time": 3600,
+            "average_watts": None,
+            "weighted_average_watts": None,
+            "average_heartrate": 150,
+        }
+    )
+
+    # Mock streams API raising an exception
+    mock_intervals_client.get_activity_streams = Mock(side_effect=Exception("API timeout"))
+
+    with patch(
+        "cyclisme_training_logs.config.create_intervals_client",
+        return_value=mock_intervals_client,
+    ):
+        from cyclisme_training_logs.mcp_server import handle_get_activity_details
+
+        result = await handle_get_activity_details(
+            {"activity_id": "i123456", "include_streams": False}
+        )
+
+        result_json = json.loads(result[0].text)
+
+        # Should not crash, return None for metrics that need streams
+        assert result_json["average_watts"] is None
+        assert result_json["weighted_average_watts"] is None
+        assert result_json["cardiovascular_decoupling"] is None
+
+
+@pytest.mark.asyncio
+async def test_get_activity_details_handles_malformed_stream_data(
+    mock_intervals_client,
+):
+    """Test graceful handling when stream data is malformed."""
+    mock_intervals_client.get_activity = Mock(
+        return_value={
+            "id": "i123456",
+            "name": "Test Activity",
+            "type": "VirtualRide",
+            "moving_time": 3600,
+            "average_watts": None,
+            "weighted_average_watts": None,
+            "average_heartrate": 150,
+        }
+    )
+
+    # Mock streams with malformed data (missing 'data' key)
+    mock_intervals_client.get_activity_streams = Mock(
+        return_value=[
+            {"type": "watts"},  # Missing 'data' key
+            {"type": "heartrate", "data": [150] * 3600},
+        ]
+    )
+
+    with patch(
+        "cyclisme_training_logs.config.create_intervals_client",
+        return_value=mock_intervals_client,
+    ):
+        from cyclisme_training_logs.mcp_server import handle_get_activity_details
+
+        result = await handle_get_activity_details(
+            {"activity_id": "i123456", "include_streams": False}
+        )
+
+        result_json = json.loads(result[0].text)
+
+        # Should gracefully handle malformed data
+        assert result_json["average_watts"] is None
+        assert result_json["weighted_average_watts"] is None
+        assert result_json["cardiovascular_decoupling"] is None
+
+
+@pytest.mark.asyncio
+async def test_get_activity_details_decoupling_with_all_zero_hr(
+    mock_intervals_client,
+):
+    """Test that decoupling is None when all HR values are zero."""
+    mock_intervals_client.get_activity = Mock(
+        return_value={
+            "id": "i123456",
+            "name": "Test Activity",
+            "type": "VirtualRide",
+            "moving_time": 3600,
+            "average_watts": 150,
+            "weighted_average_watts": 160,
+            "average_heartrate": 0,  # HR sensor failed
+        }
+    )
+
+    # Power data exists but HR is all zeros
+    mock_intervals_client.get_activity_streams = Mock(
+        return_value=[
+            {"type": "watts", "data": [150] * 3600},
+            {"type": "heartrate", "data": [0] * 3600},  # All zeros
+        ]
+    )
+
+    with patch(
+        "cyclisme_training_logs.config.create_intervals_client",
+        return_value=mock_intervals_client,
+    ):
+        from cyclisme_training_logs.mcp_server import handle_get_activity_details
+
+        result = await handle_get_activity_details(
+            {"activity_id": "i123456", "include_streams": False}
+        )
+
+        result_json = json.loads(result[0].text)
+
+        # Should return None when HR data is unusable
+        assert result_json["cardiovascular_decoupling"] is None
+
+
+@pytest.mark.asyncio
+async def test_get_activity_details_decoupling_with_barely_long_enough_activity(
+    mock_intervals_client,
+):
+    """Test decoupling calculation edge case where halves are just barely < 30s each."""
+    mock_intervals_client.get_activity = Mock(
+        return_value={
+            "id": "i123456",
+            "name": "Test Activity",
+            "type": "VirtualRide",
+            "moving_time": 100,  # 100 seconds total, 50 seconds per half
+            "average_watts": 150,
+            "weighted_average_watts": 160,
+            "average_heartrate": 140,
+        }
+    )
+
+    # 100 seconds activity - each half will be 50 seconds (> 30s, can calculate NP)
+    mock_intervals_client.get_activity_streams = Mock(
+        return_value=[
+            {"type": "watts", "data": [150] * 100},
+            {"type": "heartrate", "data": [140] * 100},
+        ]
+    )
+
+    with patch(
+        "cyclisme_training_logs.config.create_intervals_client",
+        return_value=mock_intervals_client,
+    ):
+        from cyclisme_training_logs.mcp_server import handle_get_activity_details
+
+        result = await handle_get_activity_details(
+            {"activity_id": "i123456", "include_streams": False}
+        )
+
+        result_json = json.loads(result[0].text)
+
+        # Should calculate decoupling for activities where each half >= 30s
+        assert result_json["cardiovascular_decoupling"] is not None
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
