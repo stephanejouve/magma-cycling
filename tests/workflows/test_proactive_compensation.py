@@ -39,9 +39,6 @@ from cyclisme_training_logs.workflows.proactive_compensation import (
     parse_ai_compensation_response,
 )
 
-# Apply mock_data_repo fixture to all tests in this module
-pytestmark = pytest.mark.usefixtures("mock_data_repo")
-
 # ============================================================================
 # Fixtures
 # ============================================================================
