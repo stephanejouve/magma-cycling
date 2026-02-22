@@ -4544,7 +4544,7 @@ async def handle_withings_enrich_session(args: dict) -> list[TextContent]:
     return [TextContent(type="text", text=json.dumps(result, indent=2))]
 
 
-async def main():
+async def async_main():
     """Run MCP server with configured transport (stdio or HTTP/SSE)."""
     # Log transport mode to stderr (visible in debug logs)
     if TRANSPORT_MODE == "http":
@@ -4563,7 +4563,12 @@ async def main():
     await transport.start()
 
 
-if __name__ == "__main__":
+def main():
+    """Entry point for Poetry script."""
     import asyncio
 
-    asyncio.run(main())
+    asyncio.run(async_main())
+
+
+if __name__ == "__main__":
+    main()
