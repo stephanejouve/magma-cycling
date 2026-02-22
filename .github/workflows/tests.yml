@@ -106,7 +106,7 @@ jobs:
           tests/test_ai_providers/ \
           tests/utils/ \
           tests/workflows/test_insert_analysis.py \
-          -v --cov=cyclisme_training_logs --cov-report=xml --cov-report=term
+          -v --cov=cyclisme_training_logs --cov-report=xml --cov-report=term --junitxml=junit.xml
       continue-on-error: false
 
     - name: Upload coverage to Codecov
