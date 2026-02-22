@@ -1,0 +1,16 @@
+{
+  "2026-02-21": {
+    "activities": [
+      {
+        "id": "i126850020",
+        "activity_id": "i126850020",
+        "paired_event_id": null,
+        "name": "S081-06-END-EnduranceLongue-V001",
+        "type": "VirtualRide",
+        "icu_training_load": 69,
+        "analyzed": true,
+        "analyzed_at": "2026-02-22T13:15:12.377414"
+      }
+    ]
+  }
+}
