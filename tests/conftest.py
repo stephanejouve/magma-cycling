@@ -7,21 +7,53 @@ preventing FileNotFoundError on CI where data repo doesn't exist.
 
 import json
 from datetime import date, timedelta
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
 
 
+def pytest_configure(config):
+    """Register custom markers."""
+    config.addinivalue_line(
+        "markers",
+        "needs_data_repo: mark test as needing mock data repo (deselect with '-m \"not needs_data_repo\"')",
+    )
+
+
 @pytest.fixture(autouse=True)
-def mock_data_repo_for_planning_tower(monkeypatch, tmp_path):
+def mock_data_repo_for_planning_tower(request, monkeypatch, tmp_path):
     """
-    Auto-use fixture to mock get_data_config for all tests.
+    Conditional auto-use fixture to mock get_data_config.
 
     This prevents FileNotFoundError when importing modules that create
     planning_tower global instance (which calls get_data_config).
 
-    Applied automatically to all tests.
+    Applied automatically ONLY to tests in specific directories:
+    - tests/test_mcp_*.py
+    - tests/workflows/test_proactive_compensation.py
+    - tests/test_weekly_*.py
+    - tests/utils/test_date_helpers.py
+
+    Other tests are skipped to avoid mock conflicts.
     """
+    # Get test file path
+    test_file = Path(request.node.fspath)
+    test_name = test_file.name
+
+    # Apply only to specific test files that need it
+    needs_mock = test_name.startswith("test_mcp_") or test_name in [
+        "test_proactive_compensation.py",
+        "test_weekly_parser.py",
+        "test_weekly_corrections.py",
+        "test_date_helpers.py",
+        "test_workflow_coach_steps.py",
+    ]
+
+    if not needs_mock:
+        # Skip this fixture for tests that don't need it
+        yield None
+        return
     # Create mock data_repo structure with REAL Path objects (not Mocks)
     # This prevents "TypeError: unsupported operand type(s) for /: 'Mock' and 'str'"
     data_repo_path = tmp_path / "data"
