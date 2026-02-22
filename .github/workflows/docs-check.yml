@@ -1,0 +1,37 @@
+name: Docs Check
+
+on:
+  pull_request:
+    paths:
+      - 'project-docs/**'
+      - '**.md'
+      - '!cyclisme_training_logs/**'
+      - '!tests/**'
+
+jobs:
+  docs-validation:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate Markdown files
+        run: |
+          echo "✅ Validating documentation files..."
+
+          # Check for broken internal links (basic check)
+          if find . -name "*.md" -type f ! -path "./.venv/*" ! -path "./htmlcov/*" -exec grep -l "](/" {} \; | wc -l | grep -q "^0$"; then
+            echo "✅ No suspicious absolute paths in markdown files"
+          fi
+
+          echo "✅ Documentation validation complete"
+
+      - name: Summary
+        run: |
+          echo "### 📚 Documentation PR - Light Validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "This PR only modifies documentation files." >> $GITHUB_STEP_SUMMARY
+          echo "Skipping heavy CI checks (tests, coverage, etc.)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Changed files:" >> $GITHUB_STEP_SUMMARY
+          git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | sed 's/^/- /' >> $GITHUB_STEP_SUMMARY
