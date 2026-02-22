@@ -19,7 +19,7 @@ class TestExtractDayNumber:
     def temp_planning_dir(self, tmp_path):
         """Create temporary planning directory."""
         planning_dir = tmp_path / "planning"
-        planning_dir.mkdir()
+        planning_dir.mkdir(exist_ok=True)
         return planning_dir
 
     @pytest.fixture

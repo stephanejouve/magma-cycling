@@ -77,7 +77,7 @@ def mock_weekly_plan(mock_session):
 
 
 @pytest.mark.asyncio
-async def test_daily_sync_empty_activities_returns_dict(mock_intervals_client):
+async def test_daily_sync_empty_activities_returns_dict(mock_intervals_client, tmp_path):
     """
     Test that daily-sync returns empty dict {} instead of None
     when there are no activities.
@@ -85,13 +85,17 @@ async def test_daily_sync_empty_activities_returns_dict(mock_intervals_client):
     Bug: update_completed_sessions() was returning None instead of {},
     causing 'NoneType' object has no attribute 'get' error.
     """
-    from cyclisme_training_logs.daily_sync import DailySync
+    tracking_file = tmp_path / "tracking.json"
+    reports_dir = tmp_path / "reports"
+    reports_dir.mkdir()
 
     with patch(
-        "cyclisme_training_logs.daily_sync.create_intervals_client",
+        "cyclisme_training_logs.config.create_intervals_client",
         return_value=mock_intervals_client,
     ):
-        sync = DailySync()
+        from cyclisme_training_logs.daily_sync import DailySync
+
+        sync = DailySync(tracking_file=tracking_file, reports_dir=reports_dir, verbose=False)
 
         # Mock _check_activities_internal to return empty lists
         sync._check_activities_internal = Mock(return_value=([], []))
@@ -106,22 +110,27 @@ async def test_daily_sync_empty_activities_returns_dict(mock_intervals_client):
 
 
 @pytest.mark.asyncio
-async def test_daily_sync_api_error_returns_dict():
+async def test_daily_sync_api_error_returns_dict(tmp_path):
     """
     Test that daily-sync returns empty dict {} when API call fails.
 
     Bug: update_completed_sessions() was returning None on exception,
     causing downstream crashes.
     """
-    from cyclisme_training_logs.daily_sync import DailySync
+    tracking_file = tmp_path / "tracking.json"
+    reports_dir = tmp_path / "reports"
+    reports_dir.mkdir()
 
     mock_client = Mock()
     mock_client.get_events.side_effect = Exception("API error")
 
     with patch(
-        "cyclisme_training_logs.daily_sync.create_intervals_client", return_value=mock_client
+        "cyclisme_training_logs.config.create_intervals_client",
+        return_value=mock_client,
     ):
-        sync = DailySync()
+        from cyclisme_training_logs.daily_sync import DailySync
+
+        sync = DailySync(tracking_file=tracking_file, reports_dir=reports_dir, verbose=False)
 
         # Should return empty dict on error, not None
         result = sync.update_completed_sessions([{"id": "i123"}])
@@ -147,10 +156,10 @@ async def test_analyze_session_adherence_attribute_names(
     from cyclisme_training_logs.mcp_server import handle_analyze_session_adherence
 
     with patch(
-        "cyclisme_training_logs.mcp_server.create_intervals_client",
+        "cyclisme_training_logs.config.create_intervals_client",
         return_value=mock_intervals_client,
     ):
-        with patch("cyclisme_training_logs.mcp_server.planning_tower") as mock_tower:
+        with patch("cyclisme_training_logs.planning.control_tower.planning_tower") as mock_tower:
             mock_tower.read_week.return_value = mock_weekly_plan
 
             args = {"session_id": "S081-06", "activity_id": "i126850020"}
@@ -184,7 +193,7 @@ async def test_analyze_session_adherence_session_not_found():
     mock_plan = Mock(spec=WeeklyPlan)
     mock_plan.planned_sessions = []  # Empty sessions
 
-    with patch("cyclisme_training_logs.mcp_server.planning_tower") as mock_tower:
+    with patch("cyclisme_training_logs.planning.control_tower.planning_tower") as mock_tower:
         mock_tower.read_week.return_value = mock_plan
 
         args = {"session_id": "S081-99", "activity_id": "i123"}
@@ -240,7 +249,7 @@ async def test_update_athlete_profile_accepts_ftp(mock_intervals_client):
     from cyclisme_training_logs.mcp_server import handle_update_athlete_profile
 
     with patch(
-        "cyclisme_training_logs.mcp_server.create_intervals_client",
+        "cyclisme_training_logs.config.create_intervals_client",
         return_value=mock_intervals_client,
     ):
         args = {"updates": {"ftp": 223}}
@@ -263,7 +272,7 @@ async def test_update_athlete_profile_accepts_multiple_fields(mock_intervals_cli
     mock_intervals_client.update_athlete.return_value = {"ftp": 223, "weight": 75, "max_hr": 185}
 
     with patch(
-        "cyclisme_training_logs.mcp_server.create_intervals_client",
+        "cyclisme_training_logs.config.create_intervals_client",
         return_value=mock_intervals_client,
     ):
         args = {"updates": {"ftp": 223, "weight": 75, "max_hr": 185}}
@@ -335,43 +344,39 @@ async def test_daily_sync_handler_full_flow(mock_intervals_client, mock_weekly_p
     ]
 
     with patch(
-        "cyclisme_training_logs.mcp_server.create_intervals_client",
+        "cyclisme_training_logs.daily_sync.create_intervals_client",
         return_value=mock_intervals_client,
     ):
-        with patch(
-            "cyclisme_training_logs.daily_sync.create_intervals_client",
-            return_value=mock_intervals_client,
-        ):
-            with patch("cyclisme_training_logs.mcp_server.planning_tower") as mock_tower:
-                mock_tower.read_week.return_value = mock_weekly_plan
+        with patch("cyclisme_training_logs.planning.control_tower.planning_tower") as mock_tower:
+            mock_tower.read_week.return_value = mock_weekly_plan
 
-                args = {"date": "2026-02-21", "week_id": "S081"}
+            args = {"date": "2026-02-21", "week_id": "S081"}
 
-                result = await handle_daily_sync(args)
+            result = await handle_daily_sync(args)
 
-                # Should return valid result
-                assert result is not None
-                assert len(result) > 0
+            # Should return valid result
+            assert result is not None
+            assert len(result) > 0
 
-                # Parse result
-                result_json = json.loads(result[0].text)
+            # Parse result
+            result_json = json.loads(result[0].text)
 
-                # Should have expected structure
-                assert "date" in result_json
-                assert "completed_activities" in result_json
-                assert "new_activities" in result_json
-                assert "activities" in result_json
-                assert "status" in result_json
+            # Should have expected structure
+            assert "date" in result_json
+            assert "completed_activities" in result_json
+            assert "new_activities" in result_json
+            assert "activities" in result_json
+            assert "status" in result_json
 
-                # Should not have error
-                assert "error" not in result_json
+            # Should not have error
+            assert "error" not in result_json
 
-                # Verify activities list
-                assert isinstance(result_json["activities"], list)
-                if len(result_json["activities"]) > 0:
-                    activity = result_json["activities"][0]
-                    assert "activity_id" in activity
-                    assert "session_id" in activity  # Can be None, but key should exist
+            # Verify activities list
+            assert isinstance(result_json["activities"], list)
+            if len(result_json["activities"]) > 0:
+                activity = result_json["activities"][0]
+                assert "activity_id" in activity
+                assert "session_id" in activity  # Can be None, but key should exist
 
 
 if __name__ == "__main__":
