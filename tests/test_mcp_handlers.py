@@ -85,8 +85,6 @@ async def test_daily_sync_empty_activities_returns_dict(mock_intervals_client, t
     Bug: update_completed_sessions() was returning None instead of {},
     causing 'NoneType' object has no attribute 'get' error.
     """
-    from cyclisme_training_logs.daily_sync import DailySync
-
     tracking_file = tmp_path / "tracking.json"
     reports_dir = tmp_path / "reports"
     reports_dir.mkdir()
@@ -95,6 +93,8 @@ async def test_daily_sync_empty_activities_returns_dict(mock_intervals_client, t
         "cyclisme_training_logs.config.config_base.create_intervals_client",
         return_value=mock_intervals_client,
     ):
+        from cyclisme_training_logs.daily_sync import DailySync
+
         sync = DailySync(tracking_file=tracking_file, reports_dir=reports_dir, verbose=False)
 
         # Mock _check_activities_internal to return empty lists
@@ -117,8 +117,6 @@ async def test_daily_sync_api_error_returns_dict(tmp_path):
     Bug: update_completed_sessions() was returning None on exception,
     causing downstream crashes.
     """
-    from cyclisme_training_logs.daily_sync import DailySync
-
     tracking_file = tmp_path / "tracking.json"
     reports_dir = tmp_path / "reports"
     reports_dir.mkdir()
@@ -130,6 +128,8 @@ async def test_daily_sync_api_error_returns_dict(tmp_path):
         "cyclisme_training_logs.config.config_base.create_intervals_client",
         return_value=mock_client,
     ):
+        from cyclisme_training_logs.daily_sync import DailySync
+
         sync = DailySync(tracking_file=tracking_file, reports_dir=reports_dir, verbose=False)
 
         # Should return empty dict on error, not None
