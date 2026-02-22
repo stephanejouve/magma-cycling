@@ -3432,60 +3432,76 @@ async def handle_sync_remote_to_local(args: dict) -> list[TextContent]:
 
     Handles desync cases from pre-write-back operations (e.g., S081-07 → S081-07a, S081-07b).
     """
-    with suppress_stdout_stderr():
-        from cyclisme_training_logs.config import create_intervals_client
-        from cyclisme_training_logs.planning.control_tower import planning_tower
+    try:
+        with suppress_stdout_stderr():
+            from cyclisme_training_logs.config import create_intervals_client
+            from cyclisme_training_logs.planning.control_tower import planning_tower
 
-        week_id = args["week_id"]
-        strategy = args.get("strategy", "merge")
+            week_id = args["week_id"]
+            strategy = args.get("strategy", "merge")
 
-        # Create Intervals.icu client
-        client = create_intervals_client()
+            # Create Intervals.icu client
+            client = create_intervals_client()
 
-        # Sync from remote
-        stats = planning_tower.sync_from_remote(
-            week_id=week_id,
-            intervals_client=client,
-            strategy=strategy,
-            requesting_script="mcp:sync-remote-to-local",
-        )
-
-        # Build response
-        result = {
-            "week_id": week_id,
-            "strategy": strategy,
-            "stats": stats,
-            "message": f"Synced {week_id} from Intervals.icu",
-        }
-
-        # Add details about changes
-        changes = []
-        if stats["sessions_added"]:
-            changes.append(
-                f"✅ Added {len(stats['sessions_added'])} sessions: {', '.join(stats['sessions_added'])}"
-            )
-        if stats["sessions_updated"]:
-            changes.append(
-                f"🔄 Updated {len(stats['sessions_updated'])} sessions: {', '.join(stats['sessions_updated'])}"
-            )
-        if stats["intervals_ids_fixed"]:
-            changes.append(f"🔧 Fixed {len(stats['intervals_ids_fixed'])} intervals_id mismatches")
-            for fix in stats["intervals_ids_fixed"]:
-                changes.append(f"  - {fix['session_id']}: {fix['old_id']} → {fix['new_id']}")
-        if stats["sessions_removed"]:
-            changes.append(
-                f"🗑️ Removed {len(stats['sessions_removed'])} sessions: {', '.join(stats['sessions_removed'])}"
+            # Sync from remote
+            stats = planning_tower.sync_from_remote(
+                week_id=week_id,
+                intervals_client=client,
+                strategy=strategy,
+                requesting_script="mcp:sync-remote-to-local",
             )
 
-        if not changes:
-            changes.append("ℹ️ No changes needed - local planning already in sync")
+            # Build response
+            result = {
+                "week_id": week_id,
+                "strategy": strategy,
+                "stats": stats,
+                "message": f"Synced {week_id} from Intervals.icu",
+            }
 
-        result["changes"] = changes
+            # Add details about changes
+            changes = []
+            if stats["sessions_added"]:
+                changes.append(
+                    f"✅ Added {len(stats['sessions_added'])} sessions: {', '.join(stats['sessions_added'])}"
+                )
+            if stats["sessions_updated"]:
+                changes.append(
+                    f"🔄 Updated {len(stats['sessions_updated'])} sessions: {', '.join(stats['sessions_updated'])}"
+                )
+            if stats["intervals_ids_fixed"]:
+                changes.append(
+                    f"🔧 Fixed {len(stats['intervals_ids_fixed'])} intervals_id mismatches"
+                )
+                for fix in stats["intervals_ids_fixed"]:
+                    changes.append(f"  - {fix['session_id']}: {fix['old_id']} → {fix['new_id']}")
+            if stats["sessions_removed"]:
+                changes.append(
+                    f"🗑️ Removed {len(stats['sessions_removed'])} sessions: {', '.join(stats['sessions_removed'])}"
+                )
 
+            if not changes:
+                changes.append("ℹ️ No changes needed - local planning already in sync")
+
+            result["changes"] = changes
+
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(result, indent=2),
+                )
+            ]
+    except Exception as e:
         return [
             TextContent(
                 type="text",
-                text=json.dumps(result, indent=2),
+                text=json.dumps(
+                    {
+                        "error": str(e),
+                        "week_id": args.get("week_id"),
+                    },
+                    indent=2,
+                ),
             )
         ]
 
