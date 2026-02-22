@@ -3586,6 +3586,11 @@ async def handle_backfill_activities(args: dict) -> list[TextContent]:
         # Use update_completed_sessions to match and update (matches via workouts)
         activity_to_session_map = sync.update_completed_sessions(activities)
 
+        # Track categories for better reporting
+        updated = {}  # Sessions that were updated
+        already_completed = {}  # Sessions that were already completed
+        unmatched = []  # Activities without matching sessions
+
         # For backfill, also try direct matching from activity names
         # (for activities where workout event no longer exists)
         import re
@@ -3595,8 +3600,9 @@ async def handle_backfill_activities(args: dict) -> list[TextContent]:
         for activity in activities:
             activity_id = activity["id"]
 
-            # Skip if already matched
+            # Skip if already matched by DailySync
             if activity_id in activity_to_session_map:
+                updated[activity_id] = activity_to_session_map[activity_id]
                 continue
 
             # Try to extract session_id from activity name
@@ -3605,6 +3611,7 @@ async def handle_backfill_activities(args: dict) -> list[TextContent]:
             match = re.search(r"(S\d{3}-\d{2}[a-z]?)", name)
 
             if not match:
+                unmatched.append(activity_id)
                 continue
 
             session_id = match.group(1)
@@ -3612,6 +3619,8 @@ async def handle_backfill_activities(args: dict) -> list[TextContent]:
 
             # Try to update session status in local planning
             try:
+                session_found = False
+
                 with planning_tower.modify_week(
                     week_id,
                     requesting_script="mcp:backfill-activities",
@@ -3619,38 +3628,70 @@ async def handle_backfill_activities(args: dict) -> list[TextContent]:
                 ) as plan:
                     for session in plan.planned_sessions:
                         if session.session_id == session_id:
+                            session_found = True
                             if session.status != "completed":
                                 session.status = "completed"
-                                activity_to_session_map[activity_id] = session_id
+                                updated[activity_id] = session_id
+                            else:
+                                already_completed[activity_id] = session_id
                             break
+
+                if not session_found:
+                    unmatched.append(activity_id)
             except Exception:
                 # Week planning might not exist for old weeks
-                pass
+                unmatched.append(activity_id)
 
-        # Build response
-        matched_count = len(activity_to_session_map)
-        unmatched_count = len(activities) - matched_count
-
+        # Build response with detailed categorization
         result = {
-            "message": f"Backfilled {matched_count}/{len(activities)} activities for {date_source}",
+            "message": f"Backfill complete: {len(updated)} updated, {len(already_completed)} already completed, {len(unmatched)} unmatched",
             "start_date": str(start_date),
             "end_date": str(end_date),
             "total_activities": len(activities),
-            "matched_activities": matched_count,
-            "unmatched_activities": unmatched_count,
-            "matches": [],
+            "updated": len(updated),
+            "already_completed": len(already_completed),
+            "unmatched": len(unmatched),
+            "details": {
+                "updated_sessions": [],
+                "already_completed_sessions": [],
+                "unmatched_activities": [],
+            },
         }
 
-        # Add details about matches
-        for activity_id, session_id in activity_to_session_map.items():
-            # Find activity details
+        # Add details about updated sessions
+        for activity_id, session_id in updated.items():
             activity = next((a for a in activities if a["id"] == activity_id), None)
             if activity:
-                result["matches"].append(
+                result["details"]["updated_sessions"].append(
                     {
                         "activity_id": activity_id,
                         "activity_name": activity.get("name", ""),
                         "session_id": session_id,
+                        "date": activity.get("start_date_local", "")[:10],
+                    }
+                )
+
+        # Add details about already completed sessions
+        for activity_id, session_id in already_completed.items():
+            activity = next((a for a in activities if a["id"] == activity_id), None)
+            if activity:
+                result["details"]["already_completed_sessions"].append(
+                    {
+                        "activity_id": activity_id,
+                        "activity_name": activity.get("name", ""),
+                        "session_id": session_id,
+                        "date": activity.get("start_date_local", "")[:10],
+                    }
+                )
+
+        # Add details about unmatched activities
+        for activity_id in unmatched:
+            activity = next((a for a in activities if a["id"] == activity_id), None)
+            if activity:
+                result["details"]["unmatched_activities"].append(
+                    {
+                        "activity_id": activity_id,
+                        "activity_name": activity.get("name", ""),
                         "date": activity.get("start_date_local", "")[:10],
                     }
                 )
