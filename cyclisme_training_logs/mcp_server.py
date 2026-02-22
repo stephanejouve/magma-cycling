@@ -30,6 +30,7 @@ Claude Desktop config (~/.config/claude/claude_desktop_config.json):
 """
 
 import json
+import os
 import sys
 from contextlib import contextmanager
 from datetime import date, datetime, timedelta
@@ -37,11 +38,12 @@ from io import StringIO
 from pathlib import Path
 
 from mcp.server import Server
-from mcp.server.stdio import stdio_server
 from mcp.types import (
     TextContent,
     Tool,
 )
+
+from cyclisme_training_logs.mcp_transport import MCPTransportManager
 
 
 @contextmanager
@@ -60,6 +62,11 @@ def suppress_stdout_stderr():
 
 # Initialize MCP server
 server = Server("cyclisme-training-logs")
+
+# Transport configuration from environment variables
+TRANSPORT_MODE = os.getenv("MCP_TRANSPORT", "stdio")  # "stdio" (default) or "http"
+HTTP_HOST = os.getenv("MCP_HTTP_HOST", "localhost")
+HTTP_PORT = int(os.getenv("MCP_HTTP_PORT", "3000"))
 
 
 @server.list_tools()
@@ -3890,13 +3897,22 @@ async def handle_reload_server(args: dict) -> list[TextContent]:
 
 
 async def main():
-    """Run MCP server using stdio transport."""
-    async with stdio_server() as (read_stream, write_stream):
-        await server.run(
-            read_stream,
-            write_stream,
-            server.create_initialization_options(),
-        )
+    """Run MCP server with configured transport (stdio or HTTP/SSE)."""
+    # Log transport mode to stderr (visible in debug logs)
+    if TRANSPORT_MODE == "http":
+        print(f"[MCP] Starting HTTP/SSE server on {HTTP_HOST}:{HTTP_PORT}", file=sys.stderr)
+    else:
+        print("[MCP] Starting stdio transport", file=sys.stderr)
+
+    # Create and start transport manager
+    transport = MCPTransportManager(
+        server=server,
+        transport_mode=TRANSPORT_MODE,
+        host=HTTP_HOST,
+        port=HTTP_PORT,
+    )
+
+    await transport.start()
 
 
 if __name__ == "__main__":
