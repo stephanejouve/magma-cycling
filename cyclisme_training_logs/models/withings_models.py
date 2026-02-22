@@ -5,7 +5,8 @@ including sleep data, weight measurements, training readiness evaluations,
 and health trend analysis.
 """
 
-from datetime import date, datetime
+from datetime import date as DateType
+from datetime import datetime as DateTimeType
 from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
@@ -31,9 +32,9 @@ class SleepData(BaseModel):
         breathing_disturbances: Breathing quality indicator (optional)
     """
 
-    date: date = Field(description="Sleep date (night ending)")
-    start_datetime: datetime = Field(description="Sleep start time")
-    end_datetime: datetime = Field(description="Sleep end time")
+    date: DateType = Field(description="Sleep date (night ending)")
+    start_datetime: DateTimeType = Field(description="Sleep start time")
+    end_datetime: DateTimeType = Field(description="Sleep end time")
     total_sleep_hours: float = Field(ge=0, le=24, description="Total sleep duration in hours")
     deep_sleep_minutes: float | None = Field(
         default=None, ge=0, description="Deep sleep duration in minutes"
@@ -79,8 +80,8 @@ class WeightMeasurement(BaseModel):
         muscle_mass_kg: Muscle mass in kg (optional, requires compatible scale)
     """
 
-    date: date = Field(description="Measurement date")
-    datetime: datetime = Field(description="Measurement timestamp")
+    date: DateType = Field(description="Measurement date")
+    datetime: DateTimeType = Field(description="Measurement timestamp")
     weight_kg: float = Field(gt=0, description="Weight in kilograms")
     fat_mass_kg: float | None = Field(default=None, ge=0, description="Fat mass in kg")
     bone_mass_kg: float | None = Field(default=None, ge=0, description="Bone mass in kg")
@@ -107,7 +108,7 @@ class TrainingReadiness(BaseModel):
         resting_hr: Resting heart rate in bpm (optional)
     """
 
-    date: date = Field(description="Evaluation date")
+    date: DateType = Field(description="Evaluation date")
     sleep_hours: float = Field(ge=0, description="Last night sleep duration")
     sleep_score: int | None = Field(default=None, ge=0, le=100, description="Sleep quality score")
     deep_sleep_minutes: float | None = Field(default=None, ge=0, description="Deep sleep duration")
@@ -146,8 +147,8 @@ class HealthTrend(BaseModel):
         alerts: List of health alerts or concerns
     """
 
-    start_date: date = Field(description="Period start date")
-    end_date: date = Field(description="Period end date")
+    start_date: DateType = Field(description="Period start date")
+    end_date: DateType = Field(description="Period end date")
 
     avg_sleep_hours: float = Field(ge=0, description="Average sleep per night")
     avg_sleep_score: float | None = Field(
@@ -192,8 +193,8 @@ class HeartRateData(BaseModel):
         hr_variability: Heart rate variability in ms (optional)
     """
 
-    date: date = Field(description="Measurement date")
-    datetime: datetime = Field(description="Measurement timestamp")
+    date: DateType = Field(description="Measurement date")
+    datetime: DateTimeType = Field(description="Measurement timestamp")
     resting_hr: int = Field(gt=0, le=300, description="Resting heart rate in bpm")
     hr_variability: float | None = Field(
         default=None, ge=0, description="Heart rate variability in ms"
