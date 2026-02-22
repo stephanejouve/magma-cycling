@@ -5,6 +5,10 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
+    paths-ignore:
+      - 'project-docs/sessions/**'
+      - '**.md'
+      - 'docs/**'
 
 jobs:
   test:
