@@ -126,7 +126,7 @@ jobs:
           DATA_REPO_PATH: ${{ github.workspace }}/test-data
           CI: "true"
         run: |
-          poetry run pytest --cov=cyclisme_training_logs --cov-report=xml --cov-report=term
+          poetry run pytest --cov=cyclisme_training_logs --cov-report=xml --cov-report=term --junitxml=junit.xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
