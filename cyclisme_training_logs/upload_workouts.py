@@ -629,6 +629,9 @@ class WorkoutUploader:
         print(f"📝 Total    : {len(workouts)}")
         print("=" * 70)
 
+        # Add total and errors for end_of_week.py compatibility
+        stats["total"] = len(workouts)
+        stats["errors"] = []
         return stats
 
 
