@@ -693,6 +693,7 @@ Certaines métriques (puissance, découplage) peuvent être manquantes ou incomp
 
 {strava_warning}{power_warning}{sleep_warning}### Informations Générales
 - **Nom** : {act['name']}
+- **ID** : {act['id']}
 - **Type** : {act['type']}
 - **Date** : {act['date']}
 - **Source** : {act['source']}
