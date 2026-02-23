@@ -3332,6 +3332,88 @@ class IntervalsFeelScale:
 
 ---
 
+### Refactoring Massif - MCP Server + Gros Scripts (P1) 🏗️
+
+**Priorité :** P1 (Important pour maintenabilité long-terme)
+**Sprint cible :** R14 (post Phase 3)
+**Identifié le :** 23/02/2026
+
+#### Contexte
+
+Le projet a accumulé 12 681 lignes de code sur 5 fichiers centraux, dont un serveur MCP monolithique construit en parallèle des scripts historiques sans réutilisation suffisante :
+
+| Fichier | Lignes | Problème |
+|---|---|---|
+| `mcp_server.py` | 4 574 | ~30 handlers qui réimplémentent la logique au lieu de déléguer aux scripts |
+| `workflow_coach.py` | 3 600 | God Class — UI, planning, API, détection mélangés |
+| `daily_sync.py` | 2 137 | Responsabilités multiples (sync, AI, servo, rapport) |
+| `prepare_analysis.py` | 1 514 | Génération prompt + logique métier couplées |
+| `training_intelligence.py` | 856 | OK mais à aligner avec la refonte générale |
+
+#### Objectif Sprint R14
+
+**1. Refonte mcp_server.py (P1)** ⭐
+
+Découper le monolithe en modules par domaine, chaque handler devenant une fine couche d'adaptation qui délègue aux scripts historiques :
+
+```
+cyclisme_training_logs/mcp/
+├── __init__.py
+├── server.py              # Bootstrap + routing (< 100 lignes)
+├── handlers/
+│   ├── planning.py        # weekly_planner, create/modify/delete session → workflow_coach
+│   ├── sync.py            # daily_sync, update_session → daily_sync.py
+│   ├── analysis.py        # monthly_analysis, get_recommendations → training_intelligence
+│   ├── remote.py          # sync_to_intervals, remote CRUD → intervals_client
+│   └── metrics.py         # get_metrics, athlete_profile → intervals_client
+└── formatters.py          # Mise en forme TextContent commune
+```
+
+**2. Refonte workflow_coach.py — God Class (P1)** ⭐
+
+Extraction des 4 responsabilités actuelles :
+
+- `PlanningModifier` — logique modification/création/suppression sessions
+- `IntervalsAPIHelper` — wrapper appels API (remplace le `intervals_client` manquant signalé en log)
+- `ActivityDetector` — détection nouvelles activités, matching
+- `ConsoleUI` — présentation, formatage sortie
+
+Objectif : réduire `WorkflowCoach` de 3 600 → ~800 lignes (orchestrateur uniquement).
+
+**3. Clarification daily_sync.py (P1)**
+
+Séparer les 4 responsabilités actuelles en services injectables :
+- `SyncService` — récupération activités Intervals
+- `AIAnalysisService` — génération analyses (délègue `prepare_analysis.py`)
+- `ServoService` — auto-servo planning
+- `ReportService` — génération rapport + envoi email
+
+**4. Réduction prepare_analysis.py (P2)**
+
+Extraire `PromptBuilder` (construction prompt) de `AnalysisService` (appel API + insertion).
+
+#### Bénéfices
+
+- Handlers MCP testables unitairement sans mocker 400 lignes de setup
+- Fin de la double maintenance (logique présente dans le script ET dans le handler MCP)
+- `workflow_coach.py` : de 3 600 à ~800 lignes → couverture de tests viable
+- Chaque service injectable → mocks simples, tests rapides
+
+#### Effort Estimé
+
+- Phase 1 — mcp_server.py split : 2-3 sessions
+- Phase 2 — workflow_coach.py extraction : 2-3 sessions
+- Phase 3 — daily_sync.py + prepare_analysis.py : 1-2 sessions
+- Tests & validation : 1 session
+
+#### Prérequis
+
+- ✅ Suite de tests existante (garantit non-régression)
+- Sprint R10-R13 complétés (stabiliser les features avant refactoring)
+- Couverture de tests ≥ 60% sur les fichiers cibles avant de commencer
+
+---
+
 ## ✅ Statut Global
 
 **Projet :** ✅ Production-Ready
