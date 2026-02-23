@@ -901,8 +901,7 @@ class EndOfWeekWorkflow:
                 status=OperationStatus.SUCCESS,
                 tool="end-of-week",
                 description=f"Created planning for {self.week_next} ({len(planning_data['planned_sessions'])} sessions, {tss_total} TSS)",
-                backup_path=None,  # No backup for CREATE
-                username="end-of-week-workflow",
+                requested_by="end-of-week-workflow",
             )
 
             print()

@@ -57,18 +57,40 @@ class ProjectCleaner:
 
         # Files that MUST be at root (whitelist)
         self.allowed_root_files = {
+            # Standard project files
             "README.md",
+            "CHANGELOG.md",
             "CODING_STANDARDS.md",
+            "LICENSE",
+            # Python package configuration
             "pyproject.toml",
             "poetry.lock",
+            "uv.lock",  # UV package manager lock file
+            "requirements.txt",
+            "setup.py",
+            "setup.cfg",
+            # Git & CI/CD
             ".gitignore",
+            ".gitattributes",
             ".pre-commit-config.yaml",
+            ".github",
+            # Python tooling config
             ".pycodestyle",
+            ".pydocstyle",
+            ".flake8",
+            "pytest.ini",
+            "tox.ini",
+            # Environment & runtime
             ".env",
             ".env.example",
             ".workflow_state.json",
             ".workflow_state.json.backup",
+            # Coverage & testing artifacts (temporary but OK at root)
             ".coverage",
+            "coverage.xml",
+            # Active scripts
+            "mcp-server-wrapper.sh",  # Active MCP server wrapper
+            "Makefile",
         }
 
         # Directories that MUST exist at root

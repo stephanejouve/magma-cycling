@@ -1488,18 +1488,19 @@ class TestRemainingSessionsLoading:
         # Should print warning
         assert mock_print.called
 
-    def test_load_remaining_sessions_success(self, tmp_path, mock_config):
+    @patch("cyclisme_training_logs.workflow_coach.datetime")
+    def test_load_remaining_sessions_success(self, mock_dt, tmp_path, mock_config):
         """Test load_remaining_sessions successfully loads future sessions."""
 
-        # Use current week that includes today (2026-02-21)
-        # Week 2026-02-16 (Monday) to 2026-02-22 (Sunday)
-        week_start = date(2026, 2, 16)  # Monday
-        week_end = date(2026, 2, 22)  # Sunday
+        # Fix "today" to a known Wednesday so dates never expire
+        # 2026-02-25 is a Wednesday; week: Mon 2026-02-23 → Sun 2026-03-01
+        fixed_today = date(2026, 2, 25)
+        mock_dt.now.return_value.date.return_value = fixed_today
 
-        # Today is 2026-02-21 (Saturday)
-        # past_date: before today, future_date: after today
-        past_date = "2026-02-17"  # Tuesday - past
-        future_date = "2026-02-22"  # Sunday - future
+        week_start = date(2026, 2, 23)  # Monday
+        week_end = date(2026, 3, 1)  # Sunday
+        past_date = "2026-02-24"  # Tuesday  – before fixed_today
+        future_date = "2026-02-27"  # Friday   – after fixed_today
 
         planning_data = {
             "week_id": "S072",
@@ -1547,7 +1548,7 @@ class TestRemainingSessionsLoading:
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
         remaining = coach.load_remaining_sessions("S072")
 
-        # Should only return future session
+        # Should only return the future session
         assert len(remaining) == 1
         assert remaining[0]["date"] == future_date
         assert remaining[0]["name"] == "Future"

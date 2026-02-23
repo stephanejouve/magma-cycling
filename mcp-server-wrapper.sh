@@ -3,7 +3,7 @@
 
 cd /Users/stephanejouve/cyclisme-training-logs
 
-VENV_PYTHON=/Users/stephanejouve/Library/Caches/pypoetry/virtualenvs/cyclisme-training-logs-L0Jb5TFj-py3.13/bin/python
+VENV_PYTHON=/Users/stephanejouve/cyclisme-training-logs/.venv/bin/python
 DEBUG_LOG=/tmp/mcp-server-debug.log
 
 # Check if dev mode is enabled via environment variable
