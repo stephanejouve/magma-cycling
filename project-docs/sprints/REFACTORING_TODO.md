@@ -18,11 +18,117 @@
 
 | ID | Composant | Fichiers | Lignes Dup. | Priorité | Complexité |
 |----|-----------|----------|-------------|----------|------------|
+| R0 | .env audit logging | 1 | ~50 | P0 | Faible |
 | R1 | IntervalsAPI classes | 3 | ~200 | P0 | Moyenne |
 | R2 | CTL/ATL/TSB handling | 9 | ~100 | P1 | Faible |
 | R3 | JSON planning ops | 5 | ~150 | P1 | Moyenne |
 | R4 | Date utilities | 11 | ~80 | P1 | Faible |
 | R5 | Wellness fetching | 9 | ~60 | P2 | Faible |
+
+---
+
+## R0 - Surveillance Modifications .env (P0 - SÉCURITÉ CRITIQUE)
+
+### Problème
+
+**Le fichier `.env` contient des secrets critiques** et peut être modifié sans traçabilité :
+- Clés API (Intervals.icu, Claude, Mistral, Brevo, Withings)
+- Configuration athlète (FTP, seuils TSB, profil)
+- Configuration MCP et Git
+
+**Incident récent (23 février 2026) :**
+- `.env` réduit à 10 lignes (210 octets vs 2.5KB) avec `VITE_INTERVALS_API_KEY=test_key`
+- Restauration depuis Time Machine nécessaire
+- `.env` restauré était obsolète (17 février) - manquait variables récentes
+- Impact : `end-of-week` workflow incomplet, `week_planning_S082.json` non créé
+
+### Impact
+
+- **Sécurité** : Modifications non auditées de secrets
+- **Fiabilité** : Variables manquantes cassent workflows
+- **Debugging** : Impossible de savoir qui/quand/pourquoi .env modifié
+- **Risque de fuite** : Pas de détection si secrets exposés
+
+### Solution Recommandée
+
+**Implémenter surveillance .env via Control Tower :**
+
+1. **Pre-commit hook** `.git/hooks/pre-commit` :
+   ```bash
+   # Détecter modifications .env
+   if git diff --cached --name-only | grep -q "^\.env$"; then
+       echo "⚠️  .env modifié - audit requis"
+       python scripts/audit_env_changes.py
+   fi
+   ```
+
+2. **Script d'audit** `scripts/audit_env_changes.py` :
+   ```python
+   """Audit .env modifications avant commit."""
+   import os
+   from cyclisme_training_logs.planning.audit_log import AuditLog, OperationType
+
+   def audit_env_change():
+       # Comparer .env avec .env.backup
+       # Logger dans Control Tower
+       # Créer backup automatique
+       audit_log.log_operation(
+           operation=OperationType.MODIFY,
+           week_id="N/A",
+           status=OperationStatus.SUCCESS,
+           tool="pre-commit-hook",
+           description=".env modified",
+           backup_path=".env.backup-YYYYMMDD-HHMMSS",
+           username=os.getenv("USER")
+       )
+   ```
+
+3. **Backup automatique** :
+   - Créer `.env.backup-YYYYMMDD-HHMMSS` à chaque modification
+   - Garder 10 backups les plus récents
+   - Logger dans `.env_audit.jsonl`
+
+4. **Validation** :
+   - Vérifier que variables critiques existent : `VITE_INTERVALS_API_KEY`, `ATHLETE_FTP`, etc.
+   - Warning si clé API = "test_key" ou similaire
+   - Error si variables obligatoires manquantes
+
+### Fichiers à créer
+
+```
+scripts/
+├── audit_env_changes.py       # Script d'audit
+└── validate_env.py            # Validation .env complet
+
+.git/hooks/
+└── pre-commit                 # Hook git (ou via pre-commit config)
+
+.env.backup-template           # Template avec toutes variables
+.env_audit.jsonl              # Log des modifications .env
+```
+
+### Livrable
+
+✅ Détection automatique modifications .env
+✅ Backup automatique avant chaque modification
+✅ Validation variables critiques
+✅ Audit trail complet dans Control Tower
+✅ Restauration facile depuis backups
+
+### Effort Estimé
+
+- **Développement** : 2-3 heures
+- **Tests** : 1 heure
+- **Documentation** : 30 minutes
+- **Total** : ~4 heures
+
+### Status
+
+🔴 **Non implémenté** - À faire en priorité absolue
+
+**Date identification** : 23 février 2026
+**Identifié par** : Claude Code (session hot reload)
+**Contexte** : Incident .env corrompu lors développement MCP hot reload
 
 ---
 
