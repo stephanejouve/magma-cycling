@@ -322,7 +322,7 @@ class TestLoadConfig:
         """Test loading valid config file."""
         config_file = tmp_path / "config.json"
         config_data = {
-            "athlete_id": "i151223",
+            "athlete_id": "iXXXXXX",
             "api_key": "test_key_12345",
         }
 
@@ -332,7 +332,7 @@ class TestLoadConfig:
         result = load_config(str(config_file))
 
         assert result == config_data
-        assert result["athlete_id"] == "i151223"
+        assert result["athlete_id"] == "iXXXXXX"
 
     def test_load_config_nonexistent_file(self, tmp_path):
         """Test loading nonexistent config file."""
@@ -362,7 +362,7 @@ class TestMainFunction:
     @patch("cyclisme_training_logs.sync_intervals.IntervalsAPI")
     @patch("cyclisme_training_logs.sync_intervals.WorkoutLogger")
     @patch("cyclisme_training_logs.sync_intervals.load_config")
-    @patch("sys.argv", ["sync-intervals", "--athlete-id", "i151223", "--api-key", "test_key"])
+    @patch("sys.argv", ["sync-intervals", "--athlete-id", "iXXXXXX", "--api-key", "test_key"])
     def test_main_with_cli_args(self, mock_load_config, mock_logger_class, mock_api_class):
         """Test main function with CLI arguments."""
         from cyclisme_training_logs.sync_intervals import main
@@ -397,7 +397,7 @@ class TestMainFunction:
         main()
 
         # Verify API was initialized
-        mock_api_class.assert_called_once_with("i151223", "test_key")
+        mock_api_class.assert_called_once_with("iXXXXXX", "test_key")
 
         # Verify data was fetched
         mock_api.get_athlete.assert_called_once()
@@ -432,7 +432,7 @@ class TestMainFunction:
 
         # Mock config file
         mock_load_config.return_value = {
-            "athlete_id": "i151223",
+            "athlete_id": "iXXXXXX",
             "api_key": "test_key",
         }
 
@@ -448,4 +448,4 @@ class TestMainFunction:
             main()
 
         # Verify API was initialized with config credentials
-        mock_api_class.assert_called_once_with("i151223", "test_key")
+        mock_api_class.assert_called_once_with("iXXXXXX", "test_key")

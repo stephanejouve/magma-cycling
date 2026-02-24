@@ -17,7 +17,7 @@ class TestGetActivityStreamsDi2:
     @pytest.fixture
     def client(self):
         """Create IntervalsClient with test credentials."""
-        return IntervalsClient(athlete_id="i151223", api_key="test_key")
+        return IntervalsClient(athlete_id="iXXXXXX", api_key="test_key")
 
     @pytest.fixture
     def mock_di2_streams(self):

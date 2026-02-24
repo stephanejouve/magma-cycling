@@ -56,9 +56,9 @@ TEMP_PLIST=$(mktemp)
 
 # Replace placeholder paths in .plist
 # Note: Wrapper script (run_adherence_check.sh) is self-configuring
-sed -e "s|/Users/stephanejouve/cyclisme-training-logs/scripts/monitoring/run_adherence_check.sh|$WRAPPER_SCRIPT|g" \
-    -e "s|/Users/stephanejouve/cyclisme-training-logs|$PROJECT_ROOT|g" \
-    -e "s|/Users/stephanejouve|$HOME|g" \
+sed -e "s|__PROJECT_ROOT__/scripts/monitoring/run_adherence_check.sh|$WRAPPER_SCRIPT|g" \
+    -e "s|__PROJECT_ROOT__|$PROJECT_ROOT|g" \
+    -e "s|__HOME__|$HOME|g" \
     "$PLIST_SOURCE" > "$TEMP_PLIST"
 
 echo "✅ Configuration generated"

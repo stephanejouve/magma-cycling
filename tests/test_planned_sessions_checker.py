@@ -25,14 +25,14 @@ class TestPlannedSessionsCheckerInit:
 
     def test_init_with_credentials(self):
         """Test initialization with valid credentials."""
-        checker = PlannedSessionsChecker(athlete_id="i151223", api_key="test_api_key_12345")
+        checker = PlannedSessionsChecker(athlete_id="iXXXXXX", api_key="test_api_key_12345")
 
-        assert checker.athlete_id == "i151223"
+        assert checker.athlete_id == "iXXXXXX"
         assert checker.api is not None
 
     def test_api_client_is_created(self):
         """Test that IntervalsClient is properly instantiated."""
-        checker = PlannedSessionsChecker(athlete_id="i151223", api_key="test_key")
+        checker = PlannedSessionsChecker(athlete_id="iXXXXXX", api_key="test_key")
 
         # Verify API client has required methods
         assert hasattr(checker.api, "get_events")
@@ -45,7 +45,7 @@ class TestGetPlannedWorkouts:
     @pytest.fixture
     def mock_checker(self):
         """Create checker with mocked API."""
-        checker = PlannedSessionsChecker(athlete_id="i151223", api_key="test_key")
+        checker = PlannedSessionsChecker(athlete_id="iXXXXXX", api_key="test_key")
         checker.api = MagicMock()
         return checker
 
@@ -99,7 +99,7 @@ class TestFindMatchingActivity:
     @pytest.fixture
     def mock_checker(self):
         """Create checker for testing."""
-        checker = PlannedSessionsChecker(athlete_id="i151223", api_key="test_key")
+        checker = PlannedSessionsChecker(athlete_id="iXXXXXX", api_key="test_key")
         return checker
 
     def test_match_by_session_code(self, mock_checker):
@@ -234,7 +234,7 @@ class TestDetectSkippedSessions:
     @pytest.fixture
     def mock_checker(self):
         """Create checker with mocked API."""
-        checker = PlannedSessionsChecker(athlete_id="i151223", api_key="test_key")
+        checker = PlannedSessionsChecker(athlete_id="iXXXXXX", api_key="test_key")
         checker.api = MagicMock()
         return checker
 
@@ -374,7 +374,7 @@ class TestGenerateSkippedSessionMarkdown:
     @pytest.fixture
     def mock_checker(self):
         """Create checker for testing."""
-        checker = PlannedSessionsChecker(athlete_id="i151223", api_key="test_key")
+        checker = PlannedSessionsChecker(athlete_id="iXXXXXX", api_key="test_key")
         return checker
 
     def test_generate_markdown_basic(self, mock_checker):
@@ -463,7 +463,7 @@ class TestMainFunction:
         from cyclisme_training_logs.planned_sessions_checker import main
 
         # Mock config file content
-        mock_config_data = '{"athlete_id": "i151223", "api_key": "test_key"}'
+        mock_config_data = '{"athlete_id": "iXXXXXX", "api_key": "test_key"}'
         mock_open.return_value.__enter__.return_value = StringIO(mock_config_data)
 
         # Mock checker instance

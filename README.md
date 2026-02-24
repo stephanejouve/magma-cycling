@@ -1,7 +1,7 @@
 # Cyclisme Training Logs
 
-[![CI](https://github.com/stephanejouve/cyclisme-training-logs/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/stephanejouve/cyclisme-training-logs/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/stephanejouve/cyclisme-training-logs/branch/main/graph/badge.svg?token=K39R7YEOPN)](https://codecov.io/gh/stephanejouve/cyclisme-training-logs)
+[![CI](https://github.com/YOUR_USERNAME/cyclisme-training-logs/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/YOUR_USERNAME/cyclisme-training-logs/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/YOUR_USERNAME/cyclisme-training-logs/branch/main/graph/badge.svg?token=K39R7YEOPN)](https://codecov.io/gh/YOUR_USERNAME/cyclisme-training-logs)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Poetry](https://img.shields.io/badge/poetry-managed-blue)](https://python-poetry.org/)
 [![Architecture Review](https://img.shields.io/badge/Architecture%20Review-10%2F10-brightgreen)](project-docs/ARCHITECTURE_REVIEW_20260104.md)
@@ -17,7 +17,7 @@
 
 ```bash
 # Clone repository
-git clone https://github.com/stephanejouve/cyclisme-training-logs.git
+git clone https://github.com/YOUR_USERNAME/cyclisme-training-logs.git
 cd cyclisme-training-logs
 
 # Install dependencies
@@ -101,7 +101,7 @@ curl -sSL https://install.python-poetry.org | python3 -
 ### Install Project
 
 ```bash
-git clone https://github.com/stephanejouve/cyclisme-training-logs.git
+git clone https://github.com/YOUR_USERNAME/cyclisme-training-logs.git
 cd cyclisme-training-logs
 poetry install
 ```
@@ -112,7 +112,7 @@ Create `.env` file at project root:
 
 ```bash
 # Intervals.icu API
-VITE_INTERVALS_ATHLETE_ID=i151223
+VITE_INTERVALS_ATHLETE_ID=your_athlete_id
 VITE_INTERVALS_API_KEY=your_api_key_here
 
 # Email (for daily-sync --send-email)
@@ -132,7 +132,7 @@ OLLAMA_URL=http://localhost:11434
 1. Login to [intervals.icu](https://intervals.icu)
 2. Go to Settings → Developer Settings
 3. Generate API key
-4. Your athlete ID is in URL: `https://intervals.icu/athlete/i151223/...`
+4. Your athlete ID is in URL: `https://intervals.icu/athlete/your_athlete_id/...`
 
 **Get Brevo (email) credentials (optional - for daily-sync email reports):**
 1. Create free account at [brevo.com](https://www.brevo.com) (ex-Sendinblue)
@@ -397,7 +397,7 @@ cyclisme-training-logs/
   - Pattern analysis avec risk scoring
   - ROADMAP reorganization + Commit conventions
   - 206 commits, 38 tests, 84% coverage modules monitoring
-  - [Release Notes](https://github.com/stephanejouve/cyclisme-training-logs/releases/tag/v3.0.0)
+  - [Release Notes](https://github.com/YOUR_USERNAME/cyclisme-training-logs/releases/tag/v3.0.0)
 - **v2.3.1** - Di2 Analysis + Tests (54 tests, coverage +1%, upload_workouts +53%)
 - **v2.2.0** - Sprint R4++ (Training Intelligence + Backfill + PID) - 120/100 MOA
 - **v2.1.1** - Intervals.icu Sync Fix (session cancellation → NOTE)

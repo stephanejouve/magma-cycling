@@ -85,7 +85,7 @@ class TestWeeklyPlanAntiAliasing:
             created_at=datetime(2026, 2, 8, 20, 0, 0),
             last_updated=datetime(2026, 2, 8, 20, 0, 0),
             version=1,
-            athlete_id="i151223",
+            athlete_id="iXXXXXX",
             tss_target=350,
             planned_sessions=[
                 Session(
@@ -182,7 +182,7 @@ class TestWeeklyPlanAntiAliasing:
             "created_at": "2026-02-08T20:00:00",
             "last_updated": "2026-02-08T20:00:00",
             "version": 1,
-            "athlete_id": "i151223",
+            "athlete_id": "iXXXXXX",
             "tss_target": 350,
             "planned_sessions": [
                 {
@@ -220,7 +220,7 @@ class TestValidationProtection:
                 created_at=datetime.now(),
                 last_updated=datetime.now(),
                 version=1,
-                athlete_id="i151223",
+                athlete_id="iXXXXXX",
                 tss_target=350,
             )
 
@@ -234,7 +234,7 @@ class TestValidationProtection:
                 created_at=datetime.now(),
                 last_updated=datetime.now(),
                 version=1,
-                athlete_id="i151223",
+                athlete_id="iXXXXXX",
                 tss_target=350,
             )
 
@@ -287,7 +287,7 @@ class TestValidationProtection:
                 created_at=datetime.now(),
                 last_updated=datetime.now(),
                 version=1,
-                athlete_id="i151223",
+                athlete_id="iXXXXXX",
                 tss_target=350,
                 planned_sessions=[
                     Session(

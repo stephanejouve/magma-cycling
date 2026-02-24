@@ -22,7 +22,7 @@ def mock_intervals_client():
 @pytest.fixture
 def backfiller(mock_intervals_client):
     """Create backfiller instance with mocked client."""
-    return IntervalsICUBackfiller(athlete_id="i151223", api_key="test_key")
+    return IntervalsICUBackfiller(athlete_id="iXXXXXX", api_key="test_key")
 
 
 def test_classify_workout_type_sweet_spot(backfiller):

@@ -71,7 +71,7 @@ def mock_plan(mock_session):
     p.week_id = "S081"
     p.start_date = date(2026, 2, 17)
     p.end_date = date(2026, 2, 23)
-    p.athlete_id = "i151223"
+    p.athlete_id = "iXXXXXX"
     p.tss_target = 300
     p.created_at = "2026-02-17T10:00:00"
     p.last_updated = "2026-02-17T10:00:00"
