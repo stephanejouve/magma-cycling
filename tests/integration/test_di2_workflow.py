@@ -260,7 +260,7 @@ class TestDi2WorkflowIntegration:
         pytest.skip("Requires real Intervals.icu API credentials")
 
         # Pseudo-code for real test:
-        # api = IntervalsClient(athlete_id="i151223", api_key=os.getenv("INTERVALS_API_KEY"))
+        # api = IntervalsClient(athlete_id="iXXXXXX", api_key=os.getenv("INTERVALS_API_KEY"))
         # aggregator = WeeklyAggregator(api=api)
         # gear_metrics = aggregator._extract_gear_metrics("i107424849")  # Real S067 activity
         # assert gear_metrics["shifts"] == 394  # Known value from session log

@@ -4,7 +4,7 @@ set -e
 
 PHASE2_MARKER="/tmp/cyclisme-migration-phase2.done"
 PHASE3_DONE="/tmp/cyclisme-migration-phase3.done"
-SCRIPT_DIR="/Users/stephanejouve/cyclisme-training-logs/scripts/launchagents"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # If Phase 3 already done, unload self
 if [ -f "$PHASE3_DONE" ]; then

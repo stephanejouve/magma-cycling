@@ -313,7 +313,7 @@ class WorkflowCoach:
 **Fichier** : `~/.intervals_config.json`
 ```json
 {
-  "athlete_id": "i151223",
+  "athlete_id": "YOUR_ATHLETE_ID",
   "api_key": "your_api_key_here"
 }
 ```

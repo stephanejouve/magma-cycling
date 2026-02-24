@@ -293,7 +293,7 @@ class TestHandleGetMetrics:
         from cyclisme_training_logs.mcp_server import handle_get_metrics
 
         mock_config = Mock()
-        mock_config.athlete_id = "i151223"
+        mock_config.athlete_id = "iXXXXXX"
         mock_config.api_key = "apikey123"
         mock_client = Mock()
         mock_client.get_wellness.return_value = [
@@ -323,7 +323,7 @@ class TestHandleGetMetrics:
         from cyclisme_training_logs.mcp_server import handle_get_metrics
 
         mock_config = Mock()
-        mock_config.athlete_id = "i151223"
+        mock_config.athlete_id = "iXXXXXX"
         mock_config.api_key = "apikey123"
         mock_client = Mock()
         mock_client.get_wellness.return_value = []

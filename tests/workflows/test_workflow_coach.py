@@ -271,7 +271,7 @@ class TestPlanningModifications:
             "created_at": "2025-12-01T20:00:00Z",
             "last_updated": "2025-12-01T20:00:00Z",
             "version": 1,
-            "athlete_id": "i151223",
+            "athlete_id": "iXXXXXX",
             "tss_target": 350,
             "planned_sessions": [
                 {
@@ -1509,7 +1509,7 @@ class TestRemainingSessionsLoading:
             "created_at": "2025-12-01T20:00:00Z",
             "last_updated": "2025-12-01T20:00:00Z",
             "version": 1,
-            "athlete_id": "i151223",
+            "athlete_id": "iXXXXXX",
             "tss_target": 350,
             "planned_sessions": [
                 {

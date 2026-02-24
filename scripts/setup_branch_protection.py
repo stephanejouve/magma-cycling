@@ -27,7 +27,7 @@ def setup_branch_protection():
         sys.exit(1)
 
     # Repository info
-    owner = "stephanejouve"
+    owner = os.environ.get("GITHUB_OWNER", "YOUR_USERNAME")
     repo = "cyclisme-training-logs"
     branch = "main"
 
@@ -120,7 +120,7 @@ def check_existing_protection():
     if not token:
         return False
 
-    owner = "stephanejouve"
+    owner = os.environ.get("GITHUB_OWNER", "YOUR_USERNAME")
     repo = "cyclisme-training-logs"
     branch = "main"
 

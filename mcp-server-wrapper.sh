@@ -1,9 +1,9 @@
 #!/bin/bash
 # MCP Server Wrapper - Supports dev mode with hot reload
 
-cd /Users/stephanejouve/cyclisme-training-logs
+cd "$(dirname "$0")"
 
-VENV_PYTHON=/Users/stephanejouve/cyclisme-training-logs/.venv/bin/python
+VENV_PYTHON="$(dirname "$0")/.venv/bin/python"
 DEBUG_LOG=/tmp/mcp-server-debug.log
 
 # Check if dev mode is enabled via environment variable

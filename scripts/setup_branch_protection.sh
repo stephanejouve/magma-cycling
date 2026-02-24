@@ -7,7 +7,7 @@ echo "============================================================"
 echo
 
 KEYCHAIN_SERVICE="github-api-token"
-KEYCHAIN_ACCOUNT="stephanejouve"
+KEYCHAIN_ACCOUNT="$(git config user.name)"
 
 # Try to get token from keychain
 if [ -z "$GITHUB_TOKEN" ]; then
@@ -51,7 +51,7 @@ if [ -z "$GITHUB_TOKEN" ]; then
 fi
 
 # Config
-OWNER="stephanejouve"
+OWNER="${GITHUB_OWNER:-$(git remote get-url origin | sed 's/.*github.com[:/]\([^/]*\)\/.*/\1/')}"
 REPO="cyclisme-training-logs"
 BRANCH="main"
 API_URL="https://api.github.com/repos/$OWNER/$REPO/branches/$BRANCH/protection"
