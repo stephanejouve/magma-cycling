@@ -127,3 +127,7 @@ backups/
 
 # Sphinx build artifacts
 docs/_build/
+# Session transcripts (Claude Code raw logs - not for public repo)
+project-docs/sessions/*.jsonl
+project-docs/sessions/*.jsonl.gz
+project-docs/sessions/*.jsonl.original
