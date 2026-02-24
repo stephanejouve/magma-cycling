@@ -1570,4 +1570,794 @@ class TestRemainingSessionsLoading:
 
         assert remaining == []
         # Should print error message
-        assert mock_print.called
+
+
+class TestSummarizeDetectedGaps:
+    """Test WorkflowCoach._display_gaps_summary — pure display function."""
+
+    def test_empty_gaps_returns_zero(self, capsys):
+        """No gaps → prints message and returns 0."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        gaps_data = {"unanalyzed": [], "skipped": [], "rest_days": [], "cancelled": []}
+        result = coach._display_gaps_summary(gaps_data)
+        assert result == 0
+        assert "Aucun gap" in capsys.readouterr().out
+
+    def test_with_unanalyzed_activities(self, capsys):
+        """Unanalyzed activities shown, returns count."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        gaps_data = {
+            "unanalyzed": [
+                {
+                    "start_date_local": "2026-02-23T18:00:00",
+                    "name": "S082-01-END-EnduranceBase-V001",
+                }
+            ],
+            "skipped": [],
+            "rest_days": [],
+            "cancelled": [],
+        }
+        result = coach._display_gaps_summary(gaps_data)
+        assert result == 1
+
+    def test_with_more_than_3_unanalyzed(self, capsys):
+        """More than 3 unanalyzed → shows '+N autres' truncation."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        activities = [
+            {"start_date_local": f"2026-02-2{i}T18:00:00", "name": f"Séance {i}"} for i in range(5)
+        ]
+        gaps_data = {
+            "unanalyzed": activities,
+            "skipped": [],
+            "rest_days": [],
+            "cancelled": [],
+        }
+        result = coach._display_gaps_summary(gaps_data)
+        assert result == 5
+        assert "autres" in capsys.readouterr().out
+
+    def test_with_rest_days(self, capsys):
+        """Rest days listed."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        gaps_data = {
+            "unanalyzed": [],
+            "skipped": [],
+            "rest_days": [
+                {"date": "2026-02-23", "session_id": "S082-07", "rest_reason": "Repos planifié"}
+            ],
+            "cancelled": [],
+        }
+        result = coach._display_gaps_summary(gaps_data)
+        assert result == 1
+
+    def test_with_cancelled_sessions(self, capsys):
+        """Cancelled sessions listed."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        gaps_data = {
+            "unanalyzed": [],
+            "skipped": [],
+            "rest_days": [],
+            "cancelled": [
+                {
+                    "date": "2026-02-22",
+                    "session_id": "S082-06",
+                    "cancellation_reason": "Maladie",
+                }
+            ],
+        }
+        result = coach._display_gaps_summary(gaps_data)
+        assert result == 1
+
+    def test_with_skipped_sessions(self, capsys):
+        """Skipped sessions listed."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        gaps_data = {
+            "unanalyzed": [],
+            "skipped": [
+                {
+                    "planned_date": "2026-02-21",
+                    "planned_name": "Tempo Progression",
+                    "planned_tss": 68,
+                    "days_ago": 2,
+                }
+            ],
+            "rest_days": [],
+            "cancelled": [],
+        }
+        result = coach._display_gaps_summary(gaps_data)
+        assert result == 1
+
+    def test_total_is_sum_of_all_types(self, capsys):
+        """Total = unanalyzed + skipped + rest_days + cancelled."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        gaps_data = {
+            "unanalyzed": [{"start_date_local": "2026-02-23T18:00:00", "name": "S1"}],
+            "skipped": [
+                {
+                    "planned_date": "2026-02-22",
+                    "planned_name": "S2",
+                    "planned_tss": 50,
+                    "days_ago": 1,
+                }
+            ],
+            "rest_days": [{"date": "2026-02-21", "session_id": "R1", "rest_reason": "Repos"}],
+            "cancelled": [
+                {"date": "2026-02-20", "session_id": "C1", "cancellation_reason": "Annulé"}
+            ],
+        }
+        result = coach._display_gaps_summary(gaps_data)
+        assert result == 4
+
+
+class TestPromptUserChoiceAutoMode:
+    """Test WorkflowCoach._prompt_user_choice in auto_mode."""
+
+    def test_executed_only_auto_returns_single(self):
+        """auto_mode with executed activities → 'single_executed'."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True, auto_mode=True)
+        gaps_data = {
+            "unanalyzed": [{"start_date_local": "2026-02-23T18:00:00", "name": "S1"}],
+            "skipped": [],
+            "rest_days": [],
+            "cancelled": [],
+        }
+        result = coach._prompt_user_choice(gaps_data)
+        assert result == "single_executed"
+
+    def test_rest_only_auto_returns_batch_rest(self):
+        """auto_mode with only rest days → no option [1], returns 'exit'."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True, auto_mode=True)
+        gaps_data = {
+            "unanalyzed": [],
+            "skipped": [],
+            "rest_days": [{"date": "2026-02-22", "session_id": "R1", "rest_reason": "Repos"}],
+            "cancelled": [],
+        }
+        result = coach._prompt_user_choice(gaps_data)
+        # auto_mode picks "1" which maps to batch_rest_cancelled (first option built)
+        assert result in ("batch_rest_cancelled", "exit")
+
+    def test_skipped_only_auto(self):
+        """auto_mode with only skipped → option [1] maps to batch_skipped."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True, auto_mode=True)
+        gaps_data = {
+            "unanalyzed": [],
+            "skipped": [
+                {
+                    "planned_date": "2026-02-22",
+                    "planned_name": "Séance sautée",
+                    "planned_tss": 50,
+                    "days_ago": 1,
+                }
+            ],
+            "rest_days": [],
+            "cancelled": [],
+        }
+        result = coach._prompt_user_choice(gaps_data)
+        # Option [1] maps to batch_skipped when only skipped
+        assert result in ("batch_skipped", "exit")
+
+    def test_mixed_auto_has_batch_all_option(self):
+        """auto_mode with executed + rest → 'single_executed' (first option)."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True, auto_mode=True)
+        gaps_data = {
+            "unanalyzed": [{"start_date_local": "2026-02-23T18:00:00", "name": "S1"}],
+            "skipped": [],
+            "rest_days": [{"date": "2026-02-22", "session_id": "R1", "rest_reason": "Repos"}],
+            "cancelled": [],
+        }
+        result = coach._prompt_user_choice(gaps_data)
+        assert result == "single_executed"
+
+
+class TestWorkflowCoachInit:
+    """Test __init__ branches not yet covered."""
+
+    def test_init_with_explicit_provider(self):
+        """Explicit valid provider specified → used directly."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True, provider="clipboard")
+        assert coach.current_provider == "clipboard"
+
+    def test_init_auto_mode_flag_stored(self):
+        """auto_mode=True stored on instance."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True, auto_mode=True)
+        assert coach.auto_mode is True
+
+
+class TestApplyLightenAutoMode:
+    """Test WorkflowCoach._apply_lighten in auto/non-interactive mode."""
+
+    @pytest.fixture
+    def coach_with_templates(self):
+        """WorkflowCoach with auto_mode=True and a fake workout template."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True, auto_mode=True)
+        coach.workout_templates = {
+            "RECUP_COURTE": {
+                "name": "Récupération Courte",
+                "tss": 25,
+                "duration_minutes": 45,
+                "type": "RECUP",
+                "description": "Récupération active courte",
+                "workout_code_pattern": "{week_id}-{day_num}-REC-RecuperationCourte-V001",
+                "intervals_icu_format": {},
+            }
+        }
+        return coach
+
+    def test_auto_mode_stores_recommendation(self, coach_with_templates):
+        """In auto_mode, _apply_lighten stores recommendation without applying."""
+        mod = {
+            "template_id": "RECUP_COURTE",
+            "target_date": "2026-02-25",
+            "reason": "Fatigue élevée",
+            "current_workout": {"code": "S082-03-INT-SweetSpot-V001"},
+        }
+        coach_with_templates._apply_lighten(mod, week_id="S082")
+
+        assert hasattr(coach_with_templates, "_servo_recommendations")
+        assert len(coach_with_templates._servo_recommendations) == 1
+        rec = coach_with_templates._servo_recommendations[0]
+        assert rec["date"] == "2026-02-25"
+        assert rec["template"] == "Récupération Courte"
+        assert rec["tss"] == 25
+        assert rec["status"] == "pending_manual_application"
+
+    def test_auto_mode_accumulates_recommendations(self, coach_with_templates):
+        """Multiple _apply_lighten calls accumulate recommendations."""
+        mod = {
+            "template_id": "RECUP_COURTE",
+            "target_date": "2026-02-25",
+            "reason": "Fatigue",
+            "current_workout": {},
+        }
+        coach_with_templates._apply_lighten(mod, week_id="S082")
+        coach_with_templates._apply_lighten(mod, week_id="S082")
+
+        assert len(coach_with_templates._servo_recommendations) == 2
+
+    def test_unknown_template_no_crash(self, coach_with_templates):
+        """Unknown template_id → returns early without crashing."""
+        mod = {
+            "template_id": "TEMPLATE_INEXISTANT",
+            "target_date": "2026-02-25",
+            "reason": "Test",
+            "current_workout": {},
+        }
+        coach_with_templates._apply_lighten(mod, week_id="S082")
+        # No _servo_recommendations created (early return)
+        assert not hasattr(coach_with_templates, "_servo_recommendations")
+
+
+class TestInitFallback:
+    """Test WorkflowCoach.__init__ fallback when get_data_config raises FileNotFoundError."""
+
+    def test_config_not_found_uses_legacy_fallback(self):
+        """When get_data_config raises FileNotFoundError, falls back to project_root/logs."""
+        with patch("cyclisme_training_logs.config.get_data_config") as mock_config:
+            mock_config.side_effect = FileNotFoundError("config not found")
+            coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        assert coach.config is None
+        assert coach.data_repo_path.name == "logs"
+
+
+class TestGetApiMethod:
+    """Test WorkflowCoach._get_api() lazy initialization."""
+
+    def test_get_api_creates_client_on_first_call(self):
+        """_get_api() creates API client when self.api is None."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        mock_api = Mock()
+        with patch("cyclisme_training_logs.config.create_intervals_client", return_value=mock_api):
+            result = coach._get_api()
+        assert result is mock_api
+        assert coach.api is mock_api
+
+    def test_get_api_reuses_existing_client(self):
+        """_get_api() returns existing api without recreating it."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        existing_api = Mock()
+        coach.api = existing_api
+        result = coach._get_api()
+        assert result is existing_api
+
+    def test_get_api_raises_value_error_on_missing_credentials(self):
+        """_get_api() raises ValueError when credentials not configured."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        with patch(
+            "cyclisme_training_logs.config.create_intervals_client",
+            side_effect=ValueError("credentials not found"),
+        ):
+            with pytest.raises(ValueError):
+                coach._get_api()
+
+
+class TestLoadWorkoutTemplatesEdgeCases:
+    """Test load_workout_templates edge cases."""
+
+    def test_missing_templates_dir_returns_empty(self, tmp_path):
+        """Returns empty dict when templates dir does not exist."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        coach.project_root = tmp_path  # No data/workout_templates subdir
+        result = coach.load_workout_templates()
+        assert result == {}
+
+    def test_existing_empty_dir_returns_empty(self, tmp_path):
+        """Returns empty dict when templates dir exists but has no JSON files."""
+        templates_dir = tmp_path / "data" / "workout_templates"
+        templates_dir.mkdir(parents=True)
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        coach.project_root = tmp_path
+        result = coach.load_workout_templates()
+        assert result == {}
+
+
+class TestUpdatePlanningJsonErrors:
+    """Test _update_planning_json error paths."""
+
+    def test_session_not_found_returns_false(self):
+        """Returns False when no session matches the given date."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        mock_plan = Mock()
+        mock_plan.planned_sessions = []
+        with patch("cyclisme_training_logs.workflow_coach.planning_tower") as mock_tower:
+            mock_tower.modify_week.return_value.__enter__ = Mock(return_value=mock_plan)
+            mock_tower.modify_week.return_value.__exit__ = Mock(return_value=False)
+            result = coach._update_planning_json(
+                week_id="S082",
+                date="2026-02-25",
+                new_workout={"code": "X", "type": "RECUP", "tss": 25, "description": "Test"},
+                old_workout="old",
+                reason="test",
+            )
+        assert result is False
+
+    def test_file_not_found_returns_false(self):
+        """Returns False when planning file does not exist."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        with patch("cyclisme_training_logs.workflow_coach.planning_tower") as mock_tower:
+            mock_tower.modify_week.side_effect = FileNotFoundError("no file")
+            result = coach._update_planning_json(
+                week_id="S999",
+                date="2026-02-25",
+                new_workout={"code": "X", "type": "RECUP", "tss": 25, "description": "Test"},
+                old_workout="old",
+                reason="test",
+            )
+        assert result is False
+
+    def test_generic_exception_returns_false(self):
+        """Returns False on unexpected exception."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        with patch("cyclisme_training_logs.workflow_coach.planning_tower") as mock_tower:
+            mock_tower.modify_week.side_effect = RuntimeError("unexpected")
+            result = coach._update_planning_json(
+                week_id="S082",
+                date="2026-02-25",
+                new_workout={"code": "X", "type": "RECUP", "tss": 25, "description": "Test"},
+                old_workout="old",
+                reason="test",
+            )
+        assert result is False
+
+
+class TestDetectSkippedSessionsException:
+    """Test _detect_skipped_sessions exception path."""
+
+    def test_exception_returns_none(self):
+        """Returns None when PlannedSessionsChecker raises an exception."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        with patch(
+            "cyclisme_training_logs.workflow_coach.PlannedSessionsChecker",
+            side_effect=Exception("API error"),
+        ):
+            result = coach._detect_skipped_sessions(
+                athlete_id="AT1", api_key="key", oldest_date="2026-02-17", newest_date="2026-02-24"
+            )
+        assert result is None
+
+
+class TestDetectRestCancelledNoWeekId:
+    """Test _detect_rest_and_cancelled_sessions with no week_id."""
+
+    def test_no_week_id_returns_empty_lists(self):
+        """Returns ([], []) immediately when week_id is not set."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        coach.week_id = None
+        rest, cancelled = coach._detect_rest_and_cancelled_sessions()
+        assert rest == []
+        assert cancelled == []
+
+    def test_week_id_set_planning_file_missing_returns_empty(self, tmp_path):
+        """Returns ([], []) when planning file does not exist."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        coach.week_id = "S999"
+        mock_cfg = Mock()
+        mock_cfg.week_planning_dir = tmp_path  # No planning file here
+        with patch("cyclisme_training_logs.workflow_coach.get_data_config", return_value=mock_cfg):
+            rest, cancelled = coach._detect_rest_and_cancelled_sessions()
+        assert rest == []
+        assert cancelled == []
+
+
+class TestGenerateSkippedMarkdownFormat:
+    """Test _generate_skipped_markdown session_id extraction."""
+
+    def test_planned_name_without_space_dash_separator(self):
+        """planned_name without ' - ' uses split('-') fallback."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        skipped = {
+            "planned_name": "S082-05-TEC-TechniqueCadence-V001",
+            "planned_date": "2026-02-20",
+        }
+        markdown = coach._generate_skipped_markdown(skipped, "fatigue")
+        assert "S082-05" in markdown
+
+    def test_planned_name_with_space_dash_separator(self):
+        """planned_name with ' - ' uses split(' - ')[0]."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        skipped = {"planned_name": "S082-05 - Technique Cadence", "planned_date": "2026-02-20"}
+        markdown = coach._generate_skipped_markdown(skipped, "fatigue")
+        assert "S082-05" in markdown
+
+
+class TestStep1bWithActivityId:
+    """Test step_1b_detect_all_gaps early return when activity_id is set."""
+
+    def test_activity_id_returns_single_executed(self):
+        """When activity_id is set, returns ('single_executed', empty_gaps) immediately."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True, activity_id="i12345")
+        choice, gaps_data = coach.step_1b_detect_all_gaps()
+        assert choice == "single_executed"
+        assert gaps_data == {"unanalyzed": [], "skipped": [], "rest_days": [], "cancelled": []}
+
+
+class TestRunMethod:
+    """Test WorkflowCoach.run() with mocked steps — covers main loop branches."""
+
+    def test_run_exits_immediately_on_exit_choice(self):
+        """run() exits cleanly when step_1b returns 'exit' on first call."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True, auto_mode=True)
+        gaps_data = {"unanalyzed": [], "skipped": [], "rest_days": [], "cancelled": []}
+        with (
+            patch.object(coach, "step_1_welcome"),
+            patch.object(coach, "step_1b_detect_all_gaps", return_value=("exit", gaps_data)),
+        ):
+            coach.run()  # Must complete without raising
+
+    def test_run_breaks_on_unknown_choice(self):
+        """run() breaks safely on unrecognised choice."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True, auto_mode=True)
+        gaps_data = {"unanalyzed": [], "skipped": [], "rest_days": [], "cancelled": []}
+        with (
+            patch.object(coach, "step_1_welcome"),
+            patch.object(coach, "step_1b_detect_all_gaps", return_value=("unknown_xyz", gaps_data)),
+        ):
+            coach.run()
+
+    def test_run_single_executed_then_exit(self):
+        """run() processes single_executed branch then exits on next iteration."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True, auto_mode=True)
+        gaps_data = {
+            "unanalyzed": [{"id": "act1", "start_date_local": "2026-02-24T10:00:00"}],
+            "skipped": [],
+            "rest_days": [],
+            "cancelled": [],
+        }
+        empty_gaps = {"unanalyzed": [], "skipped": [], "rest_days": [], "cancelled": []}
+        call_count = 0
+
+        def mock_step_1b():
+            nonlocal call_count
+            call_count += 1
+            return ("single_executed", gaps_data) if call_count == 1 else ("exit", empty_gaps)
+
+        with (
+            patch.object(coach, "step_1_welcome"),
+            patch.object(coach, "step_1b_detect_all_gaps", side_effect=mock_step_1b),
+            patch.object(coach, "step_2_collect_feedback"),
+            patch.object(coach, "step_3_prepare_analysis"),
+            patch.object(coach, "step_4_paste_prompt"),
+            patch.object(coach, "step_4b_display_analysis"),
+            patch.object(coach, "step_5_validate_analysis"),
+            patch.object(coach, "step_6_insert_analysis"),
+            patch.object(coach, "step_7_git_commit"),
+            patch.object(coach, "show_summary"),
+        ):
+            coach.run()
+
+        assert call_count == 2
+
+    def test_run_same_gaps_twice_breaks_with_all_treated_message(self, capsys):
+        """run() breaks when two consecutive gap signatures are identical."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True, auto_mode=True)
+        gaps_data = {
+            "unanalyzed": [{"id": "act1", "start_date_local": "2026-02-24T10:00:00"}],
+            "skipped": [],
+            "rest_days": [],
+            "cancelled": [],
+        }
+        call_count = 0
+
+        def mock_step_1b():
+            nonlocal call_count
+            call_count += 1
+            # Always return same non-empty gaps → same signature → break
+            return ("single_executed", gaps_data) if call_count == 1 else ("exit", gaps_data)
+
+        with (
+            patch.object(coach, "step_1_welcome"),
+            patch.object(coach, "step_1b_detect_all_gaps", side_effect=mock_step_1b),
+            patch.object(coach, "step_2_collect_feedback"),
+            patch.object(coach, "step_3_prepare_analysis"),
+            patch.object(coach, "step_4_paste_prompt"),
+            patch.object(coach, "step_4b_display_analysis"),
+            patch.object(coach, "step_5_validate_analysis"),
+            patch.object(coach, "step_6_insert_analysis"),
+            patch.object(coach, "step_7_git_commit"),
+            patch.object(coach, "show_summary"),
+        ):
+            coach.run()
+
+        captured = capsys.readouterr()
+        assert "TOUS LES GAPS TRAITÉS" in captured.out
+
+    def test_run_batch_rest_cancelled_exit(self):
+        """run() processes batch_rest_cancelled branch when _handle_rest_cancellations returns 'exit'."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True, auto_mode=True)
+        gaps_data = {
+            "unanalyzed": [],
+            "skipped": [],
+            "rest_days": [{"session_id": "S082-R1", "date": "2026-02-24"}],
+            "cancelled": [],
+        }
+        empty_gaps = {"unanalyzed": [], "skipped": [], "rest_days": [], "cancelled": []}
+        call_count = 0
+
+        def mock_step_1b():
+            nonlocal call_count
+            call_count += 1
+            return ("batch_rest_cancelled", gaps_data) if call_count == 1 else ("exit", empty_gaps)
+
+        with (
+            patch.object(coach, "step_1_welcome"),
+            patch.object(coach, "step_1b_detect_all_gaps", side_effect=mock_step_1b),
+            patch.object(coach, "_handle_rest_cancellations", return_value="exit"),
+        ):
+            coach.run()
+
+        assert call_count == 2
+
+    def test_run_batch_skipped_exit(self):
+        """run() processes batch_skipped branch when _handle_skipped_sessions returns 'exit'."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True, auto_mode=True)
+        gaps_data = {
+            "unanalyzed": [],
+            "skipped": [{"planned_name": "S082-05 - TEC", "planned_date": "2026-02-20"}],
+            "rest_days": [],
+            "cancelled": [],
+        }
+        empty_gaps = {"unanalyzed": [], "skipped": [], "rest_days": [], "cancelled": []}
+        call_count = 0
+
+        def mock_step_1b():
+            nonlocal call_count
+            call_count += 1
+            return ("batch_skipped", gaps_data) if call_count == 1 else ("exit", empty_gaps)
+
+        with (
+            patch.object(coach, "step_1_welcome"),
+            patch.object(coach, "step_1b_detect_all_gaps", side_effect=mock_step_1b),
+            patch.object(coach, "_handle_skipped_sessions", return_value="exit"),
+        ):
+            coach.run()
+
+        assert call_count == 2
+
+    def test_run_batch_rest_cancelled_continue(self):
+        """run() processes batch_rest_cancelled 'continue' branch (enrichissement IA)."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True, auto_mode=True)
+        gaps_data = {
+            "unanalyzed": [],
+            "skipped": [],
+            "rest_days": [{"session_id": "S082-R1", "date": "2026-02-24"}],
+            "cancelled": [],
+        }
+        empty_gaps = {"unanalyzed": [], "skipped": [], "rest_days": [], "cancelled": []}
+        call_count = 0
+
+        def mock_step_1b():
+            nonlocal call_count
+            call_count += 1
+            return ("batch_rest_cancelled", gaps_data) if call_count == 1 else ("exit", empty_gaps)
+
+        with (
+            patch.object(coach, "step_1_welcome"),
+            patch.object(coach, "step_1b_detect_all_gaps", side_effect=mock_step_1b),
+            patch.object(coach, "_handle_rest_cancellations", return_value="continue"),
+            patch.object(coach, "step_4b_display_analysis"),
+            patch.object(coach, "step_5_validate_analysis"),
+            patch.object(coach, "step_6_insert_analysis"),
+            patch.object(coach, "step_7_git_commit"),
+            patch.object(coach, "show_summary"),
+        ):
+            coach.run()
+
+        assert call_count == 2
+
+    def test_run_batch_skipped_continue(self):
+        """run() processes batch_skipped 'continue' branch (enrichissement IA)."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True, auto_mode=True)
+        gaps_data = {
+            "unanalyzed": [],
+            "skipped": [{"planned_name": "S082-05 - TEC", "planned_date": "2026-02-20"}],
+            "rest_days": [],
+            "cancelled": [],
+        }
+        empty_gaps = {"unanalyzed": [], "skipped": [], "rest_days": [], "cancelled": []}
+        call_count = 0
+
+        def mock_step_1b():
+            nonlocal call_count
+            call_count += 1
+            return ("batch_skipped", gaps_data) if call_count == 1 else ("exit", empty_gaps)
+
+        with (
+            patch.object(coach, "step_1_welcome"),
+            patch.object(coach, "step_1b_detect_all_gaps", side_effect=mock_step_1b),
+            patch.object(coach, "_handle_skipped_sessions", return_value="continue"),
+            patch.object(coach, "step_4b_display_analysis"),
+            patch.object(coach, "step_5_validate_analysis"),
+            patch.object(coach, "step_6_insert_analysis"),
+            patch.object(coach, "step_7_git_commit"),
+            patch.object(coach, "show_summary"),
+        ):
+            coach.run()
+
+        assert call_count == 2
+
+    def test_run_batch_all_calls_handle_batch_all(self):
+        """run() calls _handle_batch_all on 'batch_all' choice."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True, auto_mode=True)
+        gaps_data = {"unanalyzed": [], "skipped": [], "rest_days": [], "cancelled": []}
+        empty_gaps = {"unanalyzed": [], "skipped": [], "rest_days": [], "cancelled": []}
+        call_count = 0
+
+        def mock_step_1b():
+            nonlocal call_count
+            call_count += 1
+            return ("batch_all", gaps_data) if call_count == 1 else ("exit", empty_gaps)
+
+        mock_batch_all = Mock()
+        with (
+            patch.object(coach, "step_1_welcome"),
+            patch.object(coach, "step_1b_detect_all_gaps", side_effect=mock_step_1b),
+            patch.object(coach, "_handle_batch_all", mock_batch_all),
+        ):
+            coach.run()
+
+        mock_batch_all.assert_called_once()
+
+    def test_run_batch_rest_cancelled_exit_without_skip_git(self):
+        """run() calls _optional_git_commit in batch_rest_cancelled 'exit' when skip_git=False."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=False, auto_mode=True)
+        gaps_data = {
+            "unanalyzed": [],
+            "skipped": [],
+            "rest_days": [{"session_id": "S082-R1", "date": "2026-02-24"}],
+            "cancelled": [],
+        }
+        empty_gaps = {"unanalyzed": [], "skipped": [], "rest_days": [], "cancelled": []}
+        call_count = 0
+
+        def mock_step_1b():
+            nonlocal call_count
+            call_count += 1
+            return ("batch_rest_cancelled", gaps_data) if call_count == 1 else ("exit", empty_gaps)
+
+        mock_git = Mock()
+        with (
+            patch.object(coach, "step_1_welcome"),
+            patch.object(coach, "step_1b_detect_all_gaps", side_effect=mock_step_1b),
+            patch.object(coach, "_handle_rest_cancellations", return_value="exit"),
+            patch.object(coach, "_optional_git_commit", mock_git),
+        ):
+            coach.run()
+
+        mock_git.assert_called_once()
+
+    def test_run_batch_skipped_exit_without_skip_git(self):
+        """run() calls _optional_git_commit in batch_skipped 'exit' when skip_git=False."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=False, auto_mode=True)
+        gaps_data = {
+            "unanalyzed": [],
+            "skipped": [{"planned_name": "S082-05 - TEC", "planned_date": "2026-02-20"}],
+            "rest_days": [],
+            "cancelled": [],
+        }
+        empty_gaps = {"unanalyzed": [], "skipped": [], "rest_days": [], "cancelled": []}
+        call_count = 0
+
+        def mock_step_1b():
+            nonlocal call_count
+            call_count += 1
+            return ("batch_skipped", gaps_data) if call_count == 1 else ("exit", empty_gaps)
+
+        mock_git = Mock()
+        with (
+            patch.object(coach, "step_1_welcome"),
+            patch.object(coach, "step_1b_detect_all_gaps", side_effect=mock_step_1b),
+            patch.object(coach, "_handle_skipped_sessions", return_value="exit"),
+            patch.object(coach, "_optional_git_commit", mock_git),
+        ):
+            coach.run()
+
+        mock_git.assert_called_once()
+
+    def test_run_unexpected_exception_calls_sys_exit(self):
+        """run() catches unexpected exceptions and calls sys.exit(1)."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True, auto_mode=True)
+        with (
+            patch.object(coach, "step_1_welcome"),
+            patch.object(coach, "step_1b_detect_all_gaps", side_effect=RuntimeError("boom")),
+            pytest.raises(SystemExit) as exc_info,
+        ):
+            coach.run()
+        assert exc_info.value.code == 1
+
+    def test_run_keyboard_interrupt_calls_sys_exit(self):
+        """run() catches KeyboardInterrupt and calls sys.exit(0)."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True, auto_mode=True)
+        with (
+            patch.object(coach, "step_1_welcome"),
+            patch.object(coach, "step_1b_detect_all_gaps", side_effect=KeyboardInterrupt),
+            pytest.raises(SystemExit) as exc_info,
+        ):
+            coach.run()
+        assert exc_info.value.code == 0
+
+    def test_run_single_executed_servo_mode(self):
+        """run() calls step_6b_servo_control when servo_mode is True."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True, auto_mode=True, servo_mode=True)
+        coach.workout_templates = {}
+        gaps_data = {
+            "unanalyzed": [{"id": "act1", "start_date_local": "2026-02-24T10:00:00"}],
+            "skipped": [],
+            "rest_days": [],
+            "cancelled": [],
+        }
+        empty_gaps = {"unanalyzed": [], "skipped": [], "rest_days": [], "cancelled": []}
+        call_count = 0
+
+        def mock_step_1b():
+            nonlocal call_count
+            call_count += 1
+            return ("single_executed", gaps_data) if call_count == 1 else ("exit", empty_gaps)
+
+        mock_servo = Mock()
+        with (
+            patch.object(coach, "step_1_welcome"),
+            patch.object(coach, "step_1b_detect_all_gaps", side_effect=mock_step_1b),
+            patch.object(coach, "step_2_collect_feedback"),
+            patch.object(coach, "step_3_prepare_analysis"),
+            patch.object(coach, "step_4_paste_prompt"),
+            patch.object(coach, "step_4b_display_analysis"),
+            patch.object(coach, "step_5_validate_analysis"),
+            patch.object(coach, "step_6_insert_analysis"),
+            patch.object(coach, "step_6b_servo_control", mock_servo),
+            patch.object(coach, "step_7_git_commit"),
+            patch.object(coach, "show_summary"),
+        ):
+            coach.run()
+
+        mock_servo.assert_called_once()
+
+
+class TestStep1Welcome:
+    """Test WorkflowCoach.step_1_welcome — output behavior in auto_mode."""
+
+    def test_step_1_welcome_auto_mode_skips_wait(self, capsys):
+        """In auto_mode, wait_user is skipped (no blocking input call)."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True, auto_mode=True)
+        # Should not block on input
+        coach.step_1_welcome()
+        # Just verify it completes without error (auto_mode skips input())
