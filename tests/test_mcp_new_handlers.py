@@ -619,17 +619,37 @@ class TestHandleAttachWorkout:
 
 class TestHandleGetWorkout:
     @pytest.mark.asyncio
-    async def test_workout_not_found_returns_not_found(self, tmp_path):
+    async def test_workout_not_found_returns_planning_description(self, tmp_path):
         from cyclisme_training_logs.mcp_server import handle_get_workout
+
+        mock_session = Mock()
+        mock_session.session_id = "S081-03"
+        mock_session.name = "EnduranceBase"
+        mock_session.session_type = "END"
+        mock_session.description = "2h endurance Z2"
+        mock_session.tss_planned = 80
+        mock_session.duration_min = 120
+
+        mock_plan = Mock()
+        mock_plan.planned_sessions = [mock_session]
 
         mc = Mock()
         mc.data_repo_path = tmp_path
+        mc.week_planning_dir = tmp_path / "week_planning"
+        mc.data_dir = tmp_path / "data"
         (tmp_path / "workouts").mkdir()
-        with patch(DATA_CONFIG_PATCH, return_value=mc):
+
+        tower_mock = Mock()
+        tower_mock.read_week.return_value = mock_plan
+
+        with patch(DATA_CONFIG_PATCH, return_value=mc), patch(TOWER_PATCH, tower_mock):
             result = await handle_get_workout({"session_id": "S081-03"})
         data = json.loads(result[0].text)
         assert data["found"] is False
-        assert "S081-03" in data["message"]
+        assert data["structured_file"] is None
+        assert data["session_definition"]["name"] == "EnduranceBase"
+        assert data["session_definition"]["description"] == "2h endurance Z2"
+        assert data["session_definition"]["tss_planned"] == 80
 
     @pytest.mark.asyncio
     async def test_workout_found_returns_content(self, tmp_path):
