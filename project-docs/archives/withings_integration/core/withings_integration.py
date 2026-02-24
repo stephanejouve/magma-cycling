@@ -354,10 +354,11 @@ def sync_sleep_to_intervals(sleep_data: dict, intervals_api_key: str, athlete_id
 # Script d'exemple d'utilisation
 if __name__ == "__main__":
     # Configuration (à adapter avec tes vraies valeurs)
-    CLIENT_ID = "c5e8820a701242a8708c54ee9fcc83915f02270f2ae0930b9a5917bbb3d21278"
+    CLIENT_ID = os.getenv("WITHINGS_CLIENT_ID", "your_withings_client_id_here")
     CLIENT_SECRET = os.getenv("WITHINGS_SECRET")  # À définir dans .env
-    CALLBACK_URI = (
-        "https://4f3c-2a01-cb14-8513-df00-2031-d098-d697-75c1.ngrok-free.app/auth/withings/callback"
+    CALLBACK_URI = os.getenv(
+        "WITHINGS_CALLBACK_URI",
+        "https://your-ngrok-url.ngrok-free.app/auth/withings/callback",
     )
 
     # Initialisation

@@ -314,7 +314,7 @@ class WorkflowCoach:
 ```json
 {
   "athlete_id": "i151223",
-  "api_key": "420dlwmr1rxqfb73z19iq0ime"
+  "api_key": "your_api_key_here"
 }
 ```
 

@@ -312,7 +312,7 @@ Fichier : S068-02-INT-SweetSpot88Validation-V001.zwo
 #### Fichier .env
 ```bash
 VITE_INTERVALS_ATHLETE_ID=i151223
-VITE_INTERVALS_API_KEY=420dlwmr1rxqfb73z19iq0ime
+VITE_INTERVALS_API_KEY=your_api_key_here
 ```
 
 #### Fichier .gitignore

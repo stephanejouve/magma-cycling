@@ -47,6 +47,7 @@ from cyclisme_training_logs.ai_providers import AIProviderFactory
 from cyclisme_training_logs.config import (
     create_intervals_client,
     get_ai_config,
+    get_data_config,
     get_email_config,
     get_week_config,
 )
@@ -2114,9 +2115,10 @@ def main():
             print("❌ Erreur: --auto-servo nécessite --ai-analysis")
             sys.exit(1)
 
-    # Setup paths
-    tracking_file = Path("/Users/stephanejouve/training-logs/data/activities_tracking.json")
-    reports_dir = Path("/Users/stephanejouve/training-logs/daily-reports")
+    # Setup paths from config (uses TRAINING_DATA_REPO env var or ~/training-logs fallback)
+    data_config = get_data_config()
+    tracking_file = data_config.data_dir / "activities_tracking.json"
+    reports_dir = data_config.data_repo_path / "daily-reports"
 
     # Run sync
     sync = DailySync(

@@ -34,9 +34,9 @@ pip install withings-api requests python-dotenv
 
 Vous avez déjà créé l'application dans le Developer Dashboard :
 - **Application**: Sync Withings Intervals
-- **ClientID**: `c5e8820a701242a8708c54ee9fcc83915f02270f2ae0930b9a5917bbb3d21278`
+- **ClientID**: `your_withings_client_id_here`
 - **Secret**: (à récupérer du Dashboard)
-- **Callback URL**: `https://4f3c-2a01-cb14-8513-df00-2031-d098-d697-75c1.ngrok-free.app/auth/withings/callback`
+- **Callback URL**: `https://your-ngrok-url.ngrok-free.app/auth/withings/callback`
 
 ### 3. Setup initial (une seule fois)
 

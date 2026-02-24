@@ -22,7 +22,7 @@ def main():
     if not athlete_id or not api_key:
         print("❌ ERREUR : Variables d'environnement manquantes !")
         print("   Exporte-les avec :")
-        print('   export VITE_INTERVALS_ATHLETE_ID="i151223"')
+        print('   export VITE_INTERVALS_ATHLETE_ID="your_athlete_id_here"')
         print('   export VITE_INTERVALS_API_KEY="..."')
         sys.exit(1)
 

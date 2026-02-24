@@ -10,7 +10,7 @@
 **Current .env (correct):**
 ```
 VITE_INTERVALS_ATHLETE_ID=i151223
-VITE_INTERVALS_API_KEY=420dlwmr1rxqfb73z19iq0ime
+VITE_INTERVALS_API_KEY=your_api_key_here
 ```
 
 **Current Error:**

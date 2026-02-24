@@ -141,7 +141,7 @@ class PlanningAuditLog:
             ...     "shift-sessions",
             ...     "Shifted Thu→Fri sessions",
             ...     reason="User skipped Thursday training",
-            ...     requested_by="stephane",
+            ...     requested_by="athlete",
             ...     files_modified=["week_planning_S081.json"],
             ...     file_timestamp="2026-02-20T23:30:00Z",
             ...     backup_path=Path("backups/week_planning_S081_20260220_233000.json")
