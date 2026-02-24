@@ -66,7 +66,7 @@ class WorkflowCoach:
 ```json
 {
   "athlete_id": "i151223",
-  "api_key": "REDACTED_INTERVALS_KEY"
+  "api_key": "your_api_key_here"
 }
 ```
 

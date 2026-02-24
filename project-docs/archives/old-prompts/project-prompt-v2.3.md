@@ -292,7 +292,7 @@ Structure réalisée : 3×4min @ 106-120% FTP
 #### Fichier .env
 ```bash
 VITE_INTERVALS_ATHLETE_ID=i151223
-VITE_INTERVALS_API_KEY=REDACTED_INTERVALS_KEY
+VITE_INTERVALS_API_KEY=your_api_key_here
 ```
 
 #### Fichier .gitignore

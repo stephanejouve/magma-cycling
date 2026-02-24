@@ -106,17 +106,38 @@ def mock_intervals():
     client.get_events.return_value = []
     client.get_wellness.return_value = [{"id": "2026-02-17", "ctl": 65, "atl": 70, "tsb": -5}]
     client.get_athlete.return_value = {
-        "ftp": 240,
-        "weight": 72.5,
-        "max_hr": 180,
-        "resting_hr": 45,
-        "fthr": 160,
-        "ctl": 65,
-        "atl": 70,
-        "ramp_rate": 1.2,
-        "weight_class": None,
-        "power_zones": None,
-        "hr_zones": None,
+        "name": "Test Athlete",
+        "icu_weight": 72.5,
+        "icu_resting_hr": 45,
+        "sportSettings": [
+            {
+                "types": ["Ride", "VirtualRide"],
+                "ftp": 240,
+                "max_hr": 180,
+                "lthr": 160,
+                "w_prime": 20000,
+                "power_zones": [55, 75, 90, 105, 120, 150, 999],
+                "power_zone_names": [
+                    "Active Recovery",
+                    "Endurance",
+                    "Tempo",
+                    "Threshold",
+                    "VO2 Max",
+                    "Anaerobic",
+                    "Neuromuscular",
+                ],
+                "hr_zones": [120, 135, 145, 155, 165, 175, 180],
+                "hr_zone_names": [
+                    "Recovery",
+                    "Aerobic",
+                    "Tempo",
+                    "SubThreshold",
+                    "SuperThreshold",
+                    "Aerobic Capacity",
+                    "Anaerobic",
+                ],
+            }
+        ],
     }
     client.create_event.return_value = {"id": "evt123"}
     client.update_event.return_value = True
@@ -819,6 +840,10 @@ class TestHandleGetAthleteProfile:
         data = json.loads(result[0].text)
         assert data["ftp"] == 240
         assert data["weight"] == 72.5
+        assert data["resting_hr"] == 45
+        assert data["fthr"] == 160
+        assert data["power_zones"][0]["name"] == "Active Recovery"
+        assert data["hr_zones"][0]["name"] == "Recovery"
 
     @pytest.mark.asyncio
     async def test_api_error_returns_error(self, mock_intervals):

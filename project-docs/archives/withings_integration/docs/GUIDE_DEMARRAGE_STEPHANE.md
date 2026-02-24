@@ -75,7 +75,7 @@ Tu as déjà créé l'application, il te faut juste :
 
 1. **ClientID** (déjà dans le code)
    ```
-   c5e8820a701242a8708c54ee9fcc83915f02270f2ae0930b9a5917bbb3d21278
+   your_withings_client_id_here
    ```
 
 2. **Secret** (à récupérer du Dashboard)
@@ -85,14 +85,14 @@ Tu as déjà créé l'application, il te faut juste :
 
 3. **Callback URL** (déjà configuré)
    ```
-   https://4f3c-2a01-cb14-8513-df00-2031-d098-d697-75c1.ngrok-free.app/auth/withings/callback
+   https://your-ngrok-url.ngrok-free.app/auth/withings/callback
    ```
 
 ### Configuration Intervals.icu (déjà OK)
 
 Les valeurs sont déjà dans le code :
 - Athlete ID: `i151223`
-- API Key: `REDACTED_INTERVALS_KEY`
+- API Key: `your_api_key_here`
 
 ## 🔑 Première utilisation
 

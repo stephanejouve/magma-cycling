@@ -188,9 +188,12 @@ def check_api_connection():
         from withings_integration import WithingsIntegration
 
         # Charger config
-        CLIENT_ID = "c5e8820a701242a8708c54ee9fcc83915f02270f2ae0930b9a5917bbb3d21278"
+        CLIENT_ID = os.getenv("WITHINGS_CLIENT_ID", "your_withings_client_id_here")
         CLIENT_SECRET = os.getenv("WITHINGS_SECRET", "dummy")
-        CALLBACK_URI = "https://4f3c-2a01-cb14-8513-df00-2031-d098-d697-75c1.ngrok-free.app/auth/withings/callback"
+        CALLBACK_URI = os.getenv(
+            "WITHINGS_CALLBACK_URI",
+            "https://your-ngrok-url.ngrok-free.app/auth/withings/callback",
+        )
 
         # Charger credentials
         with open("withings_credentials.json") as f:

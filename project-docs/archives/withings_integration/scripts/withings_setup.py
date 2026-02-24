@@ -12,12 +12,12 @@ from urllib.parse import parse_qs, urlparse
 from withings_integration import WithingsIntegration
 
 # Configuration depuis Developer Dashboard
-CLIENT_ID = "c5e8820a701242a8708c54ee9fcc83915f02270f2ae0930b9a5917bbb3d21278"
+CLIENT_ID = os.getenv("WITHINGS_CLIENT_ID", "your_withings_client_id_here")
 CLIENT_SECRET = input("Entrez le Secret Withings (depuis Developer Dashboard): ").strip()
 
 # Pour développement local avec ngrok
-CALLBACK_URI = (
-    "https://4f3c-2a01-cb14-8513-df00-2031-d098-d697-75c1.ngrok-free.app/auth/withings/callback"
+CALLBACK_URI = os.getenv(
+    "WITHINGS_CALLBACK_URI", "https://your-ngrok-url.ngrok-free.app/auth/withings/callback"
 )
 
 # Variable globale pour stocker le code
@@ -221,8 +221,8 @@ WITHINGS_CLIENT_SECRET={CLIENT_SECRET}
 WITHINGS_CALLBACK_URI={CALLBACK_URI}
 
 # Configuration Intervals.icu (existante)
-INTERVALS_ATHLETE_ID=i151223
-INTERVALS_API_KEY=REDACTED_INTERVALS_KEY
+INTERVALS_ATHLETE_ID=your_athlete_id_here
+INTERVALS_API_KEY=your_api_key_here
 """
 
         with open(".env.withings", "w") as f:

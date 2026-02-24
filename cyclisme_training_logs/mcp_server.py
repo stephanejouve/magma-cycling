@@ -23,7 +23,7 @@ Claude Desktop config (~/.config/claude/claude_desktop_config.json):
         "cyclisme-training": {
           "command": "poetry",
           "args": ["run", "mcp-server"],
-          "cwd": "/Users/stephanejouve/cyclisme-training-logs"
+          "cwd": "/path/to/cyclisme-training-logs"
         }
       }
     }
@@ -2906,20 +2906,42 @@ async def handle_get_athlete_profile(args: dict) -> list[TextContent]:
             client = create_intervals_client()
             athlete = client.get_athlete()
 
-            # Format result with key metrics
+            # Sport settings for cycling (ftp, zones, hr) are nested in sportSettings
+            sport_settings = next(
+                (s for s in athlete.get("sportSettings", []) if "Ride" in s.get("types", [])),
+                {},
+            )
+
+            # Build power zones with names
+            power_zone_values = sport_settings.get("power_zones", [])
+            power_zone_names = sport_settings.get("power_zone_names", [])
+            power_zones = (
+                [{"name": n, "max_pct_ftp": v} for n, v in zip(power_zone_names, power_zone_values)]
+                if power_zone_values
+                else None
+            )
+
+            # Build HR zones with names
+            hr_zone_values = sport_settings.get("hr_zones", [])
+            hr_zone_names = sport_settings.get("hr_zone_names", [])
+            hr_zones = (
+                [{"name": n, "max_bpm": v} for n, v in zip(hr_zone_names, hr_zone_values)]
+                if hr_zone_values
+                else None
+            )
+
             result = {
                 "name": athlete.get("name"),
-                "ftp": athlete.get("ftp"),
-                "weight": athlete.get("weight"),
-                "max_hr": athlete.get("max_hr"),
-                "resting_hr": athlete.get("resting_hr"),
-                "fthr": athlete.get("fthr"),
-                "ctl": athlete.get("ctl"),
-                "atl": athlete.get("atl"),
-                "ramp_rate": athlete.get("ramp_rate"),
-                "weight_class": athlete.get("weight_class"),
-                "power_zones": athlete.get("power_zones"),
-                "hr_zones": athlete.get("hr_zones"),
+                # Top-level icu_ fields
+                "weight": athlete.get("icu_weight"),
+                "resting_hr": athlete.get("icu_resting_hr"),
+                # Cycling sport settings
+                "ftp": sport_settings.get("ftp"),
+                "max_hr": sport_settings.get("max_hr"),
+                "fthr": sport_settings.get("lthr"),
+                "w_prime": sport_settings.get("w_prime"),
+                "power_zones": power_zones,
+                "hr_zones": hr_zones,
             }
 
         return [TextContent(type="text", text=json.dumps(result, indent=2))]
