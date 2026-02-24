@@ -2015,6 +2015,20 @@ async def handle_get_workout(args: dict) -> list[TextContent]:
             workout_files = list(workouts_dir.glob(f"{session_id}-*"))
 
             if not workout_files:
+                # No .zwo file — fall back to session description from planning
+                from cyclisme_training_logs.planning.control_tower import planning_tower
+
+                week_id = session_id[:4]  # "S082-02" → "S082"
+                session_def = None
+                try:
+                    plan = planning_tower.read_week(week_id)
+                    session_def = next(
+                        (s for s in plan.planned_sessions if s.session_id == session_id),
+                        None,
+                    )
+                except Exception:
+                    pass
+
                 return [
                     TextContent(
                         type="text",
@@ -2022,8 +2036,26 @@ async def handle_get_workout(args: dict) -> list[TextContent]:
                             {
                                 "found": False,
                                 "session_id": session_id,
-                                "message": f"No workout file found for session {session_id}. "
-                                f"Workout files are expected at {workouts_dir}/{session_id}-*.zwo",
+                                "structured_file": None,
+                                "message": "No structured workout file (.zwo) found. "
+                                "Session is defined via text description in the planning.",
+                                "session_definition": (
+                                    {
+                                        "name": session_def.name if session_def else None,
+                                        "type": session_def.session_type if session_def else None,
+                                        "description": (
+                                            session_def.description if session_def else None
+                                        ),
+                                        "tss_planned": (
+                                            session_def.tss_planned if session_def else None
+                                        ),
+                                        "duration_min": (
+                                            session_def.duration_min if session_def else None
+                                        ),
+                                    }
+                                    if session_def
+                                    else None
+                                ),
                             },
                             indent=2,
                         ),
