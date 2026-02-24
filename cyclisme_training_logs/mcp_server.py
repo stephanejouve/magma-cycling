@@ -2019,7 +2019,13 @@ async def handle_get_workout(args: dict) -> list[TextContent]:
                     TextContent(
                         type="text",
                         text=json.dumps(
-                            {"error": f"No workout file found for session {session_id}"}, indent=2
+                            {
+                                "found": False,
+                                "session_id": session_id,
+                                "message": f"No workout file found for session {session_id}. "
+                                f"Workout files are expected at {workouts_dir}/{session_id}-*.zwo",
+                            },
+                            indent=2,
                         ),
                     )
                 ]
@@ -3090,7 +3096,8 @@ async def handle_get_recommendations(args: dict) -> list[TextContent]:
                 result = {
                     "week_id": week_id,
                     "found": False,
-                    "message": f"No recommendations file found for {week_id}",
+                    "message": f"No recommendations file generated yet for {week_id}. "
+                    "Run PID evaluation or end-of-week workflow to generate recommendations.",
                     "planning_notes": plan.notes if hasattr(plan, "notes") else None,
                 }
 

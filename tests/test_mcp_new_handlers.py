@@ -619,7 +619,7 @@ class TestHandleAttachWorkout:
 
 class TestHandleGetWorkout:
     @pytest.mark.asyncio
-    async def test_workout_not_found_returns_error(self, tmp_path):
+    async def test_workout_not_found_returns_not_found(self, tmp_path):
         from cyclisme_training_logs.mcp_server import handle_get_workout
 
         mc = Mock()
@@ -628,7 +628,8 @@ class TestHandleGetWorkout:
         with patch(DATA_CONFIG_PATCH, return_value=mc):
             result = await handle_get_workout({"session_id": "S081-03"})
         data = json.loads(result[0].text)
-        assert "error" in data
+        assert data["found"] is False
+        assert "S081-03" in data["message"]
 
     @pytest.mark.asyncio
     async def test_workout_found_returns_content(self, tmp_path):
