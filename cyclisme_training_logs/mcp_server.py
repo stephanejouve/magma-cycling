@@ -2894,8 +2894,9 @@ async def handle_update_remote_session(args: dict) -> list[TextContent]:
                                         date_str, "%Y-%m-%d"
                                     ).date()
 
-                                if "description" in updates:
-                                    session_dict["description"] = updates["description"]
+                                # NOTE: description is NOT written back to local planning.
+                                # The planning JSON holds a SHORT description; full workout
+                                # content lives in _workouts.txt / .zwo files and Intervals.icu.
 
                                 updated_session = Session(**session_dict)
                                 updated_sessions.append(updated_session)
