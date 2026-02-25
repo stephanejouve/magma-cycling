@@ -14,29 +14,12 @@ Subpackages
 Submodules
 ----------
 
-cyclisme\_training\_logs.reports.cli module
--------------------------------------------
+.. toctree::
+   :maxdepth: 4
 
-.. automodule:: cyclisme_training_logs.reports.cli
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-cyclisme\_training\_logs.reports.data\_collector module
--------------------------------------------------------
-
-.. automodule:: cyclisme_training_logs.reports.data_collector
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-cyclisme\_training\_logs.reports.generator module
--------------------------------------------------
-
-.. automodule:: cyclisme_training_logs.reports.generator
-   :members:
-   :show-inheritance:
-   :undoc-members:
+   cyclisme_training_logs.reports.cli
+   cyclisme_training_logs.reports.data_collector
+   cyclisme_training_logs.reports.generator
 
 Module contents
 ---------------

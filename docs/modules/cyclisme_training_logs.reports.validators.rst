@@ -4,13 +4,10 @@ cyclisme\_training\_logs.reports.validators package
 Submodules
 ----------
 
-cyclisme\_training\_logs.reports.validators.markdown\_validator module
-----------------------------------------------------------------------
+.. toctree::
+   :maxdepth: 4
 
-.. automodule:: cyclisme_training_logs.reports.validators.markdown_validator
-   :members:
-   :show-inheritance:
-   :undoc-members:
+   cyclisme_training_logs.reports.validators.markdown_validator
 
 Module contents
 ---------------
