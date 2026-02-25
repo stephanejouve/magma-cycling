@@ -938,7 +938,7 @@ class TestUpdateCompletedSessions:
     @pytest.fixture
     def ds(self, tmp_path):
         ds = _make_ds(tmp_path)
-        ds.intervals_client = Mock()  # attribute name differs from self.client
+        ds.client = Mock()  # attribute name differs from self.client
         return ds
 
     def test_empty_activities_returns_empty(self, ds):
@@ -951,14 +951,14 @@ class TestUpdateCompletedSessions:
 
     def test_api_exception_returns_empty(self, ds):
         activities = [{"id": 1, "start_date_local": "2026-02-24T10:00:00+00:00", "name": "Ride"}]
-        ds.intervals_client.get_events.side_effect = Exception("API error")
+        ds.client.get_events.side_effect = Exception("API error")
         result = ds.update_completed_sessions(activities)
         assert result == {}
 
     def test_workouts_no_session_id_returns_empty(self, ds):
         """Workouts without matching S###-## pattern → no sessions updated."""
         activities = [{"id": 1, "start_date_local": "2026-02-24T10:00:00+00:00", "name": "Ride"}]
-        ds.intervals_client.get_events.return_value = [
+        ds.client.get_events.return_value = [
             {
                 "category": "WORKOUT",
                 "name": "Regular Workout",
@@ -979,7 +979,7 @@ class TestUpdateCompletedSessions:
                 "paired_event_id": 99,
             },
         ]
-        ds.intervals_client.get_events.return_value = [
+        ds.client.get_events.return_value = [
             {
                 "category": "WORKOUT",
                 "name": "S082-03-INT-SweetSpot-V001",
@@ -1010,7 +1010,7 @@ class TestUpdateCompletedSessions:
                 "paired_event_id": 99,
             },
         ]
-        ds.intervals_client.get_events.return_value = [
+        ds.client.get_events.return_value = [
             {
                 "category": "WORKOUT",
                 "name": "S082-03-INT-SweetSpot-V001",
@@ -1041,7 +1041,7 @@ class TestUpdateCompletedSessions:
                 "paired_event_id": 99,
             },
         ]
-        ds.intervals_client.get_events.return_value = [
+        ds.client.get_events.return_value = [
             {
                 "category": "WORKOUT",
                 "name": "S082-03-INT-SweetSpot-V001",
@@ -1342,7 +1342,7 @@ class TestUpdateCompletedSessionsEdgeCases:
     @pytest.fixture
     def ds(self, tmp_path):
         ds = _make_ds(tmp_path)
-        ds.intervals_client = Mock()
+        ds.client = Mock()
         return ds
 
     def _activities(self):
@@ -1367,7 +1367,7 @@ class TestUpdateCompletedSessionsEdgeCases:
 
     def test_session_not_found_in_planning(self, ds):
         """Session_id from workout not found in plan — still returns activity map."""
-        ds.intervals_client.get_events.return_value = self._workouts()
+        ds.client.get_events.return_value = self._workouts()
         mock_plan = Mock()
         mock_plan.planned_sessions = []  # No sessions → not found in planning
 
@@ -1381,7 +1381,7 @@ class TestUpdateCompletedSessionsEdgeCases:
 
     def test_generic_exception_in_planning_tower(self, ds):
         """Generic exception from planning_tower.modify_week is caught."""
-        ds.intervals_client.get_events.return_value = self._workouts()
+        ds.client.get_events.return_value = self._workouts()
 
         with patch("cyclisme_training_logs.daily_sync.planning_tower") as mock_tower:
             mock_tower.modify_week.side_effect = RuntimeError("unexpected error")
