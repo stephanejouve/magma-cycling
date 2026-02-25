@@ -4,29 +4,15 @@ cyclisme\_training\_logs.analyzers package
 Submodules
 ----------
 
-cyclisme\_training\_logs.analyzers.daily\_aggregator module
------------------------------------------------------------
+.. toctree::
+   :maxdepth: 4
 
-.. automodule:: cyclisme_training_logs.analyzers.daily_aggregator
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-cyclisme\_training\_logs.analyzers.weekly\_aggregator module
-------------------------------------------------------------
-
-.. automodule:: cyclisme_training_logs.analyzers.weekly_aggregator
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-cyclisme\_training\_logs.analyzers.weekly\_analyzer module
-----------------------------------------------------------
-
-.. automodule:: cyclisme_training_logs.analyzers.weekly_analyzer
-   :members:
-   :show-inheritance:
-   :undoc-members:
+   cyclisme_training_logs.analyzers.adherence_storage
+   cyclisme_training_logs.analyzers.adherence_tracker
+   cyclisme_training_logs.analyzers.daily_aggregator
+   cyclisme_training_logs.analyzers.mesocycle_analyzer
+   cyclisme_training_logs.analyzers.weekly_aggregator
+   cyclisme_training_logs.analyzers.weekly_analyzer
 
 Module contents
 ---------------

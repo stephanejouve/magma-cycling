@@ -4,21 +4,13 @@ cyclisme\_training\_logs.workflows package
 Submodules
 ----------
 
-cyclisme\_training\_logs.workflows.end\_of\_week module
--------------------------------------------------------
+.. toctree::
+   :maxdepth: 4
 
-.. automodule:: cyclisme_training_logs.workflows.end_of_week
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-cyclisme\_training\_logs.workflows.workflow\_weekly module
-----------------------------------------------------------
-
-.. automodule:: cyclisme_training_logs.workflows.workflow_weekly
-   :members:
-   :show-inheritance:
-   :undoc-members:
+   cyclisme_training_logs.workflows.end_of_week
+   cyclisme_training_logs.workflows.pid_peaks_integration
+   cyclisme_training_logs.workflows.proactive_compensation
+   cyclisme_training_logs.workflows.workflow_weekly
 
 Module contents
 ---------------

@@ -4,13 +4,11 @@ cyclisme\_training\_logs.api package
 Submodules
 ----------
 
-cyclisme\_training\_logs.api.intervals\_client module
------------------------------------------------------
+.. toctree::
+   :maxdepth: 4
 
-.. automodule:: cyclisme_training_logs.api.intervals_client
-   :members:
-   :show-inheritance:
-   :undoc-members:
+   cyclisme_training_logs.api.intervals_client
+   cyclisme_training_logs.api.withings_client
 
 Module contents
 ---------------
