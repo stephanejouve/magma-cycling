@@ -4,6 +4,7 @@ Script de configuration initiale Withings OAuth
 """
 
 import json
+import os
 import threading
 import webbrowser
 from http.server import BaseHTTPRequestHandler, HTTPServer

@@ -110,9 +110,16 @@ jobs:
       continue-on-error: false
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       with:
-        file: ./coverage.xml
+        files: ./coverage.xml
         flags: unittests
         name: codecov-umbrella
+        fail_ci_if_error: false
+
+    - name: Upload test results to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        files: ./junit.xml
+        report_type: test_results
         fail_ci_if_error: false
