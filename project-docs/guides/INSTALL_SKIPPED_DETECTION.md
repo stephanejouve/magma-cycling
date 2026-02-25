@@ -67,7 +67,7 @@ Untracked files:
 python3 scripts/test_skipped_detection.py
 
 # Si succès, tu verras :
-# ✅ Credentials chargés (athlete: i151223)
+# ✅ Credentials chargés (athlete: iXXXXXX)
 # 📅 Période analysée : ...
 # ✅ Excellent ! Toutes les séances planifiées ont été exécutées.
 # OU
@@ -147,7 +147,7 @@ cat ~/.intervals_config.json
 # Si absent, créer :
 cat > ~/.intervals_config.json << EOF
 {
-  "athlete_id": "i151223",
+  "athlete_id": "iXXXXXX",
   "api_key": "ta_clé_api_ici"
 }
 EOF
@@ -167,7 +167,7 @@ python3 scripts/test_skipped_detection.py --verbose
 
 # Vérifier API directement
 curl -u "API_KEY:ta_clé" \
-  "https://intervals.icu/api/v1/athlete/i151223/events?newest=2025-12-13&oldest=2025-12-06"
+  "https://intervals.icu/api/v1/athlete/iXXXXXX/events?newest=2025-12-13&oldest=2025-12-06"
 ```
 
 ## 📚 Utilisation
@@ -199,7 +199,7 @@ python3 scripts/test_skipped_detection.py --days 14
 ```python
 from planned_sessions_checker import PlannedSessionsChecker
 
-checker = PlannedSessionsChecker("i151223", "ta_clé")
+checker = PlannedSessionsChecker("iXXXXXX", "ta_clé")
 skipped = checker.detect_skipped_sessions("2025-12-01", "2025-12-13")
 
 for session in skipped:

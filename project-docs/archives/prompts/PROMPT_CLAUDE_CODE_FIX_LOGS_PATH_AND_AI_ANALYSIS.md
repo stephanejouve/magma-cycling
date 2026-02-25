@@ -189,7 +189,7 @@ class Config:
 
 ```bash
 # Intervals.icu Configuration
-VITE_INTERVALS_ATHLETE_ID=i151223
+VITE_INTERVALS_ATHLETE_ID=iXXXXXX
 VITE_INTERVALS_API_KEY=your_api_key_here
 
 # AI Providers

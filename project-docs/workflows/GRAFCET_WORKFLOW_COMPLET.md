@@ -75,7 +75,7 @@ graph TB
         Start --> Init[__init__ lines 47-65]
         Init --> Run[run lines 484-527]
         Run --> Step1[collect_current_metrics lines 67-116]
-        Step1 --> API1[GET /api/v1/athlete/i151223/wellness]
+        Step1 --> API1[GET /api/v1/athlete/iXXXXXX/wellness]
         API1 --> Metrics[CTL, ATL, TSB, HR, HRV, Weight]
         Metrics --> Step2[load_previous_week_bilan lines 118-131]
         Step2 --> ReadBilan[Lecture logs/weekly_reports/S071/bilan_final_S071.md]

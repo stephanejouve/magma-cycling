@@ -702,7 +702,7 @@ python scripts/maintenance/clear_week_planning.py \
 📅 Période: 05/01/2026 → 11/01/2026
 🔍 Mode: DRY-RUN (simulation)
 
-✅ Connecté à Intervals.icu (athlete: i151223)
+✅ Connecté à Intervals.icu (athlete: iXXXXXX)
 
 📥 Récupération des événements de la semaine...
    ✅ 7 événements trouvés
@@ -856,7 +856,7 @@ config = get_intervals_config()
 
 Assurez-vous que votre fichier `.env` contient :
 ```bash
-INTERVALS_ATHLETE_ID=i151223
+INTERVALS_ATHLETE_ID=iXXXXXX
 INTERVALS_API_KEY=your_api_key_here
 ```
 
@@ -924,8 +924,8 @@ Vérifiez :
 
 ```bash
 # Vérifier les événements manuellement
-curl -u "API_i151223:your_api_key" \
-  "https://intervals.icu/api/v1/athlete/i151223/events?oldest=2026-01-05&newest=2026-01-11"
+curl -u "API_iXXXXXX:your_api_key" \
+  "https://intervals.icu/api/v1/athlete/iXXXXXX/events?oldest=2026-01-05&newest=2026-01-11"
 ```
 
 #### Erreur d'authentification

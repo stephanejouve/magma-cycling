@@ -65,7 +65,7 @@ class WorkflowCoach:
 **Fichier** : `~/.intervals_config.json`
 ```json
 {
-  "athlete_id": "i151223",
+  "athlete_id": "iXXXXXX",
   "api_key": "your_api_key_here"
 }
 ```

@@ -109,7 +109,7 @@ digraph memory_graph {
 	node4439384112 [label=<
 <TABLE BORDER="1" CELLBORDER="1" CELLSPACING="5" CELLPADDING="0" BGCOLOR="seagreen1" PORT="table">
     <TR><TD BORDER="1" STYLE="ROUNDED"> week_id </TD><TD BORDER="1" STYLE="ROUNDED"> start_date </TD><TD BORDER="1" STYLE="ROUNDED"> end_date </TD><TD BORDER="1" STYLE="ROUNDED"> created_at </TD><TD BORDER="1" STYLE="ROUNDED"> last_updated </TD><TD BORDER="1" STYLE="ROUNDED"> version </TD><TD BORDER="1" STYLE="ROUNDED"> athlete_id </TD><TD BORDER="1" STYLE="ROUNDED"> tss_target </TD><TD BORDER="1" STYLE="ROUNDED"> planned_sessions </TD></TR>
-    <TR><TD BORDER="1"> S080 </TD><TD BORDER="1" PORT="ref0"> </TD><TD BORDER="1" PORT="ref1"> </TD><TD BORDER="1" PORT="ref2"> </TD><TD BORDER="1" PORT="ref3"> </TD><TD BORDER="1"> 1 </TD><TD BORDER="1"> i151223 </TD><TD BORDER="1"> 260 </TD><TD BORDER="1" PORT="ref4"> </TD></TR>
+    <TR><TD BORDER="1"> S080 </TD><TD BORDER="1" PORT="ref0"> </TD><TD BORDER="1" PORT="ref1"> </TD><TD BORDER="1" PORT="ref2"> </TD><TD BORDER="1" PORT="ref3"> </TD><TD BORDER="1"> 1 </TD><TD BORDER="1"> iXXXXXX </TD><TD BORDER="1"> 260 </TD><TD BORDER="1" PORT="ref4"> </TD></TR>
 </TABLE>
 > xlabel=WeeklyPlan]
 	node4439384112:ref0 -> node4433210064:table [style=solid]

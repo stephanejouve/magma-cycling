@@ -124,7 +124,7 @@ from planned_sessions_checker import PlannedSessionsChecker
 
 # Initialiser
 checker = PlannedSessionsChecker(
-    athlete_id="i151223",
+    athlete_id="iXXXXXX",
     api_key="votre_clé"
 )
 
@@ -339,7 +339,7 @@ all_gaps = {
 # Créer ~/.intervals_config.json
 cat > ~/.intervals_config.json << EOF
 {
-  "athlete_id": "i151223",
+  "athlete_id": "iXXXXXX",
   "api_key": "votre_clé_api"
 }
 EOF
@@ -356,7 +356,7 @@ EOF
 ```bash
 # Vérifier API
 curl -u "API_KEY:votre_clé" \
-  "https://intervals.icu/api/v1/athlete/i151223/events"
+  "https://intervals.icu/api/v1/athlete/iXXXXXX/events"
 
 # Si erreur → vérifier credentials
 # Si vide → pas de workouts planifiés (normal)

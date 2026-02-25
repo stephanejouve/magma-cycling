@@ -74,7 +74,7 @@
   "external_id": "2025-11-15-171547-FID1338_437B6943-0-0.fit",
   "file_sport_index": 0,
   "file_type": "fit",
-  "icu_athlete_id": "i151223",
+  "icu_athlete_id": "iXXXXXX",
   "created": "2025-11-15T18:23:25.088+00:00",
   "icu_sync_date": "2025-11-15T18:23:26.000+00:00",
   "analyzed": "2025-11-15T18:23:26.000+00:00",

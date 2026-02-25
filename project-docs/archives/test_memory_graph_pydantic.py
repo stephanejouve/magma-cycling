@@ -46,7 +46,7 @@ def test_pydantic_backup_no_aliasing():
             created_at=datetime.now(UTC),
             last_updated=datetime.now(UTC),
             version=1,
-            athlete_id="i151223",
+            athlete_id="iXXXXXX",
             tss_target=350,
             planned_sessions=[
                 Session(
@@ -234,7 +234,7 @@ def test_compare_dict_vs_pydantic():
         created_at=datetime.now(UTC),
         last_updated=datetime.now(UTC),
         version=1,
-        athlete_id="i151223",
+        athlete_id="iXXXXXX",
         tss_target=350,
         planned_sessions=[
             Session(

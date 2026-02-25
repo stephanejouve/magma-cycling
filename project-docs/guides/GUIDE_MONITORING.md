@@ -534,7 +534,7 @@ poetry run python scripts/monitoring/check_workout_adherence.py --date 2026-01-0
    ```bash
    cat .env | grep INTERVALS
    # Should show:
-   # VITE_INTERVALS_ATHLETE_ID=i151223
+   # VITE_INTERVALS_ATHLETE_ID=iXXXXXX
    # VITE_INTERVALS_API_KEY=your_key
    ```
 

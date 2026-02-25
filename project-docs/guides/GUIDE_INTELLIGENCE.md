@@ -729,7 +729,7 @@ poetry run backfill-intelligence --help
 
 **Prérequis** :
 - Intervals.icu API key (obtenir depuis Settings > API → Generate Key)
-- Athlete ID (format `i151223`, visible dans URL Intervals.icu)
+- Athlete ID (format `iXXXXXX`, visible dans URL Intervals.icu)
 
 ---
 
@@ -743,7 +743,7 @@ cd ~/cyclisme-training-logs
 nano .env
 
 # Ajouter :
-INTERVALS_ATHLETE_ID=i151223
+INTERVALS_ATHLETE_ID=iXXXXXX
 INTERVALS_API_KEY=votre_api_key_ici
 ```
 
@@ -751,7 +751,7 @@ INTERVALS_API_KEY=votre_api_key_ici
 
 ```bash
 poetry run backfill-intelligence \
-  --athlete-id i151223 \
+  --athlete-id iXXXXXX \
   --api-key votre_api_key \
   --start-date 2024-01-01 \
   --end-date 2025-12-31
@@ -997,15 +997,15 @@ print(f"✅ Sauvegardé : {active_file}")
 ```
 
 **Causes Possibles** :
-1. Athlete ID incorrect (vérifier format `i151223`)
+1. Athlete ID incorrect (vérifier format `iXXXXXX`)
 2. Période sans données (vérifier calendrier Intervals.icu)
 3. Activités supprimées ou privées
 
 **Solution** :
 ```bash
 # Tester API manuellement
-curl -u "API_i151223:votre_api_key" \
-  "https://intervals.icu/api/v1/athlete/i151223/activities?oldest=2024-01-01&newest=2024-12-31"
+curl -u "API_iXXXXXX:votre_api_key" \
+  "https://intervals.icu/api/v1/athlete/iXXXXXX/activities?oldest=2024-01-01&newest=2024-12-31"
 ```
 
 ---
@@ -1039,7 +1039,7 @@ from cyclisme_training_logs.scripts.backfill_intelligence import IntervalsICUBac
 
 # Créer backfiller custom
 backfiller = IntervalsICUBackfiller(
-    athlete_id="i151223",
+    athlete_id="iXXXXXX",
     api_key="your_api_key"
 )
 
