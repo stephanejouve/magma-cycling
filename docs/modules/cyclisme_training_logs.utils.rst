@@ -4,21 +4,14 @@ cyclisme\_training\_logs.utils package
 Submodules
 ----------
 
-cyclisme\_training\_logs.utils.metrics module
----------------------------------------------
+.. toctree::
+   :maxdepth: 4
 
-.. automodule:: cyclisme_training_logs.utils.metrics
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-cyclisme\_training\_logs.utils.metrics\_advanced module
--------------------------------------------------------
-
-.. automodule:: cyclisme_training_logs.utils.metrics_advanced
-   :members:
-   :show-inheritance:
-   :undoc-members:
+   cyclisme_training_logs.utils.ai_response_parser
+   cyclisme_training_logs.utils.date_helpers
+   cyclisme_training_logs.utils.hot_reload
+   cyclisme_training_logs.utils.metrics
+   cyclisme_training_logs.utils.metrics_advanced
 
 Module contents
 ---------------

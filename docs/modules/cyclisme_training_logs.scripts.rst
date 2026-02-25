@@ -4,29 +4,18 @@ cyclisme\_training\_logs.scripts package
 Submodules
 ----------
 
-cyclisme\_training\_logs.scripts.backfill\_history module
----------------------------------------------------------
+.. toctree::
+   :maxdepth: 4
 
-.. automodule:: cyclisme_training_logs.scripts.backfill_history
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-cyclisme\_training\_logs.scripts.backfill\_intelligence module
---------------------------------------------------------------
-
-.. automodule:: cyclisme_training_logs.scripts.backfill_intelligence
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-cyclisme\_training\_logs.scripts.validate\_templates module
------------------------------------------------------------
-
-.. automodule:: cyclisme_training_logs.scripts.validate_templates
-   :members:
-   :show-inheritance:
-   :undoc-members:
+   cyclisme_training_logs.scripts.backfill_history
+   cyclisme_training_logs.scripts.backfill_intelligence
+   cyclisme_training_logs.scripts.initialize_pid_controller
+   cyclisme_training_logs.scripts.pid_daily_evaluation
+   cyclisme_training_logs.scripts.populate_zwift_cache
+   cyclisme_training_logs.scripts.search_zwift_workouts
+   cyclisme_training_logs.scripts.seed_zwift_workouts
+   cyclisme_training_logs.scripts.setup_withings
+   cyclisme_training_logs.scripts.validate_templates
 
 Module contents
 ---------------
