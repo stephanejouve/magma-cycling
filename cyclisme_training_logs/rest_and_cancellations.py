@@ -637,7 +637,7 @@ def generate_cancelled_session_entry(
         impact_notes = session_data.get("impact_notes", "Impact à évaluer")
 
     # Construire markdown
-    markdown = f"""### {session_id}-{session_type}-{session_name}-{version}.
+    markdown = f"""### {session_id}-{session_type}-{session_name}-{version}
 
 Date : {date_str}
 

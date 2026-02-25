@@ -1246,6 +1246,8 @@ async def handle_update_session(args: dict) -> list[TextContent]:
     intervals_id = None
     session_date = None
     session_name = None
+    session_type = None
+    session_version = None
     session_description = None
 
     # Suppress all output to prevent JSON protocol pollution
@@ -1262,6 +1264,8 @@ async def handle_update_session(args: dict) -> list[TextContent]:
                     intervals_id = session.intervals_id
                     session_date = session.session_date
                     session_name = session.name
+                    session_type = session.session_type
+                    session_version = session.version
                     session_description = session.description
 
                     # PROTECTION: Never modify completed sessions in Intervals.icu
@@ -1305,10 +1309,13 @@ async def handle_update_session(args: dict) -> list[TextContent]:
                     # Saturday → 09:00, other days → 17:00
                     start_time = "09:00:00" if day_of_week == 5 else "17:00:00"
 
+                # Build Intervals.icu event name: S082-03-INT-SweetSpotBlocs-V001
+                intervals_name = f"{session_id}-{session_type}-{session_name}-{session_version}"
+
                 event_data = {
                     "category": "WORKOUT",
                     "type": "VirtualRide",
-                    "name": session_name,
+                    "name": intervals_name,
                     "description": session_description,
                     "start_date_local": f"{session_date}T{start_time}",
                 }
@@ -2151,10 +2158,15 @@ async def handle_sync_week_to_intervals(args: dict) -> list[TextContent]:
                     # Saturday → 09:00, other days → 17:00
                     start_time = "09:00:00" if day_of_week == 5 else "17:00:00"
 
+                # Build Intervals.icu event name: S082-03-INT-SweetSpotBlocs-V001
+                intervals_name = (
+                    f"{session.session_id}-{session.session_type}-{session.name}-{session.version}"
+                )
+
                 event_data = {
                     "category": "WORKOUT",
                     "type": "VirtualRide",
-                    "name": session.name,
+                    "name": intervals_name,
                     "description": session.description,
                     "start_date_local": f"{session.session_date}T{start_time}",
                 }
@@ -2879,13 +2891,14 @@ async def handle_update_remote_session(args: dict) -> list[TextContent]:
                                 session_dict = session.model_dump()
 
                                 if "name" in updates:
-                                    session_dict["name"] = (
-                                        updates["name"]
-                                        .split("-")[-1]
-                                        .replace("-V001", "")
-                                        .replace("-V002", "")
-                                        .replace("-V003", "")
-                                    )
+                                    # Extract exercise name from Intervals.icu format
+                                    # S082-03-INT-SweetSpotBlocs-V001 → SweetSpotBlocs
+                                    parts = updates["name"].split("-")
+                                    raw_name = parts[-1]
+                                    # If last segment is version (V001, V002...), take the one before
+                                    if raw_name.startswith("V") and raw_name[1:].isdigit():
+                                        raw_name = parts[-2] if len(parts) >= 2 else updates["name"]
+                                    session_dict["name"] = raw_name
 
                                 if "start_date_local" in updates:
                                     # Extract date from datetime string (YYYY-MM-DDTHH:MM:SS)
