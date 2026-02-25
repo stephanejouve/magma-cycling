@@ -1102,6 +1102,37 @@ class TestHandleRestoreWeekFromBackup:
 
 
 class TestHandleReloadServer:
+    @pytest.fixture(autouse=True)
+    def preserve_planning_tower(self):
+        """Preserve planning_tower state across reload tests.
+
+        handle_reload_server calls importlib.reload on control_tower,
+        weekly_planner, and daily_sync. This recreates the planning_tower
+        singleton and re-imports it in reloaded modules, creating
+        desynchronized references. We must restore the original singleton
+        in ALL affected modules so later tests work correctly.
+        """
+        import sys
+
+        from cyclisme_training_logs.planning import control_tower as ct_module
+
+        original_tower = ct_module.planning_tower
+
+        # Collect all modules that hold a planning_tower reference
+        modules_with_tower = []
+        for mod_name, mod in sys.modules.items():
+            if mod and hasattr(mod, "planning_tower") and mod is not ct_module:
+                modules_with_tower.append((mod_name, mod))
+
+        yield
+
+        # Restore the original singleton in control_tower
+        ct_module.planning_tower = original_tower
+        # Restore in all modules that may have been reloaded with a new reference
+        for mod_name, mod in modules_with_tower:
+            if hasattr(mod, "planning_tower"):
+                mod.planning_tower = original_tower
+
     @pytest.mark.asyncio
     async def test_success_reloads_modules(self):
         from cyclisme_training_logs.mcp_server import handle_reload_server

@@ -104,12 +104,18 @@ jobs:
           }
           EOF
 
-          # Create S072 planning file (required by tests)
+          # Create S072 planning file (required by tests — must be valid WeeklyPlan)
           cat > ${{ github.workspace }}/test-data/data/week_planning/week_planning_S072.json << 'EOF'
           {
-            "week": "S072",
+            "week_id": "S072",
             "start_date": "2025-12-15",
-            "sessions": []
+            "end_date": "2025-12-21",
+            "created_at": "2025-12-14T20:00:00Z",
+            "last_updated": "2025-12-14T20:00:00Z",
+            "version": 1,
+            "athlete_id": "iXXXXXX",
+            "tss_target": 300,
+            "planned_sessions": []
           }
           EOF
 
