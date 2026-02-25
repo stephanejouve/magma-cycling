@@ -83,7 +83,7 @@ class TestWorkoutUploaderInit:
     @patch(
         "builtins.open",
         new_callable=mock_open,
-        read_data='{"athlete_id": "i151223", "api_key": "test_key"}',
+        read_data='{"athlete_id": "iXXXXXX", "api_key": "test_key"}',
     )
     @patch("pathlib.Path.exists", return_value=True)
     def test_init_with_config_file(self, mock_exists, mock_file, mock_create_client):
@@ -106,7 +106,7 @@ class TestWorkoutUploaderInit:
     @patch("cyclisme_training_logs.config.create_intervals_client")
     @patch("pathlib.Path.exists", return_value=False)
     @patch.dict(
-        "os.environ", {"VITE_INTERVALS_ATHLETE_ID": "i151223", "VITE_INTERVALS_API_KEY": "test_key"}
+        "os.environ", {"VITE_INTERVALS_ATHLETE_ID": "iXXXXXX", "VITE_INTERVALS_API_KEY": "test_key"}
     )
     def test_init_with_env_vars(self, mock_exists, mock_create_client):
         """Test init with environment variables (Sprint R9.B Phase 2)."""
@@ -146,7 +146,7 @@ class TestValidateWorkoutNotation:
     @patch(
         "builtins.open",
         new_callable=mock_open,
-        read_data='{"athlete_id": "i151223", "api_key": "test_key"}',
+        read_data='{"athlete_id": "iXXXXXX", "api_key": "test_key"}',
     )
     @patch("pathlib.Path.exists", return_value=True)
     def test_validate_workout_notation_valid(self, mock_exists, mock_file, mock_client):
@@ -177,7 +177,7 @@ Cooldown
     @patch(
         "builtins.open",
         new_callable=mock_open,
-        read_data='{"athlete_id": "i151223", "api_key": "test_key"}',
+        read_data='{"athlete_id": "iXXXXXX", "api_key": "test_key"}',
     )
     @patch("pathlib.Path.exists", return_value=True)
     def test_validate_bad_repetition_notation(self, mock_exists, mock_file, mock_client):
@@ -207,7 +207,7 @@ Main set
     @patch(
         "builtins.open",
         new_callable=mock_open,
-        read_data='{"athlete_id": "i151223", "api_key": "test_key"}',
+        read_data='{"athlete_id": "iXXXXXX", "api_key": "test_key"}',
     )
     @patch("pathlib.Path.exists", return_value=True)
     def test_validate_rest_day_skips_warmup_cooldown(self, mock_exists, mock_file, mock_client):
@@ -233,7 +233,7 @@ class TestParseWorkoutsFile:
     @patch(
         "builtins.open",
         new_callable=mock_open,
-        read_data='{"athlete_id": "i151223", "api_key": "test_key"}',
+        read_data='{"athlete_id": "iXXXXXX", "api_key": "test_key"}',
     )
     @patch("pathlib.Path.exists", return_value=True)
     def test_parse_workouts_file_single_workout(
@@ -276,7 +276,7 @@ Cooldown
     @patch(
         "builtins.open",
         new_callable=mock_open,
-        read_data='{"athlete_id": "i151223", "api_key": "test_key"}',
+        read_data='{"athlete_id": "iXXXXXX", "api_key": "test_key"}',
     )
     @patch("pathlib.Path.exists", return_value=True)
     def test_parse_workouts_file_multiple_workouts(
@@ -327,7 +327,7 @@ REPOS COMPLET - Aucune activite
     @patch(
         "builtins.open",
         new_callable=mock_open,
-        read_data='{"athlete_id": "i151223", "api_key": "test_key"}',
+        read_data='{"athlete_id": "iXXXXXX", "api_key": "test_key"}',
     )
     @patch("pathlib.Path.exists", return_value=True)
     def test_parse_workouts_file_extracts_tss(self, mock_exists, mock_file, mock_client, tmp_path):
@@ -367,7 +367,7 @@ class TestUploadWorkout:
     @patch(
         "builtins.open",
         new_callable=mock_open,
-        read_data='{"athlete_id": "i151223", "api_key": "test_key"}',
+        read_data='{"athlete_id": "iXXXXXX", "api_key": "test_key"}',
     )
     @patch("pathlib.Path.exists", return_value=True)
     def test_upload_workout_success(self, mock_exists, mock_file, mock_client_class):
@@ -396,7 +396,7 @@ class TestUploadWorkout:
     @patch(
         "builtins.open",
         new_callable=mock_open,
-        read_data='{"athlete_id": "i151223", "api_key": "test_key"}',
+        read_data='{"athlete_id": "iXXXXXX", "api_key": "test_key"}',
     )
     @patch("pathlib.Path.exists", return_value=True)
     def test_upload_workout_api_failure(self, mock_exists, mock_file, mock_client_class):
@@ -423,7 +423,7 @@ class TestUploadAll:
     @patch(
         "builtins.open",
         new_callable=mock_open,
-        read_data='{"athlete_id": "i151223", "api_key": "test_key"}',
+        read_data='{"athlete_id": "iXXXXXX", "api_key": "test_key"}',
     )
     @patch("pathlib.Path.exists", return_value=True)
     def test_upload_all_dry_run(self, mock_exists, mock_file, mock_client):
@@ -460,7 +460,7 @@ class TestUploadAll:
     @patch(
         "builtins.open",
         new_callable=mock_open,
-        read_data='{"athlete_id": "i151223", "api_key": "test_key"}',
+        read_data='{"athlete_id": "iXXXXXX", "api_key": "test_key"}',
     )
     @patch("pathlib.Path.exists", return_value=True)
     def test_upload_all_success(self, mock_exists, mock_file, mock_client_class):
@@ -501,7 +501,7 @@ class TestUploadAll:
     @patch(
         "builtins.open",
         new_callable=mock_open,
-        read_data='{"athlete_id": "i151223", "api_key": "test_key"}',
+        read_data='{"athlete_id": "iXXXXXX", "api_key": "test_key"}',
     )
     @patch("pathlib.Path.exists", return_value=True)
     def test_upload_all_partial_failure(self, mock_exists, mock_file, mock_client_class):
@@ -556,7 +556,7 @@ class TestIntegrationUploadWorkflow:
     @patch(
         "builtins.open",
         new_callable=mock_open,
-        read_data='{"athlete_id": "i151223", "api_key": "test_key"}',
+        read_data='{"athlete_id": "iXXXXXX", "api_key": "test_key"}',
     )
     @patch("pathlib.Path.exists", return_value=True)
     def test_full_workflow_parse_validate_upload(

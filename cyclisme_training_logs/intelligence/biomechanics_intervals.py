@@ -47,7 +47,7 @@ def extract_biomechanical_metrics(
 
     Example:
         >>> from cyclisme_training_logs.api.intervals_client import IntervalsClient
-        >>> client = IntervalsClient("i151223", api_key)
+        >>> client = IntervalsClient("iXXXXXX", api_key)
         >>> activities = client.get_activities(oldest="2026-01-01", newest="2026-01-14")
         >>> metrics = extract_biomechanical_metrics(activities)
         >>> print(f"Avg cadence: {metrics['avg_cadence']} rpm")
@@ -190,7 +190,7 @@ def get_activities_last_n_weeks(
 
     Example:
         >>> from cyclisme_training_logs.api.intervals_client import IntervalsClient
-        >>> client = IntervalsClient("i151223", api_key)
+        >>> client = IntervalsClient("iXXXXXX", api_key)
         >>> activities = get_activities_last_n_weeks(client, n_weeks=6)
         >>> print(f"Found {len(activities)} activities")
     """

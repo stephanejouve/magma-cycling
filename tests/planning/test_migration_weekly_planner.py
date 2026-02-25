@@ -52,7 +52,7 @@ class TestWeeklyPlannerMigration:
             "created_at": "2026-02-08T20:00:00",
             "last_updated": "2026-02-08T20:00:00",
             "version": 1,
-            "athlete_id": "i151223",
+            "athlete_id": "iXXXXXX",
             "tss_target": 350,
             "planned_sessions": [
                 {
@@ -235,7 +235,7 @@ class TestBackwardCompatibility:
             "created_at": "2026-02-01T20:00:00",
             "last_updated": "2026-02-07T21:30:11.182043",
             "version": 1,
-            "athlete_id": "i151223",
+            "athlete_id": "iXXXXXX",
             "tss_target": 319,
             "planned_sessions": [
                 {

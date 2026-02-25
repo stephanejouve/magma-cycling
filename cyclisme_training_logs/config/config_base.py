@@ -88,7 +88,7 @@ class DataRepoConfig:
             raise FileNotFoundError(
                 f"Data repo not found: {self.data_repo_path}\n"
                 f"Set TRAINING_DATA_REPO env var or clone:\n"
-                f"  git clone https://github.com/stephanejouve/training-logs.git ~/training-logs"
+                f"  git clone https://github.com/YOUR_USERNAME/training-logs.git ~/training-logs"
             )
 
         # Duplicate detection settings (paranoid mode for backfill testing)
@@ -404,7 +404,7 @@ class IntervalsConfig:
     Examples:
         >>> config = get_intervals_config()
         >>> print(config.athlete_id)
-        'i151223'
+        'iXXXXXX'
         >>> print(config.is_configured())
         True.
     """
@@ -473,7 +473,7 @@ def get_intervals_config() -> IntervalsConfig:
     Examples:
         >>> config = get_intervals_config()
         >>> print(config.athlete_id)
-        'i151223'.
+        'iXXXXXX'.
     """
     global _intervals_config_instance
 
@@ -1041,7 +1041,7 @@ def get_withings_config() -> WithingsConfig:
     Examples:
         >>> config = get_withings_config()
         >>> print(config.client_id)
-        'c5e8820a701242a8...'
+        'your_withings_client_id_here'
     """
     global _withings_config_instance
 

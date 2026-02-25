@@ -56,7 +56,7 @@ class TestUpdateSessionStatusLocal:
             "created_at": "2026-02-01T20:00:00Z",
             "last_updated": "2026-02-01T20:00:00Z",
             "version": 1,
-            "athlete_id": "i151223",
+            "athlete_id": "iXXXXXX",
             "tss_target": 350,
             "planned_sessions": [
                 {

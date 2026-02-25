@@ -15,10 +15,8 @@ from cyclisme_training_logs.planning.calendar import TrainingCalendar, WorkoutTy
 from cyclisme_training_logs.planning.intervals_sync import IntervalsSync
 
 # Load week planning with descriptions and hashes
-week_planning_file = Path(
-    "/Users/stephanejouve/training-logs/data/week_planning/week_planning_S077.json"
-)
-workouts_file = Path("/Users/stephanejouve/training-logs/data/week_planning/S077_workouts.txt")
+week_planning_file = Path(Path.home() / "training-logs/data/week_planning/week_planning_S077.json")
+workouts_file = Path.home() / "training-logs/data/week_planning/S077_workouts.txt"
 
 with open(week_planning_file) as f:
     planning_data = json.load(f)

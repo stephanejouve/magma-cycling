@@ -13,7 +13,7 @@ Examples:
     poetry run backfill-intelligence --start-date 2024-01-01 --end-date 2025-12-31 --output ~/data/intelligence.json
 
     # Analyse spécifique
-    python backfill_intelligence.py --athlete-id i151223 --start 2024-01-01 --end 2024-12-31
+    python backfill_intelligence.py --athlete-id iXXXXXX --start 2024-01-01 --end 2024-12-31
 
 Metadata:
     Created: 2026-01-02
@@ -68,7 +68,7 @@ class IntervalsICUBackfiller:
         Initialize backfiller.
 
         Args:
-            athlete_id: Intervals.icu athlete ID (e.g., "i151223")
+            athlete_id: Intervals.icu athlete ID (e.g., "iXXXXXX")
             api_key: Intervals.icu API key
         """
         self.athlete_id = athlete_id

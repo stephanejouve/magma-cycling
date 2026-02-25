@@ -24,7 +24,7 @@ def mock_session():
 @pytest.fixture
 def client(mock_session):
     """Create an IntervalsClient instance with mocked session."""
-    return IntervalsClient(athlete_id="i151223", api_key="test_key")
+    return IntervalsClient(athlete_id="iXXXXXX", api_key="test_key")
 
 
 class TestIntervalsClientInit:
@@ -32,9 +32,9 @@ class TestIntervalsClientInit:
 
     def test_init_success(self, mock_session):
         """Test successful initialization."""
-        client = IntervalsClient(athlete_id="i151223", api_key="test_key")
+        client = IntervalsClient(athlete_id="iXXXXXX", api_key="test_key")
 
-        assert client.athlete_id == "i151223"
+        assert client.athlete_id == "iXXXXXX"
         assert client.BASE_URL == "https://intervals.icu/api/v1"
 
         # Verify session setup
@@ -49,7 +49,7 @@ class TestIntervalsClientInit:
     def test_init_empty_api_key(self):
         """Test initialization fails with empty api_key."""
         with pytest.raises(ValueError, match="athlete_id and api_key are required"):
-            IntervalsClient(athlete_id="i151223", api_key="")
+            IntervalsClient(athlete_id="iXXXXXX", api_key="")
 
 
 class TestGetAthlete:
@@ -60,7 +60,7 @@ class TestGetAthlete:
         mock_response = Mock()
 
         mock_response.json.return_value = {
-            "id": "i151223",
+            "id": "iXXXXXX",
             "name": "Test Athlete",
             "ftp": 250,
             "weight": 75.0,
@@ -69,9 +69,9 @@ class TestGetAthlete:
 
         result = client.get_athlete()
 
-        assert result["id"] == "i151223"
+        assert result["id"] == "iXXXXXX"
         assert result["ftp"] == 250
-        mock_session.get.assert_called_once_with("https://intervals.icu/api/v1/athlete/i151223")
+        mock_session.get.assert_called_once_with("https://intervals.icu/api/v1/athlete/iXXXXXX")
         mock_response.raise_for_status.assert_called_once()
 
 
@@ -92,7 +92,7 @@ class TestGetActivities:
         assert len(result) == 1
         assert result[0]["id"] == "i107424849"
         mock_session.get.assert_called_once_with(
-            "https://intervals.icu/api/v1/athlete/i151223/activities", params={}
+            "https://intervals.icu/api/v1/athlete/iXXXXXX/activities", params={}
         )
 
     def test_get_activities_with_dates(self, client, mock_session):
@@ -105,7 +105,7 @@ class TestGetActivities:
         client.get_activities(oldest="2025-12-22", newest="2025-12-28")
 
         mock_session.get.assert_called_once_with(
-            "https://intervals.icu/api/v1/athlete/i151223/activities",
+            "https://intervals.icu/api/v1/athlete/iXXXXXX/activities",
             params={"oldest": "2025-12-22", "newest": "2025-12-28"},
         )
 
@@ -148,7 +148,7 @@ class TestGetWellness:
         assert len(result) == 1
         assert result[0]["ctl"] == 45.6
         mock_session.get.assert_called_once_with(
-            "https://intervals.icu/api/v1/athlete/i151223/wellness",
+            "https://intervals.icu/api/v1/athlete/iXXXXXX/wellness",
             params={"oldest": "2025-12-22", "newest": "2025-12-22"},
         )
 
@@ -185,7 +185,7 @@ class TestGetEvents:
         assert len(result) == 1
         assert result[0]["category"] == "WORKOUT"
         mock_session.get.assert_called_once_with(
-            "https://intervals.icu/api/v1/athlete/i151223/events",
+            "https://intervals.icu/api/v1/athlete/iXXXXXX/events",
             params={"oldest": "2025-12-29", "newest": "2026-01-04"},
         )
 
@@ -245,7 +245,7 @@ class TestCreateEvent:
         assert result is not None
         assert result["id"] == 86044984
         mock_session.post.assert_called_once_with(
-            "https://intervals.icu/api/v1/athlete/i151223/events", json=event_data
+            "https://intervals.icu/api/v1/athlete/iXXXXXX/events", json=event_data
         )
 
     def test_create_event_http_error(self, client, mock_session):
