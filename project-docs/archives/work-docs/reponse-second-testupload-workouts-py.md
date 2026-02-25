@@ -159,7 +159,7 @@ Mode : RÉEL
 
 📅 Jour 01 - 2025-11-24
    S069-01-TYPE-NomExercice-V001
-❌ Erreur HTTP : 422 Client Error: Unprocessable Entity for url: https://intervals.icu/api/v1/athlete/i151223/events
+❌ Erreur HTTP : 422 Client Error: Unprocessable Entity for url: https://intervals.icu/api/v1/athlete/iXXXXXX/events
    Détail : {'status': 422, 'error': 'type is required for category WORKOUT'}
    Données envoyées : {'category': 'WORKOUT', 'name': '[Nom séance] ([durée]min, [TSS] TSS)', 'description': '[Nom séance] ([durée]min, [TSS] TSS)\n\nWarmup\n- [durée] [intensité%] [cadence]rpm\n\nMain set\n- [structure]\n\nCooldown  \n- [durée] [intensité%] [cadence]rpm', 'start_date_local': '2025-11-24'}
   ❌ Échec : [Nom séance] ([durée]min, [TSS] TSS)
@@ -307,7 +307,7 @@ Génère **7 blocs WORKOUT** (un par jour, dimanche = mention repos) au format t
 
 📅 Jour 02 - 2025-11-25
    S069-02-INT-SweetSpot-V001
-❌ Erreur HTTP : 422 Client Error: Unprocessable Entity for url: https://intervals.icu/api/v1/athlete/i151223/events
+❌ Erreur HTTP : 422 Client Error: Unprocessable Entity for url: https://intervals.icu/api/v1/athlete/iXXXXXX/events
    Détail : {'status': 422, 'error': 'type is required for category WORKOUT'}
    Données envoyées : {'category': 'WORKOUT', 'name': 'Sweet Spot 3x10 (74min, 78 TSS)', 'description': 'Sweet Spot 3x10 (74min, 78 TSS)\n\nWarmup\n- 12m ramp 50-65% 85rpm\n- 5m 65% 90rpm\n\nMain set 3x\n- 10m 90% 92rpm\n- 4m 62% 85rpm\n\nCooldown\n- 10m ramp 65-50% 85rpm', 'start_date_local': '2025-11-25'}
   ❌ Échec : Sweet Spot 3x10 (74min, 78 TSS)

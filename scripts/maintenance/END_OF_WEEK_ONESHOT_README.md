@@ -145,7 +145,7 @@ CLAUDE_MODEL=claude-sonnet-4-20250514
 
 # Intervals.icu (required for upload)
 INTERVALS_API_KEY=...
-INTERVALS_ATHLETE_ID=i151223
+INTERVALS_ATHLETE_ID=iXXXXXX
 ```
 
 ### Working Directory

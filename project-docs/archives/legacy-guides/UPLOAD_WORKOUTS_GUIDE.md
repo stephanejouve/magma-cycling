@@ -203,7 +203,7 @@ cat ~/.intervals_config.json
 cat .env
 
 # Reconfigurer si nécessaire
-export VITE_INTERVALS_ATHLETE_ID=i151223
+export VITE_INTERVALS_ATHLETE_ID=iXXXXXX
 export VITE_INTERVALS_API_KEY=votre_clé
 ```
 

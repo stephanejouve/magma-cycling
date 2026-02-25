@@ -91,7 +91,7 @@ Tu as déjà créé l'application, il te faut juste :
 ### Configuration Intervals.icu (déjà OK)
 
 Les valeurs sont déjà dans le code :
-- Athlete ID: `i151223`
+- Athlete ID: `iXXXXXX`
 - API Key: `your_api_key_here`
 
 ## 🔑 Première utilisation

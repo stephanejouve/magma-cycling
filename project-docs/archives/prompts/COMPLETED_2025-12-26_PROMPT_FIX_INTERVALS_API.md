@@ -9,7 +9,7 @@
 
 **Current .env (correct):**
 ```
-VITE_INTERVALS_ATHLETE_ID=i151223
+VITE_INTERVALS_ATHLETE_ID=iXXXXXX
 VITE_INTERVALS_API_KEY=your_api_key_here
 ```
 
@@ -48,7 +48,7 @@ class IntervalsConfig:
     Examples:
         >>> config = get_intervals_config()
         >>> print(config.athlete_id)
-        'i151223'
+        'iXXXXXX'
         >>> print(config.is_configured())
         True
     """
@@ -118,7 +118,7 @@ def get_intervals_config() -> IntervalsConfig:
     Examples:
         >>> config = get_intervals_config()
         >>> print(config.athlete_id)
-        'i151223'
+        'iXXXXXX'
     """
     global _intervals_config_instance
     if _intervals_config_instance is None:
@@ -228,7 +228,7 @@ poetry run pytest tests/ -v
 ```
 
 **Expected Results:**
-- ✅ Athlete ID: i151223
+- ✅ Athlete ID: iXXXXXX
 - ✅ Configured: True
 - ✅ Headers: True
 - ✅ No API initialization warning
