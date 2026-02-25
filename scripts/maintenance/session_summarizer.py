@@ -372,8 +372,8 @@ class SummaryGenerator:
             Shortened path
         """
         # Remove common prefixes
-        path = path.replace("/Users/stephanejouve/cyclisme-training-logs/", "")
-        path = path.replace("/Users/stephanejouve/training-logs/", "")
+        path = path.replace("", "")
+        path = path.replace("", "")
         return path
 
 

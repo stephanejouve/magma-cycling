@@ -380,7 +380,7 @@ cat > "$OUTPUT_DIR/metrics_summary.txt" << METRICS_EOF
 ---
 
 **Généré automatiquement par generate_code_review_package.sh**
-**Projet:** https://github.com/stephanejouve/cyclisme-training-logs
+**Projet:** https://github.com/YOUR_USERNAME/cyclisme-training-logs
 METRICS_EOF
 
 echo "📄 Copie de la documentation..."

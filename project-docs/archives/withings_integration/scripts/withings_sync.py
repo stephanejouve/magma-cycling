@@ -15,13 +15,14 @@ from withings_integration import (
 
 # Configuration
 CREDENTIALS_FILE = "withings_credentials.json"
-INTERVALS_API_KEY = os.getenv("INTERVALS_API_KEY", "REDACTED_INTERVALS_KEY")
-INTERVALS_ATHLETE_ID = os.getenv("INTERVALS_ATHLETE_ID", "i151223")
+INTERVALS_API_KEY = os.getenv("INTERVALS_API_KEY", "")
+INTERVALS_ATHLETE_ID = os.getenv("INTERVALS_ATHLETE_ID", "")
 
-CLIENT_ID = "c5e8820a701242a8708c54ee9fcc83915f02270f2ae0930b9a5917bbb3d21278"
+CLIENT_ID = os.getenv("WITHINGS_CLIENT_ID", "your_withings_client_id_here")
 CLIENT_SECRET = os.getenv("WITHINGS_SECRET")
-CALLBACK_URI = (
-    "https://4f3c-2a01-cb14-8513-df00-2031-d098-d697-75c1.ngrok-free.app/auth/withings/callback"
+CALLBACK_URI = os.getenv(
+    "WITHINGS_CALLBACK_URI",
+    "https://your-ngrok-url.ngrok-free.app/auth/withings/callback",
 )
 
 

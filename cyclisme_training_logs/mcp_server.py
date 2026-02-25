@@ -23,7 +23,7 @@ Claude Desktop config (~/.config/claude/claude_desktop_config.json):
         "cyclisme-training": {
           "command": "poetry",
           "args": ["run", "mcp-server"],
-          "cwd": "/Users/stephanejouve/cyclisme-training-logs"
+          "cwd": "/path/to/cyclisme-training-logs"
         }
       }
     }
@@ -2015,11 +2015,49 @@ async def handle_get_workout(args: dict) -> list[TextContent]:
             workout_files = list(workouts_dir.glob(f"{session_id}-*"))
 
             if not workout_files:
+                # No .zwo file — fall back to session description from planning
+                from cyclisme_training_logs.planning.control_tower import planning_tower
+
+                week_id = session_id[:4]  # "S082-02" → "S082"
+                session_def = None
+                try:
+                    plan = planning_tower.read_week(week_id)
+                    session_def = next(
+                        (s for s in plan.planned_sessions if s.session_id == session_id),
+                        None,
+                    )
+                except Exception:
+                    pass
+
                 return [
                     TextContent(
                         type="text",
                         text=json.dumps(
-                            {"error": f"No workout file found for session {session_id}"}, indent=2
+                            {
+                                "found": False,
+                                "session_id": session_id,
+                                "structured_file": None,
+                                "message": "No structured workout file (.zwo) found. "
+                                "Session is defined via text description in the planning.",
+                                "session_definition": (
+                                    {
+                                        "name": session_def.name if session_def else None,
+                                        "type": session_def.session_type if session_def else None,
+                                        "description": (
+                                            session_def.description if session_def else None
+                                        ),
+                                        "tss_planned": (
+                                            session_def.tss_planned if session_def else None
+                                        ),
+                                        "duration_min": (
+                                            session_def.duration_min if session_def else None
+                                        ),
+                                    }
+                                    if session_def
+                                    else None
+                                ),
+                            },
+                            indent=2,
                         ),
                     )
                 ]
@@ -2856,8 +2894,9 @@ async def handle_update_remote_session(args: dict) -> list[TextContent]:
                                         date_str, "%Y-%m-%d"
                                     ).date()
 
-                                if "description" in updates:
-                                    session_dict["description"] = updates["description"]
+                                # NOTE: description is NOT written back to local planning.
+                                # The planning JSON holds a SHORT description; full workout
+                                # content lives in _workouts.txt / .zwo files and Intervals.icu.
 
                                 updated_session = Session(**session_dict)
                                 updated_sessions.append(updated_session)
@@ -2906,20 +2945,42 @@ async def handle_get_athlete_profile(args: dict) -> list[TextContent]:
             client = create_intervals_client()
             athlete = client.get_athlete()
 
-            # Format result with key metrics
+            # Sport settings for cycling (ftp, zones, hr) are nested in sportSettings
+            sport_settings = next(
+                (s for s in athlete.get("sportSettings", []) if "Ride" in s.get("types", [])),
+                {},
+            )
+
+            # Build power zones with names
+            power_zone_values = sport_settings.get("power_zones", [])
+            power_zone_names = sport_settings.get("power_zone_names", [])
+            power_zones = (
+                [{"name": n, "max_pct_ftp": v} for n, v in zip(power_zone_names, power_zone_values)]
+                if power_zone_values
+                else None
+            )
+
+            # Build HR zones with names
+            hr_zone_values = sport_settings.get("hr_zones", [])
+            hr_zone_names = sport_settings.get("hr_zone_names", [])
+            hr_zones = (
+                [{"name": n, "max_bpm": v} for n, v in zip(hr_zone_names, hr_zone_values)]
+                if hr_zone_values
+                else None
+            )
+
             result = {
                 "name": athlete.get("name"),
-                "ftp": athlete.get("ftp"),
-                "weight": athlete.get("weight"),
-                "max_hr": athlete.get("max_hr"),
-                "resting_hr": athlete.get("resting_hr"),
-                "fthr": athlete.get("fthr"),
-                "ctl": athlete.get("ctl"),
-                "atl": athlete.get("atl"),
-                "ramp_rate": athlete.get("ramp_rate"),
-                "weight_class": athlete.get("weight_class"),
-                "power_zones": athlete.get("power_zones"),
-                "hr_zones": athlete.get("hr_zones"),
+                # Top-level icu_ fields
+                "weight": athlete.get("icu_weight"),
+                "resting_hr": athlete.get("icu_resting_hr"),
+                # Cycling sport settings
+                "ftp": sport_settings.get("ftp"),
+                "max_hr": sport_settings.get("max_hr"),
+                "fthr": sport_settings.get("lthr"),
+                "w_prime": sport_settings.get("w_prime"),
+                "power_zones": power_zones,
+                "hr_zones": hr_zones,
             }
 
         return [TextContent(type="text", text=json.dumps(result, indent=2))]
@@ -3068,7 +3129,8 @@ async def handle_get_recommendations(args: dict) -> list[TextContent]:
                 result = {
                     "week_id": week_id,
                     "found": False,
-                    "message": f"No recommendations file found for {week_id}",
+                    "message": f"No recommendations file generated yet for {week_id}. "
+                    "Run PID evaluation or end-of-week workflow to generate recommendations.",
                     "planning_notes": plan.notes if hasattr(plan, "notes") else None,
                 }
 

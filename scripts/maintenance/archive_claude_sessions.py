@@ -45,9 +45,10 @@ class SessionArchiver:
         self.dry_run = dry_run
 
         # Paths
-        self.claude_dir = (
-            Path.home() / ".claude" / "projects" / "-Users-stephanejouve-cyclisme-training-logs"
+        project_slug = "-".join(
+            str(project_root.resolve()).replace("/", "-").lstrip("-").split("-")
         )
+        self.claude_dir = Path.home() / ".claude" / "projects" / f"-{project_slug}"
         self.archive_dir = project_root / "project-docs" / "sessions" / "archives"
         self.summaries_dir = project_root / "project-docs" / "sessions"
 

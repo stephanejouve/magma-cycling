@@ -55,7 +55,7 @@ def create_test_planning(week_id="S070", with_cancellation=True, with_rest=True)
         "week_id": week_id,
         "start_date": "2025-12-01",  # Monday
         "end_date": "2025-12-07",  # Sunday
-        "athlete_id": "i151223",
+        "athlete_id": "iXXXXXX",
         "tss_target": 255,
         "created_at": "2025-11-30T20:00:00",
         "last_updated": "2025-12-01T10:00:00",

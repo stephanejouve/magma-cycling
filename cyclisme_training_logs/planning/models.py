@@ -163,7 +163,7 @@ class WeeklyPlan(BaseModel):
         created_at: Plan creation timestamp
         last_updated: Last modification timestamp
         version: Plan version number
-        athlete_id: Athlete identifier (e.g., "i151223")
+        athlete_id: Athlete identifier (e.g., "iXXXXXX")
         tss_target: Target weekly TSS
         planned_sessions: List of sessions (auto deep-copied)
 
@@ -186,7 +186,7 @@ class WeeklyPlan(BaseModel):
     created_at: datetime = Field(description="Plan creation timestamp")
     last_updated: datetime = Field(description="Last modification timestamp")
     version: int = Field(ge=1, description="Plan version number")
-    athlete_id: str = Field(description="Athlete identifier (e.g., i151223)")
+    athlete_id: str = Field(description="Athlete identifier (e.g., iXXXXXX)")
     tss_target: int = Field(ge=0, le=2000, description="Target weekly TSS")
     planned_sessions: list[Session] = Field(
         default_factory=list, alias="planned_sessions", description="List of planned sessions"

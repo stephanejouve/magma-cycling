@@ -30,7 +30,7 @@ class IntervalsClient:
         session: Configured requests.Session with authentication
 
     Example:
-        >>> client = IntervalsClient(athlete_id="i151223", api_key="your_key")
+        >>> client = IntervalsClient(athlete_id="iXXXXXX", api_key="your_key")
         >>> activities = client.get_activities(oldest="2025-12-22", newest="2025-12-28")
         >>> wellness = client.get_wellness(oldest="2025-12-22", newest="2025-12-28")
     """
