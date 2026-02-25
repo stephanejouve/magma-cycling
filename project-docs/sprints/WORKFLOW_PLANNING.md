@@ -34,7 +34,7 @@ wp --week-id S075 --start-date 2026-01-05
   "created_at": "2026-01-05T10:00:00",
   "last_updated": "2026-01-05T10:00:00",
   "version": 1,
-  "athlete_id": "i151223",
+  "athlete_id": "iXXXXXX",
   "tss_target": 0,  // Sera mis à jour après upload
   "planned_sessions": [
     {

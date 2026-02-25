@@ -1,7 +1,7 @@
 # Cyclisme Training Logs
 
-[![CI](https://github.com/YOUR_USERNAME/cyclisme-training-logs/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/YOUR_USERNAME/cyclisme-training-logs/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/YOUR_USERNAME/cyclisme-training-logs/branch/main/graph/badge.svg?token=K39R7YEOPN)](https://codecov.io/gh/YOUR_USERNAME/cyclisme-training-logs)
+[![CI](https://github.com/stephanejouve/cyclisme-training-logs/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/stephanejouve/cyclisme-training-logs/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/stephanejouve/cyclisme-training-logs/branch/main/graph/badge.svg?token=K39R7YEOPN)](https://codecov.io/gh/stephanejouve/cyclisme-training-logs)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Poetry](https://img.shields.io/badge/poetry-managed-blue)](https://python-poetry.org/)
 [![Quality](https://img.shields.io/badge/Quality-Production%20Ready-brightgreen)](CODING_STANDARDS.md)
@@ -13,7 +13,7 @@ A personal cycling training log system integrating Intervals.icu, AI coaching, a
 ## Quick Start
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/cyclisme-training-logs.git
+git clone https://github.com/stephanejouve/cyclisme-training-logs.git
 cd cyclisme-training-logs
 poetry install
 cp .env.example .env  # edit with your API key and athlete ID
@@ -66,7 +66,7 @@ poetry run workflow-coach
 curl -sSL https://install.python-poetry.org | python3 -
 
 # Clone and install
-git clone https://github.com/YOUR_USERNAME/cyclisme-training-logs.git
+git clone https://github.com/stephanejouve/cyclisme-training-logs.git
 cd cyclisme-training-logs
 poetry install
 ```

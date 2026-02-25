@@ -183,7 +183,7 @@ class IntervalsClient:
     Client API unifié pour Intervals.icu.
 
     Usage:
-        client = IntervalsClient(athlete_id="i151223", api_key="...")
+        client = IntervalsClient(athlete_id="iXXXXXX", api_key="...")
         activities = client.get_activities(oldest="2025-12-22", newest="2025-12-28")
         wellness = client.get_wellness(oldest="2025-12-22", newest="2025-12-28")
     """

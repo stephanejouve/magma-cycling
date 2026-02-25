@@ -360,7 +360,7 @@ docs/archive/work-docs/
 
 **.env variables :**
 ```bash
-VITE_INTERVALS_ATHLETE_ID=i151223
+VITE_INTERVALS_ATHLETE_ID=iXXXXXX
 VITE_INTERVALS_API_KEY=your_api_key_here
 MISTRAL_API_KEY=your_key
 TRAINING_DATA_REPO=~/training-logs  # Optionnel, défaut ~/training-logs
