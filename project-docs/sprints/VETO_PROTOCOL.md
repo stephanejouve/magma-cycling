@@ -165,7 +165,7 @@ from cyclisme_training_logs.config import AthleteProfile
 from cyclisme_training_logs.api.intervals_client import IntervalsClient
 
 # 1. Charger données wellness Intervals.icu
-api = IntervalsClient(athlete_id="i151223", api_key=API_KEY)
+api = IntervalsClient(athlete_id="iXXXXXX", api_key=API_KEY)
 wellness = api.get_wellness(oldest="2026-01-01", newest="2026-01-01")[0]
 
 # 2. Charger profil athlète (.env)

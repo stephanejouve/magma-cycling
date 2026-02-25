@@ -2703,7 +2703,7 @@ Total: 14-21 heures développement (2-3 jours)
 **Fichier : `~/training-logs/.config.json`**
 ```json
 {
-  "athlete_id": "i151223",
+  "athlete_id": "iXXXXXX",
   "name": "Stéphane Jouve",
 
   "week_reference": {
@@ -2713,7 +2713,7 @@ Total: 14-21 heures développement (2-3 jours)
   },
 
   "intervals_config": {
-    "athlete_id": "i151223",
+    "athlete_id": "iXXXXXX",
     "api_key": "xxxxx"
   }
 }
@@ -2730,7 +2730,7 @@ cd ~/training-logs-2026
 # Nouvelle config avec nouvelle référence S001
 cat > .config.json <<EOF
 {
-  "athlete_id": "i151223",
+  "athlete_id": "iXXXXXX",
   "week_reference": {
     "s001_date": "2026-09-01",
     "description": "Season 2026-2027"
@@ -2753,7 +2753,7 @@ export TRAINING_DATA_REPO=~/training-logs-2026
 ```json
 // ~/training-logs/.config.json
 {
-  "athlete_id": "i151223",
+  "athlete_id": "iXXXXXX",
   "current_season": "2026-2027",
 
   "seasons": {

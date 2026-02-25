@@ -126,7 +126,7 @@ class SimpleIntervalsAPI:
     """API minimale pour upload workouts"""
 
     def __init__(self):
-        self.athlete_id = os.getenv('VITE_INTERVALS_ATHLETE_ID', 'i151223')
+        self.athlete_id = os.getenv('VITE_INTERVALS_ATHLETE_ID', 'iXXXXXX')
         self.api_key = os.getenv('VITE_INTERVALS_API_KEY')
         self.base_url = 'https://intervals.icu/api/v1'
 

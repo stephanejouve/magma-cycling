@@ -2,7 +2,7 @@
 
 {
   "id": "16457456654",
-  "icu_athlete_id": "i151223",
+  "icu_athlete_id": "iXXXXXX",
   "start_date_local": "2025-11-14T17:42:25",
   "source": "STRAVA",
   "_note": "STRAVA activities are not available via the API"

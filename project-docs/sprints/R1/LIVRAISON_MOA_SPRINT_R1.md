@@ -465,7 +465,7 @@ poetry run monthly-analysis --month 2025-12 --no-ai
 from cyclisme_training_logs.api.intervals_client import IntervalsClient
 
 # Initialisation
-api = IntervalsClient(athlete_id="i151223", api_key="...")
+api = IntervalsClient(athlete_id="iXXXXXX", api_key="...")
 
 # Récupérer activités
 activities = api.get_activities(oldest="2025-12-01", newest="2025-12-31")
