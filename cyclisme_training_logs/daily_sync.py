@@ -1383,7 +1383,7 @@ Réponds maintenant."""
 
         # Get planned workouts (events) from Intervals.icu
         try:
-            events = self.intervals_client.get_events(oldest=oldest, newest=newest)
+            events = self.client.get_events(oldest=oldest, newest=newest)
             workouts = [e for e in events if e.get("category") == "WORKOUT"]
             print(f"  ℹ️  {len(workouts)} workout(s) planifié(s) trouvé(s) sur Intervals.icu")
         except Exception as e:
