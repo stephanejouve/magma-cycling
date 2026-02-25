@@ -4,45 +4,16 @@ cyclisme\_training\_logs.intelligence package
 Submodules
 ----------
 
-cyclisme\_training\_logs.intelligence.biomechanics module
----------------------------------------------------------
+.. toctree::
+   :maxdepth: 4
 
-.. automodule:: cyclisme_training_logs.intelligence.biomechanics
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-cyclisme\_training\_logs.intelligence.biomechanics\_intervals module
---------------------------------------------------------------------
-
-.. automodule:: cyclisme_training_logs.intelligence.biomechanics_intervals
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-cyclisme\_training\_logs.intelligence.discrete\_pid\_controller module
-----------------------------------------------------------------------
-
-.. automodule:: cyclisme_training_logs.intelligence.discrete_pid_controller
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-cyclisme\_training\_logs.intelligence.pid\_controller module
-------------------------------------------------------------
-
-.. automodule:: cyclisme_training_logs.intelligence.pid_controller
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-cyclisme\_training\_logs.intelligence.training\_intelligence module
--------------------------------------------------------------------
-
-.. automodule:: cyclisme_training_logs.intelligence.training_intelligence
-   :members:
-   :show-inheritance:
-   :undoc-members:
+   cyclisme_training_logs.intelligence.biomechanics
+   cyclisme_training_logs.intelligence.biomechanics_intervals
+   cyclisme_training_logs.intelligence.compensation_strategies
+   cyclisme_training_logs.intelligence.discrete_pid_controller
+   cyclisme_training_logs.intelligence.pid_controller
+   cyclisme_training_logs.intelligence.training_intelligence
+   cyclisme_training_logs.intelligence.workout_diversity
 
 Module contents
 ---------------
