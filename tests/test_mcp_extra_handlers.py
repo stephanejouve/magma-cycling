@@ -1020,6 +1020,8 @@ class TestHandleGetActivityIntervals:
                 "average_cadence": 85.5,
                 "intensity": 62,
                 "training_load": 10,
+                "average_torque": 14.4,
+                "avg_lr_balance": 51.8,
                 "some_extra_field": "ignored",
                 "average_dfa_a1": 0.8,
             },
@@ -1042,6 +1044,10 @@ class TestHandleGetActivityIntervals:
                 "intensity": 88,
                 "training_load": 45,
                 "decoupling": 2.1,
+                "average_torque": 21.4,
+                "min_torque": 17.6,
+                "max_torque": 34.5,
+                "avg_lr_balance": 52.7,
                 "some_extra_field": "ignored",
                 "average_dfa_a1": 0.5,
             },
@@ -1082,6 +1088,8 @@ class TestHandleGetActivityIntervals:
         assert data["intervals"][1]["average_watts"] == 230
         assert data["intervals"][1]["average_heartrate"] == 155
         assert data["intervals"][1]["decoupling"] == 2.1
+        assert data["intervals"][1]["average_torque"] == 21.4
+        assert data["intervals"][1]["avg_lr_balance"] == 52.7
 
     @pytest.mark.asyncio
     async def test_get_activity_intervals_api_error(self):
