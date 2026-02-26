@@ -567,7 +567,7 @@ class TestHandleSwapSessions:
 
     @pytest.mark.asyncio
     async def test_swap_updates_remote_events(self, mock_plan, mock_session, mock_session2):
-        """Enhancement: swap updates remote events when both sessions have intervals_id."""
+        """Enhancement: swap updates remote events with new name + date."""
         from cyclisme_training_logs.mcp_server import handle_swap_sessions
 
         mock_session.intervals_id = "evt1"
@@ -589,8 +589,33 @@ class TestHandleSwapSessions:
         assert data["status"] == "success"
         assert data["remote_updated"] is True
         assert set(data["swapped_session_ids"]) == {"S081-03", "S081-06"}
-        # Both remote events should have been updated
+        # Both remote events should have been updated with name + start_date_local
         assert mock_client.update_event.call_count == 2
+        for call in mock_client.update_event.call_args_list:
+            event_data = call[0][1]
+            assert "name" in event_data
+            assert "start_date_local" in event_data
+
+    @pytest.mark.asyncio
+    async def test_swap_session_ids_are_exchanged(self, mock_plan, mock_session, mock_session2):
+        """Session IDs are swapped so day index matches the new date."""
+        from cyclisme_training_logs.mcp_server import handle_swap_sessions
+
+        mock_plan.planned_sessions = [mock_session, mock_session2]
+        tower = make_tower(mock_plan)
+        args = {
+            "week_id": "S081",
+            "session_id_1": "S081-03",
+            "session_id_2": "S081-06",
+        }
+        with patch(TOWER_PATCH, tower):
+            result = await handle_swap_sessions(args)
+        data = json.loads(result[0].text)
+        assert data["status"] == "success"
+        # After swap: session_1 (TempoCourt) should now have id S081-06
+        # and session_2 (EnduranceLongue) should now have id S081-03
+        assert mock_session.session_id == "S081-06"
+        assert mock_session2.session_id == "S081-03"
 
     @pytest.mark.asyncio
     async def test_swap_no_remote_update_without_intervals_ids(

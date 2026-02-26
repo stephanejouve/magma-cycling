@@ -1935,11 +1935,27 @@ async def handle_swap_sessions(args: dict) -> list[TextContent]:
                 session_1.session_date = session_2.session_date
                 session_2.session_date = temp_date
 
-                # Capture data for remote update
+                # Swap session_ids so the day index matches the new date
+                # e.g., S082-04 (Thu) <-> S082-05 (Fri) → each keeps its
+                # workout content but gets the other's id+date slot
+                temp_id = session_1.session_id
+                session_1.session_id = session_2.session_id
+                session_2.session_id = temp_id
+
+                # Capture data for remote update (after id swap)
                 intervals_id_1 = session_1.intervals_id
                 intervals_id_2 = session_2.intervals_id
                 new_date_1 = session_1.session_date
                 new_date_2 = session_2.session_date
+                # Build new intervals_names with swapped session_ids
+                new_name_1 = (
+                    f"{session_1.session_id}-{session_1.session_type}"
+                    f"-{session_1.name}-{session_1.version}"
+                )
+                new_name_2 = (
+                    f"{session_2.session_id}-{session_2.session_type}"
+                    f"-{session_2.name}-{session_2.version}"
+                )
 
                 # Re-sort sessions
                 plan.planned_sessions.sort(key=lambda s: (s.session_date, s.session_id))
@@ -1948,16 +1964,22 @@ async def handle_swap_sessions(args: dict) -> list[TextContent]:
             remote_updated = False
             if intervals_id_1 and intervals_id_2:
                 client = create_intervals_client()
-                start_time_1 = _compute_start_time(new_date_1, session_id_1)
-                start_time_2 = _compute_start_time(new_date_2, session_id_2)
+                start_time_1 = _compute_start_time(new_date_1, session_1.session_id)
+                start_time_2 = _compute_start_time(new_date_2, session_2.session_id)
 
                 client.update_event(
                     intervals_id_1,
-                    {"start_date_local": f"{new_date_1}T{start_time_1}"},
+                    {
+                        "name": new_name_1,
+                        "start_date_local": f"{new_date_1}T{start_time_1}",
+                    },
                 )
                 client.update_event(
                     intervals_id_2,
-                    {"start_date_local": f"{new_date_2}T{start_time_2}"},
+                    {
+                        "name": new_name_2,
+                        "start_date_local": f"{new_date_2}T{start_time_2}",
+                    },
                 )
                 remote_updated = True
 
