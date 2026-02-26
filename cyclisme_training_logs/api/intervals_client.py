@@ -196,6 +196,34 @@ class IntervalsClient:
         response.raise_for_status()
         return response.json()
 
+    def get_activity_intervals(self, activity_id: str) -> list[dict[str, Any]]:
+        """
+        Get interval/lap data for a single activity.
+
+        Récupérer les données d'intervalles/laps d'une activité.
+
+        Args:
+            activity_id: Activity ID (format: i107424849 or numeric string)
+
+        Returns:
+            List of interval dicts with aggregated metrics (avg power, HR, cadence, etc.)
+
+        Raises:
+            requests.HTTPError: If API request fails or activity not found
+
+        Example:
+            >>> intervals = client.get_activity_intervals("i107424849")
+            >>> for iv in intervals:
+            ...     print(f"{iv.get('type')}: {iv.get('average_watts')}W")
+        """
+        url = f"{self.BASE_URL}/activity/{activity_id}/intervals"
+
+        response = self.session.get(url)
+        response.raise_for_status()
+        data = response.json()
+        # API returns {"id": ..., "icu_intervals": [...], "icu_groups": [...]}
+        return data.get("icu_intervals", [])
+
     def get_wellness(
         self, oldest: str | None = None, newest: str | None = None
     ) -> list[dict[str, Any]]:
