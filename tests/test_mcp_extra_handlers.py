@@ -988,3 +988,127 @@ class TestSessionPrescription:
         )
 
         assert "Prescription Coach" not in prompt
+
+
+# =======================
+# TestHandleGetActivityIntervals
+# =======================
+
+
+class TestHandleGetActivityIntervals:
+    @pytest.mark.asyncio
+    async def test_get_activity_intervals_success(self):
+        """Success path: 3 intervals returned with filtered fields."""
+        from cyclisme_training_logs.mcp_server import handle_get_activity_intervals
+
+        mock_client = Mock()
+        mock_client.get_activity_intervals.return_value = [
+            {
+                "type": "RECOVERY",
+                "label": "Warmup",
+                "start_index": 0,
+                "end_index": 600,
+                "elapsed_time": 600,
+                "moving_time": 580,
+                "distance": 5000,
+                "average_watts": 150,
+                "min_watts": 80,
+                "max_watts": 200,
+                "average_heartrate": 120,
+                "min_heartrate": 90,
+                "max_heartrate": 140,
+                "average_cadence": 85.5,
+                "intensity": 62,
+                "training_load": 10,
+                "some_extra_field": "ignored",
+                "average_dfa_a1": 0.8,
+            },
+            {
+                "type": "WORK",
+                "label": "3x10min Tempo",
+                "start_index": 600,
+                "end_index": 2400,
+                "elapsed_time": 1800,
+                "moving_time": 1800,
+                "distance": 18000,
+                "average_watts": 230,
+                "weighted_average_watts": 235,
+                "min_watts": 210,
+                "max_watts": 260,
+                "average_heartrate": 155,
+                "min_heartrate": 140,
+                "max_heartrate": 170,
+                "average_cadence": 90.2,
+                "intensity": 88,
+                "training_load": 45,
+                "decoupling": 2.1,
+                "some_extra_field": "ignored",
+                "average_dfa_a1": 0.5,
+            },
+            {
+                "type": "RECOVERY",
+                "label": "Cooldown",
+                "start_index": 2400,
+                "end_index": 3000,
+                "elapsed_time": 600,
+                "moving_time": 590,
+                "distance": 4000,
+                "average_watts": 120,
+                "min_watts": 70,
+                "max_watts": 160,
+                "average_heartrate": 110,
+                "min_heartrate": 95,
+                "max_heartrate": 130,
+                "average_cadence": 80.0,
+                "intensity": 55,
+                "training_load": 8,
+                "some_extra_field": "ignored",
+                "average_dfa_a1": 0.9,
+            },
+        ]
+
+        with patch(INTERVALS_PATCH, return_value=mock_client):
+            result = await handle_get_activity_intervals({"activity_id": "i107424849"})
+        data = json.loads(result[0].text)
+        assert data["activity_id"] == "i107424849"
+        assert data["total_intervals"] == 3
+        assert data["total_elapsed_seconds"] == 3000
+        assert len(data["intervals"]) == 3
+        # Extra fields should be filtered out
+        assert "some_extra_field" not in data["intervals"][0]
+        assert "average_dfa_a1" not in data["intervals"][0]
+        # Check kept fields
+        assert data["intervals"][1]["type"] == "WORK"
+        assert data["intervals"][1]["average_watts"] == 230
+        assert data["intervals"][1]["average_heartrate"] == 155
+        assert data["intervals"][1]["decoupling"] == 2.1
+
+    @pytest.mark.asyncio
+    async def test_get_activity_intervals_api_error(self):
+        """API error returns error JSON."""
+        from cyclisme_training_logs.mcp_server import handle_get_activity_intervals
+
+        mock_client = Mock()
+        mock_client.get_activity_intervals.side_effect = RuntimeError("API timeout")
+
+        with patch(INTERVALS_PATCH, return_value=mock_client):
+            result = await handle_get_activity_intervals({"activity_id": "i999999"})
+        data = json.loads(result[0].text)
+        assert "error" in data
+        assert "API timeout" in data["error"]
+        assert data["activity_id"] == "i999999"
+
+    @pytest.mark.asyncio
+    async def test_get_activity_intervals_empty(self):
+        """Empty intervals list returns total_intervals == 0."""
+        from cyclisme_training_logs.mcp_server import handle_get_activity_intervals
+
+        mock_client = Mock()
+        mock_client.get_activity_intervals.return_value = []
+
+        with patch(INTERVALS_PATCH, return_value=mock_client):
+            result = await handle_get_activity_intervals({"activity_id": "i107424849"})
+        data = json.loads(result[0].text)
+        assert data["total_intervals"] == 0
+        assert data["total_elapsed_seconds"] == 0
+        assert data["intervals"] == []
