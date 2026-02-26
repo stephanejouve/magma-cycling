@@ -855,3 +855,136 @@ class TestDailySyncMCPAiParam:
         assert call_kwargs[1]["enable_ai_analysis"] is False
         data = json.loads(result[0].text)
         assert data["ai_analysis"] is False
+
+
+# =======================
+# TestSessionPrescription
+# =======================
+
+DAILY_SYNC_TOWER_PATCH = "cyclisme_training_logs.daily_sync.planning_tower"
+
+
+class TestSessionPrescription:
+    """Test the Prescription → Exécution → Ressenti triptyque."""
+
+    def test_analyze_activity_includes_session_prescription(self, tmp_path):
+        """analyze_activity extracts prescription from planning and passes it to generate_prompt."""
+        from cyclisme_training_logs.daily_sync import DailySync
+
+        # Build a mock plan with a session that has a description
+        mock_session = Mock()
+        mock_session.session_id = "S082-01"
+        mock_session.description = "Tempo 3x10min à 85% FTP — focus cadence haute"
+
+        mock_plan = Mock()
+        mock_plan.planned_sessions = [mock_session]
+
+        mock_tower = Mock()
+        mock_tower.read_week.return_value = mock_plan
+
+        # Build a DailySync with mocked internals
+        mock_ai_config = Mock()
+        mock_ai_config.default_provider = "claude_api"
+        mock_ai_config.get_available_providers.return_value = ["claude_api"]
+        mock_ai_config.get_provider_config.return_value = {"claude_api_key": "k"}
+
+        mock_analyzer = Mock()
+        mock_analyzer.analyze_session.return_value = "AI analysis text"
+        mock_factory = Mock()
+        mock_factory.create.return_value = mock_analyzer
+
+        with (
+            patch(AI_CONFIG_PATCH, return_value=mock_ai_config),
+            patch(AI_FACTORY_PATCH, mock_factory),
+            patch(INTERVALS_CLIENT_PATCH, return_value=Mock()),
+        ):
+            sync = DailySync(
+                tracking_file=tmp_path / "tracking.json",
+                reports_dir=tmp_path / "reports",
+                enable_ai_analysis=True,
+            )
+
+        # Mock all dependencies of analyze_activity
+        sync.client = Mock()
+        sync.client.get_wellness.return_value = [{"ctl": 50, "atl": 40, "tsb": 10}]
+        sync.client.get_planned_workout.return_value = None
+
+        sync.prompt_generator = Mock()
+        sync.prompt_generator.generate_prompt.return_value = "fake prompt"
+        sync.history_manager = Mock()
+        sync.history_manager.get_existing_analysis.return_value = None
+        sync.ai_analyzer = mock_analyzer
+
+        activity = {
+            "id": "i12345",
+            "name": "S082-01-END-EnduranceBase-V001",
+            "start_date_local": "2026-02-23T18:00:00",
+        }
+
+        with patch(DAILY_SYNC_TOWER_PATCH, mock_tower):
+            sync.analyze_activity(activity)
+
+        # Verify generate_prompt was called with session_prescription
+        call_kwargs = sync.prompt_generator.generate_prompt.call_args
+        assert call_kwargs[1]["session_prescription"] == (
+            "Tempo 3x10min à 85% FTP — focus cadence haute"
+        )
+
+    def test_generate_prompt_includes_prescription_section(self, tmp_path):
+        """generate_prompt includes Prescription Coach section when prescription provided."""
+        from cyclisme_training_logs.prepare_analysis import PromptGenerator
+
+        gen = PromptGenerator(project_root=tmp_path)
+        raw = {
+            "id": 99,
+            "name": "S082-01-INT-Tempo-V001",
+            "type": "Ride",
+            "start_date_local": "2026-02-23T10:00:00",
+            "moving_time": 3600,
+            "icu_training_load": 65,
+            "icu_intensity": 75,
+            "source": "GARMIN",
+        }
+        activity_data = gen.format_activity_data(raw)
+
+        prompt = gen.generate_prompt(
+            activity_data=activity_data,
+            wellness_pre=None,
+            wellness_post=None,
+            athlete_context=None,
+            recent_workouts=None,
+            session_prescription="Tempo 3x10min à 85% FTP — focus cadence haute",
+        )
+
+        assert "Prescription Coach" in prompt
+        assert "Tempo 3x10min à 85% FTP" in prompt
+        assert "focus cadence haute" in prompt
+        assert "Évaluer si l'exécution répond aux objectifs prescrits" in prompt
+
+    def test_generate_prompt_skips_prescription_when_none(self, tmp_path):
+        """generate_prompt omits Prescription Coach section when prescription is None."""
+        from cyclisme_training_logs.prepare_analysis import PromptGenerator
+
+        gen = PromptGenerator(project_root=tmp_path)
+        raw = {
+            "id": 99,
+            "name": "S082-01-INT-Tempo-V001",
+            "type": "Ride",
+            "start_date_local": "2026-02-23T10:00:00",
+            "moving_time": 3600,
+            "icu_training_load": 65,
+            "icu_intensity": 75,
+            "source": "GARMIN",
+        }
+        activity_data = gen.format_activity_data(raw)
+
+        prompt = gen.generate_prompt(
+            activity_data=activity_data,
+            wellness_pre=None,
+            wellness_post=None,
+            athlete_context=None,
+            recent_workouts=None,
+            session_prescription=None,
+        )
+
+        assert "Prescription Coach" not in prompt
