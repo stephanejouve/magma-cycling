@@ -140,6 +140,11 @@ async def list_tools() -> list[Tool]:
                         "description": "Week ID for planning check (e.g., S082)",
                         "pattern": "^S\\d{3}$",
                     },
+                    "ai_analysis": {
+                        "type": "boolean",
+                        "description": "Enable AI analysis of activities (default: true)",
+                        "default": True,
+                    },
                 },
                 "required": [],
             },
@@ -1150,15 +1155,24 @@ async def handle_monthly_analysis(args: dict) -> list[TextContent]:
 
 
 async def handle_daily_sync(args: dict) -> list[TextContent]:
-    """Sync with Intervals.icu."""
-    from cyclisme_training_logs.daily_sync import DailySync
+    """Sync with Intervals.icu (full pipeline: check, AI analysis, report)."""
+    from cyclisme_training_logs.daily_sync import DailySync, calculate_current_week_info
 
     check_date_str = args.get("date")
+    enable_ai = args.get("ai_analysis", True)
 
     if check_date_str:
         check_date = datetime.strptime(check_date_str, "%Y-%m-%d").date()
     else:
         check_date = date.today()
+
+    # Auto-calculate week_id and start_date
+    week_id = args.get("week_id")
+    with suppress_stdout_stderr():
+        calculated_week_id, calculated_start_date = calculate_current_week_info(check_date)
+    if not week_id:
+        week_id = calculated_week_id
+    start_date = calculated_start_date
 
     # Setup paths
     from cyclisme_training_logs.config import get_data_config
@@ -1167,28 +1181,27 @@ async def handle_daily_sync(args: dict) -> list[TextContent]:
     tracking_file = config.data_repo_path / "activities_tracking.json"
     reports_dir = config.data_repo_path / "daily-reports"
 
-    sync = DailySync(
-        tracking_file=tracking_file,
-        reports_dir=reports_dir,
-        enable_ai_analysis=False,
-        enable_auto_servo=False,
-        verbose=False,  # Disable prints to prevent MCP protocol pollution
-    )
-
-    # Suppress all output to prevent JSON protocol pollution
+    # DailySync init may print AI provider info — suppress it
     with suppress_stdout_stderr():
-        # Run sync - returns (new_activities, completed_activities)
-        new_activities, completed_activities = sync.check_activities(check_date)
+        sync = DailySync(
+            tracking_file=tracking_file,
+            reports_dir=reports_dir,
+            enable_ai_analysis=enable_ai,
+            enable_auto_servo=False,
+            verbose=False,
+        )
 
-        # Mark new activities as analyzed
-        if new_activities:
-            for activity in new_activities:
-                if activity is None:
-                    continue
-                sync.tracker.mark_analyzed(activity, datetime.now())
+    # Run full sync pipeline (check, AI analysis, update sessions, report)
+    with suppress_stdout_stderr():
+        sync.run(
+            check_date=check_date,
+            week_id=week_id,
+            start_date=start_date,
+        )
 
-        # Auto-update session statuses using ALL completed activities (not just new ones)
-        # This ensures status updates even for activities analyzed in previous runs
+    # Re-read completed activities for response building (lightweight API GET)
+    with suppress_stdout_stderr():
+        _, completed_activities = sync.check_activities(check_date)
         activity_to_session_map = {}
         if completed_activities:
             activity_to_session_map = sync.update_completed_sessions(completed_activities)
@@ -1218,15 +1231,26 @@ async def handle_daily_sync(args: dict) -> list[TextContent]:
                     else None
                 ),
                 "average_watts": activity.get("average_watts"),
-                "session_id": activity_to_session_map.get(activity_id),  # From matching
+                "session_id": activity_to_session_map.get(activity_id),
             }
             activities_details.append(activity_detail)
 
+    # Report file path
+    report_file = reports_dir / f"daily_report_{check_date.isoformat()}.md"
+
+    # AI provider info
+    ai_provider = None
+    if enable_ai and sync.ai_analyzer:
+        ai_provider = type(sync.ai_analyzer).__name__
+
     result = {
         "date": check_date.isoformat(),
+        "week_id": week_id,
         "completed_activities": len(completed_activities) if completed_activities else 0,
-        "new_activities": len(new_activities) if new_activities else 0,
-        "activities": activities_details,  # Detailed activity info with session mapping
+        "activities": activities_details,
+        "ai_analysis": enable_ai and sync.ai_analyzer is not None,
+        "ai_provider": ai_provider,
+        "report_file": str(report_file) if report_file.exists() else None,
         "status": "completed",
         "message": f"Sync completed for {check_date.isoformat()}",
     }
