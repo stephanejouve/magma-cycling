@@ -621,6 +621,7 @@ class PromptGenerator:
         planned_workout=None,
         cycling_concepts=None,
         periodization_context=None,
+        session_prescription=None,
     ):
         """Generate le prompt complet pour analyse IA."""
         # Formater les données
@@ -730,6 +731,18 @@ Certaines métriques (puissance, découplage) peuvent être manquantes ou incomp
 {self._format_athlete_notes(act.get('description', ''), w_pre.get('comments', ''))}
 
 **Tags** : {', '.join(act['tags']) if act['tags'] else '_Aucun tag_'}
+
+---
+"""
+        # Ajouter prescription coach si disponible
+        if session_prescription:
+            prompt += f"""
+## 🎯 Prescription Coach (Objectifs de la Séance)
+
+{session_prescription}
+
+**Consigne d'analyse** : Évaluer si l'exécution répond aux objectifs prescrits
+ci-dessus. Identifier les écarts entre intention et réalisation.
 
 ---
 """

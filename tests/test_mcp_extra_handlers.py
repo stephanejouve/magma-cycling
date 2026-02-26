@@ -855,3 +855,268 @@ class TestDailySyncMCPAiParam:
         assert call_kwargs[1]["enable_ai_analysis"] is False
         data = json.loads(result[0].text)
         assert data["ai_analysis"] is False
+
+
+# =======================
+# TestSessionPrescription
+# =======================
+
+DAILY_SYNC_TOWER_PATCH = "cyclisme_training_logs.daily_sync.planning_tower"
+
+
+class TestSessionPrescription:
+    """Test the Prescription → Exécution → Ressenti triptyque."""
+
+    def test_analyze_activity_includes_session_prescription(self, tmp_path):
+        """analyze_activity extracts prescription from planning and passes it to generate_prompt."""
+        from cyclisme_training_logs.daily_sync import DailySync
+
+        # Build a mock plan with a session that has a description
+        mock_session = Mock()
+        mock_session.session_id = "S082-01"
+        mock_session.description = "Tempo 3x10min à 85% FTP — focus cadence haute"
+
+        mock_plan = Mock()
+        mock_plan.planned_sessions = [mock_session]
+
+        mock_tower = Mock()
+        mock_tower.read_week.return_value = mock_plan
+
+        # Build a DailySync with mocked internals
+        mock_ai_config = Mock()
+        mock_ai_config.default_provider = "claude_api"
+        mock_ai_config.get_available_providers.return_value = ["claude_api"]
+        mock_ai_config.get_provider_config.return_value = {"claude_api_key": "k"}
+
+        mock_analyzer = Mock()
+        mock_analyzer.analyze_session.return_value = "AI analysis text"
+        mock_factory = Mock()
+        mock_factory.create.return_value = mock_analyzer
+
+        with (
+            patch(AI_CONFIG_PATCH, return_value=mock_ai_config),
+            patch(AI_FACTORY_PATCH, mock_factory),
+            patch(INTERVALS_CLIENT_PATCH, return_value=Mock()),
+        ):
+            sync = DailySync(
+                tracking_file=tmp_path / "tracking.json",
+                reports_dir=tmp_path / "reports",
+                enable_ai_analysis=True,
+            )
+
+        # Mock all dependencies of analyze_activity
+        sync.client = Mock()
+        sync.client.get_wellness.return_value = [{"ctl": 50, "atl": 40, "tsb": 10}]
+        sync.client.get_planned_workout.return_value = None
+
+        sync.prompt_generator = Mock()
+        sync.prompt_generator.generate_prompt.return_value = "fake prompt"
+        sync.history_manager = Mock()
+        sync.history_manager.get_existing_analysis.return_value = None
+        sync.ai_analyzer = mock_analyzer
+
+        activity = {
+            "id": "i12345",
+            "name": "S082-01-END-EnduranceBase-V001",
+            "start_date_local": "2026-02-23T18:00:00",
+        }
+
+        with patch(DAILY_SYNC_TOWER_PATCH, mock_tower):
+            sync.analyze_activity(activity)
+
+        # Verify generate_prompt was called with session_prescription
+        call_kwargs = sync.prompt_generator.generate_prompt.call_args
+        assert call_kwargs[1]["session_prescription"] == (
+            "Tempo 3x10min à 85% FTP — focus cadence haute"
+        )
+
+    def test_generate_prompt_includes_prescription_section(self, tmp_path):
+        """generate_prompt includes Prescription Coach section when prescription provided."""
+        from cyclisme_training_logs.prepare_analysis import PromptGenerator
+
+        gen = PromptGenerator(project_root=tmp_path)
+        raw = {
+            "id": 99,
+            "name": "S082-01-INT-Tempo-V001",
+            "type": "Ride",
+            "start_date_local": "2026-02-23T10:00:00",
+            "moving_time": 3600,
+            "icu_training_load": 65,
+            "icu_intensity": 75,
+            "source": "GARMIN",
+        }
+        activity_data = gen.format_activity_data(raw)
+
+        prompt = gen.generate_prompt(
+            activity_data=activity_data,
+            wellness_pre=None,
+            wellness_post=None,
+            athlete_context=None,
+            recent_workouts=None,
+            session_prescription="Tempo 3x10min à 85% FTP — focus cadence haute",
+        )
+
+        assert "Prescription Coach" in prompt
+        assert "Tempo 3x10min à 85% FTP" in prompt
+        assert "focus cadence haute" in prompt
+        assert "Évaluer si l'exécution répond aux objectifs prescrits" in prompt
+
+    def test_generate_prompt_skips_prescription_when_none(self, tmp_path):
+        """generate_prompt omits Prescription Coach section when prescription is None."""
+        from cyclisme_training_logs.prepare_analysis import PromptGenerator
+
+        gen = PromptGenerator(project_root=tmp_path)
+        raw = {
+            "id": 99,
+            "name": "S082-01-INT-Tempo-V001",
+            "type": "Ride",
+            "start_date_local": "2026-02-23T10:00:00",
+            "moving_time": 3600,
+            "icu_training_load": 65,
+            "icu_intensity": 75,
+            "source": "GARMIN",
+        }
+        activity_data = gen.format_activity_data(raw)
+
+        prompt = gen.generate_prompt(
+            activity_data=activity_data,
+            wellness_pre=None,
+            wellness_post=None,
+            athlete_context=None,
+            recent_workouts=None,
+            session_prescription=None,
+        )
+
+        assert "Prescription Coach" not in prompt
+
+
+# =======================
+# TestHandleGetActivityIntervals
+# =======================
+
+
+class TestHandleGetActivityIntervals:
+    @pytest.mark.asyncio
+    async def test_get_activity_intervals_success(self):
+        """Success path: 3 intervals returned with filtered fields."""
+        from cyclisme_training_logs.mcp_server import handle_get_activity_intervals
+
+        mock_client = Mock()
+        mock_client.get_activity_intervals.return_value = [
+            {
+                "type": "RECOVERY",
+                "label": "Warmup",
+                "start_index": 0,
+                "end_index": 600,
+                "elapsed_time": 600,
+                "moving_time": 580,
+                "distance": 5000,
+                "average_watts": 150,
+                "min_watts": 80,
+                "max_watts": 200,
+                "average_heartrate": 120,
+                "min_heartrate": 90,
+                "max_heartrate": 140,
+                "average_cadence": 85.5,
+                "intensity": 62,
+                "training_load": 10,
+                "average_torque": 14.4,
+                "avg_lr_balance": 51.8,
+                "some_extra_field": "ignored",
+                "average_dfa_a1": 0.8,
+            },
+            {
+                "type": "WORK",
+                "label": "3x10min Tempo",
+                "start_index": 600,
+                "end_index": 2400,
+                "elapsed_time": 1800,
+                "moving_time": 1800,
+                "distance": 18000,
+                "average_watts": 230,
+                "weighted_average_watts": 235,
+                "min_watts": 210,
+                "max_watts": 260,
+                "average_heartrate": 155,
+                "min_heartrate": 140,
+                "max_heartrate": 170,
+                "average_cadence": 90.2,
+                "intensity": 88,
+                "training_load": 45,
+                "decoupling": 2.1,
+                "average_torque": 21.4,
+                "min_torque": 17.6,
+                "max_torque": 34.5,
+                "avg_lr_balance": 52.7,
+                "some_extra_field": "ignored",
+                "average_dfa_a1": 0.5,
+            },
+            {
+                "type": "RECOVERY",
+                "label": "Cooldown",
+                "start_index": 2400,
+                "end_index": 3000,
+                "elapsed_time": 600,
+                "moving_time": 590,
+                "distance": 4000,
+                "average_watts": 120,
+                "min_watts": 70,
+                "max_watts": 160,
+                "average_heartrate": 110,
+                "min_heartrate": 95,
+                "max_heartrate": 130,
+                "average_cadence": 80.0,
+                "intensity": 55,
+                "training_load": 8,
+                "some_extra_field": "ignored",
+                "average_dfa_a1": 0.9,
+            },
+        ]
+
+        with patch(INTERVALS_PATCH, return_value=mock_client):
+            result = await handle_get_activity_intervals({"activity_id": "i107424849"})
+        data = json.loads(result[0].text)
+        assert data["activity_id"] == "i107424849"
+        assert data["total_intervals"] == 3
+        assert data["total_elapsed_seconds"] == 3000
+        assert len(data["intervals"]) == 3
+        # Extra fields should be filtered out
+        assert "some_extra_field" not in data["intervals"][0]
+        assert "average_dfa_a1" not in data["intervals"][0]
+        # Check kept fields
+        assert data["intervals"][1]["type"] == "WORK"
+        assert data["intervals"][1]["average_watts"] == 230
+        assert data["intervals"][1]["average_heartrate"] == 155
+        assert data["intervals"][1]["decoupling"] == 2.1
+        assert data["intervals"][1]["average_torque"] == 21.4
+        assert data["intervals"][1]["avg_lr_balance"] == 52.7
+
+    @pytest.mark.asyncio
+    async def test_get_activity_intervals_api_error(self):
+        """API error returns error JSON."""
+        from cyclisme_training_logs.mcp_server import handle_get_activity_intervals
+
+        mock_client = Mock()
+        mock_client.get_activity_intervals.side_effect = RuntimeError("API timeout")
+
+        with patch(INTERVALS_PATCH, return_value=mock_client):
+            result = await handle_get_activity_intervals({"activity_id": "i999999"})
+        data = json.loads(result[0].text)
+        assert "error" in data
+        assert "API timeout" in data["error"]
+        assert data["activity_id"] == "i999999"
+
+    @pytest.mark.asyncio
+    async def test_get_activity_intervals_empty(self):
+        """Empty intervals list returns total_intervals == 0."""
+        from cyclisme_training_logs.mcp_server import handle_get_activity_intervals
+
+        mock_client = Mock()
+        mock_client.get_activity_intervals.return_value = []
+
+        with patch(INTERVALS_PATCH, return_value=mock_client):
+            result = await handle_get_activity_intervals({"activity_id": "i107424849"})
+        data = json.loads(result[0].text)
+        assert data["total_intervals"] == 0
+        assert data["total_elapsed_seconds"] == 0
+        assert data["intervals"] == []
