@@ -109,7 +109,7 @@ class WithingsClient:
             "response_type": "code",
             "client_id": self.client_id,
             "redirect_uri": self.redirect_uri,
-            "scope": "user.metrics,user.activity",  # Weight and sleep/activity data
+            "scope": "user.metrics,user.activity,user.sleepevents",
         }
         if state:
             params["state"] = state
@@ -377,7 +377,8 @@ class WithingsClient:
         self._ensure_authenticated()
         self._check_rate_limit()
 
-        url = f"{self.BASE_URL}/v2/{action}"
+        # Support both full paths (v2/sleep) and short paths (measure)
+        url = f"{self.BASE_URL}/{action}"
 
         headers = {
             "Authorization": f"Bearer {self.access_token}",
@@ -456,11 +457,34 @@ class WithingsClient:
             end_date = date.today()
 
         params = {
+            "action": "getsummary",
             "startdateymd": start_date.strftime("%Y-%m-%d"),
             "enddateymd": end_date.strftime("%Y-%m-%d"),
+            "data_fields": ",".join(
+                [
+                    "sleep_score",
+                    "sleep_efficiency",
+                    "total_sleep_time",
+                    "deepsleepduration",
+                    "lightsleepduration",
+                    "remsleepduration",
+                    "wakeupcount",
+                    "wakeupduration",
+                    "hr_average",
+                    "hr_min",
+                    "hr_max",
+                    "rr_average",
+                    "rr_min",
+                    "rr_max",
+                    "sleep_latency",
+                    "out_of_bed_count",
+                    "waso",
+                    "nb_rem_episodes",
+                ]
+            ),
         }
 
-        body = self._make_request("sleep", params)
+        body = self._make_request("v2/sleep", params)
 
         sleep_sessions = []
         series = body.get("series", [])
@@ -483,12 +507,12 @@ class WithingsClient:
             total_sleep_seconds = session.get("data", {}).get("total_sleep_time", 0)
             total_sleep_hours = total_sleep_seconds / 3600 if total_sleep_seconds else 0
 
-            # Get sleep stages (in seconds, convert to minutes)
+            # Get sleep stages and metrics
             data = session.get("data", {})
             deep_sleep_sec = data.get("deepsleepduration", 0)
             light_sleep_sec = data.get("lightsleepduration", 0)
             rem_sleep_sec = data.get("remsleepduration", 0)
-            wakeup_sec = data.get("wakeupcount", 0)
+            wakeup_dur_sec = data.get("wakeupduration", 0)
 
             sleep_sessions.append(
                 {
@@ -502,8 +526,21 @@ class WithingsClient:
                     ),
                     "rem_sleep_minutes": round(rem_sleep_sec / 60, 1) if rem_sleep_sec else None,
                     "sleep_score": data.get("sleep_score"),
+                    "sleep_efficiency": data.get("sleep_efficiency"),
                     "wakeup_count": data.get("wakeupcount", 0),
-                    "wakeup_minutes": round(wakeup_sec / 60, 1) if wakeup_sec else None,
+                    "wakeup_minutes": round(wakeup_dur_sec / 60, 1) if wakeup_dur_sec else None,
+                    "hr_average": data.get("hr_average"),
+                    "hr_min": data.get("hr_min"),
+                    "hr_max": data.get("hr_max"),
+                    "rr_average": data.get("rr_average"),
+                    "rr_min": data.get("rr_min"),
+                    "rr_max": data.get("rr_max"),
+                    "sleep_latency_min": (
+                        round(data.get("sleep_latency", 0) / 60, 1)
+                        if data.get("sleep_latency")
+                        else None
+                    ),
+                    "out_of_bed_count": data.get("out_of_bed_count"),
                     "breathing_disturbances": data.get("breathing_disturbances_intensity"),
                 }
             )
@@ -569,6 +606,7 @@ class WithingsClient:
         enddate = int(datetime.combine(end_date, datetime.max.time()).timestamp())
 
         params = {
+            "action": "getmeas",
             "startdate": startdate,
             "enddate": enddate,
             "meastypes": ",".join(map(str, measure_types)),
