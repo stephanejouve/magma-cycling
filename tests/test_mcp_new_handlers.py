@@ -565,6 +565,59 @@ class TestHandleSwapSessions:
         data = json.loads(result[0].text)
         assert "error" in data
 
+    @pytest.mark.asyncio
+    async def test_swap_updates_remote_events(self, mock_plan, mock_session, mock_session2):
+        """Enhancement: swap updates remote events when both sessions have intervals_id."""
+        from cyclisme_training_logs.mcp_server import handle_swap_sessions
+
+        mock_session.intervals_id = "evt1"
+        mock_session2.intervals_id = "evt2"
+        mock_plan.planned_sessions = [mock_session, mock_session2]
+        tower = make_tower(mock_plan)
+        mock_client = Mock()
+        mock_client.update_event.return_value = True
+
+        args = {
+            "week_id": "S081",
+            "session_id_1": "S081-03",
+            "session_id_2": "S081-06",
+        }
+        with patch(TOWER_PATCH, tower):
+            with patch(INTERVALS_PATCH, return_value=mock_client):
+                result = await handle_swap_sessions(args)
+        data = json.loads(result[0].text)
+        assert data["status"] == "success"
+        assert data["remote_updated"] is True
+        assert set(data["swapped_session_ids"]) == {"S081-03", "S081-06"}
+        # Both remote events should have been updated
+        assert mock_client.update_event.call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_swap_no_remote_update_without_intervals_ids(
+        self, mock_plan, mock_session, mock_session2
+    ):
+        """No remote update when sessions lack intervals_id."""
+        from cyclisme_training_logs.mcp_server import handle_swap_sessions
+
+        mock_session.intervals_id = None
+        mock_session2.intervals_id = "evt2"  # Only one has id
+        mock_plan.planned_sessions = [mock_session, mock_session2]
+        tower = make_tower(mock_plan)
+        mock_client = Mock()
+
+        args = {
+            "week_id": "S081",
+            "session_id_1": "S081-03",
+            "session_id_2": "S081-06",
+        }
+        with patch(TOWER_PATCH, tower):
+            with patch(INTERVALS_PATCH, return_value=mock_client):
+                result = await handle_swap_sessions(args)
+        data = json.loads(result[0].text)
+        assert data["status"] == "success"
+        assert data["remote_updated"] is False
+        mock_client.update_event.assert_not_called()
+
 
 # =======================
 # TestHandleAttachWorkout

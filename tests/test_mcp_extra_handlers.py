@@ -164,6 +164,9 @@ class TestHandleUpdateSession:
 # =======================
 
 
+LOAD_WORKOUTS_PATCH = "cyclisme_training_logs.mcp_server._load_workout_descriptions"
+
+
 class TestHandleSyncWeekToIntervals:
     @pytest.mark.asyncio
     async def test_dry_run_no_api_calls(self, mock_plan, mock_session):
@@ -179,7 +182,8 @@ class TestHandleSyncWeekToIntervals:
         args = {"week_id": "S081", "dry_run": True}
         with patch(TOWER_PATCH, tower):
             with patch(INTERVALS_PATCH, return_value=mock_client):
-                result = await handle_sync_week_to_intervals(args)
+                with patch(LOAD_WORKOUTS_PATCH, return_value={}):
+                    result = await handle_sync_week_to_intervals(args)
         data = json.loads(result[0].text)
         assert data["dry_run"] is True
         assert data["summary"]["to_create"] == 1
@@ -201,9 +205,10 @@ class TestHandleSyncWeekToIntervals:
         args = {"week_id": "S081", "dry_run": True}
         with patch(TOWER_PATCH, tower):
             with patch(INTERVALS_PATCH, return_value=mock_client):
-                result = await handle_sync_week_to_intervals(args)
+                with patch(LOAD_WORKOUTS_PATCH, return_value={}):
+                    result = await handle_sync_week_to_intervals(args)
         data = json.loads(result[0].text)
-        assert data["summary"]["skipped_completed"] == 1
+        assert data["summary"]["skipped_protected"] == 1
         assert data["summary"]["to_create"] == 0
 
     @pytest.mark.asyncio
@@ -227,18 +232,18 @@ class TestHandleSyncWeekToIntervals:
 
         mock_session.intervals_id = "evt123"
         mock_session.status = "pending"
-        mock_session.name = "SameName"
-        mock_session.description = "Same description"
+        mock_session.name = "TempoCourt"
+        mock_session.description = "Tempo 3x10min"
         mock_plan.planned_sessions = [mock_session]
         tower = make_tower(mock_plan)
         mock_client = Mock()
-        # Remote event with same name/description (no conflict)
+        # Remote event with full intervals_name and matching start_date (no conflict)
         mock_client.get_events.return_value = [
             {
                 "id": "evt123",
                 "category": "WORKOUT",
-                "name": "SameName",
-                "description": "Same description",
+                "name": "S081-03-INT-TempoCourt-V001",
+                "start_date_local": "2026-02-19T17:00:00",
             },
         ]
         mock_client.update_event.return_value = True
@@ -246,9 +251,10 @@ class TestHandleSyncWeekToIntervals:
         args = {"week_id": "S081", "dry_run": True, "force_update": False}
         with patch(TOWER_PATCH, tower):
             with patch(INTERVALS_PATCH, return_value=mock_client):
-                result = await handle_sync_week_to_intervals(args)
+                with patch(LOAD_WORKOUTS_PATCH, return_value={}):
+                    result = await handle_sync_week_to_intervals(args)
         data = json.loads(result[0].text)
-        # No changes needed (same name/desc)
+        # No changes needed (same name and date)
         assert data["summary"]["to_update"] == 0
 
     @pytest.mark.asyncio
@@ -258,28 +264,175 @@ class TestHandleSyncWeekToIntervals:
 
         mock_session.intervals_id = "evt123"
         mock_session.status = "pending"
-        mock_session.name = "LocalName"
-        mock_session.description = "Local desc"
+        mock_session.name = "TempoCourt"
+        mock_session.description = "Tempo 3x10min"
         mock_plan.planned_sessions = [mock_session]
         tower = make_tower(mock_plan)
         mock_client = Mock()
-        # Remote event has different name (manually modified)
+        # Remote event has different name (manually modified in Intervals.icu)
         mock_client.get_events.return_value = [
             {
                 "id": "evt123",
                 "category": "WORKOUT",
-                "name": "RemoteName",
-                "description": "Remote desc",
+                "name": "ManuallyRenamedWorkout",
+                "start_date_local": "2026-02-19T17:00:00",
             },
         ]
 
         args = {"week_id": "S081", "dry_run": True, "force_update": False}
         with patch(TOWER_PATCH, tower):
             with patch(INTERVALS_PATCH, return_value=mock_client):
-                result = await handle_sync_week_to_intervals(args)
+                with patch(LOAD_WORKOUTS_PATCH, return_value={}):
+                    result = await handle_sync_week_to_intervals(args)
         data = json.loads(result[0].text)
         assert data["summary"]["warnings"] == 1
         assert data["status"] == "success_with_warnings"
+
+    @pytest.mark.asyncio
+    async def test_skipped_session_not_synced(self, mock_plan, mock_session):
+        """Skipped sessions are protected — not synced to Intervals.icu."""
+        from cyclisme_training_logs.mcp_server import handle_sync_week_to_intervals
+
+        mock_session.status = "skipped"
+        mock_session.intervals_id = None
+        mock_plan.planned_sessions = [mock_session]
+        tower = make_tower(mock_plan)
+        mock_client = Mock()
+        mock_client.get_events.return_value = []
+
+        args = {"week_id": "S081", "dry_run": True}
+        with patch(TOWER_PATCH, tower):
+            with patch(INTERVALS_PATCH, return_value=mock_client):
+                with patch(LOAD_WORKOUTS_PATCH, return_value={}):
+                    result = await handle_sync_week_to_intervals(args)
+        data = json.loads(result[0].text)
+        assert data["summary"]["skipped_protected"] == 1
+        assert data["summary"]["to_create"] == 0
+        assert data["details"]["skipped_protected"][0]["status"] == "skipped"
+
+    @pytest.mark.asyncio
+    async def test_rest_day_session_not_synced(self, mock_plan, mock_session):
+        """Rest day sessions are protected — not synced to Intervals.icu."""
+        from cyclisme_training_logs.mcp_server import handle_sync_week_to_intervals
+
+        mock_session.status = "rest_day"
+        mock_session.intervals_id = None
+        mock_plan.planned_sessions = [mock_session]
+        tower = make_tower(mock_plan)
+        mock_client = Mock()
+        mock_client.get_events.return_value = []
+
+        args = {"week_id": "S081", "dry_run": True}
+        with patch(TOWER_PATCH, tower):
+            with patch(INTERVALS_PATCH, return_value=mock_client):
+                with patch(LOAD_WORKOUTS_PATCH, return_value={}):
+                    result = await handle_sync_week_to_intervals(args)
+        data = json.loads(result[0].text)
+        assert data["summary"]["skipped_protected"] == 1
+        assert data["summary"]["to_create"] == 0
+        assert data["details"]["skipped_protected"][0]["status"] == "rest_day"
+
+    @pytest.mark.asyncio
+    async def test_name_comparison_uses_full_intervals_name(self, mock_plan, mock_session):
+        """Bug 2: Comparison uses full intervals_name, not short session.name."""
+        from cyclisme_training_logs.mcp_server import handle_sync_week_to_intervals
+
+        mock_session.intervals_id = "evt123"
+        mock_session.status = "pending"
+        mock_session.name = "TempoCourt"
+        mock_session.session_type = "INT"
+        mock_session.version = "V001"
+        mock_plan.planned_sessions = [mock_session]
+        tower = make_tower(mock_plan)
+        mock_client = Mock()
+        # Remote has short name (old bug would match wrongly)
+        mock_client.get_events.return_value = [
+            {
+                "id": "evt123",
+                "category": "WORKOUT",
+                "name": "TempoCourt",  # Short name, NOT full intervals_name
+                "start_date_local": "2026-02-19T17:00:00",
+            },
+        ]
+
+        args = {"week_id": "S081", "dry_run": True, "force_update": False}
+        with patch(TOWER_PATCH, tower):
+            with patch(INTERVALS_PATCH, return_value=mock_client):
+                with patch(LOAD_WORKOUTS_PATCH, return_value={}):
+                    result = await handle_sync_week_to_intervals(args)
+        data = json.loads(result[0].text)
+        # Short name != full intervals_name → conflict detected
+        assert data["summary"]["warnings"] == 1
+
+    @pytest.mark.asyncio
+    async def test_update_payload_excludes_description(self, mock_plan, mock_session):
+        """Bug 3: Update payload sends only name + start_date_local, not description."""
+        from cyclisme_training_logs.mcp_server import handle_sync_week_to_intervals
+
+        mock_session.intervals_id = "evt123"
+        mock_session.status = "pending"
+        mock_session.name = "TempoCourt"
+        mock_session.session_type = "INT"
+        mock_session.version = "V001"
+        mock_session.description = "Short desc"
+        mock_plan.planned_sessions = [mock_session]
+        tower = make_tower(mock_plan)
+        mock_client = Mock()
+        # Remote has different date (triggers update)
+        mock_client.get_events.return_value = [
+            {
+                "id": "evt123",
+                "category": "WORKOUT",
+                "name": "S081-03-INT-TempoCourt-V001",
+                "start_date_local": "2026-02-20T17:00:00",  # Wrong date
+            },
+        ]
+        mock_client.update_event.return_value = True
+
+        args = {"week_id": "S081", "dry_run": False, "force_update": True}
+        with patch(TOWER_PATCH, tower):
+            with patch(INTERVALS_PATCH, return_value=mock_client):
+                with patch(LOAD_WORKOUTS_PATCH, return_value={}):
+                    result = await handle_sync_week_to_intervals(args)
+        data = json.loads(result[0].text)
+        assert data["summary"]["updated"] == 1
+        # Verify the update_event was called without description
+        update_call = mock_client.update_event.call_args
+        event_data = update_call[0][1]
+        assert "description" not in event_data
+        assert "name" in event_data
+        assert "start_date_local" in event_data
+
+    @pytest.mark.asyncio
+    async def test_session_ids_filter(self, mock_plan, mock_session):
+        """Bug 4: session_ids parameter filters which sessions are synced."""
+        from cyclisme_training_logs.mcp_server import handle_sync_week_to_intervals
+
+        # Add a second session
+        session2 = Mock()
+        session2.session_id = "S081-06"
+        session2.session_date = date(2026, 2, 22)
+        session2.name = "EnduranceLongue"
+        session2.session_type = "END"
+        session2.version = "V001"
+        session2.description = "90min endurance"
+        session2.status = "pending"
+        session2.intervals_id = None
+        mock_session.intervals_id = None
+        mock_plan.planned_sessions = [mock_session, session2]
+        tower = make_tower(mock_plan)
+        mock_client = Mock()
+        mock_client.get_events.return_value = []
+
+        # Only sync session2
+        args = {"week_id": "S081", "dry_run": True, "session_ids": ["S081-06"]}
+        with patch(TOWER_PATCH, tower):
+            with patch(INTERVALS_PATCH, return_value=mock_client):
+                with patch(LOAD_WORKOUTS_PATCH, return_value={}):
+                    result = await handle_sync_week_to_intervals(args)
+        data = json.loads(result[0].text)
+        assert data["summary"]["to_create"] == 1
+        assert data["details"]["to_create"][0]["session_id"] == "S081-06"
 
 
 # =======================
