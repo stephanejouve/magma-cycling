@@ -706,3 +706,152 @@ class TestHandleListWeeksException:
             result = await handle_list_weeks({"limit": 10})
         data = json.loads(result[0].text)
         assert data["total_found"] == 0  # Bad file skipped
+
+
+# =======================
+# TestDailySyncDefaultProvider
+# =======================
+
+
+AI_CONFIG_PATCH = "cyclisme_training_logs.daily_sync.get_ai_config"
+AI_FACTORY_PATCH = "cyclisme_training_logs.daily_sync.AIProviderFactory"
+INTERVALS_CLIENT_PATCH = "cyclisme_training_logs.daily_sync.create_intervals_client"
+
+
+class TestDailySyncDefaultProvider:
+    def test_respects_default_provider(self, tmp_path):
+        """DailySync.__init__ picks default_provider over available[0]."""
+        from cyclisme_training_logs.daily_sync import DailySync
+
+        mock_ai_config = Mock()
+        mock_ai_config.default_provider = "mistral_api"
+        mock_ai_config.get_available_providers.return_value = [
+            "claude_api",
+            "mistral_api",
+        ]
+        mock_ai_config.get_provider_config.return_value = {"mistral_api_key": "key"}
+
+        mock_analyzer = Mock()
+        mock_factory = Mock()
+        mock_factory.create.return_value = mock_analyzer
+
+        with (
+            patch(AI_CONFIG_PATCH, return_value=mock_ai_config),
+            patch(AI_FACTORY_PATCH, mock_factory),
+            patch(INTERVALS_CLIENT_PATCH, return_value=Mock()),
+        ):
+            sync = DailySync(
+                tracking_file=tmp_path / "tracking.json",
+                reports_dir=tmp_path / "reports",
+                enable_ai_analysis=True,
+            )
+
+        # Factory must be called with mistral_api (default), NOT claude_api (available[0])
+        mock_factory.create.assert_called_once_with("mistral_api", {"mistral_api_key": "key"})
+        assert sync.ai_analyzer is mock_analyzer
+
+    def test_falls_back_to_first_available_if_default_not_configured(self, tmp_path):
+        """DailySync.__init__ falls back to available[0] when default not in list."""
+        from cyclisme_training_logs.daily_sync import DailySync
+
+        mock_ai_config = Mock()
+        mock_ai_config.default_provider = "openai"  # Not in available list
+        mock_ai_config.get_available_providers.return_value = ["claude_api"]
+        mock_ai_config.get_provider_config.return_value = {"claude_api_key": "key"}
+
+        mock_factory = Mock()
+        mock_factory.create.return_value = Mock()
+
+        with (
+            patch(AI_CONFIG_PATCH, return_value=mock_ai_config),
+            patch(AI_FACTORY_PATCH, mock_factory),
+            patch(INTERVALS_CLIENT_PATCH, return_value=Mock()),
+        ):
+            DailySync(
+                tracking_file=tmp_path / "tracking.json",
+                reports_dir=tmp_path / "reports",
+                enable_ai_analysis=True,
+            )
+
+        # Falls back to claude_api (available[0])
+        mock_factory.create.assert_called_once_with("claude_api", {"claude_api_key": "key"})
+
+
+# =======================
+# TestDailySyncMCPAiParam
+# =======================
+
+
+class TestDailySyncMCPAiParam:
+    """Test that handle_daily_sync passes ai_analysis param to DailySync."""
+
+    def _make_patches(self, tmp_path):
+        """Return common patches for handle_daily_sync tests."""
+        from contextlib import nullcontext
+
+        mock_config = Mock()
+        mock_config.data_repo_path = tmp_path
+
+        mock_sync = Mock()
+        mock_sync.run.return_value = None
+        mock_sync.check_activities.return_value = ([], [])
+        mock_sync.ai_analyzer = None
+
+        return {
+            "sync_cls": patch(
+                "cyclisme_training_logs.daily_sync.DailySync",
+                return_value=mock_sync,
+            ),
+            "calc_week": patch(
+                "cyclisme_training_logs.daily_sync.calculate_current_week_info",
+                return_value=("S082", date(2026, 2, 23)),
+            ),
+            "data_config": patch(
+                "cyclisme_training_logs.config.get_data_config",
+                return_value=mock_config,
+            ),
+            "suppress": patch(
+                "cyclisme_training_logs.mcp_server.suppress_stdout_stderr",
+                nullcontext,
+            ),
+        }
+
+    @pytest.mark.asyncio
+    async def test_ai_analysis_enabled_by_default(self, tmp_path):
+        """handle_daily_sync passes enable_ai_analysis=True by default."""
+        from cyclisme_training_logs.mcp_server import handle_daily_sync
+
+        patches = self._make_patches(tmp_path)
+        with (
+            patches["sync_cls"] as mock_cls,
+            patches["calc_week"],
+            patches["data_config"],
+            patches["suppress"],
+        ):
+            await handle_daily_sync({"date": "2026-02-24"})
+
+        # DailySync instantiated with enable_ai_analysis=True
+        mock_cls.assert_called_once()
+        call_kwargs = mock_cls.call_args
+        assert call_kwargs[1]["enable_ai_analysis"] is True
+
+    @pytest.mark.asyncio
+    async def test_ai_analysis_disabled_via_param(self, tmp_path):
+        """handle_daily_sync passes enable_ai_analysis=False when ai_analysis=false."""
+        from cyclisme_training_logs.mcp_server import handle_daily_sync
+
+        patches = self._make_patches(tmp_path)
+        with (
+            patches["sync_cls"] as mock_cls,
+            patches["calc_week"],
+            patches["data_config"],
+            patches["suppress"],
+        ):
+            result = await handle_daily_sync({"date": "2026-02-24", "ai_analysis": False})
+
+        # DailySync instantiated with enable_ai_analysis=False
+        mock_cls.assert_called_once()
+        call_kwargs = mock_cls.call_args
+        assert call_kwargs[1]["enable_ai_analysis"] is False
+        data = json.loads(result[0].text)
+        assert data["ai_analysis"] is False
