@@ -466,6 +466,11 @@ async def list_tools() -> list[Tool]:
                         "description": "Force update all sessions even if unchanged (default: false)",
                         "default": False,
                     },
+                    "session_ids": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Optional: only sync these session IDs (e.g., ['S081-03', 'S081-06'])",
+                    },
                 },
                 "required": ["week_id"],
             },
@@ -1875,7 +1880,8 @@ async def handle_duplicate_session(args: dict) -> list[TextContent]:
 
 
 async def handle_swap_sessions(args: dict) -> list[TextContent]:
-    """Swap the dates of two sessions."""
+    """Swap the dates of two sessions and update remote events if synced."""
+    from cyclisme_training_logs.config import create_intervals_client
     from cyclisme_training_logs.planning.control_tower import planning_tower
 
     week_id = args["week_id"]
@@ -1883,6 +1889,12 @@ async def handle_swap_sessions(args: dict) -> list[TextContent]:
     session_id_2 = args["session_id_2"]
 
     try:
+        # Track session data for remote update after local swap
+        intervals_id_1 = None
+        intervals_id_2 = None
+        new_date_1 = None
+        new_date_2 = None
+
         # Suppress all output to prevent JSON protocol pollution
         with suppress_stdout_stderr():
             # Modify via Control Tower
@@ -1923,15 +1935,41 @@ async def handle_swap_sessions(args: dict) -> list[TextContent]:
                 session_1.session_date = session_2.session_date
                 session_2.session_date = temp_date
 
+                # Capture data for remote update
+                intervals_id_1 = session_1.intervals_id
+                intervals_id_2 = session_2.intervals_id
+                new_date_1 = session_1.session_date
+                new_date_2 = session_2.session_date
+
                 # Re-sort sessions
                 plan.planned_sessions.sort(key=lambda s: (s.session_date, s.session_id))
+
+            # Update remote events if both sessions are synced
+            remote_updated = False
+            if intervals_id_1 and intervals_id_2:
+                client = create_intervals_client()
+                start_time_1 = _compute_start_time(new_date_1, session_id_1)
+                start_time_2 = _compute_start_time(new_date_2, session_id_2)
+
+                client.update_event(
+                    intervals_id_1,
+                    {"start_date_local": f"{new_date_1}T{start_time_1}"},
+                )
+                client.update_event(
+                    intervals_id_2,
+                    {"start_date_local": f"{new_date_2}T{start_time_2}"},
+                )
+                remote_updated = True
 
         result = {
             "status": "success",
             "week_id": week_id,
             "session_id_1": session_id_1,
             "session_id_2": session_id_2,
-            "message": f"Sessions swapped successfully: {session_id_1} <-> {session_id_2}",
+            "swapped_session_ids": [session_id_1, session_id_2],
+            "remote_updated": remote_updated,
+            "message": f"Sessions swapped successfully: {session_id_1} <-> {session_id_2}"
+            + (" (+ remote events updated)" if remote_updated else ""),
         }
 
         return [TextContent(type="text", text=json.dumps(result, indent=2))]
@@ -2095,6 +2133,66 @@ async def handle_get_workout(args: dict) -> list[TextContent]:
         ]
 
 
+# Statuses that should be synced to Intervals.icu.
+# Any other status (completed, skipped, cancelled, rest_day, replaced) is protected.
+SYNCABLE_STATUSES = {"pending", "planned", "uploaded", "modified"}
+
+
+def _compute_start_time(session_date, session_id: str) -> str:
+    """Compute start time for an Intervals.icu event.
+
+    Args:
+        session_date: Date of the session (date object with .weekday()).
+        session_id: Session ID (e.g., "S081-04", "S081-06a", "S081-06b").
+
+    Returns:
+        Time string like "09:00:00" or "17:00:00".
+    """
+    day_of_week = session_date.weekday()  # 0=Monday, 5=Saturday
+    session_day_part = session_id.split("-")[-1]  # e.g., "04" or "06a"
+    session_suffix = session_day_part[-1] if session_day_part[-1].isalpha() else None
+
+    if session_suffix == "a":
+        return "09:00:00"  # Morning
+    elif session_suffix == "b":
+        return "15:00:00"  # Afternoon
+    else:
+        # Saturday → 09:00, other days → 17:00
+        return "09:00:00" if day_of_week == 5 else "17:00:00"
+
+
+def _load_workout_descriptions(week_id: str) -> dict[str, str]:
+    """Load full workout descriptions from {week_id}_workouts.txt.
+
+    Parses the === WORKOUT ... === / === FIN WORKOUT === delimited file
+    and returns a dict mapping intervals_name → full description.
+
+    Args:
+        week_id: Week ID (e.g., "S081").
+
+    Returns:
+        Dict {intervals_name: full_description}. Empty dict if file not found.
+    """
+    import re
+
+    from cyclisme_training_logs.planning.control_tower import planning_tower
+
+    workouts_file = planning_tower.planning_dir / f"{week_id}_workouts.txt"
+    if not workouts_file.exists():
+        return {}
+
+    content = workouts_file.read_text(encoding="utf-8")
+    pattern = r"=== WORKOUT (.*?) ===\n(.*?)\n=== FIN WORKOUT ==="
+    matches = re.findall(pattern, content, re.DOTALL)
+
+    descriptions = {}
+    for workout_name, workout_content in matches:
+        name = workout_name.strip()
+        descriptions[name] = workout_content.strip()
+
+    return descriptions
+
+
 async def handle_sync_week_to_intervals(args: dict) -> list[TextContent]:
     """Synchronize week planning to Intervals.icu."""
     from cyclisme_training_logs.config import create_intervals_client
@@ -2103,6 +2201,7 @@ async def handle_sync_week_to_intervals(args: dict) -> list[TextContent]:
     week_id = args["week_id"]
     dry_run = args.get("dry_run", False)
     force_update = args.get("force_update", False)
+    session_ids = args.get("session_ids")
 
     try:
         # Suppress all output to prevent JSON protocol pollution
@@ -2121,53 +2220,54 @@ async def handle_sync_week_to_intervals(args: dict) -> list[TextContent]:
             # Filter to workouts only
             remote_workouts = {e["id"]: e for e in remote_events if e.get("category") == "WORKOUT"}
 
+            # Load full workout descriptions from workouts.txt
+            workout_descriptions = _load_workout_descriptions(week_id)
+
             # Track changes
             to_create = []
             to_update = []
-            to_skip_completed = []
+            to_skip_protected = []
             warnings = []
             errors = []
 
+            # Determine sessions to process (selective sync support)
+            sessions_to_process = plan.planned_sessions
+            if session_ids:
+                session_ids_set = set(session_ids)
+                sessions_to_process = [
+                    s for s in plan.planned_sessions if s.session_id in session_ids_set
+                ]
+
             # Process each session
-            for session in plan.planned_sessions:
-                # PROTECTION: Never modify completed sessions
-                if session.status == "completed":
-                    to_skip_completed.append(
+            for session in sessions_to_process:
+                # PROTECTION: Only sync sessions with syncable statuses
+                if session.status not in SYNCABLE_STATUSES:
+                    to_skip_protected.append(
                         {
                             "session_id": session.session_id,
                             "name": session.name,
-                            "reason": "Session completed - protected from sync",
+                            "status": session.status,
+                            "reason": f"Session {session.status} - protected from sync",
                         }
                     )
                     continue
 
-                # Prepare event data
-                # Determine start time based on day and session suffix
-                day_of_week = session.session_date.weekday()  # 0=Monday, 5=Saturday
-                session_day_part = session.session_id.split("-")[-1]  # e.g., "04" or "06a"
-
-                # Check if session has letter suffix (double session)
-                session_suffix = session_day_part[-1] if session_day_part[-1].isalpha() else None
-
-                # Double session (a/b)
-                if session_suffix == "a":
-                    start_time = "09:00:00"  # Morning
-                elif session_suffix == "b":
-                    start_time = "15:00:00"  # Afternoon
-                else:
-                    # Saturday → 09:00, other days → 17:00
-                    start_time = "09:00:00" if day_of_week == 5 else "17:00:00"
+                # Compute start time using shared helper
+                start_time = _compute_start_time(session.session_date, session.session_id)
 
                 # Build Intervals.icu event name: S082-03-INT-SweetSpotBlocs-V001
                 intervals_name = (
                     f"{session.session_id}-{session.session_type}-{session.name}-{session.version}"
                 )
 
+                # Use full workout description from workouts.txt if available
+                full_description = workout_descriptions.get(intervals_name, session.description)
+
                 event_data = {
                     "category": "WORKOUT",
                     "type": "VirtualRide",
                     "name": intervals_name,
-                    "description": session.description,
+                    "description": full_description,
                     "start_date_local": f"{session.session_date}T{start_time}",
                 }
 
@@ -2178,12 +2278,14 @@ async def handle_sync_week_to_intervals(args: dict) -> list[TextContent]:
                         remote_event = remote_workouts[session.intervals_id]
 
                         # 🛡️ VALIDATION: Detect if remote was manually modified
+                        # Compare full intervals_name (not short session.name) and date
                         remote_name = remote_event.get("name", "")
-                        remote_desc = remote_event.get("description", "")
-                        local_name = session.name
-                        local_desc = session.description
+                        remote_start = remote_event.get("start_date_local", "")
+                        local_start = f"{session.session_date}T{start_time}"
 
-                        has_remote_changes = remote_name != local_name or remote_desc != local_desc
+                        has_remote_changes = (
+                            remote_name != intervals_name or remote_start != local_start
+                        )
 
                         if has_remote_changes and not force_update:
                             # Remote has been manually modified - warn about conflict
@@ -2193,7 +2295,7 @@ async def handle_sync_week_to_intervals(args: dict) -> list[TextContent]:
                                     "intervals_id": session.intervals_id,
                                     "type": "remote_modification_detected",
                                     "message": f"⚠️ Remote event {session.intervals_id} has been manually modified in Intervals.icu",
-                                    "local_name": local_name,
+                                    "local_name": intervals_name,
                                     "remote_name": remote_name,
                                     "suggestion": "Use force_update=true to overwrite remote changes",
                                 }
@@ -2205,12 +2307,18 @@ async def handle_sync_week_to_intervals(args: dict) -> list[TextContent]:
                         needs_update = force_update or has_remote_changes
 
                         if needs_update:
+                            # For updates: only send name + start_date_local,
+                            # NOT description (remote is source of truth for workout content)
+                            update_data = {
+                                "name": intervals_name,
+                                "start_date_local": f"{session.session_date}T{start_time}",
+                            }
                             to_update.append(
                                 {
                                     "session_id": session.session_id,
                                     "intervals_id": session.intervals_id,
                                     "name": session.name,
-                                    "event_data": event_data,
+                                    "event_data": update_data,
                                 }
                             )
                     else:
@@ -2302,7 +2410,7 @@ async def handle_sync_week_to_intervals(args: dict) -> list[TextContent]:
             "summary": {
                 "to_create": len(to_create),
                 "to_update": len(to_update),
-                "skipped_completed": len(to_skip_completed),
+                "skipped_protected": len(to_skip_protected),
                 "warnings": len(warnings),
                 "created": created_count if not dry_run else 0,
                 "updated": updated_count if not dry_run else 0,
@@ -2320,7 +2428,7 @@ async def handle_sync_week_to_intervals(args: dict) -> list[TextContent]:
                     }
                     for item in to_update
                 ],
-                "skipped_completed": to_skip_completed,
+                "skipped_protected": to_skip_protected,
             },
             "warnings": warnings if warnings else None,
             "errors": errors if errors else None,
