@@ -364,9 +364,10 @@ async def test_daily_sync_handler_full_flow(mock_intervals_client, mock_weekly_p
             # Should have expected structure
             assert "date" in result_json
             assert "completed_activities" in result_json
-            assert "new_activities" in result_json
             assert "activities" in result_json
             assert "status" in result_json
+            assert "week_id" in result_json
+            assert "ai_analysis" in result_json
 
             # Should not have error
             assert "error" not in result_json
