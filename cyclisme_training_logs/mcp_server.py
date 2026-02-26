@@ -3027,6 +3027,10 @@ async def handle_get_activity_intervals(args: dict) -> list[TextContent]:
             "decoupling",
             "average_speed",
             "total_elevation_gain",
+            "average_torque",
+            "min_torque",
+            "max_torque",
+            "avg_lr_balance",
         }
 
         intervals = []
