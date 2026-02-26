@@ -229,7 +229,8 @@ class DailySync:
             ai_config = get_ai_config()
             available = ai_config.get_available_providers()
             if available:
-                provider = available[0]
+                default = ai_config.default_provider
+                provider = default if default in available else available[0]
                 provider_config = ai_config.get_provider_config(provider)
                 self.ai_analyzer = AIProviderFactory.create(provider, provider_config)
                 self.prompt_generator = PromptGenerator()
