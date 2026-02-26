@@ -651,6 +651,22 @@ class DailySync:
             except Exception:
                 pass  # No planned workout available
 
+            # Get session prescription from local planning JSON
+            session_prescription = None
+            if "-" in activity_name:
+                parts = activity_name.split("-")
+                if len(parts) >= 2 and parts[0].startswith("S") and len(parts[0]) == 4:
+                    _week_id = parts[0]
+                    _session_id = f"{parts[0]}-{parts[1]}"
+                    try:
+                        plan = planning_tower.read_week(_week_id)
+                        for s in plan.planned_sessions:
+                            if s.session_id == _session_id:
+                                session_prescription = s.description
+                                break
+                    except Exception:
+                        pass  # Planning not found — skip
+
             # Generate complete prompt
             prompt = self.prompt_generator.generate_prompt(
                 activity_data=activity_data,
@@ -662,6 +678,7 @@ class DailySync:
                 planned_workout=planned_workout,
                 cycling_concepts=None,
                 periodization_context=periodization_context,
+                session_prescription=session_prescription,
             )
 
             # Get AI analysis

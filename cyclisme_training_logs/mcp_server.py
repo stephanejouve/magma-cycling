@@ -560,6 +560,20 @@ async def list_tools() -> list[Tool]:
             },
         ),
         Tool(
+            name="get-activity-intervals",
+            description="Get aggregated interval/lap data for a completed activity from Intervals.icu (avg power, HR, cadence per interval — ideal for block-by-block analysis)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "activity_id": {
+                        "type": "string",
+                        "description": "Activity ID (format: i107424849 or numeric)",
+                    },
+                },
+                "required": ["activity_id"],
+            },
+        ),
+        Tool(
             name="update-remote-session",
             description="Update an existing workout event on Intervals.icu (PROTECTION: cannot update completed sessions)",
             inputSchema={
@@ -1017,6 +1031,8 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             return await handle_list_remote_events(arguments)
         elif name == "get-activity-details":
             return await handle_get_activity_details(arguments)
+        elif name == "get-activity-intervals":
+            return await handle_get_activity_intervals(arguments)
         elif name == "update-remote-session":
             return await handle_update_remote_session(arguments)
         elif name == "get-athlete-profile":
@@ -2969,6 +2985,77 @@ async def handle_get_activity_details(args: dict) -> list[TextContent]:
                 text=json.dumps(
                     {
                         "error": f"Failed to get activity details: {str(e)}",
+                        "activity_id": activity_id,
+                    },
+                    indent=2,
+                ),
+            )
+        ]
+
+
+async def handle_get_activity_intervals(args: dict) -> list[TextContent]:
+    """Get aggregated interval/lap data for a completed activity from Intervals.icu."""
+    from cyclisme_training_logs.config import create_intervals_client
+
+    activity_id = args["activity_id"]
+
+    try:
+        with suppress_stdout_stderr():
+            client = create_intervals_client()
+            raw_intervals = client.get_activity_intervals(activity_id)
+
+        # Fields to keep from each interval (filter nulls to lighten context)
+        # Field names match Intervals.icu API response format
+        keep_fields = {
+            "type",
+            "label",
+            "start_index",
+            "end_index",
+            "elapsed_time",
+            "moving_time",
+            "distance",
+            "average_watts",
+            "weighted_average_watts",
+            "min_watts",
+            "max_watts",
+            "average_heartrate",
+            "min_heartrate",
+            "max_heartrate",
+            "average_cadence",
+            "intensity",
+            "training_load",
+            "decoupling",
+            "average_speed",
+            "total_elevation_gain",
+            "average_torque",
+            "min_torque",
+            "max_torque",
+            "avg_lr_balance",
+        }
+
+        intervals = []
+        total_elapsed = 0
+        for iv in raw_intervals:
+            filtered = {k: v for k, v in iv.items() if k in keep_fields and v is not None}
+            intervals.append(filtered)
+            total_elapsed += iv.get("elapsed_time", 0) or 0
+
+        result = {
+            "activity_id": activity_id,
+            "total_intervals": len(intervals),
+            "total_elapsed_seconds": total_elapsed,
+            "intervals": intervals,
+        }
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(
+                    {
+                        "error": f"Failed to get activity intervals: {str(e)}",
                         "activity_id": activity_id,
                     },
                     indent=2,
