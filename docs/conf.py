@@ -47,6 +47,9 @@ napoleon_use_rtype = True
 napoleon_use_keyword = True
 napoleon_custom_sections = [("Metadata", "params_style")]
 
+# Mock imports that fail at import time (MCP, HTTP transport)
+autodoc_mock_imports = ["mcp", "mcp_http_transport"]
+
 # Autodoc settings
 autodoc_default_options = {
     "members": True,
