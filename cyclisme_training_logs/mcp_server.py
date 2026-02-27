@@ -574,6 +574,43 @@ async def list_tools() -> list[Tool]:
             },
         ),
         Tool(
+            name="compare-intervals",
+            description="Compare interval data across multiple activities to track progression over time. Aligns intervals by label, calculates deltas and trends for metrics like power, HR, cadence, torque, decoupling.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "activity_ids": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Explicit list of activity IDs to compare (e.g. ['i122793458', 'i126184461'])",
+                    },
+                    "name_pattern": {
+                        "type": "string",
+                        "description": "Search activities by name substring (case-insensitive, e.g. 'CadenceVariations')",
+                    },
+                    "weeks_back": {
+                        "type": "integer",
+                        "description": "Number of weeks to search back (default: 6, used with name_pattern)",
+                        "default": 6,
+                    },
+                    "label_filter": {
+                        "type": "string",
+                        "description": "Only keep intervals whose label contains this substring (case-insensitive, e.g. '95rpm')",
+                    },
+                    "type_filter": {
+                        "type": "string",
+                        "enum": ["WORK", "RECOVERY"],
+                        "description": "Only keep intervals of this type",
+                    },
+                    "metrics": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Metrics to include in comparison (default: all numeric metrics)",
+                    },
+                },
+            },
+        ),
+        Tool(
             name="apply-workout-intervals",
             description="Apply custom interval boundaries to an Intervals.icu activity. Auto mode: parses workout prescription to compute intervals. Manual mode: accepts explicit interval list. Always dry_run=true by default (preview only).",
             inputSchema={
@@ -1069,6 +1106,8 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             return await handle_get_activity_details(arguments)
         elif name == "get-activity-intervals":
             return await handle_get_activity_intervals(arguments)
+        elif name == "compare-intervals":
+            return await handle_compare_intervals(arguments)
         elif name == "apply-workout-intervals":
             return await handle_apply_workout_intervals(arguments)
         elif name == "update-remote-session":
@@ -3074,6 +3113,259 @@ async def handle_get_activity_intervals(args: dict) -> list[TextContent]:
                         "error": f"Failed to get activity intervals: {str(e)}",
                         "activity_id": activity_id,
                     },
+                    indent=2,
+                ),
+            )
+        ]
+
+
+async def handle_compare_intervals(args: dict) -> list[TextContent]:
+    """Compare interval data across multiple activities to track progression."""
+    from cyclisme_training_logs.config import create_intervals_client
+
+    NUMERIC_METRICS = {
+        "elapsed_time",
+        "moving_time",
+        "distance",
+        "average_watts",
+        "weighted_average_watts",
+        "min_watts",
+        "max_watts",
+        "average_heartrate",
+        "min_heartrate",
+        "max_heartrate",
+        "average_cadence",
+        "intensity",
+        "training_load",
+        "decoupling",
+        "average_speed",
+        "total_elevation_gain",
+        "average_torque",
+        "min_torque",
+        "max_torque",
+        "avg_lr_balance",
+    }
+
+    activity_ids = args.get("activity_ids")
+    name_pattern = args.get("name_pattern")
+    weeks_back = args.get("weeks_back", 6)
+    label_filter = args.get("label_filter")
+    type_filter = args.get("type_filter")
+    requested_metrics = args.get("metrics")
+
+    # Validation: need at least one mode
+    if not activity_ids and not name_pattern:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(
+                    {
+                        "error": "Either 'activity_ids' or 'name_pattern' is required.",
+                    },
+                    indent=2,
+                ),
+            )
+        ]
+
+    # Validate metrics if provided
+    if requested_metrics:
+        invalid = [m for m in requested_metrics if m not in NUMERIC_METRICS]
+        if invalid:
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "error": f"Invalid metrics: {invalid}",
+                            "available_metrics": sorted(NUMERIC_METRICS),
+                        },
+                        indent=2,
+                    ),
+                )
+            ]
+
+    try:
+        with suppress_stdout_stderr():
+            client = create_intervals_client()
+
+        # Resolve activities
+        if activity_ids:
+            mode = "explicit"
+            resolved = []
+            for aid in activity_ids:
+                with suppress_stdout_stderr():
+                    act = client.get_activity(aid)
+                resolved.append(
+                    {
+                        "id": aid,
+                        "name": act.get("name", ""),
+                        "date": (act.get("start_date_local", "") or "")[:10],
+                    }
+                )
+        else:
+            mode = "search"
+            newest = date.today().isoformat()
+            oldest = (date.today() - timedelta(weeks=weeks_back)).isoformat()
+            with suppress_stdout_stderr():
+                all_activities = client.get_activities(oldest=oldest, newest=newest)
+            pattern_lower = name_pattern.lower()
+            resolved = [
+                {
+                    "id": a.get("id", ""),
+                    "name": a.get("name", ""),
+                    "date": (a.get("start_date_local", "") or "")[:10],
+                }
+                for a in all_activities
+                if pattern_lower in (a.get("name", "") or "").lower()
+            ]
+            resolved.sort(key=lambda x: x["date"])
+
+            if not resolved:
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps(
+                            {
+                                "error": f"No activities matching '{name_pattern}' in the last {weeks_back} weeks.",
+                            },
+                            indent=2,
+                        ),
+                    )
+                ]
+
+        # Fetch intervals for each activity
+        activity_intervals = {}
+        for act_info in resolved:
+            aid = act_info["id"]
+            with suppress_stdout_stderr():
+                raw = client.get_activity_intervals(aid)
+            activity_intervals[aid] = raw
+
+        # Build metadata
+        activity_metadata = {a["id"]: {"name": a["name"], "date": a["date"]} for a in resolved}
+        intervals_per_activity = {aid: len(ivs) for aid, ivs in activity_intervals.items()}
+
+        # Filter intervals
+        metrics_to_use = set(requested_metrics) if requested_metrics else NUMERIC_METRICS
+
+        filtered_intervals = {}
+        for aid, raw_ivs in activity_intervals.items():
+            kept = []
+            for iv in raw_ivs:
+                # Skip gap intervals (auto-inserted by Intervals.icu)
+                if (iv.get("elapsed_time") or 0) <= 2:
+                    continue
+                if type_filter and iv.get("type") != type_filter:
+                    continue
+                if label_filter and label_filter.lower() not in (iv.get("label", "") or "").lower():
+                    continue
+                kept.append(iv)
+            filtered_intervals[aid] = kept
+
+        # Align by label
+        from collections import defaultdict
+
+        label_groups = defaultdict(lambda: defaultdict(list))
+        for aid, ivs in filtered_intervals.items():
+            for iv in ivs:
+                label = (iv.get("label", "") or "").strip().lower()
+                label_groups[label][aid].append(iv)
+
+        # Preserve original label casing from first occurrence
+        label_display = {}
+        for aid, ivs in filtered_intervals.items():
+            for iv in ivs:
+                norm = (iv.get("label", "") or "").strip().lower()
+                if norm not in label_display:
+                    label_display[norm] = (iv.get("label", "") or "").strip()
+
+        # Build comparison
+        ordered_ids = [a["id"] for a in resolved]
+        comparison = []
+        for norm_label in sorted(label_groups.keys()):
+            group = label_groups[norm_label]
+            activities_data = []
+            values_by_metric = defaultdict(list)
+
+            for aid in ordered_ids:
+                if aid not in group:
+                    activities_data.append(
+                        {
+                            "activity_id": aid,
+                            "date": activity_metadata[aid]["date"],
+                            "data": None,
+                        }
+                    )
+                    continue
+
+                ivs = group[aid]
+                # Aggregate: average if multiple intervals with same label
+                agg = {}
+                for metric in metrics_to_use:
+                    vals = [iv[metric] for iv in ivs if metric in iv and iv[metric] is not None]
+                    if vals:
+                        avg_val = sum(vals) / len(vals)
+                        agg[metric] = round(avg_val, 2) if avg_val != int(avg_val) else int(avg_val)
+
+                activities_data.append(
+                    {
+                        "activity_id": aid,
+                        "date": activity_metadata[aid]["date"],
+                        "data": agg if agg else None,
+                    }
+                )
+
+                # Collect for trends
+                for metric, val in agg.items():
+                    values_by_metric[metric].append(val)
+
+            # Calculate trends
+            trends = {}
+            for metric, vals in values_by_metric.items():
+                if len(vals) >= 2:
+                    first = vals[0]
+                    last = vals[-1]
+                    delta = round(last - first, 2)
+                    delta_pct = round((delta / first) * 100, 1) if first != 0 else None
+                    avg = round(sum(vals) / len(vals), 2)
+                    trends[metric] = {
+                        "first": first,
+                        "last": last,
+                        "delta": delta,
+                        "delta_pct": delta_pct,
+                        "avg": avg,
+                    }
+
+            comparison.append(
+                {
+                    "label": label_display.get(norm_label, norm_label),
+                    "activities": activities_data,
+                    "trends": trends,
+                }
+            )
+
+        result = {
+            "mode": mode,
+            "activities_compared": len(resolved),
+            "activity_ids": ordered_ids,
+            "activity_metadata": activity_metadata,
+            "intervals_per_activity": intervals_per_activity,
+            "filters_applied": {
+                "label_filter": label_filter,
+                "type_filter": type_filter,
+                "metrics": requested_metrics if requested_metrics else "all",
+            },
+            "comparison": comparison,
+        }
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(
+                    {"error": f"Failed to compare intervals: {str(e)}"},
                     indent=2,
                 ),
             )
