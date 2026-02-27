@@ -3,7 +3,8 @@ Additional MCP handler tests — push mcp_server.py from 50% to 60%.
 
 Focuses on: handle_update_session, handle_sync_week_to_intervals,
 handle_get_metrics, handle_withings_get_sleep, handle_withings_get_weight,
-handle_withings_get_readiness, handle_apply_workout_intervals.
+handle_withings_get_readiness, handle_apply_workout_intervals,
+handle_compare_intervals.
 """
 
 import json
@@ -1291,3 +1292,264 @@ Cooldown
         assert "error" in data
         assert "API timeout" in data["error"]
         assert data["activity_id"] == "i127869034"
+
+
+class TestHandleCompareIntervals:
+    """Tests for handle_compare_intervals."""
+
+    def _make_interval(self, label, type_="WORK", elapsed_time=300, **kwargs):
+        """Helper to build a mock interval dict."""
+        iv = {
+            "type": type_,
+            "label": label,
+            "start_index": 0,
+            "end_index": 999,
+            "elapsed_time": elapsed_time,
+            "average_watts": 150,
+            "average_heartrate": 130,
+            "average_cadence": 90,
+            "average_torque": 40.0,
+        }
+        iv.update(kwargs)
+        return iv
+
+    @pytest.mark.asyncio
+    async def test_explicit_ids_success(self):
+        """3 explicit IDs with common labels → comparison + trends."""
+        from cyclisme_training_logs.mcp_server import handle_compare_intervals
+
+        mock_client = Mock()
+        mock_client.get_activity.side_effect = [
+            {"name": "S079-03-CAD", "start_date_local": "2026-02-04T10:00:00"},
+            {"name": "S080-03-CAD", "start_date_local": "2026-02-11T10:00:00"},
+            {"name": "S081-03-CAD", "start_date_local": "2026-02-18T10:00:00"},
+        ]
+        mock_client.get_activity_intervals.side_effect = [
+            [self._make_interval("Set1 95rpm", average_cadence=94)],
+            [self._make_interval("Set1 95rpm", average_cadence=95)],
+            [self._make_interval("Set1 95rpm", average_cadence=96)],
+        ]
+
+        args = {"activity_ids": ["i100", "i200", "i300"]}
+        with patch(INTERVALS_PATCH, return_value=mock_client):
+            result = await handle_compare_intervals(args)
+
+        data = json.loads(result[0].text)
+        assert data["mode"] == "explicit"
+        assert data["activities_compared"] == 3
+        assert len(data["comparison"]) == 1
+        assert data["comparison"][0]["label"] == "Set1 95rpm"
+        trends = data["comparison"][0]["trends"]
+        assert "average_cadence" in trends
+        assert trends["average_cadence"]["first"] == 94
+        assert trends["average_cadence"]["last"] == 96
+        assert trends["average_cadence"]["delta"] == 2
+
+    @pytest.mark.asyncio
+    async def test_search_mode_success(self):
+        """name_pattern + weeks_back → filters matching activities, mode='search'."""
+        from cyclisme_training_logs.mcp_server import handle_compare_intervals
+
+        mock_client = Mock()
+        mock_client.get_activities.return_value = [
+            {
+                "id": "i100",
+                "name": "S079-03-CadenceVariations",
+                "start_date_local": "2026-02-04T10:00:00",
+            },
+            {"id": "i200", "name": "S080-01-Endurance", "start_date_local": "2026-02-08T10:00:00"},
+            {
+                "id": "i300",
+                "name": "S081-03-CadenceVariations",
+                "start_date_local": "2026-02-18T10:00:00",
+            },
+        ]
+        mock_client.get_activity_intervals.side_effect = [
+            [self._make_interval("Set1")],
+            [self._make_interval("Set1")],
+        ]
+
+        args = {"name_pattern": "CadenceVariations", "weeks_back": 4}
+        with patch(INTERVALS_PATCH, return_value=mock_client):
+            result = await handle_compare_intervals(args)
+
+        data = json.loads(result[0].text)
+        assert data["mode"] == "search"
+        assert data["activities_compared"] == 2
+        assert "i200" not in data["activity_ids"]
+        assert "i100" in data["activity_ids"]
+        assert "i300" in data["activity_ids"]
+
+    @pytest.mark.asyncio
+    async def test_no_matching_activities_search(self):
+        """Pattern that matches nothing → error."""
+        from cyclisme_training_logs.mcp_server import handle_compare_intervals
+
+        mock_client = Mock()
+        mock_client.get_activities.return_value = [
+            {"id": "i100", "name": "S079-01-Endurance", "start_date_local": "2026-02-04T10:00:00"},
+        ]
+
+        args = {"name_pattern": "NonExistentWorkout"}
+        with patch(INTERVALS_PATCH, return_value=mock_client):
+            result = await handle_compare_intervals(args)
+
+        data = json.loads(result[0].text)
+        assert "error" in data
+        assert "NonExistentWorkout" in data["error"]
+
+    @pytest.mark.asyncio
+    async def test_missing_both_params(self):
+        """Neither activity_ids nor name_pattern → error."""
+        from cyclisme_training_logs.mcp_server import handle_compare_intervals
+
+        args = {}
+        result = await handle_compare_intervals(args)
+
+        data = json.loads(result[0].text)
+        assert "error" in data
+        assert "activity_ids" in data["error"]
+        assert "name_pattern" in data["error"]
+
+    @pytest.mark.asyncio
+    async def test_gap_intervals_filtered(self):
+        """Intervals with elapsed_time <= 2 are excluded."""
+        from cyclisme_training_logs.mcp_server import handle_compare_intervals
+
+        mock_client = Mock()
+        mock_client.get_activity.side_effect = [
+            {"name": "A1", "start_date_local": "2026-02-04T10:00:00"},
+        ]
+        mock_client.get_activity_intervals.return_value = [
+            self._make_interval("Set1", elapsed_time=300),
+            self._make_interval("Gap", elapsed_time=1),
+            self._make_interval("Set2", elapsed_time=300),
+        ]
+
+        args = {"activity_ids": ["i100"]}
+        with patch(INTERVALS_PATCH, return_value=mock_client):
+            result = await handle_compare_intervals(args)
+
+        data = json.loads(result[0].text)
+        labels = [c["label"] for c in data["comparison"]]
+        assert "Set1" in labels
+        assert "Set2" in labels
+        assert "Gap" not in labels
+
+    @pytest.mark.asyncio
+    async def test_label_filter(self):
+        """label_filter='95rpm' → only 95rpm intervals kept."""
+        from cyclisme_training_logs.mcp_server import handle_compare_intervals
+
+        mock_client = Mock()
+        mock_client.get_activity.side_effect = [
+            {"name": "A1", "start_date_local": "2026-02-04T10:00:00"},
+        ]
+        mock_client.get_activity_intervals.return_value = [
+            self._make_interval("Set1 95rpm"),
+            self._make_interval("Set2 80rpm"),
+            self._make_interval("Set3 95rpm"),
+        ]
+
+        args = {"activity_ids": ["i100"], "label_filter": "95rpm"}
+        with patch(INTERVALS_PATCH, return_value=mock_client):
+            result = await handle_compare_intervals(args)
+
+        data = json.loads(result[0].text)
+        labels = [c["label"] for c in data["comparison"]]
+        assert all("95rpm" in lbl for lbl in labels)
+        assert not any("80rpm" in lbl for lbl in labels)
+
+    @pytest.mark.asyncio
+    async def test_type_filter_work_only(self):
+        """type_filter='WORK' → only WORK intervals kept."""
+        from cyclisme_training_logs.mcp_server import handle_compare_intervals
+
+        mock_client = Mock()
+        mock_client.get_activity.side_effect = [
+            {"name": "A1", "start_date_local": "2026-02-04T10:00:00"},
+        ]
+        mock_client.get_activity_intervals.return_value = [
+            self._make_interval("Set1", type_="WORK"),
+            self._make_interval("Recovery", type_="RECOVERY"),
+        ]
+
+        args = {"activity_ids": ["i100"], "type_filter": "WORK"}
+        with patch(INTERVALS_PATCH, return_value=mock_client):
+            result = await handle_compare_intervals(args)
+
+        data = json.loads(result[0].text)
+        labels = [c["label"] for c in data["comparison"]]
+        assert "Set1" in labels
+        assert "Recovery" not in labels
+
+    @pytest.mark.asyncio
+    async def test_metrics_selection(self):
+        """metrics=['average_watts','average_heartrate'] → only those 2 in data."""
+        from cyclisme_training_logs.mcp_server import handle_compare_intervals
+
+        mock_client = Mock()
+        mock_client.get_activity.side_effect = [
+            {"name": "A1", "start_date_local": "2026-02-04T10:00:00"},
+        ]
+        mock_client.get_activity_intervals.return_value = [
+            self._make_interval(
+                "Set1", average_watts=200, average_heartrate=140, average_cadence=95
+            ),
+        ]
+
+        args = {
+            "activity_ids": ["i100"],
+            "metrics": ["average_watts", "average_heartrate"],
+        }
+        with patch(INTERVALS_PATCH, return_value=mock_client):
+            result = await handle_compare_intervals(args)
+
+        data = json.loads(result[0].text)
+        interval_data = data["comparison"][0]["activities"][0]["data"]
+        assert "average_watts" in interval_data
+        assert "average_heartrate" in interval_data
+        assert "average_cadence" not in interval_data
+
+    @pytest.mark.asyncio
+    async def test_invalid_metrics(self):
+        """metrics=['bogus'] → error with available_metrics list."""
+        from cyclisme_training_logs.mcp_server import handle_compare_intervals
+
+        args = {"activity_ids": ["i100"], "metrics": ["bogus"]}
+        result = await handle_compare_intervals(args)
+
+        data = json.loads(result[0].text)
+        assert "error" in data
+        assert "bogus" in data["error"]
+        assert "available_metrics" in data
+
+    @pytest.mark.asyncio
+    async def test_label_mismatch_across_activities(self):
+        """A has Set1+Set2, B has Set1 only → Set2 data=null for B."""
+        from cyclisme_training_logs.mcp_server import handle_compare_intervals
+
+        mock_client = Mock()
+        mock_client.get_activity.side_effect = [
+            {"name": "A1", "start_date_local": "2026-02-04T10:00:00"},
+            {"name": "A2", "start_date_local": "2026-02-11T10:00:00"},
+        ]
+        mock_client.get_activity_intervals.side_effect = [
+            [
+                self._make_interval("Set1"),
+                self._make_interval("Set2"),
+            ],
+            [
+                self._make_interval("Set1"),
+            ],
+        ]
+
+        args = {"activity_ids": ["i100", "i200"]}
+        with patch(INTERVALS_PATCH, return_value=mock_client):
+            result = await handle_compare_intervals(args)
+
+        data = json.loads(result[0].text)
+        set2_entry = [c for c in data["comparison"] if c["label"] == "Set2"][0]
+        # First activity has data, second has null
+        assert set2_entry["activities"][0]["data"] is not None
+        assert set2_entry["activities"][1]["data"] is None
