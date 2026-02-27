@@ -441,6 +441,80 @@ class TestHandleSyncWeekToIntervals:
 # =======================
 
 
+# =======================
+# TestSyncValidationGate
+# =======================
+
+
+class TestSyncValidationGate:
+    """Validation gate rejects invalid workout descriptions before sync."""
+
+    @pytest.mark.asyncio
+    async def test_sync_rejects_invalid_workout(self, mock_plan, mock_session):
+        """Session with '5min' duration → validation error, no API create."""
+        from cyclisme_training_logs.mcp_server import handle_sync_week_to_intervals
+
+        mock_session.intervals_id = None
+        mock_session.status = "pending"
+        mock_plan.planned_sessions = [mock_session]
+        tower = make_tower(mock_plan)
+        mock_client = Mock()
+        mock_client.get_events.return_value = []
+
+        # Workout with invalid duration (5min instead of 5m)
+        invalid_workout = "Warmup\n- 5min ramp 50-65%\n\nMain set\n- 10m 90%"
+        workout_descriptions = {
+            f"{mock_session.session_id}-{mock_session.session_type}-{mock_session.name}-{mock_session.version}": invalid_workout,
+        }
+
+        args = {"week_id": "S081", "dry_run": False}
+        with patch(TOWER_PATCH, tower):
+            with patch(INTERVALS_PATCH, return_value=mock_client):
+                with patch(LOAD_WORKOUTS_PATCH, return_value=workout_descriptions):
+                    result = await handle_sync_week_to_intervals(args)
+        data = json.loads(result[0].text)
+        # Session should be rejected — no creation
+        assert data["summary"]["to_create"] == 0
+        assert data["summary"]["created"] == 0
+        assert len(data["errors"]) > 0
+        assert "validation failed" in data["errors"][0].lower()
+        mock_client.create_event.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_sync_accepts_valid_workout(self, mock_plan, mock_session):
+        """Session with valid '5m' duration → create API called normally."""
+        from cyclisme_training_logs.mcp_server import handle_sync_week_to_intervals
+
+        mock_session.intervals_id = None
+        mock_session.status = "pending"
+        mock_plan.planned_sessions = [mock_session]
+        tower = make_tower(mock_plan)
+        mock_client = Mock()
+        mock_client.get_events.return_value = []
+        mock_client.create_event.return_value = {"id": "evt999"}
+
+        # Valid workout description
+        valid_workout = "Warmup\n- 5m ramp 50-65%\n\nMain set\n- 10m 90%"
+        workout_descriptions = {
+            f"{mock_session.session_id}-{mock_session.session_type}-{mock_session.name}-{mock_session.version}": valid_workout,
+        }
+
+        args = {"week_id": "S081", "dry_run": False}
+        with patch(TOWER_PATCH, tower):
+            with patch(INTERVALS_PATCH, return_value=mock_client):
+                with patch(LOAD_WORKOUTS_PATCH, return_value=workout_descriptions):
+                    result = await handle_sync_week_to_intervals(args)
+        data = json.loads(result[0].text)
+        assert data["summary"]["to_create"] == 1
+        assert data["summary"]["created"] == 1
+        mock_client.create_event.assert_called_once()
+
+
+# =======================
+# TestHandleGetMetrics
+# =======================
+
+
 class TestHandleGetMetrics:
     @pytest.mark.asyncio
     async def test_success_returns_wellness_data(self):
