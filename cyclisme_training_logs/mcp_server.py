@@ -2388,6 +2388,23 @@ async def handle_sync_week_to_intervals(args: dict) -> list[TextContent]:
                     "start_date_local": f"{session.session_date}T{start_time}",
                 }
 
+                # Validate workout description before creating remote event
+                if full_description and full_description.strip():
+                    from cyclisme_training_logs.intervals_format_validator import (
+                        IntervalsFormatValidator,
+                    )
+
+                    validator = IntervalsFormatValidator()
+                    is_valid, val_errors, _val_warnings = validator.validate_workout(
+                        full_description
+                    )
+                    if not is_valid:
+                        errors.append(
+                            f"Session {session.session_id}: workout validation failed — {val_errors}. "
+                            f"Fix with validate-workout tool, then retry sync."
+                        )
+                        continue
+
                 if session.intervals_id:
                     # Check if event exists remotely
                     if session.intervals_id in remote_workouts:
