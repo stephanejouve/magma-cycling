@@ -70,6 +70,7 @@ class IntervalsFormatValidator:
     SECTION_WITH_REP_PATTERN = r"^(.*?)\s+(\d+x)\s*$"  # "Main set 3x"
     INTERVAL_PATTERN = r"^\s*-\s+\d+[msh].*$"  # "- 10m 90% 85rpm"
     MARKDOWN_PATTERN = r"\*\*|###|`|__|~~"  # Markdown interdit
+    INVALID_DURATION_PATTERN = r"\d+(?:min|sec|hr|hours?|mins|secs)\b"
 
     # Sections valides
     VALID_SECTIONS = ["Warmup", "Main set", "Cooldown", "Block"]
@@ -128,14 +129,14 @@ class IntervalsFormatValidator:
             # Détecter répétition seule (ex: "3x")
             if re.match(self.REPETITION_PATTERN, stripped):
                 self.errors.append(
-                    f"Ligne {i+1}: Répétition '{stripped}' seule. "
+                    f"Ligne {i + 1}: Répétition '{stripped}' seule. "
                     f"Doit être sur ligne section (ex: 'Main set 3x')"
                 )
 
             # Détecter répétition dans intervalle (ex: "- 3x 10m 90%")
             if stripped.startswith("-") and re.search(r"\b\d+x\b", stripped):
                 self.errors.append(
-                    f"Ligne {i+1}: Répétition dans intervalle '{stripped}'. "
+                    f"Ligne {i + 1}: Répétition dans intervalle '{stripped}'. "
                     f"Format incorrect. Utiliser 'Main set Nx' avant le bloc."
                 )
 
@@ -150,7 +151,7 @@ class IntervalsFormatValidator:
 
                 if not is_valid_section:
                     self.warnings.append(
-                        f"Ligne {i+1}: Section '{section_name} {repetition}' "
+                        f"Ligne {i + 1}: Section '{section_name} {repetition}' "
                         f"non standard. Sections valides: {', '.join(self.VALID_SECTIONS)}"
                     )
 
@@ -168,9 +169,25 @@ class IntervalsFormatValidator:
             if not stripped or not stripped.startswith("-"):
                 continue
 
+            # Vérifier suffixes de durée invalides (min, sec, hr, etc.)
+            invalid_match = re.search(self.INVALID_DURATION_PATTERN, stripped)
+            if invalid_match:
+                self.errors.append(
+                    f"Ligne {i + 1}: Durée invalide '{invalid_match.group()}'. "
+                    f"Utiliser s, m ou h (ex: 5m, 30s, 2h)"
+                )
+
+            # Vérifier format ramp (tiret obligatoire entre bornes)
+            if re.search(r"\bramp\b", stripped, re.IGNORECASE):
+                if not re.search(r"\bramp\s+\d+-\d+%", stripped, re.IGNORECASE):
+                    self.errors.append(
+                        f"Ligne {i + 1}: Format ramp invalide dans '{stripped}'. "
+                        f"Format attendu: 'ramp XX-YY%' (ex: 'ramp 50-65%')"
+                    )
+
             # Vérifier présence durée
             if not re.search(r"\d+[msh]", stripped):
-                self.warnings.append(f"Ligne {i+1}: Aucune durée détectée dans '{stripped}'")
+                self.warnings.append(f"Ligne {i + 1}: Aucune durée détectée dans '{stripped}'")
 
     def fix_repetition_format(self, workout_text: str) -> str:
         """
@@ -191,7 +208,7 @@ class IntervalsFormatValidator:
             # Détecter répétition dans intervalle
             if stripped.startswith("-") and re.search(r"\b(\d+)x\b", stripped):
                 errors_found.append(
-                    f"Ligne {i+1}: Impossible de corriger automatiquement "
+                    f"Ligne {i + 1}: Impossible de corriger automatiquement "
                     f"'{stripped}'. Restructurer manuellement."
                 )
                 corrected.append(line)
@@ -209,7 +226,7 @@ class IntervalsFormatValidator:
                 if not is_valid_section:
                     corrected_line = f"Main set {repetition}"
                     corrected.append(corrected_line)
-                    print(f"⚠️  Ligne {i+1} corrigée: " f"'{stripped}' → '{corrected_line}'")
+                    print(f"⚠️  Ligne {i + 1} corrigée: " f"'{stripped}' → '{corrected_line}'")
                     continue
 
             # Ligne OK
