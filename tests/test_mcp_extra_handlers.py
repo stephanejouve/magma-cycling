@@ -33,7 +33,6 @@ def mock_session():
     s.session_type = "INT"
     s.version = "V001"
     s.tss_planned = 65
-    s.planned_tss = 65
     s.duration_min = 60
     s.description = "Tempo 3x10min"
     s.status = "pending"

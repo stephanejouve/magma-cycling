@@ -4030,9 +4030,9 @@ async def handle_validate_week_consistency(args: dict) -> list[TextContent]:
 
             # Check TSS coherence (not too high for a single day)
             for session in plan.planned_sessions:
-                if session.planned_tss and session.planned_tss > 300:
+                if session.tss_planned and session.tss_planned > 300:
                     warnings.append(
-                        f"{session.session_id}: Very high TSS ({session.planned_tss}) - verify if intentional"
+                        f"{session.session_id}: Very high TSS ({session.tss_planned}) - verify if intentional"
                     )
 
             # Check for empty descriptions
@@ -4042,7 +4042,7 @@ async def handle_validate_week_consistency(args: dict) -> list[TextContent]:
 
             # Check week TSS total
             total_tss = sum(
-                s.planned_tss or 0 for s in plan.planned_sessions if s.status != "cancelled"
+                s.tss_planned or 0 for s in plan.planned_sessions if s.status != "cancelled"
             )
             if total_tss > 800:
                 warnings.append(f"Very high weekly TSS ({total_tss}) - verify training load")
@@ -4312,8 +4312,8 @@ async def handle_export_week_to_json(args: dict) -> list[TextContent]:
                         "session_date": str(s.session_date),
                         "category": s.category,
                         "status": s.status,
-                        "planned_tss": s.planned_tss,
-                        "planned_duration": s.planned_duration,
+                        "planned_tss": s.tss_planned,
+                        "planned_duration": s.duration_min,
                         "description": s.description,
                         "intervals_id": s.intervals_id,
                     }
@@ -4398,8 +4398,8 @@ async def handle_restore_week_from_backup(args: dict) -> list[TextContent]:
                     session_date=date_type.fromisoformat(s["session_date"]),
                     category=s["category"],
                     status=s["status"],
-                    planned_tss=s.get("planned_tss"),
-                    planned_duration=s.get("planned_duration"),
+                    tss_planned=s.get("planned_tss", 0),
+                    duration_min=s.get("planned_duration", 0),
                     description=s["description"],
                     intervals_id=s.get("intervals_id"),
                 )
@@ -4479,7 +4479,7 @@ async def handle_analyze_training_patterns(args: dict) -> list[TextContent]:
                                     {
                                         "session_id": session.session_id,
                                         "activity_id": event["paired_activity_id"],
-                                        "planned_tss": session.planned_tss,
+                                        "planned_tss": session.tss_planned,
                                         "actual_tss": activity.get("icu_training_load"),
                                         "actual_if": activity.get("icu_intensity"),
                                         "actual_duration": activity.get("moving_time", 0) / 60,
@@ -4504,7 +4504,7 @@ async def handle_analyze_training_patterns(args: dict) -> list[TextContent]:
             ]
 
             planned_tss = sum(
-                s.planned_tss or 0 for s in current_plan.planned_sessions if s.status != "cancelled"
+                s.tss_planned or 0 for s in current_plan.planned_sessions if s.status != "cancelled"
             )
             actual_tss = sum(a["actual_tss"] or 0 for a in activities_data)
 
@@ -4540,8 +4540,8 @@ async def handle_analyze_training_patterns(args: dict) -> list[TextContent]:
                         "date": str(s.session_date),
                         "category": s.category,
                         "status": s.status,
-                        "planned_tss": s.planned_tss,
-                        "planned_duration": s.planned_duration,
+                        "planned_tss": s.tss_planned,
+                        "planned_duration": s.duration_min,
                         "description": s.description[:100] if s.description else "",
                         "intervals_id": s.intervals_id,
                     }
@@ -4574,7 +4574,7 @@ async def handle_analyze_training_patterns(args: dict) -> list[TextContent]:
                     prev_completed = [
                         s for s in prev_plan.planned_sessions if s.status == "completed"
                     ]
-                    prev_tss = sum(s.planned_tss or 0 for s in prev_completed)
+                    prev_tss = sum(s.tss_planned or 0 for s in prev_completed)
 
                     result["previous_week"] = {
                         "week_id": prev_week_id,
