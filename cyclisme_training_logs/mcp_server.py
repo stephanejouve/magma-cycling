@@ -1059,6 +1059,36 @@ async def list_tools() -> list[Tool]:
                 "required": ["week_id", "session_id"],
             },
         ),
+        Tool(
+            name="rename-session",
+            description="Rename a session_id within a weekly plan. Updates remote event name if synced.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "week_id": {
+                        "type": "string",
+                        "description": "Week ID (e.g. S082)",
+                        "pattern": "^S\\d{3}$",
+                    },
+                    "session_id": {
+                        "type": "string",
+                        "description": "Current session ID (e.g. S082-06)",
+                        "pattern": "^S\\d{3}-\\d{2}[a-z]?$",
+                    },
+                    "new_session_id": {
+                        "type": "string",
+                        "description": "New session ID (e.g. S082-06b)",
+                        "pattern": "^S\\d{3}-\\d{2}[a-z]?$",
+                    },
+                    "sync_remote": {
+                        "type": "boolean",
+                        "description": "Update remote event in Intervals.icu if synced (default: true)",
+                        "default": True,
+                    },
+                },
+                "required": ["week_id", "session_id", "new_session_id"],
+            },
+        ),
     ]
 
 
@@ -1154,6 +1184,8 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             return await handle_withings_analyze_trends(arguments)
         elif name == "withings-enrich-session":
             return await handle_withings_enrich_session(arguments)
+        elif name == "rename-session":
+            return await handle_rename_session(arguments)
         else:
             raise ValueError(f"Unknown tool: {name}")
 
@@ -1708,6 +1740,171 @@ async def handle_modify_session_details(args: dict) -> list[TextContent]:
             TextContent(
                 type="text",
                 text=json.dumps({"error": f"Error modifying session: {str(e)}"}, indent=2),
+            )
+        ]
+
+
+async def handle_rename_session(args: dict) -> list[TextContent]:
+    """Rename a session_id within a weekly plan."""
+    import re
+
+    from cyclisme_training_logs.config import create_intervals_client
+    from cyclisme_training_logs.planning.control_tower import planning_tower
+
+    week_id = args["week_id"]
+    session_id = args["session_id"]
+    new_session_id = args["new_session_id"]
+    sync_remote = args.get("sync_remote", True)
+
+    # Validate format
+    if not re.match(r"^S\d{3}-\d{2}[a-z]?$", new_session_id):
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(
+                    {
+                        "error": f"Invalid session_id format: '{new_session_id}'. "
+                        f"Expected: S###-##[a-z]"
+                    },
+                    indent=2,
+                ),
+            )
+        ]
+
+    # Validate same week
+    new_week = new_session_id.split("-")[0]
+    if new_week != week_id:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(
+                    {
+                        "error": f"Cannot rename across weeks: "
+                        f"{session_id} ({week_id}) → {new_session_id} ({new_week})"
+                    },
+                    indent=2,
+                ),
+            )
+        ]
+
+    remote_updated = False
+    old_intervals_name = None
+    new_intervals_name = None
+    intervals_id = None
+    session_date = None
+
+    try:
+        with suppress_stdout_stderr():
+            with planning_tower.modify_week(
+                week_id,
+                requesting_script="mcp-server",
+                reason=f"MCP: Rename {session_id} → {new_session_id}",
+            ) as plan:
+                # Find session
+                session = None
+                for s in plan.planned_sessions:
+                    if s.session_id == session_id:
+                        session = s
+                        break
+                if not session:
+                    raise ValueError(f"Session {session_id} not found in {week_id}")
+
+                # Protect completed sessions
+                if session.status == "completed":
+                    raise ValueError(
+                        f"⛔ PROTECTION: Cannot rename {session_id} — " f"status is 'completed'"
+                    )
+
+                # Check uniqueness
+                for s in plan.planned_sessions:
+                    if s.session_id == new_session_id:
+                        raise ValueError(f"Session {new_session_id} already exists in {week_id}")
+
+                # Build intervals names for reference
+                old_intervals_name = (
+                    f"{session_id}-{session.session_type}-" f"{session.name}-{session.version}"
+                )
+
+                # Rename
+                session.session_id = new_session_id
+
+                new_intervals_name = (
+                    f"{new_session_id}-{session.session_type}-" f"{session.name}-{session.version}"
+                )
+                intervals_id = session.intervals_id
+                session_date = session.session_date
+
+        # Sync remote if needed (outside modify_week to avoid long lock)
+        if sync_remote and intervals_id:
+            try:
+                client = create_intervals_client()
+                new_start_time = _compute_start_time(session_date, new_session_id)
+                client.update_event(
+                    intervals_id,
+                    {
+                        "name": new_intervals_name,
+                        "start_date_local": f"{session_date}T{new_start_time}",
+                    },
+                )
+                remote_updated = True
+            except Exception as e:
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps(
+                            {
+                                "status": "partial",
+                                "message": f"Session renamed locally but remote update failed: {e}",
+                                "week_id": week_id,
+                                "old_session_id": session_id,
+                                "new_session_id": new_session_id,
+                            },
+                            indent=2,
+                        ),
+                    )
+                ]
+
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(
+                    {
+                        "status": "success",
+                        "week_id": week_id,
+                        "old_session_id": session_id,
+                        "new_session_id": new_session_id,
+                        "old_intervals_name": old_intervals_name,
+                        "new_intervals_name": new_intervals_name,
+                        "remote_updated": remote_updated,
+                        "intervals_id": intervals_id,
+                    },
+                    indent=2,
+                ),
+            )
+        ]
+
+    except FileNotFoundError:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(
+                    {"error": f"Planning file not found for week {week_id}"},
+                    indent=2,
+                ),
+            )
+        ]
+    except ValueError as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps({"error": str(e)}, indent=2),
+            )
+        ]
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps({"error": f"Error renaming session: {str(e)}"}, indent=2),
             )
         ]
 
