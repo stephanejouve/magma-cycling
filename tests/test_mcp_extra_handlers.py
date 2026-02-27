@@ -3,7 +3,7 @@ Additional MCP handler tests — push mcp_server.py from 50% to 60%.
 
 Focuses on: handle_update_session, handle_sync_week_to_intervals,
 handle_get_metrics, handle_withings_get_sleep, handle_withings_get_weight,
-handle_withings_get_readiness.
+handle_withings_get_readiness, handle_apply_workout_intervals.
 """
 
 import json
@@ -1120,3 +1120,174 @@ class TestHandleGetActivityIntervals:
         assert data["total_intervals"] == 0
         assert data["total_elapsed_seconds"] == 0
         assert data["intervals"] == []
+
+
+WORKOUT_PARSER_PATCH = "cyclisme_training_logs.workout_parser.load_workout_descriptions"
+
+
+class TestHandleApplyWorkoutIntervals:
+    """Tests for handle_apply_workout_intervals."""
+
+    @pytest.mark.asyncio
+    async def test_manual_mode_dry_run(self):
+        """Manual mode with dry_run=true returns preview without PUT."""
+        from cyclisme_training_logs.mcp_server import handle_apply_workout_intervals
+
+        mock_client = Mock()
+
+        intervals = [
+            {"type": "RECOVERY", "label": "Warmup", "start_index": 0, "end_index": 499},
+            {"type": "WORK", "label": "Set1", "start_index": 500, "end_index": 999},
+        ]
+        args = {
+            "activity_id": "i127869034",
+            "intervals": intervals,
+            "dry_run": True,
+        }
+
+        with patch(INTERVALS_PATCH, return_value=mock_client):
+            result = await handle_apply_workout_intervals(args)
+
+        data = json.loads(result[0].text)
+        assert data["mode"] == "manual"
+        assert data["dry_run"] is True
+        assert data["intervals_count"] == 2
+        assert data["intervals"] == intervals
+        # PUT should NOT have been called
+        mock_client.put_activity_intervals.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_manual_mode_apply(self):
+        """Manual mode with dry_run=false calls PUT."""
+        from cyclisme_training_logs.mcp_server import handle_apply_workout_intervals
+
+        mock_client = Mock()
+        mock_client.put_activity_intervals.return_value = {"status": "ok"}
+
+        intervals = [
+            {"type": "WORK", "label": "Set1", "start_index": 0, "end_index": 999},
+        ]
+        args = {
+            "activity_id": "i127869034",
+            "intervals": intervals,
+            "dry_run": False,
+        }
+
+        with patch(INTERVALS_PATCH, return_value=mock_client):
+            result = await handle_apply_workout_intervals(args)
+
+        data = json.loads(result[0].text)
+        assert data["mode"] == "manual"
+        assert data["dry_run"] is False
+        assert data["applied"] is True
+        mock_client.put_activity_intervals.assert_called_once_with("i127869034", intervals)
+
+    @pytest.mark.asyncio
+    async def test_auto_mode_dry_run(self):
+        """Auto mode parses workout and returns preview."""
+        from cyclisme_training_logs.mcp_server import handle_apply_workout_intervals
+
+        mock_client = Mock()
+        mock_client.get_activity_streams.return_value = [{"type": "watts", "data": [0] * 3000}]
+
+        workout_text = """\
+Variations Cadence (40min, 32 TSS)
+
+Warmup
+- 5m ramp 50-65% 85rpm
+
+Main set 3x
+- 3m 70% 95rpm
+- 2m 70% 80rpm
+- 3m 70% 105rpm
+- 2m 65% 85rpm
+
+Cooldown
+- 5m ramp 65-50% 85rpm"""
+
+        mock_descriptions = {"S082-02-TEC-CadenceVariations-V001": workout_text}
+
+        args = {
+            "activity_id": "i127869034",
+            "session_id": "S082-02",
+            "dry_run": True,
+        }
+
+        with (
+            patch(INTERVALS_PATCH, return_value=mock_client),
+            patch(WORKOUT_PARSER_PATCH, return_value=mock_descriptions),
+        ):
+            result = await handle_apply_workout_intervals(args)
+
+        data = json.loads(result[0].text)
+        assert data["mode"] == "auto"
+        assert data["dry_run"] is True
+        assert data["session_id"] == "S082-02"
+        assert data["stream_points"] == 3000
+        assert data["intervals_count"] > 0
+        assert "message" in data
+        # PUT should NOT have been called
+        mock_client.put_activity_intervals.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_auto_no_session_in_name(self):
+        """Activity name without session pattern → error with hint."""
+        from cyclisme_training_logs.mcp_server import handle_apply_workout_intervals
+
+        mock_client = Mock()
+        mock_client.get_activity.return_value = {"name": "Morning Ride"}
+
+        args = {"activity_id": "i127869034"}
+
+        with patch(INTERVALS_PATCH, return_value=mock_client):
+            result = await handle_apply_workout_intervals(args)
+
+        data = json.loads(result[0].text)
+        assert "error" in data
+        assert "hint" in data
+        assert "session_id" in data["hint"].lower() or "session_id" in data["hint"]
+
+    @pytest.mark.asyncio
+    async def test_default_dry_run_true(self):
+        """dry_run defaults to true when not specified (safety)."""
+        from cyclisme_training_logs.mcp_server import handle_apply_workout_intervals
+
+        mock_client = Mock()
+
+        intervals = [
+            {"type": "WORK", "label": "Set1", "start_index": 0, "end_index": 999},
+        ]
+        args = {
+            "activity_id": "i127869034",
+            "intervals": intervals,
+            # dry_run not specified → should default to True
+        }
+
+        with patch(INTERVALS_PATCH, return_value=mock_client):
+            result = await handle_apply_workout_intervals(args)
+
+        data = json.loads(result[0].text)
+        assert data["dry_run"] is True
+        mock_client.put_activity_intervals.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_api_error(self):
+        """API exception → JSON error response."""
+        from cyclisme_training_logs.mcp_server import handle_apply_workout_intervals
+
+        mock_client = Mock()
+        mock_client.put_activity_intervals.side_effect = RuntimeError("API timeout")
+
+        args = {
+            "activity_id": "i127869034",
+            "intervals": [{"type": "WORK", "label": "S1", "start_index": 0, "end_index": 99}],
+            "dry_run": False,
+        }
+
+        with patch(INTERVALS_PATCH, return_value=mock_client):
+            result = await handle_apply_workout_intervals(args)
+
+        data = json.loads(result[0].text)
+        assert "error" in data
+        assert "API timeout" in data["error"]
+        assert data["activity_id"] == "i127869034"

@@ -574,6 +574,42 @@ async def list_tools() -> list[Tool]:
             },
         ),
         Tool(
+            name="apply-workout-intervals",
+            description="Apply custom interval boundaries to an Intervals.icu activity. Auto mode: parses workout prescription to compute intervals. Manual mode: accepts explicit interval list. Always dry_run=true by default (preview only).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "activity_id": {
+                        "type": "string",
+                        "description": "Activity ID (format: i107424849 or numeric)",
+                    },
+                    "session_id": {
+                        "type": "string",
+                        "description": "Session ID (e.g. S082-02). If omitted, extracted from activity name.",
+                    },
+                    "intervals": {
+                        "type": "array",
+                        "description": "Manual mode: explicit interval list [{type, label, start_index, end_index}]. If omitted, auto-computes from workout prescription.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "type": {"type": "string"},
+                                "label": {"type": "string"},
+                                "start_index": {"type": "integer"},
+                                "end_index": {"type": "integer"},
+                            },
+                            "required": ["type", "label", "start_index", "end_index"],
+                        },
+                    },
+                    "dry_run": {
+                        "type": "boolean",
+                        "description": "Preview only, do not modify (default: true)",
+                    },
+                },
+                "required": ["activity_id"],
+            },
+        ),
+        Tool(
             name="update-remote-session",
             description="Update an existing workout event on Intervals.icu (PROTECTION: cannot update completed sessions)",
             inputSchema={
@@ -1033,6 +1069,8 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             return await handle_get_activity_details(arguments)
         elif name == "get-activity-intervals":
             return await handle_get_activity_intervals(arguments)
+        elif name == "apply-workout-intervals":
+            return await handle_apply_workout_intervals(arguments)
         elif name == "update-remote-session":
             return await handle_update_remote_session(arguments)
         elif name == "get-athlete-profile":
@@ -2226,33 +2264,11 @@ def _compute_start_time(session_date, session_id: str) -> str:
 def _load_workout_descriptions(week_id: str) -> dict[str, str]:
     """Load full workout descriptions from {week_id}_workouts.txt.
 
-    Parses the === WORKOUT ... === / === FIN WORKOUT === delimited file
-    and returns a dict mapping intervals_name → full description.
-
-    Args:
-        week_id: Week ID (e.g., "S081").
-
-    Returns:
-        Dict {intervals_name: full_description}. Empty dict if file not found.
+    Delegates to workout_parser.load_workout_descriptions.
     """
-    import re
+    from cyclisme_training_logs.workout_parser import load_workout_descriptions
 
-    from cyclisme_training_logs.planning.control_tower import planning_tower
-
-    workouts_file = planning_tower.planning_dir / f"{week_id}_workouts.txt"
-    if not workouts_file.exists():
-        return {}
-
-    content = workouts_file.read_text(encoding="utf-8")
-    pattern = r"=== WORKOUT (.*?) ===\n(.*?)\n=== FIN WORKOUT ==="
-    matches = re.findall(pattern, content, re.DOTALL)
-
-    descriptions = {}
-    for workout_name, workout_content in matches:
-        name = workout_name.strip()
-        descriptions[name] = workout_content.strip()
-
-    return descriptions
+    return load_workout_descriptions(week_id)
 
 
 async def handle_sync_week_to_intervals(args: dict) -> list[TextContent]:
@@ -3056,6 +3072,203 @@ async def handle_get_activity_intervals(args: dict) -> list[TextContent]:
                 text=json.dumps(
                     {
                         "error": f"Failed to get activity intervals: {str(e)}",
+                        "activity_id": activity_id,
+                    },
+                    indent=2,
+                ),
+            )
+        ]
+
+
+async def handle_apply_workout_intervals(args: dict) -> list[TextContent]:
+    """Apply custom interval boundaries to an Intervals.icu activity."""
+    import re
+
+    from cyclisme_training_logs.config import create_intervals_client
+    from cyclisme_training_logs.workout_parser import (
+        compute_intervals,
+        load_workout_descriptions,
+        parse_workout_text,
+    )
+
+    activity_id = args["activity_id"]
+    dry_run = args.get("dry_run", True)
+    manual_intervals = args.get("intervals")
+
+    try:
+        with suppress_stdout_stderr():
+            client = create_intervals_client()
+
+        # --- Manual mode ---
+        if manual_intervals is not None:
+            if dry_run:
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps(
+                            {
+                                "mode": "manual",
+                                "dry_run": True,
+                                "activity_id": activity_id,
+                                "intervals_count": len(manual_intervals),
+                                "intervals": manual_intervals,
+                                "message": "Preview only. Set dry_run=false to apply.",
+                            },
+                            indent=2,
+                        ),
+                    )
+                ]
+            with suppress_stdout_stderr():
+                result = client.put_activity_intervals(activity_id, manual_intervals)
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "mode": "manual",
+                            "dry_run": False,
+                            "activity_id": activity_id,
+                            "applied": True,
+                            "result": result,
+                        },
+                        indent=2,
+                    ),
+                )
+            ]
+
+        # --- Auto mode ---
+        # 1. Get activity to extract session_id from name
+        session_id = args.get("session_id")
+        if not session_id:
+            with suppress_stdout_stderr():
+                activity = client.get_activity(activity_id)
+            activity_name = activity.get("name", "")
+            m = re.search(r"(S\d{3}-\d{2}[a-z]?)", activity_name)
+            if not m:
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps(
+                            {
+                                "error": f"Cannot extract session_id from activity name: '{activity_name}'",
+                                "hint": "Provide session_id parameter explicitly (e.g. S082-02)",
+                            },
+                            indent=2,
+                        ),
+                    )
+                ]
+            session_id = m.group(1)
+
+        # 2. Load workout description
+        week_id = session_id.split("-")[0]
+        descriptions = load_workout_descriptions(week_id)
+
+        # Find matching workout (session_id appears in workout name)
+        workout_text = None
+        for name, text in descriptions.items():
+            if session_id in name:
+                workout_text = text
+                break
+
+        if workout_text is None:
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "error": f"No workout found for session {session_id} in {week_id}_workouts.txt",
+                            "available_workouts": list(descriptions.keys()),
+                        },
+                        indent=2,
+                    ),
+                )
+            ]
+
+        # 3. Parse workout
+        blocks = parse_workout_text(workout_text)
+        if not blocks:
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "error": f"Workout {session_id} is a rest day (no blocks to apply)",
+                        },
+                        indent=2,
+                    ),
+                )
+            ]
+
+        # 4. Get stream to determine total points
+        with suppress_stdout_stderr():
+            streams = client.get_activity_streams(activity_id)
+
+        if not streams or not streams[0].get("data"):
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "error": f"No stream data found for activity {activity_id}",
+                        },
+                        indent=2,
+                    ),
+                )
+            ]
+        total_points = len(streams[0]["data"])
+
+        # 5. Compute intervals
+        computed = compute_intervals(blocks, total_points)
+
+        # Build interval dicts for API
+        interval_dicts = [
+            {
+                "type": iv.type,
+                "label": iv.label,
+                "start_index": iv.start_index,
+                "end_index": iv.end_index,
+            }
+            for iv in computed
+        ]
+
+        # Compute summary info
+        from cyclisme_training_logs.workout_parser import Phase
+
+        main_seconds = sum(b.duration_seconds for b in blocks if b.phase == Phase.MAIN_SET)
+        cooldown_seconds = sum(b.duration_seconds for b in blocks if b.phase == Phase.COOLDOWN)
+        prescription_seconds = sum(b.duration_seconds for b in blocks)
+        warmup_absorbed = total_points - main_seconds - cooldown_seconds
+
+        summary = {
+            "mode": "auto",
+            "dry_run": dry_run,
+            "activity_id": activity_id,
+            "session_id": session_id,
+            "stream_points": total_points,
+            "prescription_seconds": prescription_seconds,
+            "warmup_absorbed": warmup_absorbed,
+            "intervals_count": len(interval_dicts),
+            "intervals": interval_dicts,
+        }
+
+        if dry_run:
+            summary["message"] = "Preview only. Set dry_run=false to apply."
+            return [TextContent(type="text", text=json.dumps(summary, indent=2))]
+
+        # Apply
+        with suppress_stdout_stderr():
+            result = client.put_activity_intervals(activity_id, interval_dicts)
+        summary["applied"] = True
+        summary["result"] = result
+        return [TextContent(type="text", text=json.dumps(summary, indent=2))]
+
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(
+                    {
+                        "error": f"Failed to apply workout intervals: {str(e)}",
                         "activity_id": activity_id,
                     },
                     indent=2,
