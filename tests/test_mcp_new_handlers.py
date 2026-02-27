@@ -34,9 +34,7 @@ def mock_session():
     s.session_type = "INT"
     s.version = "V001"
     s.tss_planned = 65
-    s.planned_tss = 65
     s.duration_min = 60
-    s.planned_duration = 60
     s.description = "Tempo 3x10min"
     s.status = "pending"
     s.intervals_id = None
@@ -54,9 +52,7 @@ def mock_session2():
     s.session_type = "END"
     s.version = "V001"
     s.tss_planned = 80
-    s.planned_tss = 80
     s.duration_min = 90
-    s.planned_duration = 90
     s.description = "90min endurance"
     s.status = "pending"
     s.intervals_id = None
@@ -1005,7 +1001,7 @@ class TestHandleValidateWeekConsistency:
     async def test_high_tss_is_warning(self, mock_plan, mock_session):
         from cyclisme_training_logs.mcp_server import handle_validate_week_consistency
 
-        mock_session.planned_tss = 350  # > 300 threshold
+        mock_session.tss_planned = 350  # > 300 threshold
         tower = make_tower(mock_plan)
         with patch(TOWER_PATCH, tower):
             result = await handle_validate_week_consistency({"week_id": "S081"})
