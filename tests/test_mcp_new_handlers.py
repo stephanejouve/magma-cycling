@@ -34,9 +34,7 @@ def mock_session():
     s.session_type = "INT"
     s.version = "V001"
     s.tss_planned = 65
-    s.planned_tss = 65
     s.duration_min = 60
-    s.planned_duration = 60
     s.description = "Tempo 3x10min"
     s.status = "pending"
     s.intervals_id = None
@@ -54,9 +52,7 @@ def mock_session2():
     s.session_type = "END"
     s.version = "V001"
     s.tss_planned = 80
-    s.planned_tss = 80
     s.duration_min = 90
-    s.planned_duration = 90
     s.description = "90min endurance"
     s.status = "pending"
     s.intervals_id = None
@@ -1005,7 +1001,7 @@ class TestHandleValidateWeekConsistency:
     async def test_high_tss_is_warning(self, mock_plan, mock_session):
         from cyclisme_training_logs.mcp_server import handle_validate_week_consistency
 
-        mock_session.planned_tss = 350  # > 300 threshold
+        mock_session.tss_planned = 350  # > 300 threshold
         tower = make_tower(mock_plan)
         with patch(TOWER_PATCH, tower):
             result = await handle_validate_week_consistency({"week_id": "S081"})
@@ -1403,3 +1399,134 @@ class TestHandleWithingsAnalyzeTrends:
             )
         data = json.loads(result[0].text)
         assert data["period"] == "custom"
+
+
+# =======================
+# TestHandleRenameSession
+# =======================
+
+
+class TestHandleRenameSession:
+    @pytest.mark.asyncio
+    async def test_rename_success(self, mock_tower, mock_session):
+        from cyclisme_training_logs.mcp_server import handle_rename_session
+
+        args = {
+            "week_id": "S081",
+            "session_id": "S081-03",
+            "new_session_id": "S081-03a",
+        }
+        with patch(TOWER_PATCH, mock_tower):
+            result = await handle_rename_session(args)
+        data = json.loads(result[0].text)
+        assert data["status"] == "success"
+        assert data["old_session_id"] == "S081-03"
+        assert data["new_session_id"] == "S081-03a"
+        assert mock_session.session_id == "S081-03a"
+        assert data["remote_updated"] is False
+
+    @pytest.mark.asyncio
+    async def test_rename_with_remote_sync(self, mock_session):
+        from cyclisme_training_logs.mcp_server import handle_rename_session
+
+        mock_session.intervals_id = "evt456"
+        plan = Mock()
+        plan.planned_sessions = [mock_session]
+        tower = make_tower(plan)
+
+        mock_client = Mock()
+        mock_client.update_event.return_value = True
+
+        args = {
+            "week_id": "S081",
+            "session_id": "S081-03",
+            "new_session_id": "S081-03b",
+        }
+        with patch(TOWER_PATCH, tower), patch(INTERVALS_PATCH, return_value=mock_client):
+            result = await handle_rename_session(args)
+        data = json.loads(result[0].text)
+        assert data["status"] == "success"
+        assert data["remote_updated"] is True
+        mock_client.update_event.assert_called_once()
+        call_args = mock_client.update_event.call_args
+        assert call_args[0][0] == "evt456"
+        assert "S081-03b-INT-TempoCourt-V001" in call_args[0][1]["name"]
+        assert "15:00:00" in call_args[0][1]["start_date_local"]
+
+    @pytest.mark.asyncio
+    async def test_rename_completed_raises(self, mock_tower, mock_session):
+        from cyclisme_training_logs.mcp_server import handle_rename_session
+
+        mock_session.status = "completed"
+        args = {
+            "week_id": "S081",
+            "session_id": "S081-03",
+            "new_session_id": "S081-03a",
+        }
+        with patch(TOWER_PATCH, mock_tower):
+            result = await handle_rename_session(args)
+        data = json.loads(result[0].text)
+        assert "error" in data
+        assert "completed" in data["error"]
+
+    @pytest.mark.asyncio
+    async def test_rename_duplicate_raises(self, mock_session, mock_session2):
+        from cyclisme_training_logs.mcp_server import handle_rename_session
+
+        plan = Mock()
+        plan.planned_sessions = [mock_session, mock_session2]
+        tower = make_tower(plan)
+
+        args = {
+            "week_id": "S081",
+            "session_id": "S081-03",
+            "new_session_id": "S081-06",
+        }
+        with patch(TOWER_PATCH, tower):
+            result = await handle_rename_session(args)
+        data = json.loads(result[0].text)
+        assert "error" in data
+        assert "already exists" in data["error"]
+
+    @pytest.mark.asyncio
+    async def test_rename_invalid_format(self):
+        from cyclisme_training_logs.mcp_server import handle_rename_session
+
+        args = {
+            "week_id": "S081",
+            "session_id": "S081-03",
+            "new_session_id": "S081-ABC",
+        }
+        result = await handle_rename_session(args)
+        data = json.loads(result[0].text)
+        assert "error" in data
+        assert "Invalid session_id format" in data["error"]
+
+    @pytest.mark.asyncio
+    async def test_rename_cross_week_rejected(self):
+        from cyclisme_training_logs.mcp_server import handle_rename_session
+
+        args = {
+            "week_id": "S081",
+            "session_id": "S081-03",
+            "new_session_id": "S082-03",
+        }
+        result = await handle_rename_session(args)
+        data = json.loads(result[0].text)
+        assert "error" in data
+        assert "Cannot rename across weeks" in data["error"]
+
+    @pytest.mark.asyncio
+    async def test_rename_session_not_found(self, mock_tower):
+        from cyclisme_training_logs.mcp_server import handle_rename_session
+
+        args = {
+            "week_id": "S081",
+            "session_id": "S081-99",
+            "new_session_id": "S081-99a",
+        }
+        with patch(TOWER_PATCH, mock_tower):
+            result = await handle_rename_session(args)
+        data = json.loads(result[0].text)
+        assert "error" in data
+        assert "not found" in data["error"]
