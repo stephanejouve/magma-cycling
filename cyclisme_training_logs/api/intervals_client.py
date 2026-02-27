@@ -224,6 +224,31 @@ class IntervalsClient:
         # API returns {"id": ..., "icu_intervals": [...], "icu_groups": [...]}
         return data.get("icu_intervals", [])
 
+    def put_activity_intervals(
+        self, activity_id: str, intervals: list[dict[str, Any]]
+    ) -> dict[str, Any]:
+        """Replace interval/lap data for an activity on Intervals.icu.
+
+        Sends custom interval boundaries; Intervals.icu recalculates all metrics
+        (watts, HR, cadence, torque, L/R balance, TSS) per block.
+
+        Args:
+            activity_id: Activity ID (format: i107424849 or numeric string)
+            intervals: List of interval dicts with keys: type, label,
+                start_index, end_index
+
+        Returns:
+            Updated interval data from Intervals.icu
+
+        Raises:
+            requests.HTTPError: If API request fails or activity not found
+        """
+        url = f"{self.BASE_URL}/activity/{activity_id}/intervals"
+
+        response = self.session.put(url, json=intervals)
+        response.raise_for_status()
+        return response.json()
+
     def get_wellness(
         self, oldest: str | None = None, newest: str | None = None
     ) -> list[dict[str, Any]]:
