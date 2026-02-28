@@ -141,7 +141,7 @@ git push && git push --tags
 
 **Découverte :**
 ```bash
-poetry run pydocstyle cyclisme_training_logs/ --statistics
+poetry run pydocstyle magma_cycling/ --statistics
 # 1137 violations totales
 ```
 
@@ -191,7 +191,7 @@ exclude = patches,backups,tests,scripts/debug,withings_integration
 
 **Vérification après config :**
 ```bash
-poetry run pycodestyle cyclisme_training_logs/ --ignore=E203,E501,W503
+poetry run pycodestyle magma_cycling/ --ignore=E203,E501,W503
 # ✅ 0 violations
 ```
 
@@ -271,7 +271,7 @@ pre-commit run --all-files
 ```
 
 **Fichiers reformattés par Black (49 total) :**
-- cyclisme_training_logs/ : 27 fichiers
+- magma_cycling/ : 27 fichiers
 - tests/ : 17 fichiers
 - withings_integration/ : 1 fichier
 - .pre-commit-config.yaml
@@ -314,13 +314,13 @@ poetry run pytest
 poetry run ruff check .
 # ✅ All checks passed
 
-poetry run mypy cyclisme_training_logs/
+poetry run mypy magma_cycling/
 # ✅ Success: no issues found in 87 source files
 
-poetry run pydocstyle cyclisme_training_logs/
+poetry run pydocstyle magma_cycling/
 # ✅ 0 errors
 
-poetry run pycodestyle cyclisme_training_logs/ --ignore=E203,E501,W503
+poetry run pycodestyle magma_cycling/ --ignore=E203,E501,W503
 # ✅ 0 violations
 ```
 
@@ -416,7 +416,7 @@ git push
 
 **49 fichiers Python** reformattés automatiquement par Black pour conformité :
 
-**cyclisme_training_logs/ (27 fichiers) :**
+**magma_cycling/ (27 fichiers) :**
 - ai_providers/ : 8 fichiers (__init__, base, claude, clipboard, factory, mistral, ollama, openai)
 - analyzers/ : 4 fichiers (__init__, daily, weekly_aggregator, weekly_analyzer)
 - api/ : 2 fichiers (__init__, intervals_client)
@@ -605,7 +605,7 @@ Code → Commit → 14 hooks → ✅/❌ → Push → CI/CD → Merge
 
 ```bash
 # 1. Développer normalement
-vim cyclisme_training_logs/core/new_feature.py
+vim magma_cycling/core/new_feature.py
 
 # 2. Commit (validation automatique)
 git add .
@@ -707,13 +707,13 @@ poetry run pytest
 poetry run ruff check .
 # ✅ All checks passed!
 
-poetry run mypy cyclisme_training_logs/
+poetry run mypy magma_cycling/
 # ✅ Success: no issues found in 87 source files
 
-poetry run pydocstyle cyclisme_training_logs/
+poetry run pydocstyle magma_cycling/
 # ✅ 0 errors
 
-poetry run pycodestyle cyclisme_training_logs/ --ignore=E203,E501,W503
+poetry run pycodestyle magma_cycling/ --ignore=E203,E501,W503
 # ✅ 0 violations
 
 # Pre-commit hooks
@@ -756,7 +756,7 @@ pre-commit run --all-files
 
 ### Projet
 
-- **Repository** : https://github.com/stephanejouve/cyclisme-training-logs
+- **Repository** : https://github.com/stephanejouve/magma-cycling
 - **Version** : 2.2.0
 - **Tag** : v2.2.0
 - **Branch** : main

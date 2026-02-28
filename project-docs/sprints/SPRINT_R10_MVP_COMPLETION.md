@@ -29,11 +29,11 @@ Sprint R10 MVP successfully delivered a production-ready AI-powered weekly repor
 - ✅ Initial test suite (19 tests)
 
 **Key Files Created**:
-- `cyclisme_training_logs/reports/__init__.py` - Public API
-- `cyclisme_training_logs/reports/generator.py` - Core orchestration
-- `cyclisme_training_logs/reports/ai_client.py` - AI provider abstraction
-- `cyclisme_training_logs/reports/data_collector.py` - Data aggregation stub
-- `cyclisme_training_logs/reports/validators/markdown_validator.py` - Validation logic
+- `magma_cycling/reports/__init__.py` - Public API
+- `magma_cycling/reports/generator.py` - Core orchestration
+- `magma_cycling/reports/ai_client.py` - AI provider abstraction
+- `magma_cycling/reports/data_collector.py` - Data aggregation stub
+- `magma_cycling/reports/validators/markdown_validator.py` - Validation logic
 - `tests/reports/test_*.py` - Initial test suite
 
 **Metrics**:
@@ -127,7 +127,7 @@ Sprint R10 MVP successfully delivered a production-ready AI-powered weekly repor
 
 **Key Implementation**:
 - README with architecture, usage, API reference, best practices, troubleshooting
-- Example outputs in `cyclisme_training_logs/reports/examples/`
+- Example outputs in `magma_cycling/reports/examples/`
 - Complete documentation of all components
 - Sprint completion report for stakeholders
 
@@ -141,7 +141,7 @@ Sprint R10 MVP successfully delivered a production-ready AI-powered weekly repor
 ## Architecture Overview
 
 ```
-cyclisme_training_logs/reports/
+magma_cycling/reports/
 ├── __init__.py              # Public API (ReportGenerator export)
 ├── cli.py                   # CLI interface (218 lines)
 ├── generator.py             # Core orchestration (323 lines)
@@ -245,7 +245,7 @@ class AIClient(ABC):
 - **Validation Tests** (12 tests): Template and markdown validation
 
 **Mocking Strategy**:
-- `@patch("cyclisme_training_logs.reports.data_collector.WeeklyAggregator")`
+- `@patch("magma_cycling.reports.data_collector.WeeklyAggregator")`
 - `@patch("anthropic.Anthropic")`
 - Fixtures for all sample data
 
@@ -292,14 +292,14 @@ $ pytest --tb=short -q
 ```
 Name                                                               Stmts   Miss  Cover
 --------------------------------------------------------------------------------------
-cyclisme_training_logs/reports/__init__.py                             4      0   100%
-cyclisme_training_logs/reports/ai_client.py                           70      6    91%
-cyclisme_training_logs/reports/cli.py                                 77     77     0%
-cyclisme_training_logs/reports/data_collector.py                      91      1    99%
-cyclisme_training_logs/reports/generator.py                           95      6    94%
-cyclisme_training_logs/reports/prompts/bilan_final_prompt.py          66      4    94%
-cyclisme_training_logs/reports/prompts/workout_history_prompt.py      65      0   100%
-cyclisme_training_logs/reports/validators/markdown_validator.py      110     11    90%
+magma_cycling/reports/__init__.py                             4      0   100%
+magma_cycling/reports/ai_client.py                           70      6    91%
+magma_cycling/reports/cli.py                                 77     77     0%
+magma_cycling/reports/data_collector.py                      91      1    99%
+magma_cycling/reports/generator.py                           95      6    94%
+magma_cycling/reports/prompts/bilan_final_prompt.py          66      4    94%
+magma_cycling/reports/prompts/workout_history_prompt.py      65      0   100%
+magma_cycling/reports/validators/markdown_validator.py      110     11    90%
 --------------------------------------------------------------------------------------
 TOTAL                                                                612    134    78%
 ```

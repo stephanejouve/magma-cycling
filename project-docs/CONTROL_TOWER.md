@@ -96,7 +96,7 @@ backups/
 
 **Requêtes utiles:**
 ```python
-from cyclisme_training_logs.planning.audit_log import audit_log
+from magma_cycling.planning.audit_log import audit_log
 
 # Dernières 10 opérations
 recent = audit_log.get_recent_operations(10)
@@ -113,7 +113,7 @@ tool_ops = audit_log.get_operations_by_tool("daily-sync", limit=20)
 ### Pattern 1: Modification Simple
 
 ```python
-from cyclisme_training_logs.planning.control_tower import planning_tower
+from magma_cycling.planning.control_tower import planning_tower
 
 # Context manager - tout est automatique
 with planning_tower.modify_week(
@@ -139,7 +139,7 @@ with planning_tower.modify_week(
 ### Pattern 2: Lecture Seule
 
 ```python
-from cyclisme_training_logs.planning.control_tower import planning_tower
+from magma_cycling.planning.control_tower import planning_tower
 
 # Pas de backup nécessaire pour lecture
 plan = planning_tower.read_week("S081")
@@ -152,8 +152,8 @@ print(f"Sessions: {len(plan.planned_sessions)}")
 ### Pattern 3: Création Nouveau Planning
 
 ```python
-from cyclisme_training_logs.planning.models import WeeklyPlan
-from cyclisme_training_logs.planning.audit_log import audit_log, OperationType
+from magma_cycling.planning.models import WeeklyPlan
+from magma_cycling.planning.audit_log import audit_log, OperationType
 
 # Créer et valider
 plan = WeeklyPlan(**planning_data)
@@ -172,7 +172,7 @@ audit_log.log_operation(
 ### Pattern 4: Decorator pour Fonctions
 
 ```python
-from cyclisme_training_logs.planning.control_tower import requires_tower_permission
+from magma_cycling.planning.control_tower import requires_tower_permission
 
 @requires_tower_permission()
 def update_multiple_sessions(week_id: str, updates: dict):
@@ -265,7 +265,7 @@ planned_sessions.5
 ### Rollback Nécessaire
 
 ```python
-from cyclisme_training_logs.planning.control_tower import planning_tower
+from magma_cycling.planning.control_tower import planning_tower
 
 # Lister les backups disponibles
 backups = planning_tower.list_backups("S081")
@@ -304,7 +304,7 @@ planning_tower.rollback(
 
 ## 📚 Références
 
-- **Code:** `cyclisme_training_logs/planning/`
+- **Code:** `magma_cycling/planning/`
 - **Tests:** `tests/planning/`
 - **Audit Log:** `~/data/.planning_audit.jsonl`
 - **Backups:** `~/data/week_planning/backups/`

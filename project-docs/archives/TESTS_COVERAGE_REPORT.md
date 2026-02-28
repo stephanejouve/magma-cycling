@@ -160,7 +160,7 @@
 ============================= test session starts ==============================
 platform darwin -- Python 3.11.5, pytest-9.0.2, pluggy-1.6.0
 cachedir: .pytest_cache
-rootdir: /Users/stephanejouve/cyclisme-training-logs
+rootdir: /Users/stephanejouve/magma-cycling
 configfile: pyproject.toml
 plugins: mock-3.15.1, anyio-4.12.0, cov-7.0.0
 collected 598 items
@@ -363,13 +363,13 @@ Ces fichiers existaient AVANT v2.3.1 et n'ont jamais eu de tests:
 poetry run pytest tests/api/test_intervals_client_di2.py tests/analyzers/test_gear_metrics.py tests/workflows/test_upload_workouts_validator.py tests/integration/test_di2_workflow.py tests/workflows/test_upload_workouts_full.py -v
 
 # Lancer tous tests avec coverage
-poetry run pytest tests/ --cov=cyclisme_training_logs --cov-report=html -v
+poetry run pytest tests/ --cov=magma_cycling --cov-report=html -v
 
 # Voir coverage HTML
 open htmlcov/index.html
 
 # Coverage upload_workouts.py uniquement
-poetry run pytest tests/workflows/test_upload_workouts_full.py --cov=cyclisme_training_logs/upload_workouts.py --cov-report=term -v
+poetry run pytest tests/workflows/test_upload_workouts_full.py --cov=magma_cycling/upload_workouts.py --cov-report=term -v
 ```
 
 🤖 *Generated with [Claude Code](https://claude.com/claude-code)*

@@ -19,7 +19,7 @@ Ajouter flag `--force-reanalyze` qui ignore l'état `workflow_state.json` et for
 
 ## Implémentation
 
-### Fichier: `cyclisme_training_logs/scripts/backfill_history.py`
+### Fichier: `magma_cycling/scripts/backfill_history.py`
 
 **1. Ajouter argument CLI:**
 

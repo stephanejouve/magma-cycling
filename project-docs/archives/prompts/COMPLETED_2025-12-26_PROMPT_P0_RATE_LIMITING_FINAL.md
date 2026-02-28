@@ -228,8 +228,8 @@ poetry run backfill-history \
 
 ```bash
 poetry run python3 << 'EOF'
-from cyclisme_training_logs.sync_intervals import IntervalsAPI
-from cyclisme_training_logs.workflow_state import WorkflowState
+from magma_cycling.sync_intervals import IntervalsAPI
+from magma_cycling.workflow_state import WorkflowState
 import os
 
 api = IntervalsAPI(
@@ -402,7 +402,7 @@ scripts/backfill_history.py
 
 **Validation syntaxe:**
 ```bash
-poetry run python -m py_compile cyclisme_training_logs/scripts/backfill_history.py
+poetry run python -m py_compile magma_cycling/scripts/backfill_history.py
 ```
 
 **Tests:**

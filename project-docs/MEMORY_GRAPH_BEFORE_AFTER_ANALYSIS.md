@@ -179,7 +179,7 @@ BUT:
 
 ```python
 # ✅ NEW CODE (deep copy protection)
-from cyclisme_training_logs.planning.models import WeeklyPlan
+from magma_cycling.planning.models import WeeklyPlan
 
 plan = WeeklyPlan.from_json("week_planning_S079.json")  # Pydantic
 
@@ -209,7 +209,7 @@ pydantic_backup                --> list_B (différente liste)
 
 ### 1. `WeeklyPlan.backup_sessions()` - Deep Copy Garanti
 
-**Code:** `cyclisme_training_logs/planning/models.py:212-229`
+**Code:** `magma_cycling/planning/models.py:212-229`
 
 ```python
 def backup_sessions(self) -> list[Session]:
@@ -235,7 +235,7 @@ def test_backup_sessions_creates_deep_copy(self, sample_plan):
 
 ### 2. `Session.model_copy_deep()` - Copie Indépendante
 
-**Code:** `cyclisme_training_logs/planning/models.py:120-133`
+**Code:** `magma_cycling/planning/models.py:120-133`
 
 ```python
 def model_copy_deep(self) -> "Session":
@@ -260,7 +260,7 @@ def test_session_model_copy_deep_no_aliasing(self):
 
 ### 3. Validation Automatique
 
-**Config:** `cyclisme_training_logs/planning/models.py:135-139`
+**Config:** `magma_cycling/planning/models.py:135-139`
 
 ```python
 model_config = ConfigDict(
@@ -281,28 +281,28 @@ model_config = ConfigDict(
 
 ### Migration Complète (3 fichiers critiques)
 
-1. **`cyclisme_training_logs/weekly_planner.py`**
+1. **`magma_cycling/weekly_planner.py`**
    - ✅ Utilise `WeeklyPlan.from_json()`
    - ✅ Sauvegarde via `plan.to_json()`
    - ✅ Tests: 8/8 passants
 
-2. **`cyclisme_training_logs/rest_and_cancellations.py`**
+2. **`magma_cycling/rest_and_cancellations.py`**
    - ✅ `load_week_planning()` retourne `WeeklyPlan`
    - ✅ Backward compatibility (supporte dict + WeeklyPlan)
    - ✅ Tests: 14/14 passants
 
-3. **`cyclisme_training_logs/daily_sync.py`**
+3. **`magma_cycling/daily_sync.py`**
    - ✅ Script cron utilise Pydantic
    - ✅ Sauvegarde atomique
    - ✅ Timestamps timezone-aware (UTC)
 
 ### Fichiers Appelants Mis à Jour
 
-4. **`cyclisme_training_logs/workflow_coach.py`**
+4. **`magma_cycling/workflow_coach.py`**
    - ✅ Accès via `.start_date` (pas `["start_date"]`)
    - ✅ Utilise `plan.planned_sessions`
 
-5. **`cyclisme_training_logs/planned_sessions_checker.py`**
+5. **`magma_cycling/planned_sessions_checker.py`**
    - ✅ Même pattern que workflow_coach.py
 
 ### Tests Anti-Aliasing
@@ -438,7 +438,7 @@ model_config = ConfigDict(
 
 ### Code
 
-- **Modèles Pydantic:** `cyclisme_training_logs/planning/models.py`
+- **Modèles Pydantic:** `magma_cycling/planning/models.py`
 - **Tests anti-aliasing:** `tests/planning/test_models_anti_aliasing.py`
 - **Tests migration:** `tests/planning/test_migration_weekly_planner.py`
 

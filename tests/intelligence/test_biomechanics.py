@@ -7,7 +7,7 @@ including fiber profile adjustments and duration considerations.
 
 import pytest
 
-from cyclisme_training_logs.intelligence.biomechanics import (
+from magma_cycling.intelligence.biomechanics import (
     calculer_cadence_optimale,
     calculer_cout_energetique,
     calculer_cout_energetique_from_activity,
@@ -252,8 +252,8 @@ def test_cadence_91_minutes():
 
 def test_pid_grappe_initialization():
     """Test PIDGrappeEnhanced initialization."""
-    from cyclisme_training_logs.intelligence.biomechanics import PIDGrappeEnhanced
-    from cyclisme_training_logs.intelligence.discrete_pid_controller import (
+    from magma_cycling.intelligence.biomechanics import PIDGrappeEnhanced
+    from magma_cycling.intelligence.discrete_pid_controller import (
         DiscretePIDController,
     )
 
@@ -268,8 +268,8 @@ def test_pid_grappe_initialization():
 
 def test_pid_grappe_invalid_profil():
     """Test PIDGrappeEnhanced raises on invalid profile."""
-    from cyclisme_training_logs.intelligence.biomechanics import PIDGrappeEnhanced
-    from cyclisme_training_logs.intelligence.discrete_pid_controller import (
+    from magma_cycling.intelligence.biomechanics import PIDGrappeEnhanced
+    from magma_cycling.intelligence.discrete_pid_controller import (
         DiscretePIDController,
     )
 
@@ -281,8 +281,8 @@ def test_pid_grappe_invalid_profil():
 
 def test_pid_grappe_adaptive_gains_explosif():
     """Test adaptive gains for explosive profile."""
-    from cyclisme_training_logs.intelligence.biomechanics import PIDGrappeEnhanced
-    from cyclisme_training_logs.intelligence.discrete_pid_controller import (
+    from magma_cycling.intelligence.biomechanics import PIDGrappeEnhanced
+    from magma_cycling.intelligence.discrete_pid_controller import (
         DiscretePIDController,
     )
 
@@ -296,8 +296,8 @@ def test_pid_grappe_adaptive_gains_explosif():
 
 def test_pid_grappe_adaptive_gains_endurant():
     """Test adaptive gains for endurance profile."""
-    from cyclisme_training_logs.intelligence.biomechanics import PIDGrappeEnhanced
-    from cyclisme_training_logs.intelligence.discrete_pid_controller import (
+    from magma_cycling.intelligence.biomechanics import PIDGrappeEnhanced
+    from magma_cycling.intelligence.discrete_pid_controller import (
         DiscretePIDController,
     )
 
@@ -311,8 +311,8 @@ def test_pid_grappe_adaptive_gains_endurant():
 
 def test_pid_grappe_calculer_commande_cadence_optimal():
     """Test PID command with optimal cadence (no penalty)."""
-    from cyclisme_training_logs.intelligence.biomechanics import PIDGrappeEnhanced
-    from cyclisme_training_logs.intelligence.discrete_pid_controller import (
+    from magma_cycling.intelligence.biomechanics import PIDGrappeEnhanced
+    from magma_cycling.intelligence.discrete_pid_controller import (
         DiscretePIDController,
     )
 
@@ -335,8 +335,8 @@ def test_pid_grappe_calculer_commande_cadence_optimal():
 
 def test_pid_grappe_calculer_commande_cadence_suboptimal():
     """Test PID command with suboptimal cadence (penalty applied)."""
-    from cyclisme_training_logs.intelligence.biomechanics import PIDGrappeEnhanced
-    from cyclisme_training_logs.intelligence.discrete_pid_controller import (
+    from magma_cycling.intelligence.biomechanics import PIDGrappeEnhanced
+    from magma_cycling.intelligence.discrete_pid_controller import (
         DiscretePIDController,
     )
 
@@ -360,8 +360,8 @@ def test_pid_grappe_calculer_commande_cadence_suboptimal():
 
 def test_pid_grappe_integration_explosif_vo2():
     """Test PID Grappe with explosive profile in VO2 zone."""
-    from cyclisme_training_logs.intelligence.biomechanics import PIDGrappeEnhanced
-    from cyclisme_training_logs.intelligence.discrete_pid_controller import (
+    from magma_cycling.intelligence.biomechanics import PIDGrappeEnhanced
+    from magma_cycling.intelligence.discrete_pid_controller import (
         DiscretePIDController,
     )
 
@@ -384,8 +384,8 @@ def test_pid_grappe_integration_explosif_vo2():
 
 def test_pid_grappe_integration_endurant_long_endurance():
     """Test PID Grappe with endurance profile in long endurance zone."""
-    from cyclisme_training_logs.intelligence.biomechanics import PIDGrappeEnhanced
-    from cyclisme_training_logs.intelligence.discrete_pid_controller import (
+    from magma_cycling.intelligence.biomechanics import PIDGrappeEnhanced
+    from magma_cycling.intelligence.discrete_pid_controller import (
         DiscretePIDController,
     )
 

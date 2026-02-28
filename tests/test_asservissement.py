@@ -4,7 +4,7 @@ tests/test_asservissement.py - Tests pour fonctionnalités asservissement.
 """
 import pytest
 
-from cyclisme_training_logs.workflow_coach import WorkflowCoach
+from magma_cycling.workflow_coach import WorkflowCoach
 
 
 def test_load_workout_templates():

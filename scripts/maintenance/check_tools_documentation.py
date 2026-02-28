@@ -80,7 +80,7 @@ def load_poetry_scripts(pyproject_path: Path) -> dict[str, str]:
         pyproject_path: Path to pyproject.toml
 
     Returns:
-        Dict mapping script name to module path (e.g., {'shift-sessions': 'cyclisme_training_logs.shift_sessions:main'})
+        Dict mapping script name to module path (e.g., {'shift-sessions': 'magma_cycling.shift_sessions:main'})
     """
     with open(pyproject_path, "rb") as f:
         data = tomllib.load(f)
@@ -92,7 +92,7 @@ def extract_module_from_script(script_path: str) -> str:
     """Extract module name from script path.
 
     Args:
-        script_path: e.g., 'cyclisme_training_logs.shift_sessions:main'
+        script_path: e.g., 'magma_cycling.shift_sessions:main'
 
     Returns:
         Module name, e.g., 'shift_sessions'
@@ -120,7 +120,7 @@ def find_documented_tools(docs_dir: Path) -> set[str]:
             if ".. automodule::" in line:
                 # Extract module name after automodule::
                 module = line.split("::")[1].strip()
-                # Get last component (e.g., shift_sessions from cyclisme_training_logs.shift_sessions)
+                # Get last component (e.g., shift_sessions from magma_cycling.shift_sessions)
                 module_name = module.split(".")[-1]
                 documented.add(module_name)
 
@@ -196,7 +196,7 @@ def generate_doc_skeleton(tool_name: str, module_name: str, docs_dir: Path) -> s
 
 Brief description of what {tool_name} does.
 
-.. automodule:: cyclisme_training_logs.{module_name}
+.. automodule:: magma_cycling.{module_name}
    :members:
    :undoc-members:
    :show-inheritance:

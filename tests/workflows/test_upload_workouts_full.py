@@ -9,7 +9,7 @@ from unittest.mock import Mock, mock_open, patch
 
 import pytest
 
-from cyclisme_training_logs.upload_workouts import (
+from magma_cycling.upload_workouts import (
     WorkoutUploader,
     calculate_week_start_date,
 )
@@ -18,7 +18,7 @@ from cyclisme_training_logs.upload_workouts import (
 class TestCalculateWeekStartDate:
     """Tests for calculate_week_start_date() function."""
 
-    @patch("cyclisme_training_logs.config.get_week_config")
+    @patch("magma_cycling.config.get_week_config")
     def test_calculate_week_start_date_s075(self, mock_config):
         """Test S075 calculates to 2026-01-05 (Monday)."""
         # Given: S075 with reference config
@@ -38,7 +38,7 @@ class TestCalculateWeekStartDate:
         assert result == datetime(2026, 1, 5, 0, 0)
         assert result.weekday() == 0  # Monday
 
-    @patch("cyclisme_training_logs.config.get_week_config")
+    @patch("magma_cycling.config.get_week_config")
     def test_calculate_week_start_date_s001_reference(self, mock_config):
         """Test S001 returns reference date."""
         # Given: S001 (reference week)
@@ -58,7 +58,7 @@ class TestCalculateWeekStartDate:
         assert result == datetime(2024, 8, 5, 0, 0)
         assert result.weekday() == 0  # Monday
 
-    @patch("cyclisme_training_logs.config.get_week_config")
+    @patch("magma_cycling.config.get_week_config")
     def test_calculate_week_start_date_validates_monday(self, mock_config):
         """Test raises error if calculated date is not Monday."""
         # Given: Invalid reference (not Monday)
@@ -79,7 +79,7 @@ class TestCalculateWeekStartDate:
 class TestWorkoutUploaderInit:
     """Tests for WorkoutUploader initialization."""
 
-    @patch("cyclisme_training_logs.config.create_intervals_client")
+    @patch("magma_cycling.config.create_intervals_client")
     @patch(
         "builtins.open",
         new_callable=mock_open,
@@ -103,7 +103,7 @@ class TestWorkoutUploaderInit:
         assert uploader.api is mock_api
         mock_create_client.assert_called_once()
 
-    @patch("cyclisme_training_logs.config.create_intervals_client")
+    @patch("magma_cycling.config.create_intervals_client")
     @patch("pathlib.Path.exists", return_value=False)
     @patch.dict(
         "os.environ", {"VITE_INTERVALS_ATHLETE_ID": "iXXXXXX", "VITE_INTERVALS_API_KEY": "test_key"}
@@ -124,7 +124,7 @@ class TestWorkoutUploaderInit:
         assert uploader.api is mock_api
         mock_create_client.assert_called_once()
 
-    @patch("cyclisme_training_logs.config.create_intervals_client")
+    @patch("magma_cycling.config.create_intervals_client")
     @patch("pathlib.Path.exists", return_value=False)
     @patch.dict("os.environ", {}, clear=True)
     def test_init_without_credentials_exits(self, mock_exists, mock_create_client):
@@ -142,7 +142,7 @@ class TestWorkoutUploaderInit:
 class TestValidateWorkoutNotation:
     """Tests for validate_workout_notation() method."""
 
-    @patch("cyclisme_training_logs.config.create_intervals_client")
+    @patch("magma_cycling.config.create_intervals_client")
     @patch(
         "builtins.open",
         new_callable=mock_open,
@@ -173,7 +173,7 @@ Cooldown
         # Then: No warnings
         assert len(warnings) == 0
 
-    @patch("cyclisme_training_logs.config.create_intervals_client")
+    @patch("magma_cycling.config.create_intervals_client")
     @patch(
         "builtins.open",
         new_callable=mock_open,
@@ -203,7 +203,7 @@ Main set
         assert "3x [...]" in warnings[0]
         assert "Main set: 3x" in warnings[0]
 
-    @patch("cyclisme_training_logs.config.create_intervals_client")
+    @patch("magma_cycling.config.create_intervals_client")
     @patch(
         "builtins.open",
         new_callable=mock_open,
@@ -229,7 +229,7 @@ Main set
 class TestParseWorkoutsFile:
     """Tests for parse_workouts_file() method."""
 
-    @patch("cyclisme_training_logs.config.create_intervals_client")
+    @patch("magma_cycling.config.create_intervals_client")
     @patch(
         "builtins.open",
         new_callable=mock_open,
@@ -272,7 +272,7 @@ Cooldown
         assert "Main set" in workouts[0]["description"]
         assert "Cooldown" in workouts[0]["description"]
 
-    @patch("cyclisme_training_logs.config.create_intervals_client")
+    @patch("magma_cycling.config.create_intervals_client")
     @patch(
         "builtins.open",
         new_callable=mock_open,
@@ -323,7 +323,7 @@ REPOS COMPLET - Aucune activite
         assert workouts[1]["name"] == "S075-02-END"
         assert workouts[2]["name"] == "S075-07-REPOS"
 
-    @patch("cyclisme_training_logs.config.create_intervals_client")
+    @patch("magma_cycling.config.create_intervals_client")
     @patch(
         "builtins.open",
         new_callable=mock_open,
@@ -363,7 +363,7 @@ Cooldown
 class TestUploadWorkout:
     """Tests for upload_workout() method."""
 
-    @patch("cyclisme_training_logs.config.create_intervals_client")
+    @patch("magma_cycling.config.create_intervals_client")
     @patch(
         "builtins.open",
         new_callable=mock_open,
@@ -392,7 +392,7 @@ class TestUploadWorkout:
         assert success is True
         mock_api_instance.create_event.assert_called_once()
 
-    @patch("cyclisme_training_logs.config.create_intervals_client")
+    @patch("magma_cycling.config.create_intervals_client")
     @patch(
         "builtins.open",
         new_callable=mock_open,
@@ -419,7 +419,7 @@ class TestUploadWorkout:
 class TestUploadAll:
     """Tests for upload_all() method."""
 
-    @patch("cyclisme_training_logs.config.create_intervals_client")
+    @patch("magma_cycling.config.create_intervals_client")
     @patch(
         "builtins.open",
         new_callable=mock_open,
@@ -456,7 +456,7 @@ class TestUploadAll:
         # API create_event should not be called in dry-run
         uploader.api.create_event.assert_not_called()
 
-    @patch("cyclisme_training_logs.config.create_intervals_client")
+    @patch("magma_cycling.config.create_intervals_client")
     @patch(
         "builtins.open",
         new_callable=mock_open,
@@ -497,7 +497,7 @@ class TestUploadAll:
         assert result["failed"] == 0
         assert mock_api_instance.create_event.call_count == 2
 
-    @patch("cyclisme_training_logs.config.create_intervals_client")
+    @patch("magma_cycling.config.create_intervals_client")
     @patch(
         "builtins.open",
         new_callable=mock_open,
@@ -552,7 +552,7 @@ class TestUploadAll:
 class TestIntegrationUploadWorkflow:
     """Integration tests for complete upload workflow."""
 
-    @patch("cyclisme_training_logs.config.create_intervals_client")
+    @patch("magma_cycling.config.create_intervals_client")
     @patch(
         "builtins.open",
         new_callable=mock_open,

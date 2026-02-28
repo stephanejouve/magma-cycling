@@ -72,7 +72,7 @@ class ConsoleUI:
 - ✅ Réutilisable dans d'autres scripts
 - ✅ Découplage UI/logique métier
 
-**Localisation**: `cyclisme_training_logs/core/console_ui.py`
+**Localisation**: `magma_cycling/core/console_ui.py`
 
 ---
 
@@ -99,7 +99,7 @@ class PlanningModifier:
 - ✅ Tests unitaires faciles
 - ✅ Réutilisable (API, CLI, etc.)
 
-**Localisation**: `cyclisme_training_logs/planning/modifier.py`
+**Localisation**: `magma_cycling/planning/modifier.py`
 
 ---
 
@@ -126,7 +126,7 @@ class IntervalsAPIHelper:
 - ✅ Cache/retry logic centralisé
 - ✅ Mock facile pour tests
 
-**Localisation**: `cyclisme_training_logs/api/intervals_helper.py`
+**Localisation**: `magma_cycling/api/intervals_helper.py`
 
 ---
 
@@ -153,7 +153,7 @@ class ActivityDetector:
 - ✅ Réutilisable (daily-sync, etc.)
 - ✅ Tests ciblés
 
-**Localisation**: `cyclisme_training_logs/planning/activity_detector.py`
+**Localisation**: `magma_cycling/planning/activity_detector.py`
 
 ---
 

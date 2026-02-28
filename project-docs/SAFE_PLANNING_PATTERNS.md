@@ -32,7 +32,7 @@ L'analyse avec `memory_graph` a révélé des **shallow copy bugs** dans le code
 
 ### Solution implémentée
 
-Migration vers les modèles Pydantic (`cyclisme_training_logs/planning/models.py`) :
+Migration vers les modèles Pydantic (`magma_cycling/planning/models.py`) :
 
 - ✅ Protection automatique contre shallow copy
 - ✅ Validation des types à chaque modification
@@ -75,7 +75,7 @@ with open("week_planning_S080.json", "w") as f:
 ### ✅ Nouveau pattern (SÉCURISÉ)
 
 ```python
-from cyclisme_training_logs.planning.models import WeeklyPlan
+from magma_cycling.planning.models import WeeklyPlan
 from pydantic import ValidationError
 
 # ✅ Chargement avec validation Pydantic
@@ -121,7 +121,7 @@ sessions = planning["planned_sessions"]
 #### ✅ Nouveau (Pydantic)
 
 ```python
-from cyclisme_training_logs.planning.models import WeeklyPlan
+from magma_cycling.planning.models import WeeklyPlan
 from pydantic import ValidationError
 
 try:
@@ -242,7 +242,7 @@ def load_week_planning(week_id: str) -> dict:
 #### ✅ Nouveau (retourne WeeklyPlan)
 
 ```python
-from cyclisme_training_logs.planning.models import WeeklyPlan
+from magma_cycling.planning.models import WeeklyPlan
 from pydantic import ValidationError
 
 def load_week_planning(week_id: str) -> WeeklyPlan:
@@ -261,7 +261,7 @@ def load_week_planning(week_id: str) -> WeeklyPlan:
 
 ### Fichiers migrés (Phase 1 + 2)
 
-#### 1. `cyclisme_training_logs/planning/models.py`
+#### 1. `magma_cycling/planning/models.py`
 
 **Statut:** ✅ COMPLÉTÉ
 **Date:** 2026-02-08
@@ -272,7 +272,7 @@ Modèles Pydantic avec protection anti-shallow copy :
 - `Session(BaseModel)`: Session individuelle avec validation
 - `WeeklyPlan(BaseModel)`: Planning hebdomadaire avec méthodes `backup_sessions()` et `restore_sessions()`
 
-#### 2. `cyclisme_training_logs/weekly_planner.py`
+#### 2. `magma_cycling/weekly_planner.py`
 
 **Statut:** ✅ COMPLÉTÉ
 **Date:** 2026-02-08
@@ -285,7 +285,7 @@ Modèles Pydantic avec protection anti-shallow copy :
 
 **Ligne clé:** 730-756 (anciennement dict brut)
 
-#### 3. `cyclisme_training_logs/rest_and_cancellations.py`
+#### 3. `magma_cycling/rest_and_cancellations.py`
 
 **Statut:** ✅ COMPLÉTÉ
 **Date:** 2026-02-08
@@ -313,7 +313,7 @@ Modèles Pydantic avec protection anti-shallow copy :
 - `planned_sessions_checker.py:423`
 - `rest_and_cancellations.py:849` (interne)
 
-#### 4. `cyclisme_training_logs/daily_sync.py`
+#### 4. `magma_cycling/daily_sync.py`
 
 **Statut:** ✅ COMPLÉTÉ
 **Date:** 2026-02-08
@@ -504,7 +504,7 @@ Après migration, vérifier :
 
 ## Références
 
-- **Modèles Pydantic:** `cyclisme_training_logs/planning/models.py`
+- **Modèles Pydantic:** `magma_cycling/planning/models.py`
 - **Tests anti-aliasing:** `tests/planning/test_models_anti_aliasing.py`
 - **Tests migration:** `tests/planning/test_migration_weekly_planner.py`
 - **Audit complet:** `project-docs/SHALLOW_COPY_AUDIT.md`

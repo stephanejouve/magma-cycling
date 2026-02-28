@@ -573,8 +573,8 @@ git push origin main --tags
 **2. Validation Tests Archive**
 ```bash
 cd /tmp
-tar -xzf ~/cyclisme-training-logs-sprint-r3-20260101.tar.gz
-cd cyclisme-training-logs/
+tar -xzf ~/magma-cycling-sprint-r3-20260101.tar.gz
+cd magma-cycling/
 poetry install
 poetry run pytest tests/planning/ -v  # 41/41 attendu
 ```

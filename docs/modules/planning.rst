@@ -6,7 +6,7 @@ Module Sprint R3 pour planification d'entraînement (4-12 semaines).
 planning_manager
 ----------------
 
-.. automodule:: cyclisme_training_logs.planning.planning_manager
+.. automodule:: magma_cycling.planning.planning_manager
    :members:
    :undoc-members:
    :show-inheritance:
@@ -45,7 +45,7 @@ Exemples
 
 .. code-block:: python
 
-    from cyclisme_training_logs.planning import (
+    from magma_cycling.planning import (
         PlanningManager, PriorityLevel, ObjectiveType
     )
 
@@ -76,7 +76,7 @@ Exemples
 calendar
 --------
 
-.. automodule:: cyclisme_training_logs.planning.calendar
+.. automodule:: magma_cycling.planning.calendar
    :members:
    :undoc-members:
    :show-inheritance:
@@ -110,7 +110,7 @@ Exemples
 
 .. code-block:: python
 
-    from cyclisme_training_logs.planning import (
+    from magma_cycling.planning import (
         TrainingCalendar, WorkoutType
     )
 

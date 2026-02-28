@@ -107,7 +107,7 @@ git log -1 --format="%h" project-docs/ROADMAP.md
 ```bash
 # Générer résumé session automatique depuis JSONL
 python scripts/maintenance/session_summarizer.py \
-    ~/.claude/projects/-Users-stephanejouve-cyclisme-training-logs/<session-id>.jsonl \
+    ~/.claude/projects/-Users-stephanejouve-magma-cycling/<session-id>.jsonl \
     --output project-docs/sessions/SESSION_YYYYMMDD_AUTO_SUMMARY.md
 ```
 

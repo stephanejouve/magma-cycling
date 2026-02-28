@@ -31,7 +31,7 @@ sys.path.insert(0, str(project_root))
 
 async def test_tool(tool_name: str, arguments: dict):
     """Test a specific MCP tool."""
-    from cyclisme_training_logs.mcp_server import call_tool
+    from magma_cycling.mcp_server import call_tool
 
     print(f"🧪 Testing tool: {tool_name}")
     print(f"   Arguments: {json.dumps(arguments, indent=2)}\n")

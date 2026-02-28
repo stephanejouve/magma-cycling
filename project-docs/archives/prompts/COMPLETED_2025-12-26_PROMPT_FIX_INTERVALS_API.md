@@ -2,7 +2,7 @@
 
 ## CONTEXT
 
-**Project:** cyclisme-training-logs
+**Project:** magma-cycling
 **Issue:** Weekly analysis workflow cannot initialize Intervals.icu API
 **Root Cause:** config.py missing Intervals.icu configuration with VITE_ prefix
 **Requirement:** ALL environment variables MUST use VITE_ prefix for React compatibility
@@ -24,7 +24,7 @@ IntervalsAPI.__init__() missing 2 required positional arguments:
 
 ## TASK 1: Add Intervals.icu Configuration to config.py
 
-**File:** `cyclisme_training_logs/config.py`
+**File:** `magma_cycling/config.py`
 
 **Location:** After AIProvidersConfig class (line ~325), before global instances
 
@@ -141,7 +141,7 @@ def reset_intervals_config():
 
 ## TASK 2: Update Module Exports
 
-**File:** `cyclisme_training_logs/config.py`
+**File:** `magma_cycling/config.py`
 
 **Location:** End of file, update __all__ or add if missing
 ```python
@@ -167,13 +167,13 @@ __all__ = [
 
 ## TASK 3: Fix Weekly Workflow to Use Config
 
-**File:** `cyclisme_training_logs/workflows/workflow_weekly.py`
+**File:** `magma_cycling/workflows/workflow_weekly.py`
 
 **Find:** Import section (top of file)
 
 **Add this import:**
 ```python
-from cyclisme_training_logs.config import get_intervals_config
+from magma_cycling.config import get_intervals_config
 ```
 
 **Find:** Section where IntervalsAPI is initialized (likely in WeeklyWorkflow.__init__ or similar)
@@ -198,7 +198,7 @@ else:
 
 ## TASK 4: Update Gartner Tags in config.py
 
-**File:** `cyclisme_training_logs/config.py`
+**File:** `magma_cycling/config.py`
 
 **Update module docstring LAST_REVIEW date:**
 ```python
@@ -213,7 +213,7 @@ After changes, verify:
 ```bash
 # 1. Test config import
 poetry run python -c "
-from cyclisme_training_logs.config import get_intervals_config
+from magma_cycling.config import get_intervals_config
 config = get_intervals_config()
 print('✅ Athlete ID:', config.athlete_id)
 print('✅ Configured:', config.is_configured())
@@ -239,8 +239,8 @@ poetry run pytest tests/ -v
 ## GIT WORKFLOW
 ```bash
 # 1. Commit changes
-git add cyclisme_training_logs/config.py
-git add cyclisme_training_logs/workflows/workflow_weekly.py
+git add magma_cycling/config.py
+git add magma_cycling/workflows/workflow_weekly.py
 git commit -m "fix(config): add Intervals.icu configuration with VITE_ prefix
 
 - Add IntervalsConfig class to config.py
@@ -267,8 +267,8 @@ git push origin main
 - Graceful degradation if API not configured
 
 **Files Modified:**
-1. `cyclisme_training_logs/config.py` (add IntervalsConfig)
-2. `cyclisme_training_logs/workflows/workflow_weekly.py` (use config)
+1. `magma_cycling/config.py` (add IntervalsConfig)
+2. `magma_cycling/workflows/workflow_weekly.py` (use config)
 
 **Estimated Time:** 15-20 minutes
 

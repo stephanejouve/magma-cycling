@@ -139,7 +139,7 @@ self.wait_user("\nAppuyer sur ENTRÉE pour continuer...")
 1. ✅ Analyses IA SONT correctement insérées (contrairement au document PROMPT)
 2. ✅ Configuration externe EXISTE déjà (`DataRepoConfig` avec `TRAINING_DATA_REPO`)
 3. ✅ Données écrites au BON endroit (`~/training-logs/workouts-history.md`)
-4. ❌ Git commits au MAUVAIS endroit (`cyclisme-training-logs/` au lieu de `training-logs/`)
+4. ❌ Git commits au MAUVAIS endroit (`magma-cycling/` au lieu de `training-logs/`)
 
 **Cause racine :**
 ```python
@@ -149,19 +149,19 @@ def commit_batch(self, batch_num, activities):
     cmd = ['git', 'add', 'logs/workouts-history.md']
     subprocess.run(cmd, cwd=str(project_root), check=True)  # ❌ Mauvais repo
 
-    # Git commit dans cyclisme-training-logs/
+    # Git commit dans magma-cycling/
     cmd = ['git', 'commit', '-m', commit_msg]
     subprocess.run(cmd, cwd=str(project_root), check=True)  # ❌ Mauvais repo
 ```
 
-Le script utilisait `project_root = Path(__file__).parent` (cyclisme-training-logs) pour les commits, alors que les données étaient dans ~/training-logs.
+Le script utilisait `project_root = Path(__file__).parent` (magma-cycling) pour les commits, alors que les données étaient dans ~/training-logs.
 
 ### Solution implémentée
 
 **backfill_history.py :**
 ```python
 # Ajout import
-from cyclisme_training_logs.config import get_data_config
+from magma_cycling.config import get_data_config
 
 # Dans __init__()
 self.data_config = get_data_config()
@@ -199,7 +199,7 @@ print(f"   Repo: {data_repo_path}")
 
 **Test Python direct :**
 ```python
-from cyclisme_training_logs.config import get_data_config
+from magma_cycling.config import get_data_config
 import subprocess
 
 config = get_data_config()
@@ -216,14 +216,14 @@ result = subprocess.run(cmd, cwd=str(config.data_repo_path))
 ```bash
 cd ~/training-logs && git log --oneline -3
 # 07b2272 Test: backfill-history git integration
-# 863d2f3 Migration données depuis cyclisme-training-logs
+# 863d2f3 Migration données depuis magma-cycling
 # 13a72a9 Update README.md
 ```
 
 ### Commit créé
 
 ```
-7f17d41 fix(backfill): Commit dans training-logs au lieu de cyclisme-training-logs
+7f17d41 fix(backfill): Commit dans training-logs au lieu de magma-cycling
 ```
 
 ---
@@ -314,7 +314,7 @@ docs/archive/work-docs/
 
 ### État final des repos
 
-**cyclisme-training-logs :**
+**magma-cycling :**
 ```bash
 ✅ Working directory clean
 ✅ Branche main à jour avec origin
@@ -370,8 +370,8 @@ TRAINING_DATA_REPO=~/training-logs  # Optionnel, défaut ~/training-logs
 
 **1. Imports absolus Poetry :**
 ```python
-from cyclisme_training_logs.config import get_data_config
-from cyclisme_training_logs.workflow_state import WorkflowState
+from magma_cycling.config import get_data_config
+from magma_cycling.workflow_state import WorkflowState
 ```
 
 **2. Gestion paths repo externe :**
@@ -431,7 +431,7 @@ subprocess.run(cmd, cwd=str(data_repo_path), check=True)
 
 **Date :** 26 Décembre 2025
 **Outil :** Claude Code (Claude Sonnet 4.5)
-**Repo :** cyclisme-training-logs
+**Repo :** magma-cycling
 **Branch :** main
 **Commits :** 8d6d480, 5e92efb, 7f17d41, 0d2b57e, 4173836
 

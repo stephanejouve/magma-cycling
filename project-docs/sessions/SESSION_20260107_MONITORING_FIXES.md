@@ -511,9 +511,9 @@ cf55d06 - fix: Correct rest day to Sunday Jan 11 (not Monday Jan 12)
 - `project-docs/guides/GUIDE_REST_DAYS.md` (394 LOC)
 
 **Code modifié (3):**
-- `cyclisme_training_logs/ai_providers/mistral_api.py` (+63 LOC)
-- `cyclisme_training_logs/prepare_analysis.py` (+6 LOC)
-- `cyclisme_training_logs/workflow_coach.py` (UX fix)
+- `magma_cycling/ai_providers/mistral_api.py` (+63 LOC)
+- `magma_cycling/prepare_analysis.py` (+6 LOC)
+- `magma_cycling/workflow_coach.py` (UX fix)
 
 **Total:** ~1800 LOC ajoutées
 
@@ -724,7 +724,7 @@ Dim 11 jan → Repos ✅ NOTE créé
 
 ### Modifications Fichiers
 
-**Fichier:** `cyclisme_training_logs/workflow_coach.py`
+**Fichier:** `magma_cycling/workflow_coach.py`
 
 **Ajouts:**
 - `step_4b_display_analysis()` (+59 LOC) - Affichage terminal
@@ -737,7 +737,7 @@ Dim 11 jan → Repos ✅ NOTE créé
 
 **Test syntaxe:**
 ```bash
-python3 -m py_compile cyclisme_training_logs/workflow_coach.py
+python3 -m py_compile magma_cycling/workflow_coach.py
 # ✅ Pass (no errors)
 ```
 
@@ -849,12 +849,12 @@ modifications = self.parse_ai_modifications(ai_response)
 - ✅ Cohérent avec step_4b_display_analysis()
 
 **Modifications:**
-- `cyclisme_training_logs/workflow_coach.py` (+30 LOC)
+- `magma_cycling/workflow_coach.py` (+30 LOC)
 - Localisation : step_6b_servo_control() ligne ~2979-3009
 
 **Test syntaxe:**
 ```bash
-python3 -m py_compile cyclisme_training_logs/workflow_coach.py
+python3 -m py_compile magma_cycling/workflow_coach.py
 # ✅ Pass (no errors)
 ```
 
@@ -935,12 +935,12 @@ python3 -m py_compile cyclisme_training_logs/workflow_coach.py
 - ✅ Workflow plus robuste
 
 **Modifications:**
-- `cyclisme_training_logs/weekly_planner.py` : +23 LOC
+- `magma_cycling/weekly_planner.py` : +23 LOC
 - Localisation : méthode `run()` ligne ~775-803
 
 **Test syntaxe:**
 ```bash
-python3 -m py_compile cyclisme_training_logs/weekly_planner.py
+python3 -m py_compile magma_cycling/weekly_planner.py
 # ✅ Pass (no errors)
 ```
 

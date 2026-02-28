@@ -10,9 +10,9 @@ import json
 from datetime import date
 from pathlib import Path
 
-from cyclisme_training_logs.config.athlete_profile import AthleteProfile
-from cyclisme_training_logs.planning.calendar import TrainingCalendar, WorkoutType
-from cyclisme_training_logs.planning.intervals_sync import IntervalsSync
+from magma_cycling.config.athlete_profile import AthleteProfile
+from magma_cycling.planning.calendar import TrainingCalendar, WorkoutType
+from magma_cycling.planning.intervals_sync import IntervalsSync
 
 # Load week planning with descriptions and hashes
 week_planning_file = Path(Path.home() / "training-logs/data/week_planning/week_planning_S077.json")

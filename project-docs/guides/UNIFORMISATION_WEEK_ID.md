@@ -20,7 +20,7 @@ Tous les scripts Python du projet utilisent maintenant de manière cohérente l'
 
 ### Recherche Exhaustive
 ```bash
-grep -rn "add_argument.*week" --include="*.py" cyclisme_training_logs/
+grep -rn "add_argument.*week" --include="*.py" magma_cycling/
 ```
 
 **Résultats**:
@@ -231,41 +231,41 @@ analysis = WeeklyAnalysis(args.week_id, args.start_date)
 **Avant**:
 ```python
 Usage:
-    python3 cyclisme_training_logs/weekly_analysis.py S068
-    python3 cyclisme_training_logs/weekly_analysis.py S068 --start-date 2024-11-18
+    python3 magma_cycling/weekly_analysis.py S068
+    python3 magma_cycling/weekly_analysis.py S068 --start-date 2024-11-18
 ```
 
 **Après**:
 ```python
 Usage:
-    python3 cyclisme_training_logs/weekly_analysis.py --week-id S068
-    python3 cyclisme_training_logs/weekly_analysis.py --week-id S068 --start-date 2024-11-18
+    python3 magma_cycling/weekly_analysis.py --week-id S068
+    python3 magma_cycling/weekly_analysis.py --week-id S068 --start-date 2024-11-18
 ```
 
 #### Modification 5: Epilog Examples (Lignes 669, 672)
 
 **Avant**:
 ```python
-  python3 cyclisme_training_logs/weekly_analysis.py S068
-  python3 cyclisme_training_logs/weekly_analysis.py S068 --start-date 2024-11-18
+  python3 magma_cycling/weekly_analysis.py S068
+  python3 magma_cycling/weekly_analysis.py S068 --start-date 2024-11-18
 ```
 
 **Après**:
 ```python
-  python3 cyclisme_training_logs/weekly_analysis.py --week-id S068
-  python3 cyclisme_training_logs/weekly_analysis.py --week-id S068 --start-date 2024-11-18
+  python3 magma_cycling/weekly_analysis.py --week-id S068
+  python3 magma_cycling/weekly_analysis.py --week-id S068 --start-date 2024-11-18
 ```
 
 #### Modification 6: Error Message Example (Ligne 711)
 
 **Avant**:
 ```python
-print("   python3 cyclisme_training_logs/weekly_analysis.py S068")
+print("   python3 magma_cycling/weekly_analysis.py S068")
 ```
 
 **Après**:
 ```python
-print("   python3 cyclisme_training_logs/weekly_analysis.py --week-id S068")
+print("   python3 magma_cycling/weekly_analysis.py --week-id S068")
 ```
 
 **Total occurrences corrigées**: 6 (1 définition argument + 2 usages `args.week` + 3 exemples documentation)
@@ -340,7 +340,7 @@ usage: workflow-coach [-h] [--skip-feedback] [--skip-git]
 
 **Test 4: weekly-analysis**
 ```bash
-$ poetry run python3 cyclisme_training_logs/weekly_analysis.py --help
+$ poetry run python3 magma_cycling/weekly_analysis.py --help
 usage: weekly_analysis.py [-h] --week-id WEEK_ID [--start-date START_DATE]
 
   --week-id WEEK_ID     Numéro de semaine (format SXXX, ex: S072)
@@ -406,12 +406,12 @@ Les scripts suivants n'utilisent pas d'argument de semaine:
 # Avant
 poetry run weekly-planner S072 --start-date 2025-12-16
 poetry run upload-workouts S072 --start-date 2025-12-16
-python3 cyclisme_training_logs/weekly_analysis.py S068
+python3 magma_cycling/weekly_analysis.py S068
 
 # Après
 poetry run weekly-planner --week-id S072 --start-date 2025-12-16
 poetry run upload-workouts --week-id S072 --start-date 2025-12-16
-python3 cyclisme_training_logs/weekly_analysis.py --week-id S068
+python3 magma_cycling/weekly_analysis.py --week-id S068
 ```
 
 ---
@@ -422,9 +422,9 @@ python3 cyclisme_training_logs/weekly_analysis.py --week-id S068
 Aucune modification nécessaire. Les CLI commands restent:
 ```toml
 [tool.poetry.scripts]
-weekly-planner = "cyclisme_training_logs.weekly_planner:main"
-upload-workouts = "cyclisme_training_logs.upload_workouts:main"
-workflow-coach = "cyclisme_training_logs.workflow_coach:main"
+weekly-planner = "magma_cycling.weekly_planner:main"
+upload-workouts = "magma_cycling.upload_workouts:main"
+workflow-coach = "magma_cycling.workflow_coach:main"
 ```
 
 ### Help Text
@@ -518,7 +518,7 @@ parser.add_argument(
 ```bash
 poetry run weekly-planner --week-id S072 --start-date 2025-12-16
 poetry run upload-workouts --week-id S072 --start-date 2025-12-16
-python3 cyclisme_training_logs/weekly_analysis.py --week-id S068
+python3 magma_cycling/weekly_analysis.py --week-id S068
 poetry run workflow-coach --week-id S072
 ```
 

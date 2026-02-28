@@ -24,7 +24,7 @@ Standardiser 10 fichiers critiques (Priority 1-2) en ajoutant :
 
 ### **État Actuel**
 ```
-Location: ~/cyclisme-training-logs/
+Location: ~/magma-cycling/
 Gartner tags: 7/45 (15.5%) ← Priority 1 complété
 Tests: 273/273 passing
 Git: Clean (commit 5dc8fb4)
@@ -87,7 +87,7 @@ workflow principal.
 Examples:
     Sync recent activities::
 
-        from cyclisme_training_logs.sync_intervals import IntervalsAPI
+        from magma_cycling.sync_intervals import IntervalsAPI
 
         # Initialiser API
         api = IntervalsAPI()
@@ -158,7 +158,7 @@ automatiquement.
 Examples:
     Upload single workout::
 
-        from cyclisme_training_logs.upload_workouts import upload_workout
+        from magma_cycling.upload_workouts import upload_workout
         from pathlib import Path
 
         # Upload fichier .zwo
@@ -174,7 +174,7 @@ Examples:
 
     Batch upload week::
 
-        from cyclisme_training_logs.upload_workouts import upload_week
+        from magma_cycling.upload_workouts import upload_week
 
         # Upload semaine complète
         week_dir = Path("workouts/S073-Semaine73")
@@ -236,7 +236,7 @@ compliance hebdomadaire.
 Examples:
     Check weekly compliance::
 
-        from cyclisme_training_logs.planned_sessions_checker import check_week
+        from magma_cycling.planned_sessions_checker import check_week
 
         # Vérifier semaine S073
         compliance = check_week(
@@ -250,7 +250,7 @@ Examples:
 
     Detailed session comparison::
 
-        from cyclisme_training_logs.planned_sessions_checker import compare_sessions
+        from magma_cycling.planned_sessions_checker import compare_sessions
 
         # Comparer séance planifiée vs exécutée
         comparison = compare_sessions(
@@ -311,7 +311,7 @@ génère warnings si problèmes détectés.
 Examples:
     Validate workout syntax::
 
-        from cyclisme_training_logs.intervals_format_validator import validate_workout
+        from magma_cycling.intervals_format_validator import validate_workout
 
         workout_text = '''
         Warmup
@@ -388,7 +388,7 @@ fallback automatique entre providers.
 Examples:
     Get AI provider::
 
-        from cyclisme_training_logs.ai_providers import get_provider
+        from magma_cycling.ai_providers import get_provider
 
         # Provider par défaut (Claude)
         provider = get_provider()
@@ -413,7 +413,7 @@ Examples:
 
     List available providers::
 
-        from cyclisme_training_logs.ai_providers import list_providers
+        from magma_cycling.ai_providers import list_providers
 
         providers = list_providers()
         print(f"Available: {', '.join(providers)}")
@@ -454,7 +454,7 @@ principal après Claude.
 Examples:
     Basic analysis::
 
-        from cyclisme_training_logs.ai_providers.mistral_api import MistralProvider
+        from magma_cycling.ai_providers.mistral_api import MistralProvider
 
         provider = MistralProvider()
 
@@ -473,7 +473,7 @@ Examples:
 
     Error handling::
 
-        from cyclisme_training_logs.ai_providers.mistral_api import MistralProvider
+        from magma_cycling.ai_providers.mistral_api import MistralProvider
 
         provider = MistralProvider(max_retries=3)
 
@@ -519,7 +519,7 @@ thinking blocks et artifacts.
 Examples:
     Standard analysis::
 
-        from cyclisme_training_logs.ai_providers.claude_api import ClaudeProvider
+        from magma_cycling.ai_providers.claude_api import ClaudeProvider
 
         provider = ClaudeProvider()
 
@@ -593,7 +593,7 @@ adaptations planning.
 Examples:
     Log rest day::
 
-        from cyclisme_training_logs.rest_and_cancellations import log_rest
+        from magma_cycling.rest_and_cancellations import log_rest
 
         # Logger repos programmé
         log_rest(
@@ -665,7 +665,7 @@ d'analyse quotidien.
 Examples:
     Load workflow state::
 
-        from cyclisme_training_logs.workflow_state import WorkflowState
+        from magma_cycling.workflow_state import WorkflowState
 
         # Charger état
         state = WorkflowState.load()
@@ -736,7 +736,7 @@ utiliser analyzers/weekly_analyzer.py.
 Examples:
     Basic stats (legacy)::
 
-        from cyclisme_training_logs.stats import compute_weekly_stats
+        from magma_cycling.stats import compute_weekly_stats
 
         # ⚠️  Legacy - à remplacer
         stats = compute_weekly_stats(
@@ -749,7 +749,7 @@ Examples:
     Migration to new system::
 
         # ✅ NOUVEAU (Phase 2) - À utiliser pour nouveau code
-        from cyclisme_training_logs.analyzers.weekly_analyzer import WeeklyAnalyzer
+        from magma_cycling.analyzers.weekly_analyzer import WeeklyAnalyzer
 
         analyzer = WeeklyAnalyzer(week="S073")
         analysis = analyzer.analyze()
@@ -893,7 +893,7 @@ Updated: 2025-12-26 (Standardization Prompt 3 Priority 2 - Marked as Legacy)
 
 **Obligatoire :**
 1. Minimum 2 code blocks exécutables
-2. Imports explicites (`from cyclisme_training_logs.module import Class`)
+2. Imports explicites (`from magma_cycling.module import Class`)
 3. Code complet (pas de `...` ou placeholders)
 4. Cas d'usage réalistes
 5. Comments si aide compréhension
@@ -903,7 +903,7 @@ Updated: 2025-12-26 (Standardization Prompt 3 Priority 2 - Marked as Legacy)
 Examples:
     Basic usage::
 
-        from cyclisme_training_logs.sync_intervals import IntervalsAPI
+        from magma_cycling.sync_intervals import IntervalsAPI
 
         api = IntervalsAPI()
         activities = api.sync_recent_activities(days=7)
@@ -913,7 +913,7 @@ Examples:
 
     Advanced with error handling::
 
-        from cyclisme_training_logs.sync_intervals import IntervalsAPI
+        from magma_cycling.sync_intervals import IntervalsAPI
 
         api = IntervalsAPI()
 
@@ -1027,7 +1027,7 @@ class IntervalsAPI:  # ← INCHANGÉ
 poetry run pytest tests/test_[nom_module].py -v
 
 # Valider tags Gartner
-poetry run python scripts/validate_gartner_tags.py --file cyclisme_training_logs/[nom_fichier].py
+poetry run python scripts/validate_gartner_tags.py --file magma_cycling/[nom_fichier].py
 ```
 
 **Après tous fichiers :**

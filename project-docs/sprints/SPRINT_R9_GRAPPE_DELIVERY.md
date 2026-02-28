@@ -28,7 +28,7 @@
 **Date:** 15 janvier 2026 - 00:10
 
 **Fichiers créés:**
-- `cyclisme_training_logs/intelligence/biomechanics.py` (343 lignes)
+- `magma_cycling/intelligence/biomechanics.py` (343 lignes)
 - `tests/intelligence/test_biomechanics.py` (403 lignes, 30 tests)
 
 **Fonctionnalités:**
@@ -53,7 +53,7 @@
 **Date:** 15 janvier 2026 - 00:25
 
 **Fichiers créés:**
-- `cyclisme_training_logs/intelligence/biomechanics_intervals.py` (211 lignes)
+- `magma_cycling/intelligence/biomechanics_intervals.py` (211 lignes)
 - `tests/intelligence/test_biomechanics_intervals.py` (391 lignes, 16 tests)
 
 **Fonctionnalités:**
@@ -99,7 +99,7 @@
 **Date:** 15 janvier 2026 - 01:15
 
 **Fichiers modifiés:**
-- `cyclisme_training_logs/intelligence/biomechanics.py` (+173 lignes)
+- `magma_cycling/intelligence/biomechanics.py` (+173 lignes)
 - `tests/intelligence/test_biomechanics.py` (+174 lignes, 14 tests)
 
 **Fonctionnalités:**
@@ -131,7 +131,7 @@
 **Date:** 15 janvier 2026 - 01:45
 
 **Fichiers modifiés:**
-- `cyclisme_training_logs/config/athlete_profile.py` (+24 lignes)
+- `magma_cycling/config/athlete_profile.py` (+24 lignes)
 - `tests/config/test_athlete_profile.py` (+144 lignes, 11 tests)
 
 **Nouveaux champs:**
@@ -304,8 +304,8 @@ Range typique: 18-25% (baseline 21%)
 
 **Code:**
 ```python
-from cyclisme_training_logs.api.intervals_client import IntervalsClient
-from cyclisme_training_logs.intelligence.biomechanics_intervals import (
+from magma_cycling.api.intervals_client import IntervalsClient
+from magma_cycling.intelligence.biomechanics_intervals import (
     get_activities_last_n_weeks,
     get_cadence_recommendation_from_activities
 )
@@ -337,9 +337,9 @@ if recommendation["correction_necessaire"]:
 
 **Code:**
 ```python
-from cyclisme_training_logs.config.athlete_profile import AthleteProfile
-from cyclisme_training_logs.intelligence.discrete_pid_controller import DiscretePIDController
-from cyclisme_training_logs.intelligence.biomechanics import PIDGrappeEnhanced
+from magma_cycling.config.athlete_profile import AthleteProfile
+from magma_cycling.intelligence.discrete_pid_controller import DiscretePIDController
+from magma_cycling.intelligence.biomechanics import PIDGrappeEnhanced
 
 profile = AthleteProfile.from_env()
 base_controller = DiscretePIDController(kp=0.008, ki=0.001, kd=0.12, setpoint=260)
@@ -373,7 +373,7 @@ print(f"Ajustement biomécanique: {result['ajustement_biomecanique']}")
 
 **Code:**
 ```python
-from cyclisme_training_logs.intelligence.biomechanics import (
+from magma_cycling.intelligence.biomechanics import (
     calculer_cout_energetique_from_activity
 )
 
@@ -422,7 +422,7 @@ print(f"Coût par km: {ce['cout_km_reel_kj']} kJ/km")
 ### Modules Créés
 
 ```
-cyclisme_training_logs/
+magma_cycling/
 └── intelligence/
     ├── biomechanics.py              # Core Grappe logic
     │   ├── calculer_cadence_optimale()

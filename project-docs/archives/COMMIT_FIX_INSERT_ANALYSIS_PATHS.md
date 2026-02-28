@@ -103,15 +103,15 @@ class WorkoutHistoryManager:
 Chercher tous les usages de `workouts-history.md`:
 
 ```bash
-cd ~/cyclisme-training-logs
-grep -n '"workouts-history.md"' cyclisme_training_logs/insert_analysis.py
+cd ~/magma-cycling
+grep -n '"workouts-history.md"' magma_cycling/insert_analysis.py
 ```
 
 **Remplacer TOUS par `config.workouts_history_path`**
 
 ## Modifications à Faire
 
-### Fichier: cyclisme_training_logs/insert_analysis.py
+### Fichier: magma_cycling/insert_analysis.py
 
 **Ligne ~10-20 - Ajouter import:**
 ```python
@@ -167,7 +167,7 @@ EOF
 cat /tmp/test.md | pbcopy
 
 # Test insertion
-poetry run python -m cyclisme_training_logs.insert_analysis --yes
+poetry run python -m magma_cycling.insert_analysis --yes
 ```
 
 **Attendu:**
@@ -199,7 +199,7 @@ poetry run workflow-coach \
 ### Test 3: Backfill final
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 poetry run backfill-history \
   --start-date 2025-12-22 \
@@ -218,9 +218,9 @@ poetry run backfill-history \
 ## Commit
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
-git add cyclisme_training_logs/insert_analysis.py
+git add magma_cycling/insert_analysis.py
 
 git commit -m "fix(insert_analysis): utiliser config.py au lieu de paths hardcodés
 

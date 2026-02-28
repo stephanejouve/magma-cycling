@@ -317,8 +317,8 @@ project-docs/ROADMAP.md                  | 35 modifications
 
 - **ROADMAP:** `project-docs/ROADMAP.md` (Sprint R10 section)
 - **Tests:** `tests/workflows/test_end_of_week.py`
-- **Production:** `cyclisme_training_logs/workflows/end_of_week.py`
-- **Coverage Report:** Run `poetry run pytest --cov=cyclisme_training_logs.workflows.end_of_week`
+- **Production:** `magma_cycling/workflows/end_of_week.py`
+- **Coverage Report:** Run `poetry run pytest --cov=magma_cycling.workflows.end_of_week`
 
 ---
 

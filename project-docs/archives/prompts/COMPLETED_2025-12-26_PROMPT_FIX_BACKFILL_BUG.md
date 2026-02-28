@@ -5,7 +5,7 @@
 **Symptôme:**
 ```bash
 backfill_history.py écrit dans:
-~/cyclisme-training-logs/cyclisme_training_logs/logs/workouts-history.md ❌
+~/magma-cycling/magma_cycling/logs/workouts-history.md ❌
 
 Au lieu de:
 ~/training-logs/workouts-history.md ✅
@@ -15,8 +15,8 @@ Au lieu de:
 ```python
 # backfill_history.py ligne 65
 project_root = Path(__file__).parent
-# = ~/cyclisme-training-logs/cyclisme_training_logs/scripts/../
-# = ~/cyclisme-training-logs/cyclisme_training_logs/
+# = ~/magma-cycling/magma_cycling/scripts/../
+# = ~/magma-cycling/magma_cycling/
 
 # Ligne 216
 subprocess.run(cmd, cwd=str(project_root))  # ❌ Mauvais CWD !
@@ -26,7 +26,7 @@ self.project_root = Path.cwd()  # ← CWD hérité = mauvais repo
 
 # Ligne 1763 fallback:
 history_file = self.project_root / "logs" / "workouts-history.md"
-# = ~/cyclisme-training-logs/cyclisme_training_logs/logs/workouts-history.md ❌
+# = ~/magma-cycling/magma_cycling/logs/workouts-history.md ❌
 ```
 
 ---
@@ -35,7 +35,7 @@ history_file = self.project_root / "logs" / "workouts-history.md"
 
 ### Fix 1: backfill_history.py (PRIORITAIRE)
 
-**Fichier:** `cyclisme_training_logs/scripts/backfill_history.py`
+**Fichier:** `magma_cycling/scripts/backfill_history.py`
 
 **Ligne 216:** Remplacer CWD par data_repo_path
 
@@ -68,7 +68,7 @@ result = subprocess.run(
 
 ### Fix 2: workflow_coach.py (DÉFENSE PROFONDEUR)
 
-**Fichier:** `cyclisme_training_logs/workflow_coach.py`
+**Fichier:** `magma_cycling/workflow_coach.py`
 
 **Ligne 1763:** Supprimer fallback hardcodé
 
@@ -84,7 +84,7 @@ if self.config:
     history_file = self.config.workouts_history_path
 else:
     # Toujours utiliser DataRepoConfig, jamais fallback
-    from cyclisme_training_logs.config import get_data_config
+    from magma_cycling.config import get_data_config
     history_file = get_data_config().workouts_history_path  # ✅
 ```
 
@@ -100,7 +100,7 @@ else:
 ### Test 1: Dry-run backfill
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 # Avant fix
 poetry run backfill-history \
@@ -126,7 +126,7 @@ poetry run backfill-history \
 ls -lhat ~/training-logs/workouts-history.md
 # Devrait être récent ✅
 
-ls -lhat ~/cyclisme-training-logs/cyclisme_training_logs/logs/workouts-history.md
+ls -lhat ~/magma-cycling/magma_cycling/logs/workouts-history.md
 # Ne devrait PAS exister ❌
 ```
 
@@ -134,7 +134,7 @@ ls -lhat ~/cyclisme-training-logs/cyclisme_training_logs/logs/workouts-history.m
 
 ```bash
 poetry run python -c "
-from cyclisme_training_logs.config import get_data_config
+from magma_cycling.config import get_data_config
 config = get_data_config()
 print('Data repo:', config.data_repo_path)
 print('Workouts:', config.workouts_history_path)
@@ -154,7 +154,7 @@ print('✅ Config OK')
 - [ ] Test dry-run réussi
 - [ ] Test backfill 1 activité réussi
 - [ ] Fichier écrit dans ~/training-logs/ ✅
-- [ ] Aucun fichier dans ~/cyclisme-training-logs/logs/ ❌
+- [ ] Aucun fichier dans ~/magma-cycling/logs/ ❌
 - [ ] Git commit dans bon repo
 - [ ] Documentation mise à jour
 
@@ -175,7 +175,7 @@ print('✅ Config OK')
 **Migration manuelle nécessaire:**
 ```bash
 # Récupérer données perdues
-tail -200 ~/cyclisme-training-logs/cyclisme_training_logs/logs/workouts-history.md > /tmp/lost_data.md
+tail -200 ~/magma-cycling/magma_cycling/logs/workouts-history.md > /tmp/lost_data.md
 
 # Injecter dans bon repo
 cd ~/training-logs
@@ -196,8 +196,8 @@ TRAINING_DATA_REPO=/Users/stephanejouve/training-logs  ✅
 **Architecture repos:**
 ```
 ~/training-logs/                          ← REPO DONNÉES (bon)
-~/cyclisme-training-logs/                 ← REPO CODE
-  ├── cyclisme_training_logs/
+~/magma-cycling/                 ← REPO CODE
+  ├── magma_cycling/
   │   ├── scripts/backfill_history.py     ← BUG ICI
   │   ├── workflow_coach.py               ← FALLBACK ICI
   │   └── logs/ (NE DEVRAIT PAS EXISTER)  ❌

@@ -71,7 +71,7 @@ Le commit git a été skippé (--skip-git).
 
 ## Required Changes
 
-### File 1: cyclisme_training_logs/generate_analysis_prompt.py
+### File 1: magma_cycling/generate_analysis_prompt.py
 
 **Location:** Main function that prints instructions after prompt generation
 
@@ -102,7 +102,7 @@ def main():
 4. Copier la réponse de Claude (UNIQUEMENT le bloc markdown)
 
 5. Exécuter le script d'insertion :
-   python3 cyclisme_training_logs/insert_analysis.py
+   python3 magma_cycling/insert_analysis.py
 
 ============================================================
 """)
@@ -164,7 +164,7 @@ def main():
 4. Copier la réponse (UNIQUEMENT le bloc markdown)
 
 5. Exécuter le script d'insertion :
-   python3 cyclisme_training_logs/insert_analysis.py
+   python3 magma_cycling/insert_analysis.py
 
 ============================================================
 """)
@@ -176,7 +176,7 @@ def main():
 - List of API providers: `['claude_api', 'mistral_api', 'openai', 'ollama']`
 - Clipboard gets generic instructions mentioning multiple AI options
 
-### File 2: cyclisme_training_logs/workflow_coach.py
+### File 2: magma_cycling/workflow_coach.py
 
 **Location:** `step_7_git_commit()` method in WorkflowCoach class
 
@@ -348,7 +348,7 @@ if self.skip_git:
 ## File Structure Context
 
 ```
-cyclisme_training_logs/
+magma_cycling/
 ├── config.py                      # Contains get_ai_config()
 ├── generate_analysis_prompt.py    # FIX 1: Conditional instructions
 └── workflow_coach.py              # FIX 2: Add return in step_7
@@ -398,9 +398,9 @@ If you encounter issues:
 ## Context Files Available
 
 You have access to:
-- `cyclisme_training_logs/config.py` (AI config with get_ai_config())
-- `cyclisme_training_logs/workflow_coach.py` (Workflow orchestration)
-- `cyclisme_training_logs/generate_analysis_prompt.py` (Prompt generation)
+- `magma_cycling/config.py` (AI config with get_ai_config())
+- `magma_cycling/workflow_coach.py` (Workflow orchestration)
+- `magma_cycling/generate_analysis_prompt.py` (Prompt generation)
 - All test files in `tests/` directory
 
 Refer to these files to understand:

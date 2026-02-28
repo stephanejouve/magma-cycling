@@ -223,7 +223,7 @@ Examples:
     args = parser.parse_args()
 
     # iCloud archive directory
-    archive_dir = Path.home() / "Documents" / "cyclisme-training-logs-archives"
+    archive_dir = Path.home() / "Documents" / "magma-cycling-archives"
 
     print_header("🗑️  iCloud Archives Cleanup")
 

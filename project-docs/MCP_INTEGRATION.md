@@ -18,7 +18,7 @@ Le **MCP Server** (Model Context Protocol) expose tous les outils de training lo
               ▼
 ┌─────────────────────────────────────────┐
 │     MCP Server                          │
-│  cyclisme_training_logs.mcp_server      │
+│  magma_cycling.mcp_server      │
 │                                         │
 │  Tools:                                 │
 │  ├── weekly-planner                     │
@@ -46,7 +46,7 @@ poetry run mcp-server
 # Devrait attendre stdin (Ctrl+C pour quitter)
 
 # Tester les imports
-poetry run python -c "from cyclisme_training_logs.mcp_server import server; print('✅ OK')"
+poetry run python -c "from magma_cycling.mcp_server import server; print('✅ OK')"
 ```
 
 ### 2. Configuration Claude Desktop
@@ -59,14 +59,14 @@ poetry run python -c "from cyclisme_training_logs.mcp_server import server; prin
     "cyclisme-training": {
       "command": "poetry",
       "args": ["run", "mcp-server"],
-      "cwd": "/Users/stephanejouve/cyclisme-training-logs",
+      "cwd": "/Users/stephanejouve/magma-cycling",
       "env": {}
     }
   }
 }
 ```
 
-**Remplacer `/Users/stephanejouve/cyclisme-training-logs` par votre chemin absolu au projet.**
+**Remplacer `/Users/stephanejouve/magma-cycling` par votre chemin absolu au projet.**
 
 ### 3. Redémarrer Claude Desktop
 
@@ -350,7 +350,7 @@ Audit log: `~/data/.planning_audit.jsonl`
 
 ```bash
 # Vérifier les imports
-poetry run python -c "from cyclisme_training_logs.mcp_server import server"
+poetry run python -c "from magma_cycling.mcp_server import server"
 
 # Vérifier les dépendances
 poetry show mcp
@@ -415,7 +415,7 @@ Vérifier:
 ## 📚 Références
 
 - **MCP Spec:** https://modelcontextprotocol.io/
-- **Code Server:** `cyclisme_training_logs/mcp_server.py`
+- **Code Server:** `magma_cycling/mcp_server.py`
 - **Control Tower:** `project-docs/CONTROL_TOWER.md`
 - **Features Feb 2026:** `project-docs/FEATURES_FEB_2026.md`
 

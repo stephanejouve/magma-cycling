@@ -1,6 +1,6 @@
 # 🎯 Instructions Claude Code - Amélioration Coverage 80%
 
-**Projet** : cyclisme-training-logs
+**Projet** : magma-cycling
 **Objectif** : Améliorer coverage de 68% → 80%
 **Durée estimée** : 2-3h
 **Branch** : main (directement)
@@ -138,7 +138,7 @@ def test_clipboard_provider_info():
 """Tests ClaudeAPIAnalyzer avec mocks."""
 import pytest
 from unittest.mock import Mock, patch, MagicMock
-from cyclisme_training_logs.ai_providers.claude_api import ClaudeAPIAnalyzer
+from magma_cycling.ai_providers.claude_api import ClaudeAPIAnalyzer
 
 @pytest.fixture
 def claude_config():
@@ -350,7 +350,7 @@ def test_provider_info(provider_config): ...
 import pytest
 from unittest.mock import Mock, patch
 import requests
-from cyclisme_training_logs.ai_providers.ollama import OllamaAnalyzer
+from magma_cycling.ai_providers.ollama import OllamaAnalyzer
 
 @pytest.fixture
 def ollama_config():
@@ -478,7 +478,7 @@ poetry run pytest tests/test_ai_providers/ -v
 
 # Coverage détaillé
 poetry run pytest tests/test_ai_providers/ \
-  --cov=cyclisme_training_logs/ai_providers \
+  --cov=magma_cycling/ai_providers \
   --cov-report=term-missing \
   --cov-report=html
 

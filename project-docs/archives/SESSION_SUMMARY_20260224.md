@@ -85,8 +85,8 @@ Phase 0 du Sprint R14 : établir une couverture ≥ 60% sur les 4 fichiers cible
 - **Fix :** Suppression du test basé sur ce patch, remplacement par un test plus simple
 
 ### 6. Patch `get_data_config` pour `prepare_analysis.py`
-- **Cause :** Import inline dans `__init__` → patch `cyclisme_training_logs.prepare_analysis.get_data_config` échoue
-- **Fix :** Patch au niveau source → `cyclisme_training_logs.config.get_data_config`
+- **Cause :** Import inline dans `__init__` → patch `magma_cycling.prepare_analysis.get_data_config` échoue
+- **Fix :** Patch au niveau source → `magma_cycling.config.get_data_config`
 
 ---
 
@@ -150,7 +150,7 @@ L'API Intervals.icu retourne `icu_intensity` comme entier (ex: `67` = IF 0.67). 
 - Stratégie : tester handlers purs (calculs) en priorité
 
 ### Ensuite : Phase 1 — MCP Split
-Une fois couverture ≥ 60% atteinte, démarrer le split `mcp_server.py` → `cyclisme_training_logs/mcp/` selon le plan R14.
+Une fois couverture ≥ 60% atteinte, démarrer le split `mcp_server.py` → `magma_cycling/mcp/` selon le plan R14.
 
 ---
 

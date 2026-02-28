@@ -30,7 +30,7 @@ Examples:
 
     Programmatic usage::
 
-        from cyclisme_training_logs.module import Class
+        from magma_cycling.module import Class
 
         # Initialisation
         obj = Class(param="value")
@@ -79,7 +79,7 @@ Mentionner la source de migration si applicable.
 Examples:
     Basic usage::
 
-        from cyclisme_training_logs.core.module import NewClass
+        from magma_cycling.core.module import NewClass
 
         # Initialisation
         obj = NewClass()
@@ -89,8 +89,8 @@ Examples:
 
     Integration example::
 
-        from cyclisme_training_logs.workflow_coach import WorkflowCoach
-        from cyclisme_training_logs.core.module import NewClass
+        from magma_cycling.workflow_coach import WorkflowCoach
+        from magma_cycling.core.module import NewClass
 
         # Intégration dans workflow existant
         workflow = WorkflowCoach()
@@ -126,7 +126,7 @@ Indiquer quand le fichier actuel sera déprécié.
 Examples:
     Current usage (v1)::
 
-        from cyclisme_training_logs.old_module import OldClass
+        from magma_cycling.old_module import OldClass
 
         # Méthode actuelle (sera dépréciée)
         obj = OldClass()
@@ -134,7 +134,7 @@ Examples:
 
     Future usage (v2) - After migration::
 
-        from cyclisme_training_logs.core.new_module import NewClass
+        from magma_cycling.core.new_module import NewClass
 
         # Nouvelle méthode (post-migration)
         obj = NewClass()
@@ -143,7 +143,7 @@ Examples:
     Migration helper::
 
         # Compatibilité temporaire
-        from cyclisme_training_logs.old_module import migrate_to_new
+        from magma_cycling.old_module import migrate_to_new
 
         old_obj = OldClass()
         new_obj = migrate_to_new(old_obj)
@@ -176,7 +176,7 @@ de temps. Indiquer si utilisé activement ou peu fréquent.
 Examples:
     Current usage (still supported)::
 
-        from cyclisme_training_logs.legacy_module import LegacyClass
+        from magma_cycling.legacy_module import LegacyClass
 
         # Méthode actuelle (fonctionnelle mais à éviter)
         obj = LegacyClass()
@@ -185,7 +185,7 @@ Examples:
     Recommended alternative::
 
         # Utiliser plutôt le nouveau module
-        from cyclisme_training_logs.new_module import NewClass
+        from magma_cycling.new_module import NewClass
 
         obj = NewClass()
         result = obj.modern_method()
@@ -223,7 +223,7 @@ quel module le remplace, et la date de suppression prévue.
 Examples:
     Old usage (DEPRECATED - DO NOT USE)::
 
-        from cyclisme_training_logs.deprecated_module import DeprecatedClass
+        from magma_cycling.deprecated_module import DeprecatedClass
 
         # ❌ NE PLUS UTILISER
         obj = DeprecatedClass()
@@ -232,7 +232,7 @@ Examples:
     Migration path::
 
         # ✅ Utiliser à la place
-        from cyclisme_training_logs.new_module import NewClass
+        from magma_cycling.new_module import NewClass
 
         obj = NewClass()
         result = obj.new_method()
@@ -240,7 +240,7 @@ Examples:
 Deprecated:
     Version: 2.0
     Removal: 2026-01-26
-    Replacement: cyclisme_training_logs.new_module.NewClass
+    Replacement: magma_cycling.new_module.NewClass
 
 Warning:
     Ce module sera supprimé dans 30 jours. Migrer vers new_module.py.
@@ -360,7 +360,7 @@ Examples:
 Examples:
     Basic usage::
 
-        from cyclisme_training_logs.module import Class
+        from magma_cycling.module import Class
 
         obj = Class(param="value")
         result = obj.method()
@@ -380,8 +380,8 @@ Examples:
 Examples:
     Integration::
 
-        from cyclisme_training_logs.workflow_coach import WorkflowCoach
-        from cyclisme_training_logs.module import Helper
+        from magma_cycling.workflow_coach import WorkflowCoach
+        from magma_cycling.module import Helper
 
         workflow = WorkflowCoach()
         helper = Helper(workflow.config)
@@ -524,7 +524,7 @@ def validate_docstring(file_path: Path) -> dict:
 
 def validate_all_files():
     """Valider tous les fichiers Python du projet."""
-    project_root = Path(__file__).parent.parent / 'cyclisme_training_logs'
+    project_root = Path(__file__).parent.parent / 'magma_cycling'
 
     results = {}
     for py_file in project_root.rglob('*.py'):

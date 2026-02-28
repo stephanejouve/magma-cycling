@@ -91,7 +91,7 @@ Signification:
 
 #### 3.1 Architecture Existante (Validée)
 
-**Module**: `cyclisme_training_logs/intelligence/discrete_pid_controller.py`
+**Module**: `magma_cycling/intelligence/discrete_pid_controller.py`
 
 **Fonctionnalités**:
 - ✅ PID discret avec sample-and-hold (cycles 6-8 semaines)
@@ -268,7 +268,7 @@ Kd = 0.15  * 0.8  = 0.12   # -20% anticipation
 
 ### 1. Initialisation PID Controller ✅
 
-**Script créé**: `cyclisme_training_logs/scripts/initialize_pid_controller.py`
+**Script créé**: `magma_cycling/scripts/initialize_pid_controller.py`
 
 **Gains implémentés**:
 ```python
@@ -534,7 +534,7 @@ NIVEAU 3 - OPÉRATIONNEL (jour/semaine)
 
 ### 3. Intégration PID + Peaks ✅
 
-**Module créé**: `cyclisme_training_logs/workflows/pid_peaks_integration.py`
+**Module créé**: `magma_cycling/workflows/pid_peaks_integration.py`
 
 **Architecture hiérarchique implémentée**:
 
@@ -671,7 +671,7 @@ def compute_integrated_correction(
 #### 6.2 Fichiers Créés
 
 - `project-docs/templates/WORKOUT_TEMPLATES_PEAKS.md` (300+ lignes)
-- `cyclisme_training_logs/workflows/pid_peaks_integration.py` (400+ lignes)
+- `magma_cycling/workflows/pid_peaks_integration.py` (400+ lignes)
 - Planning S081 (généré, non committé)
 - Calendrier S081-S086 (documenté)
 

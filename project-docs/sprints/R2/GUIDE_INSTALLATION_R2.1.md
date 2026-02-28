@@ -19,12 +19,12 @@
 
 ```bash
 # Copier vers le package utils/
-cp metrics_advanced.py cyclisme_training_logs/utils/metrics_advanced.py
+cp metrics_advanced.py magma_cycling/utils/metrics_advanced.py
 ```
 
 **Vérification :**
 ```bash
-ls -lh cyclisme_training_logs/utils/metrics_advanced.py
+ls -lh magma_cycling/utils/metrics_advanced.py
 # Expected: -rw-r--r--  1 user  group   27K Jan  1 12:00 metrics_advanced.py
 ```
 
@@ -55,7 +55,7 @@ poetry run pytest tests/ -v
 poetry run pytest tests/utils/test_metrics_advanced.py -v
 
 # Option 3: Avec coverage
-poetry run pytest tests/utils/test_metrics_advanced.py --cov=cyclisme_training_logs.utils.metrics_advanced
+poetry run pytest tests/utils/test_metrics_advanced.py --cov=magma_cycling.utils.metrics_advanced
 ```
 
 **Résultat Attendu :**
@@ -77,7 +77,7 @@ tests/utils/test_metrics_advanced.py::test_overtraining_risk_custom_thresholds P
 
 ```bash
 poetry run python3 -c "
-from cyclisme_training_logs.utils.metrics_advanced import (
+from magma_cycling.utils.metrics_advanced import (
     calculate_ramp_rate,
     get_weekly_metrics_trend,
     detect_training_peaks,
@@ -93,7 +93,7 @@ print('✅ All 6 functions imported successfully')
 
 ```bash
 poetry run python3 << 'EOF'
-from cyclisme_training_logs.utils.metrics_advanced import detect_overtraining_risk
+from magma_cycling.utils.metrics_advanced import detect_overtraining_risk
 
 # Test CRITIQUE: Détection surmenage
 result = detect_overtraining_risk(
@@ -123,7 +123,7 @@ EOF
 
 ```python
 # Début du fichier
-from cyclisme_training_logs.utils.metrics_advanced import detect_overtraining_risk
+from magma_cycling.utils.metrics_advanced import detect_overtraining_risk
 
 # Dans la fonction principale
 def check_session_veto(wellness_data, athlete_profile):
@@ -157,7 +157,7 @@ def check_session_veto(wellness_data, athlete_profile):
 **Ajout Recovery Recommendations :**
 
 ```python
-from cyclisme_training_logs.utils.metrics_advanced import get_recovery_recommendation
+from magma_cycling.utils.metrics_advanced import get_recovery_recommendation
 
 def adjust_weekly_plan(tsb, atl_ctl_ratio, athlete_profile):
     """Adjust weekly plan based on recovery needs."""
@@ -239,7 +239,7 @@ Aucune dépendance externe. Module utilise uniquement :
 
 ## 📋 Checklist Post-Installation
 
-- [ ] `metrics_advanced.py` copié vers `cyclisme_training_logs/utils/`
+- [ ] `metrics_advanced.py` copié vers `magma_cycling/utils/`
 - [ ] `test_metrics_advanced.py` copié vers `tests/utils/`
 - [ ] Tests exécutés : `poetry run pytest tests/utils/test_metrics_advanced.py -v`
 - [ ] 33/33 tests PASSING

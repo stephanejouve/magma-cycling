@@ -37,7 +37,7 @@ VALID_STATUSES = ['completed', 'cancelled', 'rest_day', 'replaced', 'skipped']
 ### Solution
 Added "modified" to the `VALID_STATUSES` list.
 
-**File**: `cyclisme_training_logs/rest_and_cancellations.py`
+**File**: `magma_cycling/rest_and_cancellations.py`
 **Line**: 41
 
 ```python
@@ -65,7 +65,7 @@ Iteration 2: Detect same skipped → Update JSON → Workout still on API
 ### Solution
 Added API workout deletion immediately after marking session as skipped in `reconcile_week()`.
 
-**File**: `cyclisme_training_logs/workflow_coach.py`
+**File**: `magma_cycling/workflow_coach.py`
 **Lines**: 635-642
 
 ```python
@@ -111,7 +111,7 @@ Manual testing required (API interaction cannot be easily unit tested without mo
 ### Problem
 When `reconcile_planned_vs_actual()` auto-detected that a session marked "completed" had no corresponding activity, it reclassified it as "skipped". However, the code created a **copy** of the session object, modified the copy, and appended it to results. The original session in `week_planning['planned_sessions']` remained unchanged.
 
-**File**: `cyclisme_training_logs/rest_and_cancellations.py`
+**File**: `magma_cycling/rest_and_cancellations.py`
 **Lines**: 566-569 (original)
 
 ```python
@@ -189,7 +189,7 @@ tests/test_p0_fixes.py::test_validation_with_modified_status PASSED      [100%]
 
 ## Files Modified
 
-### 1. `cyclisme_training_logs/rest_and_cancellations.py`
+### 1. `magma_cycling/rest_and_cancellations.py`
 
 **Change #1 (Line 41)**: Added "modified" to VALID_STATUSES
 ```diff
@@ -208,7 +208,7 @@ tests/test_p0_fixes.py::test_validation_with_modified_status PASSED      [100%]
 + result['skipped'].append(session)
 ```
 
-### 2. `cyclisme_training_logs/workflow_coach.py`
+### 2. `magma_cycling/workflow_coach.py`
 
 **Change (Lines 635-642)**: Added API workout deletion during reconciliation
 ```diff
@@ -302,7 +302,7 @@ def _apply_lighten_with_rollback(self, mod, week_id):
 
 ## References
 
-- **Phase 1 Audit Report**: `/Users/stephanejouve/cyclisme-training-logs/PHASE1_AUDIT_REPORT.md`
+- **Phase 1 Audit Report**: `/Users/stephanejouve/magma-cycling/PHASE1_AUDIT_REPORT.md`
 - **Servo Control Plan**: `~/.claude/plans/zazzy-brewing-unicorn.md`
 - **Related Issues**: P0 #1, P0 #2, P0 #3 from Phase 1 Audit
 

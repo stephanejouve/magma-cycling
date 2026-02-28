@@ -145,10 +145,10 @@ Affichage recommandation dans workflow ✨
 
 ## 📚 Références
 
-- PID Discrete Controller: `cyclisme_training_logs/intelligence/discrete_pid_controller.py`
-- Training Intelligence: `cyclisme_training_logs/intelligence/training_intelligence.py`
-- PID Daily Evaluation: `cyclisme_training_logs/scripts/pid_daily_evaluation.py`
-- End-of-Week Workflow: `cyclisme_training_logs/workflows/end_of_week.py`
+- PID Discrete Controller: `magma_cycling/intelligence/discrete_pid_controller.py`
+- Training Intelligence: `magma_cycling/intelligence/training_intelligence.py`
+- PID Daily Evaluation: `magma_cycling/scripts/pid_daily_evaluation.py`
+- End-of-Week Workflow: `magma_cycling/workflows/end_of_week.py`
 
 ---
 

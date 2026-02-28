@@ -25,7 +25,7 @@ Examples:
 
     Migrate specific directory::
 
-        python migrate_docstrings.py --input-dir cyclisme_training_logs/core/
+        python migrate_docstrings.py --input-dir magma_cycling/core/
 
 Note:
     Always run with --backup flag first to create .bak files.
@@ -84,7 +84,7 @@ class DocstringMigrator:
         Basic migration::
 
             migrator = DocstringMigrator(
-                project_root=Path('cyclisme_training_logs'),
+                project_root=Path('magma_cycling'),
                 backup=True
             )
             stats = migrator.migrate_all()
@@ -345,7 +345,7 @@ Examples:
   python migrate_docstrings.py --dry-run
 
   # Migrate specific directory
-  python migrate_docstrings.py --input-dir cyclisme_training_logs/core/
+  python migrate_docstrings.py --input-dir magma_cycling/core/
 
   # Verbose output
   python migrate_docstrings.py --backup --verbose
@@ -355,8 +355,8 @@ Examples:
     parser.add_argument(
         "--input-dir",
         type=Path,
-        default=Path.cwd() / "cyclisme_training_logs",
-        help="Root directory to scan (default: ./cyclisme_training_logs)",
+        default=Path.cwd() / "magma_cycling",
+        help="Root directory to scan (default: ./magma_cycling)",
     )
     parser.add_argument(
         "--backup", action="store_true", help="Create .bak files before modification"

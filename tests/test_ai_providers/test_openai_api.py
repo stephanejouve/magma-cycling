@@ -8,8 +8,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from cyclisme_training_logs.ai_providers.base import AIProvider
-from cyclisme_training_logs.ai_providers.openai_api import OpenAIAnalyzer, WorkflowError
+from magma_cycling.ai_providers.base import AIProvider
+from magma_cycling.ai_providers.openai_api import OpenAIAnalyzer, WorkflowError
 
 
 @pytest.fixture
@@ -27,7 +27,7 @@ def openai_config(valid_api_key):
 @pytest.fixture
 def mock_openai_client():
     """Mock OpenAI client."""
-    with patch("cyclisme_training_logs.ai_providers.openai_api.OpenAI") as mock_class:
+    with patch("magma_cycling.ai_providers.openai_api.OpenAI") as mock_class:
         mock_client = MagicMock()
         mock_class.return_value = mock_client
         yield mock_client

@@ -38,7 +38,7 @@ class SessionArchiver:
         """Initialize archiver.
 
         Args:
-            project_root: Root of cyclisme-training-logs project
+            project_root: Root of magma-cycling project
             dry_run: If True, only show what would be done
         """
         self.project_root = project_root

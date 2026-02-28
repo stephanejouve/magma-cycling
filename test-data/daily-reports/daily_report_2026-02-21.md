@@ -1,6 +1,6 @@
 # Rapport Quotidien - 21/02/2026
 
-**Généré le**: 27/02/2026 à 05:06
+**Généré le**: 28/02/2026 à 10:18
 
 ---
 
@@ -16,4 +16,4 @@
 
 ---
 
-*Rapport généré automatiquement par daily-sync - [cyclisme-training-logs](https://github.com/stephanejouve/cyclisme-training-logs)*
+*Rapport généré automatiquement par daily-sync - [magma-cycling](https://github.com/stephanejouve/magma-cycling)*

@@ -56,7 +56,7 @@ Ce script liste toutes les activités récentes avec leur source pour identifier
 ### Étape 1 : Préparer le Prompt
 
 ```bash
-cd /Users/stephanejouve/cyclisme-training-logs
+cd /Users/stephanejouve/magma-cycling
 ./scripts/prepare_analysis.py
 ```
 

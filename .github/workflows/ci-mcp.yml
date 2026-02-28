@@ -85,7 +85,7 @@ jobs:
 
       - name: Run pytest with coverage
         run: |
-          poetry run pytest tests/test_mcp_edge_cases.py             --verbose --tb=short             --cov=cyclisme_training_logs             --cov-report=term-missing             --cov-report=xml             --junitxml=junit.xml
+          poetry run pytest tests/test_mcp_edge_cases.py             --verbose --tb=short             --cov=magma_cycling             --cov-report=term-missing             --cov-report=xml             --junitxml=junit.xml
 
       - name: Upload coverage
         if: matrix.python-version == '3.13'
@@ -118,7 +118,7 @@ jobs:
         run: |
           poetry run python -c "
           import asyncio
-          from cyclisme_training_logs.mcp_server import list_tools
+          from magma_cycling.mcp_server import list_tools
 
           async def validate():
               tools = await list_tools()

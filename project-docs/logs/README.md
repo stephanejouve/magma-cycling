@@ -166,7 +166,7 @@ for msg in messages:
 
 Le transcript original se trouve dans:
 ```
-~/.claude/projects/-Users-stephanejouve-cyclisme-training-logs/46864120-e85e-4d67-a77a-e39a0d41cf00.jsonl
+~/.claude/projects/-Users-stephanejouve-magma-cycling/46864120-e85e-4d67-a77a-e39a0d41cf00.jsonl
 ```
 
 Cette copie est un snapshot au moment de la création (16 janvier 2026 06:20).

@@ -2,7 +2,7 @@
 
 import pytest
 
-from cyclisme_training_logs.config.athlete_profile import AthleteProfile
+from magma_cycling.config.athlete_profile import AthleteProfile
 
 
 class TestAthleteProfileFromEnv:

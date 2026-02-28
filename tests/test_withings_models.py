@@ -10,7 +10,7 @@ from datetime import date, datetime
 import pytest
 from pydantic import ValidationError
 
-from cyclisme_training_logs.models.withings_models import (
+from magma_cycling.models.withings_models import (
     HealthTrend,
     HeartRateData,
     SleepData,

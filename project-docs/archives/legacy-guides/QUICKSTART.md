@@ -133,7 +133,7 @@ Voir [WORKFLOW_WITH_FEEDBACK.md](WORKFLOW_WITH_FEEDBACK.md) pour les détails.
 ### 1️⃣ Générer le Prompt
 
 ```bash
-cd /Users/stephanejouve/cyclisme-training-logs
+cd /Users/stephanejouve/magma-cycling
 ./scripts/prepare_analysis.py
 ```
 

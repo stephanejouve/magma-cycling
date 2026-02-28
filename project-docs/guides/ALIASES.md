@@ -17,7 +17,7 @@ coach     # Workflow coach
 
 ## Navigation
 ```bash
-cdtrain   # cd ~/cyclisme-training-logs
+cdtrain   # cd ~/magma-cycling
 logs      # Voir logs
 reports   # Voir rapports hebdo
 ```

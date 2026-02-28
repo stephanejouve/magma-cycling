@@ -95,7 +95,7 @@ class ProjectCleaner:
 
         # Directories that MUST exist at root
         self.required_directories = {
-            "cyclisme_training_logs",
+            "magma_cycling",
             "tests",
             "docs",
             "scripts",
@@ -342,9 +342,7 @@ class ProjectCleaner:
 
         if dry_run:
             self.print_info(f"Would create archive: {output_dir}/{archive_name}")
-            self.print_info(
-                f"Would copy to: ~/Documents/cyclisme-training-logs-archives/{archive_name}"
-            )
+            self.print_info(f"Would copy to: ~/Documents/magma-cycling-archives/{archive_name}")
             return None, None
 
         # Create output directory
@@ -381,7 +379,7 @@ class ProjectCleaner:
             f.write(f"{checksum}  {archive_name}\n")
 
         # Copy to iCloud Documents for easy sharing from iPhone
-        icloud_dir = Path.home() / "Documents" / "cyclisme-training-logs-archives"
+        icloud_dir = Path.home() / "Documents" / "magma-cycling-archives"
         icloud_dir.mkdir(parents=True, exist_ok=True)
 
         icloud_archive_path = icloud_dir / archive_name
@@ -407,7 +405,7 @@ class ProjectCleaner:
         }
 
         # Count Python files
-        for py_file in self.project_root.glob("cyclisme_training_logs/**/*.py"):
+        for py_file in self.project_root.glob("magma_cycling/**/*.py"):
             stats["python_files"] += 1
             try:
                 stats["lines_of_code"] += len(py_file.read_text().splitlines())
@@ -542,9 +540,7 @@ class ProjectCleaner:
             results["checksum"] = checksum
 
             # iCloud path
-            icloud_path = (
-                Path.home() / "Documents" / "cyclisme-training-logs-archives" / archive_path.name
-            )
+            icloud_path = Path.home() / "Documents" / "magma-cycling-archives" / archive_path.name
             results["icloud_path"] = icloud_path
 
             # Print results
@@ -556,7 +552,7 @@ class ProjectCleaner:
             print(f"  1. Local (gitignored): {archive_path}")
             print(f"  2. iCloud (shareable):  {icloud_path}")
             print(
-                f"\n{BLUE}📱 Access from iPhone: Files → Documents → cyclisme-training-logs-archives{RESET}"
+                f"\n{BLUE}📱 Access from iPhone: Files → Documents → magma-cycling-archives{RESET}"
             )
 
         return results

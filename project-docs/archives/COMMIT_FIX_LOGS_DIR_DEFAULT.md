@@ -84,7 +84,7 @@ EOF
 cat /tmp/test.md | pbcopy
 
 # Test insertion (SANS --logs-dir)
-poetry run python -m cyclisme_training_logs.insert_analysis --yes
+poetry run python -m magma_cycling.insert_analysis --yes
 ```
 
 **Résultat attendu:**
@@ -97,7 +97,7 @@ poetry run python -m cyclisme_training_logs.insert_analysis --yes
 
 ```bash
 # Test avec --logs-dir explicite (legacy mode)
-poetry run python -m cyclisme_training_logs.insert_analysis \
+poetry run python -m magma_cycling.insert_analysis \
   --logs-dir ~/training-logs \
   --yes
 ```
@@ -131,7 +131,7 @@ poetry run workflow-coach \
 ### Test 4: Backfill final
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 poetry run backfill-history \
   --start-date 2025-12-22 \
@@ -149,9 +149,9 @@ poetry run backfill-history \
 ## Commit
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
-git add cyclisme_training_logs/insert_analysis.py
+git add magma_cycling/insert_analysis.py
 
 git commit -m "fix(insert_analysis): Remove hardcoded default logs-dir
 
@@ -169,10 +169,10 @@ Closes: Dernier path hardcodé résiduel"
 Après ce fix, **PLUS AUCUN** path hardcodé ne doit rester:
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 # Chercher tous les 'logs/' restants
-grep -r "logs/" cyclisme_training_logs/ \
+grep -r "logs/" magma_cycling/ \
   --include="*.py" \
   | grep -v "^#" \
   | grep -v "help=" \

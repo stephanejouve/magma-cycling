@@ -2,7 +2,7 @@
 
 ## Vue d'ensemble
 
-À partir de la version refactorée, `cyclisme-training-logs` sépare le code (public) des données d'entraînement (privées). Cette architecture permet :
+À partir de la version refactorée, `magma-cycling` sépare le code (public) des données d'entraînement (privées). Cette architecture permet :
 
 - **Open-sourcing du code** sans exposer vos données personnelles
 - **Versionnement séparé** du code et des données
@@ -12,8 +12,8 @@
 ## Architecture
 
 ```
-~/cyclisme-training-logs/          # Dépôt CODE (public)
-├── cyclisme_training_logs/        # Code Python
+~/magma-cycling/          # Dépôt CODE (public)
+├── magma_cycling/        # Code Python
 ├── references/                    # Références d'entraînement
 ├── tests/                         # Tests unitaires
 └── README.md
@@ -35,28 +35,28 @@
 
 ## Pour Utilisateurs Existants
 
-Si vous avez déjà utilisé `cyclisme-training-logs` avant cette migration, suivez ces étapes :
+Si vous avez déjà utilisé `magma-cycling` avant cette migration, suivez ces étapes :
 
 ### Étape 1 : Sauvegarder données actuelles
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 # Créer backup temporaire
-mkdir ~/cyclisme-training-logs-backup
-cp logs/workouts-history.md ~/cyclisme-training-logs-backup/
-cp logs/metrics-evolution.md ~/cyclisme-training-logs-backup/ 2>/dev/null || true
-cp -r logs/bilans ~/cyclisme-training-logs-backup/ 2>/dev/null || true
-cp -r data ~/cyclisme-training-logs-backup/ 2>/dev/null || true
-cp .workflow_state.json ~/cyclisme-training-logs-backup/ 2>/dev/null || true
+mkdir ~/magma-cycling-backup
+cp logs/workouts-history.md ~/magma-cycling-backup/
+cp logs/metrics-evolution.md ~/magma-cycling-backup/ 2>/dev/null || true
+cp -r logs/bilans ~/magma-cycling-backup/ 2>/dev/null || true
+cp -r data ~/magma-cycling-backup/ 2>/dev/null || true
+cp .workflow_state.json ~/magma-cycling-backup/ 2>/dev/null || true
 
-echo "✅ Backup créé dans ~/cyclisme-training-logs-backup"
+echo "✅ Backup créé dans ~/magma-cycling-backup"
 ```
 
 ### Étape 2 : Mettre à jour code
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 git pull origin main
 poetry install
 ```
@@ -96,21 +96,21 @@ git clone https://github.com/VOTRE_USERNAME/training-logs.git
 
 ```bash
 # Copier données depuis backup
-cp ~/cyclisme-training-logs-backup/workouts-history.md ~/training-logs/
-cp ~/cyclisme-training-logs-backup/metrics-evolution.md ~/training-logs/ 2>/dev/null || true
+cp ~/magma-cycling-backup/workouts-history.md ~/training-logs/
+cp ~/magma-cycling-backup/metrics-evolution.md ~/training-logs/ 2>/dev/null || true
 
 # Copier bilans si présents
-if [ -d ~/cyclisme-training-logs-backup/bilans ]; then
-    cp -r ~/cyclisme-training-logs-backup/bilans ~/training-logs/
+if [ -d ~/magma-cycling-backup/bilans ]; then
+    cp -r ~/magma-cycling-backup/bilans ~/training-logs/
 fi
 
 # Copier data si présent
-if [ -d ~/cyclisme-training-logs-backup/data ]; then
-    cp -r ~/cyclisme-training-logs-backup/data ~/training-logs/
+if [ -d ~/magma-cycling-backup/data ]; then
+    cp -r ~/magma-cycling-backup/data ~/training-logs/
 fi
 
 # Copier workflow state
-cp ~/cyclisme-training-logs-backup/.workflow_state.json ~/training-logs/ 2>/dev/null || true
+cp ~/magma-cycling-backup/.workflow_state.json ~/training-logs/ 2>/dev/null || true
 
 # Commiter
 cd ~/training-logs
@@ -147,7 +147,7 @@ echo $TRAINING_DATA_REPO
 ### Étape 6 : Valider migration
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 poetry run workflow-coach
 
 # Devrait afficher au démarrage :
@@ -160,7 +160,7 @@ poetry run workflow-coach
 ```bash
 # Test 1 : Lire historique
 poetry run python -c "
-from cyclisme_training_logs.config import get_data_config
+from magma_cycling.config import get_data_config
 config = get_data_config()
 print(f'✅ Config OK: {config.workouts_history_path}')
 "
@@ -176,7 +176,7 @@ poetry run workflow-coach --skip-feedback --skip-git
 
 ```bash
 # SEULEMENT après validation complète !
-rm -rf ~/cyclisme-training-logs-backup
+rm -rf ~/magma-cycling-backup
 echo "✅ Backup supprimé"
 ```
 
@@ -189,8 +189,8 @@ Si c'est votre première installation :
 ### 1. Cloner le code
 
 ```bash
-git clone https://github.com/stephanejouve/cyclisme-training-logs.git
-cd cyclisme-training-logs
+git clone https://github.com/stephanejouve/magma-cycling.git
+cd magma-cycling
 poetry install
 ```
 
@@ -240,7 +240,7 @@ chmod 600 ~/.intervals_config.json
 ### 5. Premier workflow
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 poetry run workflow-coach
 ```
 
@@ -319,7 +319,7 @@ Le workflow démarre mais ne trouve pas workouts-history.md ou .workflow_state.j
 **Diagnostic** :
 ```bash
 python3 -c "
-from cyclisme_training_logs.config import get_data_config
+from magma_cycling.config import get_data_config
 config = get_data_config()
 print('Data repo:', config.data_repo_path)
 print('Workouts:', config.workouts_history_path)
@@ -337,12 +337,12 @@ ls -la workouts-history.md .workflow_state.json
 ### Migration incomplète
 
 **Symptôme** :
-Certaines données dans cyclisme-training-logs, d'autres dans training-logs
+Certaines données dans magma-cycling, d'autres dans training-logs
 
 **Solution** :
 ```bash
 # Identifier fichiers à migrer
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 find logs/ -name "*.md" -o -name "*.json"
 
 # Copier vers training-logs
@@ -365,7 +365,7 @@ Si la migration pose problème, vous pouvez revenir à l'ancien système :
 
 ```bash
 # 1. Checkout commit avant migration
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 git log --oneline | head -10  # Trouver commit avant refactor
 git checkout <commit-hash>
 
@@ -385,7 +385,7 @@ poetry run workflow-coach
 
 ## Support
 
-- **Issues GitHub** : https://github.com/stephanejouve/cyclisme-training-logs/issues
+- **Issues GitHub** : https://github.com/stephanejouve/magma-cycling/issues
 - **Documentation** : Voir README.md et docs/
 - **Contact** : Créer une issue avec tag `[migration]`
 
@@ -393,7 +393,7 @@ poetry run workflow-coach
 
 ## Checklist Migration
 
-- [ ] Backup données créé (~/cyclisme-training-logs-backup)
+- [ ] Backup données créé (~/magma-cycling-backup)
 - [ ] Code mis à jour (git pull + poetry install)
 - [ ] Repo training-logs créé (local + GitHub privé)
 - [ ] Données restaurées dans training-logs

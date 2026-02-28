@@ -9,7 +9,7 @@
 ## ✅ Phases Complétées
 
 ### Phase 1 - Module Unifié Créé
-**Fichier :** `cyclisme_training_logs/api/intervals_client.py` (320 lignes)
+**Fichier :** `magma_cycling/api/intervals_client.py` (320 lignes)
 
 **Classe :** `IntervalsClient`
 
@@ -91,7 +91,7 @@ except ImportError:
 
 **Ligne 18 - APRÈS :**
 ```python
-from cyclisme_training_logs.api.intervals_client import IntervalsClient
+from magma_cycling.api.intervals_client import IntervalsClient
 ```
 
 **Ligne 65 - AVANT :**
@@ -162,14 +162,14 @@ poetry run upload-workouts --week-id S075 --start-date 2026-01-05
 **Option B (conservative) :** Créer wrappers avec deprecation
 ```python
 # Dans prepare_analysis.py
-from cyclisme_training_logs.api.intervals_client import IntervalsClient
+from magma_cycling.api.intervals_client import IntervalsClient
 import warnings
 
 class IntervalsAPI(IntervalsClient):
     def __init__(self, *args, **kwargs):
         warnings.warn(
             "IntervalsAPI is deprecated, use IntervalsClient from "
-            "cyclisme_training_logs.api.intervals_client",
+            "magma_cycling.api.intervals_client",
             DeprecationWarning,
             stacklevel=2
         )
@@ -230,11 +230,11 @@ git log -3 --oneline
 
 # Reprendre migration
 # Commencer par weekly_analysis.py
-grep -n "IntervalsAPI" cyclisme_training_logs/weekly_analysis.py
+grep -n "IntervalsAPI" magma_cycling/weekly_analysis.py
 
 # Éditer imports
 # from prepare_analysis import IntervalsAPI
-# → from cyclisme_training_logs.api.intervals_client import IntervalsClient
+# → from magma_cycling.api.intervals_client import IntervalsClient
 
 # Éditer instanciations
 # IntervalsAPI(...) → IntervalsClient(...)
@@ -248,11 +248,11 @@ poetry run pytest tests/ -v
 ## 💾 État Git (Non Committé)
 
 **Fichiers modifiés :**
-- `cyclisme_training_logs/weekly_planner.py` (2 éditions)
+- `magma_cycling/weekly_planner.py` (2 éditions)
 
 **Fichiers nouveaux :**
-- `cyclisme_training_logs/api/__init__.py`
-- `cyclisme_training_logs/api/intervals_client.py`
+- `magma_cycling/api/__init__.py`
+- `magma_cycling/api/intervals_client.py`
 - `tests/api/__init__.py`
 - `tests/api/test_intervals_client.py`
 
@@ -261,7 +261,7 @@ poetry run pytest tests/ -v
 refactor(api): Create unified IntervalsClient (Sprint R1 - Phase 1-2)
 
 Create unified API client to replace 3 duplicated implementations:
-- cyclisme_training_logs/api/intervals_client.py (320 lines)
+- magma_cycling/api/intervals_client.py (320 lines)
 - 7 methods with complete type hints and Google Style docstrings
 - Improved error handling with logging
 

@@ -195,7 +195,7 @@ def main():
     # Find all Python files
 
     python_files = []
-    for directory in ["cyclisme_training_logs", "tests", "scripts"]:
+    for directory in ["magma_cycling", "tests", "scripts"]:
         path = Path(directory)
         if path.exists():
             python_files.extend(path.rglob("*.py"))

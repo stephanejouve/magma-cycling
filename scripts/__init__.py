@@ -1,1 +1,1 @@
-"""Scripts package for cyclisme-training-logs."""
+"""Scripts package for magma-cycling."""

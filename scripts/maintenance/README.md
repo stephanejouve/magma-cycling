@@ -44,10 +44,10 @@ Génère un package professionnel pour revue de code externe contenant :
 
 ```bash
 # Depuis n'importe où
-bash ~/cyclisme-training-logs/scripts/maintenance/generate_code_review_package.sh
+bash ~/magma-cycling/scripts/maintenance/generate_code_review_package.sh
 
 # Ou depuis le projet
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 bash scripts/maintenance/generate_code_review_package.sh
 ```
 
@@ -76,7 +76,7 @@ bash scripts/maintenance/generate_code_review_package.sh
 
 Ajouter à `~/.zshrc` :
 ```bash
-alias review-package='bash ~/cyclisme-training-logs/scripts/maintenance/generate_code_review_package.sh'
+alias review-package='bash ~/magma-cycling/scripts/maintenance/generate_code_review_package.sh'
 ```
 
 Usage :
@@ -612,7 +612,7 @@ options:
 
 Ajouter à `~/.zshrc`:
 ```bash
-alias format-planning='python ~/cyclisme-training-logs/scripts/maintenance/format_planning.py'
+alias format-planning='python ~/magma-cycling/scripts/maintenance/format_planning.py'
 ```
 
 Usage:
@@ -848,7 +848,7 @@ Le script utilise l'API Intervals.icu via `IntervalsClient` :
 Le script utilise automatiquement la configuration Intervals.icu du projet :
 
 ```python
-from cyclisme_training_logs.config import get_intervals_config
+from magma_cycling.config import get_intervals_config
 
 config = get_intervals_config()
 # Lit INTERVALS_ATHLETE_ID et INTERVALS_API_KEY depuis .env
@@ -864,7 +864,7 @@ INTERVALS_API_KEY=your_api_key_here
 
 Ajouter à `~/.zshrc` :
 ```bash
-alias clear-week='python ~/cyclisme-training-logs/scripts/maintenance/clear_week_planning.py'
+alias clear-week='python ~/magma-cycling/scripts/maintenance/clear_week_planning.py'
 ```
 
 Usage :
@@ -878,7 +878,7 @@ clear-week --week-id S075 --start-date 2026-01-05 --yes
 Le script utilise le logger standard du projet :
 
 ```python
-from cyclisme_training_logs.api.intervals_client import IntervalsClient
+from magma_cycling.api.intervals_client import IntervalsClient
 # Logs dans stdout + fichiers selon configuration logging
 ```
 
@@ -932,7 +932,7 @@ curl -u "API_iXXXXXX:your_api_key" \
 
 ```bash
 # Vérifier config
-python -c "from cyclisme_training_logs.config import get_intervals_config; print(get_intervals_config())"
+python -c "from magma_cycling.config import get_intervals_config; print(get_intervals_config())"
 ```
 
 #### Import errors

@@ -261,7 +261,7 @@ ModuleNotFoundError: No module named 'prepare_analysis'
 **Solution :**
 ```bash
 # Lancer depuis la racine du projet
-cd /Users/stephanejouve/cyclisme-training-logs
+cd /Users/stephanejouve/magma-cycling
 python3 scripts/weekly_analysis.py S068
 ```
 

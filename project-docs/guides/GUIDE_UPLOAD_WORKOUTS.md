@@ -274,7 +274,7 @@ graph LR
 
 ```bash
 # Test complet depuis zéro
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 # Génération
 python3 scripts/weekly_planner.py S069 --start-date 2025-11-24

@@ -13,7 +13,7 @@ from datetime import date
 
 import pytest
 
-from cyclisme_training_logs.planning.models import Session
+from magma_cycling.planning.models import Session
 
 # Configure pytest-asyncio
 pytest_plugins = ("pytest_asyncio",)
@@ -52,14 +52,14 @@ def test_update_completed_sessions_returns_dict_not_none():
         mock_data_config.week_planning_dir.mkdir()
 
         with patch(
-            "cyclisme_training_logs.config.create_intervals_client",
+            "magma_cycling.config.create_intervals_client",
             return_value=mock_client,
         ):
             with patch(
-                "cyclisme_training_logs.config.config_base.get_data_config",
+                "magma_cycling.config.config_base.get_data_config",
                 return_value=mock_data_config,
             ):
-                from cyclisme_training_logs.daily_sync import DailySync
+                from magma_cycling.daily_sync import DailySync
 
                 sync = DailySync(
                     tracking_file=tracking_file, reports_dir=reports_dir, verbose=False
@@ -97,14 +97,14 @@ def test_update_completed_sessions_exception_returns_dict():
         mock_data_config.week_planning_dir.mkdir()
 
         with patch(
-            "cyclisme_training_logs.config.create_intervals_client",
+            "magma_cycling.config.create_intervals_client",
             return_value=mock_client,
         ):
             with patch(
-                "cyclisme_training_logs.config.config_base.get_data_config",
+                "magma_cycling.config.config_base.get_data_config",
                 return_value=mock_data_config,
             ):
-                from cyclisme_training_logs.daily_sync import DailySync
+                from magma_cycling.daily_sync import DailySync
 
                 sync = DailySync(
                     tracking_file=tracking_file, reports_dir=reports_dir, verbose=False
@@ -169,7 +169,7 @@ async def test_update_athlete_profile_schema_structure():
     Line fixed: mcp_server.py:580
     Added: "additionalProperties": True
     """
-    from cyclisme_training_logs.mcp_server import list_tools
+    from magma_cycling.mcp_server import list_tools
 
     tools = await list_tools()
 
@@ -280,7 +280,7 @@ def test_all_fixes_integrated():
     2. analyze-session-adherence: wrong attributes
     3. update-athlete-profile: schema incomplete
     """
-    from cyclisme_training_logs.planning.models import Session
+    from magma_cycling.planning.models import Session
 
     # Fix 1: Session model attributes
     session_fields = Session.model_fields.keys()

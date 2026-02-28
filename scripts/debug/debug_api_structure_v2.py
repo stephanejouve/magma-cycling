@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 # Add project to path
-project_root = Path.home() / "cyclisme-training-logs"
+project_root = Path.home() / "magma-cycling"
 sys.path.insert(0, str(project_root))
 
 # Charger .env si variables absentes
@@ -25,7 +25,7 @@ if not os.getenv("VITE_INTERVALS_ATHLETE_ID"):
         print(f"❌ Fichier .env non trouvé: {env_file}")
         sys.exit(1)
 
-from cyclisme_training_logs.sync_intervals import IntervalsAPI  # noqa: E402
+from magma_cycling.sync_intervals import IntervalsAPI  # noqa: E402
 
 
 def main():

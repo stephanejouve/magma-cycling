@@ -44,7 +44,7 @@ com.cyclisme.migration.30-phase3-archive-7d.plist       Phase 3 (auto 7j)
 ### 🚀 Démarrage (Une seule commande !)
 
 ```bash
-cd ~/cyclisme-training-logs/scripts/launchagents
+cd ~/magma-cycling/scripts/launchagents
 
 # 1. Validation préalable (optionnel mais recommandé)
 ./validate-plists.sh

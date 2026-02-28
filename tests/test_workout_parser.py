@@ -2,7 +2,7 @@
 
 import pytest
 
-from cyclisme_training_logs.workout_parser import (
+from magma_cycling.workout_parser import (
     Phase,
     WorkoutBlock,
     classify_interval_type,

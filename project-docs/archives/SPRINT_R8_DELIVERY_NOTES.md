@@ -143,12 +143,12 @@ activities = [
 
 ## 📦 Contenu Archive
 
-**Fichier:** `cyclisme-training-logs-sprint-r8.tar.gz`
+**Fichier:** `magma-cycling-sprint-r8.tar.gz`
 
 **Contenu:**
 ```
-cyclisme-training-logs/
-├── cyclisme_training_logs/           # Code production
+magma-cycling/
+├── magma_cycling/           # Code production
 │   └── workflow_coach.py             # 1,822 lines, 19% coverage
 ├── tests/                             # Tests
 │   ├── workflows/

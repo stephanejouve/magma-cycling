@@ -74,7 +74,7 @@ grep -r "\.copy()" --include="*.py" | grep session
 
 #### Rationnelle:
 
-1. **Modèles déjà prêts**: `cyclisme_training_logs/planning/models.py` existe déjà avec:
+1. **Modèles déjà prêts**: `magma_cycling/planning/models.py` existe déjà avec:
    - `WeeklyPlan(BaseModel)` avec méthodes `backup_sessions()` et `restore_sessions()`
    - `Session(BaseModel)` avec validation automatique
    - Tests anti-aliasing déjà en place
@@ -193,7 +193,7 @@ grep -r "\.copy()" --include="*.py" | grep session
 
 ## 📚 Références
 
-- **Implémentation**: `cyclisme_training_logs/planning/models.py`
+- **Implémentation**: `magma_cycling/planning/models.py`
 - **Tests anti-aliasing**: `tests/planning/test_models_anti_aliasing.py`
 - **Tests migration**: `tests/planning/test_migration_weekly_planner.py`
 - **Audit complet**: `project-docs/SHALLOW_COPY_AUDIT.md`

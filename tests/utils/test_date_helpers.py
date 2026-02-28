@@ -9,7 +9,7 @@ import json
 
 import pytest
 
-from cyclisme_training_logs.utils.date_helpers import extract_day_number
+from magma_cycling.utils.date_helpers import extract_day_number
 
 
 class TestExtractDayNumber:

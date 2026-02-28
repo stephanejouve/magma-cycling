@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test memory_graph visualization tool on cyclisme-training-logs data structures.
+Test memory_graph visualization tool on magma-cycling data structures.
 """
 import json
 from pathlib import Path

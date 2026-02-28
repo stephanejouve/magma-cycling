@@ -8,7 +8,7 @@ shift_sessions - Session Rescheduling Tool
 
 Outil pour décaler, échanger et réorganiser les séances d'entraînement planifiées.
 
-.. automodule:: cyclisme_training_logs.shift_sessions
+.. automodule:: magma_cycling.shift_sessions
    :members:
    :undoc-members:
    :show-inheritance:
@@ -95,10 +95,10 @@ Des alias shell sont fournis dans ``.zsh_aliases_shift_sessions`` :
 .. code-block:: bash
 
     # Source les alias
-    source ~/cyclisme-training-logs/.zsh_aliases_shift_sessions
+    source ~/magma-cycling/.zsh_aliases_shift_sessions
 
     # Ou ajouter à ~/.zshrc de façon permanente
-    echo 'source ~/cyclisme-training-logs/.zsh_aliases_shift_sessions' >> ~/.zshrc
+    echo 'source ~/magma-cycling/.zsh_aliases_shift_sessions' >> ~/.zshrc
 
 **Alias disponibles:**
 
@@ -173,7 +173,7 @@ Scénario typique : fatigue jeudi, besoin de décaler toutes les séances d'un j
 
 .. code-block:: python
 
-    from cyclisme_training_logs.shift_sessions import SessionShifter
+    from magma_cycling.shift_sessions import SessionShifter
 
     # 1. Initialiser le shifter
     shifter = SessionShifter(week_id="S081")
@@ -248,7 +248,7 @@ Related Modules
 ~~~~~~~~~~~~~~~
 
 - :doc:`planning` - Planning models and managers
-- :doc:`cyclisme_training_logs.planning` - Pydantic models (Session, WeeklyPlan)
+- :doc:`magma_cycling.planning` - Pydantic models (Session, WeeklyPlan)
 - ``update_session_status.py`` - Update individual session status
 - ``weekly_planner.py`` - Generate weekly planning prompts
 

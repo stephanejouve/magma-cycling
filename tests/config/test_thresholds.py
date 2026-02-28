@@ -4,7 +4,7 @@ import os
 
 import pytest
 
-from cyclisme_training_logs.config.thresholds import TrainingThresholds
+from magma_cycling.config.thresholds import TrainingThresholds
 
 
 class TestTrainingThresholdsFromEnv:

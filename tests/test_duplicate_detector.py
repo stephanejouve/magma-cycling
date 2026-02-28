@@ -19,7 +19,7 @@ from pathlib import Path
 
 import pytest
 
-from cyclisme_training_logs.core.duplicate_detector import (
+from magma_cycling.core.duplicate_detector import (
     DuplicateDetectedError,
     DuplicateDetector,
     check_and_handle_duplicates,

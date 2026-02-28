@@ -62,8 +62,8 @@ def fix_d400_in_file(file_path: Path) -> tuple[bool, int]:
 
 
 def main():
-    """Run D400 fixer on cyclisme_training_logs directory."""
-    base_dir = Path(__file__).parent.parent / "cyclisme_training_logs"
+    """Run D400 fixer on magma_cycling directory."""
+    base_dir = Path(__file__).parent.parent / "magma_cycling"
 
     if not base_dir.exists():
         print(f"Error: Directory not found: {base_dir}")

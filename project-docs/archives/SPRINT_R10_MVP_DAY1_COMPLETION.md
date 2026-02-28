@@ -29,7 +29,7 @@ Sprint R10 MVP Day 1 has been successfully completed. The architecture skeleton 
 
 **Structure:**
 ```
-cyclisme_training_logs/reports/
+magma_cycling/reports/
 ├── __init__.py                   # Module exports (ReportGenerator)
 ├── generator.py                  # Core orchestration class
 ├── templates/                    # Report structure definitions
@@ -460,15 +460,15 @@ Test Duration: 11.31s
 - **Branch:** `feature/r10-mvp-ai-reports`
 - **Base:** `main` (from tag v2.3.2)
 - **Commit:** `80d57e4` - "feat: Add Sprint R10 MVP Day 1..."
-- **Remote:** https://github.com/stephanejouve/cyclisme-training-logs/tree/feature/r10-mvp-ai-reports
+- **Remote:** https://github.com/stephanejouve/magma-cycling/tree/feature/r10-mvp-ai-reports
 
 ### Documentation
 - Sprint Brief: `SPRINT_R10_MVP_BRIEF.md` (user-provided)
 - Day 1 Report: `SPRINT_R10_MVP_DAY1_COMPLETION.md` (this file)
 
 ### Key Files
-- `cyclisme_training_logs/reports/generator.py` - Core interface
-- `cyclisme_training_logs/reports/validators/markdown_validator.py` - Validation logic
+- `magma_cycling/reports/generator.py` - Core interface
+- `magma_cycling/reports/validators/markdown_validator.py` - Validation logic
 - `tests/reports/fixtures/sample_data.py` - Realistic test data
 
 ---

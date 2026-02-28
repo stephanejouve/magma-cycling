@@ -9,7 +9,7 @@
 
 ## 🎯 MISSION
 
-Migrer l'infrastructure core depuis le projet v2 (cyclisme-training-automation-v2) vers le projet actuel (cyclisme-training-logs) en 5 étapes :
+Migrer l'infrastructure core depuis le projet v2 (cyclisme-training-automation-v2) vers le projet actuel (magma-cycling) en 5 étapes :
 
 1. **Créer `core/timeline_injector.py`** - Chronological injection
 2. **Créer `core/data_aggregator.py`** - Abstract aggregation framework
@@ -33,7 +33,7 @@ Fichiers source:
 
 ### **Projet Actuel**
 ```
-Location: ~/cyclisme-training-logs/
+Location: ~/magma-cycling/
 État actuel:
   - Gartner TIME intégré (7/45 fichiers v2)
   - Tests : 273/273 passing
@@ -55,7 +55,7 @@ Location: ~/cyclisme-training-logs/
 
 ## 📋 ÉTAPE 1 : CRÉER `core/timeline_injector.py`
 
-### **Fichier à créer :** `cyclisme_training_logs/core/timeline_injector.py`
+### **Fichier à créer :** `magma_cycling/core/timeline_injector.py`
 
 **Source v2 :** `/Users/stephanejouve/cyclisme-training-automation-v2/src/core/markdown_parser.py`
 
@@ -81,7 +81,7 @@ insertion intelligente basée sur les dates de workout.
 Examples:
     Basic chronological injection::
 
-        from cyclisme_training_logs.core.timeline_injector import TimelineInjector
+        from magma_cycling.core.timeline_injector import TimelineInjector
         from pathlib import Path
 
         # Initialiser
@@ -119,8 +119,8 @@ Examples:
 
     Integration with existing workflow::
 
-        from cyclisme_training_logs.core.timeline_injector import TimelineInjector
-        from cyclisme_training_logs.config import DataRepoConfig
+        from magma_cycling.core.timeline_injector import TimelineInjector
+        from magma_cycling.config import DataRepoConfig
 
         # Configuration
         config = DataRepoConfig()
@@ -408,7 +408,7 @@ Created: 2025-12-26
 import pytest
 from pathlib import Path
 from datetime import date
-from cyclisme_training_logs.core.timeline_injector import (
+from magma_cycling.core.timeline_injector import (
     TimelineInjector,
     InjectionResult
 )
@@ -477,7 +477,7 @@ def test_duplicate_detection(sample_history_file):
 
 ## 📋 ÉTAPE 2 : CRÉER `core/data_aggregator.py`
 
-### **Fichier à créer :** `cyclisme_training_logs/core/data_aggregator.py`
+### **Fichier à créer :** `magma_cycling/core/data_aggregator.py`
 
 **Source v2 :** `/Users/stephanejouve/cyclisme-training-automation-v2/src/core/data_aggregator.py`
 
@@ -503,7 +503,7 @@ réutilisable pour tous types d'analyses.
 Examples:
     Creating a custom aggregator::
 
-        from cyclisme_training_logs.core.data_aggregator import DataAggregator
+        from magma_cycling.core.data_aggregator import DataAggregator
         from pathlib import Path
 
         class MyAggregator(DataAggregator):
@@ -525,7 +525,7 @@ Examples:
 
     Daily aggregation example::
 
-        from cyclisme_training_logs.analyzers.daily_aggregator import DailyAggregator
+        from magma_cycling.analyzers.daily_aggregator import DailyAggregator
 
         # Analyse séance quotidienne
         daily = DailyAggregator(activity_id="i123456")
@@ -538,7 +538,7 @@ Examples:
 
     Weekly aggregation (future)::
 
-        from cyclisme_training_logs.analyzers.weekly_aggregator import WeeklyAggregator
+        from magma_cycling.analyzers.weekly_aggregator import WeeklyAggregator
 
         # Analyse hebdomadaire
         weekly = WeeklyAggregator(week="S073", start_date="2025-01-06")
@@ -819,7 +819,7 @@ Created: 2025-12-26
 
 import pytest
 from pathlib import Path
-from cyclisme_training_logs.core.data_aggregator import (
+from magma_cycling.core.data_aggregator import (
     DataAggregator,
     AggregationResult
 )
@@ -863,7 +863,7 @@ def test_aggregator_with_metadata():
 
 ## 📋 ÉTAPE 3 : CRÉER `core/prompt_generator.py`
 
-### **Fichier à créer :** `cyclisme_training_logs/core/prompt_generator.py`
+### **Fichier à créer :** `magma_cycling/core/prompt_generator.py`
 
 **Source v2 :** `/Users/stephanejouve/cyclisme-training-automation-v2/src/core/prompt_generator.py`
 
@@ -889,7 +889,7 @@ output_format) avec templates personnalisables.
 Examples:
     Basic prompt generation::
 
-        from cyclisme_training_logs.core.prompt_generator import PromptGenerator
+        from magma_cycling.core.prompt_generator import PromptGenerator
 
         generator = PromptGenerator()
 
@@ -1164,7 +1164,7 @@ Répondre en JSON :
 
 ## 📋 ÉTAPE 4 : CRÉER `analyzers/daily_aggregator.py`
 
-### **Fichier à créer :** `cyclisme_training_logs/analyzers/daily_aggregator.py`
+### **Fichier à créer :** `magma_cycling/analyzers/daily_aggregator.py`
 
 **Source v2 :** `/Users/stephanejouve/cyclisme-training-automation-v2/src/analyzers/session_analyzer.py`
 
@@ -1190,7 +1190,7 @@ métriques pré/post séance.
 Examples:
     Basic daily aggregation::
 
-        from cyclisme_training_logs.analyzers.daily_aggregator import DailyAggregator
+        from magma_cycling.analyzers.daily_aggregator import DailyAggregator
 
         # Agréger données séance
         aggregator = DailyAggregator(activity_id="i123456")
@@ -1201,8 +1201,8 @@ Examples:
 
     Integration with workflow::
 
-        from cyclisme_training_logs.analyzers.daily_aggregator import DailyAggregator
-        from cyclisme_training_logs.config import DataRepoConfig
+        from magma_cycling.analyzers.daily_aggregator import DailyAggregator
+        from magma_cycling.config import DataRepoConfig
 
         # Configuration
         config = DataRepoConfig()
@@ -1228,7 +1228,7 @@ Created: 2025-12-26 (Migrated from v2)
 import json
 from pathlib import Path
 from typing import Dict, Any, Optional
-from cyclisme_training_logs.core.data_aggregator import DataAggregator
+from magma_cycling.core.data_aggregator import DataAggregator
 import logging
 
 logger = logging.getLogger(__name__)
@@ -1404,7 +1404,7 @@ class DailyAggregator(DataAggregator):
     def _fetch_intervals_activity(self) -> Dict[str, Any]:
         """Fetch activité depuis Intervals.icu API."""
         # Utiliser sync_intervals existant
-        from cyclisme_training_logs.sync_intervals import IntervalsAPI
+        from magma_cycling.sync_intervals import IntervalsAPI
 
         api = IntervalsAPI()
         return api.get_activity(self.activity_id)
@@ -1431,7 +1431,7 @@ class DailyAggregator(DataAggregator):
 
     def _fetch_fitness_metrics(self) -> Dict[str, Any]:
         """Fetch métriques forme depuis Intervals.icu."""
-        from cyclisme_training_logs.sync_intervals import IntervalsAPI
+        from magma_cycling.sync_intervals import IntervalsAPI
 
         api = IntervalsAPI()
         return api.get_wellness_today()
@@ -1455,7 +1455,7 @@ class DailyAggregator(DataAggregator):
 
 ## 📋 ÉTAPE 5 : REFACTOR `insert_analysis.py` (M→I)
 
-### **Fichier à modifier :** `cyclisme_training_logs/insert_analysis.py`
+### **Fichier à modifier :** `magma_cycling/insert_analysis.py`
 
 **Objectif :** Utiliser TimelineInjector au lieu d'append-only
 
@@ -1463,7 +1463,7 @@ class DailyAggregator(DataAggregator):
 
 1. **Importer TimelineInjector**
 ```python
-from cyclisme_training_logs.core.timeline_injector import TimelineInjector
+from magma_cycling.core.timeline_injector import TimelineInjector
 ```
 
 2. **Remplacer méthode d'insertion**
@@ -1513,8 +1513,8 @@ Examples:
 
     Programmatic usage (new)::
 
-        from cyclisme_training_logs.insert_analysis import insert_analysis
-        from cyclisme_training_logs.core.timeline_injector import TimelineInjector
+        from magma_cycling.insert_analysis import insert_analysis
+        from magma_cycling.core.timeline_injector import TimelineInjector
         from pathlib import Path
 
         # Nouvelle méthode chronologique
@@ -1535,7 +1535,7 @@ Updated: 2025-12-26 (Refactored with TimelineInjector - Migration M→I complete
 
 ## 📋 ÉTAPE 6 : REFACTOR `backfill_history.py` (M→I)
 
-### **Fichier à modifier :** `cyclisme_training_logs/backfill_history.py`
+### **Fichier à modifier :** `magma_cycling/backfill_history.py`
 
 **Objectif :** Utiliser TimelineInjector pour backfill chronologique
 
@@ -1636,7 +1636,7 @@ Tests: 290+ passing ← +17 nouveaux tests
 
 **Règles impératives :**
 1. **Préserver docstrings v2 complètes** de cyclisme-training-automation-v2
-2. **Adapter imports** : `from src.` → `from cyclisme_training_logs.`
+2. **Adapter imports** : `from src.` → `from magma_cycling.`
 3. **Ajouter note migration** : `# Migrated from cyclisme-training-automation-v2`
 4. **Mettre à jour Examples** avec imports corrects
 5. **Conserver metadata** Author/Created + ajouter Created migration

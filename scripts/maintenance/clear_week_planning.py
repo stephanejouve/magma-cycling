@@ -34,8 +34,8 @@ import argparse
 import sys
 from datetime import datetime, timedelta
 
-from cyclisme_training_logs.api.intervals_client import IntervalsClient
-from cyclisme_training_logs.config import get_intervals_config
+from magma_cycling.api.intervals_client import IntervalsClient
+from magma_cycling.config import get_intervals_config
 
 
 def parse_args():

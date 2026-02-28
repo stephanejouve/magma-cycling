@@ -5,7 +5,7 @@ Author: Claude Sonnet 4.5
 Created: 2026-02-19
 """
 
-from cyclisme_training_logs.planning.session_formatter import (
+from magma_cycling.planning.session_formatter import (
     format_remaining_sessions_compact,
 )
 

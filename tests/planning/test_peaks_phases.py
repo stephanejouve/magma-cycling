@@ -8,7 +8,7 @@ Created: 2026-02-14
 
 import pytest
 
-from cyclisme_training_logs.planning.peaks_phases import (
+from magma_cycling.planning.peaks_phases import (
     TrainingPhase,
     calculate_ctl_target,
     determine_training_phase,

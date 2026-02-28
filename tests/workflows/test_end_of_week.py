@@ -18,7 +18,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from cyclisme_training_logs.workflows.end_of_week import (
+from magma_cycling.workflows.end_of_week import (
     EndOfWeekWorkflow,
     calculate_week_start_date,
     calculate_weekly_transition,
@@ -34,7 +34,7 @@ from cyclisme_training_logs.workflows.end_of_week import (
 class TestCalculateWeekStartDate:
     """Test calculate_week_start_date function."""
 
-    @patch("cyclisme_training_logs.workflows.end_of_week.get_week_config")
+    @patch("magma_cycling.workflows.end_of_week.get_week_config")
     def test_calculate_week_start_date_s001(self, mock_config):
         """Test calculation for S001 (season start)."""
         mock_week_config = Mock()
@@ -47,7 +47,7 @@ class TestCalculateWeekStartDate:
         assert result.weekday() == 0  # Monday
         mock_week_config.get_reference_for_week.assert_called_once_with("S001")
 
-    @patch("cyclisme_training_logs.workflows.end_of_week.get_week_config")
+    @patch("magma_cycling.workflows.end_of_week.get_week_config")
     def test_calculate_week_start_date_s075(self, mock_config):
         """Test calculation for S075."""
         mock_week_config = Mock()
@@ -61,7 +61,7 @@ class TestCalculateWeekStartDate:
         assert result == expected
         assert result.weekday() == 0  # Monday
 
-    @patch("cyclisme_training_logs.workflows.end_of_week.get_week_config")
+    @patch("magma_cycling.workflows.end_of_week.get_week_config")
     def test_calculate_week_start_date_invalid_not_monday(self, mock_config):
         """Test error when calculated date is not a Monday."""
         mock_week_config = Mock()
@@ -81,7 +81,7 @@ class TestCalculateWeekStartDate:
 class TestCalculateWeeklyTransition:
     """Test calculate_weekly_transition function."""
 
-    @patch("cyclisme_training_logs.workflows.end_of_week.get_week_config")
+    @patch("magma_cycling.workflows.end_of_week.get_week_config")
     def test_calculate_weekly_transition_sunday(self, mock_config):
         """Test transition calculation on Sunday."""
         mock_week_config = Mock()
@@ -100,7 +100,7 @@ class TestCalculateWeeklyTransition:
         assert completed_start == date(2026, 1, 19)  # Monday S077
         assert next_start == date(2026, 1, 26)  # Monday S078
 
-    @patch("cyclisme_training_logs.workflows.end_of_week.get_week_config")
+    @patch("magma_cycling.workflows.end_of_week.get_week_config")
     def test_calculate_weekly_transition_monday(self, mock_config):
         """Test transition calculation on Monday."""
         mock_week_config = Mock()
@@ -117,8 +117,8 @@ class TestCalculateWeeklyTransition:
         assert week_completed == "S078"
         assert week_next == "S079"
 
-    @patch("cyclisme_training_logs.workflows.end_of_week.get_week_config")
-    @patch("cyclisme_training_logs.workflows.end_of_week.date")
+    @patch("magma_cycling.workflows.end_of_week.get_week_config")
+    @patch("magma_cycling.workflows.end_of_week.date")
     def test_calculate_weekly_transition_no_reference_date(self, mock_date_class, mock_config):
         """Test transition uses today() when no reference_date provided."""
         mock_week_config = Mock()
@@ -143,8 +143,8 @@ class TestCalculateWeeklyTransition:
 class TestEndOfWeekWorkflowInit:
     """Test EndOfWeekWorkflow initialization."""
 
-    @patch("cyclisme_training_logs.workflows.end_of_week.get_data_config")
-    @patch("cyclisme_training_logs.workflows.end_of_week.calculate_week_start_date")
+    @patch("magma_cycling.workflows.end_of_week.get_data_config")
+    @patch("magma_cycling.workflows.end_of_week.calculate_week_start_date")
     def test_init_basic(self, mock_calc_date, mock_data_config):
         """Test basic initialization."""
         mock_calc_date.side_effect = [date(2026, 1, 5), date(2026, 1, 12)]
@@ -171,8 +171,8 @@ class TestEndOfWeekWorkflowInit:
         assert workflow.completed_start_date == date(2026, 1, 5)
         assert workflow.next_start_date == date(2026, 1, 12)
 
-    @patch("cyclisme_training_logs.workflows.end_of_week.get_data_config")
-    @patch("cyclisme_training_logs.workflows.end_of_week.calculate_week_start_date")
+    @patch("magma_cycling.workflows.end_of_week.get_data_config")
+    @patch("magma_cycling.workflows.end_of_week.calculate_week_start_date")
     def test_init_dry_run_mode(self, mock_calc_date, mock_data_config):
         """Test initialization with dry_run=True."""
         mock_calc_date.side_effect = [date(2026, 1, 5), date(2026, 1, 12)]
@@ -185,8 +185,8 @@ class TestEndOfWeekWorkflowInit:
 
         assert workflow.dry_run is True
 
-    @patch("cyclisme_training_logs.workflows.end_of_week.get_data_config")
-    @patch("cyclisme_training_logs.workflows.end_of_week.calculate_week_start_date")
+    @patch("magma_cycling.workflows.end_of_week.get_data_config")
+    @patch("magma_cycling.workflows.end_of_week.calculate_week_start_date")
     def test_init_config_error(self, mock_calc_date, mock_data_config):
         """Test initialization fails gracefully on config error."""
         mock_calc_date.side_effect = [date(2026, 1, 5), date(2026, 1, 12)]
@@ -208,10 +208,8 @@ class TestEndOfWeekWorkflowSteps:
     def workflow(self):
         """Create workflow instance for testing (dry_run=False for step testing)."""
         with (
-            patch("cyclisme_training_logs.workflows.end_of_week.get_data_config"),
-            patch(
-                "cyclisme_training_logs.workflows.end_of_week.calculate_week_start_date"
-            ) as mock_calc,
+            patch("magma_cycling.workflows.end_of_week.get_data_config"),
+            patch("magma_cycling.workflows.end_of_week.calculate_week_start_date") as mock_calc,
         ):
             mock_calc.side_effect = [date(2026, 1, 5), date(2026, 1, 12)]
             mock_config = Mock()
@@ -219,7 +217,7 @@ class TestEndOfWeekWorkflowSteps:
             mock_config.week_planning_dir = Path("/tmp/planning")
 
             with patch(
-                "cyclisme_training_logs.workflows.end_of_week.get_data_config",
+                "magma_cycling.workflows.end_of_week.get_data_config",
                 return_value=mock_config,
             ):
                 return EndOfWeekWorkflow(
@@ -233,10 +231,8 @@ class TestEndOfWeekWorkflowSteps:
     def workflow_dry_run(self):
         """Create workflow instance in dry-run mode."""
         with (
-            patch("cyclisme_training_logs.workflows.end_of_week.get_data_config"),
-            patch(
-                "cyclisme_training_logs.workflows.end_of_week.calculate_week_start_date"
-            ) as mock_calc,
+            patch("magma_cycling.workflows.end_of_week.get_data_config"),
+            patch("magma_cycling.workflows.end_of_week.calculate_week_start_date") as mock_calc,
         ):
             mock_calc.side_effect = [date(2026, 1, 5), date(2026, 1, 12)]
             mock_config = Mock()
@@ -244,7 +240,7 @@ class TestEndOfWeekWorkflowSteps:
             mock_config.week_planning_dir = Path("/tmp/planning")
 
             with patch(
-                "cyclisme_training_logs.workflows.end_of_week.get_data_config",
+                "magma_cycling.workflows.end_of_week.get_data_config",
                 return_value=mock_config,
             ):
                 return EndOfWeekWorkflow(
@@ -254,7 +250,7 @@ class TestEndOfWeekWorkflowSteps:
                     dry_run=True,
                 )
 
-    @patch("cyclisme_training_logs.workflows.workflow_weekly.run_weekly_analysis")
+    @patch("magma_cycling.workflows.workflow_weekly.run_weekly_analysis")
     @patch("pathlib.Path.exists")
     def test_step1_analyze_completed_week_file_exists(
         self, mock_exists, mock_run_analysis, workflow
@@ -268,7 +264,7 @@ class TestEndOfWeekWorkflowSteps:
         assert result is True
         mock_run_analysis.assert_not_called()  # Shouldn't run analysis if file exists
 
-    @patch("cyclisme_training_logs.workflows.workflow_weekly.run_weekly_analysis")
+    @patch("magma_cycling.workflows.workflow_weekly.run_weekly_analysis")
     @patch("pathlib.Path.exists")
     def test_step1_analyze_completed_week_run_analysis(
         self, mock_exists, mock_run_analysis, workflow
@@ -287,7 +283,7 @@ class TestEndOfWeekWorkflowSteps:
         assert call_args[1]["week"] == "S075"
         assert call_args[1]["ai_analysis"] is False
 
-    @patch("cyclisme_training_logs.workflows.workflow_weekly.run_weekly_analysis")
+    @patch("magma_cycling.workflows.workflow_weekly.run_weekly_analysis")
     @patch("pathlib.Path.exists")
     def test_step1_analyze_completed_week_analysis_fails(
         self, mock_exists, mock_run_analysis, workflow
@@ -307,7 +303,7 @@ class TestEndOfWeekWorkflowSteps:
         assert result is True
         assert workflow_dry_run.reports != {}  # Should have mock reports
 
-    @patch("cyclisme_training_logs.scripts.pid_daily_evaluation.PIDDailyEvaluator")
+    @patch("magma_cycling.scripts.pid_daily_evaluation.PIDDailyEvaluator")
     def test_step1b_pid_evaluation_success(self, mock_pid_class, workflow):
         """Test step 1b: PID evaluation (success)."""
         mock_evaluator = Mock()
@@ -320,7 +316,7 @@ class TestEndOfWeekWorkflowSteps:
         mock_pid_class.assert_called_once_with(dry_run=False)
         mock_evaluator.run_daily_evaluation.assert_called_once_with(days_back=7)
 
-    @patch("cyclisme_training_logs.scripts.pid_daily_evaluation.PIDDailyEvaluator")
+    @patch("magma_cycling.scripts.pid_daily_evaluation.PIDDailyEvaluator")
     def test_step1b_pid_evaluation_with_test_recommendation(self, mock_pid_class, workflow):
         """Test step 1b: PID evaluation with test recommendation."""
         mock_evaluator = Mock()
@@ -339,7 +335,7 @@ class TestEndOfWeekWorkflowSteps:
 
         assert result is True
 
-    @patch("cyclisme_training_logs.scripts.pid_daily_evaluation.PIDDailyEvaluator")
+    @patch("magma_cycling.scripts.pid_daily_evaluation.PIDDailyEvaluator")
     def test_step1b_pid_evaluation_exception_non_blocking(self, mock_pid_class, workflow):
         """Test step 1b: exception is non-blocking (returns True)."""
         mock_pid_class.side_effect = Exception("PID error")
@@ -444,7 +440,7 @@ class TestEndOfWeekWorkflowSteps:
             assert result is True
             mock_input.assert_not_called()  # No user prompt in auto mode
 
-    @patch("cyclisme_training_logs.upload_workouts.WorkoutUploader")
+    @patch("magma_cycling.upload_workouts.WorkoutUploader")
     def test_step4_validate_workouts_success(self, mock_uploader_class, workflow):
         """Test step 4: validate workouts (success)."""
         workflow.workouts_file = Path("/tmp/test_workouts.txt")
@@ -459,7 +455,7 @@ class TestEndOfWeekWorkflowSteps:
 
         assert result is True
 
-    @patch("cyclisme_training_logs.upload_workouts.WorkoutUploader")
+    @patch("magma_cycling.upload_workouts.WorkoutUploader")
     def test_step4_validate_workouts_no_file(self, mock_uploader_class, workflow):
         """Test step 4: no workouts file set."""
         workflow.workouts_file = None
@@ -468,7 +464,7 @@ class TestEndOfWeekWorkflowSteps:
 
         assert result is False
 
-    @patch("cyclisme_training_logs.upload_workouts.WorkoutUploader")
+    @patch("magma_cycling.upload_workouts.WorkoutUploader")
     def test_step4_validate_workouts_invalid(self, mock_uploader_class, workflow):
         """Test step 4: validation fails (empty workouts)."""
         workflow.workouts_file = Path("/tmp/test_workouts.txt")
@@ -487,7 +483,7 @@ class TestEndOfWeekWorkflowSteps:
 
         assert result is True
 
-    @patch("cyclisme_training_logs.upload_workouts.WorkoutUploader")
+    @patch("magma_cycling.upload_workouts.WorkoutUploader")
     def test_step5_upload_workouts_auto_mode_success(self, mock_uploader_class, workflow):
         """Test step 5: upload in auto mode (success)."""
         workflow.auto = True
@@ -502,7 +498,7 @@ class TestEndOfWeekWorkflowSteps:
 
         assert result is True
 
-    @patch("cyclisme_training_logs.upload_workouts.WorkoutUploader")
+    @patch("magma_cycling.upload_workouts.WorkoutUploader")
     def test_step5_upload_workouts_auto_mode_partial_failure(self, mock_uploader_class, workflow):
         """Test step 5: upload in auto mode (partial failure)."""
         workflow.auto = True
@@ -586,10 +582,8 @@ class TestEndOfWeekWorkflowIntegration:
     def workflow_with_mocks(self):
         """Create workflow with all external calls mocked."""
         with (
-            patch("cyclisme_training_logs.workflows.end_of_week.get_data_config"),
-            patch(
-                "cyclisme_training_logs.workflows.end_of_week.calculate_week_start_date"
-            ) as mock_calc,
+            patch("magma_cycling.workflows.end_of_week.get_data_config"),
+            patch("magma_cycling.workflows.end_of_week.calculate_week_start_date") as mock_calc,
         ):
             mock_calc.side_effect = [date(2026, 1, 5), date(2026, 1, 12)]
             mock_config = Mock()
@@ -597,7 +591,7 @@ class TestEndOfWeekWorkflowIntegration:
             mock_config.week_planning_dir = Path("/tmp/planning")
 
             with patch(
-                "cyclisme_training_logs.workflows.end_of_week.get_data_config",
+                "magma_cycling.workflows.end_of_week.get_data_config",
                 return_value=mock_config,
             ):
                 workflow = EndOfWeekWorkflow(
@@ -624,8 +618,8 @@ class TestEndOfWeekWorkflowIntegration:
 
         assert result is True
 
-    @patch("cyclisme_training_logs.workflows.end_of_week.get_data_config")
-    @patch("cyclisme_training_logs.workflows.end_of_week.calculate_week_start_date")
+    @patch("magma_cycling.workflows.end_of_week.get_data_config")
+    @patch("magma_cycling.workflows.end_of_week.calculate_week_start_date")
     def test_workflow_run_step1_failure(self, mock_calc, mock_config):
         """Test workflow stops on step 1 failure."""
         mock_calc.side_effect = [date(2026, 1, 5), date(2026, 1, 12)]
@@ -701,9 +695,9 @@ class TestParseArgs:
 class TestMain:
     """Test main() entry point."""
 
-    @patch("cyclisme_training_logs.workflows.end_of_week.parse_args")
-    @patch("cyclisme_training_logs.workflows.end_of_week.calculate_weekly_transition")
-    @patch("cyclisme_training_logs.workflows.end_of_week.EndOfWeekWorkflow")
+    @patch("magma_cycling.workflows.end_of_week.parse_args")
+    @patch("magma_cycling.workflows.end_of_week.calculate_weekly_transition")
+    @patch("magma_cycling.workflows.end_of_week.EndOfWeekWorkflow")
     def test_main_manual_weeks(self, mock_workflow_class, mock_transition, mock_parse_args):
         """Test main() with manual week specification."""
         mock_args = Mock()
@@ -723,9 +717,9 @@ class TestMain:
         exit_code = main()
         assert exit_code == 0
 
-    @patch("cyclisme_training_logs.workflows.end_of_week.parse_args")
-    @patch("cyclisme_training_logs.workflows.end_of_week.calculate_weekly_transition")
-    @patch("cyclisme_training_logs.workflows.end_of_week.EndOfWeekWorkflow")
+    @patch("magma_cycling.workflows.end_of_week.parse_args")
+    @patch("magma_cycling.workflows.end_of_week.calculate_weekly_transition")
+    @patch("magma_cycling.workflows.end_of_week.EndOfWeekWorkflow")
     def test_main_auto_transition(self, mock_workflow_class, mock_transition, mock_parse_args):
         """Test main() with --auto-calculate."""
         mock_args = Mock()
@@ -754,8 +748,8 @@ class TestMain:
         assert exit_code == 0
         mock_workflow_class.assert_called_once()
 
-    @patch("cyclisme_training_logs.workflows.end_of_week.parse_args")
-    @patch("cyclisme_training_logs.workflows.end_of_week.EndOfWeekWorkflow")
+    @patch("magma_cycling.workflows.end_of_week.parse_args")
+    @patch("magma_cycling.workflows.end_of_week.EndOfWeekWorkflow")
     def test_main_workflow_failure(self, mock_workflow_class, mock_parse_args):
         """Test main() when workflow fails."""
         mock_args = Mock()

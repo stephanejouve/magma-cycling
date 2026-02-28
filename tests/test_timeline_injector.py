@@ -16,7 +16,7 @@ from pathlib import Path
 
 import pytest
 
-from cyclisme_training_logs.core.timeline_injector import TimelineInjector
+from magma_cycling.core.timeline_injector import TimelineInjector
 
 
 @pytest.fixture

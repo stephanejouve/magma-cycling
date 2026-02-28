@@ -1,4 +1,4 @@
-stephanejouve@Tiresias cyclisme-training-logs % python3 scripts/upload_workouts.py S069 --start-date 2025-11-24
+stephanejouve@Tiresias magma-cycling % python3 scripts/upload_workouts.py S069 --start-date 2025-11-24
 ✅ API Intervals.icu connectée
 
 📋 Lecture presse-papier...
@@ -320,4 +320,4 @@ Génère **7 blocs WORKOUT** (un par jour, dimanche = mention repos) au format t
 ⏭️  Ignorés  : 1
 📝 Total    : 3
 ======================================================================
-stephanejouve@Tiresias cyclisme-training-logs %
+stephanejouve@Tiresias magma-cycling %

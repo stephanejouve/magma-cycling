@@ -182,7 +182,7 @@ supplementary_prompt = f"""# ASSERVISSEMENT PLANNING - Demande Coach AI.
 
 #### Phase 1: Helpers Centralisés
 
-**Fichier:** `cyclisme_training_logs/config/config_base.py` (+97 lignes)
+**Fichier:** `magma_cycling/config/config_base.py` (+97 lignes)
 
 **1. Factory Function `create_intervals_client()`** (+44 lignes)
 ```python
@@ -199,7 +199,7 @@ def create_intervals_client():
         ValueError: If Intervals.icu credentials are not configured
 
     Examples:
-        >>> from cyclisme_training_logs.config import create_intervals_client
+        >>> from magma_cycling.config import create_intervals_client
         >>> client = create_intervals_client()
         >>> activities = client.get_activities(oldest="2026-01-01", newest="2026-01-15")
 
@@ -214,7 +214,7 @@ def create_intervals_client():
         NEW (centralized):
         client = create_intervals_client()
     """
-    from cyclisme_training_logs.api.intervals_client import IntervalsClient
+    from magma_cycling.api.intervals_client import IntervalsClient
 
     config = get_intervals_config()
 
@@ -278,7 +278,7 @@ def load_json_config(config_file: str) -> dict | None:
         return None
 ```
 
-**Fichier:** `cyclisme_training_logs/config/__init__.py` (+5 lignes)
+**Fichier:** `magma_cycling/config/__init__.py` (+5 lignes)
 ```python
 __all__ = [
     # Original config
@@ -296,7 +296,7 @@ __all__ = [
 
 #### Phase 2: Refactoring Core Files
 
-**1. Fichier:** `cyclisme_training_logs/workflow_coach.py` (-13 lignes)
+**1. Fichier:** `magma_cycling/workflow_coach.py` (-13 lignes)
 
 **AVANT (16 lignes):**
 ```python
@@ -328,7 +328,7 @@ def load_credentials(self):
     Tries .intervals_config.json first (backward compatibility),
     then environment variables.
     """
-    from cyclisme_training_logs.config import get_intervals_config, load_json_config
+    from magma_cycling.config import get_intervals_config, load_json_config
 
     # Try .intervals_config.json first (backward compatibility)
     config_file = load_json_config("~/.intervals_config.json")
@@ -346,7 +346,7 @@ def load_credentials(self):
     return None, None
 ```
 
-**2. Fichier:** `cyclisme_training_logs/upload_workouts.py` (-18 lignes)
+**2. Fichier:** `magma_cycling/upload_workouts.py` (-18 lignes)
 
 **AVANT (16 lignes):**
 ```python
@@ -376,7 +376,7 @@ def _init_api(self):
     """Initialize l'API Intervals.icu."""
     try:
         # Sprint R9.B - Use centralized client creation
-        from cyclisme_training_logs.config import create_intervals_client
+        from magma_cycling.config import create_intervals_client
 
         self.api = create_intervals_client()
     except ValueError as e:
@@ -406,8 +406,8 @@ def test_load_credentials_missing(self, mock_exists):
 
 **APRÈS:**
 ```python
-@patch("cyclisme_training_logs.config.load_json_config", return_value=None)
-@patch("cyclisme_training_logs.config.get_intervals_config")
+@patch("magma_cycling.config.load_json_config", return_value=None)
+@patch("magma_cycling.config.get_intervals_config")
 def test_load_credentials_missing(self, mock_get_config, mock_load_json):
     # Mock IntervalsConfig as not configured
     mock_intervals_config = Mock()
@@ -469,7 +469,7 @@ def test_load_credentials_missing(self, mock_get_config, mock_load_json):
 **Message:** "fix: Servo-mode hallucinated sleep data - use real metrics from analysis"
 
 **Fichiers:**
-- `cyclisme_training_logs/workflow_coach.py`: +91 lignes
+- `magma_cycling/workflow_coach.py`: +91 lignes
   - `_extract_metrics_from_analysis()` (+52)
   - `_prompt_sleep_if_missing()` (+39)
   - Modifications dans `step_6b_servo_control()`
@@ -484,10 +484,10 @@ def test_load_credentials_missing(self, mock_get_config, mock_load_json):
 **Message:** "refactor: Sprint R9.B - Centralize credential loading and JSON config (DRY)"
 
 **Fichiers:**
-- `cyclisme_training_logs/config/config_base.py`: +97 lignes
-- `cyclisme_training_logs/config/__init__.py`: +5 lignes
-- `cyclisme_training_logs/workflow_coach.py`: -13 lignes
-- `cyclisme_training_logs/upload_workouts.py`: -18 lignes
+- `magma_cycling/config/config_base.py`: +97 lignes
+- `magma_cycling/config/__init__.py`: +5 lignes
+- `magma_cycling/workflow_coach.py`: -13 lignes
+- `magma_cycling/upload_workouts.py`: -18 lignes
 - `tests/workflows/test_workflow_coach.py`: +20 lignes
 
 **Impact:** -52 duplicated LOC, +97 centralized LOC (net: +50)
@@ -577,7 +577,7 @@ def test_load_credentials_missing(self, mock_get_config, mock_load_json):
 1. **Test Alignment with Refactoring:**
    - Refactoring changes behavior expectations
    - Tests must be updated to mock at correct import level
-   - `cyclisme_training_logs.config.*` vs `cyclisme_training_logs.workflow_coach.*`
+   - `magma_cycling.config.*` vs `magma_cycling.workflow_coach.*`
 
 2. **Centralized Error Handling:**
    - `logging.warning()` instead of `print()` for libraries
