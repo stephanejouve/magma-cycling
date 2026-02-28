@@ -4,6 +4,9 @@ tests/test_asservissement.py - Tests pour fonctionnalités asservissement.
 """
 import pytest
 
+from magma_cycling.planning.session_formatter import format_remaining_sessions_compact
+from magma_cycling.utils.ai_response_parser import parse_ai_modifications
+from magma_cycling.utils.date_helpers import extract_day_number
 from magma_cycling.workflow_coach import WorkflowCoach
 
 
@@ -31,8 +34,6 @@ def test_load_remaining_sessions():
 
 def test_format_remaining_sessions_compact():
     """Test format compact planning."""
-    coach = WorkflowCoach()
-
     remaining = [
         {
             "session_id": "S072-03",
@@ -54,7 +55,7 @@ def test_format_remaining_sessions_compact():
         },
     ]
 
-    formatted = coach.format_remaining_sessions_compact(remaining)
+    formatted = format_remaining_sessions_compact(remaining)
 
     assert "S072-03-END-Endurance-V001" in formatted
     assert "45 TSS" in formatted
@@ -63,19 +64,15 @@ def test_format_remaining_sessions_compact():
 
 def test_parse_modifications_empty():
     """Test parsing sans modification."""
-    coach = WorkflowCoach()
-
     ai_response = "# Analyse\n\nTout va bien, planning maintenu."
 
-    mods = coach.parse_ai_modifications(ai_response)
+    mods = parse_ai_modifications(ai_response)
 
     assert mods == []
 
 
 def test_parse_modifications_valid():
     """Test parsing avec modification valide."""
-    coach = WorkflowCoach()
-
     ai_response = """
 # Analyse
 
@@ -90,7 +87,7 @@ def test_parse_modifications_valid():
 }]}
 ```
 """
-    mods = coach.parse_ai_modifications(ai_response)
+    mods = parse_ai_modifications(ai_response)
 
     assert len(mods) == 1
     assert mods[0]["action"] == "lighten"
@@ -99,10 +96,12 @@ def test_parse_modifications_valid():
 
 def test_extract_day_number():
     """Test extraction numéro jour."""
-    coach = WorkflowCoach()
+    from magma_cycling.config import get_data_config
+
+    config = get_data_config()
 
     # Test with known week (S072 starts 2025-12-15, Monday)
-    day_num = coach._extract_day_number("2025-12-18", "S072")
+    day_num = extract_day_number("2025-12-18", "S072", config.week_planning_dir)
 
     assert day_num == 4  # 2025-12-18 (Thursday) is day 4 of week starting 2025-12-15 (Monday)
 
