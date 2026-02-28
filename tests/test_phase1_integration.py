@@ -16,15 +16,11 @@ import tempfile
 from datetime import date
 from pathlib import Path
 
-# Add project root to path
-project_root = Path(__file__).parent
-sys.path.insert(0, str(project_root))
-
-from magma_cycling.analyzers.daily_aggregator import (  # noqa: E402
+from magma_cycling.analyzers.daily_aggregator import (
     DailyAggregator,
 )
-from magma_cycling.core.prompt_generator import PromptGenerator  # noqa: E402
-from magma_cycling.core.timeline_injector import TimelineInjector  # noqa: E402
+from magma_cycling.core.prompt_generator import PromptGenerator
+from magma_cycling.core.timeline_injector import TimelineInjector
 
 
 def print_section(title):
