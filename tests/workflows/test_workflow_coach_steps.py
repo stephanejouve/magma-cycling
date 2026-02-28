@@ -145,8 +145,8 @@ class TestMarkdownHelpers:
         assert "Tempo Session" in markdown or "ANNULÉE" in markdown
         assert "Fatigue excessive" in markdown or "2026-01-07" in markdown
 
-    @patch("magma_cycling.workflow_coach.WorkflowState")
-    @patch("magma_cycling.workflow_coach.TimelineInjector")
+    @patch("magma_cycling.workflows.coach.history.WorkflowState")
+    @patch("magma_cycling.workflows.coach.history.TimelineInjector")
     def test_insert_to_history_writes_markdown(
         self, mock_timeline_injector_class, mock_workflow_state_class
     ):

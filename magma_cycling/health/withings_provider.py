@@ -23,14 +23,33 @@ class WithingsProvider(HealthProvider):
 
     # -- sleep ---------------------------------------------------------------
 
+    @staticmethod
+    def _normalize_sleep_data(data: dict) -> dict:
+        """Normalize Withings sleep data before Pydantic validation.
+
+        Withings API returns sleep_efficiency as a 0-1 ratio (e.g. 0.96),
+        but SleepData model expects an integer percentage (0-100).
+        """
+        eff = data.get("sleep_efficiency")
+        if eff is not None and eff <= 1.0:
+            data["sleep_efficiency"] = round(eff * 100)
+        elif eff is not None:
+            data["sleep_efficiency"] = round(eff)
+        return data
+
     def get_sleep_summary(self, target_date: date) -> SleepData | None:
         """Get last night's sleep from Withings."""
         data = self._client.get_last_night_sleep()
-        return SleepData(**data) if data else None
+        if not data:
+            return None
+        return SleepData(**self._normalize_sleep_data(data))
 
     def get_sleep_range(self, start_date: date, end_date: date) -> list[SleepData]:
         """Get sleep sessions over a date range from Withings."""
-        return [SleepData(**s) for s in self._client.get_sleep(start_date, end_date)]
+        return [
+            SleepData(**self._normalize_sleep_data(s))
+            for s in self._client.get_sleep(start_date, end_date)
+        ]
 
     # -- body composition ----------------------------------------------------
 
