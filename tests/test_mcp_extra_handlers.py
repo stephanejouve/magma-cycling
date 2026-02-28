@@ -164,7 +164,7 @@ class TestHandleUpdateSession:
 # =======================
 
 
-LOAD_WORKOUTS_PATCH = "cyclisme_training_logs.mcp_server._load_workout_descriptions"
+LOAD_WORKOUTS_PATCH = "cyclisme_training_logs._mcp.handlers.intervals.load_workout_descriptions"
 
 
 class TestHandleSyncWeekToIntervals:
@@ -885,7 +885,7 @@ class TestDailySyncMCPAiParam:
                 return_value=mock_config,
             ),
             "suppress": patch(
-                "cyclisme_training_logs.mcp_server.suppress_stdout_stderr",
+                "cyclisme_training_logs._mcp.handlers.planning.suppress_stdout_stderr",
                 nullcontext,
             ),
         }
