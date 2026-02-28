@@ -480,7 +480,7 @@ def main():
     parser.add_argument(
         "--weekly-alert",
         action="store_true",
-        help="Check weekly adherence and send alerts if <85% (Sprint R10)",
+        help="Check weekly adherence and send alerts if <85%% (Sprint R10)",
     )
     parser.add_argument("--dry-run", action="store_true", help="Dry-run mode (no notifications)")
 
