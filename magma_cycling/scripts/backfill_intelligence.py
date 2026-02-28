@@ -32,20 +32,17 @@ from typing import Any
 
 from dotenv import load_dotenv
 
-# Load environment
-env_file = Path(__file__).parent.parent.parent / ".env"
-if env_file.exists():
-    load_dotenv(env_file)
-
-# Add project to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
-from magma_cycling.api.intervals_client import IntervalsClient  # noqa: E402
-from magma_cycling.intelligence.training_intelligence import (  # noqa: E402
+from magma_cycling.api.intervals_client import IntervalsClient
+from magma_cycling.intelligence.training_intelligence import (
     AnalysisLevel,
     ConfidenceLevel,
     TrainingIntelligence,
 )
+
+# Load environment
+env_file = Path(__file__).parent.parent.parent / ".env"
+if env_file.exists():
+    load_dotenv(env_file)
 
 
 class IntervalsICUBackfiller:

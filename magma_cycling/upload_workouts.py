@@ -67,9 +67,6 @@ from pathlib import Path
 
 from magma_cycling.planning.backup import auto_backup
 
-# Ajouter le répertoire parent au PYTHONPATH
-sys.path.insert(0, str(Path(__file__).parent))
-
 
 def calculate_week_start_date(week_id: str) -> datetime:
     """

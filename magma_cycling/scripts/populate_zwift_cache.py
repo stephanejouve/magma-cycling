@@ -34,11 +34,8 @@ from pathlib import Path
 
 import requests
 
-# Add project to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
-from magma_cycling.external.zwift_client import ZwiftWorkoutClient  # noqa: E402
-from magma_cycling.external.zwift_scraper import ZwiftWorkoutScraper  # noqa: E402
+from magma_cycling.external.zwift_client import ZwiftWorkoutClient
+from magma_cycling.external.zwift_scraper import ZwiftWorkoutScraper
 
 # Known workout collections on whatsonzwift.com
 KNOWN_COLLECTIONS = {

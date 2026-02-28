@@ -1,14 +1,9 @@
 #!/usr/bin/env python3
 """Script de debug détection multi-séances - VERSION DEBUG AVANCÉE."""
-import sys
 from datetime import datetime, timedelta
-from pathlib import Path
 
-# Ajouter magma_cycling/ au path
-sys.path.insert(0, str(Path(__file__).parent))
-
-from magma_cycling.config import create_intervals_client  # noqa: E402
-from magma_cycling.workflow_state import WorkflowState  # noqa: E402
+from magma_cycling.config import create_intervals_client
+from magma_cycling.workflow_state import WorkflowState
 
 
 def main():

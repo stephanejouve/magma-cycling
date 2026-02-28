@@ -1,14 +1,10 @@
 #!/usr/bin/env python3
 """Script de diagnostic pour comprendre pourquoi le matching échoue."""
 import json
-import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
-# Ajouter le répertoire scripts au path
-sys.path.insert(0, str(Path(__file__).parent / "scripts"))
-
-from magma_cycling.planned_sessions_checker import (  # noqa: E402
+from magma_cycling.planned_sessions_checker import (
     PlannedSessionsChecker,
 )
 
