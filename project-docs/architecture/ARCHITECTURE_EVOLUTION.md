@@ -10,7 +10,7 @@
 
 ### Architecture Initiale - PID Continu
 
-**Implementation:** `cyclisme_training_logs/intelligence/pid_controller.py`
+**Implementation:** `magma_cycling/intelligence/pid_controller.py`
 
 **Assumptions:**
 ```python
@@ -50,7 +50,7 @@ Test S007: FTP=206W → Correction: +7 TSS/semaine
 S008-S013: +7 TSS (pas de PID)
 ```
 
-**Implementation:** `cyclisme_training_logs/intelligence/discrete_pid_controller.py`
+**Implementation:** `magma_cycling/intelligence/discrete_pid_controller.py`
 
 ```python
 controller = DiscretePIDController(kp=0.008, ki=0.001, kd=0.12, setpoint=260)

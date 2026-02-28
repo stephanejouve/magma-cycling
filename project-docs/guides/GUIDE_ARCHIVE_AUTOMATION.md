@@ -8,7 +8,7 @@ Le système d'archivage automatique permet de créer des archives complètes du 
 
 ### Fichier de Contrôle: `.archive_needed`
 
-**Emplacement**: Racine du projet (`/Users/stephanejouve/cyclisme-training-logs/.archive_needed`)
+**Emplacement**: Racine du projet (`/Users/stephanejouve/magma-cycling/.archive_needed`)
 
 **Valeurs possibles**:
 - `TRUE` : Archive sera créée au prochain run du bot de nettoyage
@@ -23,7 +23,7 @@ Le système d'archivage automatique permet de créer des archives complètes du 
 Quand vous avez besoin d'une archive (requête MOA, livraison sprint, etc.):
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 ./scripts/maintenance/request_archive.sh
 ```
 
@@ -135,7 +135,7 @@ Le bot de nettoyage (`project-clean`) s'exécute:
 # Stéphane a besoin de l'archive pour un prompt MOA
 
 # 1. Demander l'archive
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 ./scripts/maintenance/request_archive.sh
 # ✅ Archive requested
 
@@ -152,7 +152,7 @@ shasum -a 256 -c claude-code-context_20260118_153022.tar.gz.sha256
 # claude-code-context_20260118_153022.tar.gz: OK
 
 # 4. Utiliser l'archive dans le prompt MOA
-# Chemin: ~/cyclisme-training-logs/project-docs/archives/claude-code/claude-code-context_20260118_153022.tar.gz
+# Chemin: ~/magma-cycling/project-docs/archives/claude-code/claude-code-context_20260118_153022.tar.gz
 # Checksum disponible pour vérification si transfert réseau
 ```
 

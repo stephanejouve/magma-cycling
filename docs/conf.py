@@ -1,5 +1,5 @@
 """
-Sphinx configuration for cyclisme-training-logs documentation.
+Sphinx configuration for magma-cycling documentation.
 
 Metadata:
     Created: 2025-12-27

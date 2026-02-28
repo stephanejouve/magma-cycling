@@ -12,7 +12,7 @@ Résout problème silos temporels en créant mémoire partagée entre analyses q
 training_intelligence
 ---------------------
 
-.. automodule:: cyclisme_training_logs.intelligence.training_intelligence
+.. automodule:: magma_cycling.intelligence.training_intelligence
    :members:
    :undoc-members:
    :show-inheritance:
@@ -20,33 +20,33 @@ training_intelligence
 Enums
 ~~~~~
 
-.. autoclass:: cyclisme_training_logs.intelligence.training_intelligence.AnalysisLevel
+.. autoclass:: magma_cycling.intelligence.training_intelligence.AnalysisLevel
    :members:
    :undoc-members:
 
-.. autoclass:: cyclisme_training_logs.intelligence.training_intelligence.ConfidenceLevel
+.. autoclass:: magma_cycling.intelligence.training_intelligence.ConfidenceLevel
    :members:
    :undoc-members:
 
 Dataclasses
 ~~~~~~~~~~~
 
-.. autoclass:: cyclisme_training_logs.intelligence.training_intelligence.TrainingLearning
+.. autoclass:: magma_cycling.intelligence.training_intelligence.TrainingLearning
    :members:
    :undoc-members:
 
-.. autoclass:: cyclisme_training_logs.intelligence.training_intelligence.Pattern
+.. autoclass:: magma_cycling.intelligence.training_intelligence.Pattern
    :members:
    :undoc-members:
 
-.. autoclass:: cyclisme_training_logs.intelligence.training_intelligence.ProtocolAdaptation
+.. autoclass:: magma_cycling.intelligence.training_intelligence.ProtocolAdaptation
    :members:
    :undoc-members:
 
 Main Class
 ~~~~~~~~~~
 
-.. autoclass:: cyclisme_training_logs.intelligence.training_intelligence.TrainingIntelligence
+.. autoclass:: magma_cycling.intelligence.training_intelligence.TrainingIntelligence
    :members:
    :undoc-members:
    :special-members: __init__
@@ -59,7 +59,7 @@ Ajouter Learning
 
 .. code-block:: python
 
-    from cyclisme_training_logs.intelligence import (
+    from magma_cycling.intelligence import (
         TrainingIntelligence,
         AnalysisLevel
     )
@@ -125,7 +125,7 @@ Persistance
 discrete_pid_controller
 -----------------------
 
-.. automodule:: cyclisme_training_logs.intelligence.discrete_pid_controller
+.. automodule:: magma_cycling.intelligence.discrete_pid_controller
    :members:
    :undoc-members:
    :show-inheritance:
@@ -135,7 +135,7 @@ Contrôleur PID Discret adapté aux mesures sporadiques FTP (tous les 6-8 semain
 biomechanics
 ------------
 
-.. automodule:: cyclisme_training_logs.intelligence.biomechanics
+.. automodule:: magma_cycling.intelligence.biomechanics
    :members:
    :undoc-members:
    :show-inheritance:
@@ -145,7 +145,7 @@ Module intégration recherche Grappe (2000) - cadence optimale et coefficients P
 biomechanics_intervals
 ----------------------
 
-.. automodule:: cyclisme_training_logs.intelligence.biomechanics_intervals
+.. automodule:: magma_cycling.intelligence.biomechanics_intervals
    :members:
    :undoc-members:
    :show-inheritance:
@@ -155,7 +155,7 @@ Extraction métriques biomécaniques depuis API Intervals.icu.
 workout_diversity
 -----------------
 
-.. automodule:: cyclisme_training_logs.intelligence.workout_diversity
+.. automodule:: magma_cycling.intelligence.workout_diversity
    :members:
    :undoc-members:
    :show-inheritance:
@@ -165,14 +165,14 @@ Module Sprint Zwift Integration S2 pour tracking diversité workouts externes.
 Dataclasses
 ~~~~~~~~~~~
 
-.. autoclass:: cyclisme_training_logs.intelligence.workout_diversity.WorkoutUsage
+.. autoclass:: magma_cycling.intelligence.workout_diversity.WorkoutUsage
    :members:
    :undoc-members:
 
 Main Class
 ~~~~~~~~~~
 
-.. autoclass:: cyclisme_training_logs.intelligence.workout_diversity.WorkoutDiversityTracker
+.. autoclass:: magma_cycling.intelligence.workout_diversity.WorkoutDiversityTracker
    :members:
    :undoc-members:
    :special-members: __init__
@@ -185,7 +185,7 @@ Enregistrer Usage
 
 .. code-block:: python
 
-    from cyclisme_training_logs.intelligence.workout_diversity import (
+    from magma_cycling.intelligence.workout_diversity import (
         WorkoutDiversityTracker,
         WorkoutUsage
     )

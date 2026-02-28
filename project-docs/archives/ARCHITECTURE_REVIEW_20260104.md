@@ -243,10 +243,10 @@ poetry run pytest
 poetry run ruff check .
 # All checks passed! (0 violations)
 
-poetry run mypy cyclisme_training_logs/
+poetry run mypy magma_cycling/
 # Success: no issues found in 87 source files
 
-poetry run pydocstyle cyclisme_training_logs/
+poetry run pydocstyle magma_cycling/
 # 0 errors (100% compliance)
 ```
 

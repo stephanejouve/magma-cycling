@@ -13,7 +13,7 @@ Rendre disponibles les docs MOA et techniques sur iPhone via iCloud Drive pour:
 
 **Source:** `project-docs/` (dans le projet)
 
-**Destination:** `~/Documents/cyclisme-training-logs-docs/` (→ iCloud)
+**Destination:** `~/Documents/magma-cycling-docs/` (→ iCloud)
 
 **Contenu synchronisé:**
 - ✅ `ROADMAP.md`, `CHANGELOG.md`, `README.md`
@@ -64,7 +64,7 @@ Résultat attendu: `com.cyclisme.sync-docs-icloud` avec exit code 0
 
 1. Ouvrir l'app **Files** (Fichiers)
 2. Naviguer: **iCloud Drive → Documents**
-3. Dossier: **cyclisme-training-logs-docs**
+3. Dossier: **magma-cycling-docs**
 4. Tous les docs disponibles immédiatement!
 
 **Partage depuis iPhone:**
@@ -163,10 +163,10 @@ scripts/maintenance/sync_docs_icloud.sh -v
 Le dossier fait ~1MB, très léger. Si problème de quota:
 ```bash
 # Voir la taille
-du -sh ~/Documents/cyclisme-training-logs-docs
+du -sh ~/Documents/magma-cycling-docs
 
 # Nettoyer les vieux fichiers (manuel)
-rm -rf ~/Documents/cyclisme-training-logs-docs/sessions/OLD_*.md
+rm -rf ~/Documents/magma-cycling-docs/sessions/OLD_*.md
 ```
 
 ### Conflits de fichiers
@@ -175,7 +175,7 @@ Le script utilise `--update` (skip si plus récent côté iCloud) et `--ignore-e
 Si conflit manuel détecté:
 ```bash
 # Forcer re-sync complet
-rm -rf ~/Documents/cyclisme-training-logs-docs
+rm -rf ~/Documents/magma-cycling-docs
 scripts/maintenance/sync_docs_icloud.sh
 ```
 
@@ -249,7 +249,7 @@ poetry run cleanup-archives --dry-run
 
 ### Où nettoie-t-il?
 
-**✅ Nettoie:** `~/Documents/cyclisme-training-logs-archives/` (iCloud)
+**✅ Nettoie:** `~/Documents/magma-cycling-archives/` (iCloud)
 
 **❌ Préserve:** `releases/` (local, jamais touché)
 

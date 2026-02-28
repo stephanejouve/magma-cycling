@@ -73,7 +73,7 @@ Un **jour de repos** a été créé comme **WORKOUT** dans Intervals.icu:
 **Création via API:**
 
 ```python
-from cyclisme_training_logs.api.intervals_client import IntervalsClient
+from magma_cycling.api.intervals_client import IntervalsClient
 
 client = IntervalsClient(athlete_id, api_key)
 
@@ -261,11 +261,11 @@ planned_workouts = [
 **Étape 1: Identifier l'Event**
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 python3 << 'PYEOF'
-from cyclisme_training_logs.api.intervals_client import IntervalsClient
-from cyclisme_training_logs.config import get_intervals_config
+from magma_cycling.api.intervals_client import IntervalsClient
+from magma_cycling.config import get_intervals_config
 
 config = get_intervals_config()
 client = IntervalsClient(config.athlete_id, config.api_key)
@@ -367,7 +367,7 @@ Les jours de repos doivent être **correctement identifiés** car:
 ### Scripts Connexes
 
 - `scripts/monitoring/check_workout_adherence.py` - Monitoring adherence
-- `cyclisme_training_logs/api/intervals_client.py` - API Intervals.icu
+- `magma_cycling/api/intervals_client.py` - API Intervals.icu
 
 ### Documentation
 

@@ -16,7 +16,7 @@ Ces bugs sont **indépendants** du fix planning path et concernent la logique in
 
 ## Issue #2 : Clipboard Manuel Malgré AI Provider Configuré
 
-**Lien** : https://github.com/stephanejouve/cyclisme-training-logs/issues/2
+**Lien** : https://github.com/stephanejouve/magma-cycling/issues/2
 **Titre** : Servo mode prompts for manual clipboard even when AI provider configured
 **Créé** : 2025-12-28
 **État** : 🟢 Open
@@ -36,7 +36,7 @@ Le servo mode demande une saisie manuelle via clipboard même quand `--provider 
 
 ### Fichiers à Investiguer
 ```
-cyclisme_training_logs/workflow_coach.py
+magma_cycling/workflow_coach.py
 - Méthode: _get_servo_modifications() ou similaire
 - Chercher: "clipboard", "paste", "provider"
 - Ligne probable: 2450-2600 (section servo mode)
@@ -45,10 +45,10 @@ cyclisme_training_logs/workflow_coach.py
 ### Commandes Debug
 ```bash
 # Trouver logique clipboard
-grep -n "clipboard\|paste.*manual" cyclisme_training_logs/workflow_coach.py
+grep -n "clipboard\|paste.*manual" magma_cycling/workflow_coach.py
 
 # Trouver où provider est (ou n'est pas) utilisé
-grep -n "self\.provider\|ai_provider" cyclisme_training_logs/workflow_coach.py | grep -A 5 -B 5 servo
+grep -n "self\.provider\|ai_provider" magma_cycling/workflow_coach.py | grep -A 5 -B 5 servo
 ```
 
 ### Fix Suggéré (À Valider)
@@ -68,7 +68,7 @@ else:
 
 ## Issue #3 : Servo Mode Dit "No Modifications" Avec JSON Valide
 
-**Lien** : https://github.com/stephanejouve/cyclisme-training-logs/issues/3
+**Lien** : https://github.com/stephanejouve/magma-cycling/issues/3
 **Titre** : Servo mode says "no modifications" when AI response contains valid JSON modifications
 **Créé** : 2025-12-28
 **État** : 🟢 Open
@@ -111,7 +111,7 @@ L'IA retourne un JSON valide avec des modifications, mais le code affiche "Aucun
 
 ### Fichiers à Investiguer
 ```
-cyclisme_training_logs/workflow_coach.py
+magma_cycling/workflow_coach.py
 - Méthode: _parse_servo_response() ou _extract_modifications()
 - Chercher: "json.loads", "no modifications", "parse.*response"
 - Section: Servo mode parsing (après appel AI)
@@ -120,13 +120,13 @@ cyclisme_training_logs/workflow_coach.py
 ### Commandes Debug
 ```bash
 # Trouver parsing JSON servo
-grep -n "json\.loads\|json\.dumps" cyclisme_training_logs/workflow_coach.py | grep -A 10 -B 10 servo
+grep -n "json\.loads\|json\.dumps" magma_cycling/workflow_coach.py | grep -A 10 -B 10 servo
 
 # Trouver message "no modifications"
-grep -n "no modifications\|aucune modification\|Aucune modification" cyclisme_training_logs/workflow_coach.py
+grep -n "no modifications\|aucune modification\|Aucune modification" magma_cycling/workflow_coach.py
 
 # Trouver regex extraction JSON
-grep -n "```json\|re\.search.*json" cyclisme_training_logs/workflow_coach.py
+grep -n "```json\|re\.search.*json" magma_cycling/workflow_coach.py
 ```
 
 ### Fix Suggéré (À Valider)
@@ -153,7 +153,7 @@ except json.JSONDecodeError as e:
 
 ## Issue #4 : Feedback Collection Demande Permission Puis Skip
 
-**Lien** : https://github.com/stephanejouve/cyclisme-training-logs/issues/4
+**Lien** : https://github.com/stephanejouve/magma-cycling/issues/4
 **Titre** : Feedback collection asks permission then skips if no gaps detected
 **Créé** : 2025-12-28
 **État** : 🟢 Open
@@ -192,7 +192,7 @@ Le workflow demande "Collecter feedback athlète ? [o/N]", utilisateur dit oui, 
 
 ### Fichiers à Investiguer
 ```
-cyclisme_training_logs/workflow_coach.py
+magma_cycling/workflow_coach.py
 - Méthode: _collect_feedback() ou step_feedback()
 - Chercher: "feedback", "gaps", "skip"
 - Section: Étape feedback collection
@@ -201,13 +201,13 @@ cyclisme_training_logs/workflow_coach.py
 ### Commandes Debug
 ```bash
 # Trouver logique feedback
-grep -n "collect.*feedback\|Collecter feedback" cyclisme_training_logs/workflow_coach.py
+grep -n "collect.*feedback\|Collecter feedback" magma_cycling/workflow_coach.py
 
 # Trouver check gaps
-grep -n "gaps.*detected\|aucun gap\|no gap" cyclisme_training_logs/workflow_coach.py
+grep -n "gaps.*detected\|aucun gap\|no gap" magma_cycling/workflow_coach.py
 
 # Trouver ordre des checks
-grep -n "input.*feedback" cyclisme_training_logs/workflow_coach.py -A 20
+grep -n "input.*feedback" magma_cycling/workflow_coach.py -A 20
 ```
 
 ### Fix Suggéré (À Valider)
@@ -246,13 +246,13 @@ def collect_feedback(self):
 1. **Lire body complet des 3 issues** (détails utilisateur)
    ```bash
    curl -s -H "Authorization: token $GITHUB_TOKEN" \
-     https://api.github.com/repos/stephanejouve/cyclisme-training-logs/issues/2 \
+     https://api.github.com/repos/stephanejouve/magma-cycling/issues/2 \
      | jq -r '.body'
    ```
 
 2. **Chercher code problématique** (grep + read)
    ```bash
-   grep -n "clipboard\|no modifications\|feedback.*gaps" cyclisme_training_logs/workflow_coach.py
+   grep -n "clipboard\|no modifications\|feedback.*gaps" magma_cycling/workflow_coach.py
    ```
 
 3. **Identifier lignes exactes** (3 locations)
@@ -270,7 +270,7 @@ def collect_feedback(self):
 ### Phase 4 : Commit + Close Issues (15 min)
 ```bash
 # Commit fixes
-git add cyclisme_training_logs/workflow_coach.py
+git add magma_cycling/workflow_coach.py
 git commit -m "fix(servo): Fix 3 servo mode issues (#2, #3, #4)"
 
 # Close issues avec référence commit
@@ -353,12 +353,12 @@ git reset --hard 3c86f84
 ## Ressources
 
 **GitHub Issues** :
-- https://github.com/stephanejouve/cyclisme-training-logs/issues/2
-- https://github.com/stephanejouve/cyclisme-training-logs/issues/3
-- https://github.com/stephanejouve/cyclisme-training-logs/issues/4
+- https://github.com/stephanejouve/magma-cycling/issues/2
+- https://github.com/stephanejouve/magma-cycling/issues/3
+- https://github.com/stephanejouve/magma-cycling/issues/4
 
 **Code Principal** :
-- `cyclisme_training_logs/workflow_coach.py` (lignes 2400-2700)
+- `magma_cycling/workflow_coach.py` (lignes 2400-2700)
 
 **Config** :
 - `.env` (GITHUB_TOKEN configuré)

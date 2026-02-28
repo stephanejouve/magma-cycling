@@ -4,7 +4,7 @@ test_intervals_format.py - Tests validation format Intervals.icu.
 """
 import pytest
 
-from cyclisme_training_logs.intervals_format_validator import IntervalsFormatValidator
+from magma_cycling.intervals_format_validator import IntervalsFormatValidator
 
 
 @pytest.fixture
@@ -289,7 +289,7 @@ def test_main_function_runs():
     This test verifies that the CLI demonstration runs successfully
     with all test cases (invalid formats, corrections, valid formats, examples).
     """
-    from cyclisme_training_logs.intervals_format_validator import main
+    from magma_cycling.intervals_format_validator import main
 
     # Should run without exceptions
     try:
@@ -307,7 +307,7 @@ def test_main_function_outputs(capsys):
 
     Covers lines 271-350: Verify main() prints all expected sections.
     """
-    from cyclisme_training_logs.intervals_format_validator import main
+    from magma_cycling.intervals_format_validator import main
 
     main()
 
@@ -339,7 +339,7 @@ def test_script_main_entry_point(monkeypatch, capsys):
     from unittest.mock import patch
 
     # Import the module
-    import cyclisme_training_logs.intervals_format_validator as validator_module
+    import magma_cycling.intervals_format_validator as validator_module
 
     # Mock __name__ to be '__main__' and execute the module-level code
     # We'll directly test that the condition would trigger main()

@@ -5,9 +5,9 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from cyclisme_training_logs.config.athlete_profile import AthleteProfile
-from cyclisme_training_logs.planning.calendar import TrainingCalendar, WorkoutType
-from cyclisme_training_logs.planning.intervals_sync import (
+from magma_cycling.config.athlete_profile import AthleteProfile
+from magma_cycling.planning.calendar import TrainingCalendar, WorkoutType
+from magma_cycling.planning.intervals_sync import (
     CalendarDiff,
     IntervalsSync,
     SyncStatusReport,
@@ -163,7 +163,7 @@ class TestIntervalsSync:
 
     def test_init(self):
         """Test IntervalsSync initialization."""
-        with patch("cyclisme_training_logs.planning.intervals_sync.create_intervals_client"):
+        with patch("magma_cycling.planning.intervals_sync.create_intervals_client"):
             sync = IntervalsSync()
             assert sync.client is not None
 
@@ -171,9 +171,7 @@ class TestIntervalsSync:
         """Test fetch_remote_calendar() with no events."""
         mock_intervals_client.get_events.return_value = []
 
-        with patch(
-            "cyclisme_training_logs.planning.intervals_sync.create_intervals_client"
-        ) as mock_create:
+        with patch("magma_cycling.planning.intervals_sync.create_intervals_client") as mock_create:
             mock_create.return_value = mock_intervals_client
 
             sync = IntervalsSync()
@@ -213,9 +211,7 @@ class TestIntervalsSync:
             },
         ]
 
-        with patch(
-            "cyclisme_training_logs.planning.intervals_sync.create_intervals_client"
-        ) as mock_create:
+        with patch("magma_cycling.planning.intervals_sync.create_intervals_client") as mock_create:
             mock_create.return_value = mock_intervals_client
 
             sync = IntervalsSync()
@@ -254,9 +250,7 @@ class TestIntervalsSync:
             },
         ]
 
-        with patch(
-            "cyclisme_training_logs.planning.intervals_sync.create_intervals_client"
-        ) as mock_create:
+        with patch("magma_cycling.planning.intervals_sync.create_intervals_client") as mock_create:
             mock_create.return_value = mock_intervals_client
 
             sync = IntervalsSync()
@@ -290,9 +284,7 @@ class TestIntervalsSync:
             },
         ]
 
-        with patch(
-            "cyclisme_training_logs.planning.intervals_sync.create_intervals_client"
-        ) as mock_create:
+        with patch("magma_cycling.planning.intervals_sync.create_intervals_client") as mock_create:
             mock_create.return_value = mock_intervals_client
 
             sync = IntervalsSync()
@@ -337,9 +329,7 @@ class TestIntervalsSync:
             },
         ]
 
-        with patch(
-            "cyclisme_training_logs.planning.intervals_sync.create_intervals_client"
-        ) as mock_create:
+        with patch("magma_cycling.planning.intervals_sync.create_intervals_client") as mock_create:
             mock_create.return_value = mock_intervals_client
 
             sync = IntervalsSync()
@@ -378,9 +368,7 @@ class TestIntervalsSync:
             },
         ]
 
-        with patch(
-            "cyclisme_training_logs.planning.intervals_sync.create_intervals_client"
-        ) as mock_create:
+        with patch("magma_cycling.planning.intervals_sync.create_intervals_client") as mock_create:
             mock_create.return_value = mock_intervals_client
 
             sync = IntervalsSync()
@@ -418,9 +406,7 @@ class TestIntervalsSync:
             },
         ]
 
-        with patch(
-            "cyclisme_training_logs.planning.intervals_sync.create_intervals_client"
-        ) as mock_create:
+        with patch("magma_cycling.planning.intervals_sync.create_intervals_client") as mock_create:
             mock_create.return_value = mock_intervals_client
 
             sync = IntervalsSync()
@@ -459,9 +445,7 @@ class TestIntervalsSync:
             },
         ]
 
-        with patch(
-            "cyclisme_training_logs.planning.intervals_sync.create_intervals_client"
-        ) as mock_create:
+        with patch("magma_cycling.planning.intervals_sync.create_intervals_client") as mock_create:
             mock_create.return_value = mock_intervals_client
 
             sync = IntervalsSync()

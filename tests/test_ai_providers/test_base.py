@@ -6,7 +6,7 @@ Tests AIProvider enum and AIAnalyzer abstract base class.
 """
 import pytest
 
-from cyclisme_training_logs.ai_providers.base import AIAnalyzer, AIProvider
+from magma_cycling.ai_providers.base import AIAnalyzer, AIProvider
 
 
 class TestAIProviderEnum:

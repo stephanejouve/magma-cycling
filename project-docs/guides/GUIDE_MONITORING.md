@@ -58,7 +58,7 @@ Pour Sprint R6 (PID Baseline & Calibration), ce monitoring est **critique** car:
 Les scripts sont déjà disponibles dans le projet:
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 # Vérifier présence scripts
 ls scripts/monitoring/
@@ -84,7 +84,7 @@ chmod +x scripts/monitoring/check_workout_adherence.py
 ### Check Adherence Today
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 poetry run python scripts/monitoring/check_workout_adherence.py
 ```
 
@@ -154,7 +154,7 @@ poetry run python scripts/monitoring/check_workout_adherence.py --dry-run
 #### Installation launchd Job
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 bash scripts/monitoring/setup_launchd.sh
 ```
 
@@ -165,7 +165,7 @@ bash scripts/monitoring/setup_launchd.sh
 🔧 Setting up Workout Adherence Monitoring (launchd)
 ==========================================
 
-📍 Project root: /Users/stephanejouve/cyclisme-training-logs
+📍 Project root: /Users/stephanejouve/magma-cycling
 🐍 Python: /Users/stephanejouve/.pyenv/versions/3.11.0/bin/python
 📦 Poetry: /usr/local/bin/poetry
 
@@ -237,7 +237,7 @@ bash scripts/monitoring/remove_launchd.sh
 ### Installation Cron Job
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 bash scripts/monitoring/setup_cron.sh
 ```
 
@@ -248,11 +248,11 @@ bash scripts/monitoring/setup_cron.sh
 🔧 Setting up Workout Adherence Monitoring
 ==========================================
 
-📍 Project root: /Users/stephanejouve/cyclisme-training-logs
+📍 Project root: /Users/stephanejouve/magma-cycling
 🐍 Python: /Users/stephanejouve/.pyenv/versions/3.11.0/bin/python
 
 📝 Cron job to be installed:
-0 22 * * * cd /Users/stephanejouve/cyclisme-training-logs && /path/to/python scripts/monitoring/check_workout_adherence.py >> ~/data/monitoring/cron.log 2>&1
+0 22 * * * cd /Users/stephanejouve/magma-cycling && /path/to/python scripts/monitoring/check_workout_adherence.py >> ~/data/monitoring/cron.log 2>&1
 
 ✅ Cron job installed successfully!
 
@@ -272,7 +272,7 @@ crontab -l | grep check_workout_adherence
 **Output:**
 
 ```
-0 22 * * * cd /Users/stephanejouve/cyclisme-training-logs && /path/to/python scripts/monitoring/check_workout_adherence.py >> ~/data/monitoring/cron.log 2>&1
+0 22 * * * cd /Users/stephanejouve/magma-cycling && /path/to/python scripts/monitoring/check_workout_adherence.py >> ~/data/monitoring/cron.log 2>&1
 ```
 
 ### Schedule Par Défaut
@@ -293,16 +293,16 @@ crontab -e
 
 ```bash
 # Tous les jours à 20:00
-0 20 * * * cd ~/cyclisme-training-logs && poetry run python scripts/monitoring/check_workout_adherence.py
+0 20 * * * cd ~/magma-cycling && poetry run python scripts/monitoring/check_workout_adherence.py
 
 # Deux fois par jour (12:00 et 22:00)
-0 12,22 * * * cd ~/cyclisme-training-logs && poetry run python scripts/monitoring/check_workout_adherence.py
+0 12,22 * * * cd ~/magma-cycling && poetry run python scripts/monitoring/check_workout_adherence.py
 
 # Seulement jours semaine (Lundi-Vendredi)
-0 22 * * 1-5 cd ~/cyclisme-training-logs && poetry run python scripts/monitoring/check_workout_adherence.py
+0 22 * * 1-5 cd ~/magma-cycling && poetry run python scripts/monitoring/check_workout_adherence.py
 
 # Seulement weekend (Samedi-Dimanche) à 18:00
-0 18 * * 6,7 cd ~/cyclisme-training-logs && poetry run python scripts/monitoring/check_workout_adherence.py
+0 18 * * 6,7 cd ~/magma-cycling && poetry run python scripts/monitoring/check_workout_adherence.py
 ```
 
 ### Désinstaller Cron Job
@@ -472,7 +472,7 @@ grep "WORKOUT ADHERENCE ALERT" ~/data/monitoring/cron.log
 2. **Vérifier chemins absolus:**
    ```bash
    # Tester commande cron manuellement
-   cd /Users/stephanejouve/cyclisme-training-logs
+   cd /Users/stephanejouve/magma-cycling
    poetry run python scripts/monitoring/check_workout_adherence.py
    ```
 
@@ -540,7 +540,7 @@ poetry run python scripts/monitoring/check_workout_adherence.py --date 2026-01-0
 
 2. **Tester API manuellement:**
    ```bash
-   poetry run python -c "from cyclisme_training_logs.api.intervals_client import IntervalsClient; from cyclisme_training_logs.config.config_base import ConfigBase; c = ConfigBase(); client = IntervalsClient(c.intervals_athlete_id, c.intervals_api_key); print(client.get_athlete_profile())"
+   poetry run python -c "from magma_cycling.api.intervals_client import IntervalsClient; from magma_cycling.config.config_base import ConfigBase; c = ConfigBase(); client = IntervalsClient(c.intervals_athlete_id, c.intervals_api_key); print(client.get_athlete_profile())"
    ```
 
 3. **Regénérer API key:**
@@ -676,7 +676,7 @@ cat ~/data/monitoring/workout_adherence.jsonl | jq -r '[.date, .planned_workouts
 Le monitoring adherence alimente le `BaselineCollector` (Sprint R6):
 
 ```python
-# cyclisme_training_logs/intelligence/baseline_collector.py
+# magma_cycling/intelligence/baseline_collector.py
 from pathlib import Path
 import json
 
@@ -719,7 +719,7 @@ def load_adherence_data(week_id: str) -> float:
 ### API
 
 - [Intervals.icu API Docs](https://intervals.icu/api)
-- [IntervalsClient](../../cyclisme_training_logs/api/intervals_client.py)
+- [IntervalsClient](../../magma_cycling/api/intervals_client.py)
 
 ---
 

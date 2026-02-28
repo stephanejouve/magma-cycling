@@ -12,8 +12,8 @@ from datetime import date
 
 import pytest
 
-from cyclisme_training_logs.planning.models import Session, WeeklyPlan
-from cyclisme_training_logs.shift_sessions import SessionShifter
+from magma_cycling.planning.models import Session, WeeklyPlan
+from magma_cycling.shift_sessions import SessionShifter
 
 
 class TestSessionShifter:

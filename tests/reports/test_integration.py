@@ -12,9 +12,9 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from cyclisme_training_logs.reports import ReportGenerator
-from cyclisme_training_logs.reports.data_collector import DataCollectionError
-from cyclisme_training_logs.reports.generator import ReportGenerationError
+from magma_cycling.reports import ReportGenerator
+from magma_cycling.reports.data_collector import DataCollectionError
+from magma_cycling.reports.generator import ReportGenerationError
 from tests.reports.fixtures import (
     SAMPLE_WEEK_DATA_S076,
     SAMPLE_WORKOUT_HISTORY_REPORT,
@@ -24,8 +24,8 @@ from tests.reports.fixtures import (
 class TestReportGeneratorIntegration:
     """Integration tests for ReportGenerator with mocked components."""
 
-    @patch("cyclisme_training_logs.reports.generator.DataCollector")
-    @patch("cyclisme_training_logs.reports.generator.AIProviderFactory")
+    @patch("magma_cycling.reports.generator.DataCollector")
+    @patch("magma_cycling.reports.generator.AIProviderFactory")
     def test_generate_workout_history_success(self, mock_factory, mock_data_collector_class):
         """Test successful workout_history report generation end-to-end."""
         # Given: Mocked dependencies
@@ -55,7 +55,7 @@ class TestReportGeneratorIntegration:
         mock_collector.collect_week_data.assert_called_once()
         mock_analyzer.analyze_session.assert_called_once()
 
-    @patch("cyclisme_training_logs.reports.generator.DataCollector")
+    @patch("magma_cycling.reports.generator.DataCollector")
     def test_generate_report_data_collection_failure(self, mock_data_collector_class):
         """Test report generation fails gracefully on data collection error."""
         # Given: DataCollector that fails
@@ -69,8 +69,8 @@ class TestReportGeneratorIntegration:
         with pytest.raises(ReportGenerationError, match="Data collection failed"):
             generator.generate_report(week="S076", report_type="workout_history")
 
-    @patch("cyclisme_training_logs.reports.generator.DataCollector")
-    @patch("cyclisme_training_logs.reports.generator.AIProviderFactory")
+    @patch("magma_cycling.reports.generator.DataCollector")
+    @patch("magma_cycling.reports.generator.AIProviderFactory")
     def test_generate_report_ai_generation_failure(self, mock_factory, mock_data_collector_class):
         """Test report generation fails gracefully on AI error."""
         # Given: Successful data collection but AI failure
@@ -88,8 +88,8 @@ class TestReportGeneratorIntegration:
         with pytest.raises(ReportGenerationError, match="Unexpected error"):
             generator.generate_report(week="S076", report_type="workout_history")
 
-    @patch("cyclisme_training_logs.reports.generator.DataCollector")
-    @patch("cyclisme_training_logs.reports.generator.AIProviderFactory")
+    @patch("magma_cycling.reports.generator.DataCollector")
+    @patch("magma_cycling.reports.generator.AIProviderFactory")
     def test_generate_report_validation_failure(self, mock_factory, mock_data_collector_class):
         """Test report generation fails on validation errors."""
         # Given: Successful generation but invalid output
@@ -111,8 +111,8 @@ class TestReportGeneratorIntegration:
                 output_dir=Path("/tmp/test_reports"),
             )
 
-    @patch("cyclisme_training_logs.reports.generator.DataCollector")
-    @patch("cyclisme_training_logs.reports.generator.AIProviderFactory")
+    @patch("magma_cycling.reports.generator.DataCollector")
+    @patch("magma_cycling.reports.generator.AIProviderFactory")
     def test_generate_bilan_final_success(self, mock_factory, mock_data_collector_class):
         """Test successful bilan_final report generation."""
         # Given: Mocked dependencies with bilan_final data (same structure as workout_history)
@@ -145,8 +145,8 @@ Report content here."""
         assert str(output_path).endswith("bilan_final_s076.md")
         mock_analyzer.analyze_session.assert_called_once()
 
-    @patch("cyclisme_training_logs.reports.generator.DataCollector")
-    @patch("cyclisme_training_logs.reports.generator.AIProviderFactory")
+    @patch("magma_cycling.reports.generator.DataCollector")
+    @patch("magma_cycling.reports.generator.AIProviderFactory")
     def test_generate_with_ai_provider_override(self, mock_factory, mock_data_collector_class):
         """Test AI provider can be overridden per request."""
         # Given: Generator with default provider

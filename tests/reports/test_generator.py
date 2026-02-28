@@ -8,7 +8,7 @@ Created: 2026-01-18
 
 import pytest
 
-from cyclisme_training_logs.reports import ReportGenerator
+from magma_cycling.reports import ReportGenerator
 
 
 class TestReportGenerator:

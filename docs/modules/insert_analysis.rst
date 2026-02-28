@@ -1,7 +1,7 @@
 Insert Analysis Module
 ======================
 
-.. automodule:: cyclisme_training_logs.insert_analysis
+.. automodule:: magma_cycling.insert_analysis
    :members:
    :undoc-members:
    :show-inheritance:

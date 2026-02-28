@@ -8,8 +8,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from cyclisme_training_logs.ai_providers.base import AIProvider
-from cyclisme_training_logs.ai_providers.claude_api import ClaudeAPIAnalyzer
+from magma_cycling.ai_providers.base import AIProvider
+from magma_cycling.ai_providers.claude_api import ClaudeAPIAnalyzer
 
 
 @pytest.fixture
@@ -27,7 +27,7 @@ def claude_config(valid_api_key):
 @pytest.fixture
 def mock_anthropic():
     """Mock Anthropic client."""
-    with patch("cyclisme_training_logs.ai_providers.claude_api.Anthropic") as mock_class:
+    with patch("magma_cycling.ai_providers.claude_api.Anthropic") as mock_class:
         mock_client = MagicMock()
         mock_class.return_value = mock_client
         yield mock_client
@@ -48,7 +48,7 @@ class TestClaudeAPIAnalyzer:
 
     def test_init_missing_api_key(self):
         """Test initialization fails without API key."""
-        from cyclisme_training_logs.ai_providers.claude_api import WorkflowError
+        from magma_cycling.ai_providers.claude_api import WorkflowError
 
         with pytest.raises(WorkflowError) as exc_info:
             ClaudeAPIAnalyzer(api_key=None, model="claude-sonnet-4")
@@ -58,7 +58,7 @@ class TestClaudeAPIAnalyzer:
 
     def test_init_invalid_api_key_format(self):
         """Test initialization fails with invalid API key format."""
-        from cyclisme_training_logs.ai_providers.claude_api import WorkflowError
+        from magma_cycling.ai_providers.claude_api import WorkflowError
 
         with pytest.raises(WorkflowError) as exc_info:
             ClaudeAPIAnalyzer(api_key="invalid-key", model="claude-sonnet-4")
@@ -204,7 +204,7 @@ class TestClaudeAPIAnalyzer:
         """Test handling of timeout."""
         import requests
 
-        from cyclisme_training_logs.ai_providers.claude_api import WorkflowError
+        from magma_cycling.ai_providers.claude_api import WorkflowError
 
         mock_anthropic.messages.create.side_effect = requests.Timeout("Request timeout")
 
@@ -219,7 +219,7 @@ class TestClaudeAPIAnalyzer:
         """Test handling of connection error."""
         import requests
 
-        from cyclisme_training_logs.ai_providers.claude_api import WorkflowError
+        from magma_cycling.ai_providers.claude_api import WorkflowError
 
         mock_anthropic.messages.create.side_effect = requests.ConnectionError("Cannot connect")
 

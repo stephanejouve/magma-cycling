@@ -124,9 +124,9 @@ while True:
 ## 📎 Références
 
 - **Audit complet** : `docs/audits/AUDIT_WORKFLOW_LOOP_BUG.md`
-- **Fichier principal** : `cyclisme_training_logs/workflow_coach.py:2191-2258` (boucle while)
-- **Détection gaps** : `cyclisme_training_logs/workflow_coach.py:775-1005`
-- **WorkflowState** : `cyclisme_training_logs/workflow_state.py`
+- **Fichier principal** : `magma_cycling/workflow_coach.py:2191-2258` (boucle while)
+- **Détection gaps** : `magma_cycling/workflow_coach.py:775-1005`
+- **WorkflowState** : `magma_cycling/workflow_state.py`
 
 ---
 

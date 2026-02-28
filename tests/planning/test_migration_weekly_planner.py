@@ -13,8 +13,8 @@ from datetime import datetime
 
 import pytest
 
-from cyclisme_training_logs.planning.models import WeeklyPlan
-from cyclisme_training_logs.weekly_planner import WeeklyPlanner
+from magma_cycling.planning.models import WeeklyPlan
+from magma_cycling.weekly_planner import WeeklyPlanner
 
 
 class TestWeeklyPlannerMigration:
@@ -23,7 +23,7 @@ class TestWeeklyPlannerMigration:
     @pytest.fixture
     def mock_config(self, tmp_path):
         """Mock Control Tower to use tmp_path for planning."""
-        from cyclisme_training_logs.planning.control_tower import planning_tower
+        from magma_cycling.planning.control_tower import planning_tower
 
         # Create required files for DataRepoConfig validation
         workouts_history = tmp_path / "workouts-history.md"
@@ -147,7 +147,7 @@ class TestWeeklyPlannerMigration:
 
     def test_update_missing_file_returns_false(self, tmp_path):
         """Vérifie que tenter de modifier un fichier inexistant retourne False."""
-        from cyclisme_training_logs.planning.control_tower import planning_tower
+        from magma_cycling.planning.control_tower import planning_tower
 
         # Point Control Tower to nonexistent directory
         nonexistent_dir = tmp_path / "nonexistent"

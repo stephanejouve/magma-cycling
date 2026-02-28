@@ -29,8 +29,8 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from cyclisme_training_logs.api.intervals_client import IntervalsClient  # noqa: E402
-from cyclisme_training_logs.config import get_intervals_config  # noqa: E402
+from magma_cycling.api.intervals_client import IntervalsClient  # noqa: E402
+from magma_cycling.config import get_intervals_config  # noqa: E402
 
 
 class WorkoutAdherenceChecker:
@@ -340,7 +340,7 @@ class WorkoutAdherenceChecker:
             import sib_api_v3_sdk
             from sib_api_v3_sdk.rest import ApiException
 
-            from cyclisme_training_logs.config import get_email_config
+            from magma_cycling.config import get_email_config
 
             email_config = get_email_config()
 

@@ -158,7 +158,7 @@ def main():
 
     # Directories to process
     dirs = [
-        project_root / "cyclisme_training_logs",
+        project_root / "magma_cycling",
         project_root / "tests",
         project_root / "scripts",
     ]
@@ -181,9 +181,9 @@ def main():
                 files_modified += 1
                 print(f"✓ {py_file.relative_to(project_root)}: {fixes} fix(es)")
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"TOTAL: {total_fixes} fixes in {files_modified} files")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     return 0
 

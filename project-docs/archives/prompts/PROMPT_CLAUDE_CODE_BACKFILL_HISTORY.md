@@ -2,7 +2,7 @@
 
 ## Context
 
-The cyclisme-training-logs project now has full automation capabilities (v2.0.3):
+The magma-cycling project now has full automation capabilities (v2.0.3):
 - ✅ 5 AI providers operational (Mistral, Claude, OpenAI, Ollama, Clipboard)
 - ✅ `--auto` mode for zero-interaction workflow
 - ✅ `manage-state` tool for state management
@@ -20,7 +20,7 @@ Create a robust `backfill-history` tool that analyzes ALL historical activities 
 
 ### File 1: backfill_history.py (Main Script)
 
-**Location:** `cyclisme-training-logs/backfill_history.py` (project root)
+**Location:** `magma-cycling/backfill_history.py` (project root)
 
 **Purpose:** Automated batch analysis of historical training data
 
@@ -87,8 +87,8 @@ from typing import List, Dict, Set
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from cyclisme_training_logs.config import get_config
-from cyclisme_training_logs.intervals_client import IntervalsClient
+from magma_cycling.config import get_config
+from magma_cycling.intervals_client import IntervalsClient
 
 
 class HistoryBackfiller:
@@ -601,8 +601,8 @@ Add to `[tool.poetry.scripts]` section:
 
 ```toml
 [tool.poetry.scripts]
-workflow-coach = "cyclisme_training_logs.workflow_coach:main"
-manage-state = "cyclisme_training_logs.tools.manage_state:main"
+workflow-coach = "magma_cycling.workflow_coach:main"
+manage-state = "magma_cycling.tools.manage_state:main"
 backfill-history = "backfill_history:main"  # NEW
 ```
 

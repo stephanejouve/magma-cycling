@@ -15,7 +15,7 @@
 ### Solutions Implémentées ✅
 
 #### Fix #1 : Extension WorkflowState (Tâche 1)
-**Fichier** : `cyclisme_training_logs/workflow_state.py`
+**Fichier** : `magma_cycling/workflow_state.py`
 **Lignes ajoutées** : +100
 
 **Nouvelles méthodes - Tracking sessions spéciales** :
@@ -56,7 +56,7 @@
 ---
 
 #### Fix #2 : Filtrage Détection Sessions Spéciales (Tâche 2)
-**Fichier** : `cyclisme_training_logs/workflow_coach.py`
+**Fichier** : `magma_cycling/workflow_coach.py`
 **Lignes ajoutées** : +60
 
 **Modifications dans step_1b_detect_all_gaps()** :
@@ -123,7 +123,7 @@ cancelled_sessions = cancelled_filtered
 ---
 
 #### Fix #3 : Sortie Intelligente Boucle (Tâche 3)
-**Fichier** : `cyclisme_training_logs/workflow_coach.py`
+**Fichier** : `magma_cycling/workflow_coach.py`
 **Lignes ajoutées** : +70
 
 **Nouvelle méthode _compute_gaps_signature()** (lignes 2264-2299) :
@@ -200,7 +200,7 @@ while True:
 ---
 
 #### Fix #4 : Marking Sessions Après Documentation (Tâche 4)
-**Fichier** : `cyclisme_training_logs/workflow_coach.py`
+**Fichier** : `magma_cycling/workflow_coach.py`
 **Lignes ajoutées** : +50
 
 **Nouvelle méthode _detect_session_type_from_markdown()** (lignes 1476-1499) :
@@ -301,8 +301,8 @@ poetry run pytest tests/test_workflow_state_extensions.py -v
 
 ### Syntaxe Python ✅
 ```bash
-python3 -m py_compile cyclisme_training_logs/workflow_coach.py
-python3 -m py_compile cyclisme_training_logs/workflow_state.py
+python3 -m py_compile magma_cycling/workflow_coach.py
+python3 -m py_compile magma_cycling/workflow_state.py
 ```
 
 **Résultat** : Aucune erreur

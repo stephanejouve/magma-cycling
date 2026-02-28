@@ -8,7 +8,7 @@ Created: 2026-02-14
 
 import pytest
 
-from cyclisme_training_logs.planning.workout_validation import (
+from magma_cycling.planning.workout_validation import (
     ValidationResult,
     format_validation_report,
     validate_workout,

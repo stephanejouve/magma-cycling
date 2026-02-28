@@ -123,22 +123,22 @@ plan.last_updated = datetime.now(UTC)  # Timezone-aware
 
 **Liste:**
 ```
-cyclisme_training_logs/workflow_coach.py          - READ-ONLY (analyse)
-cyclisme_training_logs/planned_sessions_checker.py - READ-ONLY (validation)
-cyclisme_training_logs/prepare_analysis.py       - READ-ONLY (préparation)
-cyclisme_training_logs/update_session_status.py  - UPDATE (candidate migration)
-cyclisme_training_logs/config/config_base.py     - CONFIG (non-planning)
-cyclisme_training_logs/analyzers/weekly_aggregator.py - READ-ONLY (stats)
-cyclisme_training_logs/intelligence/training_intelligence.py - READ-ONLY
-cyclisme_training_logs/weekly_analysis.py        - READ-ONLY (analyse)
-cyclisme_training_logs/diagnose-matching.py      - DEBUG (non-critique)
-cyclisme_training_logs/analyzers/daily_aggregator.py - READ-ONLY (stats)
-cyclisme_training_logs/scripts/validate_templates.py - VALIDATION (non-planning)
-cyclisme_training_logs/check_activity_sources.py - DEBUG
-cyclisme_training_logs/collect_athlete_feedback.py - FEEDBACK (non-planning)
-cyclisme_training_logs/workflow_state.py         - STATE (non-planning)
-cyclisme_training_logs/sync_intervals.py         - API SYNC (non-planning)
-cyclisme_training_logs/monthly_analysis.py       - READ-ONLY (stats)
+magma_cycling/workflow_coach.py          - READ-ONLY (analyse)
+magma_cycling/planned_sessions_checker.py - READ-ONLY (validation)
+magma_cycling/prepare_analysis.py       - READ-ONLY (préparation)
+magma_cycling/update_session_status.py  - UPDATE (candidate migration)
+magma_cycling/config/config_base.py     - CONFIG (non-planning)
+magma_cycling/analyzers/weekly_aggregator.py - READ-ONLY (stats)
+magma_cycling/intelligence/training_intelligence.py - READ-ONLY
+magma_cycling/weekly_analysis.py        - READ-ONLY (analyse)
+magma_cycling/diagnose-matching.py      - DEBUG (non-critique)
+magma_cycling/analyzers/daily_aggregator.py - READ-ONLY (stats)
+magma_cycling/scripts/validate_templates.py - VALIDATION (non-planning)
+magma_cycling/check_activity_sources.py - DEBUG
+magma_cycling/collect_athlete_feedback.py - FEEDBACK (non-planning)
+magma_cycling/workflow_state.py         - STATE (non-planning)
+magma_cycling/sync_intervals.py         - API SYNC (non-planning)
+magma_cycling/monthly_analysis.py       - READ-ONLY (stats)
 + 3 autres (config, scripts)
 ```
 

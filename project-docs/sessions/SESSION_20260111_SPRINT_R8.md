@@ -243,7 +243,7 @@ class TestUIHelpers:
 @patch("pathlib.Path.exists", return_value=True)
 
 # Config
-@patch("cyclisme_training_logs.workflow_coach.get_data_config")
+@patch("magma_cycling.workflow_coach.get_data_config")
 @patch.dict("os.environ", {"KEY": "value"})
 ```
 
@@ -286,7 +286,7 @@ class TestCategoryName:
 - **Lines:** 728 lignes
 - **Classes:** 7 test classes
 - **Methods:** 44 test methods
-- **Coverage target file:** `cyclisme_training_logs/workflow_coach.py` (1,822 lignes)
+- **Coverage target file:** `magma_cycling/workflow_coach.py` (1,822 lignes)
 
 ---
 

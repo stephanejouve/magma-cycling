@@ -131,7 +131,7 @@
 ```
 Name                                                    Stmts   Miss  Cover   Missing
 -------------------------------------------------------------------------------------
-cyclisme_training_logs/intelligence/pid_controller.py      72      2    97%   214, 224
+magma_cycling/intelligence/pid_controller.py      72      2    97%   214, 224
 -------------------------------------------------------------------------------------
 TOTAL                                                      72      2    97%
 ```

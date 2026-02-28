@@ -5,28 +5,28 @@
 ### pyproject.toml - Scripts Configurés
 ```toml
 [tool.poetry.scripts]
-workflow-coach = "cyclisme_training_logs.workflow_coach:main"
-weekly-analysis = "cyclisme_training_logs.weekly_analysis:main"
-upload-workouts = "cyclisme_training_logs.upload_workouts:main"
-prepare-analysis = "cyclisme_training_logs.prepare_analysis:main"
-collect-athlete-feedback = "cyclisme_training_logs.collect_athlete_feedback:main"
-sync-intervals = "cyclisme_training_logs.sync_intervals:main"
-stats = "cyclisme_training_logs.stats:main"
-planned-checker = "cyclisme_training_logs.planned_sessions_checker:main"
-insert-analysis = "cyclisme_training_logs.insert_analysis:main"
-organize-report = "cyclisme_training_logs.organize_report:main"
-setup-week = "cyclisme_training_logs.setup_week:main"
-check-rest = "cyclisme_training_logs.rest_and_cancellations:main"
-validate-state = "cyclisme_training_logs.workout_state:main"
-gen-week = "cyclisme_training_logs.generate_week_workouts:main"
-intervals-api = "cyclisme_training_logs.intervals_api:main"
+workflow-coach = "magma_cycling.workflow_coach:main"
+weekly-analysis = "magma_cycling.weekly_analysis:main"
+upload-workouts = "magma_cycling.upload_workouts:main"
+prepare-analysis = "magma_cycling.prepare_analysis:main"
+collect-athlete-feedback = "magma_cycling.collect_athlete_feedback:main"
+sync-intervals = "magma_cycling.sync_intervals:main"
+stats = "magma_cycling.stats:main"
+planned-checker = "magma_cycling.planned_sessions_checker:main"
+insert-analysis = "magma_cycling.insert_analysis:main"
+organize-report = "magma_cycling.organize_report:main"
+setup-week = "magma_cycling.setup_week:main"
+check-rest = "magma_cycling.rest_and_cancellations:main"
+validate-state = "magma_cycling.workout_state:main"
+gen-week = "magma_cycling.generate_week_workouts:main"
+intervals-api = "magma_cycling.intervals_api:main"
 ```
 
-## Package cyclisme_training_logs/
+## Package magma_cycling/
 
 ### Structure (33 modules Python)
 ```
-cyclisme_training_logs/
+magma_cycling/
 ├── __init__.py
 ├── workflow_coach.py           # ⭐ ORCHESTRATEUR PRINCIPAL
 ├── intervals_api.py            # Client API Intervals.icu
@@ -39,8 +39,8 @@ cyclisme_training_logs/
 
 ### ✅ Correct
 ```python
-from cyclisme_training_logs.intervals_api import IntervalsAPI
-from cyclisme_training_logs.workout_state import WorkoutState
+from magma_cycling.intervals_api import IntervalsAPI
+from magma_cycling.workout_state import WorkoutState
 ```
 
 ### ❌ Incorrect
@@ -72,7 +72,7 @@ class WorkflowCoach:
 
 ## Client API - Référence
 
-Voir `cyclisme_training_logs/intervals_api.py` pour patterns complets.
+Voir `magma_cycling/intervals_api.py` pour patterns complets.
 
 ### Endpoints Principaux
 ```python
@@ -111,7 +111,7 @@ poetry run pytest
 poetry run pytest tests/test_asservissement.py -v
 
 # Avec couverture
-poetry run pytest --cov=cyclisme_training_logs
+poetry run pytest --cov=magma_cycling
 ```
 
 ## Commandes Utiles

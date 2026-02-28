@@ -8,8 +8,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from cyclisme_training_logs.ai_providers.base import AIProvider
-from cyclisme_training_logs.ai_providers.mistral_api import (
+from magma_cycling.ai_providers.base import AIProvider
+from magma_cycling.ai_providers.mistral_api import (
     MistralAPIAnalyzer,
     WorkflowError,
 )
@@ -35,7 +35,7 @@ def mistral_config(valid_api_key):
 @pytest.fixture
 def mock_mistral_client():
     """Mock Mistral client."""
-    with patch("cyclisme_training_logs.ai_providers.mistral_api.Mistral") as mock_class:
+    with patch("magma_cycling.ai_providers.mistral_api.Mistral") as mock_class:
         mock_client = MagicMock()
         # Mock the chat.complete method (new API)
         mock_client.chat = MagicMock()

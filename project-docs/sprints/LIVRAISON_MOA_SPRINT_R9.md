@@ -245,7 +245,7 @@ tests/workflows/test_insert_analysis.py
 
 #### Problème Initial
 Structure projet polluée avec fichiers obsolètes et mal placés:
-- 9 guides markdown dans code source (cyclisme_training_logs/)
+- 9 guides markdown dans code source (magma_cycling/)
 - 11 fichiers legacy (backups, scripts shell, test data)
 - 5 répertoires obsolètes à la racine (backups/, patches/, references/, withings_integration/, .athlete_feedback/)
 - 2 fichiers markdown dans docs/ Sphinx
@@ -254,7 +254,7 @@ Structure projet polluée avec fichiers obsolètes et mal placés:
 #### Actions Réalisées
 **Total fichiers déplacés**: 41 fichiers + 5 répertoires
 
-1. **Nettoyage code source** (cyclisme_training_logs/)
+1. **Nettoyage code source** (magma_cycling/)
    - 9 guides markdown → `project-docs/archives/legacy-guides/`
    - 11 fichiers legacy → `project-docs/archives/legacy-code/`
    - Garde uniquement: Python modules + reports/README.md
@@ -282,10 +282,10 @@ Structure projet polluée avec fichiers obsolètes et mal placés:
 
 #### Structure Finale (Propre)
 ```
-cyclisme-training-logs/
+magma-cycling/
 ├── .github/              # CI/CD workflows
 ├── .claude/              # Claude Code settings
-├── cyclisme_training_logs/  # Source code Python UNIQUEMENT
+├── magma_cycling/  # Source code Python UNIQUEMENT
 ├── tests/                # Tests unitaires
 ├── scripts/              # Scripts maintenance
 ├── data/                 # Workout templates, planning
@@ -385,7 +385,7 @@ cyclisme-training-logs/
 
 ### Core Changes
 ```
-cyclisme_training_logs/
+magma_cycling/
 ├── daily_sync.py                     # Fix détection activités (critique)
 ├── prepare_analysis.py               # Intégration température
 ├── update_session_status.py          # Fix status "replaced"
@@ -523,11 +523,11 @@ Taille augmentée de 20.4 MB → 22.3 MB due à:
 ---
 
 **Archive disponible**: `sprint-r9-v2.2.0-20260125.tar.gz` (22.3 MB)
-**Location**: iCloud Drive → Documents → cyclisme-training-logs-archives
+**Location**: iCloud Drive → Documents → magma-cycling-archives
 **SHA256**: `a784a1890a8eaa2c10a2c6818d42d01ceefa85fe37454671a63532e3f1a68605`
 
 ---
 
 *Livraison générée le 25 janvier 2026*
-*Projet: cyclisme-training-logs v2.2.0*
+*Projet: magma-cycling v2.2.0*
 *Sprint: R9 (Robustesse & Automatisation)*

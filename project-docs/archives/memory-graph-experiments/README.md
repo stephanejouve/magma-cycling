@@ -8,7 +8,7 @@
 
 ## Purpose
 
-Expérimentation avec le package Python `memory_graph` pour visualiser les références mémoire et patterns d'aliasing dans les structures de données du projet cyclisme-training-logs.
+Expérimentation avec le package Python `memory_graph` pour visualiser les références mémoire et patterns d'aliasing dans les structures de données du projet magma-cycling.
 
 ## Files
 

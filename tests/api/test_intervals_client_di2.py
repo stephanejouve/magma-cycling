@@ -8,7 +8,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from cyclisme_training_logs.api.intervals_client import IntervalsClient
+from magma_cycling.api.intervals_client import IntervalsClient
 
 
 class TestGetActivityStreamsDi2:

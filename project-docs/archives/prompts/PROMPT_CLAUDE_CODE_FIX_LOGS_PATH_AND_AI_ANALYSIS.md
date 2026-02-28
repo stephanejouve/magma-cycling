@@ -2,9 +2,9 @@
 
 ## Context
 
-The cyclisme-training-logs project has two critical issues:
+The magma-cycling project has two critical issues:
 
-1. **Logs Path Hardcoded**: Logs written to `cyclisme-training-logs/logs/` instead of external `training-logs/` repo
+1. **Logs Path Hardcoded**: Logs written to `magma-cycling/logs/` instead of external `training-logs/` repo
 2. **AI Analysis Not Collected**: Backfill tests show analyses not appearing in workouts-history.md
 
 **Current State:**
@@ -44,7 +44,7 @@ Date: 25/12/2025
 ### Issue 1: Path Configuration
 
 **Files Affected:**
-- `cyclisme_training_logs/config.py` - Hardcoded paths
+- `magma_cycling/config.py` - Hardcoded paths
 - `insert_analysis.py` - Uses config paths
 - `workflow_coach.py` - Uses config paths
 - `backfill_history.py` - Uses config paths
@@ -95,7 +95,7 @@ Possible causes:
 
 ### Part 1: Configurable Logs Path
 
-#### File: cyclisme_training_logs/config.py
+#### File: magma_cycling/config.py
 
 **Changes:**
 
@@ -169,7 +169,7 @@ class Config:
         self.training_learnings_path = self.logs_dir / "training-learnings.md"
         self.workout_templates_path = self.logs_dir / "workout-templates.md"
 
-        # State file (keep in cyclisme-training-logs)
+        # State file (keep in magma-cycling)
         # This is NOT training data, it's tool state
         state_dir = Path(__file__).parent.parent / ".state"
         state_dir.mkdir(exist_ok=True)
@@ -202,7 +202,7 @@ OPENAI_API_KEY=your_key_here
 # Leave empty or comment out to use local logs/ directory
 TRAINING_LOGS_PATH=/Users/your_username/training-logs
 
-# Alternative: Relative path (from cyclisme-training-logs)
+# Alternative: Relative path (from magma-cycling)
 # TRAINING_LOGS_PATH=../training-logs
 ```
 
@@ -279,7 +279,7 @@ TRAINING_LOGS_PATH=/Users/john/training-logs
 
 # Results in:
 # - Logs written to: /Users/john/training-logs/logs/
-# - Code in: /Users/john/cyclisme-training-logs/
+# - Code in: /Users/john/magma-cycling/
 ```
 ```
 
@@ -450,7 +450,7 @@ def run_workflow(args):
 
     # Build insert command
     insert_cmd = [
-        'python', '-m', 'cyclisme_training_logs.insert_analysis',
+        'python', '-m', 'magma_cycling.insert_analysis',
         '--activity-id', args.activity_id,
         '--analysis-file', str(analysis_file)
     ]
@@ -475,7 +475,7 @@ Alternative: Call insertion function directly instead of subprocess:
 ```python
 # In workflow_coach.py
 
-from cyclisme_training_logs.insert_analysis import insert_analysis_to_history
+from magma_cycling.insert_analysis import insert_analysis_to_history
 
 def run_workflow(args):
     # ... prompt generation ...
@@ -557,7 +557,7 @@ def insert_analysis_to_history(activity_id, analysis_text, config, auto_confirm=
    # Test 2: Without external path
    # Comment out TRAINING_LOGS_PATH
    poetry run workflow-coach --help
-   # Should show: "ℹ️  Using local logs: .../cyclisme-training-logs/logs"
+   # Should show: "ℹ️  Using local logs: .../magma-cycling/logs"
    ```
 
 ---
@@ -596,7 +596,7 @@ def insert_analysis_to_history(activity_id, analysis_text, config, auto_confirm=
 
 ```bash
 # Setup
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 # Test external path
 echo "TRAINING_LOGS_PATH=$HOME/training-logs" > .env.test
@@ -609,7 +609,7 @@ poetry run workflow-coach --help
 # ✅ Using external logs: /Users/you/training-logs/logs
 
 # Verify logs location
-poetry run python -c "from cyclisme_training_logs.config import get_config; print(get_config().logs_dir)"
+poetry run python -c "from magma_cycling.config import get_config; print(get_config().logs_dir)"
 
 # Expected: /Users/you/training-logs/logs
 ```

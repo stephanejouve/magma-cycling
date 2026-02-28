@@ -16,7 +16,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from cyclisme_training_logs.workflows.workflow_weekly import (
+from magma_cycling.workflows.workflow_weekly import (
     WeeklyWorkflow,
     get_current_week_info,
     run_weekly_analysis,
@@ -29,7 +29,7 @@ def test_get_current_week_info():
     Examples:
         Basic week calculation::
 
-            from cyclisme_training_logs.workflows.workflow_weekly import get_current_week_info
+            from magma_cycling.workflows.workflow_weekly import get_current_week_info
             from datetime import date
 
             week, start_date = get_current_week_info()
@@ -119,7 +119,7 @@ def test_weekly_workflow_initialization(mock_data_dir):
     Examples:
         Initialize with explicit parameters::
 
-            from cyclisme_training_logs.workflows.workflow_weekly import WeeklyWorkflow
+            from magma_cycling.workflows.workflow_weekly import WeeklyWorkflow
             from datetime import date
             from pathlib import Path
 
@@ -156,8 +156,8 @@ def test_weekly_workflow_initialization(mock_data_dir):
     assert workflow.ai_analysis is False
 
 
-@patch("cyclisme_training_logs.workflows.workflow_weekly.WeeklyAggregator")
-@patch("cyclisme_training_logs.workflows.workflow_weekly.WeeklyAnalyzer")
+@patch("magma_cycling.workflows.workflow_weekly.WeeklyAggregator")
+@patch("magma_cycling.workflows.workflow_weekly.WeeklyAnalyzer")
 def test_weekly_workflow_run(mock_analyzer_class, mock_aggregator_class, mock_data_dir):
     """Test exécution workflow complet.
 
@@ -166,8 +166,8 @@ def test_weekly_workflow_run(mock_analyzer_class, mock_aggregator_class, mock_da
 
             from unittest.mock import patch, Mock
 
-            with patch('cyclisme_training_logs.workflows.workflow_weekly.WeeklyAggregator') as mock_agg:
-                with patch('cyclisme_training_logs.workflows.workflow_weekly.WeeklyAnalyzer') as mock_ana:
+            with patch('magma_cycling.workflows.workflow_weekly.WeeklyAggregator') as mock_agg:
+                with patch('magma_cycling.workflows.workflow_weekly.WeeklyAnalyzer') as mock_ana:
                     # Setup mocks
                     mock_agg_instance = Mock()
                     mock_agg.return_value = mock_agg_instance
@@ -246,7 +246,7 @@ def test_weekly_workflow_run(mock_analyzer_class, mock_aggregator_class, mock_da
     assert "workout_history" in reports
 
 
-@patch("cyclisme_training_logs.workflows.workflow_weekly.WeeklyAggregator")
+@patch("magma_cycling.workflows.workflow_weekly.WeeklyAggregator")
 def test_weekly_workflow_aggregation_failure(mock_aggregator_class, mock_data_dir):
     """Test gestion échec aggregation.
 
@@ -291,8 +291,8 @@ def test_weekly_workflow_aggregation_failure(mock_aggregator_class, mock_data_di
 
 
 @patch("subprocess.run")
-@patch("cyclisme_training_logs.workflows.workflow_weekly.WeeklyAggregator")
-@patch("cyclisme_training_logs.workflows.workflow_weekly.WeeklyAnalyzer")
+@patch("magma_cycling.workflows.workflow_weekly.WeeklyAggregator")
+@patch("magma_cycling.workflows.workflow_weekly.WeeklyAnalyzer")
 def test_weekly_workflow_ai_analysis(
     mock_analyzer_class, mock_aggregator_class, mock_subprocess, mock_data_dir
 ):
@@ -361,14 +361,14 @@ def test_weekly_workflow_ai_analysis(
     assert call_args[0][0] == ["pbcopy"]
 
 
-@patch("cyclisme_training_logs.workflows.workflow_weekly.WeeklyWorkflow")
+@patch("magma_cycling.workflows.workflow_weekly.WeeklyWorkflow")
 def test_run_weekly_analysis_utility(mock_workflow_class, mock_data_dir):
     """Test fonction utilitaire run_weekly_analysis.
 
     Examples:
         Use utility function::
 
-            from cyclisme_training_logs.workflows.workflow_weekly import run_weekly_analysis
+            from magma_cycling.workflows.workflow_weekly import run_weekly_analysis
             from datetime import date
 
             reports = run_weekly_analysis(
@@ -450,7 +450,7 @@ def test_week_number_format():
     assert 1 <= week_num <= 53
 
 
-@patch("cyclisme_training_logs.workflows.workflow_weekly.WeeklyWorkflow")
+@patch("magma_cycling.workflows.workflow_weekly.WeeklyWorkflow")
 def test_workflow_without_data_dir(mock_workflow_class):
     """Test workflow sans data_dir (auto-detect).
 

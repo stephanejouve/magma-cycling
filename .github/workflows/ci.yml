@@ -136,7 +136,7 @@ jobs:
           DATA_REPO_PATH: ${{ github.workspace }}/test-data
           CI: "true"
         run: |
-          poetry run pytest --cov=cyclisme_training_logs --cov-report=xml --cov-report=term --junitxml=junit.xml
+          poetry run pytest --cov=magma_cycling --cov-report=xml --cov-report=term --junitxml=junit.xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -189,20 +189,20 @@ jobs:
         run: poetry install --no-interaction --no-ansi
 
       - name: Format check (Black)
-        run: poetry run black cyclisme_training_logs/ tests/ --check --line-length=100
+        run: poetry run black magma_cycling/ tests/ --check --line-length=100
 
       - name: Lint (Ruff)
-        run: poetry run ruff check cyclisme_training_logs/
+        run: poetry run ruff check magma_cycling/
 
       - name: Import sorting check (isort)
-        run: poetry run isort cyclisme_training_logs/ tests/ --check-only --profile black
+        run: poetry run isort magma_cycling/ tests/ --check-only --profile black
 
       - name: Type check (mypy) - Non-blocking
-        run: poetry run mypy cyclisme_training_logs/ || true
+        run: poetry run mypy magma_cycling/ || true
         continue-on-error: true
 
       - name: Docstring check (pydocstyle) - Non-blocking
-        run: poetry run pydocstyle cyclisme_training_logs/ --convention=google || true
+        run: poetry run pydocstyle magma_cycling/ --convention=google || true
         continue-on-error: true
 
   security:

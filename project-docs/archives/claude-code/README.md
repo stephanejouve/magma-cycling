@@ -7,7 +7,7 @@ Ce répertoire contient les archives complètes du projet pour partager le conte
 - **Nom**: `claude-code-context_YYYYMMDD_HHMMSS.tar.gz`
 - **Checksum**: `claude-code-context_YYYYMMDD_HHMMSS.tar.gz.sha256` (SHA256)
 - **Contenu**:
-  - Code source complet (cyclisme_training_logs/)
+  - Code source complet (magma_cycling/)
   - Documentation technique (POETRY_ARCHITECTURE.md, IMPLEMENTATION_BRIEF.md, etc.)
   - Logs récents (workouts-history.md, 3 dernières semaines de rapports)
   - Exemples (planning JSON, workout templates)
@@ -18,7 +18,7 @@ Ce répertoire contient les archives complètes du projet pour partager le conte
 Pour créer une archive à jour du projet:
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 ./scripts/backup/create_claude_code_archive.sh
 ```
 

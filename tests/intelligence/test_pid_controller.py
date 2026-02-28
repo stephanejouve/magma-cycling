@@ -6,11 +6,11 @@ Tests PID control logic, gain calculation, and integration with TrainingIntellig
 
 import pytest
 
-from cyclisme_training_logs.intelligence.pid_controller import (
+from magma_cycling.intelligence.pid_controller import (
     PIDController,
     compute_pid_gains_from_intelligence,
 )
-from cyclisme_training_logs.intelligence.training_intelligence import (
+from magma_cycling.intelligence.training_intelligence import (
     AnalysisLevel,
     ConfidenceLevel,
     TrainingIntelligence,

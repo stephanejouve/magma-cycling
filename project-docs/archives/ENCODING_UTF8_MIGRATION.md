@@ -150,7 +150,7 @@ poetry run pytest tests/planning/ -v
 ### Compilation
 
 ```bash
-poetry run python -m py_compile cyclisme_training_logs/**/*.py
+poetry run python -m py_compile magma_cycling/**/*.py
 ```
 
 **Résultat:** ✅ Aucune erreur de syntaxe

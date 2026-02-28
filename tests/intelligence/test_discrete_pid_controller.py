@@ -7,11 +7,11 @@ cycle-level corrections, and enhanced validation with complementary variables.
 
 import pytest
 
-from cyclisme_training_logs.intelligence.discrete_pid_controller import (
+from magma_cycling.intelligence.discrete_pid_controller import (
     DiscretePIDController,
     compute_discrete_pid_gains_from_intelligence,
 )
-from cyclisme_training_logs.intelligence.training_intelligence import (
+from magma_cycling.intelligence.training_intelligence import (
     AnalysisLevel,
     ConfidenceLevel,
     TrainingIntelligence,

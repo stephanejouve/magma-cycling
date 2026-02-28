@@ -188,7 +188,7 @@ L'athlète Stéphane (54 ans) a un profile **sleep_dependent: true**.
 **`rest_and_cancellations.py`**
 ```python
 # Ajout VETO logic avant toute séance intensité
-from cyclisme_training_logs.utils.metrics_advanced import detect_overtraining_risk
+from magma_cycling.utils.metrics_advanced import detect_overtraining_risk
 
 risk = detect_overtraining_risk(...)
 if risk['veto']:
@@ -200,7 +200,7 @@ if risk['veto']:
 **`weekly_aggregator.py`**
 ```python
 # Analyse tendances hebdomadaires
-from cyclisme_training_logs.utils.metrics_advanced import (
+from magma_cycling.utils.metrics_advanced import (
     get_weekly_metrics_trend,
     detect_training_peaks
 )
@@ -212,7 +212,7 @@ peaks = detect_training_peaks(ctl_history)
 **`weekly_planner.py`**
 ```python
 # Ajustement planning selon récupération
-from cyclisme_training_logs.utils.metrics_advanced import get_recovery_recommendation
+from magma_cycling.utils.metrics_advanced import get_recovery_recommendation
 
 rec = get_recovery_recommendation(tsb, ratio, profile)
 if rec['priority'] in ['high', 'critical']:
@@ -224,7 +224,7 @@ if rec['priority'] in ['high', 'critical']:
 **`monthly_analysis.py`**
 ```python
 # Comparaisons mois à mois
-from cyclisme_training_logs.utils.metrics_advanced import format_metrics_comparison
+from magma_cycling.utils.metrics_advanced import format_metrics_comparison
 
 comparison = format_metrics_comparison(last_month, this_month)
 print(comparison)
@@ -238,7 +238,7 @@ print(comparison)
 
 1. **Copier fichiers** vers dépôt
    ```bash
-   cp metrics_advanced.py cyclisme_training_logs/utils/
+   cp metrics_advanced.py magma_cycling/utils/
    cp test_metrics_advanced.py tests/utils/
    ```
 
@@ -251,7 +251,7 @@ print(comparison)
 
 4. **Commit Sprint R2.1**
    ```bash
-   git add cyclisme_training_logs/utils/metrics_advanced.py
+   git add magma_cycling/utils/metrics_advanced.py
    git add tests/utils/test_metrics_advanced.py
    git commit -m "feat(metrics): Sprint R2.1 - Add 6 advanced metrics functions
 
@@ -310,7 +310,7 @@ print(comparison)
 ## 📦 Archive Livrable
 
 **Archive créée:**
-- 📦 `~/cyclisme-training-logs-sprint-r2.1-20260101.tar.gz`
+- 📦 `~/magma-cycling-sprint-r2.1-20260101.tar.gz`
 - **Taille:** 15 MB
 - **Contenu:** Projet complet (code + tests + documentation Sprint R2.1)
 - **Exclusions:** .git, __pycache__, .venv, .cache, node_modules, .env
@@ -318,18 +318,18 @@ print(comparison)
 **Extraction:**
 ```bash
 cd ~
-tar -xzf cyclisme-training-logs-sprint-r2.1-20260101.tar.gz
+tar -xzf magma-cycling-sprint-r2.1-20260101.tar.gz
 ```
 
 **Vérification archive:**
 ```bash
-tar -tzf ~/cyclisme-training-logs-sprint-r2.1-20260101.tar.gz | grep -E "metrics_advanced|test_metrics_advanced|SPRINT_R2.1"
+tar -tzf ~/magma-cycling-sprint-r2.1-20260101.tar.gz | grep -E "metrics_advanced|test_metrics_advanced|SPRINT_R2.1"
 # Expected:
-# cyclisme-training-logs/cyclisme_training_logs/utils/metrics_advanced.py
-# cyclisme-training-logs/tests/utils/test_metrics_advanced.py
-# cyclisme-training-logs/project-docs/sprints/R2/SPRINT_R2.1_DOCUMENTATION.md
-# cyclisme-training-logs/project-docs/sprints/R2/GUIDE_INSTALLATION_R2.1.md
-# cyclisme-training-logs/project-docs/sprints/R2/RECAPITULATIF_SPRINT_R2.1.md
+# magma-cycling/magma_cycling/utils/metrics_advanced.py
+# magma-cycling/tests/utils/test_metrics_advanced.py
+# magma-cycling/project-docs/sprints/R2/SPRINT_R2.1_DOCUMENTATION.md
+# magma-cycling/project-docs/sprints/R2/GUIDE_INSTALLATION_R2.1.md
+# magma-cycling/project-docs/sprints/R2/RECAPITULATIF_SPRINT_R2.1.md
 ```
 
 ---
@@ -353,5 +353,5 @@ tar -tzf ~/cyclisme-training-logs-sprint-r2.1-20260101.tar.gz | grep -E "metrics
 **Généré par:** Claude (MOA Sprint R2.1)
 **Date:** 2026-01-01
 **Durée Sprint:** ~45 minutes
-**Archive:** cyclisme-training-logs-sprint-r2.1-20260101.tar.gz (15 MB)
+**Archive:** magma-cycling-sprint-r2.1-20260101.tar.gz (15 MB)
 **Status:** ✅ LIVRÉ ET VALIDÉ

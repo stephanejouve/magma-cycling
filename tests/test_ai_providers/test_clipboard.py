@@ -6,8 +6,8 @@ Tests ClipboardAnalyzer for manual copy/paste workflow with realistic mocks.
 """
 from unittest.mock import patch
 
-from cyclisme_training_logs.ai_providers.base import AIProvider
-from cyclisme_training_logs.ai_providers.clipboard import ClipboardAnalyzer
+from magma_cycling.ai_providers.base import AIProvider
+from magma_cycling.ai_providers.clipboard import ClipboardAnalyzer
 
 
 class TestClipboardAnalyzer:
@@ -26,7 +26,7 @@ class TestClipboardAnalyzer:
 
         assert analyzer.provider == AIProvider.CLIPBOARD
 
-    @patch("cyclisme_training_logs.ai_providers.clipboard.copy_to_clipboard")
+    @patch("magma_cycling.ai_providers.clipboard.copy_to_clipboard")
     def test_analyze_session_copies_to_clipboard(self, mock_copy):
         """Test that analyze_session copies prompt to clipboard."""
         mock_copy.return_value = True
@@ -43,7 +43,7 @@ class TestClipboardAnalyzer:
         assert result is not None
         assert len(result) > 0
 
-    @patch("cyclisme_training_logs.ai_providers.clipboard.copy_to_clipboard")
+    @patch("magma_cycling.ai_providers.clipboard.copy_to_clipboard")
     def test_analyze_session_with_dataset(self, mock_copy):
         """Test that analyze_session handles dataset parameter."""
         mock_copy.return_value = True
@@ -58,7 +58,7 @@ class TestClipboardAnalyzer:
         mock_copy.assert_called_once_with(prompt)
         assert result is not None
 
-    @patch("cyclisme_training_logs.ai_providers.clipboard.copy_to_clipboard")
+    @patch("magma_cycling.ai_providers.clipboard.copy_to_clipboard")
     def test_analyze_session_multiline_prompt(self, mock_copy):
         """Test that analyze_session handles multiline prompts."""
         mock_copy.return_value = True
@@ -94,7 +94,7 @@ Line 3"""
         info_str = str(info).lower()
         assert "$0" in info_str or "free" in info_str or "gratuit" in info_str
 
-    @patch("cyclisme_training_logs.ai_providers.clipboard.copy_to_clipboard")
+    @patch("magma_cycling.ai_providers.clipboard.copy_to_clipboard")
     def test_validate_config_always_returns_true(self, mock_copy):
         """Test that validate_config always returns True (no config needed)."""
         mock_copy.return_value = True  # Mock clipboard availability
@@ -105,7 +105,7 @@ Line 3"""
 
         assert is_valid is True
 
-    @patch("cyclisme_training_logs.ai_providers.clipboard.copy_to_clipboard")
+    @patch("magma_cycling.ai_providers.clipboard.copy_to_clipboard")
     def test_clipboard_analyzer_is_always_available(self, mock_copy):
         """Test that clipboard analyzer doesn't require any configuration."""
         mock_copy.return_value = True  # Mock clipboard availability
@@ -115,7 +115,7 @@ Line 3"""
 
         assert analyzer.validate_config() is True
 
-    @patch("cyclisme_training_logs.ai_providers.clipboard.copy_to_clipboard")
+    @patch("magma_cycling.ai_providers.clipboard.copy_to_clipboard")
     def test_analyze_session_empty_prompt(self, mock_copy):
         """Test that analyze_session handles empty prompt."""
         mock_copy.return_value = True
@@ -129,7 +129,7 @@ Line 3"""
         mock_copy.assert_called_once_with("")
         assert result is not None
 
-    @patch("cyclisme_training_logs.ai_providers.clipboard.copy_to_clipboard")
+    @patch("magma_cycling.ai_providers.clipboard.copy_to_clipboard")
     def test_analyze_session_large_prompt(self, mock_copy):
         """Test that analyze_session handles large prompts."""
         mock_copy.return_value = True
@@ -143,7 +143,7 @@ Line 3"""
         mock_copy.assert_called_once_with(prompt)
         assert result is not None
 
-    @patch("cyclisme_training_logs.ai_providers.clipboard.copy_to_clipboard")
+    @patch("magma_cycling.ai_providers.clipboard.copy_to_clipboard")
     def test_analyze_session_special_characters(self, mock_copy):
         """Test that analyze_session handles special characters."""
         mock_copy.return_value = True
@@ -176,7 +176,7 @@ Line 3"""
         assert analyzer1 is not analyzer2
         assert analyzer1.provider == analyzer2.provider == AIProvider.CLIPBOARD
 
-    @patch("cyclisme_training_logs.ai_providers.clipboard.copy_to_clipboard")
+    @patch("magma_cycling.ai_providers.clipboard.copy_to_clipboard")
     def test_clipboard_copy_failure_handling(self, mock_copy):
         """Test handling when clipboard copy fails."""
         mock_copy.return_value = False  # Simulate failure
@@ -194,7 +194,7 @@ Line 3"""
         assert result is not None
         assert len(result) > 0
 
-    @patch("cyclisme_training_logs.ai_providers.clipboard.copy_to_clipboard")
+    @patch("magma_cycling.ai_providers.clipboard.copy_to_clipboard")
     def test_dataset_is_ignored(self, mock_copy):
         """Test that dataset parameter is ignored by clipboard provider."""
         mock_copy.return_value = True
@@ -221,7 +221,7 @@ Line 3"""
         # Should have some metadata
         assert len(info) >= 2  # At least provider and one other field
 
-    @patch("cyclisme_training_logs.ai_providers.clipboard.copy_to_clipboard")
+    @patch("magma_cycling.ai_providers.clipboard.copy_to_clipboard")
     def test_instructions_returned_on_success(self, mock_copy):
         """Test that instructions are returned when copy succeeds."""
         mock_copy.return_value = True
@@ -234,7 +234,7 @@ Line 3"""
         assert len(result) > 10  # Should be substantial instructions
         assert isinstance(result, str)
 
-    @patch("cyclisme_training_logs.ai_providers.clipboard.copy_to_clipboard")
+    @patch("magma_cycling.ai_providers.clipboard.copy_to_clipboard")
     def test_unicode_handling(self, mock_copy):
         """Test proper handling of unicode characters."""
         mock_copy.return_value = True
@@ -249,7 +249,7 @@ Line 3"""
         mock_copy.assert_called_once_with(prompt)
         assert result is not None
 
-    @patch("cyclisme_training_logs.ai_providers.clipboard.copy_to_clipboard")
+    @patch("magma_cycling.ai_providers.clipboard.copy_to_clipboard")
     def test_newlines_and_tabs(self, mock_copy):
         """Test handling of newlines and tabs in prompt."""
         mock_copy.return_value = True

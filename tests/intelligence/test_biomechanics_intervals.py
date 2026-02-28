@@ -10,7 +10,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from cyclisme_training_logs.intelligence.biomechanics_intervals import (
+from magma_cycling.intelligence.biomechanics_intervals import (
     extract_biomechanical_metrics,
     get_activities_last_n_weeks,
     get_cadence_recommendation_from_activities,

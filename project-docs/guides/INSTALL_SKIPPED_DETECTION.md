@@ -7,7 +7,7 @@ Ajouter la détection automatique des séances planifiées dans Intervals.icu ma
 ## 📦 Fichiers fournis
 
 ```
-cyclisme-training-logs/
+magma-cycling/
 ├── scripts/
 │   ├── planned_sessions_checker.py           [NOUVEAU]
 │   └── test_skipped_detection.py             [NOUVEAU]
@@ -23,7 +23,7 @@ cyclisme-training-logs/
 ### Étape 1 : Vérifier l'environnement
 
 ```bash
-cd /path/to/cyclisme-training-logs
+cd /path/to/magma-cycling
 
 # Vérifier que tu es à jour
 git status

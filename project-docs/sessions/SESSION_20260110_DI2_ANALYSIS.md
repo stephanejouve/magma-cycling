@@ -20,8 +20,8 @@
 ### 1. Fonctionnalité Analyse Di2 (commit a5c75c7)
 
 **Fichiers modifiés:**
-- `cyclisme_training_logs/api/intervals_client.py` (+28 LOC)
-- `cyclisme_training_logs/analyzers/weekly_aggregator.py` (+147 LOC)
+- `magma_cycling/api/intervals_client.py` (+28 LOC)
+- `magma_cycling/analyzers/weekly_aggregator.py` (+147 LOC)
 
 **Fonctionnalités implémentées:**
 
@@ -119,7 +119,7 @@ Bénéfices attendus:
 ### 3. Correctif Validateur (commit cd066a0)
 
 **Fichier modifié:**
-- `cyclisme_training_logs/upload_workouts.py` (+4 LOC, refactoring 15 LOC)
+- `magma_cycling/upload_workouts.py` (+4 LOC, refactoring 15 LOC)
 
 **Problème résolu:**
 ```
@@ -398,9 +398,9 @@ WeeklyAggregator
 - `~/training-logs/weekly-reports/S075/` (rapports semaine précédente)
 
 ### Code
-- `cyclisme_training_logs/api/intervals_client.py:143-170`
-- `cyclisme_training_logs/analyzers/weekly_aggregator.py:544-797`
-- `cyclisme_training_logs/upload_workouts.py:228-245`
+- `magma_cycling/api/intervals_client.py:143-170`
+- `magma_cycling/analyzers/weekly_aggregator.py:544-797`
+- `magma_cycling/upload_workouts.py:228-245`
 
 ### Données
 - Sorties Di2: Mai 2025 (S040) → Novembre 2025 (S067)

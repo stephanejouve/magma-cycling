@@ -60,7 +60,7 @@ Pipeline complet de validation pour les outils MCP:
 Ajoutez ce badge dans votre README:
 
 ```markdown
-![CI Status](https://github.com/stephanejouve/cyclisme-training-logs/workflows/CI%2FCD%20Pipeline/badge.svg)
+![CI Status](https://github.com/stephanejouve/magma-cycling/workflows/CI%2FCD%20Pipeline/badge.svg)
 ```
 
 ## Configuration Locale
@@ -79,7 +79,7 @@ poetry run pytest tests/test_mcp_edge_cases.py -v
 # Validation MCP
 poetry run python -c "
 import asyncio
-from cyclisme_training_logs.mcp_server import list_tools
+from magma_cycling.mcp_server import list_tools
 asyncio.run(list_tools())
 "
 ```

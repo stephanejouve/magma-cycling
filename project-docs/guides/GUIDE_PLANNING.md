@@ -62,7 +62,7 @@ ATHLETE_SLEEP_DEPENDENT=true    # true/false
 
 ```python
 from datetime import date
-from cyclisme_training_logs.planning import PlanningManager
+from magma_cycling.planning import PlanningManager
 
 # Initialiser
 manager = PlanningManager()
@@ -83,7 +83,7 @@ print(f"Durée : {plan.duration_weeks()} semaines")
 ### Ajout d'Objectifs
 
 ```python
-from cyclisme_training_logs.planning import PriorityLevel, ObjectiveType
+from magma_cycling.planning import PriorityLevel, ObjectiveType
 
 # Objectif principal (événement)
 objective1 = manager.add_deadline(
@@ -173,7 +173,7 @@ for rec in validation['recommendations']:
 ### Génération Calendrier Hebdomadaire
 
 ```python
-from cyclisme_training_logs.planning import TrainingCalendar
+from magma_cycling.planning import TrainingCalendar
 
 # Initialiser calendrier 2026
 calendar = TrainingCalendar(year=2026)
@@ -209,7 +209,7 @@ calendar.mark_rest_days()
 ### Ajout de Séances
 
 ```python
-from cyclisme_training_logs.planning import WorkoutType
+from magma_cycling.planning import WorkoutType
 
 # Séance endurance (lundi)
 session1 = calendar.add_session(
@@ -284,7 +284,7 @@ print(f"TSS total (avec réel) : {summary.total_tss}")  # 58.0 + 85.0 = 143.0
 
 ```python
 from datetime import date
-from cyclisme_training_logs.planning import (
+from magma_cycling.planning import (
     PlanningManager, TrainingCalendar,
     PriorityLevel, ObjectiveType, WorkoutType
 )

@@ -14,7 +14,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from cyclisme_training_logs.prepare_analysis import (
+from magma_cycling.prepare_analysis import (
     PromptGenerator,
     analyze_batch,
     display_activity_menu,
@@ -743,7 +743,7 @@ class TestFormatPlannedWorkout:
 class TestPromptGeneratorInit:
     """Test PromptGenerator.__init__ branches."""
 
-    @patch("cyclisme_training_logs.config.get_data_config")
+    @patch("magma_cycling.config.get_data_config")
     def test_init_with_data_config_success(self, mock_get_config, tmp_path):
         """project_root=None + get_data_config() succeeds → data_repo_path set."""
         mock_config = MagicMock()
@@ -755,7 +755,7 @@ class TestPromptGeneratorInit:
         assert gen.logs_dir == tmp_path / "data"
         assert gen.data_repo_path == tmp_path / "data"
 
-    @patch("cyclisme_training_logs.config.get_data_config")
+    @patch("magma_cycling.config.get_data_config")
     def test_init_fallback_on_file_not_found(self, mock_get_config):
         """project_root=None + get_data_config() raises FileNotFoundError → fallback."""
         mock_get_config.side_effect = FileNotFoundError("no config")
@@ -988,19 +988,19 @@ class TestLoadPeriodizationContext:
         result = generator.load_periodization_context(wellness_data={"ctl": 0.0, "atl": 0.0})
         assert result is None
 
-    @patch("cyclisme_training_logs.config.athlete_profile.AthleteProfile.from_env")
+    @patch("magma_cycling.config.athlete_profile.AthleteProfile.from_env")
     def test_exception_returns_none_gracefully(self, mock_from_env, generator):
         """Exception in profile loading → returns None gracefully."""
         mock_from_env.side_effect = Exception("env error")
         result = generator.load_periodization_context(wellness_data={"ctl": 50.0, "atl": 55.0})
         assert result is None
 
-    @patch("cyclisme_training_logs.workflows.pid_peaks_integration.compute_integrated_correction")
-    @patch("cyclisme_training_logs.planning.peaks_phases.determine_training_phase")
-    @patch("cyclisme_training_logs.config.athlete_profile.AthleteProfile.from_env")
+    @patch("magma_cycling.workflows.pid_peaks_integration.compute_integrated_correction")
+    @patch("magma_cycling.planning.peaks_phases.determine_training_phase")
+    @patch("magma_cycling.config.athlete_profile.AthleteProfile.from_env")
     def test_success_returns_dict(self, mock_profile, mock_determine, mock_compute, generator):
         """Success path → returns periodization context dict."""
-        from cyclisme_training_logs.workflows.pid_peaks_integration import ControlMode
+        from magma_cycling.workflows.pid_peaks_integration import ControlMode
 
         mock_profile_obj = MagicMock()
         mock_profile_obj.ftp = 223
@@ -1097,12 +1097,12 @@ class TestLoadRecentWorkoutsLimit:
 class TestPIDModeBranches:
     """Cover PID_CONSTRAINED and autonomous branches in load_periodization_context."""
 
-    @patch("cyclisme_training_logs.workflows.pid_peaks_integration.compute_integrated_correction")
-    @patch("cyclisme_training_logs.planning.peaks_phases.determine_training_phase")
-    @patch("cyclisme_training_logs.config.athlete_profile.AthleteProfile.from_env")
+    @patch("magma_cycling.workflows.pid_peaks_integration.compute_integrated_correction")
+    @patch("magma_cycling.planning.peaks_phases.determine_training_phase")
+    @patch("magma_cycling.config.athlete_profile.AthleteProfile.from_env")
     def test_pid_constrained_mode(self, mock_profile, mock_determine, mock_compute, generator):
         """override_active=False + PID_CONSTRAINED → correct status."""
-        from cyclisme_training_logs.workflows.pid_peaks_integration import ControlMode
+        from magma_cycling.workflows.pid_peaks_integration import ControlMode
 
         mock_profile_obj = MagicMock()
         mock_profile_obj.ftp = 223
@@ -1131,12 +1131,12 @@ class TestPIDModeBranches:
         assert result is not None
         assert "contraintes" in result["pid_status"]
 
-    @patch("cyclisme_training_logs.workflows.pid_peaks_integration.compute_integrated_correction")
-    @patch("cyclisme_training_logs.planning.peaks_phases.determine_training_phase")
-    @patch("cyclisme_training_logs.config.athlete_profile.AthleteProfile.from_env")
+    @patch("magma_cycling.workflows.pid_peaks_integration.compute_integrated_correction")
+    @patch("magma_cycling.planning.peaks_phases.determine_training_phase")
+    @patch("magma_cycling.config.athlete_profile.AthleteProfile.from_env")
     def test_pid_autonomous_mode(self, mock_profile, mock_determine, mock_compute, generator):
         """override_active=False + PID mode → autonomous status."""
-        from cyclisme_training_logs.workflows.pid_peaks_integration import ControlMode
+        from magma_cycling.workflows.pid_peaks_integration import ControlMode
 
         mock_profile_obj = MagicMock()
         mock_profile_obj.ftp = 223

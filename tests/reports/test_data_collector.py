@@ -12,7 +12,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from cyclisme_training_logs.reports.data_collector import (
+from magma_cycling.reports.data_collector import (
     DataCollectionError,
     DataCollector,
 )
@@ -44,7 +44,7 @@ class TestDataCollectorInit:
 class TestCollectWeekData:
     """Tests for collect_week_data method."""
 
-    @patch("cyclisme_training_logs.reports.data_collector.WeeklyAggregator")
+    @patch("magma_cycling.reports.data_collector.WeeklyAggregator")
     def test_collect_week_data_success(self, mock_aggregator_class):
         """Test successful week data collection."""
         # Given: Mocked WeeklyAggregator with successful result
@@ -133,7 +133,7 @@ class TestCollectWeekData:
         mock_aggregator_class.assert_called_once_with(week="S076", start_date=date(2026, 1, 13))
         mock_aggregator.aggregate.assert_called_once()
 
-    @patch("cyclisme_training_logs.reports.data_collector.WeeklyAggregator")
+    @patch("magma_cycling.reports.data_collector.WeeklyAggregator")
     def test_collect_week_data_aggregator_failure(self, mock_aggregator_class):
         """Test data collection fails when aggregator fails."""
         # Given: Mocked WeeklyAggregator with failed result
@@ -151,7 +151,7 @@ class TestCollectWeekData:
         with pytest.raises(DataCollectionError, match="Failed to aggregate week data"):
             collector.collect_week_data("S076", date(2026, 1, 13))
 
-    @patch("cyclisme_training_logs.reports.data_collector.WeeklyAggregator")
+    @patch("magma_cycling.reports.data_collector.WeeklyAggregator")
     def test_collect_week_data_exception_handling(self, mock_aggregator_class):
         """Test data collection handles exceptions properly."""
         # Given: WeeklyAggregator that raises exception

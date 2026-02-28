@@ -2,22 +2,22 @@
 
 **Date :** 2026-01-03
 **Analyseur :** Claude Code (Sonnet 4.5)
-**Mission :** Analyse comparative 4 implémentations MCP Intervals.icu vs cyclisme-training-logs
+**Mission :** Analyse comparative 4 implémentations MCP Intervals.icu vs magma-cycling
 
 ---
 
 ## 📋 Executive Summary
 
-**Objectif :** Identifier gaps fonctionnels et opportunités d'intégration MCP pour cyclisme-training-logs
+**Objectif :** Identifier gaps fonctionnels et opportunités d'intégration MCP pour magma-cycling
 
 **Résultats clés :**
 - ✅ **4 projets MCP actifs** détectés (3 matures, 1 alpha)
 - ✅ **2 langages dominants** : Python (3/4) et TypeScript (1/4)
 - ✅ **Fonctionnalités complémentaires** : Read-only, Write, Grouping, Binaries
 - ⚠️ **Gap majeur** : Aucun MCP n'implémente Training Intelligence / Planning avancé
-- 🎯 **Opportunité unique** : cyclisme-training-logs dispose de fonctionnalités uniques (Intelligence, PID, Planning)
+- 🎯 **Opportunité unique** : magma-cycling dispose de fonctionnalités uniques (Intelligence, PID, Planning)
 
-**Recommandation stratégique :** **Créer MCP distinct** pour cyclisme-training-logs (non fork) → Positionnement "AI Training Coach" vs "Data Access"
+**Recommandation stratégique :** **Créer MCP distinct** pour magma-cycling (non fork) → Positionnement "AI Training Coach" vs "Data Access"
 
 ---
 
@@ -246,7 +246,7 @@ intervals-mcp/
 
 ## 📊 Tableau Comparatif Fonctionnalités
 
-| Feature | mvilanova | mrgeorgegray | VSidhArt | notvincent | **cyclisme-training-logs** |
+| Feature | mvilanova | mrgeorgegray | VSidhArt | notvincent | **magma-cycling** |
 |---------|-----------|--------------|----------|------------|----------------------------|
 | **Read Activities** | ✅ | ✅ | ✅ | ❌ | ✅ (IntervalsClient) |
 | **Read Activities Details** | ✅ | ✅ | ❌ | ❌ | ✅ (IntervalsClient) |
@@ -273,53 +273,53 @@ intervals-mcp/
 
 ## 🔍 Gaps Identifiés
 
-### Gaps MCP Projects vs cyclisme-training-logs
+### Gaps MCP Projects vs magma-cycling
 
 **1. Analyse Intelligente**
 - ❌ **Aucun MCP** n'implémente analyse AI avancée
-- ✅ **cyclisme-training-logs** : Training Intelligence (learnings, patterns, adaptations)
-- ✅ **cyclisme-training-logs** : PID Controller adaptatif (FTP progression)
-- ✅ **cyclisme-training-logs** : Backfill historique (2+ ans données)
+- ✅ **magma-cycling** : Training Intelligence (learnings, patterns, adaptations)
+- ✅ **magma-cycling** : PID Controller adaptatif (FTP progression)
+- ✅ **magma-cycling** : Backfill historique (2+ ans données)
 
 **2. Planning Avancé**
 - ❌ **MCP projets** : Création événements simples uniquement
-- ✅ **cyclisme-training-logs** : Planning Manager (constraints, calendar logic)
-- ✅ **cyclisme-training-logs** : Weekly Planner (distribution TSS, recovery)
-- ✅ **cyclisme-training-logs** : Workflow Coach (pipeline complet)
+- ✅ **magma-cycling** : Planning Manager (constraints, calendar logic)
+- ✅ **magma-cycling** : Weekly Planner (distribution TSS, recovery)
+- ✅ **magma-cycling** : Workflow Coach (pipeline complet)
 
 **3. Multi-AI Support**
 - ❌ **MCP projets** : MCP servers (Claude/ChatGPT uniquement)
-- ✅ **cyclisme-training-logs** : 4 AI providers (OpenAI, Claude, Mistral, Ollama)
-- ✅ **cyclisme-training-logs** : Clipboard fallback (0 API cost)
+- ✅ **magma-cycling** : 4 AI providers (OpenAI, Claude, Mistral, Ollama)
+- ✅ **magma-cycling** : Clipboard fallback (0 API cost)
 
 **4. Agrégation Temporelle**
 - ⚠️ **VSidhArt** : Grouping basique (sport/day/week/month)
-- ✅ **cyclisme-training-logs** : Agrégateurs sophistiqués (weekly_aggregator, daily_aggregator)
-- ✅ **cyclisme-training-logs** : Métriques avancées (IF zones, TSS distribution, recovery metrics)
+- ✅ **magma-cycling** : Agrégateurs sophistiqués (weekly_aggregator, daily_aggregator)
+- ✅ **magma-cycling** : Métriques avancées (IF zones, TSS distribution, recovery metrics)
 
 **5. État Workflow**
 - ❌ **Aucun MCP** : Gestion état workflow
-- ✅ **cyclisme-training-logs** : workflow_state.py (tracking progression tâches)
-- ✅ **cyclisme-training-logs** : manage_workflow_state.py (orchestration)
+- ✅ **magma-cycling** : workflow_state.py (tracking progression tâches)
+- ✅ **magma-cycling** : manage_workflow_state.py (orchestration)
 
 ---
 
-### Gaps cyclisme-training-logs vs MCP Projects
+### Gaps magma-cycling vs MCP Projects
 
 **1. MCP Server**
-- ❌ **cyclisme-training-logs** : Pas de serveur MCP
+- ❌ **magma-cycling** : Pas de serveur MCP
 - ✅ **MCP projets** : Serveurs MCP prêts (Claude Desktop integration)
 
 **2. Delete Operations**
-- ❌ **cyclisme-training-logs** : Pas de suppression événements
+- ❌ **magma-cycling** : Pas de suppression événements
 - ✅ **mrgeorgegray, notvincent** : Delete events (single + bulk)
 
 **3. Pre-built Binaries**
-- ❌ **cyclisme-training-logs** : Installation Python requise
+- ❌ **magma-cycling** : Installation Python requise
 - ✅ **notvincent** : Binaries Windows/macOS/Linux (zero setup)
 
 **4. TypeScript Option**
-- ❌ **cyclisme-training-logs** : Python uniquement
+- ❌ **magma-cycling** : Python uniquement
 - ✅ **mrgeorgegray** : TypeScript/Node.js (écosystème différent)
 
 ---
@@ -331,13 +331,13 @@ intervals-mcp/
 **Positionnement :** "AI Training Coach" vs "Data Access Layer"
 
 **Rationale :**
-- cyclisme-training-logs possède **fonctionnalités uniques** (Intelligence, PID, Planning)
+- magma-cycling possède **fonctionnalités uniques** (Intelligence, PID, Planning)
 - MCP projets existants = **Data access basique** (CRUD Intervals.icu)
 - **Proposition valeur différente** : Coach AI vs API wrapper
 
 **Architecture proposée :**
 ```
-cyclisme-training-logs-mcp/
+magma-cycling-mcp/
 ├── src/
 │   ├── server.py              # MCP server entry point
 │   └── tools/
@@ -392,7 +392,7 @@ cyclisme-training-logs-mcp/
 **Contributions proposées :**
 1. **PR 1** : Add `get_grouped_activities` tool (inspiration VSidhArt)
 2. **PR 2** : Add `create_event`/`delete_event` tools (inspiration mrgeorgegray)
-3. **PR 3** : Add advanced aggregation utils (cyclisme-training-logs)
+3. **PR 3** : Add advanced aggregation utils (magma-cycling)
 
 **Avantages :**
 - ✅ **Quick win** (contribution communauté)
@@ -400,7 +400,7 @@ cyclisme-training-logs-mcp/
 - ✅ **Code review externe** (améliore qualité)
 
 **Inconvénients :**
-- ❌ **Dilue IP cyclisme-training-logs** (Intelligence/PID/Planning intégré projet tiers)
+- ❌ **Dilue IP magma-cycling** (Intelligence/PID/Planning intégré projet tiers)
 - ❌ **Moins de contrôle** (architecture, roadmap)
 - ❌ **License GPL v3.0** (copyleft, contraint usages commerciaux futurs)
 
@@ -414,11 +414,11 @@ cyclisme-training-logs-mcp/
 
 **Modifications proposées :**
 1. Fork `mvilanova/intervals-mcp-server`
-2. Ajouter modules cyclisme-training-logs :
+2. Ajouter modules magma-cycling :
    - `tools/intelligence.py`
    - `tools/planning.py`
    - `tools/analysis.py`
-3. Renommer `cyclisme-training-logs-mcp-enhanced`
+3. Renommer `magma-cycling-mcp-enhanced`
 
 **Avantages :**
 - ✅ **Base solide** (tests, CI/CD)
@@ -440,7 +440,7 @@ cyclisme-training-logs-mcp/
 
 **Architecture :**
 - **mvilanova/intervals-mcp-server** : Data access (activities, events, wellness)
-- **cyclisme-training-logs-mcp** : AI coach (intelligence, planning, analysis)
+- **magma-cycling-mcp** : AI coach (intelligence, planning, analysis)
 - **Usage combiné** : Utilisateur configure les 2 MCP servers dans Claude Desktop
 
 **Config Claude Desktop :**
@@ -454,7 +454,7 @@ cyclisme-training-logs-mcp/
     },
     "intervals-coach": {
       "command": "/path/to/uv",
-      "args": ["run", "cyclisme-training-logs-mcp/server.py"],
+      "args": ["run", "magma-cycling-mcp/server.py"],
       "env": { "API_KEY": "xxx", "ATHLETE_ID": "ixxx" }
     }
   }
@@ -469,7 +469,7 @@ cyclisme-training-logs-mcp/
 
 **Inconvénients :**
 - ⚠️ **2 serveurs MCP** (complexité setup utilisateur)
-- ⚠️ **Duplication data access** (si cyclisme-training-logs-mcp réimplémente get_activities)
+- ⚠️ **Duplication data access** (si magma-cycling-mcp réimplémente get_activities)
 
 **Effort estimé :** 3 jours
 
@@ -489,7 +489,7 @@ cyclisme-training-logs-mcp/
 **Recommandation MOA :** **Option 1 (MCP Distinct)** ou **Option 4 (Addon)**
 
 **Justification :**
-- ✅ **Valorise IP cyclisme-training-logs** (Intelligence/PID/Planning)
+- ✅ **Valorise IP magma-cycling** (Intelligence/PID/Planning)
 - ✅ **Positionnement différencié** ("AI Training Coach" vs "Data Access")
 - ✅ **License libre** (MIT recommended pour adoption communauté)
 - ✅ **Pas de concurrence directe** avec projets existants
@@ -505,14 +505,14 @@ cyclisme-training-logs-mcp/
 **Tasks :**
 1. Setup projet MCP (`pyproject.toml`, dependencies)
 2. Implement MCP server entry point (`server.py`)
-3. Wrapper IntervalsClient (réutiliser cyclisme-training-logs)
+3. Wrapper IntervalsClient (réutiliser magma-cycling)
 4. Implement 2 tools basiques :
    - `get_training_learnings`
    - `analyze_week`
 5. Test Claude Desktop integration
 
 **Deliverables :**
-- `cyclisme-training-logs-mcp/` repository
+- `magma-cycling-mcp/` repository
 - 2 MCP tools fonctionnels
 - README.md setup instructions
 
@@ -629,7 +629,7 @@ cyclisme-training-logs-mcp/
 **Synthèse :**
 - ✅ **4 projets MCP actifs** analysés (3 matures Python/TypeScript, 1 alpha binaries)
 - ✅ **Gap majeur identifié** : Aucun MCP n'implémente Training Intelligence/Planning avancé
-- ✅ **Opportunité unique** : cyclisme-training-logs possède IP différenciante (Intelligence, PID, Planning)
+- ✅ **Opportunité unique** : magma-cycling possède IP différenciante (Intelligence, PID, Planning)
 - ✅ **Recommandation** : Créer **MCP distinct** positionné "AI Training Coach" (pas fork)
 
 **Prochaine étape :**
@@ -637,7 +637,7 @@ cyclisme-training-logs-mcp/
 - **Si Option 1** : Démarrer Phase 1 roadmap (setup MCP core)
 
 **Questions PO :**
-1. Priorité : Développer MCP server maintenant, ou après autres features cyclisme-training-logs ?
+1. Priorité : Développer MCP server maintenant, ou après autres features magma-cycling ?
 2. License préférée : MIT (permissive) ou GPL v3.0 (copyleft) ?
 3. Positionnement : "AI Coach" standalone ou addon "mvilanova/intervals-mcp-server" ?
 
