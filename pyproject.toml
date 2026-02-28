@@ -58,7 +58,6 @@ dashboard = "magma_cycling.dashboard:main"
 
 # === Scripts Principaux (Usage Quotidien) ===
 weekly-analysis = "magma_cycling.workflows.workflow_weekly:main"
-weekly-analysis-legacy = "magma_cycling.weekly_analysis:main"  # DEPRECATED - Gartner E
 monthly-analysis = "magma_cycling.monthly_analysis:main"
 upload-workouts = "magma_cycling.upload_workouts:main"
 prepare-analysis = "magma_cycling.prepare_analysis:main"
@@ -77,7 +76,6 @@ sync-intervals = "magma_cycling.sync_intervals:main"
 planned-checker = "magma_cycling.planned_sessions_checker:main"
 update-session = "magma_cycling.update_session_status:main"
 shift-sessions = "magma_cycling.shift_sessions:main"
-stats = "magma_cycling.stats:main"
 validate-templates = "magma_cycling.scripts.validate_templates:main"
 backfill-intelligence = "magma_cycling.scripts.backfill_intelligence:main"
 
