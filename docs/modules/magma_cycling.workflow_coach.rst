@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.workflow\_coach module
+magma\_cycling.workflow\_coach module
 ===============================================
 
 .. automodule:: magma_cycling.workflow_coach

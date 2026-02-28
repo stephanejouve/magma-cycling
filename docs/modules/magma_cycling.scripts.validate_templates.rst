@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.scripts.validate\_templates module
+magma\_cycling.scripts.validate\_templates module
 ===========================================================
 
 .. automodule:: magma_cycling.scripts.validate_templates

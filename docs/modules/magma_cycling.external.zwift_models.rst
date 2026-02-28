@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.external.zwift\_models module
+magma\_cycling.external.zwift\_models module
 ======================================================
 
 .. automodule:: magma_cycling.external.zwift_models

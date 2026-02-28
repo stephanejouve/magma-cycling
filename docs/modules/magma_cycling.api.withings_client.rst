@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.api.withings\_client module
+magma\_cycling.api.withings\_client module
 ====================================================
 
 .. automodule:: magma_cycling.api.withings_client

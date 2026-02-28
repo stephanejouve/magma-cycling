@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.scripts.pid\_daily\_evaluation module
+magma\_cycling.scripts.pid\_daily\_evaluation module
 ==============================================================
 
 .. automodule:: magma_cycling.scripts.pid_daily_evaluation

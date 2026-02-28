@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.monthly\_analysis module
+magma\_cycling.monthly\_analysis module
 =================================================
 
 .. automodule:: magma_cycling.monthly_analysis

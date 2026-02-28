@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.api package
+magma\_cycling.api package
 ====================================
 
 Submodules

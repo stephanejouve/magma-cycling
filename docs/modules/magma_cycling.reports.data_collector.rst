@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.reports.data\_collector module
+magma\_cycling.reports.data\_collector module
 =======================================================
 
 .. automodule:: magma_cycling.reports.data_collector

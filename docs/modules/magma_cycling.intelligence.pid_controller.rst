@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.intelligence.pid\_controller module
+magma\_cycling.intelligence.pid\_controller module
 ============================================================
 
 .. automodule:: magma_cycling.intelligence.pid_controller
