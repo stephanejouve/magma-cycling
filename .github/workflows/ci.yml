@@ -42,9 +42,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: .venv
-          key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
+          key: venv-v2-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
           restore-keys: |
-            venv-${{ runner.os }}-${{ matrix.python-version }}-
+            venv-v2-${{ runner.os }}-${{ matrix.python-version }}-
 
       - name: Install dependencies
         run: poetry install --no-interaction --no-ansi
@@ -181,9 +181,9 @@ jobs:
         uses: actions/cache@v3
         with:
           path: .venv
-          key: venv-${{ runner.os }}-3.12-${{ hashFiles('**/poetry.lock') }}
+          key: venv-v2-${{ runner.os }}-3.12-${{ hashFiles('**/poetry.lock') }}
           restore-keys: |
-            venv-${{ runner.os }}-3.12-
+            venv-v2-${{ runner.os }}-3.12-
 
       - name: Install dependencies
         run: poetry install --no-interaction --no-ansi

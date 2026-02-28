@@ -379,10 +379,9 @@ class PlanningControlTower:
                 "intervals_ids_fixed": []
             }
         """
-        import re
         from datetime import datetime
 
-        from magma_cycling.planning.models import Session, WeeklyPlan
+        from magma_cycling.planning.models import WORKOUT_NAME_REGEX, Session, WeeklyPlan
 
         # Load existing planning to get date range
         planning_file = self.planning_dir / f"week_planning_{week_id}.json"
@@ -405,7 +404,7 @@ class PlanningControlTower:
             # Parse session ID from event name
             # Format: S081-07a-INT-TempoSoutenu-V001
             # Or: [ANNULÉE] S081-04-INT-TempoSoutenu-V001
-            match = re.search(r"(S\d{3}-\d{2}[a-z]?)-(\w+)-([^-]+)-V(\d{3})", name)
+            match = WORKOUT_NAME_REGEX.search(name)
             if not match:
                 continue
 

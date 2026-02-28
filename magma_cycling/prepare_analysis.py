@@ -63,11 +63,8 @@ from pathlib import Path
 import requests
 
 from magma_cycling.api.intervals_client import IntervalsClient
-from magma_cycling.config import get_ai_config
+from magma_cycling.config import create_intervals_client, get_ai_config
 from magma_cycling.workflow_state import WorkflowState
-
-# Alias for backwards compatibility
-IntervalsAPI = IntervalsClient
 
 
 class PromptGenerator:
@@ -933,17 +930,6 @@ Génère maintenant l'entrée d'analyse.
             return False
 
 
-def load_config(config_file):
-    """Load la configuration depuis un fichier JSON."""
-    config_path = Path(config_file).expanduser()
-
-    if not config_path.exists():
-        return None
-
-    with open(config_path, encoding="utf-8") as f:
-        return json.load(f)
-
-
 def analyze_batch(api, unanalyzed_activities, generator, state, project_root):
     """Analyze plusieurs activités en mode batch.
 
@@ -1267,11 +1253,6 @@ def main():
     parser.add_argument("--athlete-id", help="ID de l'athlète Intervals.icu (ex: i123456)")
     parser.add_argument("--api-key", help="Clé API Intervals.icu")
     parser.add_argument(
-        "--config",
-        default="~/.intervals_config.json",
-        help="Fichier de configuration JSON (défaut: ~/.intervals_config.json)",
-    )
-    parser.add_argument(
         "--activity-id", help="ID de l'activité spécifique à analyser (sinon prend la dernière)"
     )
     parser.add_argument(
@@ -1285,17 +1266,11 @@ def main():
 
     args = parser.parse_args()
 
-    # Charger la config
-    config = load_config(args.config)
-
-    athlete_id = args.athlete_id or (config and config.get("athlete_id"))
-    api_key = args.api_key or (config and config.get("api_key"))
-
-    if not athlete_id or not api_key:
-        print("❌ Erreur: athlete_id et api_key requis")
-        print("\nCréer ~/.intervals_config.json avec:")
-        print('{"athlete_id": "i123456", "api_key": "YOUR_KEY"}')
-        sys.exit(1)
+    # Create client: CLI args override centralized config
+    if args.athlete_id and args.api_key:
+        api = IntervalsClient(athlete_id=args.athlete_id, api_key=args.api_key)
+    else:
+        api = create_intervals_client()
 
     # Initialiser WorkflowState
     state = WorkflowState(project_root=Path(args.project_root))
@@ -1304,8 +1279,6 @@ def main():
     print()
 
     try:
-        # Connexion à l'API
-        api = IntervalsAPI(athlete_id, api_key)
 
         # Mode --activity-id : comportement existant préservé (bypass détection gaps)
         if args.activity_id:
