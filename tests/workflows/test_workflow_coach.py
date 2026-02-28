@@ -19,6 +19,9 @@ from unittest.mock import Mock, mock_open, patch
 
 import pytest
 
+from magma_cycling.planning.session_formatter import format_remaining_sessions_compact
+from magma_cycling.utils.ai_response_parser import parse_ai_modifications
+from magma_cycling.utils.date_helpers import extract_day_number
 from magma_cycling.workflow_coach import WorkflowCoach
 
 
@@ -27,7 +30,6 @@ class TestParsingAndFormatting:
 
     def test_parse_ai_modifications_valid_json_markdown(self):
         """Test parse_ai_modifications with valid JSON in markdown."""
-        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
 
         ai_response = """
 Here are the modifications:
@@ -41,7 +43,7 @@ Here are the modifications:
 }
 ```
 """
-        modifications = coach.parse_ai_modifications(ai_response)
+        modifications = parse_ai_modifications(ai_response)
 
         assert len(modifications) == 2
         assert modifications[0]["action"] == "lighten"
@@ -52,11 +54,9 @@ Here are the modifications:
 
     def test_parse_ai_modifications_valid_json_plain(self):
         """Test parse_ai_modifications with plain JSON (no markdown)."""
-        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
-
         ai_response = '{"modifications": [{"action": "skip", "date": "2025-12-20"}]}'
 
-        modifications = coach.parse_ai_modifications(ai_response)
+        modifications = parse_ai_modifications(ai_response)
 
         assert len(modifications) == 1
         assert modifications[0]["action"] == "skip"
@@ -64,27 +64,21 @@ Here are the modifications:
 
     def test_parse_ai_modifications_empty_response(self):
         """Test parse_ai_modifications with empty response."""
-        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
-
-        modifications = coach.parse_ai_modifications("")
+        modifications = parse_ai_modifications("")
         assert modifications == []
 
-        modifications = coach.parse_ai_modifications("   ")
+        modifications = parse_ai_modifications("   ")
         assert modifications == []
 
     def test_parse_ai_modifications_no_json(self):
         """Test parse_ai_modifications with no JSON found."""
-        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
-
         ai_response = "No modifications needed. Everything looks good."
 
-        modifications = coach.parse_ai_modifications(ai_response)
+        modifications = parse_ai_modifications(ai_response)
         assert modifications == []
 
     def test_parse_ai_modifications_invalid_json(self):
         """Test parse_ai_modifications with malformed JSON."""
-        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
-
         ai_response = """
 ```json
 {
@@ -94,20 +88,16 @@ Here are the modifications:
 }
 ```
 """
-        modifications = coach.parse_ai_modifications(ai_response)
+        modifications = parse_ai_modifications(ai_response)
         assert modifications == []
 
     def test_format_remaining_sessions_compact_empty(self):
         """Test format_remaining_sessions_compact with empty list."""
-        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
-
-        result = coach.format_remaining_sessions_compact([])
+        result = format_remaining_sessions_compact([])
         assert result == ""
 
     def test_format_remaining_sessions_compact_multiple(self):
         """Test format_remaining_sessions_compact with multiple sessions."""
-        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
-
         sessions = [
             {
                 "date": "2025-12-18",
@@ -134,32 +124,22 @@ Here are the modifications:
             },
         ]
 
-        result = coach.format_remaining_sessions_compact(sessions)
+        result = format_remaining_sessions_compact(sessions)
 
         assert "PLANNING RESTANT (3 séances)" in result
         assert "2025-12-18: S072-03-TEMPO-Tempo-V001 (75 TSS)" in result
         assert "2025-12-19: S072-04-RECOVERY-Recovery-V001 (30 TSS)" in result
         assert "2025-12-20: REPOS" in result
 
-    @patch("magma_cycling.workflow_coach.get_data_config")
     @patch("builtins.open", new_callable=mock_open)
-    def test_extract_day_number_success(self, mock_file, mock_config):
-        """Test _extract_day_number extracts correct day number."""
-        # Mock config
-        mock_config_obj = Mock()
-        mock_config_obj.week_planning_dir = Path("/fake/path")
-        mock_config.return_value = mock_config_obj
-
+    def test_extract_day_number_success(self, mock_file):
+        """Test extract_day_number extracts correct day number."""
         # Mock planning file content
         planning_data = {"start_date": "2025-12-15", "week_id": "S072"}
-        mock_file.return_value.read.return_value = json.dumps(planning_data)
         mock_file.return_value.__enter__.return_value.read.return_value = json.dumps(planning_data)
 
-        # Create coach and mock json.load
-        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
-
         with patch("json.load", return_value=planning_data):
-            day_number = coach._extract_day_number("2025-12-18", "S072")
+            day_number = extract_day_number("2025-12-18", "S072", Path("/fake/path"))
 
         # 2025-12-18 is 3 days after 2025-12-15, so day_number = 4
         assert day_number == 4
@@ -856,7 +836,7 @@ class TestAnalysisPreparation:
 
         assert week_id == "S072"
 
-    @patch("magma_cycling.workflow_coach.get_data_config")
+    @patch("magma_cycling.workflows.coach.ai_analysis.get_data_config")
     def test_check_planning_available_exists(self, mock_config):
         """Test _check_planning_available when planning file exists."""
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
@@ -873,7 +853,7 @@ class TestAnalysisPreparation:
 
         assert result is True
 
-    @patch("magma_cycling.workflow_coach.get_data_config")
+    @patch("magma_cycling.workflows.coach.ai_analysis.get_data_config")
     def test_check_planning_available_missing(self, mock_config):
         """Test _check_planning_available when planning file is missing."""
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
@@ -929,7 +909,7 @@ class TestAnalysisPreparation:
 class TestSpecialSessions:
     """Test special sessions handling methods."""
 
-    @patch("magma_cycling.workflow_coach.generate_rest_day_entry")
+    @patch("magma_cycling.workflows.coach.special_sessions.generate_rest_day_entry")
     @patch("builtins.input", return_value="0")  # Mock menu choice
     @patch("builtins.print")
     def test_show_special_sessions_with_rest_days(self, mock_print, mock_input, mock_generate):
@@ -951,7 +931,7 @@ class TestSpecialSessions:
         assert call_args[1]["session_data"]["session_id"] == "S070-01"
         assert result == "exit_workflow"
 
-    @patch("magma_cycling.workflow_coach.generate_cancelled_session_entry")
+    @patch("magma_cycling.workflows.coach.special_sessions.generate_cancelled_session_entry")
     @patch("builtins.input", return_value="0")  # Mock menu choice
     @patch("builtins.print")
     def test_show_special_sessions_with_cancelled(self, mock_print, mock_input, mock_generate):
@@ -1450,7 +1430,7 @@ class TestRemainingSessionsLoading:
         # Should print warning
         assert mock_print.called
 
-    @patch("magma_cycling.workflow_coach.datetime")
+    @patch("magma_cycling.workflows.coach.intervals_api.datetime")
     def test_load_remaining_sessions_success(self, mock_dt, tmp_path, mock_config):
         """Test load_remaining_sessions successfully loads future sessions."""
 
@@ -1795,7 +1775,7 @@ class TestInitFallback:
 
     def test_config_not_found_uses_legacy_fallback(self):
         """When get_data_config raises FileNotFoundError, falls back to project_root/logs."""
-        with patch("magma_cycling.config.get_data_config") as mock_config:
+        with patch("magma_cycling.workflow_coach.get_data_config") as mock_config:
             mock_config.side_effect = FileNotFoundError("config not found")
             coach = WorkflowCoach(skip_feedback=True, skip_git=True)
         assert coach.config is None
@@ -1861,7 +1841,7 @@ class TestUpdatePlanningJsonErrors:
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
         mock_plan = Mock()
         mock_plan.planned_sessions = []
-        with patch("magma_cycling.workflow_coach.planning_tower") as mock_tower:
+        with patch("magma_cycling.workflows.coach.servo_control.planning_tower") as mock_tower:
             mock_tower.modify_week.return_value.__enter__ = Mock(return_value=mock_plan)
             mock_tower.modify_week.return_value.__exit__ = Mock(return_value=False)
             result = coach._update_planning_json(
@@ -1876,7 +1856,7 @@ class TestUpdatePlanningJsonErrors:
     def test_file_not_found_returns_false(self):
         """Returns False when planning file does not exist."""
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
-        with patch("magma_cycling.workflow_coach.planning_tower") as mock_tower:
+        with patch("magma_cycling.workflows.coach.servo_control.planning_tower") as mock_tower:
             mock_tower.modify_week.side_effect = FileNotFoundError("no file")
             result = coach._update_planning_json(
                 week_id="S999",
@@ -1890,7 +1870,7 @@ class TestUpdatePlanningJsonErrors:
     def test_generic_exception_returns_false(self):
         """Returns False on unexpected exception."""
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
-        with patch("magma_cycling.workflow_coach.planning_tower") as mock_tower:
+        with patch("magma_cycling.workflows.coach.servo_control.planning_tower") as mock_tower:
             mock_tower.modify_week.side_effect = RuntimeError("unexpected")
             result = coach._update_planning_json(
                 week_id="S082",
@@ -1910,7 +1890,7 @@ class TestDetectSkippedSessionsException:
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
         coach._get_api = Mock(return_value=Mock())
         with patch(
-            "magma_cycling.workflow_coach.PlannedSessionsChecker",
+            "magma_cycling.workflows.coach.gap_detection.PlannedSessionsChecker",
             side_effect=Exception("API error"),
         ):
             result = coach._detect_skipped_sessions(
@@ -1936,7 +1916,9 @@ class TestDetectRestCancelledNoWeekId:
         coach.week_id = "S999"
         mock_cfg = Mock()
         mock_cfg.week_planning_dir = tmp_path  # No planning file here
-        with patch("magma_cycling.workflow_coach.get_data_config", return_value=mock_cfg):
+        with patch(
+            "magma_cycling.workflows.coach.gap_detection.get_data_config", return_value=mock_cfg
+        ):
             rest, cancelled = coach._detect_rest_and_cancelled_sessions()
         assert rest == []
         assert cancelled == []
