@@ -564,10 +564,9 @@ async def handle_modify_session_details(args: dict) -> list[TextContent]:
 
 async def handle_rename_session(args: dict) -> list[TextContent]:
     """Rename a session_id within a weekly plan."""
-    import re
-
     from magma_cycling.config import create_intervals_client
     from magma_cycling.planning.control_tower import planning_tower
+    from magma_cycling.planning.models import SESSION_ID_REGEX
 
     week_id = args["week_id"]
     session_id = args["session_id"]
@@ -575,7 +574,7 @@ async def handle_rename_session(args: dict) -> list[TextContent]:
     sync_remote = args.get("sync_remote", True)
 
     # Validate format
-    if not re.match(r"^S\d{3}-\d{2}[a-z]?$", new_session_id):
+    if not SESSION_ID_REGEX.match(new_session_id):
         return [
             TextContent(
                 type="text",
