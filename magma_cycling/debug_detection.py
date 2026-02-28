@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Script de debug détection multi-séances - VERSION DEBUG AVANCÉE."""
-import os
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -8,28 +7,16 @@ from pathlib import Path
 # Ajouter magma_cycling/ au path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from magma_cycling.api.intervals_client import IntervalsClient  # noqa: E402
+from magma_cycling.config import create_intervals_client  # noqa: E402
 from magma_cycling.workflow_state import WorkflowState  # noqa: E402
 
 
 def main():
     """Command-line entry point for debugging gap detection."""
-    # Vérifier credentials
+    # Init API via centralized config
+    api = create_intervals_client()
 
-    athlete_id = os.getenv("VITE_INTERVALS_ATHLETE_ID")
-    api_key = os.getenv("VITE_INTERVALS_API_KEY")
-
-    if not athlete_id or not api_key:
-        print("❌ ERREUR : Variables d'environnement manquantes !")
-        print("   Exporte-les avec :")
-        print('   export VITE_INTERVALS_ATHLETE_ID="your_athlete_id_here"')
-        print('   export VITE_INTERVALS_API_KEY="..."')
-        sys.exit(1)
-
-    print(f"✅ Credentials OK (Athlete: {athlete_id})\n")
-
-    # Init API
-    api = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
+    print(f"✅ Credentials OK (Athlete: {api.athlete_id})\n")
 
     # Init state
     state = WorkflowState()

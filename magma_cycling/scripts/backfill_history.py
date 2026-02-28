@@ -54,7 +54,6 @@ Metadata:
     Version: v2
 """
 import argparse
-import os
 import subprocess
 import sys
 import time
@@ -67,8 +66,7 @@ from requests.exceptions import HTTPError
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-from magma_cycling.api.intervals_client import IntervalsClient  # noqa: E402
-from magma_cycling.config import get_data_config  # noqa: E402
+from magma_cycling.config import create_intervals_client, get_data_config  # noqa: E402
 from magma_cycling.workflow_state import WorkflowState  # noqa: E402
 
 
@@ -99,18 +97,7 @@ class HistoryBackfiller:
         self.yes_confirm = yes_confirm
         self.force_reanalyze = force_reanalyze
 
-        # Get Intervals.icu credentials from environment
-        athlete_id = os.getenv("VITE_INTERVALS_ATHLETE_ID")
-        api_key = os.getenv("VITE_INTERVALS_API_KEY")
-
-        if not athlete_id or not api_key:
-            raise ValueError(
-                "Missing Intervals.icu credentials. Set environment variables:\n"
-                "  VITE_INTERVALS_ATHLETE_ID\n"
-                "  VITE_INTERVALS_API_KEY"
-            )
-
-        self.api = IntervalsClient(athlete_id, api_key)
+        self.api = create_intervals_client()
         self.state = WorkflowState()
 
         # Get data repo configuration

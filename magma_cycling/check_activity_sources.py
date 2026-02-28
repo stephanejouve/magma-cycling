@@ -10,25 +10,13 @@ Usage:
     python3 magma_cycling/check_activity_sources.py --last-days 14.
 """
 import argparse
-import json
 import sys
 from datetime import datetime, timedelta
-from pathlib import Path
 
 import requests
 
 from magma_cycling.api.intervals_client import IntervalsClient
-
-
-def load_config(config_file):
-    """Load la configuration depuis un fichier JSON."""
-    config_path = Path(config_file).expanduser()
-
-    if not config_path.exists():
-        return None
-
-    with open(config_path, encoding="utf-8") as f:
-        return json.load(f)
+from magma_cycling.config import create_intervals_client
 
 
 def format_source_icon(source):
@@ -49,27 +37,16 @@ def main():
     parser.add_argument("--athlete-id", help="ID de l'athlète Intervals.icu (ex: i123456)")
     parser.add_argument("--api-key", help="Clé API Intervals.icu")
     parser.add_argument(
-        "--config",
-        default="~/.intervals_config.json",
-        help="Fichier de configuration JSON (défaut: ~/.intervals_config.json)",
-    )
-    parser.add_argument(
         "--last-days", type=int, default=7, help="Nombre de jours à vérifier (défaut: 7)"
     )
 
     args = parser.parse_args()
 
-    # Charger la config
-    config = load_config(args.config)
-
-    athlete_id = args.athlete_id or (config and config.get("athlete_id"))
-    api_key = args.api_key or (config and config.get("api_key"))
-
-    if not athlete_id or not api_key:
-        print("❌ Erreur: athlete_id et api_key requis")
-        print("\nCréer ~/.intervals_config.json avec:")
-        print('{"athlete_id": "i123456", "api_key": "YOUR_KEY"}')
-        sys.exit(1)
+    # Create client: CLI args override centralized config
+    if args.athlete_id and args.api_key:
+        api = IntervalsClient(athlete_id=args.athlete_id, api_key=args.api_key)
+    else:
+        api = create_intervals_client()
 
     # Calculer la plage de dates
     newest = datetime.now()
@@ -83,8 +60,6 @@ def main():
     print()
 
     try:
-        # Connexion à l'API
-        api = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
 
         # Récupérer les activités
         print("📥 Récupération des activités...")
