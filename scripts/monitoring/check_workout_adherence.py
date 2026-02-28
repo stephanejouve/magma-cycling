@@ -22,15 +22,11 @@ Sprint R6 Integration:
 
 import argparse
 import json
-import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
-# Add project root to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
-from magma_cycling.api.intervals_client import IntervalsClient  # noqa: E402
-from magma_cycling.config import get_intervals_config  # noqa: E402
+from magma_cycling.api.intervals_client import IntervalsClient
+from magma_cycling.config import get_intervals_config
 
 
 class WorkoutAdherenceChecker:

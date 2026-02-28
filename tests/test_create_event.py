@@ -6,10 +6,7 @@ import json
 import sys
 from pathlib import Path
 
-# Ajouter le répertoire parent au PYTHONPATH
-sys.path.insert(0, str(Path(__file__).parent))
-
-from magma_cycling.api.intervals_client import IntervalsClient  # noqa: E402
+from magma_cycling.api.intervals_client import IntervalsClient
 
 
 def test_create_event():

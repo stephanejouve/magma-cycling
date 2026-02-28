@@ -58,16 +58,11 @@ import subprocess
 import sys
 import time
 from datetime import datetime
-from pathlib import Path
 
 from requests.exceptions import HTTPError
 
-# Add project to path
-project_root = Path(__file__).parent
-sys.path.insert(0, str(project_root))
-
-from magma_cycling.config import create_intervals_client, get_data_config  # noqa: E402
-from magma_cycling.workflow_state import WorkflowState  # noqa: E402
+from magma_cycling.config import create_intervals_client, get_data_config
+from magma_cycling.workflow_state import WorkflowState
 
 
 class HistoryBackfiller:
