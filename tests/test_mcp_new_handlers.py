@@ -6,7 +6,7 @@ Strategy: Test handlers directly with mocked dependencies.
 """
 
 import json
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
 
@@ -1330,10 +1330,10 @@ class TestHandleWithingsAnalyzeTrends:
     async def test_week_period_no_data(self):
         from magma_cycling.mcp_server import handle_withings_analyze_trends
 
-        mock_client = Mock()
-        mock_client.get_sleep.return_value = []
-        mock_client.get_measurements.return_value = []
-        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
+        mock_provider = Mock()
+        mock_provider.get_sleep_range.return_value = []
+        mock_provider.get_body_composition_range.return_value = []
+        with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
             result = await handle_withings_analyze_trends({"period": "week"})
         data = json.loads(result[0].text)
         assert data["period"] == "week"
@@ -1342,17 +1342,36 @@ class TestHandleWithingsAnalyzeTrends:
     @pytest.mark.asyncio
     async def test_month_period(self):
         from magma_cycling.mcp_server import handle_withings_analyze_trends
+        from magma_cycling.models.withings_models import SleepData, WeightMeasurement
 
-        mock_client = Mock()
-        mock_client.get_sleep.return_value = [
-            {"total_sleep_hours": 7.5, "sleep_score": 85},
-            {"total_sleep_hours": 8.0, "sleep_score": 90},
+        mock_provider = Mock()
+        mock_provider.get_sleep_range.return_value = [
+            SleepData(
+                date=date(2026, 2, 1),
+                start_datetime=datetime(2026, 1, 31, 23, 0),
+                end_datetime=datetime(2026, 2, 1, 6, 30),
+                total_sleep_hours=7.5,
+                sleep_score=85,
+                wakeup_count=1,
+            ),
+            SleepData(
+                date=date(2026, 2, 2),
+                start_datetime=datetime(2026, 2, 1, 23, 0),
+                end_datetime=datetime(2026, 2, 2, 7, 0),
+                total_sleep_hours=8.0,
+                sleep_score=90,
+                wakeup_count=0,
+            ),
         ]
-        mock_client.get_measurements.return_value = [
-            {"weight_kg": 72.5},
-            {"weight_kg": 72.0},
+        mock_provider.get_body_composition_range.return_value = [
+            WeightMeasurement(
+                date=date(2026, 2, 1), datetime=datetime(2026, 2, 1, 8, 0), weight_kg=72.5
+            ),
+            WeightMeasurement(
+                date=date(2026, 2, 2), datetime=datetime(2026, 2, 2, 8, 0), weight_kg=72.0
+            ),
         ]
-        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
+        with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
             result = await handle_withings_analyze_trends({"period": "month"})
         data = json.loads(result[0].text)
         assert data["period"] == "month"
@@ -1362,8 +1381,8 @@ class TestHandleWithingsAnalyzeTrends:
     async def test_custom_period_missing_dates_returns_error(self):
         from magma_cycling.mcp_server import handle_withings_analyze_trends
 
-        mock_client = Mock()
-        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
+        mock_provider = Mock()
+        with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
             result = await handle_withings_analyze_trends({"period": "custom"})
         data = json.loads(result[0].text)
         assert "error" in data
@@ -1372,10 +1391,10 @@ class TestHandleWithingsAnalyzeTrends:
     async def test_custom_period_with_dates(self):
         from magma_cycling.mcp_server import handle_withings_analyze_trends
 
-        mock_client = Mock()
-        mock_client.get_sleep.return_value = []
-        mock_client.get_measurements.return_value = []
-        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
+        mock_provider = Mock()
+        mock_provider.get_sleep_range.return_value = []
+        mock_provider.get_body_composition_range.return_value = []
+        with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
             result = await handle_withings_analyze_trends(
                 {
                     "period": "custom",
@@ -1552,28 +1571,43 @@ class TestHandleWithingsEnrichSession:
     async def test_enrich_session_success(self, mock_tower):
         """Enrich session accesses session.session_date without AttributeError."""
         from magma_cycling.mcp_server import handle_withings_enrich_session
+        from magma_cycling.models.withings_models import (
+            SleepData,
+            TrainingReadiness,
+            WeightMeasurement,
+        )
 
-        mock_withings = Mock()
-        mock_withings.get_sleep.return_value = [
-            {
-                "total_sleep_hours": 7.5,
-                "sleep_score": 82,
-                "deep_sleep_minutes": 90,
-            }
+        mock_provider = Mock()
+        mock_provider.get_sleep_range.return_value = [
+            SleepData(
+                date=date(2026, 2, 25),
+                start_datetime=datetime(2026, 2, 24, 23, 0),
+                end_datetime=datetime(2026, 2, 25, 6, 30),
+                total_sleep_hours=7.5,
+                sleep_score=82,
+                deep_sleep_minutes=90,
+                wakeup_count=1,
+            ),
         ]
-        mock_withings.get_latest_weight.return_value = {"weight_kg": 84.2}
-        mock_withings.evaluate_training_readiness.return_value = {
-            "recommended_intensity": "high",
-            "ready_for_intense": True,
-            "veto_reasons": [],
-            "recommendations": [],
-        }
+        mock_provider.get_body_composition.return_value = WeightMeasurement(
+            date=date(2026, 2, 25),
+            datetime=datetime(2026, 2, 25, 8, 0),
+            weight_kg=84.2,
+        )
+        mock_provider.get_readiness.return_value = TrainingReadiness(
+            date=date(2026, 2, 25),
+            sleep_hours=7.5,
+            ready_for_intense=True,
+            recommended_intensity="all_systems_go",
+            veto_reasons=[],
+            recommendations=[],
+        )
 
         with (
             patch(TOWER_PATCH, mock_tower),
             patch(
-                "magma_cycling.config.create_withings_client",
-                return_value=mock_withings,
+                "magma_cycling.health.create_health_provider",
+                return_value=mock_provider,
             ),
         ):
             result = await handle_withings_enrich_session(
@@ -1595,13 +1629,13 @@ class TestHandleWithingsEnrichSession:
         """Returns error when session not found."""
         from magma_cycling.mcp_server import handle_withings_enrich_session
 
-        mock_withings = Mock()
+        mock_provider = Mock()
 
         with (
             patch(TOWER_PATCH, mock_tower),
             patch(
-                "magma_cycling.config.create_withings_client",
-                return_value=mock_withings,
+                "magma_cycling.health.create_health_provider",
+                return_value=mock_provider,
             ),
         ):
             result = await handle_withings_enrich_session(
