@@ -94,132 +94,116 @@ async def handle_withings_authorize(args: dict) -> list[TextContent]:
 
 
 async def handle_withings_get_sleep(args: dict) -> list[TextContent]:
-    """Get sleep data from Withings."""
+    """Get sleep data via HealthProvider."""
     with suppress_stdout_stderr():
-        from magma_cycling.config import create_withings_client
+        from magma_cycling.health import create_health_provider
 
-        client = create_withings_client()
+        provider = create_health_provider()
 
         last_night_only = args.get("last_night_only", False)
 
         if last_night_only:
-            # Get last night's sleep
-            sleep_data = client.get_last_night_sleep()
-            result = {"last_night_sleep": sleep_data if sleep_data else None}
+            sleep = provider.get_sleep_summary(date.today())
+            result = {"last_night_sleep": sleep.model_dump() if sleep else None}
 
-            if not sleep_data:
+            if not sleep:
                 result["message"] = "No sleep data available for last night"
         else:
-            # Get sleep for date range
             start_date_str = args.get("start_date")
             end_date_str = args.get("end_date")
 
             if not start_date_str:
-                # Default: last 7 days
                 end_date_val = date.today()
                 start_date_val = end_date_val - timedelta(days=7)
             else:
                 start_date_val = date.fromisoformat(start_date_str)
                 end_date_val = date.fromisoformat(end_date_str) if end_date_str else date.today()
 
-            sleep_sessions = client.get_sleep(start_date_val, end_date_val)
+            sessions = provider.get_sleep_range(start_date_val, end_date_val)
 
             result = {
                 "start_date": start_date_val.isoformat(),
                 "end_date": end_date_val.isoformat(),
-                "sleep_sessions": sleep_sessions,
-                "count": len(sleep_sessions),
+                "sleep_sessions": [s.model_dump() for s in sessions],
+                "count": len(sessions),
             }
 
-    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+    return [TextContent(type="text", text=json.dumps(result, indent=2, default=str))]
 
 
 async def handle_withings_get_weight(args: dict) -> list[TextContent]:
-    """Get weight measurements from Withings."""
+    """Get weight measurements via HealthProvider."""
     with suppress_stdout_stderr():
-        from magma_cycling.config import create_withings_client
+        from magma_cycling.health import create_health_provider
 
-        client = create_withings_client()
+        provider = create_health_provider()
 
         latest_only = args.get("latest_only", False)
 
         if latest_only:
-            # Get latest weight
-            weight_data = client.get_latest_weight()
-            result = {"latest_weight": weight_data if weight_data else None}
+            weight = provider.get_body_composition()
+            result = {"latest_weight": weight.model_dump() if weight else None}
 
-            if not weight_data:
+            if not weight:
                 result["message"] = "No weight data available"
         else:
-            # Get weight for date range
             start_date_str = args.get("start_date")
             end_date_str = args.get("end_date")
 
             if not start_date_str:
-                # Default: last 30 days
                 end_date_val = date.today()
                 start_date_val = end_date_val - timedelta(days=30)
             else:
                 start_date_val = date.fromisoformat(start_date_str)
                 end_date_val = date.fromisoformat(end_date_str) if end_date_str else date.today()
 
-            measurements = client.get_measurements(
-                start_date_val, end_date_val, measure_types=[1, 6, 8, 76, 88]
-            )
+            measurements = provider.get_body_composition_range(start_date_val, end_date_val)
 
             result = {
                 "start_date": start_date_val.isoformat(),
                 "end_date": end_date_val.isoformat(),
-                "measurements": measurements,
+                "measurements": [m.model_dump() for m in measurements],
                 "count": len(measurements),
             }
 
-    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+    return [TextContent(type="text", text=json.dumps(result, indent=2, default=str))]
 
 
 async def handle_withings_get_readiness(args: dict) -> list[TextContent]:
-    """Evaluate training readiness based on health metrics."""
+    """Evaluate training readiness via HealthProvider."""
     with suppress_stdout_stderr():
-        from magma_cycling.config import create_withings_client
+        from magma_cycling.health import create_health_provider
 
-        client = create_withings_client()
+        provider = create_health_provider()
 
         eval_date_str = args.get("date")
         eval_date = date.fromisoformat(eval_date_str) if eval_date_str else date.today()
 
-        # Get last night's sleep
-        sleep_data = client.get_last_night_sleep()
+        readiness = provider.get_readiness(eval_date)
 
-        if not sleep_data:
+        if not readiness:
             result = {
                 "date": eval_date.isoformat(),
                 "status": "no_data",
                 "message": "No sleep data available for evaluation",
             }
         else:
-            # Evaluate readiness
-            readiness = client.evaluate_training_readiness(sleep_data)
-
-            # Get latest weight for context
-            weight_data = client.get_latest_weight()
-            if weight_data:
-                readiness["weight_kg"] = weight_data["weight_kg"]
-
             result = {
                 "date": eval_date.isoformat(),
                 "status": "evaluated",
-                "readiness": readiness,
+                "readiness": readiness.model_dump(),
             }
 
-    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+    return [TextContent(type="text", text=json.dumps(result, indent=2, default=str))]
 
 
 async def handle_withings_sync_to_intervals(args: dict) -> list[TextContent]:
-    """Synchronize Withings data to Intervals.icu wellness."""
+    """Synchronize health data to Intervals.icu wellness via HealthProvider."""
     with suppress_stdout_stderr():
-        from magma_cycling.config import create_intervals_client, create_withings_client
+        from magma_cycling.config import create_intervals_client
+        from magma_cycling.health import create_health_provider
 
-        withings_client = create_withings_client()
+        provider = create_health_provider()
         intervals_client = create_intervals_client()
 
         start_date_str = args["start_date"]
@@ -236,19 +220,24 @@ async def handle_withings_sync_to_intervals(args: dict) -> list[TextContent]:
         synced_dates = []
         errors = []
 
-        # Fetch Withings data
+        # Fetch data via provider
         sleep_data_list = []
         weight_data_list = []
 
         if sync_sleep:
-            sleep_data_list = withings_client.get_sleep(start_date_val, end_date_val)
+            sleep_data_list = [
+                s.model_dump() for s in provider.get_sleep_range(start_date_val, end_date_val)
+            ]
 
         if sync_weight:
-            weight_data_list = withings_client.get_measurements(start_date_val, end_date_val)
+            weight_data_list = [
+                m.model_dump()
+                for m in provider.get_body_composition_range(start_date_val, end_date_val)
+            ]
 
         # Create lookup dictionaries
-        sleep_by_date = {s["date"]: s for s in sleep_data_list}
-        weight_by_date = {w["date"]: w for w in weight_data_list}
+        sleep_by_date = {str(s["date"]): s for s in sleep_data_list}
+        weight_by_date = {str(w["date"]): w for w in weight_data_list}
 
         # Iterate through each date and sync
         current_date = start_date_val
@@ -297,11 +286,11 @@ async def handle_withings_sync_to_intervals(args: dict) -> list[TextContent]:
 
 
 async def handle_withings_analyze_trends(args: dict) -> list[TextContent]:
-    """Analyze health trends over time."""
+    """Analyze health trends over time via HealthProvider."""
     with suppress_stdout_stderr():
-        from magma_cycling.config import create_withings_client
+        from magma_cycling.health import create_health_provider
 
-        client = create_withings_client()
+        provider = create_health_provider()
 
         period = args.get("period", "week")
 
@@ -325,9 +314,14 @@ async def handle_withings_analyze_trends(args: dict) -> list[TextContent]:
             start_date_val = date.fromisoformat(start_date_str)
             end_date_val = date.fromisoformat(end_date_str)
 
-        # Fetch data
-        sleep_sessions = client.get_sleep(start_date_val, end_date_val)
-        weight_measurements = client.get_measurements(start_date_val, end_date_val)
+        # Fetch data via provider → convert to dicts for analysis
+        sleep_sessions = [
+            s.model_dump() for s in provider.get_sleep_range(start_date_val, end_date_val)
+        ]
+        weight_measurements = [
+            m.model_dump()
+            for m in provider.get_body_composition_range(start_date_val, end_date_val)
+        ]
 
         # Analyze sleep trends
         total_nights = len(sleep_sessions)
@@ -402,16 +396,16 @@ async def handle_withings_analyze_trends(args: dict) -> list[TextContent]:
 
 
 async def handle_withings_enrich_session(args: dict) -> list[TextContent]:
-    """Enrich training session with Withings health metrics."""
+    """Enrich training session with health metrics via HealthProvider."""
     with suppress_stdout_stderr():
-        from magma_cycling.config import create_withings_client
+        from magma_cycling.health import create_health_provider
         from magma_cycling.planning.control_tower import planning_tower
 
         week_id = args["week_id"]
         session_id = args["session_id"]
         auto_readiness_check = args.get("auto_readiness_check", True)
 
-        withings_client = create_withings_client()
+        provider = create_health_provider()
 
         # Load session
         with planning_tower.modify_week(
@@ -436,33 +430,34 @@ async def handle_withings_enrich_session(args: dict) -> list[TextContent]:
 
             # Get sleep from previous night
             sleep_date = session_date - timedelta(days=1)
-            sleep_sessions = withings_client.get_sleep(sleep_date, session_date)
+            sleep_sessions = provider.get_sleep_range(sleep_date, session_date)
 
             sleep_data = sleep_sessions[-1] if sleep_sessions else None
 
             # Get latest weight
-            weight_data = withings_client.get_latest_weight()
+            weight = provider.get_body_composition()
 
             # Build health metrics dict (Session is a Pydantic model — no extra attrs)
             health_metrics = {}
 
             # Add sleep metrics
             if sleep_data:
-                health_metrics["sleep_hours"] = sleep_data["total_sleep_hours"]
-                health_metrics["sleep_score"] = sleep_data.get("sleep_score")
-                health_metrics["deep_sleep_minutes"] = sleep_data.get("deep_sleep_minutes")
+                health_metrics["sleep_hours"] = sleep_data.total_sleep_hours
+                health_metrics["sleep_score"] = sleep_data.sleep_score
+                health_metrics["deep_sleep_minutes"] = sleep_data.deep_sleep_minutes
 
                 # Evaluate readiness
                 if auto_readiness_check:
-                    readiness = withings_client.evaluate_training_readiness(sleep_data)
-                    health_metrics["training_readiness"] = readiness["recommended_intensity"]
-                    health_metrics["ready_for_intense"] = readiness["ready_for_intense"]
-                    health_metrics["veto_reasons"] = readiness["veto_reasons"]
-                    health_metrics["recommendations"] = readiness["recommendations"]
+                    readiness = provider.get_readiness(session_date)
+                    if readiness:
+                        health_metrics["training_readiness"] = readiness.recommended_intensity
+                        health_metrics["ready_for_intense"] = readiness.ready_for_intense
+                        health_metrics["veto_reasons"] = readiness.veto_reasons
+                        health_metrics["recommendations"] = readiness.recommendations
 
             # Add weight
-            if weight_data:
-                health_metrics["weight_kg"] = weight_data["weight_kg"]
+            if weight:
+                health_metrics["weight_kg"] = weight.weight_kg
 
             result = {
                 "week_id": week_id,

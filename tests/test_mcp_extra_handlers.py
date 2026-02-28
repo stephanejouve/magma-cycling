@@ -8,7 +8,7 @@ handle_compare_intervals.
 """
 
 import json
-from datetime import date
+from datetime import date, datetime
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
@@ -574,13 +574,18 @@ class TestHandleWithingsGetSleep:
     @pytest.mark.asyncio
     async def test_last_night_only_with_data(self):
         from magma_cycling.mcp_server import handle_withings_get_sleep
+        from magma_cycling.models.withings_models import SleepData
 
-        mock_client = Mock()
-        mock_client.get_last_night_sleep.return_value = {
-            "total_sleep_hours": 7.5,
-            "sleep_score": 85,
-        }
-        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
+        mock_provider = Mock()
+        mock_provider.get_sleep_summary.return_value = SleepData(
+            date=date(2026, 2, 22),
+            start_datetime=datetime(2026, 2, 21, 22, 30),
+            end_datetime=datetime(2026, 2, 22, 6, 0),
+            total_sleep_hours=7.5,
+            sleep_score=85,
+            wakeup_count=1,
+        )
+        with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
             result = await handle_withings_get_sleep({"last_night_only": True})
         data = json.loads(result[0].text)
         assert "last_night_sleep" in data
@@ -590,9 +595,9 @@ class TestHandleWithingsGetSleep:
     async def test_last_night_only_no_data(self):
         from magma_cycling.mcp_server import handle_withings_get_sleep
 
-        mock_client = Mock()
-        mock_client.get_last_night_sleep.return_value = None
-        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
+        mock_provider = Mock()
+        mock_provider.get_sleep_summary.return_value = None
+        with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
             result = await handle_withings_get_sleep({"last_night_only": True})
         data = json.loads(result[0].text)
         assert data["last_night_sleep"] is None
@@ -601,12 +606,19 @@ class TestHandleWithingsGetSleep:
     @pytest.mark.asyncio
     async def test_date_range_returns_sessions(self):
         from magma_cycling.mcp_server import handle_withings_get_sleep
+        from magma_cycling.models.withings_models import SleepData
 
-        mock_client = Mock()
-        mock_client.get_sleep.return_value = [
-            {"date": "2026-02-17", "total_sleep_hours": 7.0},
+        mock_provider = Mock()
+        mock_provider.get_sleep_range.return_value = [
+            SleepData(
+                date=date(2026, 2, 17),
+                start_datetime=datetime(2026, 2, 16, 23, 0),
+                end_datetime=datetime(2026, 2, 17, 6, 0),
+                total_sleep_hours=7.0,
+                wakeup_count=0,
+            ),
         ]
-        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
+        with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
             result = await handle_withings_get_sleep(
                 {
                     "start_date": "2026-02-17",
@@ -621,9 +633,9 @@ class TestHandleWithingsGetSleep:
     async def test_default_7_days_range(self):
         from magma_cycling.mcp_server import handle_withings_get_sleep
 
-        mock_client = Mock()
-        mock_client.get_sleep.return_value = []
-        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
+        mock_provider = Mock()
+        mock_provider.get_sleep_range.return_value = []
+        with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
             result = await handle_withings_get_sleep({})
         data = json.loads(result[0].text)
         assert "start_date" in data
@@ -639,10 +651,15 @@ class TestHandleWithingsGetWeight:
     @pytest.mark.asyncio
     async def test_latest_only_with_data(self):
         from magma_cycling.mcp_server import handle_withings_get_weight
+        from magma_cycling.models.withings_models import WeightMeasurement
 
-        mock_client = Mock()
-        mock_client.get_latest_weight.return_value = {"weight_kg": 72.3}
-        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
+        mock_provider = Mock()
+        mock_provider.get_body_composition.return_value = WeightMeasurement(
+            date=date(2026, 2, 22),
+            datetime=datetime(2026, 2, 22, 8, 0),
+            weight_kg=72.3,
+        )
+        with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
             result = await handle_withings_get_weight({"latest_only": True})
         data = json.loads(result[0].text)
         assert data["latest_weight"]["weight_kg"] == 72.3
@@ -651,9 +668,9 @@ class TestHandleWithingsGetWeight:
     async def test_latest_only_no_data(self):
         from magma_cycling.mcp_server import handle_withings_get_weight
 
-        mock_client = Mock()
-        mock_client.get_latest_weight.return_value = None
-        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
+        mock_provider = Mock()
+        mock_provider.get_body_composition.return_value = None
+        with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
             result = await handle_withings_get_weight({"latest_only": True})
         data = json.loads(result[0].text)
         assert data["latest_weight"] is None
@@ -662,12 +679,17 @@ class TestHandleWithingsGetWeight:
     @pytest.mark.asyncio
     async def test_date_range_returns_measurements(self):
         from magma_cycling.mcp_server import handle_withings_get_weight
+        from magma_cycling.models.withings_models import WeightMeasurement
 
-        mock_client = Mock()
-        mock_client.get_measurements.return_value = [
-            {"date": "2026-02-17", "weight_kg": 72.5},
+        mock_provider = Mock()
+        mock_provider.get_body_composition_range.return_value = [
+            WeightMeasurement(
+                date=date(2026, 2, 17),
+                datetime=datetime(2026, 2, 17, 8, 0),
+                weight_kg=72.5,
+            ),
         ]
-        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
+        with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
             result = await handle_withings_get_weight(
                 {
                     "start_date": "2026-02-17",
@@ -681,9 +703,9 @@ class TestHandleWithingsGetWeight:
     async def test_default_30_days_range(self):
         from magma_cycling.mcp_server import handle_withings_get_weight
 
-        mock_client = Mock()
-        mock_client.get_measurements.return_value = []
-        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
+        mock_provider = Mock()
+        mock_provider.get_body_composition_range.return_value = []
+        with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
             result = await handle_withings_get_weight({})
         data = json.loads(result[0].text)
         assert "start_date" in data
@@ -700,9 +722,9 @@ class TestHandleWithingsGetReadiness:
     async def test_no_sleep_data_returns_no_data_status(self):
         from magma_cycling.mcp_server import handle_withings_get_readiness
 
-        mock_client = Mock()
-        mock_client.get_last_night_sleep.return_value = None
-        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
+        mock_provider = Mock()
+        mock_provider.get_readiness.return_value = None
+        with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
             result = await handle_withings_get_readiness({})
         data = json.loads(result[0].text)
         assert data["status"] == "no_data"
@@ -710,18 +732,18 @@ class TestHandleWithingsGetReadiness:
     @pytest.mark.asyncio
     async def test_with_sleep_data_evaluates_readiness(self):
         from magma_cycling.mcp_server import handle_withings_get_readiness
+        from magma_cycling.models.withings_models import TrainingReadiness
 
-        mock_client = Mock()
-        mock_client.get_last_night_sleep.return_value = {
-            "total_sleep_hours": 8.0,
-            "sleep_score": 90,
-        }
-        mock_client.evaluate_training_readiness.return_value = {
-            "recommended_intensity": "normal",
-            "ready_for_intense": True,
-        }
-        mock_client.get_latest_weight.return_value = {"weight_kg": 72.0}
-        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
+        mock_provider = Mock()
+        mock_provider.get_readiness.return_value = TrainingReadiness(
+            date=date(2026, 2, 24),
+            sleep_hours=8.0,
+            sleep_score=90,
+            ready_for_intense=True,
+            recommended_intensity="all_systems_go",
+            weight_kg=72.0,
+        )
+        with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
             result = await handle_withings_get_readiness({"date": "2026-02-24"})
         data = json.loads(result[0].text)
         assert data["status"] == "evaluated"
@@ -731,9 +753,9 @@ class TestHandleWithingsGetReadiness:
     async def test_with_date_parameter(self):
         from magma_cycling.mcp_server import handle_withings_get_readiness
 
-        mock_client = Mock()
-        mock_client.get_last_night_sleep.return_value = None
-        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
+        mock_provider = Mock()
+        mock_provider.get_readiness.return_value = None
+        with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
             result = await handle_withings_get_readiness({"date": "2026-02-20"})
         data = json.loads(result[0].text)
         assert data["date"] == "2026-02-20"
