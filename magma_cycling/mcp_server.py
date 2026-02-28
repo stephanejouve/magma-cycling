@@ -54,6 +54,7 @@ from magma_cycling._mcp.handlers.intervals import (  # noqa: F401
     handle_delete_remote_session,
     handle_get_activity_details,
     handle_get_activity_intervals,
+    handle_get_activity_streams,
     handle_list_remote_events,
     handle_sync_remote_to_local,
     handle_sync_week_to_intervals,
@@ -158,12 +159,13 @@ TOOL_HANDLERS = {
     # Workouts (2)
     "get-workout": handle_get_workout,
     "validate-workout": handle_validate_workout,
-    # Intervals.icu (11)
+    # Intervals.icu (12)
     "sync-week-to-intervals": handle_sync_week_to_intervals,
     "delete-remote-session": handle_delete_remote_session,
     "list-remote-events": handle_list_remote_events,
     "get-activity-details": handle_get_activity_details,
     "get-activity-intervals": handle_get_activity_intervals,
+    "get-activity-streams": handle_get_activity_streams,
     "compare-intervals": handle_compare_intervals,
     "apply-workout-intervals": handle_apply_workout_intervals,
     "update-remote-session": handle_update_remote_session,
