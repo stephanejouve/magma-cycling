@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.workflow\_state module
+magma\_cycling.workflow\_state module
 ===============================================
 
 .. automodule:: magma_cycling.workflow_state

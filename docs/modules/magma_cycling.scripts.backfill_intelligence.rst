@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.scripts.backfill\_intelligence module
+magma\_cycling.scripts.backfill\_intelligence module
 ==============================================================
 
 .. automodule:: magma_cycling.scripts.backfill_intelligence

@@ -1,56 +1,63 @@
-Cyclisme Training Logs - API Documentation
-===========================================
+Magma Cycling - API Documentation
+==================================
 
 Documentation auto-générée depuis les docstrings Google Style du code source.
 
-**Version :** 2.2.0
+**Version :** 2.3.0
 
-**Dernière mise à jour :** 2026-02-19
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Intelligence (Sprint R4) ⭐ NEW:
-
-   modules/intelligence
+**Dernière mise à jour :** 2026-02-28
 
 .. toctree::
    :maxdepth: 2
-   :caption: Planning (Sprint R3):
+   :caption: Intelligence:
 
-   modules/planning
-   modules/tools
+   modules/magma_cycling.intelligence
 
 .. toctree::
    :maxdepth: 2
-   :caption: Metrics Advanced (Sprint R2):
+   :caption: Planning:
 
-   modules/utils
+   modules/magma_cycling.planning
+   modules/magma_cycling.shift_sessions
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Health:
+
+   modules/magma_cycling.external
 
 .. toctree::
    :maxdepth: 2
    :caption: Core Modules:
 
-   modules/config
-   modules/insert_analysis
-   modules/workflow_coach
+   modules/magma_cycling.config
+   modules/magma_cycling.insert_analysis
+   modules/magma_cycling.workflow_coach
+   modules/magma_cycling.daily_sync
 
 .. toctree::
    :maxdepth: 2
    :caption: Analyzers:
 
-   modules/analyzers
+   modules/magma_cycling.analyzers
 
 .. toctree::
    :maxdepth: 2
    :caption: Core Components:
 
-   modules/core
+   modules/magma_cycling.core
 
 .. toctree::
    :maxdepth: 2
    :caption: AI Providers:
 
-   modules/ai_providers
+   modules/magma_cycling.ai_providers
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Utilities:
+
+   modules/magma_cycling.utils
 
 Documentation Projet
 ====================

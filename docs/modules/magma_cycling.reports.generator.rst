@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.reports.generator module
+magma\_cycling.reports.generator module
 =================================================
 
 .. automodule:: magma_cycling.reports.generator

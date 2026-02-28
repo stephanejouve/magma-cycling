@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.analyzers.adherence\_tracker module
+magma\_cycling.analyzers.adherence\_tracker module
 ============================================================
 
 .. automodule:: magma_cycling.analyzers.adherence_tracker

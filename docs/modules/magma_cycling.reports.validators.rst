@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.reports.validators package
+magma\_cycling.reports.validators package
 ===================================================
 
 Submodules

@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.workflows.workflow\_weekly module
+magma\_cycling.workflows.workflow\_weekly module
 ==========================================================
 
 .. automodule:: magma_cycling.workflows.workflow_weekly

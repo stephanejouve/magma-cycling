@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.diagnose\-matching module
+magma\_cycling.diagnose\-matching module
 ==================================================
 
 .. automodule:: magma_cycling.diagnose-matching

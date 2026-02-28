@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.planning.calendar module
+magma\_cycling.planning.calendar module
 =================================================
 
 .. automodule:: magma_cycling.planning.calendar

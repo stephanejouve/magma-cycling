@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.collect\_athlete\_feedback module
+magma\_cycling.collect\_athlete\_feedback module
 ==========================================================
 
 .. automodule:: magma_cycling.collect_athlete_feedback
