@@ -1108,6 +1108,21 @@ def create_withings_client():
 
 # ============================================================================
 
+
+def create_health_provider():
+    """Factory function for creating a configured HealthProvider.
+
+    Delegates to magma_cycling.health.factory. Returns NullProvider if
+    Withings is not configured or on any error.
+
+    Returns:
+        HealthProvider: Configured provider ready to use
+    """
+    from magma_cycling.health.factory import create_health_provider as _factory
+
+    return _factory()
+
+
 __all__ = [
     # Data repo config
     "DataRepoConfig",
@@ -1128,6 +1143,8 @@ __all__ = [
     "get_withings_config",
     "reset_withings_config",
     "create_withings_client",
+    # Health provider
+    "create_health_provider",
     # Week reference config
     "WeekReferenceConfig",
     "get_week_config",

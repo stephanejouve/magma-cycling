@@ -5,7 +5,7 @@ Tests the external behavior and API contract of WithingsClient
 without knowledge of internal implementation details.
 """
 
-from datetime import date
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from unittest.mock import Mock, patch
@@ -54,7 +54,7 @@ class TestOAuthFlow:
         assert "https://account.withings.com/oauth2_user/authorize2" in url
         assert "client_id=test_client_id" in url
         assert "redirect_uri=" in url
-        assert "scope=user.metrics,user.activity" in url
+        assert "scope=user.metrics,user.activity,user.sleepevents" in url
         assert "response_type=code" in url
 
     def test_get_authorization_url_with_state(self, client):
@@ -91,6 +91,18 @@ class TestOAuthFlow:
 
         # Verify credentials saved
         assert temp_credentials_file.exists()
+
+        # Verify request parameters sent to Withings
+        mock_post.assert_called_once()
+        args, kwargs = mock_post.call_args
+        assert args[0] == WithingsClient.TOKEN_URL
+        payload = kwargs["data"]
+        assert payload["action"] == "requesttoken"
+        assert payload["grant_type"] == "authorization_code"
+        assert payload["client_id"] == "test_client_id"
+        assert payload["client_secret"] == "test_client_secret"
+        assert payload["code"] == "test_auth_code"
+        assert payload["redirect_uri"] == "http://localhost:8080/callback"
 
     @patch("requests.post")
     def test_exchange_code_api_error(self, mock_post, client):
@@ -183,6 +195,37 @@ class TestSleepData:
         assert result[0]["total_sleep_hours"] == 7.0
         assert result[0]["sleep_score"] == 85
 
+        # Verify request parameters
+        mock_request.assert_called_once()
+        call_action, call_params = mock_request.call_args[0]
+        assert call_action == "v2/sleep"
+        assert call_params["action"] == "getsummary"
+        assert call_params["startdateymd"] == "2026-02-20"
+        assert call_params["enddateymd"] == "2026-02-22"
+        # Verify all 18 sleep data fields are requested
+        data_fields = set(call_params["data_fields"].split(","))
+        expected_fields = {
+            "sleep_score",
+            "sleep_efficiency",
+            "total_sleep_time",
+            "deepsleepduration",
+            "lightsleepduration",
+            "remsleepduration",
+            "wakeupcount",
+            "wakeupduration",
+            "hr_average",
+            "hr_min",
+            "hr_max",
+            "rr_average",
+            "rr_min",
+            "rr_max",
+            "sleep_latency",
+            "out_of_bed_count",
+            "waso",
+            "nb_rem_episodes",
+        }
+        assert data_fields == expected_fields
+
     @patch.object(WithingsClient, "_make_request")
     def test_get_sleep_empty_response(self, mock_request, client):
         """get_sleep with no data should return empty list."""
@@ -216,6 +259,15 @@ class TestSleepData:
         assert result is not None
         assert "total_sleep_hours" in result
         assert result["total_sleep_hours"] == 7.0
+
+        # Verify date window is [yesterday, today]
+        mock_request.assert_called_once()
+        call_action, call_params = mock_request.call_args[0]
+        assert call_action == "v2/sleep"
+        today = date.today()
+        yesterday = today - timedelta(days=1)
+        assert call_params["startdateymd"] == yesterday.strftime("%Y-%m-%d")
+        assert call_params["enddateymd"] == today.strftime("%Y-%m-%d")
 
     @patch.object(WithingsClient, "_make_request")
     def test_get_last_night_sleep_no_data(self, mock_request, client):
@@ -253,6 +305,16 @@ class TestWeightData:
         assert isinstance(result, list)
         assert len(result) == 1
         assert result[0]["weight_kg"] == 75.0
+
+        # Verify request parameters
+        mock_request.assert_called_once()
+        call_action, call_params = mock_request.call_args[0]
+        assert call_action == "measure"
+        assert call_params["action"] == "getmeas"
+        assert call_params["meastypes"] == "1"  # Default: weight only
+        # Verify timestamps are Unix integers
+        assert isinstance(call_params["startdate"], int)
+        assert isinstance(call_params["enddate"], int)
 
     @patch.object(WithingsClient, "_make_request")
     def test_get_measurements_with_body_composition(self, mock_request, client):
@@ -299,6 +361,19 @@ class TestWeightData:
 
         assert result is not None
         assert result["weight_kg"] == 75.2  # Most recent
+
+        # Verify 30-day lookback window and full measure_types
+        mock_request.assert_called_once()
+        call_action, call_params = mock_request.call_args[0]
+        assert call_action == "measure"
+        assert call_params["meastypes"] == "1,6,8,76,88"
+        # Verify date window spans 30 days ending today
+        today = date.today()
+        start = today - timedelta(days=30)
+        expected_start = int(datetime.combine(start, datetime.min.time()).timestamp())
+        expected_end = int(datetime.combine(today, datetime.max.time()).timestamp())
+        assert call_params["startdate"] == expected_start
+        assert call_params["enddate"] == expected_end
 
 
 class TestTrainingReadiness:
@@ -451,3 +526,82 @@ class TestErrorHandling:
 
         assert client.access_token == "new_token"
         assert mock_post.called
+
+        # Verify refresh request parameters
+        args, kwargs = mock_post.call_args
+        assert args[0] == WithingsClient.TOKEN_URL
+        payload = kwargs["data"]
+        assert payload["action"] == "requesttoken"
+        assert payload["grant_type"] == "refresh_token"
+        assert payload["client_id"] == "test_client_id"
+        assert payload["client_secret"] == "test_client_secret"
+        assert payload["refresh_token"] == "refresh_token"
+
+
+class TestMakeRequest:
+    """Test _make_request internals - URL construction, headers, retry logic."""
+
+    @patch("requests.get")
+    def test_make_request_url_headers_and_params(self, mock_get, client):
+        """_make_request should build correct URL, auth header, and forward params."""
+        client.access_token = "test_token"
+        client.token_expiry = 9999999999
+
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"status": 0, "body": {"result": "ok"}}
+        mock_get.return_value = mock_response
+
+        params = {"action": "getsummary", "startdateymd": "2026-02-20"}
+        result = client._make_request("v2/sleep", params)
+
+        mock_get.assert_called_once()
+        args, kwargs = mock_get.call_args
+        # URL = BASE_URL + "/" + action
+        assert args[0] == "https://wbsapi.withings.net/v2/sleep"
+        # Authorization header with Bearer token
+        assert kwargs["headers"]["Authorization"] == "Bearer test_token"
+        # HTTP method is GET (implicit via requests.get)
+        # Params forwarded as-is
+        assert kwargs["params"] == params
+        assert result == {"result": "ok"}
+
+    @patch("requests.get")
+    @patch("requests.post")
+    def test_make_request_401_triggers_refresh_and_retry(self, mock_post, mock_get, client):
+        """401 response should trigger token refresh then retry the request."""
+        client.access_token = "old_token"
+        client.refresh_token = "test_refresh_token"
+        client.token_expiry = 9999999999
+
+        # First call: 401, second call: 200
+        mock_401 = Mock()
+        mock_401.status_code = 401
+        mock_200 = Mock()
+        mock_200.status_code = 200
+        mock_200.json.return_value = {"status": 0, "body": {"data": "ok"}}
+        mock_get.side_effect = [mock_401, mock_200]
+
+        # Mock successful token refresh
+        mock_refresh_response = Mock()
+        mock_refresh_response.status_code = 200
+        mock_refresh_response.json.return_value = {
+            "status": 0,
+            "body": {
+                "access_token": "new_token",
+                "refresh_token": "new_refresh",
+                "expires_in": 3600,
+            },
+        }
+        mock_post.return_value = mock_refresh_response
+
+        result = client._make_request("v2/sleep", {"action": "getsummary"})
+
+        # Verify refresh was triggered via POST to TOKEN_URL
+        mock_post.assert_called_once()
+        refresh_args, refresh_kwargs = mock_post.call_args
+        assert refresh_args[0] == WithingsClient.TOKEN_URL
+        assert refresh_kwargs["data"]["grant_type"] == "refresh_token"
+        # Verify retry happened (2 GET calls total)
+        assert mock_get.call_count == 2
+        assert result == {"data": "ok"}
