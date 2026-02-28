@@ -321,14 +321,18 @@ def _collect_compensation_context(
                 break
 
         # Extract metrics (avec fallback si wellness vide)
+        # Note: .get("key", 0) returns None when key exists with null value,
+        # so we use `or 0` to guard against both missing and null values.
         athlete_state = {
             "tsb": (
-                wellness_data.get("ctl", 0) - wellness_data.get("atl", 0) if wellness_data else 0
+                (wellness_data.get("ctl") or 0) - (wellness_data.get("atl") or 0)
+                if wellness_data
+                else 0
             ),
-            "sleep_hours": wellness_data.get("sleepSecs", 0) / 3600 if wellness_data else 0,
-            "hrv": wellness_data.get("hrv", 0) if wellness_data else 0,
-            "rpe": wellness_data.get("rpe", 0) if wellness_data else 0,
-            "weight": wellness_data.get("weight", 0) if wellness_data else 0,
+            "sleep_hours": (wellness_data.get("sleepSecs") or 0) / 3600 if wellness_data else 0,
+            "hrv": (wellness_data.get("hrv") or 0) if wellness_data else 0,
+            "rpe": (wellness_data.get("rpe") or 0) if wellness_data else 0,
+            "weight": (wellness_data.get("weight") or 0) if wellness_data else 0,
         }
 
         logger.debug(f"  TSB: {athlete_state['tsb']:+.1f}")
