@@ -56,19 +56,17 @@ Metadata:
     Priority: P2
     Version: v2
 """
-import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from pydantic import ValidationError
 
+from magma_cycling.config import get_logger
 from magma_cycling.planning.control_tower import planning_tower
 from magma_cycling.planning.models import WeeklyPlan
 
-# Configuration du logging
-logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 # ============================================================================

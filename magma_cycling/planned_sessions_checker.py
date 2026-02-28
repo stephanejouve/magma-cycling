@@ -54,15 +54,12 @@ Metadata:
     Priority: P2
     Version: v2
 """
-import logging
 from datetime import datetime, timedelta
 
 from magma_cycling.api.intervals_client import IntervalsClient
-from magma_cycling.config import get_data_config
+from magma_cycling.config import get_data_config, get_logger
 
-# Configuration du logging
-logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class PlannedSessionsChecker:
