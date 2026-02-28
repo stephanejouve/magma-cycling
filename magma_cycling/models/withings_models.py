@@ -54,6 +54,31 @@ class SleepData(BaseModel):
         default=None, ge=0, description="Breathing disturbance count"
     )
 
+    # Universal sleep metrics (provider-agnostic)
+    sleep_efficiency: int | None = Field(
+        default=None, ge=0, le=100, description="Sleep efficiency percentage"
+    )
+    hr_average: int | None = Field(
+        default=None, gt=0, description="Average heart rate during sleep"
+    )
+    hr_min: int | None = Field(default=None, gt=0, description="Minimum heart rate during sleep")
+    hr_max: int | None = Field(default=None, gt=0, description="Maximum heart rate during sleep")
+    rr_average: float | None = Field(
+        default=None, ge=0, description="Average respiratory rate (breaths/min)"
+    )
+    rr_min: float | None = Field(
+        default=None, ge=0, description="Minimum respiratory rate (breaths/min)"
+    )
+    rr_max: float | None = Field(
+        default=None, ge=0, description="Maximum respiratory rate (breaths/min)"
+    )
+    sleep_latency_min: float | None = Field(
+        default=None, ge=0, description="Time to fall asleep in minutes"
+    )
+    out_of_bed_count: int | None = Field(
+        default=None, ge=0, description="Number of times out of bed"
+    )
+
     @field_validator("total_sleep_hours")
     @classmethod
     def validate_sleep_hours(cls, v: float) -> float:
@@ -123,6 +148,11 @@ class TrainingReadiness(BaseModel):
 
     weight_kg: float | None = Field(default=None, gt=0, description="Current weight")
     resting_hr: int | None = Field(default=None, gt=0, description="Resting heart rate")
+
+    sufficient_duration: bool | None = Field(default=None, description="Sleep >= 7h threshold met")
+    deep_sleep_ok: bool | None = Field(
+        default=None, description="Deep sleep >= 60min threshold met"
+    )
 
 
 class HealthTrend(BaseModel):

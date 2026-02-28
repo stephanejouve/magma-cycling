@@ -19,6 +19,7 @@ from magma_cycling.config.config_base import (
     IntervalsConfig,
     WeekReferenceConfig,
     WithingsConfig,
+    create_health_provider,
     create_intervals_client,
     create_withings_client,
     get_ai_config,
@@ -69,6 +70,7 @@ __all__ = [
     # DRY helpers
     "create_intervals_client",
     "create_withings_client",
+    "create_health_provider",
     "load_json_config",
     # Sprint R2 additions
     "AthleteProfile",

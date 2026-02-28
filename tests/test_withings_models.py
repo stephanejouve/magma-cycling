@@ -385,3 +385,115 @@ class TestModelSerialization:
 
         assert data.sleep_hours == 7.5
         assert data.ready_for_intense is True
+
+
+class TestSleepDataNewFields:
+    """Test new universal sleep metrics added for provider abstraction."""
+
+    def test_all_new_fields_optional(self):
+        data = SleepData(
+            date=date(2026, 2, 28),
+            start_datetime=datetime(2026, 2, 27, 23, 0),
+            end_datetime=datetime(2026, 2, 28, 6, 30),
+            total_sleep_hours=7.5,
+            wakeup_count=1,
+        )
+        assert data.sleep_efficiency is None
+        assert data.hr_average is None
+        assert data.hr_min is None
+        assert data.hr_max is None
+        assert data.rr_average is None
+        assert data.rr_min is None
+        assert data.rr_max is None
+        assert data.sleep_latency_min is None
+        assert data.out_of_bed_count is None
+
+    def test_new_fields_populated(self):
+        data = SleepData(
+            date=date(2026, 2, 28),
+            start_datetime=datetime(2026, 2, 27, 23, 0),
+            end_datetime=datetime(2026, 2, 28, 6, 30),
+            total_sleep_hours=7.5,
+            wakeup_count=1,
+            sleep_efficiency=92,
+            hr_average=58,
+            hr_min=48,
+            hr_max=72,
+            rr_average=14.5,
+            rr_min=12.0,
+            rr_max=18.0,
+            sleep_latency_min=12.5,
+            out_of_bed_count=1,
+        )
+        assert data.sleep_efficiency == 92
+        assert data.hr_average == 58
+        assert data.hr_min == 48
+        assert data.hr_max == 72
+        assert data.rr_average == 14.5
+        assert data.rr_min == 12.0
+        assert data.rr_max == 18.0
+        assert data.sleep_latency_min == 12.5
+        assert data.out_of_bed_count == 1
+
+    def test_sleep_efficiency_out_of_range_rejected(self):
+        with pytest.raises(ValidationError):
+            SleepData(
+                date=date(2026, 2, 28),
+                start_datetime=datetime(2026, 2, 27, 23, 0),
+                end_datetime=datetime(2026, 2, 28, 6, 30),
+                total_sleep_hours=7.5,
+                wakeup_count=1,
+                sleep_efficiency=110,
+            )
+
+    def test_new_fields_in_model_dump(self):
+        data = SleepData(
+            date=date(2026, 2, 28),
+            start_datetime=datetime(2026, 2, 27, 23, 0),
+            end_datetime=datetime(2026, 2, 28, 6, 30),
+            total_sleep_hours=7.5,
+            wakeup_count=1,
+            hr_average=55,
+        )
+        dumped = data.model_dump()
+        assert dumped["hr_average"] == 55
+        assert dumped["sleep_efficiency"] is None
+
+
+class TestTrainingReadinessNewFields:
+    """Test new readiness threshold fields."""
+
+    def test_new_fields_optional(self):
+        data = TrainingReadiness(
+            date=date(2026, 2, 28),
+            sleep_hours=7.5,
+            ready_for_intense=True,
+            recommended_intensity="all_systems_go",
+        )
+        assert data.sufficient_duration is None
+        assert data.deep_sleep_ok is None
+
+    def test_new_fields_populated(self):
+        data = TrainingReadiness(
+            date=date(2026, 2, 28),
+            sleep_hours=7.5,
+            ready_for_intense=True,
+            recommended_intensity="all_systems_go",
+            sufficient_duration=True,
+            deep_sleep_ok=True,
+        )
+        assert data.sufficient_duration is True
+        assert data.deep_sleep_ok is True
+
+    def test_new_fields_in_model_dump(self):
+        data = TrainingReadiness(
+            date=date(2026, 2, 28),
+            sleep_hours=5.0,
+            ready_for_intense=False,
+            recommended_intensity="recovery_only",
+            sufficient_duration=False,
+            deep_sleep_ok=False,
+        )
+        dumped = data.model_dump()
+        assert dumped["sufficient_duration"] is False
+        assert dumped["deep_sleep_ok"] is False
