@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 # Add project to path
-sys.path.insert(0, str(Path.home() / "magma-cycling"))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from magma_cycling.sync_intervals import IntervalsAPI  # noqa: E402
 from magma_cycling.workflow_state import WorkflowState  # noqa: E402
