@@ -111,6 +111,34 @@ def get_tools() -> list[Tool]:
             },
         ),
         Tool(
+            name="get-activity-streams",
+            description="Get raw time-series stream data for an activity with optional slicing and type filtering. Returns per-second data (watts, heartrate, cadence, etc.) with stats. Use start_index/end_index to zoom into a specific interval block without flooding the context.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "activity_id": {
+                        "type": "string",
+                        "description": "Activity ID (format: i107424849 or numeric)",
+                    },
+                    "types": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Filter stream types (e.g. ['watts', 'heartrate', 'cadence']). If omitted, returns all available streams.",
+                    },
+                    "start_index": {
+                        "type": "integer",
+                        "description": "Start index for slicing (inclusive, default: 0). Maps to seconds from activity start.",
+                        "default": 0,
+                    },
+                    "end_index": {
+                        "type": "integer",
+                        "description": "End index for slicing (exclusive, default: end of data). Use interval start_index/end_index from get-activity-intervals.",
+                    },
+                },
+                "required": ["activity_id"],
+            },
+        ),
+        Tool(
             name="compare-intervals",
             description="Compare interval data across multiple activities to track progression over time. Aligns intervals by label, calculates deltas and trends for metrics like power, HR, cadence, torque, decoupling.",
             inputSchema={

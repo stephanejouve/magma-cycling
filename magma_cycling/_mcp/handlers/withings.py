@@ -432,7 +432,7 @@ async def handle_withings_enrich_session(args: dict) -> list[TextContent]:
                 return [TextContent(type="text", text=json.dumps(result, indent=2))]
 
             # Get session date
-            session_date = date.fromisoformat(session.date)
+            session_date = session.session_date
 
             # Get sleep from previous night
             sleep_date = session_date - timedelta(days=1)
@@ -443,35 +443,32 @@ async def handle_withings_enrich_session(args: dict) -> list[TextContent]:
             # Get latest weight
             weight_data = withings_client.get_latest_weight()
 
-            # Initialize health_metrics if not present
-            if not hasattr(session, "health_metrics"):
-                session.health_metrics = {}
+            # Build health metrics dict (Session is a Pydantic model — no extra attrs)
+            health_metrics = {}
 
             # Add sleep metrics
             if sleep_data:
-                session.health_metrics["sleep_hours"] = sleep_data["total_sleep_hours"]
-                session.health_metrics["sleep_score"] = sleep_data.get("sleep_score")
-                session.health_metrics["deep_sleep_minutes"] = sleep_data.get("deep_sleep_minutes")
+                health_metrics["sleep_hours"] = sleep_data["total_sleep_hours"]
+                health_metrics["sleep_score"] = sleep_data.get("sleep_score")
+                health_metrics["deep_sleep_minutes"] = sleep_data.get("deep_sleep_minutes")
 
                 # Evaluate readiness
                 if auto_readiness_check:
                     readiness = withings_client.evaluate_training_readiness(sleep_data)
-                    session.health_metrics["training_readiness"] = readiness[
-                        "recommended_intensity"
-                    ]
-                    session.health_metrics["ready_for_intense"] = readiness["ready_for_intense"]
-                    session.health_metrics["veto_reasons"] = readiness["veto_reasons"]
-                    session.health_metrics["recommendations"] = readiness["recommendations"]
+                    health_metrics["training_readiness"] = readiness["recommended_intensity"]
+                    health_metrics["ready_for_intense"] = readiness["ready_for_intense"]
+                    health_metrics["veto_reasons"] = readiness["veto_reasons"]
+                    health_metrics["recommendations"] = readiness["recommendations"]
 
             # Add weight
             if weight_data:
-                session.health_metrics["weight_kg"] = weight_data["weight_kg"]
+                health_metrics["weight_kg"] = weight_data["weight_kg"]
 
             result = {
                 "week_id": week_id,
                 "session_id": session_id,
-                "session_date": session.date,
-                "health_metrics_added": session.health_metrics,
+                "session_date": str(session.session_date),
+                "health_metrics_added": health_metrics,
                 "status": "success",
             }
 
