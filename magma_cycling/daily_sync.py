@@ -63,7 +63,9 @@ from magma_cycling.planning.peaks_phases import (
     determine_training_phase,
     format_phase_recommendation,
 )
+from magma_cycling.planning.session_formatter import format_remaining_sessions_compact
 from magma_cycling.prepare_analysis import PromptGenerator
+from magma_cycling.utils.ai_response_parser import parse_ai_modifications
 from magma_cycling.utils.hot_reload import (
     hot_reload_if_needed,
     mark_modules_loaded,
@@ -972,7 +974,7 @@ class DailySync:
             feel_str = f"{metrics['feel']}/4" if metrics.get("feel") is not None else "Non fourni"
 
             # Generate servo prompt (same as workflow_coach)
-            planning_context = coach.format_remaining_sessions_compact(remaining_sessions)
+            planning_context = format_remaining_sessions_compact(remaining_sessions)
 
             servo_prompt = f"""# ASSERVISSEMENT PLANNING - Demande Coach AI.
 
@@ -1048,7 +1050,7 @@ Réponds maintenant."""
             print()
 
             # Parse modifications
-            modifications = coach.parse_ai_modifications(ai_response)
+            modifications = parse_ai_modifications(ai_response)
 
             result = {
                 "ai_response": ai_response,
