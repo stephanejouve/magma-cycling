@@ -586,7 +586,7 @@ Examples:
 
     Programmatic usage::
 
-        from cyclisme_training_logs.module import Class
+        from magma_cycling.module import Class
 
         obj = Class(param="value")
         result = obj.method()
@@ -615,7 +615,7 @@ DOCSTRING: v2 (Created Prompt 2)
 Examples:
     Basic usage::
 
-        from cyclisme_training_logs.core.module import Class
+        from magma_cycling.core.module import Class
 
         obj = Class()
         result = obj.method()

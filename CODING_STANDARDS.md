@@ -116,10 +116,10 @@ Les répertoires suivants sont exclus (code utilitaire/temporaire) :
 
 ```bash
 # Vérifier tout le projet
-poetry run pydocstyle cyclisme_training_logs/
+poetry run pydocstyle magma_cycling/
 
 # Vérifier un fichier spécifique
-poetry run pydocstyle cyclisme_training_logs/core/data_aggregator.py
+poetry run pydocstyle magma_cycling/core/data_aggregator.py
 
 # Exécuter tous les hooks pre-commit
 pre-commit run --all-files
@@ -156,7 +156,7 @@ ignore = E203,E501,W503
 
 **Vérification :**
 ```bash
-poetry run pycodestyle cyclisme_training_logs/ --ignore=E203,E501,W503
+poetry run pycodestyle magma_cycling/ --ignore=E203,E501,W503
 # ✅ 0 violations
 ```
 

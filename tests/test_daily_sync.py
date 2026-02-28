@@ -17,7 +17,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from cyclisme_training_logs.daily_sync import (
+from magma_cycling.daily_sync import (
     ActivityTracker,
     DailySync,
     calculate_current_week_info,
@@ -27,7 +27,7 @@ from cyclisme_training_logs.daily_sync import (
 class TestCalculateCurrentWeekInfo:
     """Test calculate_current_week_info function."""
 
-    @patch("cyclisme_training_logs.daily_sync.get_week_config")
+    @patch("magma_cycling.daily_sync.get_week_config")
     def test_calculate_current_week_info_default(self, mock_get_config):
         """Test calculating current week info for today."""
         # Mock config with S001 reference date
@@ -43,7 +43,7 @@ class TestCalculateCurrentWeekInfo:
         assert week_id == "S002"
         assert start_date == date(2024, 7, 22)
 
-    @patch("cyclisme_training_logs.daily_sync.get_week_config")
+    @patch("magma_cycling.daily_sync.get_week_config")
     def test_calculate_current_week_info_far_future(self, mock_get_config):
         """Test calculating week info for future date."""
         mock_config = MagicMock()
@@ -58,8 +58,8 @@ class TestCalculateCurrentWeekInfo:
         assert week_id == "S100"
         assert start_date == date(2024, 7, 15) + timedelta(weeks=99)
 
-    @patch("cyclisme_training_logs.daily_sync.get_week_config")
-    @patch("cyclisme_training_logs.daily_sync.date")
+    @patch("magma_cycling.daily_sync.get_week_config")
+    @patch("magma_cycling.daily_sync.date")
     def test_calculate_current_week_info_uses_today_by_default(self, mock_date, mock_get_config):
         """Test that None uses today's date."""
         mock_today = date(2024, 7, 22)
@@ -238,7 +238,7 @@ class TestDailySyncInit:
         reports_dir = tmp_path / "reports"
         return tracking_file, reports_dir
 
-    @patch("cyclisme_training_logs.daily_sync.create_intervals_client")
+    @patch("magma_cycling.daily_sync.create_intervals_client")
     def test_init_basic(self, mock_create_client, temp_paths):
         """Test basic initialization."""
         tracking_file, reports_dir = temp_paths
@@ -262,9 +262,9 @@ class TestDailySyncInit:
         # Reports dir should be created
         assert reports_dir.exists()
 
-    @patch("cyclisme_training_logs.daily_sync.create_intervals_client")
-    @patch("cyclisme_training_logs.daily_sync.get_ai_config")
-    @patch("cyclisme_training_logs.daily_sync.AIProviderFactory")
+    @patch("magma_cycling.daily_sync.create_intervals_client")
+    @patch("magma_cycling.daily_sync.get_ai_config")
+    @patch("magma_cycling.daily_sync.AIProviderFactory")
     def test_init_with_ai_analysis(
         self, mock_ai_factory, mock_get_ai_config, mock_create_client, temp_paths
     ):
@@ -296,8 +296,8 @@ class TestDailySyncInit:
         assert daily_sync.prompt_generator is not None
         assert daily_sync.history_manager is not None
 
-    @patch("cyclisme_training_logs.daily_sync.create_intervals_client")
-    @patch("cyclisme_training_logs.daily_sync.get_ai_config")
+    @patch("magma_cycling.daily_sync.create_intervals_client")
+    @patch("magma_cycling.daily_sync.get_ai_config")
     def test_init_ai_analysis_no_provider(self, mock_get_ai_config, mock_create_client, temp_paths):
         """Test initialization with AI analysis but no provider configured."""
         tracking_file, reports_dir = temp_paths
@@ -328,7 +328,7 @@ class TestDailySyncDetectDuplicates:
     @pytest.fixture
     def daily_sync_instance(self, tmp_path):
         """Create DailySync instance for testing."""
-        with patch("cyclisme_training_logs.daily_sync.create_intervals_client"):
+        with patch("magma_cycling.daily_sync.create_intervals_client"):
             return DailySync(
                 tracking_file=tmp_path / "tracking.json",
                 reports_dir=tmp_path / "reports",
@@ -417,7 +417,7 @@ class TestDetectDuplicatesEdgeCases:
 
     @pytest.fixture
     def ds(self, tmp_path):
-        with patch("cyclisme_training_logs.daily_sync.create_intervals_client"):
+        with patch("magma_cycling.daily_sync.create_intervals_client"):
             return DailySync(
                 tracking_file=tmp_path / "tracking.json",
                 reports_dir=tmp_path / "reports",
@@ -501,7 +501,7 @@ class TestCheckActivitiesVerbose:
 
     @pytest.fixture
     def ds(self, tmp_path):
-        with patch("cyclisme_training_logs.daily_sync.create_intervals_client") as mock_client:
+        with patch("magma_cycling.daily_sync.create_intervals_client") as mock_client:
             mock_client.return_value = MagicMock()
             ds = DailySync(
                 tracking_file=tmp_path / "tracking.json",
@@ -526,7 +526,7 @@ class TestIsLowEffortSocialRide:
 
     @pytest.fixture
     def daily_sync_instance(self, tmp_path):
-        with patch("cyclisme_training_logs.daily_sync.create_intervals_client"):
+        with patch("magma_cycling.daily_sync.create_intervals_client"):
             return DailySync(
                 tracking_file=tmp_path / "tracking.json",
                 reports_dir=tmp_path / "reports",
@@ -595,7 +595,7 @@ class TestShouldTriggerServo:
 
     @pytest.fixture
     def ds(self, tmp_path):
-        with patch("cyclisme_training_logs.daily_sync.create_intervals_client"):
+        with patch("magma_cycling.daily_sync.create_intervals_client"):
             return DailySync(
                 tracking_file=tmp_path / "tracking.json",
                 reports_dir=tmp_path / "reports",
@@ -693,7 +693,7 @@ class TestExtractMetricsFromActivity:
 
     @pytest.fixture
     def ds(self, tmp_path):
-        with patch("cyclisme_training_logs.daily_sync.create_intervals_client"):
+        with patch("magma_cycling.daily_sync.create_intervals_client"):
             return DailySync(
                 tracking_file=tmp_path / "tracking.json",
                 reports_dir=tmp_path / "reports",
@@ -750,7 +750,7 @@ class TestExtractMetricsFromActivity:
 
 def _make_ds(tmp_path, **kwargs):
     """Helper: créer un DailySync sans credentials réels."""
-    with patch("cyclisme_training_logs.daily_sync.create_intervals_client"):
+    with patch("magma_cycling.daily_sync.create_intervals_client"):
         return DailySync(
             tracking_file=tmp_path / "tracking.json",
             reports_dir=tmp_path / "reports",
@@ -900,13 +900,13 @@ class TestCheckPlanningChangesErrors:
         return _make_ds(tmp_path)
 
     def test_file_not_found_returns_status_none(self, ds):
-        with patch("cyclisme_training_logs.daily_sync.planning_tower") as mock_tower:
+        with patch("magma_cycling.daily_sync.planning_tower") as mock_tower:
             mock_tower.read_week.side_effect = FileNotFoundError("no file")
             result = ds.check_planning_changes("S999", date(2026, 2, 17), date(2026, 2, 23))
         assert result == {"status": None, "diff": None}
 
     def test_json_decode_error_returns_status_none(self, ds):
-        with patch("cyclisme_training_logs.daily_sync.planning_tower") as mock_tower:
+        with patch("magma_cycling.daily_sync.planning_tower") as mock_tower:
             mock_tower.read_week.side_effect = json.JSONDecodeError("err", "", 0)
             result = ds.check_planning_changes("S999", date(2026, 2, 17), date(2026, 2, 23))
         assert result == {"status": None, "diff": None}
@@ -993,7 +993,7 @@ class TestUpdateCompletedSessions:
         mock_plan = Mock()
         mock_plan.planned_sessions = [mock_session]
 
-        with patch("cyclisme_training_logs.daily_sync.planning_tower") as mock_tower:
+        with patch("magma_cycling.daily_sync.planning_tower") as mock_tower:
             mock_tower.modify_week.return_value.__enter__ = Mock(return_value=mock_plan)
             mock_tower.modify_week.return_value.__exit__ = Mock(return_value=False)
             ds.update_completed_sessions(activities)
@@ -1024,7 +1024,7 @@ class TestUpdateCompletedSessions:
         mock_plan = Mock()
         mock_plan.planned_sessions = [mock_session]
 
-        with patch("cyclisme_training_logs.daily_sync.planning_tower") as mock_tower:
+        with patch("magma_cycling.daily_sync.planning_tower") as mock_tower:
             mock_tower.modify_week.return_value.__enter__ = Mock(return_value=mock_plan)
             mock_tower.modify_week.return_value.__exit__ = Mock(return_value=False)
             ds.update_completed_sessions(activities)
@@ -1049,7 +1049,7 @@ class TestUpdateCompletedSessions:
                 "start_date_local": "2026-02-24T10:00:00+00:00",
             },
         ]
-        with patch("cyclisme_training_logs.daily_sync.planning_tower") as mock_tower:
+        with patch("magma_cycling.daily_sync.planning_tower") as mock_tower:
             mock_tower.modify_week.side_effect = FileNotFoundError("no planning")
             result = ds.update_completed_sessions(activities)
 
@@ -1288,7 +1288,7 @@ class TestGenerateReport:
         """Compensation section written when compensation_result provided."""
         compensation_result = {"context": Mock(), "recommendations": Mock()}
         with patch(
-            "cyclisme_training_logs.daily_sync.format_compensation_section",
+            "magma_cycling.daily_sync.format_compensation_section",
             return_value="## Compensation\n\nAugmenter volume.\n",
         ):
             report = ds.generate_report(
@@ -1317,11 +1317,11 @@ class TestGenerateReport:
         }
         with (
             patch(
-                "cyclisme_training_logs.daily_sync.format_phase_recommendation",
+                "magma_cycling.daily_sync.format_phase_recommendation",
                 return_value="Phase: Build\n",
             ),
             patch(
-                "cyclisme_training_logs.daily_sync.format_integrated_recommendation",
+                "magma_cycling.daily_sync.format_integrated_recommendation",
                 return_value="PID: +3 CTL/week\n",
             ),
         ):
@@ -1371,7 +1371,7 @@ class TestUpdateCompletedSessionsEdgeCases:
         mock_plan = Mock()
         mock_plan.planned_sessions = []  # No sessions → not found in planning
 
-        with patch("cyclisme_training_logs.daily_sync.planning_tower") as mock_tower:
+        with patch("magma_cycling.daily_sync.planning_tower") as mock_tower:
             mock_tower.modify_week.return_value.__enter__ = Mock(return_value=mock_plan)
             mock_tower.modify_week.return_value.__exit__ = Mock(return_value=False)
             result = ds.update_completed_sessions(self._activities())
@@ -1383,7 +1383,7 @@ class TestUpdateCompletedSessionsEdgeCases:
         """Generic exception from planning_tower.modify_week is caught."""
         ds.client.get_events.return_value = self._workouts()
 
-        with patch("cyclisme_training_logs.daily_sync.planning_tower") as mock_tower:
+        with patch("magma_cycling.daily_sync.planning_tower") as mock_tower:
             mock_tower.modify_week.side_effect = RuntimeError("unexpected error")
             result = ds.update_completed_sessions(self._activities())
 
@@ -1410,12 +1410,10 @@ class TestCheckPlanningChangesSuccess:
         mock_sync_instance.get_sync_status.return_value = mock_status
 
         with (
-            patch("cyclisme_training_logs.daily_sync.planning_tower") as mock_tower,
-            patch("cyclisme_training_logs.daily_sync.AthleteProfile") as mock_ap,
-            patch("cyclisme_training_logs.daily_sync.TrainingCalendar", return_value=Mock()),
-            patch(
-                "cyclisme_training_logs.daily_sync.IntervalsSync", return_value=mock_sync_instance
-            ),
+            patch("magma_cycling.daily_sync.planning_tower") as mock_tower,
+            patch("magma_cycling.daily_sync.AthleteProfile") as mock_ap,
+            patch("magma_cycling.daily_sync.TrainingCalendar", return_value=Mock()),
+            patch("magma_cycling.daily_sync.IntervalsSync", return_value=mock_sync_instance),
         ):
             mock_tower.read_week.return_value = mock_plan
             mock_ap.from_env.return_value = Mock()
@@ -1447,12 +1445,10 @@ class TestCheckPlanningChangesSuccess:
         mock_calendar.add_session.return_value = mock_cal_session
 
         with (
-            patch("cyclisme_training_logs.daily_sync.planning_tower") as mock_tower,
-            patch("cyclisme_training_logs.daily_sync.AthleteProfile") as mock_ap,
-            patch("cyclisme_training_logs.daily_sync.TrainingCalendar", return_value=mock_calendar),
-            patch(
-                "cyclisme_training_logs.daily_sync.IntervalsSync", return_value=mock_sync_instance
-            ),
+            patch("magma_cycling.daily_sync.planning_tower") as mock_tower,
+            patch("magma_cycling.daily_sync.AthleteProfile") as mock_ap,
+            patch("magma_cycling.daily_sync.TrainingCalendar", return_value=mock_calendar),
+            patch("magma_cycling.daily_sync.IntervalsSync", return_value=mock_sync_instance),
         ):
             mock_tower.read_week.return_value = mock_plan
             mock_ap.from_env.return_value = Mock()
@@ -1499,12 +1495,10 @@ class TestCheckPlanningChangesSundaySession:
         mock_calendar = Mock()
 
         with (
-            patch("cyclisme_training_logs.daily_sync.planning_tower") as mock_tower,
-            patch("cyclisme_training_logs.daily_sync.AthleteProfile") as mock_ap,
-            patch("cyclisme_training_logs.daily_sync.TrainingCalendar", return_value=mock_calendar),
-            patch(
-                "cyclisme_training_logs.daily_sync.IntervalsSync", return_value=mock_sync_instance
-            ),
+            patch("magma_cycling.daily_sync.planning_tower") as mock_tower,
+            patch("magma_cycling.daily_sync.AthleteProfile") as mock_ap,
+            patch("magma_cycling.daily_sync.TrainingCalendar", return_value=mock_calendar),
+            patch("magma_cycling.daily_sync.IntervalsSync", return_value=mock_sync_instance),
         ):
             mock_tower.read_week.return_value = mock_plan
             mock_ap.from_env.return_value = Mock()

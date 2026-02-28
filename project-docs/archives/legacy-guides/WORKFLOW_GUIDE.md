@@ -458,7 +458,7 @@ Pour modifier le contexte, éditer directement ces fichiers markdown.
 pwd
 
 # Naviguer vers la racine du projet
-cd /Users/stephanejouve/cyclisme-training-logs
+cd /Users/stephanejouve/magma-cycling
 
 # Relancer
 python3 scripts/workflow_coach.py

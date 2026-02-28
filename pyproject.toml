@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "cyclisme-training-logs"
+name = "magma-cycling"
 version = "2.2.0"
 description = "Système automatisé d'analyse entraînements cyclisme"
 authors = ["Stéphane"]
 readme = "README.md"
-packages = [{include = "cyclisme_training_logs"}]
+packages = [{include = "magma_cycling"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -51,57 +51,57 @@ pytest-asyncio = "^1.3.0"
 
 [tool.poetry.scripts]
 # === MCP Server ===
-mcp-server = "cyclisme_training_logs.mcp_server:main"
+mcp-server = "magma_cycling.mcp_server:main"
 
 # === Dashboard & Overview ===
-dashboard = "cyclisme_training_logs.dashboard:main"
+dashboard = "magma_cycling.dashboard:main"
 
 # === Scripts Principaux (Usage Quotidien) ===
-weekly-analysis = "cyclisme_training_logs.workflows.workflow_weekly:main"
-weekly-analysis-legacy = "cyclisme_training_logs.weekly_analysis:main"  # DEPRECATED - Gartner E
-monthly-analysis = "cyclisme_training_logs.monthly_analysis:main"
-upload-workouts = "cyclisme_training_logs.upload_workouts:main"
-prepare-analysis = "cyclisme_training_logs.prepare_analysis:main"
+weekly-analysis = "magma_cycling.workflows.workflow_weekly:main"
+weekly-analysis-legacy = "magma_cycling.weekly_analysis:main"  # DEPRECATED - Gartner E
+monthly-analysis = "magma_cycling.monthly_analysis:main"
+upload-workouts = "magma_cycling.upload_workouts:main"
+prepare-analysis = "magma_cycling.prepare_analysis:main"
 
 # === Workflow & Automation ===
-collect-feedback = "cyclisme_training_logs.collect_athlete_feedback:main"
-workflow-coach = "cyclisme_training_logs.workflow_coach:main"
-end-of-week = "cyclisme_training_logs.workflows.end_of_week:main"
-daily-sync = "cyclisme_training_logs.daily_sync:main"
-insert-analysis = "cyclisme_training_logs.insert_analysis:main"
-manage-state = "cyclisme_training_logs.manage_workflow_state:main"
-backfill-history = "cyclisme_training_logs.scripts.backfill_history:main"
+collect-feedback = "magma_cycling.collect_athlete_feedback:main"
+workflow-coach = "magma_cycling.workflow_coach:main"
+end-of-week = "magma_cycling.workflows.end_of_week:main"
+daily-sync = "magma_cycling.daily_sync:main"
+insert-analysis = "magma_cycling.insert_analysis:main"
+manage-state = "magma_cycling.manage_workflow_state:main"
+backfill-history = "magma_cycling.scripts.backfill_history:main"
 
 # === Utilitaires ===
-sync-intervals = "cyclisme_training_logs.sync_intervals:main"
-planned-checker = "cyclisme_training_logs.planned_sessions_checker:main"
-update-session = "cyclisme_training_logs.update_session_status:main"
-shift-sessions = "cyclisme_training_logs.shift_sessions:main"
-stats = "cyclisme_training_logs.stats:main"
-validate-templates = "cyclisme_training_logs.scripts.validate_templates:main"
-backfill-intelligence = "cyclisme_training_logs.scripts.backfill_intelligence:main"
+sync-intervals = "magma_cycling.sync_intervals:main"
+planned-checker = "magma_cycling.planned_sessions_checker:main"
+update-session = "magma_cycling.update_session_status:main"
+shift-sessions = "magma_cycling.shift_sessions:main"
+stats = "magma_cycling.stats:main"
+validate-templates = "magma_cycling.scripts.validate_templates:main"
+backfill-intelligence = "magma_cycling.scripts.backfill_intelligence:main"
 
 # === Rapports & Organisation ===
-organize-report = "cyclisme_training_logs.organize_weekly_report:main"
-weekly-planner = "cyclisme_training_logs.weekly_planner:main"
-generate-report = "cyclisme_training_logs.reports.cli:main"
+organize-report = "magma_cycling.organize_weekly_report:main"
+weekly-planner = "magma_cycling.weekly_planner:main"
+generate-report = "magma_cycling.reports.cli:main"
 
 # === External Data Sources ===
-search-zwift-workouts = "cyclisme_training_logs.scripts.search_zwift_workouts:main"
-populate-zwift-cache = "cyclisme_training_logs.scripts.populate_zwift_cache:main"
-seed-zwift-workouts = "cyclisme_training_logs.scripts.seed_zwift_workouts:main"
+search-zwift-workouts = "magma_cycling.scripts.search_zwift_workouts:main"
+populate-zwift-cache = "magma_cycling.scripts.populate_zwift_cache:main"
+seed-zwift-workouts = "magma_cycling.scripts.seed_zwift_workouts:main"
 
 # === Debug & Validation ===
-check-sources = "cyclisme_training_logs.check_activity_sources:main"
-validate-naming = "cyclisme_training_logs.validate_naming_convention:main"
-normalize-reports = "cyclisme_training_logs.normalize_weekly_reports_casing:main"
+check-sources = "magma_cycling.check_activity_sources:main"
+validate-naming = "magma_cycling.validate_naming_convention:main"
+normalize-reports = "magma_cycling.normalize_weekly_reports_casing:main"
 
 # === Monitoring ===
 check-workout-adherence = "scripts.monitoring.check_workout_adherence:main"
-pid-daily-evaluation = "cyclisme_training_logs.scripts.pid_daily_evaluation:main"
+pid-daily-evaluation = "magma_cycling.scripts.pid_daily_evaluation:main"
 
 # === Analysis ===
-analyze-baseline = "cyclisme_training_logs.analysis.baseline_preliminary:main"
+analyze-baseline = "magma_cycling.analysis.baseline_preliminary:main"
 
 # === Maintenance & Cleanup ===
 cleanup-archives = "scripts.maintenance.cleanup_old_archives:main"
@@ -152,7 +152,7 @@ exclude = [
 [tool.poe.tasks]
 # Tests
 test = "pytest tests/ -v"
-test-cov = "pytest tests/ -v --cov=cyclisme_training_logs --cov-report=html"
+test-cov = "pytest tests/ -v --cov=magma_cycling --cov-report=html"
 test-intelligence = "pytest tests/intelligence/ -v"
 test-planning = "pytest tests/planning/ -v"
 test-quick = "pytest tests/ -x -v"
@@ -162,7 +162,7 @@ lint = "ruff check ."
 lint-fix = "ruff check . --fix"
 format = "black ."
 format-check = "black . --check"
-type-check = "mypy cyclisme_training_logs/"
+type-check = "mypy magma_cycling/"
 
 # All checks
 check = ["format-check", "lint", "type-check", "test"]

@@ -15,9 +15,9 @@ import pytest
 pytest_plugins = ("pytest_asyncio",)
 
 # Common patch paths
-TOWER_PATCH = "cyclisme_training_logs.planning.control_tower.planning_tower"
-INTERVALS_PATCH = "cyclisme_training_logs.config.create_intervals_client"
-DATA_CONFIG_PATCH = "cyclisme_training_logs.config.get_data_config"
+TOWER_PATCH = "magma_cycling.planning.control_tower.planning_tower"
+INTERVALS_PATCH = "magma_cycling.config.create_intervals_client"
+DATA_CONFIG_PATCH = "magma_cycling.config.get_data_config"
 
 
 # =======================
@@ -149,7 +149,7 @@ def mock_intervals():
 class TestHandleListWeeks:
     @pytest.mark.asyncio
     async def test_empty_dir_returns_zero_weeks(self, tmp_path):
-        from cyclisme_training_logs.mcp_server import handle_list_weeks
+        from magma_cycling.mcp_server import handle_list_weeks
 
         mc = Mock()
         mc.week_planning_dir = tmp_path
@@ -161,7 +161,7 @@ class TestHandleListWeeks:
 
     @pytest.mark.asyncio
     async def test_with_planning_file(self, tmp_path):
-        from cyclisme_training_logs.mcp_server import handle_list_weeks
+        from magma_cycling.mcp_server import handle_list_weeks
 
         week_data = {
             "week_id": "S081",
@@ -182,7 +182,7 @@ class TestHandleListWeeks:
 
     @pytest.mark.asyncio
     async def test_recent_reverses_order(self, tmp_path):
-        from cyclisme_training_logs.mcp_server import handle_list_weeks
+        from magma_cycling.mcp_server import handle_list_weeks
 
         for wid in ["S080", "S081"]:
             week_data = {
@@ -203,7 +203,7 @@ class TestHandleListWeeks:
 
     @pytest.mark.asyncio
     async def test_limit_applied(self, tmp_path):
-        from cyclisme_training_logs.mcp_server import handle_list_weeks
+        from magma_cycling.mcp_server import handle_list_weeks
 
         for wid in ["S080", "S081", "S082"]:
             week_data = {
@@ -230,7 +230,7 @@ class TestHandleListWeeks:
 class TestHandleGetWeekDetails:
     @pytest.mark.asyncio
     async def test_success_returns_plan(self, mock_tower, mock_plan, mock_session):
-        from cyclisme_training_logs.mcp_server import handle_get_week_details
+        from magma_cycling.mcp_server import handle_get_week_details
 
         with patch(TOWER_PATCH, mock_tower):
             result = await handle_get_week_details({"week_id": "S081"})
@@ -241,7 +241,7 @@ class TestHandleGetWeekDetails:
 
     @pytest.mark.asyncio
     async def test_file_not_found_returns_error(self, mock_tower):
-        from cyclisme_training_logs.mcp_server import handle_get_week_details
+        from magma_cycling.mcp_server import handle_get_week_details
 
         mock_tower.read_week.side_effect = FileNotFoundError("not found")
         with patch(TOWER_PATCH, mock_tower):
@@ -252,7 +252,7 @@ class TestHandleGetWeekDetails:
 
     @pytest.mark.asyncio
     async def test_generic_exception_returns_error(self, mock_tower):
-        from cyclisme_training_logs.mcp_server import handle_get_week_details
+        from magma_cycling.mcp_server import handle_get_week_details
 
         mock_tower.read_week.side_effect = RuntimeError("internal error")
         with patch(TOWER_PATCH, mock_tower):
@@ -269,7 +269,7 @@ class TestHandleGetWeekDetails:
 class TestHandleModifySessionDetails:
     @pytest.mark.asyncio
     async def test_success_modifies_name(self, mock_tower, mock_session):
-        from cyclisme_training_logs.mcp_server import handle_modify_session_details
+        from magma_cycling.mcp_server import handle_modify_session_details
 
         args = {"week_id": "S081", "session_id": "S081-03", "name": "NewName", "tss_planned": 70}
         with patch(TOWER_PATCH, mock_tower):
@@ -280,7 +280,7 @@ class TestHandleModifySessionDetails:
 
     @pytest.mark.asyncio
     async def test_no_changes_still_succeeds(self, mock_tower):
-        from cyclisme_training_logs.mcp_server import handle_modify_session_details
+        from magma_cycling.mcp_server import handle_modify_session_details
 
         args = {"week_id": "S081", "session_id": "S081-03"}
         with patch(TOWER_PATCH, mock_tower):
@@ -290,7 +290,7 @@ class TestHandleModifySessionDetails:
 
     @pytest.mark.asyncio
     async def test_session_not_found_returns_value_error(self, mock_tower):
-        from cyclisme_training_logs.mcp_server import handle_modify_session_details
+        from magma_cycling.mcp_server import handle_modify_session_details
 
         args = {"week_id": "S081", "session_id": "S081-99"}
         with patch(TOWER_PATCH, mock_tower):
@@ -300,7 +300,7 @@ class TestHandleModifySessionDetails:
 
     @pytest.mark.asyncio
     async def test_file_not_found_returns_error(self, mock_tower):
-        from cyclisme_training_logs.mcp_server import handle_modify_session_details
+        from magma_cycling.mcp_server import handle_modify_session_details
 
         mock_tower.modify_week.side_effect = FileNotFoundError("not found")
         args = {"week_id": "S099", "session_id": "S099-01"}
@@ -311,7 +311,7 @@ class TestHandleModifySessionDetails:
 
     @pytest.mark.asyncio
     async def test_generic_exception_returns_error(self, mock_tower):
-        from cyclisme_training_logs.mcp_server import handle_modify_session_details
+        from magma_cycling.mcp_server import handle_modify_session_details
 
         mock_tower.modify_week.side_effect = RuntimeError("boom")
         args = {"week_id": "S081", "session_id": "S081-03"}
@@ -329,7 +329,7 @@ class TestHandleModifySessionDetails:
 class TestHandleCreateSession:
     @pytest.mark.asyncio
     async def test_success_creates_session(self, mock_tower, mock_plan):
-        from cyclisme_training_logs.mcp_server import handle_create_session
+        from magma_cycling.mcp_server import handle_create_session
 
         # Thursday = weekday 3, day_index 4
         args = {
@@ -348,7 +348,7 @@ class TestHandleCreateSession:
 
     @pytest.mark.asyncio
     async def test_default_values(self, mock_tower, mock_plan):
-        from cyclisme_training_logs.mcp_server import handle_create_session
+        from magma_cycling.mcp_server import handle_create_session
 
         # Saturday = day_index 6
         args = {"week_id": "S081", "session_date": "2026-02-21"}
@@ -360,7 +360,7 @@ class TestHandleCreateSession:
 
     @pytest.mark.asyncio
     async def test_file_not_found_returns_error(self, mock_tower):
-        from cyclisme_training_logs.mcp_server import handle_create_session
+        from magma_cycling.mcp_server import handle_create_session
 
         mock_tower.modify_week.side_effect = FileNotFoundError("not found")
         args = {"week_id": "S099", "session_date": "2026-02-19"}
@@ -372,7 +372,7 @@ class TestHandleCreateSession:
     @pytest.mark.asyncio
     async def test_double_session_gets_letter_suffix(self, mock_tower, mock_plan, mock_session):
         """When there's already a session on the same date, new one gets 'a' suffix."""
-        from cyclisme_training_logs.mcp_server import handle_create_session
+        from magma_cycling.mcp_server import handle_create_session
 
         # mock_session is on 2026-02-19 (Thursday = day_index 4), no suffix
         args = {
@@ -396,7 +396,7 @@ class TestHandleCreateSession:
 class TestHandleDeleteSession:
     @pytest.mark.asyncio
     async def test_success_deletes_session(self, mock_tower, mock_session, mock_plan):
-        from cyclisme_training_logs.mcp_server import handle_delete_session
+        from magma_cycling.mcp_server import handle_delete_session
 
         args = {"week_id": "S081", "session_id": "S081-03"}
         with patch(TOWER_PATCH, mock_tower):
@@ -407,7 +407,7 @@ class TestHandleDeleteSession:
 
     @pytest.mark.asyncio
     async def test_completed_session_raises_value_error(self, mock_plan, mock_session):
-        from cyclisme_training_logs.mcp_server import handle_delete_session
+        from magma_cycling.mcp_server import handle_delete_session
 
         mock_session.status = "completed"
         tower = make_tower(mock_plan)
@@ -420,7 +420,7 @@ class TestHandleDeleteSession:
 
     @pytest.mark.asyncio
     async def test_synced_session_raises_value_error(self, mock_plan, mock_session):
-        from cyclisme_training_logs.mcp_server import handle_delete_session
+        from magma_cycling.mcp_server import handle_delete_session
 
         mock_session.intervals_id = 12345
         tower = make_tower(mock_plan)
@@ -432,7 +432,7 @@ class TestHandleDeleteSession:
 
     @pytest.mark.asyncio
     async def test_session_not_found_returns_error(self, mock_tower):
-        from cyclisme_training_logs.mcp_server import handle_delete_session
+        from magma_cycling.mcp_server import handle_delete_session
 
         args = {"week_id": "S081", "session_id": "S081-99"}
         with patch(TOWER_PATCH, mock_tower):
@@ -442,7 +442,7 @@ class TestHandleDeleteSession:
 
     @pytest.mark.asyncio
     async def test_file_not_found_returns_error(self, mock_tower):
-        from cyclisme_training_logs.mcp_server import handle_delete_session
+        from magma_cycling.mcp_server import handle_delete_session
 
         mock_tower.modify_week.side_effect = FileNotFoundError("not found")
         args = {"week_id": "S099", "session_id": "S099-01"}
@@ -460,7 +460,7 @@ class TestHandleDeleteSession:
 class TestHandleDuplicateSession:
     @pytest.mark.asyncio
     async def test_success_duplicates_to_new_date(self, mock_tower, mock_plan, mock_session):
-        from cyclisme_training_logs.mcp_server import handle_duplicate_session
+        from magma_cycling.mcp_server import handle_duplicate_session
 
         # Target Friday (weekday 4, day_index 5) - no session there
         args = {
@@ -477,7 +477,7 @@ class TestHandleDuplicateSession:
 
     @pytest.mark.asyncio
     async def test_source_not_found_returns_error(self, mock_tower):
-        from cyclisme_training_logs.mcp_server import handle_duplicate_session
+        from magma_cycling.mcp_server import handle_duplicate_session
 
         args = {
             "week_id": "S081",
@@ -491,7 +491,7 @@ class TestHandleDuplicateSession:
 
     @pytest.mark.asyncio
     async def test_file_not_found_returns_error(self, mock_tower):
-        from cyclisme_training_logs.mcp_server import handle_duplicate_session
+        from magma_cycling.mcp_server import handle_duplicate_session
 
         mock_tower.modify_week.side_effect = FileNotFoundError("not found")
         args = {
@@ -513,7 +513,7 @@ class TestHandleDuplicateSession:
 class TestHandleSwapSessions:
     @pytest.mark.asyncio
     async def test_success_swaps_dates(self, mock_plan, mock_session, mock_session2):
-        from cyclisme_training_logs.mcp_server import handle_swap_sessions
+        from magma_cycling.mcp_server import handle_swap_sessions
 
         mock_plan.planned_sessions = [mock_session, mock_session2]
         tower = make_tower(mock_plan)
@@ -529,7 +529,7 @@ class TestHandleSwapSessions:
 
     @pytest.mark.asyncio
     async def test_session_1_not_found_returns_error(self, mock_tower, mock_plan):
-        from cyclisme_training_logs.mcp_server import handle_swap_sessions
+        from magma_cycling.mcp_server import handle_swap_sessions
 
         args = {"week_id": "S081", "session_id_1": "S081-99", "session_id_2": "S081-03"}
         with patch(TOWER_PATCH, mock_tower):
@@ -539,7 +539,7 @@ class TestHandleSwapSessions:
 
     @pytest.mark.asyncio
     async def test_completed_session_blocked(self, mock_plan, mock_session, mock_session2):
-        from cyclisme_training_logs.mcp_server import handle_swap_sessions
+        from magma_cycling.mcp_server import handle_swap_sessions
 
         mock_session.status = "completed"
         mock_plan.planned_sessions = [mock_session, mock_session2]
@@ -552,7 +552,7 @@ class TestHandleSwapSessions:
 
     @pytest.mark.asyncio
     async def test_file_not_found_returns_error(self, mock_tower):
-        from cyclisme_training_logs.mcp_server import handle_swap_sessions
+        from magma_cycling.mcp_server import handle_swap_sessions
 
         mock_tower.modify_week.side_effect = FileNotFoundError("not found")
         args = {"week_id": "S099", "session_id_1": "S099-01", "session_id_2": "S099-02"}
@@ -564,7 +564,7 @@ class TestHandleSwapSessions:
     @pytest.mark.asyncio
     async def test_swap_updates_remote_events(self, mock_plan, mock_session, mock_session2):
         """Enhancement: swap updates remote events with new name + date."""
-        from cyclisme_training_logs.mcp_server import handle_swap_sessions
+        from magma_cycling.mcp_server import handle_swap_sessions
 
         mock_session.intervals_id = "evt1"
         mock_session2.intervals_id = "evt2"
@@ -595,7 +595,7 @@ class TestHandleSwapSessions:
     @pytest.mark.asyncio
     async def test_swap_session_ids_are_exchanged(self, mock_plan, mock_session, mock_session2):
         """Session IDs are swapped so day index matches the new date."""
-        from cyclisme_training_logs.mcp_server import handle_swap_sessions
+        from magma_cycling.mcp_server import handle_swap_sessions
 
         mock_plan.planned_sessions = [mock_session, mock_session2]
         tower = make_tower(mock_plan)
@@ -618,7 +618,7 @@ class TestHandleSwapSessions:
         self, mock_plan, mock_session, mock_session2
     ):
         """No remote update when sessions lack intervals_id."""
-        from cyclisme_training_logs.mcp_server import handle_swap_sessions
+        from magma_cycling.mcp_server import handle_swap_sessions
 
         mock_session.intervals_id = None
         mock_session2.intervals_id = "evt2"  # Only one has id
@@ -648,7 +648,7 @@ class TestHandleSwapSessions:
 class TestHandleAttachWorkout:
     @pytest.mark.asyncio
     async def test_success_writes_file(self, tmp_path):
-        from cyclisme_training_logs.mcp_server import handle_attach_workout
+        from magma_cycling.mcp_server import handle_attach_workout
 
         mc = Mock()
         mc.data_repo_path = tmp_path
@@ -667,7 +667,7 @@ class TestHandleAttachWorkout:
 
     @pytest.mark.asyncio
     async def test_custom_type_and_extension(self, tmp_path):
-        from cyclisme_training_logs.mcp_server import handle_attach_workout
+        from magma_cycling.mcp_server import handle_attach_workout
 
         mc = Mock()
         mc.data_repo_path = tmp_path
@@ -694,7 +694,7 @@ class TestHandleAttachWorkout:
 class TestHandleGetWorkout:
     @pytest.mark.asyncio
     async def test_workout_not_found_returns_planning_description(self, tmp_path):
-        from cyclisme_training_logs.mcp_server import handle_get_workout
+        from magma_cycling.mcp_server import handle_get_workout
 
         mock_session = Mock()
         mock_session.session_id = "S081-03"
@@ -727,7 +727,7 @@ class TestHandleGetWorkout:
 
     @pytest.mark.asyncio
     async def test_workout_found_returns_content(self, tmp_path):
-        from cyclisme_training_logs.mcp_server import handle_get_workout
+        from magma_cycling.mcp_server import handle_get_workout
 
         workouts_dir = tmp_path / "workouts"
         workouts_dir.mkdir()
@@ -752,13 +752,13 @@ class TestHandleGetWorkout:
 class TestHandleValidateWorkout:
     @pytest.mark.asyncio
     async def test_valid_workout(self):
-        from cyclisme_training_logs.mcp_server import handle_validate_workout
+        from magma_cycling.mcp_server import handle_validate_workout
 
         mock_validator = Mock()
         mock_validator.validate_workout.return_value = (True, [], [])
 
         with patch(
-            "cyclisme_training_logs.intervals_format_validator.IntervalsFormatValidator",
+            "magma_cycling.intervals_format_validator.IntervalsFormatValidator",
             return_value=mock_validator,
         ):
             result = await handle_validate_workout({"workout_text": "valid workout text"})
@@ -768,7 +768,7 @@ class TestHandleValidateWorkout:
 
     @pytest.mark.asyncio
     async def test_invalid_workout_with_auto_fix(self):
-        from cyclisme_training_logs.mcp_server import handle_validate_workout
+        from magma_cycling.mcp_server import handle_validate_workout
 
         mock_validator = Mock()
         mock_validator.validate_workout.side_effect = [
@@ -778,7 +778,7 @@ class TestHandleValidateWorkout:
         mock_validator.fix_repetition_format.return_value = "fixed workout text"
 
         with patch(
-            "cyclisme_training_logs.intervals_format_validator.IntervalsFormatValidator",
+            "magma_cycling.intervals_format_validator.IntervalsFormatValidator",
             return_value=mock_validator,
         ):
             result = await handle_validate_workout(
@@ -793,13 +793,13 @@ class TestHandleValidateWorkout:
 
     @pytest.mark.asyncio
     async def test_invalid_workout_no_auto_fix(self):
-        from cyclisme_training_logs.mcp_server import handle_validate_workout
+        from magma_cycling.mcp_server import handle_validate_workout
 
         mock_validator = Mock()
         mock_validator.validate_workout.return_value = (False, ["bad format"], [])
 
         with patch(
-            "cyclisme_training_logs.intervals_format_validator.IntervalsFormatValidator",
+            "magma_cycling.intervals_format_validator.IntervalsFormatValidator",
             return_value=mock_validator,
         ):
             result = await handle_validate_workout({"workout_text": "bad workout"})
@@ -816,7 +816,7 @@ class TestHandleValidateWorkout:
 class TestHandleDeleteRemoteSession:
     @pytest.mark.asyncio
     async def test_no_confirm_returns_error(self):
-        from cyclisme_training_logs.mcp_server import handle_delete_remote_session
+        from magma_cycling.mcp_server import handle_delete_remote_session
 
         result = await handle_delete_remote_session({"event_id": "evt123"})
         data = json.loads(result[0].text)
@@ -825,7 +825,7 @@ class TestHandleDeleteRemoteSession:
 
     @pytest.mark.asyncio
     async def test_no_confirm_explicit_false(self):
-        from cyclisme_training_logs.mcp_server import handle_delete_remote_session
+        from magma_cycling.mcp_server import handle_delete_remote_session
 
         result = await handle_delete_remote_session({"event_id": "evt123", "confirm": False})
         data = json.loads(result[0].text)
@@ -840,7 +840,7 @@ class TestHandleDeleteRemoteSession:
 class TestHandleListRemoteEvents:
     @pytest.mark.asyncio
     async def test_success_returns_events(self, mock_intervals):
-        from cyclisme_training_logs.mcp_server import handle_list_remote_events
+        from magma_cycling.mcp_server import handle_list_remote_events
 
         mock_intervals.get_events.return_value = [
             {
@@ -872,7 +872,7 @@ class TestHandleListRemoteEvents:
 
     @pytest.mark.asyncio
     async def test_category_filter(self, mock_intervals):
-        from cyclisme_training_logs.mcp_server import handle_list_remote_events
+        from magma_cycling.mcp_server import handle_list_remote_events
 
         mock_intervals.get_events.return_value = [
             {
@@ -906,7 +906,7 @@ class TestHandleListRemoteEvents:
 
     @pytest.mark.asyncio
     async def test_api_error_returns_error(self, mock_intervals):
-        from cyclisme_training_logs.mcp_server import handle_list_remote_events
+        from magma_cycling.mcp_server import handle_list_remote_events
 
         mock_intervals.get_events.side_effect = RuntimeError("API error")
         with patch(INTERVALS_PATCH, return_value=mock_intervals):
@@ -928,7 +928,7 @@ class TestHandleListRemoteEvents:
 class TestHandleGetAthleteProfile:
     @pytest.mark.asyncio
     async def test_success_returns_profile(self, mock_intervals):
-        from cyclisme_training_logs.mcp_server import handle_get_athlete_profile
+        from magma_cycling.mcp_server import handle_get_athlete_profile
 
         with patch(INTERVALS_PATCH, return_value=mock_intervals):
             result = await handle_get_athlete_profile({})
@@ -942,7 +942,7 @@ class TestHandleGetAthleteProfile:
 
     @pytest.mark.asyncio
     async def test_api_error_returns_error(self, mock_intervals):
-        from cyclisme_training_logs.mcp_server import handle_get_athlete_profile
+        from magma_cycling.mcp_server import handle_get_athlete_profile
 
         mock_intervals.get_athlete.side_effect = RuntimeError("API error")
         with patch(INTERVALS_PATCH, return_value=mock_intervals):
@@ -959,7 +959,7 @@ class TestHandleGetAthleteProfile:
 class TestHandleUpdateAthleteProfileError:
     @pytest.mark.asyncio
     async def test_api_error_returns_error(self, mock_intervals):
-        from cyclisme_training_logs.mcp_server import handle_update_athlete_profile
+        from magma_cycling.mcp_server import handle_update_athlete_profile
 
         mock_intervals.update_athlete.side_effect = RuntimeError("API error")
         with patch(INTERVALS_PATCH, return_value=mock_intervals):
@@ -976,7 +976,7 @@ class TestHandleUpdateAthleteProfileError:
 class TestHandleValidateWeekConsistency:
     @pytest.mark.asyncio
     async def test_success_valid_plan(self, mock_tower, mock_session):
-        from cyclisme_training_logs.mcp_server import handle_validate_week_consistency
+        from magma_cycling.mcp_server import handle_validate_week_consistency
 
         with patch(TOWER_PATCH, mock_tower):
             result = await handle_validate_week_consistency({"week_id": "S081"})
@@ -987,7 +987,7 @@ class TestHandleValidateWeekConsistency:
 
     @pytest.mark.asyncio
     async def test_empty_description_is_error(self, mock_plan, mock_session):
-        from cyclisme_training_logs.mcp_server import handle_validate_week_consistency
+        from magma_cycling.mcp_server import handle_validate_week_consistency
 
         mock_session.description = ""
         tower = make_tower(mock_plan)
@@ -999,7 +999,7 @@ class TestHandleValidateWeekConsistency:
 
     @pytest.mark.asyncio
     async def test_high_tss_is_warning(self, mock_plan, mock_session):
-        from cyclisme_training_logs.mcp_server import handle_validate_week_consistency
+        from magma_cycling.mcp_server import handle_validate_week_consistency
 
         mock_session.tss_planned = 350  # > 300 threshold
         tower = make_tower(mock_plan)
@@ -1010,7 +1010,7 @@ class TestHandleValidateWeekConsistency:
 
     @pytest.mark.asyncio
     async def test_exception_returns_error(self, mock_tower):
-        from cyclisme_training_logs.mcp_server import handle_validate_week_consistency
+        from magma_cycling.mcp_server import handle_validate_week_consistency
 
         mock_tower.read_week.side_effect = RuntimeError("boom")
         with patch(TOWER_PATCH, mock_tower):
@@ -1027,7 +1027,7 @@ class TestHandleValidateWeekConsistency:
 class TestHandleGetRecommendations:
     @pytest.mark.asyncio
     async def test_no_file_returns_planning_notes(self, mock_tower, mock_plan):
-        from cyclisme_training_logs.mcp_server import handle_get_recommendations
+        from magma_cycling.mcp_server import handle_get_recommendations
 
         mock_plan.notes = "No rec file"
         with patch(TOWER_PATCH, mock_tower):
@@ -1038,7 +1038,7 @@ class TestHandleGetRecommendations:
 
     @pytest.mark.asyncio
     async def test_exception_returns_error(self, mock_tower):
-        from cyclisme_training_logs.mcp_server import handle_get_recommendations
+        from magma_cycling.mcp_server import handle_get_recommendations
 
         mock_tower.read_week.side_effect = RuntimeError("boom")
         with patch(TOWER_PATCH, mock_tower):
@@ -1055,7 +1055,7 @@ class TestHandleGetRecommendations:
 class TestHandleGetTrainingStatistics:
     @pytest.mark.asyncio
     async def test_success_empty_activities(self, mock_intervals):
-        from cyclisme_training_logs.mcp_server import handle_get_training_statistics
+        from magma_cycling.mcp_server import handle_get_training_statistics
 
         mock_intervals.get_activities.return_value = []
         mock_intervals.get_wellness.return_value = []
@@ -1071,7 +1071,7 @@ class TestHandleGetTrainingStatistics:
 
     @pytest.mark.asyncio
     async def test_success_with_activities(self, mock_intervals):
-        from cyclisme_training_logs.mcp_server import handle_get_training_statistics
+        from magma_cycling.mcp_server import handle_get_training_statistics
 
         mock_intervals.get_activities.return_value = [
             {
@@ -1104,7 +1104,7 @@ class TestHandleGetTrainingStatistics:
 
     @pytest.mark.asyncio
     async def test_api_error_returns_error(self, mock_intervals):
-        from cyclisme_training_logs.mcp_server import handle_get_training_statistics
+        from magma_cycling.mcp_server import handle_get_training_statistics
 
         mock_intervals.get_activities.side_effect = RuntimeError("API error")
         with patch(INTERVALS_PATCH, return_value=mock_intervals):
@@ -1126,7 +1126,7 @@ class TestHandleGetTrainingStatistics:
 class TestHandleExportWeekToJson:
     @pytest.mark.asyncio
     async def test_exception_returns_error(self, mock_tower):
-        from cyclisme_training_logs.mcp_server import handle_export_week_to_json
+        from magma_cycling.mcp_server import handle_export_week_to_json
 
         mock_tower.read_week.side_effect = RuntimeError("boom")
         with patch(TOWER_PATCH, mock_tower):
@@ -1143,7 +1143,7 @@ class TestHandleExportWeekToJson:
 class TestHandleRestoreWeekFromBackup:
     @pytest.mark.asyncio
     async def test_no_confirm_returns_error(self):
-        from cyclisme_training_logs.mcp_server import handle_restore_week_from_backup
+        from magma_cycling.mcp_server import handle_restore_week_from_backup
 
         result = await handle_restore_week_from_backup(
             {
@@ -1157,7 +1157,7 @@ class TestHandleRestoreWeekFromBackup:
 
     @pytest.mark.asyncio
     async def test_no_confirm_explicit_false(self):
-        from cyclisme_training_logs.mcp_server import handle_restore_week_from_backup
+        from magma_cycling.mcp_server import handle_restore_week_from_backup
 
         result = await handle_restore_week_from_backup(
             {
@@ -1188,7 +1188,7 @@ class TestHandleReloadServer:
         """
         import sys
 
-        from cyclisme_training_logs.planning import control_tower as ct_module
+        from magma_cycling.planning import control_tower as ct_module
 
         original_tower = ct_module.planning_tower
 
@@ -1209,7 +1209,7 @@ class TestHandleReloadServer:
 
     @pytest.mark.asyncio
     async def test_success_reloads_modules(self):
-        from cyclisme_training_logs.mcp_server import handle_reload_server
+        from magma_cycling.mcp_server import handle_reload_server
 
         result = await handle_reload_server({})
         data = json.loads(result[0].text)
@@ -1219,7 +1219,7 @@ class TestHandleReloadServer:
 
     @pytest.mark.asyncio
     async def test_returns_note_about_handlers(self):
-        from cyclisme_training_logs.mcp_server import handle_reload_server
+        from magma_cycling.mcp_server import handle_reload_server
 
         result = await handle_reload_server({})
         data = json.loads(result[0].text)
@@ -1234,12 +1234,12 @@ class TestHandleReloadServer:
 class TestHandleWithingsAuthStatus:
     @pytest.mark.asyncio
     async def test_not_configured(self):
-        from cyclisme_training_logs.mcp_server import handle_withings_auth_status
+        from magma_cycling.mcp_server import handle_withings_auth_status
 
         mock_config = Mock()
         mock_config.is_configured.return_value = False
         mock_config.has_valid_credentials.return_value = False
-        with patch("cyclisme_training_logs.config.get_withings_config", return_value=mock_config):
+        with patch("magma_cycling.config.get_withings_config", return_value=mock_config):
             result = await handle_withings_auth_status({})
         data = json.loads(result[0].text)
         assert data["configured"] is False
@@ -1247,12 +1247,12 @@ class TestHandleWithingsAuthStatus:
 
     @pytest.mark.asyncio
     async def test_configured_but_no_credentials(self):
-        from cyclisme_training_logs.mcp_server import handle_withings_auth_status
+        from magma_cycling.mcp_server import handle_withings_auth_status
 
         mock_config = Mock()
         mock_config.is_configured.return_value = True
         mock_config.has_valid_credentials.return_value = False
-        with patch("cyclisme_training_logs.config.get_withings_config", return_value=mock_config):
+        with patch("magma_cycling.config.get_withings_config", return_value=mock_config):
             result = await handle_withings_auth_status({})
         data = json.loads(result[0].text)
         assert data["configured"] is True
@@ -1260,13 +1260,13 @@ class TestHandleWithingsAuthStatus:
 
     @pytest.mark.asyncio
     async def test_fully_authenticated(self):
-        from cyclisme_training_logs.mcp_server import handle_withings_auth_status
+        from magma_cycling.mcp_server import handle_withings_auth_status
 
         mock_config = Mock()
         mock_config.is_configured.return_value = True
         mock_config.has_valid_credentials.return_value = True
         mock_config.credentials_path = Path("/tmp/withings.json")
-        with patch("cyclisme_training_logs.config.get_withings_config", return_value=mock_config):
+        with patch("magma_cycling.config.get_withings_config", return_value=mock_config):
             result = await handle_withings_auth_status({})
         data = json.loads(result[0].text)
         assert data["configured"] is True
@@ -1282,15 +1282,13 @@ class TestHandleWithingsAuthStatus:
 class TestHandleWithingsAuthorize:
     @pytest.mark.asyncio
     async def test_no_code_returns_auth_url(self):
-        from cyclisme_training_logs.mcp_server import handle_withings_authorize
+        from magma_cycling.mcp_server import handle_withings_authorize
 
         mock_client = Mock()
         mock_client.get_authorization_url.return_value = (
             "https://account.withings.com/oauth2_user/authorize2?..."
         )
-        with patch(
-            "cyclisme_training_logs.config.create_withings_client", return_value=mock_client
-        ):
+        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
             result = await handle_withings_authorize({})
         data = json.loads(result[0].text)
         assert data["step"] == "authorization_required"
@@ -1299,13 +1297,11 @@ class TestHandleWithingsAuthorize:
 
     @pytest.mark.asyncio
     async def test_with_code_exchanges_successfully(self):
-        from cyclisme_training_logs.mcp_server import handle_withings_authorize
+        from magma_cycling.mcp_server import handle_withings_authorize
 
         mock_client = Mock()
         mock_client.exchange_code.return_value = {"user_id": "12345", "access_token": "tok"}
-        with patch(
-            "cyclisme_training_logs.config.create_withings_client", return_value=mock_client
-        ):
+        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
             result = await handle_withings_authorize({"authorization_code": "authcode123"})
         data = json.loads(result[0].text)
         assert data["step"] == "authorization_complete"
@@ -1313,13 +1309,11 @@ class TestHandleWithingsAuthorize:
 
     @pytest.mark.asyncio
     async def test_with_code_exchange_failure(self):
-        from cyclisme_training_logs.mcp_server import handle_withings_authorize
+        from magma_cycling.mcp_server import handle_withings_authorize
 
         mock_client = Mock()
         mock_client.exchange_code.side_effect = RuntimeError("invalid code")
-        with patch(
-            "cyclisme_training_logs.config.create_withings_client", return_value=mock_client
-        ):
+        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
             result = await handle_withings_authorize({"authorization_code": "badcode"})
         data = json.loads(result[0].text)
         assert data["step"] == "authorization_failed"
@@ -1334,14 +1328,12 @@ class TestHandleWithingsAuthorize:
 class TestHandleWithingsAnalyzeTrends:
     @pytest.mark.asyncio
     async def test_week_period_no_data(self):
-        from cyclisme_training_logs.mcp_server import handle_withings_analyze_trends
+        from magma_cycling.mcp_server import handle_withings_analyze_trends
 
         mock_client = Mock()
         mock_client.get_sleep.return_value = []
         mock_client.get_measurements.return_value = []
-        with patch(
-            "cyclisme_training_logs.config.create_withings_client", return_value=mock_client
-        ):
+        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
             result = await handle_withings_analyze_trends({"period": "week"})
         data = json.loads(result[0].text)
         assert data["period"] == "week"
@@ -1349,7 +1341,7 @@ class TestHandleWithingsAnalyzeTrends:
 
     @pytest.mark.asyncio
     async def test_month_period(self):
-        from cyclisme_training_logs.mcp_server import handle_withings_analyze_trends
+        from magma_cycling.mcp_server import handle_withings_analyze_trends
 
         mock_client = Mock()
         mock_client.get_sleep.return_value = [
@@ -1360,9 +1352,7 @@ class TestHandleWithingsAnalyzeTrends:
             {"weight_kg": 72.5},
             {"weight_kg": 72.0},
         ]
-        with patch(
-            "cyclisme_training_logs.config.create_withings_client", return_value=mock_client
-        ):
+        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
             result = await handle_withings_analyze_trends({"period": "month"})
         data = json.loads(result[0].text)
         assert data["period"] == "month"
@@ -1370,26 +1360,22 @@ class TestHandleWithingsAnalyzeTrends:
 
     @pytest.mark.asyncio
     async def test_custom_period_missing_dates_returns_error(self):
-        from cyclisme_training_logs.mcp_server import handle_withings_analyze_trends
+        from magma_cycling.mcp_server import handle_withings_analyze_trends
 
         mock_client = Mock()
-        with patch(
-            "cyclisme_training_logs.config.create_withings_client", return_value=mock_client
-        ):
+        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
             result = await handle_withings_analyze_trends({"period": "custom"})
         data = json.loads(result[0].text)
         assert "error" in data
 
     @pytest.mark.asyncio
     async def test_custom_period_with_dates(self):
-        from cyclisme_training_logs.mcp_server import handle_withings_analyze_trends
+        from magma_cycling.mcp_server import handle_withings_analyze_trends
 
         mock_client = Mock()
         mock_client.get_sleep.return_value = []
         mock_client.get_measurements.return_value = []
-        with patch(
-            "cyclisme_training_logs.config.create_withings_client", return_value=mock_client
-        ):
+        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
             result = await handle_withings_analyze_trends(
                 {
                     "period": "custom",
@@ -1409,7 +1395,7 @@ class TestHandleWithingsAnalyzeTrends:
 class TestHandleRenameSession:
     @pytest.mark.asyncio
     async def test_rename_success(self, mock_tower, mock_session):
-        from cyclisme_training_logs.mcp_server import handle_rename_session
+        from magma_cycling.mcp_server import handle_rename_session
 
         args = {
             "week_id": "S081",
@@ -1427,7 +1413,7 @@ class TestHandleRenameSession:
 
     @pytest.mark.asyncio
     async def test_rename_with_remote_sync(self, mock_session):
-        from cyclisme_training_logs.mcp_server import handle_rename_session
+        from magma_cycling.mcp_server import handle_rename_session
 
         mock_session.intervals_id = "evt456"
         plan = Mock()
@@ -1455,7 +1441,7 @@ class TestHandleRenameSession:
 
     @pytest.mark.asyncio
     async def test_rename_completed_raises(self, mock_tower, mock_session):
-        from cyclisme_training_logs.mcp_server import handle_rename_session
+        from magma_cycling.mcp_server import handle_rename_session
 
         mock_session.status = "completed"
         args = {
@@ -1471,7 +1457,7 @@ class TestHandleRenameSession:
 
     @pytest.mark.asyncio
     async def test_rename_duplicate_raises(self, mock_session, mock_session2):
-        from cyclisme_training_logs.mcp_server import handle_rename_session
+        from magma_cycling.mcp_server import handle_rename_session
 
         plan = Mock()
         plan.planned_sessions = [mock_session, mock_session2]
@@ -1490,7 +1476,7 @@ class TestHandleRenameSession:
 
     @pytest.mark.asyncio
     async def test_rename_invalid_format(self):
-        from cyclisme_training_logs.mcp_server import handle_rename_session
+        from magma_cycling.mcp_server import handle_rename_session
 
         args = {
             "week_id": "S081",
@@ -1504,7 +1490,7 @@ class TestHandleRenameSession:
 
     @pytest.mark.asyncio
     async def test_rename_cross_week_rejected(self):
-        from cyclisme_training_logs.mcp_server import handle_rename_session
+        from magma_cycling.mcp_server import handle_rename_session
 
         args = {
             "week_id": "S081",
@@ -1518,7 +1504,7 @@ class TestHandleRenameSession:
 
     @pytest.mark.asyncio
     async def test_rename_session_not_found(self, mock_tower):
-        from cyclisme_training_logs.mcp_server import handle_rename_session
+        from magma_cycling.mcp_server import handle_rename_session
 
         args = {
             "week_id": "S081",

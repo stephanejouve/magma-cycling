@@ -322,7 +322,7 @@ total_naive = sum(tss_values)
 
 ```bash
 # Grep toutes les divisions
-grep -rn "/ \w" cyclisme_training_logs/ --include="*.py" | \
+grep -rn "/ \w" magma_cycling/ --include="*.py" | \
   grep -v "if .* > 0" | \
   grep -v "#" | \
   grep -v "docstring"
@@ -336,7 +336,7 @@ grep -rn "/ \w" cyclisme_training_logs/ --include="*.py" | \
 
 ```bash
 # Recherche == avec floats
-grep -rn "== \d+\.\d+" cyclisme_training_logs/ --include="*.py"
+grep -rn "== \d+\.\d+" magma_cycling/ --include="*.py"
 
 # Résultat: 1 cas (== 0.0) - safe
 ```

@@ -67,7 +67,7 @@ Pour recevoir automatiquement le rapport chaque soir à 22h :
 crontab -e
 
 # Ajouter (adapter les chemins) :
-0 22 * * * cd /Users/stephanejouve/cyclisme-training-logs && /usr/local/bin/poetry run daily-sync --date $(date +\%Y-\%m-\%d) --week-id S077 --start-date 2026-01-19 --send-email
+0 22 * * * cd /Users/stephanejouve/magma-cycling && /usr/local/bin/poetry run daily-sync --date $(date +\%Y-\%m-\%d) --week-id S077 --start-date 2026-01-19 --send-email
 ```
 
 ## 7. Format de l'email

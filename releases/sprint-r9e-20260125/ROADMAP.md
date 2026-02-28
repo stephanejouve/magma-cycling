@@ -510,7 +510,7 @@ Augmenter coverage workflow_coach.py de 19% à 27-29% (+8-10%) avec tests AI wor
 > **Git History (commits 15-18 jan)** :
 > - Sprint R9 initial = "Grappe Biomechanics" (commits `24f17b6`, `ef77367`)
 > - Sous-sprints = R9.A (Workflow Tests), R9.B (DRY), R9.C (Upload UX), etc.
-> - Code existe : `cyclisme_training_logs/intelligence/biomechanics.py`
+> - Code existe : `magma_cycling/intelligence/biomechanics.py`
 >
 > **ROADMAP Actuel (état 25 jan)** :
 > - Sprint R9 = **"Monitoring & Baseline Analysis"** (04-25 jan)
@@ -961,7 +961,7 @@ Atteindre **9/10 en réutilisation** en créant modules utilitaires communs et �
 **Nouveaux modules utilitaires :**
 
 ```python
-# cyclisme_training_logs/utils/clipboard.py
+# magma_cycling/utils/clipboard.py
 """Clipboard operations utilities."""
 
 def read_clipboard() -> str:
@@ -972,7 +972,7 @@ def write_clipboard(content: str) -> bool:
 ```
 
 ```python
-# cyclisme_training_logs/utils/credentials.py
+# magma_cycling/utils/credentials.py
 """Credentials management utilities."""
 
 def load_credentials() -> tuple[str, str]:
@@ -983,7 +983,7 @@ def validate_credentials(athlete_id: str, api_key: str) -> bool:
 ```
 
 ```python
-# cyclisme_training_logs/utils/date_utils.py
+# magma_cycling/utils/date_utils.py
 """Date calculation and formatting utilities."""
 
 def calculate_week_start_date(week_id: str) -> date:
@@ -997,7 +997,7 @@ def parse_week_id(week_id: str) -> int:
 ```
 
 ```python
-# cyclisme_training_logs/utils/markdown_utils.py
+# magma_cycling/utils/markdown_utils.py
 """Markdown generation utilities."""
 
 def generate_markdown_section(title: str, content: str, level: int = 2) -> str:
@@ -1177,7 +1177,7 @@ Refactoriser architecture Di2 pour supporter **systèmes multiples** avec patter
 **Pattern Strategy pour systèmes de transmission :**
 
 ```python
-# cyclisme_training_logs/analyzers/gear/base.py
+# magma_cycling/analyzers/gear/base.py
 class GearSystemAnalyzer(ABC):
     """Abstract base class for electronic shifting systems."""
 
@@ -1200,7 +1200,7 @@ class GearSystemAnalyzer(ABC):
 **Implémentations concrètes :**
 
 ```python
-# cyclisme_training_logs/analyzers/gear/shimano_di2.py
+# magma_cycling/analyzers/gear/shimano_di2.py
 class ShimanoDi2Analyzer(GearSystemAnalyzer):
     """Shimano Di2 analyzer (current implementation)."""
 
@@ -1218,7 +1218,7 @@ class ShimanoDi2Analyzer(GearSystemAnalyzer):
             # ... Shimano-specific metrics
         }
 
-# cyclisme_training_logs/analyzers/gear/sram_axs.py
+# magma_cycling/analyzers/gear/sram_axs.py
 class SRAMAXSAnalyzer(GearSystemAnalyzer):
     """SRAM AXS analyzer (future implementation)."""
 
@@ -1237,7 +1237,7 @@ class SRAMAXSAnalyzer(GearSystemAnalyzer):
             # ... SRAM-specific metrics
         }
 
-# cyclisme_training_logs/analyzers/gear/factory.py
+# magma_cycling/analyzers/gear/factory.py
 class GearAnalyzerFactory:
     """Factory to detect and instantiate appropriate analyzer."""
 
@@ -1261,7 +1261,7 @@ class GearAnalyzerFactory:
 **Intégration dans WeeklyAggregator :**
 
 ```python
-# cyclisme_training_logs/analyzers/weekly_aggregator.py
+# magma_cycling/analyzers/weekly_aggregator.py
 def _extract_gear_metrics(self, activity_id: str) -> dict[str, Any] | None:
     """Extract gear metrics (auto-detect system)."""
     try:
@@ -1337,8 +1337,8 @@ def _extract_gear_metrics(self, activity_id: str) -> dict[str, Any] | None:
 #### Dépendances & Blockers
 
 **Blocker CRITIQUE :**
-- ❌ **Aucune donnée SRAM AXS disponible** pour développement/tests → **[Issue #8](https://github.com/stephanejouve/cyclisme-training-logs/issues/8)**
-- ❌ **Aucune donnée Campagnolo EPS** disponible → **[Issue #9](https://github.com/stephanejouve/cyclisme-training-logs/issues/9)**
+- ❌ **Aucune donnée SRAM AXS disponible** pour développement/tests → **[Issue #8](https://github.com/stephanejouve/magma-cycling/issues/8)**
+- ❌ **Aucune donnée Campagnolo EPS** disponible → **[Issue #9](https://github.com/stephanejouve/magma-cycling/issues/9)**
 - ❌ Impossible valider streams names, formats, edge cases
 
 **Solutions :**
@@ -1493,7 +1493,7 @@ poetry run upload-workouts \
 **Implémentation :**
 
 ```python
-# cyclisme_training_logs/upload_workouts.py
+# magma_cycling/upload_workouts.py
 
 def parse_single_workout(
     workout_id: str,
@@ -1777,7 +1777,7 @@ poetry run workflow-coach --outdoor --auto
 **Implémentation :**
 
 ```python
-# cyclisme_training_logs/workflow_coach.py
+# magma_cycling/workflow_coach.py
 
 def main():
     parser = argparse.ArgumentParser(...)
@@ -2131,7 +2131,7 @@ class TestStep1AnalyzeWeek:
         transition.write_text("# Transition S075\nTest content")
 
         # Mock config to return tmp_path
-        monkeypatch.setattr("cyclisme_training_logs.workflows.end_of_week.get_data_config",
+        monkeypatch.setattr("magma_cycling.workflows.end_of_week.get_data_config",
                            lambda: Mock(data_repo_path=tmp_path))
 
         workflow = EndOfWeekWorkflow("S075", "S076")
@@ -2143,7 +2143,7 @@ class TestStep1AnalyzeWeek:
     def test_step1_fails_if_no_analysis_found(self, tmp_path, monkeypatch):
         """Should return False with helpful message if analysis missing."""
         # Mock empty reports directory
-        monkeypatch.setattr("cyclisme_training_logs.workflows.end_of_week.get_data_config",
+        monkeypatch.setattr("magma_cycling.workflows.end_of_week.get_data_config",
                            lambda: Mock(data_repo_path=tmp_path))
 
         workflow = EndOfWeekWorkflow("S075", "S076")
@@ -2204,7 +2204,7 @@ Endurance Base (60min)
         mock_analyzer.analyze.return_value = "Workout content"
 
         mock_factory = Mock(return_value=mock_analyzer)
-        monkeypatch.setattr("cyclisme_training_logs.workflows.end_of_week.get_ai_analyzer",
+        monkeypatch.setattr("magma_cycling.workflows.end_of_week.get_ai_analyzer",
                            mock_factory)
 
         workflow = EndOfWeekWorkflow("S075", "S076", provider="claude_api")
@@ -2431,7 +2431,7 @@ class TestWeeklyWorkflowEdgeCases:
 
     def test_weekly_workflow_creates_all_output_directories(self, tmp_path, monkeypatch):
         """Should create reports directory structure if missing."""
-        monkeypatch.setattr("cyclisme_training_logs.config.get_data_config",
+        monkeypatch.setattr("magma_cycling.config.get_data_config",
                            lambda: Mock(data_repo_path=tmp_path))
 
         workflow = WeeklyWorkflow("S075", date(2026, 1, 5))
@@ -2448,7 +2448,7 @@ class TestWeeklyWorkflowAIProviders:
         mock_analyzer.analyze.return_value = "Analysis content"
 
         # Mock provider factory
-        monkeypatch.setattr("cyclisme_training_logs.ai_providers.get_ai_analyzer",
+        monkeypatch.setattr("magma_cycling.ai_providers.get_ai_analyzer",
                            lambda x: mock_analyzer)
 
         workflow = WeeklyWorkflow("S075", date(2026, 1, 5), provider="claude_api")
@@ -2472,7 +2472,7 @@ class TestWeeklyWorkflowReports:
     def test_generates_all_6_required_reports(self, tmp_path, monkeypatch):
         """Should generate all 6 reports: workout_history, metrics_evolution,
         learnings, adaptations, transition, bilan_final."""
-        monkeypatch.setattr("cyclisme_training_logs.config.get_data_config",
+        monkeypatch.setattr("magma_cycling.config.get_data_config",
                            lambda: Mock(data_repo_path=tmp_path))
 
         workflow = WeeklyWorkflow("S075", date(2026, 1, 5))
@@ -2794,7 +2794,7 @@ export TRAINING_DATA_REPO=~/training-logs-2026
 
 **Modules à créer :**
 ```python
-# cyclisme_training_logs/config/athlete_config.py
+# magma_cycling/config/athlete_config.py
 class AthleteConfig:
     """Load athlete configuration from data repo."""
 
@@ -2806,7 +2806,7 @@ class AthleteConfig:
 
 **Modules à modifier :**
 ```python
-# cyclisme_training_logs/workflows/end_of_week.py
+# magma_cycling/workflows/end_of_week.py
 def calculate_week_start_date(week_id: str, config: AthleteConfig = None) -> date:
     """Calculate with config (not hard-coded)."""
     if config is None:
@@ -2830,7 +2830,7 @@ def calculate_week_start_date(week_id: str, config: AthleteConfig = None) -> dat
 
 **Phase 1 : Migration Config (1-2 heures)**
 1. Créer `~/training-logs/.config.json`
-2. Créer `cyclisme_training_logs/config/athlete_config.py`
+2. Créer `magma_cycling/config/athlete_config.py`
 3. Modifier `calculate_week_start_date()` pour lire config
 4. Tests : Vérifier backward compatibility
 5. Documentation : `GUIDE_SEASON_RESET.md`
@@ -2856,7 +2856,7 @@ def calculate_week_start_date(week_id: str, config: AthleteConfig = None) -> dat
 ### Modules Actuels
 
 ```
-cyclisme_training_logs/
+magma_cycling/
 ├── ai_providers/          # 5 AI providers + factory
 ├── analyzers/             # Weekly/daily aggregators
 ├── api/                   # Unified Intervals.icu client
@@ -2971,7 +2971,7 @@ cyclisme_training_logs/
 
 ### Repository
 
-- **GitHub :** https://github.com/stephanejouve/cyclisme-training-logs
+- **GitHub :** https://github.com/stephanejouve/magma-cycling
 - **Branch principale :** main
 - **Version :** v2.3.0
 - **License :** Private

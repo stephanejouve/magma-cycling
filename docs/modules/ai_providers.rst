@@ -1,7 +1,7 @@
 AI Providers Package
 ====================
 
-.. automodule:: cyclisme_training_logs.ai_providers
+.. automodule:: magma_cycling.ai_providers
    :members:
    :undoc-members:
    :show-inheritance:
@@ -12,7 +12,7 @@ Submodules
 Base Classes
 ~~~~~~~~~~~~
 
-.. automodule:: cyclisme_training_logs.ai_providers.base
+.. automodule:: magma_cycling.ai_providers.base
    :members:
    :undoc-members:
    :show-inheritance:
@@ -20,7 +20,7 @@ Base Classes
 Factory
 ~~~~~~~
 
-.. automodule:: cyclisme_training_logs.ai_providers.factory
+.. automodule:: magma_cycling.ai_providers.factory
    :members:
    :undoc-members:
    :show-inheritance:
@@ -28,7 +28,7 @@ Factory
 Claude API
 ~~~~~~~~~~
 
-.. automodule:: cyclisme_training_logs.ai_providers.claude_api
+.. automodule:: magma_cycling.ai_providers.claude_api
    :members:
    :undoc-members:
    :show-inheritance:
@@ -36,7 +36,7 @@ Claude API
 Mistral API
 ~~~~~~~~~~~
 
-.. automodule:: cyclisme_training_logs.ai_providers.mistral_api
+.. automodule:: magma_cycling.ai_providers.mistral_api
    :members:
    :undoc-members:
    :show-inheritance:
@@ -44,7 +44,7 @@ Mistral API
 Clipboard
 ~~~~~~~~~
 
-.. automodule:: cyclisme_training_logs.ai_providers.clipboard
+.. automodule:: magma_cycling.ai_providers.clipboard
    :members:
    :undoc-members:
    :show-inheritance:

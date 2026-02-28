@@ -13,7 +13,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from cyclisme_training_logs.planning.models import Session, WeeklyPlan
+from magma_cycling.planning.models import Session, WeeklyPlan
 
 # Configure pytest-asyncio
 pytest_plugins = ("pytest_asyncio",)
@@ -90,10 +90,10 @@ async def test_daily_sync_empty_activities_returns_dict(mock_intervals_client, t
     reports_dir.mkdir()
 
     with patch(
-        "cyclisme_training_logs.config.create_intervals_client",
+        "magma_cycling.config.create_intervals_client",
         return_value=mock_intervals_client,
     ):
-        from cyclisme_training_logs.daily_sync import DailySync
+        from magma_cycling.daily_sync import DailySync
 
         sync = DailySync(tracking_file=tracking_file, reports_dir=reports_dir, verbose=False)
 
@@ -125,10 +125,10 @@ async def test_daily_sync_api_error_returns_dict(tmp_path):
     mock_client.get_events.side_effect = Exception("API error")
 
     with patch(
-        "cyclisme_training_logs.config.create_intervals_client",
+        "magma_cycling.config.create_intervals_client",
         return_value=mock_client,
     ):
-        from cyclisme_training_logs.daily_sync import DailySync
+        from magma_cycling.daily_sync import DailySync
 
         sync = DailySync(tracking_file=tracking_file, reports_dir=reports_dir, verbose=False)
 
@@ -153,13 +153,13 @@ async def test_analyze_session_adherence_attribute_names(
     Bug: Code was using planned_session.planned_tss instead of .tss_planned
     and planned_session.planned_duration instead of .duration_min.
     """
-    from cyclisme_training_logs.mcp_server import handle_analyze_session_adherence
+    from magma_cycling.mcp_server import handle_analyze_session_adherence
 
     with patch(
-        "cyclisme_training_logs.config.create_intervals_client",
+        "magma_cycling.config.create_intervals_client",
         return_value=mock_intervals_client,
     ):
-        with patch("cyclisme_training_logs.planning.control_tower.planning_tower") as mock_tower:
+        with patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower:
             mock_tower.read_week.return_value = mock_weekly_plan
 
             args = {"session_id": "S081-06", "activity_id": "i126850020"}
@@ -188,12 +188,12 @@ async def test_analyze_session_adherence_attribute_names(
 @pytest.mark.asyncio
 async def test_analyze_session_adherence_session_not_found():
     """Test analyze-session-adherence handles session not found correctly."""
-    from cyclisme_training_logs.mcp_server import handle_analyze_session_adherence
+    from magma_cycling.mcp_server import handle_analyze_session_adherence
 
     mock_plan = Mock(spec=WeeklyPlan)
     mock_plan.planned_sessions = []  # Empty sessions
 
-    with patch("cyclisme_training_logs.planning.control_tower.planning_tower") as mock_tower:
+    with patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower:
         mock_tower.read_week.return_value = mock_plan
 
         args = {"session_id": "S081-99", "activity_id": "i123"}
@@ -215,7 +215,7 @@ async def test_update_athlete_profile_schema_allows_dynamic_fields():
     Bug: Schema was missing "additionalProperties": true, causing
     validation errors when passing fields like {"ftp": 223}.
     """
-    from cyclisme_training_logs.mcp_server import list_tools
+    from magma_cycling.mcp_server import list_tools
 
     tools = await list_tools()
 
@@ -246,10 +246,10 @@ async def test_update_athlete_profile_schema_allows_dynamic_fields():
 @pytest.mark.asyncio
 async def test_update_athlete_profile_accepts_ftp(mock_intervals_client):
     """Test that update-athlete-profile accepts FTP update."""
-    from cyclisme_training_logs.mcp_server import handle_update_athlete_profile
+    from magma_cycling.mcp_server import handle_update_athlete_profile
 
     with patch(
-        "cyclisme_training_logs.config.create_intervals_client",
+        "magma_cycling.config.create_intervals_client",
         return_value=mock_intervals_client,
     ):
         args = {"updates": {"ftp": 223}}
@@ -267,12 +267,12 @@ async def test_update_athlete_profile_accepts_ftp(mock_intervals_client):
 @pytest.mark.asyncio
 async def test_update_athlete_profile_accepts_multiple_fields(mock_intervals_client):
     """Test that update-athlete-profile accepts multiple fields."""
-    from cyclisme_training_logs.mcp_server import handle_update_athlete_profile
+    from magma_cycling.mcp_server import handle_update_athlete_profile
 
     mock_intervals_client.update_athlete.return_value = {"ftp": 223, "weight": 75, "max_hr": 185}
 
     with patch(
-        "cyclisme_training_logs.config.create_intervals_client",
+        "magma_cycling.config.create_intervals_client",
         return_value=mock_intervals_client,
     ):
         args = {"updates": {"ftp": 223, "weight": 75, "max_hr": 185}}
@@ -325,7 +325,7 @@ async def test_daily_sync_handler_full_flow(mock_intervals_client, mock_weekly_p
 
     Tests the full flow from handler call to response.
     """
-    from cyclisme_training_logs.mcp_server import handle_daily_sync
+    from magma_cycling.mcp_server import handle_daily_sync
 
     # Mock activities list
     mock_intervals_client.get_activities.return_value = [
@@ -344,10 +344,10 @@ async def test_daily_sync_handler_full_flow(mock_intervals_client, mock_weekly_p
     ]
 
     with patch(
-        "cyclisme_training_logs.daily_sync.create_intervals_client",
+        "magma_cycling.daily_sync.create_intervals_client",
         return_value=mock_intervals_client,
     ):
-        with patch("cyclisme_training_logs.planning.control_tower.planning_tower") as mock_tower:
+        with patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower:
             mock_tower.read_week.return_value = mock_weekly_plan
 
             args = {"date": "2026-02-21", "week_id": "S081"}
@@ -391,7 +391,7 @@ async def test_sync_remote_to_local_handler_returns_json(mock_intervals_client, 
     Tests the MCP interface (black-box) - verifies JSON structure, not implementation.
     """
     # Create test planning file
-    from cyclisme_training_logs.planning.models import Session, WeeklyPlan
+    from magma_cycling.planning.models import Session, WeeklyPlan
 
     planning_dir = tmp_path / "data" / "week_planning"
     planning_dir.mkdir(parents=True)
@@ -438,12 +438,12 @@ async def test_sync_remote_to_local_handler_returns_json(mock_intervals_client, 
     # Patch dependencies
     with (
         patch(
-            "cyclisme_training_logs.config.create_intervals_client",
+            "magma_cycling.config.create_intervals_client",
             return_value=mock_intervals_client,
         ),
-        patch("cyclisme_training_logs.config.get_data_config") as mock_get_config,
+        patch("magma_cycling.config.get_data_config") as mock_get_config,
         patch(
-            "cyclisme_training_logs.planning.control_tower.planning_tower.planning_dir",
+            "magma_cycling.planning.control_tower.planning_tower.planning_dir",
             planning_dir,
         ),
     ):
@@ -453,7 +453,7 @@ async def test_sync_remote_to_local_handler_returns_json(mock_intervals_client, 
         mock_get_config.return_value = mock_config
 
         # Import and call handler
-        from cyclisme_training_logs.mcp_server import handle_sync_remote_to_local
+        from magma_cycling.mcp_server import handle_sync_remote_to_local
 
         args = {"week_id": "S081", "strategy": "merge"}
 
@@ -493,8 +493,8 @@ async def test_sync_remote_to_local_planning_not_found():
     Tests error handling in MCP interface.
     """
     with (
-        patch("cyclisme_training_logs.config.create_intervals_client"),
-        patch("cyclisme_training_logs.config.get_data_config") as mock_get_config,
+        patch("magma_cycling.config.create_intervals_client"),
+        patch("magma_cycling.config.get_data_config") as mock_get_config,
     ):
         # Mock data config with non-existent directory
         mock_config = Mock()
@@ -504,7 +504,7 @@ async def test_sync_remote_to_local_planning_not_found():
         )
         mock_get_config.return_value = mock_config
 
-        from cyclisme_training_logs.mcp_server import handle_sync_remote_to_local
+        from magma_cycling.mcp_server import handle_sync_remote_to_local
 
         args = {"week_id": "S999"}
 
@@ -529,7 +529,7 @@ async def test_backfill_activities_handler_returns_json(mock_intervals_client, t
     Tests the MCP interface (black-box) - verifies JSON structure, not implementation.
     """
     # Create test planning file
-    from cyclisme_training_logs.planning.models import Session, WeeklyPlan
+    from magma_cycling.planning.models import Session, WeeklyPlan
 
     planning_dir = tmp_path / "data" / "week_planning"
     planning_dir.mkdir(parents=True)
@@ -578,10 +578,10 @@ async def test_backfill_activities_handler_returns_json(mock_intervals_client, t
     # Patch dependencies
     with (
         patch(
-            "cyclisme_training_logs.config.create_intervals_client",
+            "magma_cycling.config.create_intervals_client",
             return_value=mock_intervals_client,
         ),
-        patch("cyclisme_training_logs.config.get_data_config") as mock_get_config,
+        patch("magma_cycling.config.get_data_config") as mock_get_config,
     ):
         # Mock data config
         mock_config = Mock()
@@ -593,7 +593,7 @@ async def test_backfill_activities_handler_returns_json(mock_intervals_client, t
         (tmp_path / "reports").mkdir()
 
         # Import and call handler
-        from cyclisme_training_logs.mcp_server import handle_backfill_activities
+        from magma_cycling.mcp_server import handle_backfill_activities
 
         args = {"week_id": "S081"}
 
@@ -652,10 +652,10 @@ async def test_backfill_activities_with_date_range(mock_intervals_client, tmp_pa
 
     with (
         patch(
-            "cyclisme_training_logs.config.create_intervals_client",
+            "magma_cycling.config.create_intervals_client",
             return_value=mock_intervals_client,
         ),
-        patch("cyclisme_training_logs.config.get_data_config") as mock_get_config,
+        patch("magma_cycling.config.get_data_config") as mock_get_config,
     ):
         # Mock data config
         mock_config = Mock()
@@ -665,7 +665,7 @@ async def test_backfill_activities_with_date_range(mock_intervals_client, tmp_pa
         # Create reports dir
         (tmp_path / "reports").mkdir()
 
-        from cyclisme_training_logs.mcp_server import handle_backfill_activities
+        from magma_cycling.mcp_server import handle_backfill_activities
 
         args = {"start_date": "2026-02-16", "end_date": "2026-02-22"}
 
@@ -715,10 +715,10 @@ async def test_get_activity_details_calculates_power_from_streams(mock_intervals
     )
 
     with patch(
-        "cyclisme_training_logs.config.create_intervals_client",
+        "magma_cycling.config.create_intervals_client",
         return_value=mock_intervals_client,
     ):
-        from cyclisme_training_logs.mcp_server import handle_get_activity_details
+        from magma_cycling.mcp_server import handle_get_activity_details
 
         result = await handle_get_activity_details(
             {"activity_id": "i123456", "include_streams": False}
@@ -766,10 +766,10 @@ async def test_get_activity_details_uses_api_values_when_present(mock_intervals_
     )
 
     with patch(
-        "cyclisme_training_logs.config.create_intervals_client",
+        "magma_cycling.config.create_intervals_client",
         return_value=mock_intervals_client,
     ):
-        from cyclisme_training_logs.mcp_server import handle_get_activity_details
+        from magma_cycling.mcp_server import handle_get_activity_details
 
         result = await handle_get_activity_details(
             {"activity_id": "i123456", "include_streams": False}
@@ -809,10 +809,10 @@ async def test_get_activity_details_handles_missing_watts_stream(mock_intervals_
     )
 
     with patch(
-        "cyclisme_training_logs.config.create_intervals_client",
+        "magma_cycling.config.create_intervals_client",
         return_value=mock_intervals_client,
     ):
-        from cyclisme_training_logs.mcp_server import handle_get_activity_details
+        from magma_cycling.mcp_server import handle_get_activity_details
 
         result = await handle_get_activity_details(
             {"activity_id": "i123456", "include_streams": False}
@@ -857,10 +857,10 @@ async def test_get_activity_details_calculates_cardiovascular_decoupling(
     )
 
     with patch(
-        "cyclisme_training_logs.config.create_intervals_client",
+        "magma_cycling.config.create_intervals_client",
         return_value=mock_intervals_client,
     ):
-        from cyclisme_training_logs.mcp_server import handle_get_activity_details
+        from magma_cycling.mcp_server import handle_get_activity_details
 
         result = await handle_get_activity_details(
             {"activity_id": "i123456", "include_streams": False}
@@ -899,10 +899,10 @@ async def test_get_activity_details_no_decoupling_without_hr_stream(
     )
 
     with patch(
-        "cyclisme_training_logs.config.create_intervals_client",
+        "magma_cycling.config.create_intervals_client",
         return_value=mock_intervals_client,
     ):
-        from cyclisme_training_logs.mcp_server import handle_get_activity_details
+        from magma_cycling.mcp_server import handle_get_activity_details
 
         result = await handle_get_activity_details(
             {"activity_id": "i123456", "include_streams": False}
@@ -939,10 +939,10 @@ async def test_get_activity_details_no_decoupling_for_short_activity(
     )
 
     with patch(
-        "cyclisme_training_logs.config.create_intervals_client",
+        "magma_cycling.config.create_intervals_client",
         return_value=mock_intervals_client,
     ):
-        from cyclisme_training_logs.mcp_server import handle_get_activity_details
+        from magma_cycling.mcp_server import handle_get_activity_details
 
         result = await handle_get_activity_details(
             {"activity_id": "i123456", "include_streams": False}
@@ -975,10 +975,10 @@ async def test_get_activity_details_handles_stream_fetch_exception(
     mock_intervals_client.get_activity_streams = Mock(side_effect=Exception("API timeout"))
 
     with patch(
-        "cyclisme_training_logs.config.create_intervals_client",
+        "magma_cycling.config.create_intervals_client",
         return_value=mock_intervals_client,
     ):
-        from cyclisme_training_logs.mcp_server import handle_get_activity_details
+        from magma_cycling.mcp_server import handle_get_activity_details
 
         result = await handle_get_activity_details(
             {"activity_id": "i123456", "include_streams": False}
@@ -1018,10 +1018,10 @@ async def test_get_activity_details_handles_malformed_stream_data(
     )
 
     with patch(
-        "cyclisme_training_logs.config.create_intervals_client",
+        "magma_cycling.config.create_intervals_client",
         return_value=mock_intervals_client,
     ):
-        from cyclisme_training_logs.mcp_server import handle_get_activity_details
+        from magma_cycling.mcp_server import handle_get_activity_details
 
         result = await handle_get_activity_details(
             {"activity_id": "i123456", "include_streams": False}
@@ -1061,10 +1061,10 @@ async def test_get_activity_details_decoupling_with_all_zero_hr(
     )
 
     with patch(
-        "cyclisme_training_logs.config.create_intervals_client",
+        "magma_cycling.config.create_intervals_client",
         return_value=mock_intervals_client,
     ):
-        from cyclisme_training_logs.mcp_server import handle_get_activity_details
+        from magma_cycling.mcp_server import handle_get_activity_details
 
         result = await handle_get_activity_details(
             {"activity_id": "i123456", "include_streams": False}
@@ -1102,10 +1102,10 @@ async def test_get_activity_details_decoupling_with_barely_long_enough_activity(
     )
 
     with patch(
-        "cyclisme_training_logs.config.create_intervals_client",
+        "magma_cycling.config.create_intervals_client",
         return_value=mock_intervals_client,
     ):
-        from cyclisme_training_logs.mcp_server import handle_get_activity_details
+        from magma_cycling.mcp_server import handle_get_activity_details
 
         result = await handle_get_activity_details(
             {"activity_id": "i123456", "include_streams": False}

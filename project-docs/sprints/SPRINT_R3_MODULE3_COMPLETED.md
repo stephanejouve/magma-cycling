@@ -162,7 +162,7 @@ def test_get_sync_status_with_changes():
 ### Fichiers Créés/Modifiés
 
 **Créé**:
-- `cyclisme_training_logs/planning/intervals_sync.py` (400 lignes)
+- `magma_cycling/planning/intervals_sync.py` (400 lignes)
 - `tests/planning/test_intervals_sync.py` (460 lignes)
 
 **Supprimé** (ancien code cassé):
@@ -234,9 +234,9 @@ poetry run upload-workouts --week-id S077 --file S077_workouts.txt
 ### 3. Vérification Sync (intervals_sync) **NOUVEAU**
 
 ```python
-from cyclisme_training_logs.planning.intervals_sync import IntervalsSync
-from cyclisme_training_logs.planning.calendar import TrainingCalendar
-from cyclisme_training_logs.config.athlete_profile import AthleteProfile
+from magma_cycling.planning.intervals_sync import IntervalsSync
+from magma_cycling.planning.calendar import TrainingCalendar
+from magma_cycling.config.athlete_profile import AthleteProfile
 from datetime import date
 
 # Créer calendrier local
@@ -450,7 +450,7 @@ if not status.is_synced:
 ## Git Commit
 
 ```bash
-git add cyclisme_training_logs/planning/intervals_sync.py
+git add magma_cycling/planning/intervals_sync.py
 git add tests/planning/test_intervals_sync.py
 git add project-docs/sprints/SPRINT_R3_MODULE3_COMPLETED.md
 

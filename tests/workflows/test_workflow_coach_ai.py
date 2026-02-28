@@ -15,14 +15,14 @@ Test Categories:
 
 from unittest.mock import Mock, patch
 
-from cyclisme_training_logs.workflow_coach import WorkflowCoach
+from magma_cycling.workflow_coach import WorkflowCoach
 
 
 class TestAIProviderInitialization:
     """Test AI provider initialization and configuration."""
 
-    @patch("cyclisme_training_logs.workflow_coach.AIProviderFactory.create")
-    @patch("cyclisme_training_logs.workflow_coach.get_ai_config")
+    @patch("magma_cycling.workflow_coach.AIProviderFactory.create")
+    @patch("magma_cycling.workflow_coach.get_ai_config")
     def test_init_with_specified_provider(self, mock_get_config, mock_factory):
         """Test __init__ with specified provider."""
         # Mock AI config
@@ -42,8 +42,8 @@ class TestAIProviderInitialization:
         mock_config.is_provider_configured.assert_called_with("claude_api")
         mock_factory.assert_called_once_with("claude_api", {"api_key": "test_key"})
 
-    @patch("cyclisme_training_logs.workflow_coach.AIProviderFactory.create")
-    @patch("cyclisme_training_logs.workflow_coach.get_ai_config")
+    @patch("magma_cycling.workflow_coach.AIProviderFactory.create")
+    @patch("magma_cycling.workflow_coach.get_ai_config")
     def test_init_auto_selects_first_available(self, mock_get_config, mock_factory):
         """Test __init__ auto-selects first available provider."""
         mock_config = Mock()
@@ -60,8 +60,8 @@ class TestAIProviderInitialization:
         assert coach.current_provider == "mistral_api"
         mock_factory.assert_called_once_with("mistral_api", {"api_key": "test_key"})
 
-    @patch("cyclisme_training_logs.workflow_coach.AIProviderFactory.create")
-    @patch("cyclisme_training_logs.workflow_coach.get_ai_config")
+    @patch("magma_cycling.workflow_coach.AIProviderFactory.create")
+    @patch("magma_cycling.workflow_coach.get_ai_config")
     def test_init_fallback_to_clipboard_when_not_configured(self, mock_get_config, mock_factory):
         """Test __init__ falls back to clipboard when provider not configured."""
         mock_config = Mock()
@@ -240,9 +240,7 @@ class TestProviderFallback:
 
         # Mock fallback consent: choose fallback
         with patch.object(coach, "_ask_fallback_consent", return_value="F"):
-            with patch(
-                "cyclisme_training_logs.workflow_coach.AIProviderFactory.create"
-            ) as mock_factory:
+            with patch("magma_cycling.workflow_coach.AIProviderFactory.create") as mock_factory:
                 mock_new_analyzer = Mock()
                 mock_new_analyzer.analyze_session.return_value = (
                     "Fallback analysis result with sufficient content length"
@@ -285,9 +283,7 @@ class TestProviderFallback:
 
         # User chooses clipboard mode
         with patch.object(coach, "_ask_fallback_consent", return_value="C"):
-            with patch(
-                "cyclisme_training_logs.workflow_coach.AIProviderFactory.create"
-            ) as mock_factory:
+            with patch("magma_cycling.workflow_coach.AIProviderFactory.create") as mock_factory:
                 mock_clipboard = Mock()
                 mock_factory.return_value = mock_clipboard
 

@@ -6,13 +6,13 @@ Tests AIProviderFactory for dynamic provider creation.
 """
 import pytest
 
-from cyclisme_training_logs.ai_providers.base import AIAnalyzer, AIProvider
-from cyclisme_training_logs.ai_providers.claude_api import ClaudeAPIAnalyzer
-from cyclisme_training_logs.ai_providers.clipboard import ClipboardAnalyzer
-from cyclisme_training_logs.ai_providers.factory import AIProviderFactory, ConfigError
-from cyclisme_training_logs.ai_providers.mistral_api import MistralAPIAnalyzer
-from cyclisme_training_logs.ai_providers.ollama import OllamaAnalyzer
-from cyclisme_training_logs.ai_providers.openai_api import OpenAIAnalyzer
+from magma_cycling.ai_providers.base import AIAnalyzer, AIProvider
+from magma_cycling.ai_providers.claude_api import ClaudeAPIAnalyzer
+from magma_cycling.ai_providers.clipboard import ClipboardAnalyzer
+from magma_cycling.ai_providers.factory import AIProviderFactory, ConfigError
+from magma_cycling.ai_providers.mistral_api import MistralAPIAnalyzer
+from magma_cycling.ai_providers.ollama import OllamaAnalyzer
+from magma_cycling.ai_providers.openai_api import OpenAIAnalyzer
 
 
 class TestAIProviderFactory:

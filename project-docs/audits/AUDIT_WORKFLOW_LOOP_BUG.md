@@ -84,7 +84,7 @@ Ton choix : [User choisit 2 - traiter repos/sautées]
 
 ### Root Cause #1 : Boucle Infinie dans `run()`
 
-**Fichier** : `cyclisme_training_logs/workflow_coach.py`
+**Fichier** : `magma_cycling/workflow_coach.py`
 **Lignes** : 2191-2258
 
 ```python
@@ -122,7 +122,7 @@ while True:  # ← PROBLÈME : Pas de condition d'arrêt intelligente
 
 ### Root Cause #2 : Détection Sans État Persistant
 
-**Fichier** : `cyclisme_training_logs/workflow_coach.py`
+**Fichier** : `magma_cycling/workflow_coach.py`
 **Lignes** : 775-1005
 
 ```python
@@ -157,7 +157,7 @@ def step_1b_detect_all_gaps(self):
 
 ### Root Cause #3 : Réconciliation None
 
-**Fichier** : `cyclisme_training_logs/workflow_coach.py`
+**Fichier** : `magma_cycling/workflow_coach.py`
 **Lignes** : 1553-1572
 
 ```python
@@ -191,7 +191,7 @@ def _handle_rest_cancellations(self):
 **Implémentation** : Étendre WorkflowState
 
 ```python
-# cyclisme_training_logs/workflow_state.py
+# magma_cycling/workflow_state.py
 
 class WorkflowState:
     def __init__(self, project_root: Path):
@@ -288,7 +288,7 @@ def _insert_to_history(self, markdowns: list) -> bool:
 **Implémentation** :
 
 ```python
-# cyclisme_training_logs/workflow_coach.py
+# magma_cycling/workflow_coach.py
 
 def run(self):
     """Orchestrer le workflow complet avec détection unifiée des gaps (mode boucle)"""
@@ -484,12 +484,12 @@ def _show_skipped_sessions(self):
 
 ## 📎 Références
 
-- **Fichier principal** : `cyclisme_training_logs/workflow_coach.py`
+- **Fichier principal** : `magma_cycling/workflow_coach.py`
 - **Logs analysés** :
   - `logs/Cyclisme-training-logs_20251225_074440.txt` (trainr mode)
   - `logs/Tree-Cyclisme-training-logs_20251225_073148.txt` (trains mode)
-- **WorkflowState** : `cyclisme_training_logs/workflow_state.py`
-- **Templates** : `cyclisme_training_logs/templates/`
+- **WorkflowState** : `magma_cycling/workflow_state.py`
+- **Templates** : `magma_cycling/templates/`
 
 ---
 

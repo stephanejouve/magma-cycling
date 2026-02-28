@@ -194,7 +194,7 @@ class AthleteProfile(BaseModel):
 
 **Recherche for_master_athlete():**
 ```bash
-grep -r "for_master_athlete" cyclisme_training_logs/
+grep -r "for_master_athlete" magma_cycling/
 # Résultat: Aucune correspondance trouvée
 ```
 
@@ -427,7 +427,7 @@ Phase actuelle:
 
 ```python
 # Exemple usage future
-from cyclisme_training_logs.analyzers import RecoveryAnalyzer
+from magma_cycling.analyzers import RecoveryAnalyzer
 
 analyzer = RecoveryAnalyzer.from_env()
 

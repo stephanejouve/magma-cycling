@@ -42,7 +42,7 @@ Le système de détection des séances sautées permet d'identifier automatiquem
 ### Étape 2 : Appliquer les patches
 
 ```bash
-cd /path/to/cyclisme-training-logs
+cd /path/to/magma-cycling
 
 # Patch 1 : Intégration workflow_coach.py
 git apply patches/add_skipped_sessions_detection.patch

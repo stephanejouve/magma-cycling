@@ -15,7 +15,7 @@ import json
 
 import pytest
 
-from cyclisme_training_logs.analyzers.daily_aggregator import DailyAggregator
+from magma_cycling.analyzers.daily_aggregator import DailyAggregator
 
 
 @pytest.fixture

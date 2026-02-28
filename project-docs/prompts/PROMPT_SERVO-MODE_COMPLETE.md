@@ -2,13 +2,13 @@
 
 ## Contexte Projet
 
-Tu es Claude Code, assistant de développement pour le projet cyclisme-training-logs.
+Tu es Claude Code, assistant de développement pour le projet magma-cycling.
 Stéphane (54 ans, cycliste) utilise ce projet pour gérer ses entraînements.
 
 **Architecture:**
-- Repo code: `~/cyclisme-training-logs` (Python, Poetry)
+- Repo code: `~/magma-cycling` (Python, Poetry)
 - Repo data: `~/training-logs` (données séparées)
-- Config centralisée: `cyclisme_training_logs/config.py`
+- Config centralisée: `magma_cycling/config.py`
 
 ## État Actuel (Fin 27/12)
 
@@ -59,16 +59,16 @@ Stéphane (54 ans, cycliste) utilise ce projet pour gérer ses entraînements.
 gh issue list --label "servo-mode"
 
 # 2. Localiser code exact
-grep -rn "parse_ai_response" cyclisme_training_logs/
-grep -rn "Demander recommandations au coach AI" cyclisme_training_logs/
-grep -rn "ai_provider\|provider" cyclisme_training_logs/servo_mode.py
+grep -rn "parse_ai_response" magma_cycling/
+grep -rn "Demander recommandations au coach AI" magma_cycling/
+grep -rn "ai_provider\|provider" magma_cycling/servo_mode.py
 
 # 3. Lire code actuel complet
-cat cyclisme_training_logs/servo_mode.py
-cat cyclisme_training_logs/workflow_coach.py | grep -A 50 "servo"
+cat magma_cycling/servo_mode.py
+cat magma_cycling/workflow_coach.py | grep -A 50 "servo"
 
 # 4. Identifier dépendances
-grep -rn "from.*servo_mode import" cyclisme_training_logs/
+grep -rn "from.*servo_mode import" magma_cycling/
 ```
 
 ### Phase 2: Fix Provider Integration (45 min)
@@ -399,9 +399,9 @@ git push origin main
 ## Fichiers Clés
 
 **À Modifier:**
-- `cyclisme_training_logs/servo_mode.py` (3 fixes)
-- `cyclisme_training_logs/workflow_coach.py` (integration)
-- `cyclisme_training_logs/collect_athlete_feedback.py` (skip logic)
+- `magma_cycling/servo_mode.py` (3 fixes)
+- `magma_cycling/workflow_coach.py` (integration)
+- `magma_cycling/collect_athlete_feedback.py` (skip logic)
 
 **À Créer:**
 - `tests/test_servo_mode.py` (tests unitaires)
@@ -420,8 +420,8 @@ git push origin main
 gh issue list --label "servo-mode"
 
 # Diagnostic code actuel
-grep -rn "parse_ai_response" cyclisme_training_logs/
-cat cyclisme_training_logs/servo_mode.py
+grep -rn "parse_ai_response" magma_cycling/
+cat magma_cycling/servo_mode.py
 
 # Confirmer plan avec Stéphane
 echo "Plan validé? (Phase 1→6)"

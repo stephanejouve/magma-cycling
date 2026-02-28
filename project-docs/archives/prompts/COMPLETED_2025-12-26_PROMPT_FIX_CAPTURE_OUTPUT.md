@@ -45,7 +45,7 @@ def analyze_activity(self, activity: Dict) -> bool:
 
     cmd = [
         sys.executable,
-        '-m', 'cyclisme_training_logs.workflow_coach',
+        '-m', 'magma_cycling.workflow_coach',
         '--activity-id', activity_id,
         '--provider', self.provider,
         '--auto',

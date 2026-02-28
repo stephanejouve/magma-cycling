@@ -12,7 +12,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from cyclisme_training_logs.insert_analysis import (
+from magma_cycling.insert_analysis import (
     AnalysisParser,
     ClipboardReader,
     WorkoutHistoryManager,
@@ -239,7 +239,7 @@ Date : 15/01/2026
         mock_config.workouts_history_path = sample_history_file
         mock_config.data_repo_path = tmp_path
         # Patch the config module, not the insert_analysis import
-        monkeypatch.setattr("cyclisme_training_logs.config.get_data_config", lambda: mock_config)
+        monkeypatch.setattr("magma_cycling.config.get_data_config", lambda: mock_config)
 
         manager = WorkoutHistoryManager()
         content = manager.read_history()
@@ -266,7 +266,7 @@ Date : 15/01/2026
         mock_config = Mock()
         mock_config.workouts_history_path = sample_history_file
         mock_config.data_repo_path = tmp_path
-        monkeypatch.setattr("cyclisme_training_logs.config.get_data_config", lambda: mock_config)
+        monkeypatch.setattr("magma_cycling.config.get_data_config", lambda: mock_config)
 
         manager = WorkoutHistoryManager()
         content = sample_history_file.read_text()
@@ -289,7 +289,7 @@ Content
         mock_config = Mock()
         mock_config.workouts_history_path = sample_history_file
         mock_config.data_repo_path = tmp_path
-        monkeypatch.setattr("cyclisme_training_logs.config.get_data_config", lambda: mock_config)
+        monkeypatch.setattr("magma_cycling.config.get_data_config", lambda: mock_config)
 
         manager = WorkoutHistoryManager()
         content = sample_history_file.read_text()
@@ -317,12 +317,12 @@ class TestCLIIntegration:
         mock_config = Mock()
         mock_config.workouts_history_path = history_file
         mock_config.data_repo_path = tmp_path
-        monkeypatch.setattr("cyclisme_training_logs.config.get_data_config", lambda: mock_config)
+        monkeypatch.setattr("magma_cycling.config.get_data_config", lambda: mock_config)
 
         # Mock clipboard
         mock_clipboard = "### Test\nDate : 15/01/2026\n"
         monkeypatch.setattr(
-            "cyclisme_training_logs.insert_analysis.ClipboardReader.read_clipboard",
+            "magma_cycling.insert_analysis.ClipboardReader.read_clipboard",
             lambda: mock_clipboard,
         )
 
@@ -330,7 +330,7 @@ class TestCLIIntegration:
         monkeypatch.setattr("sys.argv", ["insert-analysis", "--dry-run", "--yes"])
 
         # Import and run main - expect SystemExit(0) on success
-        from cyclisme_training_logs.insert_analysis import main
+        from magma_cycling.insert_analysis import main
 
         with pytest.raises(SystemExit) as exc_info:
             main()
@@ -359,13 +359,13 @@ Content
         mock_config = Mock()
         mock_config.workouts_history_path = history_file
         mock_config.data_repo_path = tmp_path
-        monkeypatch.setattr("cyclisme_training_logs.config.get_data_config", lambda: mock_config)
+        monkeypatch.setattr("magma_cycling.config.get_data_config", lambda: mock_config)
 
         monkeypatch.setattr(
             "sys.argv", ["insert-analysis", "--file", str(analysis_file), "--yes", "--dry-run"]
         )
 
-        from cyclisme_training_logs.insert_analysis import main
+        from magma_cycling.insert_analysis import main
 
         with pytest.raises(SystemExit) as exc_info:
             main()

@@ -5,7 +5,7 @@ on:
     paths:
       - 'project-docs/**'
       - '**.md'
-      - '!cyclisme_training_logs/**'
+      - '!magma_cycling/**'
       - '!tests/**'
 
 jobs:

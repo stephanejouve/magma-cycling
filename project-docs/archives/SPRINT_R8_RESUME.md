@@ -221,7 +221,7 @@ class TestOrchestration:
 ### Reprendre les tests
 ```bash
 # Vérifier état actuel
-poetry run pytest tests/workflows/test_workflow_coach.py -v --cov=cyclisme_training_logs.workflow_coach --cov-report=term
+poetry run pytest tests/workflows/test_workflow_coach.py -v --cov=magma_cycling.workflow_coach --cov-report=term
 
 # Current: 44 tests, 19% coverage
 # Expected output: 44 passed
@@ -234,7 +234,7 @@ poetry run pytest tests/workflows/test_workflow_coach.py -v --cov=cyclisme_train
 poetry run pytest tests/workflows/test_workflow_coach.py::TestAnalysisPreparation -v
 
 # Check coverage après ajout
-poetry run pytest tests/workflows/test_workflow_coach.py --cov=cyclisme_training_logs.workflow_coach --cov-report=term
+poetry run pytest tests/workflows/test_workflow_coach.py --cov=magma_cycling.workflow_coach --cov-report=term
 ```
 
 ### Git Status
@@ -258,7 +258,7 @@ git status
 - `tests/test_weekly_aggregator.py` - Bug fixé (training_load → tss)
 
 ### Source
-- `cyclisme_training_logs/workflow_coach.py` - 1,822 lignes, 19% coverage
+- `magma_cycling/workflow_coach.py` - 1,822 lignes, 19% coverage
 
 ### Documentation
 - `project-docs/sessions/SESSION_20260111_SPRINT_R8.md` - Log complet
@@ -308,7 +308,7 @@ class TestCategoryName:
 ### Mocks Courants
 ```python
 # API Intervals.icu
-@patch("cyclisme_training_logs.workflow_coach.IntervalsClient")
+@patch("magma_cycling.workflow_coach.IntervalsClient")
 
 # File I/O
 @patch("builtins.open", new_callable=mock_open, read_data='...')
@@ -324,7 +324,7 @@ class TestCategoryName:
 @patch("builtins.input", side_effect=["val1", "val2", ...])
 
 # Config
-@patch("cyclisme_training_logs.workflow_coach.get_data_config")
+@patch("magma_cycling.workflow_coach.get_data_config")
 ```
 
 ---
@@ -352,7 +352,7 @@ class TestCategoryName:
 
 ## ✅ Checklist Reprise
 
-- [ ] Lancer terminal dans /Users/stephanejouve/cyclisme-training-logs
+- [ ] Lancer terminal dans /Users/stephanejouve/magma-cycling
 - [ ] Activer environnement Poetry: `poetry shell`
 - [ ] Vérifier tests actuels: `pytest tests/workflows/test_workflow_coach.py -v`
 - [ ] Lire ce fichier (SPRINT_R8_RESUME.md)

@@ -4,12 +4,12 @@
 
 ### Check All Files
 ```bash
-poetry run mypy cyclisme_training_logs/ --show-error-codes 2>&1 | grep "^Found"
+poetry run mypy magma_cycling/ --show-error-codes 2>&1 | grep "^Found"
 ```
 
 ### Check Specific File
 ```bash
-poetry run mypy cyclisme_training_logs/workflow_coach.py --show-error-codes
+poetry run mypy magma_cycling/workflow_coach.py --show-error-codes
 ```
 
 ### Current Status
@@ -23,12 +23,12 @@ poetry run mypy cyclisme_training_logs/workflow_coach.py --show-error-codes
 
 ### Check All
 ```bash
-poetry run pydocstyle cyclisme_training_logs/ --count
+poetry run pydocstyle magma_cycling/ --count
 ```
 
 ### By Error Type
 ```bash
-poetry run pydocstyle cyclisme_training_logs/ | grep -E "^        D[0-9]+" | cut -d: -f1 | sort | uniq -c | sort -rn
+poetry run pydocstyle magma_cycling/ | grep -E "^        D[0-9]+" | cut -d: -f1 | sort | uniq -c | sort -rn
 ```
 
 ### Auto-fix Scripts
@@ -59,7 +59,7 @@ poetry run pytest tests/ -x --tb=short -q
 
 ### With Coverage
 ```bash
-poetry run pytest tests/ --cov=cyclisme_training_logs --cov-report=html
+poetry run pytest tests/ --cov=magma_cycling --cov-report=html
 ```
 
 ### Specific Test
@@ -74,13 +74,13 @@ poetry run pytest tests/test_workflow_weekly.py -v
 ### Check Complexity (Radon)
 ```bash
 # Cyclomatic complexity
-poetry run radon cc cyclisme_training_logs/ -a -s
+poetry run radon cc magma_cycling/ -a -s
 
 # Complex functions only (C and above)
-poetry run radon cc cyclisme_training_logs/ -nc
+poetry run radon cc magma_cycling/ -nc
 
 # Maintainability index
-poetry run radon mi cyclisme_training_logs/ -s
+poetry run radon mi magma_cycling/ -s
 ```
 
 ### Current Critical Functions
@@ -95,12 +95,12 @@ All previously critical functions have been refactored:
 
 ### Format All
 ```bash
-poetry run black cyclisme_training_logs/
+poetry run black magma_cycling/
 ```
 
 ### Check Only
 ```bash
-poetry run black cyclisme_training_logs/ --check
+poetry run black magma_cycling/ --check
 ```
 
 ---
@@ -109,12 +109,12 @@ poetry run black cyclisme_training_logs/ --check
 
 ### Check All
 ```bash
-poetry run ruff check cyclisme_training_logs/
+poetry run ruff check magma_cycling/
 ```
 
 ### Auto-fix
 ```bash
-poetry run ruff check cyclisme_training_logs/ --fix
+poetry run ruff check magma_cycling/ --fix
 ```
 
 ---
@@ -162,10 +162,10 @@ poetry run pre-commit autoupdate
 ### Quick Health Check
 ```bash
 # Run all quality checks
-echo "=== MyPy ===" && poetry run mypy cyclisme_training_logs/ 2>&1 | grep "^Found"
-echo "\n=== Pydocstyle ===" && poetry run pydocstyle cyclisme_training_logs/ --count | tail -1
+echo "=== MyPy ===" && poetry run mypy magma_cycling/ 2>&1 | grep "^Found"
+echo "\n=== Pydocstyle ===" && poetry run pydocstyle magma_cycling/ --count | tail -1
 echo "\n=== Tests ===" && poetry run pytest tests/ -q --tb=no
-echo "\n=== Ruff ===" && poetry run ruff check cyclisme_training_logs/ --quiet && echo "✅ No issues" || echo "⚠️ Issues found"
+echo "\n=== Ruff ===" && poetry run ruff check magma_cycling/ --quiet && echo "✅ No issues" || echo "⚠️ Issues found"
 ```
 
 ---
@@ -244,14 +244,14 @@ Already configured in `.pre-commit-config.yaml`:
 ```yaml
 # Add to CI pipeline
 - name: Type Check
-  run: poetry run mypy cyclisme_training_logs/ --show-error-codes
+  run: poetry run mypy magma_cycling/ --show-error-codes
 
 - name: Doc Check
-  run: poetry run pydocstyle cyclisme_training_logs/ --count
+  run: poetry run pydocstyle magma_cycling/ --count
   continue-on-error: true  # Until all fixed
 
 - name: Complexity Check
-  run: poetry run radon cc cyclisme_training_logs/ -nc
+  run: poetry run radon cc magma_cycling/ -nc
   continue-on-error: true
 ```
 

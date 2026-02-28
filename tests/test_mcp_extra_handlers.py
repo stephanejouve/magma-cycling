@@ -15,8 +15,8 @@ import pytest
 
 pytest_plugins = ("pytest_asyncio",)
 
-TOWER_PATCH = "cyclisme_training_logs.planning.control_tower.planning_tower"
-INTERVALS_PATCH = "cyclisme_training_logs.config.create_intervals_client"
+TOWER_PATCH = "magma_cycling.planning.control_tower.planning_tower"
+INTERVALS_PATCH = "magma_cycling.config.create_intervals_client"
 
 
 # =======================
@@ -75,7 +75,7 @@ class TestHandleUpdateSession:
     @pytest.mark.asyncio
     async def test_success_no_sync(self, mock_plan, mock_session):
         """Success path without sync to Intervals.icu."""
-        from cyclisme_training_logs.mcp_server import handle_update_session
+        from magma_cycling.mcp_server import handle_update_session
 
         tower = make_tower(mock_plan)
         args = {
@@ -95,7 +95,7 @@ class TestHandleUpdateSession:
     @pytest.mark.asyncio
     async def test_session_not_found_raises_value_error(self, mock_tower):
         """Session not found raises ValueError (propagates to call_tool dispatcher)."""
-        from cyclisme_training_logs.mcp_server import handle_update_session
+        from magma_cycling.mcp_server import handle_update_session
 
         args = {
             "week_id": "S081",
@@ -109,7 +109,7 @@ class TestHandleUpdateSession:
     @pytest.mark.asyncio
     async def test_file_not_found_raises(self, mock_tower):
         """FileNotFoundError propagates from handle_update_session (no try/except)."""
-        from cyclisme_training_logs.mcp_server import handle_update_session
+        from magma_cycling.mcp_server import handle_update_session
 
         mock_tower.modify_week.side_effect = FileNotFoundError("not found")
         args = {"week_id": "S099", "session_id": "S099-01", "status": "skipped"}
@@ -120,7 +120,7 @@ class TestHandleUpdateSession:
     @pytest.mark.asyncio
     async def test_with_reason_and_skipped_status(self, mock_plan, mock_session):
         """Test with skip reason for skipped status."""
-        from cyclisme_training_logs.mcp_server import handle_update_session
+        from magma_cycling.mcp_server import handle_update_session
 
         tower = make_tower(mock_plan)
         args = {
@@ -138,7 +138,7 @@ class TestHandleUpdateSession:
     @pytest.mark.asyncio
     async def test_sync_with_existing_intervals_id(self, mock_plan, mock_session):
         """Test sync to intervals.icu when session has intervals_id."""
-        from cyclisme_training_logs.mcp_server import handle_update_session
+        from magma_cycling.mcp_server import handle_update_session
 
         mock_session.intervals_id = 12345
         mock_session.status = "pending"
@@ -164,14 +164,14 @@ class TestHandleUpdateSession:
 # =======================
 
 
-LOAD_WORKOUTS_PATCH = "cyclisme_training_logs._mcp.handlers.intervals.load_workout_descriptions"
+LOAD_WORKOUTS_PATCH = "magma_cycling._mcp.handlers.intervals.load_workout_descriptions"
 
 
 class TestHandleSyncWeekToIntervals:
     @pytest.mark.asyncio
     async def test_dry_run_no_api_calls(self, mock_plan, mock_session):
         """dry_run=True: computes plan but skips API create/update calls."""
-        from cyclisme_training_logs.mcp_server import handle_sync_week_to_intervals
+        from magma_cycling.mcp_server import handle_sync_week_to_intervals
 
         mock_session.intervals_id = None
         mock_plan.planned_sessions = [mock_session]
@@ -193,7 +193,7 @@ class TestHandleSyncWeekToIntervals:
     @pytest.mark.asyncio
     async def test_completed_session_skipped(self, mock_plan, mock_session):
         """Completed sessions are protected — skipped from sync."""
-        from cyclisme_training_logs.mcp_server import handle_sync_week_to_intervals
+        from magma_cycling.mcp_server import handle_sync_week_to_intervals
 
         mock_session.status = "completed"
         mock_session.intervals_id = 12345
@@ -214,7 +214,7 @@ class TestHandleSyncWeekToIntervals:
     @pytest.mark.asyncio
     async def test_file_not_found_returns_error(self, mock_tower):
         """FileNotFoundError from planning_tower returns error."""
-        from cyclisme_training_logs.mcp_server import handle_sync_week_to_intervals
+        from magma_cycling.mcp_server import handle_sync_week_to_intervals
 
         mock_tower.read_week.side_effect = FileNotFoundError("not found")
         mock_client = Mock()
@@ -228,7 +228,7 @@ class TestHandleSyncWeekToIntervals:
     @pytest.mark.asyncio
     async def test_intervals_id_conflict_with_force_update(self, mock_plan, mock_session):
         """Session with intervals_id that exists remotely — force_update flag."""
-        from cyclisme_training_logs.mcp_server import handle_sync_week_to_intervals
+        from magma_cycling.mcp_server import handle_sync_week_to_intervals
 
         mock_session.intervals_id = "evt123"
         mock_session.status = "pending"
@@ -260,7 +260,7 @@ class TestHandleSyncWeekToIntervals:
     @pytest.mark.asyncio
     async def test_remote_conflict_detected(self, mock_plan, mock_session):
         """Session with intervals_id but remote was manually modified → warning."""
-        from cyclisme_training_logs.mcp_server import handle_sync_week_to_intervals
+        from magma_cycling.mcp_server import handle_sync_week_to_intervals
 
         mock_session.intervals_id = "evt123"
         mock_session.status = "pending"
@@ -291,7 +291,7 @@ class TestHandleSyncWeekToIntervals:
     @pytest.mark.asyncio
     async def test_skipped_session_not_synced(self, mock_plan, mock_session):
         """Skipped sessions are protected — not synced to Intervals.icu."""
-        from cyclisme_training_logs.mcp_server import handle_sync_week_to_intervals
+        from magma_cycling.mcp_server import handle_sync_week_to_intervals
 
         mock_session.status = "skipped"
         mock_session.intervals_id = None
@@ -313,7 +313,7 @@ class TestHandleSyncWeekToIntervals:
     @pytest.mark.asyncio
     async def test_rest_day_session_not_synced(self, mock_plan, mock_session):
         """Rest day sessions are protected — not synced to Intervals.icu."""
-        from cyclisme_training_logs.mcp_server import handle_sync_week_to_intervals
+        from magma_cycling.mcp_server import handle_sync_week_to_intervals
 
         mock_session.status = "rest_day"
         mock_session.intervals_id = None
@@ -335,7 +335,7 @@ class TestHandleSyncWeekToIntervals:
     @pytest.mark.asyncio
     async def test_name_comparison_uses_full_intervals_name(self, mock_plan, mock_session):
         """Bug 2: Comparison uses full intervals_name, not short session.name."""
-        from cyclisme_training_logs.mcp_server import handle_sync_week_to_intervals
+        from magma_cycling.mcp_server import handle_sync_week_to_intervals
 
         mock_session.intervals_id = "evt123"
         mock_session.status = "pending"
@@ -367,7 +367,7 @@ class TestHandleSyncWeekToIntervals:
     @pytest.mark.asyncio
     async def test_update_payload_excludes_description(self, mock_plan, mock_session):
         """Bug 3: Update payload sends only name + start_date_local, not description."""
-        from cyclisme_training_logs.mcp_server import handle_sync_week_to_intervals
+        from magma_cycling.mcp_server import handle_sync_week_to_intervals
 
         mock_session.intervals_id = "evt123"
         mock_session.status = "pending"
@@ -406,7 +406,7 @@ class TestHandleSyncWeekToIntervals:
     @pytest.mark.asyncio
     async def test_session_ids_filter(self, mock_plan, mock_session):
         """Bug 4: session_ids parameter filters which sessions are synced."""
-        from cyclisme_training_logs.mcp_server import handle_sync_week_to_intervals
+        from magma_cycling.mcp_server import handle_sync_week_to_intervals
 
         # Add a second session
         session2 = Mock()
@@ -451,7 +451,7 @@ class TestSyncValidationGate:
     @pytest.mark.asyncio
     async def test_sync_rejects_invalid_workout(self, mock_plan, mock_session):
         """Session with '5min' duration → validation error, no API create."""
-        from cyclisme_training_logs.mcp_server import handle_sync_week_to_intervals
+        from magma_cycling.mcp_server import handle_sync_week_to_intervals
 
         mock_session.intervals_id = None
         mock_session.status = "pending"
@@ -482,7 +482,7 @@ class TestSyncValidationGate:
     @pytest.mark.asyncio
     async def test_sync_accepts_valid_workout(self, mock_plan, mock_session):
         """Session with valid '5m' duration → create API called normally."""
-        from cyclisme_training_logs.mcp_server import handle_sync_week_to_intervals
+        from magma_cycling.mcp_server import handle_sync_week_to_intervals
 
         mock_session.intervals_id = None
         mock_session.status = "pending"
@@ -517,7 +517,7 @@ class TestSyncValidationGate:
 class TestHandleGetMetrics:
     @pytest.mark.asyncio
     async def test_success_returns_wellness_data(self):
-        from cyclisme_training_logs.mcp_server import handle_get_metrics
+        from magma_cycling.mcp_server import handle_get_metrics
 
         mock_config = Mock()
         mock_config.athlete_id = "iXXXXXX"
@@ -535,9 +535,9 @@ class TestHandleGetMetrics:
             },
         ]
 
-        with patch("cyclisme_training_logs.config.get_intervals_config", return_value=mock_config):
+        with patch("magma_cycling.config.get_intervals_config", return_value=mock_config):
             with patch(
-                "cyclisme_training_logs.api.intervals_client.IntervalsClient",
+                "magma_cycling.api.intervals_client.IntervalsClient",
                 return_value=mock_client,
             ):
                 result = await handle_get_metrics({})
@@ -547,7 +547,7 @@ class TestHandleGetMetrics:
 
     @pytest.mark.asyncio
     async def test_no_wellness_data_returns_error(self):
-        from cyclisme_training_logs.mcp_server import handle_get_metrics
+        from magma_cycling.mcp_server import handle_get_metrics
 
         mock_config = Mock()
         mock_config.athlete_id = "iXXXXXX"
@@ -555,9 +555,9 @@ class TestHandleGetMetrics:
         mock_client = Mock()
         mock_client.get_wellness.return_value = []
 
-        with patch("cyclisme_training_logs.config.get_intervals_config", return_value=mock_config):
+        with patch("magma_cycling.config.get_intervals_config", return_value=mock_config):
             with patch(
-                "cyclisme_training_logs.api.intervals_client.IntervalsClient",
+                "magma_cycling.api.intervals_client.IntervalsClient",
                 return_value=mock_client,
             ):
                 result = await handle_get_metrics({})
@@ -573,16 +573,14 @@ class TestHandleGetMetrics:
 class TestHandleWithingsGetSleep:
     @pytest.mark.asyncio
     async def test_last_night_only_with_data(self):
-        from cyclisme_training_logs.mcp_server import handle_withings_get_sleep
+        from magma_cycling.mcp_server import handle_withings_get_sleep
 
         mock_client = Mock()
         mock_client.get_last_night_sleep.return_value = {
             "total_sleep_hours": 7.5,
             "sleep_score": 85,
         }
-        with patch(
-            "cyclisme_training_logs.config.create_withings_client", return_value=mock_client
-        ):
+        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
             result = await handle_withings_get_sleep({"last_night_only": True})
         data = json.loads(result[0].text)
         assert "last_night_sleep" in data
@@ -590,13 +588,11 @@ class TestHandleWithingsGetSleep:
 
     @pytest.mark.asyncio
     async def test_last_night_only_no_data(self):
-        from cyclisme_training_logs.mcp_server import handle_withings_get_sleep
+        from magma_cycling.mcp_server import handle_withings_get_sleep
 
         mock_client = Mock()
         mock_client.get_last_night_sleep.return_value = None
-        with patch(
-            "cyclisme_training_logs.config.create_withings_client", return_value=mock_client
-        ):
+        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
             result = await handle_withings_get_sleep({"last_night_only": True})
         data = json.loads(result[0].text)
         assert data["last_night_sleep"] is None
@@ -604,15 +600,13 @@ class TestHandleWithingsGetSleep:
 
     @pytest.mark.asyncio
     async def test_date_range_returns_sessions(self):
-        from cyclisme_training_logs.mcp_server import handle_withings_get_sleep
+        from magma_cycling.mcp_server import handle_withings_get_sleep
 
         mock_client = Mock()
         mock_client.get_sleep.return_value = [
             {"date": "2026-02-17", "total_sleep_hours": 7.0},
         ]
-        with patch(
-            "cyclisme_training_logs.config.create_withings_client", return_value=mock_client
-        ):
+        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
             result = await handle_withings_get_sleep(
                 {
                     "start_date": "2026-02-17",
@@ -625,13 +619,11 @@ class TestHandleWithingsGetSleep:
 
     @pytest.mark.asyncio
     async def test_default_7_days_range(self):
-        from cyclisme_training_logs.mcp_server import handle_withings_get_sleep
+        from magma_cycling.mcp_server import handle_withings_get_sleep
 
         mock_client = Mock()
         mock_client.get_sleep.return_value = []
-        with patch(
-            "cyclisme_training_logs.config.create_withings_client", return_value=mock_client
-        ):
+        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
             result = await handle_withings_get_sleep({})
         data = json.loads(result[0].text)
         assert "start_date" in data
@@ -646,26 +638,22 @@ class TestHandleWithingsGetSleep:
 class TestHandleWithingsGetWeight:
     @pytest.mark.asyncio
     async def test_latest_only_with_data(self):
-        from cyclisme_training_logs.mcp_server import handle_withings_get_weight
+        from magma_cycling.mcp_server import handle_withings_get_weight
 
         mock_client = Mock()
         mock_client.get_latest_weight.return_value = {"weight_kg": 72.3}
-        with patch(
-            "cyclisme_training_logs.config.create_withings_client", return_value=mock_client
-        ):
+        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
             result = await handle_withings_get_weight({"latest_only": True})
         data = json.loads(result[0].text)
         assert data["latest_weight"]["weight_kg"] == 72.3
 
     @pytest.mark.asyncio
     async def test_latest_only_no_data(self):
-        from cyclisme_training_logs.mcp_server import handle_withings_get_weight
+        from magma_cycling.mcp_server import handle_withings_get_weight
 
         mock_client = Mock()
         mock_client.get_latest_weight.return_value = None
-        with patch(
-            "cyclisme_training_logs.config.create_withings_client", return_value=mock_client
-        ):
+        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
             result = await handle_withings_get_weight({"latest_only": True})
         data = json.loads(result[0].text)
         assert data["latest_weight"] is None
@@ -673,15 +661,13 @@ class TestHandleWithingsGetWeight:
 
     @pytest.mark.asyncio
     async def test_date_range_returns_measurements(self):
-        from cyclisme_training_logs.mcp_server import handle_withings_get_weight
+        from magma_cycling.mcp_server import handle_withings_get_weight
 
         mock_client = Mock()
         mock_client.get_measurements.return_value = [
             {"date": "2026-02-17", "weight_kg": 72.5},
         ]
-        with patch(
-            "cyclisme_training_logs.config.create_withings_client", return_value=mock_client
-        ):
+        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
             result = await handle_withings_get_weight(
                 {
                     "start_date": "2026-02-17",
@@ -693,13 +679,11 @@ class TestHandleWithingsGetWeight:
 
     @pytest.mark.asyncio
     async def test_default_30_days_range(self):
-        from cyclisme_training_logs.mcp_server import handle_withings_get_weight
+        from magma_cycling.mcp_server import handle_withings_get_weight
 
         mock_client = Mock()
         mock_client.get_measurements.return_value = []
-        with patch(
-            "cyclisme_training_logs.config.create_withings_client", return_value=mock_client
-        ):
+        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
             result = await handle_withings_get_weight({})
         data = json.loads(result[0].text)
         assert "start_date" in data
@@ -714,20 +698,18 @@ class TestHandleWithingsGetWeight:
 class TestHandleWithingsGetReadiness:
     @pytest.mark.asyncio
     async def test_no_sleep_data_returns_no_data_status(self):
-        from cyclisme_training_logs.mcp_server import handle_withings_get_readiness
+        from magma_cycling.mcp_server import handle_withings_get_readiness
 
         mock_client = Mock()
         mock_client.get_last_night_sleep.return_value = None
-        with patch(
-            "cyclisme_training_logs.config.create_withings_client", return_value=mock_client
-        ):
+        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
             result = await handle_withings_get_readiness({})
         data = json.loads(result[0].text)
         assert data["status"] == "no_data"
 
     @pytest.mark.asyncio
     async def test_with_sleep_data_evaluates_readiness(self):
-        from cyclisme_training_logs.mcp_server import handle_withings_get_readiness
+        from magma_cycling.mcp_server import handle_withings_get_readiness
 
         mock_client = Mock()
         mock_client.get_last_night_sleep.return_value = {
@@ -739,9 +721,7 @@ class TestHandleWithingsGetReadiness:
             "ready_for_intense": True,
         }
         mock_client.get_latest_weight.return_value = {"weight_kg": 72.0}
-        with patch(
-            "cyclisme_training_logs.config.create_withings_client", return_value=mock_client
-        ):
+        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
             result = await handle_withings_get_readiness({"date": "2026-02-24"})
         data = json.loads(result[0].text)
         assert data["status"] == "evaluated"
@@ -749,13 +729,11 @@ class TestHandleWithingsGetReadiness:
 
     @pytest.mark.asyncio
     async def test_with_date_parameter(self):
-        from cyclisme_training_logs.mcp_server import handle_withings_get_readiness
+        from magma_cycling.mcp_server import handle_withings_get_readiness
 
         mock_client = Mock()
         mock_client.get_last_night_sleep.return_value = None
-        with patch(
-            "cyclisme_training_logs.config.create_withings_client", return_value=mock_client
-        ):
+        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
             result = await handle_withings_get_readiness({"date": "2026-02-20"})
         data = json.loads(result[0].text)
         assert data["date"] == "2026-02-20"
@@ -770,13 +748,13 @@ class TestHandleListWeeksException:
     @pytest.mark.asyncio
     async def test_malformed_json_file_is_skipped(self, tmp_path):
         """Malformed JSON in a planning file is silently skipped."""
-        from cyclisme_training_logs.mcp_server import handle_list_weeks
+        from magma_cycling.mcp_server import handle_list_weeks
 
         # Write bad JSON
         (tmp_path / "week_planning_S081.json").write_text("{bad json}")
         mc = Mock()
         mc.week_planning_dir = tmp_path
-        with patch("cyclisme_training_logs.config.get_data_config", return_value=mc):
+        with patch("magma_cycling.config.get_data_config", return_value=mc):
             result = await handle_list_weeks({"limit": 10})
         data = json.loads(result[0].text)
         assert data["total_found"] == 0  # Bad file skipped
@@ -787,15 +765,15 @@ class TestHandleListWeeksException:
 # =======================
 
 
-AI_CONFIG_PATCH = "cyclisme_training_logs.daily_sync.get_ai_config"
-AI_FACTORY_PATCH = "cyclisme_training_logs.daily_sync.AIProviderFactory"
-INTERVALS_CLIENT_PATCH = "cyclisme_training_logs.daily_sync.create_intervals_client"
+AI_CONFIG_PATCH = "magma_cycling.daily_sync.get_ai_config"
+AI_FACTORY_PATCH = "magma_cycling.daily_sync.AIProviderFactory"
+INTERVALS_CLIENT_PATCH = "magma_cycling.daily_sync.create_intervals_client"
 
 
 class TestDailySyncDefaultProvider:
     def test_respects_default_provider(self, tmp_path):
         """DailySync.__init__ picks default_provider over available[0]."""
-        from cyclisme_training_logs.daily_sync import DailySync
+        from magma_cycling.daily_sync import DailySync
 
         mock_ai_config = Mock()
         mock_ai_config.default_provider = "mistral_api"
@@ -826,7 +804,7 @@ class TestDailySyncDefaultProvider:
 
     def test_falls_back_to_first_available_if_default_not_configured(self, tmp_path):
         """DailySync.__init__ falls back to available[0] when default not in list."""
-        from cyclisme_training_logs.daily_sync import DailySync
+        from magma_cycling.daily_sync import DailySync
 
         mock_ai_config = Mock()
         mock_ai_config.default_provider = "openai"  # Not in available list
@@ -873,19 +851,19 @@ class TestDailySyncMCPAiParam:
 
         return {
             "sync_cls": patch(
-                "cyclisme_training_logs.daily_sync.DailySync",
+                "magma_cycling.daily_sync.DailySync",
                 return_value=mock_sync,
             ),
             "calc_week": patch(
-                "cyclisme_training_logs.daily_sync.calculate_current_week_info",
+                "magma_cycling.daily_sync.calculate_current_week_info",
                 return_value=("S082", date(2026, 2, 23)),
             ),
             "data_config": patch(
-                "cyclisme_training_logs.config.get_data_config",
+                "magma_cycling.config.get_data_config",
                 return_value=mock_config,
             ),
             "suppress": patch(
-                "cyclisme_training_logs._mcp.handlers.planning.suppress_stdout_stderr",
+                "magma_cycling._mcp.handlers.planning.suppress_stdout_stderr",
                 nullcontext,
             ),
         }
@@ -893,7 +871,7 @@ class TestDailySyncMCPAiParam:
     @pytest.mark.asyncio
     async def test_ai_analysis_enabled_by_default(self, tmp_path):
         """handle_daily_sync passes enable_ai_analysis=True by default."""
-        from cyclisme_training_logs.mcp_server import handle_daily_sync
+        from magma_cycling.mcp_server import handle_daily_sync
 
         patches = self._make_patches(tmp_path)
         with (
@@ -912,7 +890,7 @@ class TestDailySyncMCPAiParam:
     @pytest.mark.asyncio
     async def test_ai_analysis_disabled_via_param(self, tmp_path):
         """handle_daily_sync passes enable_ai_analysis=False when ai_analysis=false."""
-        from cyclisme_training_logs.mcp_server import handle_daily_sync
+        from magma_cycling.mcp_server import handle_daily_sync
 
         patches = self._make_patches(tmp_path)
         with (
@@ -935,7 +913,7 @@ class TestDailySyncMCPAiParam:
 # TestSessionPrescription
 # =======================
 
-DAILY_SYNC_TOWER_PATCH = "cyclisme_training_logs.daily_sync.planning_tower"
+DAILY_SYNC_TOWER_PATCH = "magma_cycling.daily_sync.planning_tower"
 
 
 class TestSessionPrescription:
@@ -943,7 +921,7 @@ class TestSessionPrescription:
 
     def test_analyze_activity_includes_session_prescription(self, tmp_path):
         """analyze_activity extracts prescription from planning and passes it to generate_prompt."""
-        from cyclisme_training_logs.daily_sync import DailySync
+        from magma_cycling.daily_sync import DailySync
 
         # Build a mock plan with a session that has a description
         mock_session = Mock()
@@ -1006,7 +984,7 @@ class TestSessionPrescription:
 
     def test_generate_prompt_includes_prescription_section(self, tmp_path):
         """generate_prompt includes Prescription Coach section when prescription provided."""
-        from cyclisme_training_logs.prepare_analysis import PromptGenerator
+        from magma_cycling.prepare_analysis import PromptGenerator
 
         gen = PromptGenerator(project_root=tmp_path)
         raw = {
@@ -1037,7 +1015,7 @@ class TestSessionPrescription:
 
     def test_generate_prompt_skips_prescription_when_none(self, tmp_path):
         """generate_prompt omits Prescription Coach section when prescription is None."""
-        from cyclisme_training_logs.prepare_analysis import PromptGenerator
+        from magma_cycling.prepare_analysis import PromptGenerator
 
         gen = PromptGenerator(project_root=tmp_path)
         raw = {
@@ -1073,7 +1051,7 @@ class TestHandleGetActivityIntervals:
     @pytest.mark.asyncio
     async def test_get_activity_intervals_success(self):
         """Success path: 3 intervals returned with filtered fields."""
-        from cyclisme_training_logs.mcp_server import handle_get_activity_intervals
+        from magma_cycling.mcp_server import handle_get_activity_intervals
 
         mock_client = Mock()
         mock_client.get_activity_intervals.return_value = [
@@ -1168,7 +1146,7 @@ class TestHandleGetActivityIntervals:
     @pytest.mark.asyncio
     async def test_get_activity_intervals_api_error(self):
         """API error returns error JSON."""
-        from cyclisme_training_logs.mcp_server import handle_get_activity_intervals
+        from magma_cycling.mcp_server import handle_get_activity_intervals
 
         mock_client = Mock()
         mock_client.get_activity_intervals.side_effect = RuntimeError("API timeout")
@@ -1183,7 +1161,7 @@ class TestHandleGetActivityIntervals:
     @pytest.mark.asyncio
     async def test_get_activity_intervals_empty(self):
         """Empty intervals list returns total_intervals == 0."""
-        from cyclisme_training_logs.mcp_server import handle_get_activity_intervals
+        from magma_cycling.mcp_server import handle_get_activity_intervals
 
         mock_client = Mock()
         mock_client.get_activity_intervals.return_value = []
@@ -1196,7 +1174,7 @@ class TestHandleGetActivityIntervals:
         assert data["intervals"] == []
 
 
-WORKOUT_PARSER_PATCH = "cyclisme_training_logs.workout_parser.load_workout_descriptions"
+WORKOUT_PARSER_PATCH = "magma_cycling.workout_parser.load_workout_descriptions"
 
 
 class TestHandleApplyWorkoutIntervals:
@@ -1205,7 +1183,7 @@ class TestHandleApplyWorkoutIntervals:
     @pytest.mark.asyncio
     async def test_manual_mode_dry_run(self):
         """Manual mode with dry_run=true returns preview without PUT."""
-        from cyclisme_training_logs.mcp_server import handle_apply_workout_intervals
+        from magma_cycling.mcp_server import handle_apply_workout_intervals
 
         mock_client = Mock()
 
@@ -1233,7 +1211,7 @@ class TestHandleApplyWorkoutIntervals:
     @pytest.mark.asyncio
     async def test_manual_mode_apply(self):
         """Manual mode with dry_run=false calls PUT."""
-        from cyclisme_training_logs.mcp_server import handle_apply_workout_intervals
+        from magma_cycling.mcp_server import handle_apply_workout_intervals
 
         mock_client = Mock()
         mock_client.put_activity_intervals.return_value = {"status": "ok"}
@@ -1259,7 +1237,7 @@ class TestHandleApplyWorkoutIntervals:
     @pytest.mark.asyncio
     async def test_auto_mode_dry_run(self):
         """Auto mode parses workout and returns preview."""
-        from cyclisme_training_logs.mcp_server import handle_apply_workout_intervals
+        from magma_cycling.mcp_server import handle_apply_workout_intervals
 
         mock_client = Mock()
         mock_client.get_activity_streams.return_value = [{"type": "watts", "data": [0] * 3000}]
@@ -1306,7 +1284,7 @@ Cooldown
     @pytest.mark.asyncio
     async def test_auto_no_session_in_name(self):
         """Activity name without session pattern → error with hint."""
-        from cyclisme_training_logs.mcp_server import handle_apply_workout_intervals
+        from magma_cycling.mcp_server import handle_apply_workout_intervals
 
         mock_client = Mock()
         mock_client.get_activity.return_value = {"name": "Morning Ride"}
@@ -1324,7 +1302,7 @@ Cooldown
     @pytest.mark.asyncio
     async def test_default_dry_run_true(self):
         """dry_run defaults to true when not specified (safety)."""
-        from cyclisme_training_logs.mcp_server import handle_apply_workout_intervals
+        from magma_cycling.mcp_server import handle_apply_workout_intervals
 
         mock_client = Mock()
 
@@ -1347,7 +1325,7 @@ Cooldown
     @pytest.mark.asyncio
     async def test_api_error(self):
         """API exception → JSON error response."""
-        from cyclisme_training_logs.mcp_server import handle_apply_workout_intervals
+        from magma_cycling.mcp_server import handle_apply_workout_intervals
 
         mock_client = Mock()
         mock_client.put_activity_intervals.side_effect = RuntimeError("API timeout")
@@ -1389,7 +1367,7 @@ class TestHandleCompareIntervals:
     @pytest.mark.asyncio
     async def test_explicit_ids_success(self):
         """3 explicit IDs with common labels → comparison + trends."""
-        from cyclisme_training_logs.mcp_server import handle_compare_intervals
+        from magma_cycling.mcp_server import handle_compare_intervals
 
         mock_client = Mock()
         mock_client.get_activity.side_effect = [
@@ -1421,7 +1399,7 @@ class TestHandleCompareIntervals:
     @pytest.mark.asyncio
     async def test_search_mode_success(self):
         """name_pattern + weeks_back → filters matching activities, mode='search'."""
-        from cyclisme_training_logs.mcp_server import handle_compare_intervals
+        from magma_cycling.mcp_server import handle_compare_intervals
 
         mock_client = Mock()
         mock_client.get_activities.return_value = [
@@ -1456,7 +1434,7 @@ class TestHandleCompareIntervals:
     @pytest.mark.asyncio
     async def test_no_matching_activities_search(self):
         """Pattern that matches nothing → error."""
-        from cyclisme_training_logs.mcp_server import handle_compare_intervals
+        from magma_cycling.mcp_server import handle_compare_intervals
 
         mock_client = Mock()
         mock_client.get_activities.return_value = [
@@ -1474,7 +1452,7 @@ class TestHandleCompareIntervals:
     @pytest.mark.asyncio
     async def test_missing_both_params(self):
         """Neither activity_ids nor name_pattern → error."""
-        from cyclisme_training_logs.mcp_server import handle_compare_intervals
+        from magma_cycling.mcp_server import handle_compare_intervals
 
         args = {}
         result = await handle_compare_intervals(args)
@@ -1487,7 +1465,7 @@ class TestHandleCompareIntervals:
     @pytest.mark.asyncio
     async def test_gap_intervals_filtered(self):
         """Intervals with elapsed_time <= 2 are excluded."""
-        from cyclisme_training_logs.mcp_server import handle_compare_intervals
+        from magma_cycling.mcp_server import handle_compare_intervals
 
         mock_client = Mock()
         mock_client.get_activity.side_effect = [
@@ -1512,7 +1490,7 @@ class TestHandleCompareIntervals:
     @pytest.mark.asyncio
     async def test_label_filter(self):
         """label_filter='95rpm' → only 95rpm intervals kept."""
-        from cyclisme_training_logs.mcp_server import handle_compare_intervals
+        from magma_cycling.mcp_server import handle_compare_intervals
 
         mock_client = Mock()
         mock_client.get_activity.side_effect = [
@@ -1536,7 +1514,7 @@ class TestHandleCompareIntervals:
     @pytest.mark.asyncio
     async def test_type_filter_work_only(self):
         """type_filter='WORK' → only WORK intervals kept."""
-        from cyclisme_training_logs.mcp_server import handle_compare_intervals
+        from magma_cycling.mcp_server import handle_compare_intervals
 
         mock_client = Mock()
         mock_client.get_activity.side_effect = [
@@ -1559,7 +1537,7 @@ class TestHandleCompareIntervals:
     @pytest.mark.asyncio
     async def test_metrics_selection(self):
         """metrics=['average_watts','average_heartrate'] → only those 2 in data."""
-        from cyclisme_training_logs.mcp_server import handle_compare_intervals
+        from magma_cycling.mcp_server import handle_compare_intervals
 
         mock_client = Mock()
         mock_client.get_activity.side_effect = [
@@ -1587,7 +1565,7 @@ class TestHandleCompareIntervals:
     @pytest.mark.asyncio
     async def test_invalid_metrics(self):
         """metrics=['bogus'] → error with available_metrics list."""
-        from cyclisme_training_logs.mcp_server import handle_compare_intervals
+        from magma_cycling.mcp_server import handle_compare_intervals
 
         args = {"activity_ids": ["i100"], "metrics": ["bogus"]}
         result = await handle_compare_intervals(args)
@@ -1600,7 +1578,7 @@ class TestHandleCompareIntervals:
     @pytest.mark.asyncio
     async def test_label_mismatch_across_activities(self):
         """A has Set1+Set2, B has Set1 only → Set2 data=null for B."""
-        from cyclisme_training_logs.mcp_server import handle_compare_intervals
+        from magma_cycling.mcp_server import handle_compare_intervals
 
         mock_client = Mock()
         mock_client.get_activity.side_effect = [

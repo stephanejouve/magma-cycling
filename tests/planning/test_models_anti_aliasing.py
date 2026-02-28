@@ -14,7 +14,7 @@ from datetime import date, datetime
 import pytest
 from pydantic import ValidationError
 
-from cyclisme_training_logs.planning.models import Session, WeeklyPlan
+from magma_cycling.planning.models import Session, WeeklyPlan
 
 
 class TestSessionAntiAliasing:

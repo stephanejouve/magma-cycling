@@ -1,6 +1,6 @@
 """Tests for IntervalsFormatValidator duration and ramp rules."""
 
-from cyclisme_training_logs.intervals_format_validator import IntervalsFormatValidator
+from magma_cycling.intervals_format_validator import IntervalsFormatValidator
 
 
 class TestDurationValidation:

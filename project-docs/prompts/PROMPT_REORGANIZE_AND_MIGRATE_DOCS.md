@@ -15,7 +15,7 @@ Le projet a un dossier `docs/` avec 65 fichiers de documentation projet (guides,
 ### Étape 1.1: Renommer docs/ → project-docs/
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 # Checkpoint Git avant changements
 git add .
@@ -148,7 +148,7 @@ release = '1.0.0'
 # Chemin vers code source (depuis docs/)
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../cyclisme_training_logs'))
+sys.path.insert(0, os.path.abspath('../magma_cycling'))
 
 # Extensions
 extensions = [
@@ -227,11 +227,11 @@ cd docs
 mkdir -p modules
 
 # Auto-générer stubs
-poetry run sphinx-apidoc -f -o modules/ ../cyclisme_training_logs
+poetry run sphinx-apidoc -f -o modules/ ../magma_cycling
 
 # Vérifier création
 ls modules/
-# Attendu: cyclisme_training_logs.rst, modules.rst, etc.
+# Attendu: magma_cycling.rst, modules.rst, etc.
 ```
 
 ---
@@ -261,7 +261,7 @@ mkdir -p scripts/maintenance
 ### Étape 3.4: Exécuter Migration (6 fichiers)
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 # Dry-run d'abord
 python scripts/maintenance/migrate_docstrings.py --dry-run --verbose
@@ -280,7 +280,7 @@ python scripts/maintenance/migrate_docstrings.py --backup --verbose
 
 ### Étape 3.5: Nettoyer config.py (Format Hybride)
 
-**Fichier:** `cyclisme_training_logs/config.py`
+**Fichier:** `magma_cycling/config.py`
 
 **Supprimer lignes 40-42:**
 ```python
@@ -302,18 +302,18 @@ Metadata:                        # ← Garder uniquement ça
 ### Étape 4.1: Tests Migration
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 # Tests pytest
 poetry run pytest tests/test_docstring_migrator.py -v
 # Attendu: 4/4 PASSED
 
 # Validation Google Style
-poetry run pydocstyle --convention=google cyclisme_training_logs/
+poetry run pydocstyle --convention=google magma_cycling/
 # Attendu: 0 violations
 
 # Vérifier aucun ancien format
-grep -r "GARTNER_TIME:" cyclisme_training_logs/*.py
+grep -r "GARTNER_TIME:" magma_cycling/*.py
 # Attendu: exit code 1 (rien trouvé)
 ```
 
@@ -365,13 +365,13 @@ Fixes test imports in test_docstring_migrator.py.
 ### Commit 2: Docstrings Migrés
 
 ```bash
-git add cyclisme_training_logs/weekly_analysis.py
-git add cyclisme_training_logs/stats.py
-git add cyclisme_training_logs/analyzers/daily_aggregator.py
-git add cyclisme_training_logs/core/data_aggregator.py
-git add cyclisme_training_logs/core/timeline_injector.py
-git add cyclisme_training_logs/core/prompt_generator.py
-git add cyclisme_training_logs/config.py
+git add magma_cycling/weekly_analysis.py
+git add magma_cycling/stats.py
+git add magma_cycling/analyzers/daily_aggregator.py
+git add magma_cycling/core/data_aggregator.py
+git add magma_cycling/core/timeline_injector.py
+git add magma_cycling/core/prompt_generator.py
+git add magma_cycling/config.py
 
 git commit -m "docs: Complete migration to Google Style docstrings
 
@@ -397,13 +397,13 @@ API docs: http://localhost:8000 (sphinx-build)
 ## Structure Finale
 
 ```
-cyclisme-training-logs/
+magma-cycling/
 │
 ├── docs/                        # ✅ Documentation API Sphinx (STANDARD)
 │   ├── conf.py                  # Napoleon + RTD theme
 │   ├── index.rst                # API home
 │   ├── modules/                 # Auto-generated
-│   │   ├── cyclisme_training_logs.rst
+│   │   ├── magma_cycling.rst
 │   │   └── modules.rst
 │   ├── _static/
 │   ├── _templates/
@@ -418,7 +418,7 @@ cyclisme-training-logs/
 │   ├── workflows/
 │   └── archive/
 │
-├── cyclisme_training_logs/      # Code source
+├── magma_cycling/      # Code source
 │   ├── config.py                # ✅ Google Style
 │   ├── weekly_analysis.py       # ✅ Google Style
 │   ├── stats.py                 # ✅ Google Style

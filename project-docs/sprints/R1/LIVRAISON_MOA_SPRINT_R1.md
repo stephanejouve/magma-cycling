@@ -38,8 +38,8 @@ poetry run pytest tests/api/test_intervals_client.py -v
 **Validation Imports :**
 ```bash
 # Tous les 14 modules migrés importent correctement
-python3 -c "import cyclisme_training_logs.weekly_analysis"  # ✅
-python3 -c "import cyclisme_training_logs.workflow_coach"   # ✅
+python3 -c "import magma_cycling.weekly_analysis"  # ✅
+python3 -c "import magma_cycling.workflow_coach"   # ✅
 # ... etc (14/14 modules OK)
 ```
 
@@ -72,7 +72,7 @@ Cette livraison majeure comprend :
 **Objectif :** Éliminer la duplication de code de l'API client Intervals.icu
 
 **Livrables :**
-- ✅ Module unifié `cyclisme_training_logs/api/intervals_client.py`
+- ✅ Module unifié `magma_cycling/api/intervals_client.py`
 - ✅ Suite de tests complète (16 tests, 100% passing)
 - ✅ Migration de 14 fichiers consommateurs
 - ✅ Suppression de ~200 lignes de code dupliqué
@@ -152,7 +152,7 @@ poetry run monthly-analysis --month 2025-12 --no-ai
 - Recommandations concrètes pour le mois suivant
 
 **Fichiers :**
-- `cyclisme_training_logs/monthly_analysis.py` (435 lignes)
+- `magma_cycling/monthly_analysis.py` (435 lignes)
 - Entry point: `poetry run monthly-analysis`
 
 **Commits :**
@@ -329,9 +329,9 @@ trainr --week-id S073 --provider mistral_api --auto
 
 ### Code Repositories
 
-**cyclisme-training-logs (Code) :**
+**magma-cycling (Code) :**
 ```
-cyclisme_training_logs/
+magma_cycling/
 ├── api/
 │   └── intervals_client.py          # Module unifié (NEW)
 ├── monthly_analysis.py               # Outil analyse mensuelle (NEW)
@@ -360,13 +360,13 @@ data/week_planning/
 
 ### Commits Principaux
 
-**Sprint R1 (cyclisme-training-logs) :**
+**Sprint R1 (magma-cycling) :**
 - `e0df359` - P0 migrations
 - `4106b55` - P1 migrations
 - `39ae58b` - P2-P3 migrations
 - `7ab0752` - Cleanup old implementations
 
-**Monthly Analysis (cyclisme-training-logs) :**
+**Monthly Analysis (magma-cycling) :**
 - `9607dd5` - feat: Add monthly-analysis tool
 - `77016ae` - fix: Correct AIProviderFactory usage
 - `b510459` - fix: Use analyze_session() method
@@ -376,7 +376,7 @@ data/week_planning/
 - `8e22c97` - feat: Add S072 planning
 - `85d43e2` - fix: Update S073-06 status
 
-**Fixes (cyclisme-training-logs) :**
+**Fixes (magma-cycling) :**
 - `0026411`, `8c5d90a` - Servo-mode fixes
 - `235f4f1` - Backfill rate limits
 
@@ -413,7 +413,7 @@ poetry run monthly-analysis --month 2025-12 --provider mistral_api
 
 **Backfill :**
 ```bash
-python3 cyclisme_training_logs/scripts/backfill_history.py --dry-run --start-date 2024-09-01
+python3 magma_cycling/scripts/backfill_history.py --dry-run --start-date 2024-09-01
 # ✅ 517 activités trouvées, 98 à analyser
 ```
 
@@ -422,10 +422,10 @@ python3 cyclisme_training_logs/scripts/backfill_history.py --dry-run --start-dat
 ```bash
 # Tous les modules migrés importent correctement
 python3 -c "
-import cyclisme_training_logs.weekly_analysis
-import cyclisme_training_logs.upload_workouts
-import cyclisme_training_logs.workflow_coach
-import cyclisme_training_logs.monthly_analysis
+import magma_cycling.weekly_analysis
+import magma_cycling.upload_workouts
+import magma_cycling.workflow_coach
+import magma_cycling.monthly_analysis
 print('✅ All imports successful')
 "
 ```
@@ -462,7 +462,7 @@ poetry run monthly-analysis --month 2025-12 --no-ai
 ### IntervalsClient (Développeurs)
 
 ```python
-from cyclisme_training_logs.api.intervals_client import IntervalsClient
+from magma_cycling.api.intervals_client import IntervalsClient
 
 # Initialisation
 api = IntervalsClient(athlete_id="iXXXXXX", api_key="...")
@@ -531,7 +531,7 @@ event = api.create_event({
 ## 📞 Support & Contact
 
 **Pour questions techniques :**
-- Repository: `github.com:stephanejouve/cyclisme-training-logs`
+- Repository: `github.com:stephanejouve/magma-cycling`
 - Issues: Créer un issue GitHub
 
 **Pour feedback MOA :**
@@ -547,7 +547,7 @@ event = api.create_event({
 - [x] Plannings S071-S074 créés et réconciliés
 - [x] Bugs critiques corrigés (servo-mode, validations)
 - [x] Documentation complète
-- [x] Code pushed (cyclisme-training-logs & training-logs)
+- [x] Code pushed (magma-cycling & training-logs)
 - [x] Rapport MOA généré
 
 ---

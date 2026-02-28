@@ -8,7 +8,7 @@ Created: 2026-01-18
 
 import pytest
 
-from cyclisme_training_logs.reports.validators import (
+from magma_cycling.reports.validators import (
     MarkdownValidator,
     ValidationResult,
 )

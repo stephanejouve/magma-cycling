@@ -14,8 +14,8 @@ print()
 
 print("1. Testing imports...")
 try:
-    from cyclisme_training_logs.config import AthleteProfile, TrainingThresholds
-    from cyclisme_training_logs.utils.metrics import (
+    from magma_cycling.config import AthleteProfile, TrainingThresholds
+    from magma_cycling.utils.metrics import (
         calculate_metrics_change,
         calculate_tsb,
         extract_wellness_metrics,

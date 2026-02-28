@@ -1,7 +1,7 @@
 Core Package
 ============
 
-.. automodule:: cyclisme_training_logs.core
+.. automodule:: magma_cycling.core
    :members:
    :undoc-members:
    :show-inheritance:
@@ -12,7 +12,7 @@ Submodules
 Timeline Injector
 ~~~~~~~~~~~~~~~~~
 
-.. automodule:: cyclisme_training_logs.core.timeline_injector
+.. automodule:: magma_cycling.core.timeline_injector
    :members:
    :undoc-members:
    :show-inheritance:
@@ -20,7 +20,7 @@ Timeline Injector
 Duplicate Detector
 ~~~~~~~~~~~~~~~~~~
 
-.. automodule:: cyclisme_training_logs.core.duplicate_detector
+.. automodule:: magma_cycling.core.duplicate_detector
    :members:
    :undoc-members:
    :show-inheritance:
@@ -28,7 +28,7 @@ Duplicate Detector
 Data Aggregator
 ~~~~~~~~~~~~~~~
 
-.. automodule:: cyclisme_training_logs.core.data_aggregator
+.. automodule:: magma_cycling.core.data_aggregator
    :members:
    :undoc-members:
    :show-inheritance:
@@ -36,7 +36,7 @@ Data Aggregator
 Prompt Generator
 ~~~~~~~~~~~~~~~~
 
-.. automodule:: cyclisme_training_logs.core.prompt_generator
+.. automodule:: magma_cycling.core.prompt_generator
    :members:
    :undoc-members:
    :show-inheritance:

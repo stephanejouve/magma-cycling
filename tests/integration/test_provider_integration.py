@@ -9,9 +9,9 @@ from unittest.mock import patch
 
 import pytest
 
-from cyclisme_training_logs.ai_providers.base import AIProvider
-from cyclisme_training_logs.ai_providers.factory import AIProviderFactory
-from cyclisme_training_logs.config import get_ai_config, reset_ai_config
+from magma_cycling.ai_providers.base import AIProvider
+from magma_cycling.ai_providers.factory import AIProviderFactory
+from magma_cycling.config import get_ai_config, reset_ai_config
 
 
 class TestProviderIntegration:
@@ -48,7 +48,7 @@ class TestProviderIntegration:
         assert analyzer.validate_config() is True
 
         # Test analysis (with mock)
-        with patch("cyclisme_training_logs.ai_providers.clipboard.copy_to_clipboard") as mock_copy:
+        with patch("magma_cycling.ai_providers.clipboard.copy_to_clipboard") as mock_copy:
             mock_copy.return_value = True
 
             result = analyzer.analyze_session("Test prompt")

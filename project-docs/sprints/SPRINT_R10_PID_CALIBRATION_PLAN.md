@@ -454,11 +454,11 @@ def test_pid_convergence_reconstruction_phase():
 ### Action Immédiate #1: Extraire Résultats S080
 
 ```bash
-cd /Users/stephanejouve/cyclisme-training-logs
+cd /Users/stephanejouve/magma-cycling
 
 # Check tests S080 disponibles
 poetry run python -c "
-from cyclisme_training_logs.api.intervals_client import IntervalsClient
+from magma_cycling.api.intervals_client import IntervalsClient
 client = IntervalsClient()
 events = client.get_events('2026-02-09', '2026-02-14')  # Semaine S080
 tests = [e for e in events if 'TST' in e.get('name', '')]
@@ -473,7 +473,7 @@ for test in tests:
 ```bash
 # Extraire FTP test 20min (S080-02)
 poetry run python -c "
-from cyclisme_training_logs.api.intervals_client import IntervalsClient
+from magma_cycling.api.intervals_client import IntervalsClient
 client = IntervalsClient()
 athlete = client.get_athlete()
 print(f\"FTP actuel Intervals.icu: {athlete.get('ftp', 'N/A')}W\")

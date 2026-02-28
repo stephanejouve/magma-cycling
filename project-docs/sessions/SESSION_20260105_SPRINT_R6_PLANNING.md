@@ -153,7 +153,7 @@ Phase progressive validation empirique sur 6 semaines avec 3 phases distinctes.
 
 **1. PID Controller - Mode Observation**
 ```python
-# cyclisme_training_logs/intelligence/pid_controller.py
+# magma_cycling/intelligence/pid_controller.py
 class PIDController:
     """PID Controller with observation/hybrid/active modes."""
 
@@ -182,7 +182,7 @@ class PIDController:
 
 **2. Baseline Collector - Data Collection**
 ```python
-# cyclisme_training_logs/intelligence/baseline_collector.py
+# magma_cycling/intelligence/baseline_collector.py
 @dataclass
 class BaselineObservation:
     """Single week observation for calibration."""
@@ -232,7 +232,7 @@ class BaselineCollector:
 
 **Nouveau module :**
 ```python
-# cyclisme_training_logs/intelligence/pid_calibrator.py
+# magma_cycling/intelligence/pid_calibrator.py
 class PIDCalibrator:
     """Optimize PID coefficients from empirical data."""
 
@@ -302,7 +302,7 @@ numpy = "^1.24.0"
 
 **Dashboard PID :**
 ```python
-# cyclisme_training_logs/intelligence/pid_dashboard.py
+# magma_cycling/intelligence/pid_dashboard.py
 class PIDDashboard:
     """Generate MOA approval dashboard."""
 
@@ -450,7 +450,7 @@ git push
 **Code :** Implémenter BaselineCollector
 ```bash
 # Créer baseline_collector.py
-touch cyclisme_training_logs/intelligence/baseline_collector.py
+touch magma_cycling/intelligence/baseline_collector.py
 
 # Implémenter classes BaselineObservation et BaselineCollector
 # Tests unitaires
@@ -482,7 +482,7 @@ poetry run pytest tests/intelligence/test_baseline_collector.py -v
 
 # Commit si tests passent
 git add tests/intelligence/test_baseline_collector.py
-git add cyclisme_training_logs/intelligence/baseline_collector.py
+git add magma_cycling/intelligence/baseline_collector.py
 git commit -m "feat: Implement BaselineCollector for PID calibration
 
 Add data collection module for Phase 1 observation:
@@ -504,7 +504,7 @@ git push
 
 poetry run pytest tests/intelligence/test_pid_controller.py -v
 
-git add cyclisme_training_logs/intelligence/pid_controller.py
+git add magma_cycling/intelligence/pid_controller.py
 git add tests/intelligence/test_pid_controller.py
 git commit -m "feat: Add observation mode to PID Controller
 
@@ -536,7 +536,7 @@ python scripts/intelligence/review_baseline_data.py --week S075
 **Analyse intermédiaire :**
 ```bash
 # Analyser observations S075 (jours 1-6)
-poetry run python -m cyclisme_training_logs.intelligence.baseline_collector \
+poetry run python -m magma_cycling.intelligence.baseline_collector \
   --analyze --week S075
 
 # Vérifier qualité données
@@ -570,19 +570,19 @@ git push
 ### Code (10 fichiers minimum)
 
 **Intelligence modules :**
-1. `cyclisme_training_logs/intelligence/pid_controller.py` (modifié)
+1. `magma_cycling/intelligence/pid_controller.py` (modifié)
    - Mode observation/hybrid/active
    - Logging suggestions
 
-2. `cyclisme_training_logs/intelligence/baseline_collector.py` (nouveau)
+2. `magma_cycling/intelligence/baseline_collector.py` (nouveau)
    - BaselineObservation dataclass
    - Data persistence JSON
 
-3. `cyclisme_training_logs/intelligence/pid_calibrator.py` (nouveau)
+3. `magma_cycling/intelligence/pid_calibrator.py` (nouveau)
    - Coefficient optimization scipy
    - Accuracy evaluation
 
-4. `cyclisme_training_logs/intelligence/pid_dashboard.py` (nouveau)
+4. `magma_cycling/intelligence/pid_dashboard.py` (nouveau)
    - MOA approval interface
    - Markdown generation
 
@@ -596,7 +596,7 @@ git push
    - Batch processing
 
 **Workflows :**
-7. `cyclisme_training_logs/workflows/workflow_coach.py` (modifié)
+7. `magma_cycling/workflows/workflow_coach.py` (modifié)
    - Intégration PID mode hybrid
    - Dashboard generation
 
@@ -940,16 +940,16 @@ Status: ✅ Pushed to GitHub
 
 ### Code Existant
 
-- **cyclisme_training_logs/intelligence/training_intelligence.py**
+- **magma_cycling/intelligence/training_intelligence.py**
   - Architecture Intelligence déjà validée
   - Pattern learning structure
   - Confidence progression
 
-- **cyclisme_training_logs/intelligence/pid_controller.py**
+- **magma_cycling/intelligence/pid_controller.py**
   - PID Controller existant (à modifier)
   - Coefficients théoriques actuels
 
-- **cyclisme_training_logs/workflows/workflow_coach.py**
+- **magma_cycling/workflows/workflow_coach.py**
   - Workflow principal (à modifier)
   - Intégration PID Phase 3
 

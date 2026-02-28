@@ -167,7 +167,7 @@ Tous les tests passent à chaque commit - stabilité parfaite maintenue.
 
 #### Batch 2 (Commit d76f2e8)
 4. **update_session_status.py** - 4 erreurs
-   - Correction imports: `from cyclisme_training_logs.api...`
+   - Correction imports: `from magma_cycling.api...`
    - None checks avant `update_event()`
    - Cast `int(event_id)`
 
@@ -329,22 +329,22 @@ Tous les tests passent à chaque commit - stabilité parfaite maintenue.
 ### Vérification MyPy
 ```bash
 # Erreurs restantes
-poetry run mypy cyclisme_training_logs/ --show-error-codes 2>&1 | grep "^Found"
+poetry run mypy magma_cycling/ --show-error-codes 2>&1 | grep "^Found"
 
 # Par fichier
-poetry run mypy cyclisme_training_logs/monthly_analysis.py --show-error-codes
+poetry run mypy magma_cycling/monthly_analysis.py --show-error-codes
 
 # AI providers seulement
-poetry run mypy cyclisme_training_logs/ai_providers/ --show-error-codes
+poetry run mypy magma_cycling/ai_providers/ --show-error-codes
 ```
 
 ### Documentation
 ```bash
 # Pydocstyle
-poetry run pydocstyle cyclisme_training_logs/ --count
+poetry run pydocstyle magma_cycling/ --count
 
 # Par type d'erreur
-poetry run pydocstyle cyclisme_training_logs/ | grep -E "^        D[0-9]+" | cut -d: -f1 | sort | uniq -c | sort -rn
+poetry run pydocstyle magma_cycling/ | grep -E "^        D[0-9]+" | cut -d: -f1 | sort | uniq -c | sort -rn
 ```
 
 ### Tests
@@ -439,21 +439,21 @@ process(str(activity_id))
 ## 📄 Fichiers Modifiés (Session Complète)
 
 ### Core Refactoring
-- `cyclisme_training_logs/workflow_coach.py`
-- `cyclisme_training_logs/normalize_weekly_reports_casing.py`
+- `magma_cycling/workflow_coach.py`
+- `magma_cycling/normalize_weekly_reports_casing.py`
 
 ### Type Safety
-- `cyclisme_training_logs/validate_naming_convention.py`
-- `cyclisme_training_logs/core/duplicate_detector.py`
-- `cyclisme_training_logs/utils/metrics_advanced.py`
-- `cyclisme_training_logs/update_session_status.py`
-- `cyclisme_training_logs/workflow_state.py`
-- `cyclisme_training_logs/upload_workouts.py`
-- `cyclisme_training_logs/scripts/backfill_history.py`
-- `cyclisme_training_logs/weekly_analysis.py`
+- `magma_cycling/validate_naming_convention.py`
+- `magma_cycling/core/duplicate_detector.py`
+- `magma_cycling/utils/metrics_advanced.py`
+- `magma_cycling/update_session_status.py`
+- `magma_cycling/workflow_state.py`
+- `magma_cycling/upload_workouts.py`
+- `magma_cycling/scripts/backfill_history.py`
+- `magma_cycling/weekly_analysis.py`
 
 ### Documentation (55 fichiers)
-- Tous les modules sous `cyclisme_training_logs/`
+- Tous les modules sous `magma_cycling/`
 - Scripts: `fix_d400_docstrings.py`, `fix_d205_docstrings.py`
 
 ### Configuration

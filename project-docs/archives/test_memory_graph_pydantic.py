@@ -12,7 +12,7 @@ from pathlib import Path
 
 import memory_graph as mg
 
-from cyclisme_training_logs.planning.models import Session, WeeklyPlan
+from magma_cycling.planning.models import Session, WeeklyPlan
 
 
 def test_pydantic_backup_no_aliasing():

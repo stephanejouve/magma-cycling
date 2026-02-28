@@ -8,8 +8,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from cyclisme_training_logs.analyzers.weekly_aggregator import WeeklyAggregator
-from cyclisme_training_logs.api.intervals_client import IntervalsClient
+from magma_cycling.analyzers.weekly_aggregator import WeeklyAggregator
+from magma_cycling.api.intervals_client import IntervalsClient
 
 
 class TestDi2WorkflowIntegration:
@@ -26,7 +26,7 @@ class TestDi2WorkflowIntegration:
         """Create WeeklyAggregator with mocked API."""
         from datetime import date
 
-        with patch("cyclisme_training_logs.analyzers.weekly_aggregator.create_intervals_client"):
+        with patch("magma_cycling.analyzers.weekly_aggregator.create_intervals_client"):
             aggregator = WeeklyAggregator(week="S075", start_date=date(2026, 1, 5))
             aggregator.api = mock_api
             return aggregator
@@ -152,7 +152,7 @@ class TestDi2WorkflowIntegration:
         # Given: Aggregator without API
         from datetime import date
 
-        with patch("cyclisme_training_logs.analyzers.weekly_aggregator.create_intervals_client"):
+        with patch("magma_cycling.analyzers.weekly_aggregator.create_intervals_client"):
             aggregator_no_api = WeeklyAggregator(week="S075", start_date=date(2026, 1, 5))
             aggregator_no_api.api = None  # No API
 

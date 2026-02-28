@@ -31,7 +31,7 @@ Ou modifier manuellement :
 {
   "mcpServers": {
     "cyclisme-training": {
-      "command": "/Users/stephanejouve/cyclisme-training-logs/mcp-server-wrapper.sh",
+      "command": "/Users/stephanejouve/magma-cycling/mcp-server-wrapper.sh",
       "env": {
         "MCP_DEV_MODE": "1"
       }
@@ -44,7 +44,7 @@ Ou modifier manuellement :
 
 ### Fonctionnement
 
-- ✅ Watchdog surveille tous les fichiers `*.py` dans `cyclisme_training_logs/`
+- ✅ Watchdog surveille tous les fichiers `*.py` dans `magma_cycling/`
 - ✅ À chaque modification détectée, le serveur MCP redémarre automatiquement
 - ✅ Debounce de 0.5s pour éviter les redémarrages multiples
 - ✅ Claude Desktop reste connecté (reconnexion transparente)
@@ -59,7 +59,7 @@ tail -f /tmp/mcp-server-debug.log
 Exemple :
 ```
 [MCP] Dev mode enabled - auto-reload on file changes
-[watchmedo] Restarting server on change: cyclisme_training_logs/mcp_server.py
+[watchmedo] Restarting server on change: magma_cycling/mcp_server.py
 ```
 
 ---
@@ -89,11 +89,11 @@ Ou directement :
   "success": true,
   "reloaded_count": 5,
   "reloaded_modules": [
-    "cyclisme_training_logs.config",
-    "cyclisme_training_logs.planning.models",
-    "cyclisme_training_logs.planning.control_tower",
-    "cyclisme_training_logs.daily_sync",
-    "cyclisme_training_logs.weekly_planner"
+    "magma_cycling.config",
+    "magma_cycling.planning.models",
+    "magma_cycling.planning.control_tower",
+    "magma_cycling.daily_sync",
+    "magma_cycling.weekly_planner"
   ],
   "message": "✅ Reloaded 5 modules",
   "note": "MCP server handlers NOT reloaded (requires watchdog auto-restart or manual restart)"
@@ -222,7 +222,7 @@ INFO:     Uvicorn running on http://localhost:3000 (Press CTRL+C to quit)
 
 **Watchdog redémarre le serveur:**
 ```
-[watchmedo] Restarting server on change: cyclisme_training_logs/mcp_server.py
+[watchmedo] Restarting server on change: magma_cycling/mcp_server.py
 [MCP] Starting HTTP/SSE server on localhost:3000
 INFO:     Started server process [12346]
 ...
@@ -282,26 +282,26 @@ Modifier `mcp-server-wrapper.sh` :
 
 ```bash
 exec $VENV_PYTHON -m watchdog.watchmedo auto-restart \
-    -d cyclisme_training_logs \
+    -d magma_cycling \
     -p "*.py" \                        # Patterns à surveiller
     -R \                               # Récursif
     --interval 1.0 \                   # Vérification toutes les 1s
     --debounce-interval 0.5 \          # Attendre 0.5s après dernier changement
     --kill-after 3.0 \                 # Timeout kill process
-    -- $VENV_PYTHON -m cyclisme_training_logs.mcp_server
+    -- $VENV_PYTHON -m magma_cycling.mcp_server
 ```
 
 ### Ajouter modules à reload-server
 
-Modifier `cyclisme_training_logs/mcp_server.py` :
+Modifier `magma_cycling/mcp_server.py` :
 
 ```python
 async def handle_reload_server(args: dict):
     modules_to_reload = [
-        "cyclisme_training_logs.config",
-        "cyclisme_training_logs.planning.models",
+        "magma_cycling.config",
+        "magma_cycling.planning.models",
         # ... modules existants
-        "cyclisme_training_logs.nouveau_module",  # ← Ajouter ici
+        "magma_cycling.nouveau_module",  # ← Ajouter ici
     ]
 ```
 

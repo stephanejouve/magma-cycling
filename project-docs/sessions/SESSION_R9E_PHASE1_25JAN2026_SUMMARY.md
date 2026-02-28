@@ -69,10 +69,10 @@
 51. $(cat <<'EOF' feat: Add description hash-based content modification detection Implements fine-grained workout change detection for bidirectional sync: **upload_workouts
 52. $(cat <<'EOF' feat: Add description_hash to S077 planning for sync tracking Updated week_planning_S077
 53. $(cat <<'EOF' feat: Add description hash-based content modification detection Implements fine-grained workout change detection for bidirectional sync: **upload_workouts
-54. $(cat <<'EOF' feat: Add daily-sync automated checker Implements daily synchronization checker (Option 1 from roadmap): - Detects new completed activities via paired_activity_id - Detects planning modifications by external coach (hash-based) - Generates markdown daily reports - Tracks analyzed activities to avoid re-processing Components: - cyclisme_training_logs/daily_sync
-55. $(cat <<'EOF' feat: Add daily-sync automated checker Implements daily synchronization checker (Option 1 from roadmap): - Detects new completed activities via paired_activity_id - Detects planning modifications by external coach (hash-based) - Generates markdown daily reports - Tracks analyzed activities to avoid re-processing Components: - cyclisme_training_logs/daily_sync
-56. $(cat <<'EOF' feat: Add daily-sync automated checker Implements daily synchronization checker (Option 1 from roadmap): - Detects new completed activities via paired_activity_id - Detects planning modifications by external coach (hash-based) - Generates markdown daily reports - Tracks analyzed activities to avoid re-processing Components: - cyclisme_training_logs/daily_sync
-57. $(cat <<'EOF' feat: Add daily-sync automated checker Implements daily synchronization checker (Option 1 from roadmap): - Detects new completed activities via paired_activity_id - Detects planning modifications by external coach (hash-based) - Generates markdown daily reports - Tracks analyzed activities to avoid re-processing Components: - cyclisme_training_logs/daily_sync
+54. $(cat <<'EOF' feat: Add daily-sync automated checker Implements daily synchronization checker (Option 1 from roadmap): - Detects new completed activities via paired_activity_id - Detects planning modifications by external coach (hash-based) - Generates markdown daily reports - Tracks analyzed activities to avoid re-processing Components: - magma_cycling/daily_sync
+55. $(cat <<'EOF' feat: Add daily-sync automated checker Implements daily synchronization checker (Option 1 from roadmap): - Detects new completed activities via paired_activity_id - Detects planning modifications by external coach (hash-based) - Generates markdown daily reports - Tracks analyzed activities to avoid re-processing Components: - magma_cycling/daily_sync
+56. $(cat <<'EOF' feat: Add daily-sync automated checker Implements daily synchronization checker (Option 1 from roadmap): - Detects new completed activities via paired_activity_id - Detects planning modifications by external coach (hash-based) - Generates markdown daily reports - Tracks analyzed activities to avoid re-processing Components: - magma_cycling/daily_sync
+57. $(cat <<'EOF' feat: Add daily-sync automated checker Implements daily synchronization checker (Option 1 from roadmap): - Detects new completed activities via paired_activity_id - Detects planning modifications by external coach (hash-based) - Generates markdown daily reports - Tracks analyzed activities to avoid re-processing Components: - magma_cycling/daily_sync
 58. $(cat <<'EOF' feat: Add activity tracking for daily-sync - data/activities_tracking
 59. $(cat <<'EOF' feat: Add activity tracking for daily-sync - data/activities_tracking
 60. $(cat <<'EOF' feat: Add Brevo email integration to daily-sync Implements Phase 2 of daily-sync: automated email reports via Brevo API
@@ -108,9 +108,9 @@
 90. fix: Format imports in daily_sync
 91. fix: Use iCloud-compatible rsync options for docs sync Replace -a with explicit options and add --inplace to prevent temp files
 92. docs: Add Sprint R9 MOA delivery document Complete delivery documentation covering: - End-of-week automation with auto-calculate week-ids - Critical bug fix: unplanned activities detection - Weather/temperature integration in AI analysis - Status 'replaced' sync fix - iCloud docs sync fix (rsync --inplace) - Insert analysis tests (0% → 59% coverage) - CI isort fix Sprint R9 Archive: sprint-r9-v2
-93. refactor: Move legacy guides from source code to archives Move 9 markdown documentation files from cyclisme_training_logs/ to project-docs/archives/legacy-guides/ Files moved: - API_METHOD_TO_ADD
-94. refactor: Archive legacy code and scripts from source directory Move 11 files from cyclisme_training_logs/ to project-docs/archives/legacy-code/ Files archived: - activity_raw
-95. refactor: Archive legacy shell scripts and deprecated code Move tracked legacy files from cyclisme_training_logs/ to archives: - ai_client
+93. refactor: Move legacy guides from source code to archives Move 9 markdown documentation files from magma_cycling/ to project-docs/archives/legacy-guides/ Files moved: - API_METHOD_TO_ADD
+94. refactor: Archive legacy code and scripts from source directory Move 11 files from magma_cycling/ to project-docs/archives/legacy-code/ Files archived: - activity_raw
+95. refactor: Archive legacy shell scripts and deprecated code Move tracked legacy files from magma_cycling/ to archives: - ai_client
 96. refactor: Complete project organization cleanup Major cleanup to ensure proper file organization: 1
 97. refactor: Complete project organization cleanup Major cleanup to ensure proper file organization: 1
 98. refactor: Move markdown files from docs/ to proper locations docs/ is for Sphinx documentation (technical, auto-generated)
@@ -155,16 +155,16 @@
 
 **Created (103):**
 
-- `/Users/stephanejouve/Documents/cyclisme-training-logs-docs/releases/README.md`
+- `/Users/stephanejouve/Documents/magma-cycling-docs/releases/README.md`
 - `/Users/stephanejouve/Library/LaunchAgents/com.traininglogs.dailysync.plist`
 - `/Users/stephanejouve/Library/LaunchAgents/com.traininglogs.endofweek.plist`
 - `.archive_needed`
 - `PR_DESCRIPTION.md`
 - `SPRINT_R10_MVP_DAY1_COMPLETION.md`
-- `cyclisme_training_logs/analysis/__init__.py`
-- `cyclisme_training_logs/analysis/baseline_preliminary.py`
-- `cyclisme_training_logs/daily_sync.py`
-- `cyclisme_training_logs/planning/intervals_sync.py`
+- `magma_cycling/analysis/__init__.py`
+- `magma_cycling/analysis/baseline_preliminary.py`
+- `magma_cycling/daily_sync.py`
+- `magma_cycling/planning/intervals_sync.py`
 - ... and 93 more
 
 **Modified (429):**
@@ -178,7 +178,7 @@
 - `.gitignore`
 - `.pre-commit-config.yaml`
 - `README.md`
-- `cyclisme_training_logs/analysis/baseline_preliminary.py`
+- `magma_cycling/analysis/baseline_preliminary.py`
 - ... and 419 more
 
 ---

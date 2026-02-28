@@ -1,4 +1,4 @@
-# Pre-commit hooks for cyclisme-training-logs
+# Pre-commit hooks for magma-cycling
 #
 # Installation:
 #   pip install pre-commit
@@ -75,7 +75,7 @@ repos:
         entry: poetry run check-tools-docs
         args: ['--verbose']  # Warning only (change to --fail to make it blocking)
         language: system
-        files: ^(pyproject\.toml|docs/modules/tools\.rst|cyclisme_training_logs/.*\.py)$
+        files: ^(pyproject\.toml|docs/modules/tools\.rst|magma_cycling/.*\.py)$
         pass_filenames: false
 
   # Trailing whitespace & EOF

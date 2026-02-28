@@ -8,10 +8,10 @@ Created: 2026-01-18
 
 import pytest
 
-from cyclisme_training_logs.reports.prompts.bilan_final_prompt import (
+from magma_cycling.reports.prompts.bilan_final_prompt import (
     build_bilan_final_prompt,
 )
-from cyclisme_training_logs.reports.prompts.workout_history_prompt import (
+from magma_cycling.reports.prompts.workout_history_prompt import (
     _calculate_tss_percentage,
     _format_activities,
     _format_learnings,

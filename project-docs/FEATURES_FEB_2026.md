@@ -393,7 +393,7 @@ $ poetry run update-session --week S077 --session S077-01 --status completed
 
 - **Control Tower:** `project-docs/CONTROL_TOWER.md`
 - **Migration:** `MIGRATION_CONTROL_TOWER.md`
-- **Code:** `cyclisme_training_logs/`
+- **Code:** `magma_cycling/`
   - `workflows/end_of_week.py`
   - `daily_sync.py`
   - `monthly_analysis.py`

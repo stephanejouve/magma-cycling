@@ -49,7 +49,7 @@
 **Requested**: 2026-01-18 (User: "take it log in ROADMAP in this case")
 
 **Implementation Plan**:
-- Add `MistralAIClient` in `cyclisme_training_logs/reports/ai_clients/mistral_client.py`
+- Add `MistralAIClient` in `magma_cycling/reports/ai_clients/mistral_client.py`
 - Support models: `mistral-large-2`, `mistral-medium` (or latest available)
 - API integration via official Mistral Python SDK
 - Environment variable: `MISTRAL_API_KEY`
@@ -263,14 +263,14 @@
 
 **Current State**:
 - **Existing System** (Production-ready):
-  - `cyclisme_training_logs/ai_providers/` - Complete AI provider infrastructure
+  - `magma_cycling/ai_providers/` - Complete AI provider infrastructure
   - `AIProviderFactory` - Factory pattern for provider creation
   - `AIAnalyzer` base class - Abstract interface for all providers
   - **All providers implemented**: clipboard, claude_api, mistral_api, openai, ollama
   - `AIProvidersConfig` in config_base.py - Centralized config management
 
 - **Reports Module** (Duplicate):
-  - `cyclisme_training_logs/reports/ai_client.py` - New parallel system
+  - `magma_cycling/reports/ai_client.py` - New parallel system
   - `ClaudeClient`, `OpenAIClient` classes - Duplicate implementations
   - `create_ai_client()` factory - Duplicate factory pattern
   - Only 2 providers: claude, openai (missing mistral, ollama, clipboard)
@@ -346,7 +346,7 @@
 3. Reference this ROADMAP if applicable
 
 **How to Add AI Providers**:
-1. Follow `cyclisme_training_logs/reports/ai_clients/base.py` interface
+1. Follow `magma_cycling/reports/ai_clients/base.py` interface
 2. Add unit tests with mocked API
 3. Update `README.md` with provider documentation
 4. Add to `--provider` CLI choices

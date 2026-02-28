@@ -10,10 +10,10 @@
 ## 📁 Architecture
 
 ```
-~/cyclisme-training-logs/          ← Code repo (source package)
+~/magma-cycling/          ← Code repo (source package)
   ├── .git/                        ← Git history code
   ├── pyproject.toml               ← Poetry package config
-  ├── cyclisme_training_logs/
+  ├── magma_cycling/
   │   ├── workflow_coach.py
   │   └── scripts/
   │       └── backfill_history.py
@@ -45,11 +45,11 @@
 ### Étape 1: Préparer Code Repo
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 # Vérifier pyproject.toml correct
 cat pyproject.toml | grep name
-# → name = "cyclisme-training-logs"
+# → name = "magma-cycling"
 
 # Installer en mode dev
 poetry install
@@ -63,7 +63,7 @@ cd ~/training-logs
 # Initialiser Poetry dans data repo
 poetry init \
   --name training-logs-runner \
-  --description "Runner for cyclisme-training-logs" \
+  --description "Runner for magma-cycling" \
   --author "Stephane Jouve" \
   --python "^3.11" \
   --no-interaction
@@ -73,14 +73,14 @@ cat > pyproject.toml << 'EOF'
 [tool.poetry]
 name = "training-logs-runner"
 version = "0.1.0"
-description = "Runner for cyclisme-training-logs analysis"
+description = "Runner for magma-cycling analysis"
 authors = ["Stephane Jouve"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
 # Package local en mode editable
-cyclisme-training-logs = {path = "../cyclisme-training-logs", develop = true}
+magma-cycling = {path = "../magma-cycling", develop = true}
 
 [build-system]
 requires = ["poetry-core"]
@@ -91,7 +91,7 @@ EOF
 poetry install
 
 # Vérifier installation
-poetry run python -c "import cyclisme_training_logs; print('✅ OK')"
+poetry run python -c "import magma_cycling; print('✅ OK')"
 ```
 
 ### Étape 3: Tester Subprocess Depuis Data Repo
@@ -135,11 +135,11 @@ poetry run backfill-history \
 
 ```bash
 # Travailler sur code
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 git checkout -b feature/new-analysis
 
 # Modifier code
-vim cyclisme_training_logs/workflow_coach.py
+vim magma_cycling/workflow_coach.py
 
 # Tester localement
 poetry run pytest
@@ -220,7 +220,7 @@ Le code actuel (commit 968303c) **fonctionne déjà** avec cette architecture:
 # backfill_history.py ligne ~286
 cmd = [
     sys.executable,
-    '-m', 'cyclisme_training_logs.workflow_coach',
+    '-m', 'magma_cycling.workflow_coach',
     '--activity-id', activity_id,
     ...
 ]
@@ -248,12 +248,12 @@ cat > pyproject.toml << 'EOF'
 [tool.poetry]
 name = "training-logs-runner"
 version = "0.1.0"
-description = "Runner for cyclisme-training-logs"
+description = "Runner for magma-cycling"
 authors = ["Stephane Jouve"]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-cyclisme-training-logs = {path = "../cyclisme-training-logs", develop = true}
+magma-cycling = {path = "../magma-cycling", develop = true}
 
 [build-system]
 requires = ["poetry-core"]

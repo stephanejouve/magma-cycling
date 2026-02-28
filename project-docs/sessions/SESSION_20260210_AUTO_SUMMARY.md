@@ -42,29 +42,29 @@
 
 **Created (16):**
 
-- `cyclisme_training_logs/external/__init__.py`
-- `cyclisme_training_logs/external/zwift_client.py`
-- `cyclisme_training_logs/external/zwift_converter.py`
-- `cyclisme_training_logs/external/zwift_models.py`
-- `cyclisme_training_logs/external/zwift_scraper.py`
-- `cyclisme_training_logs/external/zwift_seed_data.py`
-- `cyclisme_training_logs/intelligence/workout_diversity.py`
-- `cyclisme_training_logs/scripts/populate_zwift_cache.py`
-- `cyclisme_training_logs/scripts/search_zwift_workouts.py`
-- `cyclisme_training_logs/scripts/seed_zwift_workouts.py`
+- `magma_cycling/external/__init__.py`
+- `magma_cycling/external/zwift_client.py`
+- `magma_cycling/external/zwift_converter.py`
+- `magma_cycling/external/zwift_models.py`
+- `magma_cycling/external/zwift_scraper.py`
+- `magma_cycling/external/zwift_seed_data.py`
+- `magma_cycling/intelligence/workout_diversity.py`
+- `magma_cycling/scripts/populate_zwift_cache.py`
+- `magma_cycling/scripts/search_zwift_workouts.py`
+- `magma_cycling/scripts/seed_zwift_workouts.py`
 - ... and 6 more
 
 **Modified (31):**
 
-- `cyclisme_training_logs/external/__init__.py`
-- `cyclisme_training_logs/external/zwift_client.py`
-- `cyclisme_training_logs/external/zwift_models.py`
-- `cyclisme_training_logs/external/zwift_scraper.py`
-- `cyclisme_training_logs/external/zwift_seed_data.py`
-- `cyclisme_training_logs/scripts/populate_zwift_cache.py`
-- `cyclisme_training_logs/scripts/search_zwift_workouts.py`
-- `cyclisme_training_logs/weekly_planner.py`
-- `cyclisme_training_logs/workflows/proactive_compensation.py`
+- `magma_cycling/external/__init__.py`
+- `magma_cycling/external/zwift_client.py`
+- `magma_cycling/external/zwift_models.py`
+- `magma_cycling/external/zwift_scraper.py`
+- `magma_cycling/external/zwift_seed_data.py`
+- `magma_cycling/scripts/populate_zwift_cache.py`
+- `magma_cycling/scripts/search_zwift_workouts.py`
+- `magma_cycling/weekly_planner.py`
+- `magma_cycling/workflows/proactive_compensation.py`
 - `docs/modules/intelligence.rst`
 - ... and 21 more
 

@@ -81,7 +81,7 @@ python3 scripts/auto_generate_planning.py --week S075 --start-date 2026-01-05
 #### Annuler une séance
 
 ```bash
-python3 cyclisme_training_logs/update_session_status.py \
+python3 magma_cycling/update_session_status.py \
   --week S075 \
   --session S075-01 \
   --status cancelled \
@@ -101,7 +101,7 @@ python3 cyclisme_training_logs/update_session_status.py \
 #### Marquer comme complétée
 
 ```bash
-python3 cyclisme_training_logs/update_session_status.py \
+python3 magma_cycling/update_session_status.py \
   --week S075 \
   --session S075-02 \
   --status completed
@@ -302,10 +302,10 @@ jq '.planned_sessions[].session_id' \
 
 ## 📚 Références
 
-- **Code source** : `cyclisme_training_logs/weekly_planner.py`
-- **Helper script** : `cyclisme_training_logs/update_session_status.py`
-- **Validations** : `cyclisme_training_logs/rest_and_cancellations.py`
-- **Config** : `cyclisme_training_logs/config.py` (get_data_config)
+- **Code source** : `magma_cycling/weekly_planner.py`
+- **Helper script** : `magma_cycling/update_session_status.py`
+- **Validations** : `magma_cycling/rest_and_cancellations.py`
+- **Config** : `magma_cycling/config.py` (get_data_config)
 
 ---
 

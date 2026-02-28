@@ -17,7 +17,7 @@
 **Usage:** Calcul taux de progression CTL (points/semaine)
 
 ```python
-from cyclisme_training_logs.utils.metrics_advanced import calculate_ramp_rate
+from magma_cycling.utils.metrics_advanced import calculate_ramp_rate
 
 # Exemple: CTL passé de 60 à 65 en 1 semaine
 ramp = calculate_ramp_rate(ctl_current=65.0, ctl_previous=60.0, days=7)
@@ -36,7 +36,7 @@ if ramp > 7.0:
 **Usage:** Analyse tendance hebdomadaire (rising/stable/declining)
 
 ```python
-from cyclisme_training_logs.utils.metrics_advanced import get_weekly_metrics_trend
+from magma_cycling.utils.metrics_advanced import get_weekly_metrics_trend
 
 weekly_data = [
     {'ctl': 60.0, 'atl': 55.0, 'week': 1},
@@ -62,7 +62,7 @@ result = get_weekly_metrics_trend(weekly_data, metric='ctl')
 **Usage:** Détection pics de charge significatifs
 
 ```python
-from cyclisme_training_logs.utils.metrics_advanced import detect_training_peaks
+from magma_cycling.utils.metrics_advanced import detect_training_peaks
 
 ctl_history = [50, 52, 51, 58, 60, 55, 53, 62]
 
@@ -91,7 +91,7 @@ peaks = detect_training_peaks(ctl_history, threshold_percent=10.0)
 **Usage:** Recommandation récupération basée sur métriques
 
 ```python
-from cyclisme_training_logs.utils.metrics_advanced import get_recovery_recommendation
+from magma_cycling.utils.metrics_advanced import get_recovery_recommendation
 
 result = get_recovery_recommendation(
     tsb=-18.0,
@@ -115,7 +115,7 @@ result = get_recovery_recommendation(
 **Usage:** Comparaison formatée entre 2 périodes
 
 ```python
-from cyclisme_training_logs.utils.metrics_advanced import format_metrics_comparison
+from magma_cycling.utils.metrics_advanced import format_metrics_comparison
 
 period1 = {'ctl': 60.0, 'atl': 55.0, 'tsb': 5.0}
 period2 = {'ctl': 65.0, 'atl': 58.0, 'tsb': 7.0}
@@ -144,7 +144,7 @@ print(comparison)
 **Usage:** Détection risque surmenage avec VETO (athlète master)
 
 ```python
-from cyclisme_training_logs.utils.metrics_advanced import detect_overtraining_risk
+from magma_cycling.utils.metrics_advanced import detect_overtraining_risk
 
 # Cas CRITIQUE: TSB très bas + sommeil insuffisant
 result = detect_overtraining_risk(
@@ -205,7 +205,7 @@ if result['veto']:
 ## 📂 Fichiers Créés
 
 ```
-cyclisme_training_logs/
+magma_cycling/
 ├── utils/
 │   ├── metrics.py                    # Existant (Sprint R2)
 │   └── metrics_advanced.py           # ✅ NOUVEAU (Sprint R2.1)
@@ -224,7 +224,7 @@ cyclisme_training_logs/
 
 #### 1. `weekly_aggregator.py`
 ```python
-from cyclisme_training_logs.utils.metrics_advanced import (
+from magma_cycling.utils.metrics_advanced import (
     get_weekly_metrics_trend,
     detect_training_peaks
 )
@@ -242,7 +242,7 @@ if peaks:
 
 #### 2. `weekly_planner.py`
 ```python
-from cyclisme_training_logs.utils.metrics_advanced import get_recovery_recommendation
+from magma_cycling.utils.metrics_advanced import get_recovery_recommendation
 
 # Recommandation récupération
 rec = get_recovery_recommendation(tsb, atl_ctl_ratio, athlete_profile)
@@ -254,7 +254,7 @@ if rec['priority'] in ['high', 'critical']:
 
 #### 3. `rest_and_cancellations.py` (CRITIQUE)
 ```python
-from cyclisme_training_logs.utils.metrics_advanced import detect_overtraining_risk
+from magma_cycling.utils.metrics_advanced import detect_overtraining_risk
 
 # Vérification VETO avant séance
 risk = detect_overtraining_risk(
@@ -272,7 +272,7 @@ if risk['veto']:
 
 #### 4. `monthly_analysis.py`
 ```python
-from cyclisme_training_logs.utils.metrics_advanced import (
+from magma_cycling.utils.metrics_advanced import (
     format_metrics_comparison,
     calculate_ramp_rate
 )
@@ -311,7 +311,7 @@ monthly_ramp = calculate_ramp_rate(
 ## 🚀 Prochaines Étapes
 
 ### Immédiat
-1. ✅ Copier `metrics_advanced.py` → `cyclisme_training_logs/utils/`
+1. ✅ Copier `metrics_advanced.py` → `magma_cycling/utils/`
 2. ✅ Copier `test_metrics_advanced.py` → `tests/utils/`
 3. ⏳ Exécuter test suite complet (404 + 33 = 437 tests)
 4. ⏳ Valider avec S074 data (optionnel)

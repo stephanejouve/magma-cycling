@@ -18,8 +18,8 @@ Code workflow_coach.py vérifie que CWD = code repo:
 if not (Path.cwd() / 'pyproject.toml').exists():
     print("❌ Erreur: Ce script doit être lancé depuis la racine du projet.")
     print(f"   Répertoire courant: {Path.cwd()}")
-    print("\n   cd ~/cyclisme-training-logs")
-    print("   python3 cyclisme_training_logs/workflow_coach.py")
+    print("\n   cd ~/magma-cycling")
+    print("   python3 magma_cycling/workflow_coach.py")
     sys.exit(1)
 ```
 
@@ -44,8 +44,8 @@ if not (Path.cwd() / 'pyproject.toml').exists():
 if not (Path.cwd() / 'pyproject.toml').exists():
     print("❌ Erreur: Ce script doit être lancé depuis la racine du projet.")
     print(f"   Répertoire courant: {Path.cwd()}")
-    print("\n   cd ~/cyclisme-training-logs")
-    print("   python3 cyclisme_training_logs/workflow_coach.py")
+    print("\n   cd ~/magma-cycling")
+    print("   python3 magma_cycling/workflow_coach.py")
     sys.exit(1)
 ```
 
@@ -77,15 +77,15 @@ except Exception as e:
 
 ## Modifications
 
-### Fichier: cyclisme_training_logs/workflow_coach.py
+### Fichier: magma_cycling/workflow_coach.py
 
 **Chercher ces lignes (probablement ~30-40):**
 ```python
 if not (Path.cwd() / 'pyproject.toml').exists():
     print("❌ Erreur: Ce script doit être lancé depuis la racine du projet.")
     print(f"   Répertoire courant: {Path.cwd()}")
-    print("\n   cd ~/cyclisme-training-logs")
-    print("   python3 cyclisme_training_logs/workflow_coach.py")
+    print("\n   cd ~/magma-cycling")
+    print("   python3 magma_cycling/workflow_coach.py")
     sys.exit(1)
 ```
 
@@ -126,7 +126,7 @@ poetry run workflow-coach \
 ### Test 2: Backfill
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 poetry run backfill-history \
   --start-date 2025-12-22 \
@@ -150,7 +150,7 @@ STATISTIQUES FINALES:
 ### Test 3: Depuis code repo (backward compat)
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 poetry run workflow-coach --help
 ```
@@ -164,7 +164,7 @@ poetry run workflow-coach --help
 
 **Avant (mono-repo implicite):**
 ```
-workflow_coach.py exécuté depuis ~/cyclisme-training-logs/
+workflow_coach.py exécuté depuis ~/magma-cycling/
 CWD = code repo ✅
 pyproject.toml dans CWD ✅
 Vérification CWD OK ✅

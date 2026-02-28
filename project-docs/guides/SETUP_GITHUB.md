@@ -21,7 +21,7 @@ Ce guide te permet de configurer le dépôt GitHub pour ton suivi d'entraînemen
 2. **Nouveau dépôt** : Clic sur "+" → "New repository"
 3. **Configuration** :
    ```
-   Repository name: cyclisme-training-logs
+   Repository name: magma-cycling
    Description: Suivi structuré d'entraînement cycliste (FTP 220W→260W+)
    Visibility: ✅ Private (recommandé) ou Public
    ❌ Ne PAS initialiser avec README/gitignore/licence (on a déjà tout)
@@ -31,8 +31,8 @@ Ce guide te permet de configurer le dépôt GitHub pour ton suivi d'entraînemen
 ### Copier l'URL du dépôt
 Tu verras une URL du type :
 ```
-SSH: git@github.com:tonusername/cyclisme-training-logs.git
-HTTPS: https://github.com/tonusername/cyclisme-training-logs.git
+SSH: git@github.com:tonusername/magma-cycling.git
+HTTPS: https://github.com/tonusername/magma-cycling.git
 ```
 Copie celle qui correspond à ta configuration (SSH recommandé).
 
@@ -54,7 +54,7 @@ Copie celle qui correspond à ta configuration (SSH recommandé).
 
 ```bash
 # 1. Aller dans le répertoire du projet
-cd /chemin/vers/cyclisme-training-logs
+cd /chemin/vers/magma-cycling
 
 # 2. Initialiser Git
 git init
@@ -69,7 +69,7 @@ git commit -m "Initial commit: Structure projet v2.0.1"
 git branch -M main
 
 # 6. Connecter au dépôt GitHub (remplace l'URL par la tienne)
-git remote add origin git@github.com:tonusername/cyclisme-training-logs.git
+git remote add origin git@github.com:tonusername/magma-cycling.git
 
 # 7. Vérifier la connexion
 git remote -v
@@ -234,7 +234,7 @@ Même avec GitHub, garde un backup local :
 
 # Ou automatiser avec cron (Linux/Mac)
 # Éditer crontab: crontab -e
-# Ajouter: 0 22 * * 0 /chemin/vers/cyclisme-training-logs/scripts/backup.sh
+# Ajouter: 0 22 * * 0 /chemin/vers/magma-cycling/scripts/backup.sh
 # = Tous les dimanches à 22h
 ```
 

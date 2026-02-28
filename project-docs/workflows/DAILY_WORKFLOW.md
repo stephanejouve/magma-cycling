@@ -99,7 +99,7 @@ train              # Première séance (complet)
 train-fast         # Deuxième séance (rapide)
 
 # Puis en fin de journée, commit groupé:
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 git add .
 git commit -m "Analyses: 2 séances samedi S073-05"
 ```
@@ -315,7 +315,7 @@ trainr --week-id S073
 
 ```bash
 # Rattraper toutes les séances en batch
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 # 1. Réconcilier les séances manquées
 trainr --week-id S073
@@ -468,7 +468,7 @@ cat ~/.intervals_config.json
 
 ```bash
 # Vérifier statut
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 git status
 
 # Résoudre conflits si nécessaire

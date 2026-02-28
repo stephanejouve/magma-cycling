@@ -11,7 +11,7 @@ Test coverage for Sprint R2.1 advanced functions:
 
 import pytest
 
-from cyclisme_training_logs.utils.metrics_advanced import (
+from magma_cycling.utils.metrics_advanced import (
     calculate_ramp_rate,
     detect_overtraining_risk,
     detect_training_peaks,

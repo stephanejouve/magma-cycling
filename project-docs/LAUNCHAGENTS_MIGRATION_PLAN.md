@@ -93,7 +93,7 @@ ANCIEN: com.cyclisme.project-cleaner
 NOUVEAU: com.cyclisme.mnt.10-project-clean-daily
 
 Fichier: ~/Library/LaunchAgents/com.cyclisme.mnt.10-project-clean-daily.plist
-Command: cd ~/cyclisme-training-logs && poetry run project-clean
+Command: cd ~/magma-cycling && poetry run project-clean
 Schedule: Every 24h
 Status: ✅ Actif → Migrer
 ```
@@ -113,7 +113,7 @@ ANCIEN: com.user.sync.cyclisme
 NOUVEAU: com.cyclisme.mnt.30-rsync-sites-hourly
 
 Fichier: ~/Library/LaunchAgents/com.cyclisme.mnt.30-rsync-sites-hourly.plist
-Command: rsync -av --delete ~/cyclisme-training-logs/docs/_build/html/ ~/Sites/cyclisme-training-logs/
+Command: rsync -av --delete ~/magma-cycling/docs/_build/html/ ~/Sites/magma-cycling/
 Schedule: Every 1h
 Status: ✅ Actif → Migrer
 ```
@@ -160,7 +160,7 @@ Daily  → mnt.10 (project-clean)      → Nettoyage
 ### Étape 1: Créer Nouveaux .plist
 
 ```bash
-cd ~/cyclisme-training-logs/scripts/launchagents
+cd ~/magma-cycling/scripts/launchagents
 
 # Créer nouveaux fichiers avec nouvelle convention
 ./create_new_plists.sh

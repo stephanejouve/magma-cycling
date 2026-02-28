@@ -4,8 +4,8 @@ from datetime import date
 
 import pytest
 
-from cyclisme_training_logs.config.athlete_profile import AthleteProfile
-from cyclisme_training_logs.planning.calendar import (
+from magma_cycling.config.athlete_profile import AthleteProfile
+from magma_cycling.planning.calendar import (
     TrainingCalendar,
     TrainingSession,
     WeeklySummary,

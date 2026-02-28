@@ -328,9 +328,9 @@ git status --short
 ### Fichiers Modifiés
 
 **Code Source**:
-- cyclisme_training_logs/config.py
-- cyclisme_training_logs/core/duplicate_detector.py
-- cyclisme_training_logs/insert_analysis.py
+- magma_cycling/config.py
+- magma_cycling/core/duplicate_detector.py
+- magma_cycling/insert_analysis.py
 - 27 fichiers (migration docstrings)
 
 **Scripts**:
@@ -425,7 +425,7 @@ git status --short
 
 ### 1. Duplicate Detector
 
-**Fichier**: `cyclisme_training_logs/core/duplicate_detector.py`
+**Fichier**: `magma_cycling/core/duplicate_detector.py`
 
 **Fonctionnalités**:
 - Scan rapide avec window configurable
@@ -436,7 +436,7 @@ git status --short
 
 **Usage**:
 ```python
-from cyclisme_training_logs.core.duplicate_detector import check_and_handle_duplicates
+from magma_cycling.core.duplicate_detector import check_and_handle_duplicates
 
 check_and_handle_duplicates(
     history_file=Path("workouts-history.md"),
@@ -630,7 +630,7 @@ poetry run pytest
 poetry run pytest tests/test_duplicate_detector.py -v
 
 # Avec coverage
-poetry run pytest --cov=cyclisme_training_logs --cov-report=html
+poetry run pytest --cov=magma_cycling --cov-report=html
 ```
 
 ### B. Liens Références
@@ -648,9 +648,9 @@ poetry run pytest --cov=cyclisme_training_logs --cov-report=html
 ### C. Structure Finale Complète
 
 ```
-cyclisme-training-logs/
+magma-cycling/
 │
-├── cyclisme_training_logs/        # Code source (Google Style ✅)
+├── magma_cycling/        # Code source (Google Style ✅)
 │   ├── core/
 │   │   ├── duplicate_detector.py  # NEW (241 lignes)
 │   │   ├── timeline_injector.py

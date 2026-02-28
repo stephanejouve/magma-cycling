@@ -17,7 +17,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from cyclisme_training_logs.planned_sessions_checker import PlannedSessionsChecker
+from magma_cycling.planned_sessions_checker import PlannedSessionsChecker
 
 
 class TestPlannedSessionsCheckerInit:
@@ -453,14 +453,14 @@ class TestGenerateSkippedSessionMarkdown:
 class TestMainFunction:
     """Test main CLI function."""
 
-    @patch("cyclisme_training_logs.planned_sessions_checker.PlannedSessionsChecker")
-    @patch("cyclisme_training_logs.planned_sessions_checker.get_data_config")
+    @patch("magma_cycling.planned_sessions_checker.PlannedSessionsChecker")
+    @patch("magma_cycling.planned_sessions_checker.get_data_config")
     @patch("builtins.open", create=True)
     def test_main_with_valid_config(self, mock_open, mock_get_config, mock_checker_class):
         """Test main function with valid configuration."""
         from io import StringIO
 
-        from cyclisme_training_logs.planned_sessions_checker import main
+        from magma_cycling.planned_sessions_checker import main
 
         # Mock config file content
         mock_config_data = '{"athlete_id": "iXXXXXX", "api_key": "test_key"}'

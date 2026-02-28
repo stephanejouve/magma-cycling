@@ -6,8 +6,8 @@ Ajouter une vérification optionnelle des doublons après insertion dans workout
 
 ## Contexte
 
-- **Fichier principal:** `cyclisme_training_logs/insert_analysis.py`
-- **Fichier config:** `cyclisme_training_logs/config.py`
+- **Fichier principal:** `magma_cycling/insert_analysis.py`
+- **Fichier config:** `magma_cycling/config.py`
 - **Problème détecté:** TimelineInjector peut créer des doublons (bug #12)
 - **Solution actuelle:** Script manuel `clean_duplicates_multi.py`
 - **Architecture:** Double repo, tous paths via config.py
@@ -16,7 +16,7 @@ Ajouter une vérification optionnelle des doublons après insertion dans workout
 
 ### 1. Ajouter Flags Config (config.py)
 
-**Fichier:** `cyclisme_training_logs/config.py`
+**Fichier:** `magma_cycling/config.py`
 
 **Localisation:** Dans la classe `DataRepoConfig` (après les propriétés existantes)
 
@@ -42,7 +42,7 @@ class DataRepoConfig:
 
 ### 2. Créer Module de Détection (nouveau fichier)
 
-**Fichier:** `cyclisme_training_logs/core/duplicate_detector.py`
+**Fichier:** `magma_cycling/core/duplicate_detector.py`
 
 **Créer le fichier complet:**
 
@@ -249,17 +249,17 @@ def check_and_handle_duplicates(
 
 ### 3. Intégrer dans insert_analysis.py
 
-**Fichier:** `cyclisme_training_logs/insert_analysis.py`
+**Fichier:** `magma_cycling/insert_analysis.py`
 
 **Modification 1 - Ajouter imports (ligne ~10-20):**
 
 ```python
 # Imports existants...
-from cyclisme_training_logs.config import get_data_config
-from cyclisme_training_logs.core.timeline_injector import TimelineInjector
+from magma_cycling.config import get_data_config
+from magma_cycling.core.timeline_injector import TimelineInjector
 
 # AJOUTER:
-from cyclisme_training_logs.core.duplicate_detector import (
+from magma_cycling.core.duplicate_detector import (
     check_and_handle_duplicates,
     DuplicateDetectedError
 )
@@ -366,7 +366,7 @@ def insert_analysis(self, analysis_text):
 
 import pytest
 from pathlib import Path
-from cyclisme_training_logs.core.duplicate_detector import (
+from magma_cycling.core.duplicate_detector import (
     DuplicateDetector,
     DuplicateDetectedError,
     check_and_handle_duplicates
@@ -446,7 +446,7 @@ def test_fail_fast_mode(sample_history_with_duplicates):
 ### Tests Manuels
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 # Test 1: Mode paranoid activé, pas de doublons
 poetry run workflow-coach --activity-id i113315172 --auto --skip-feedback --skip-git
@@ -467,7 +467,7 @@ poetry run workflow-coach --activity-id i113315172 --auto --skip-feedback --skip
 ### Tests Automatisés
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 # Lancer les tests
 poetry run pytest tests/test_duplicate_detector.py -v
@@ -512,11 +512,11 @@ duplicate_check_window = 50        # N/A
 ## Commit
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
-git add cyclisme_training_logs/config.py
-git add cyclisme_training_logs/core/duplicate_detector.py
-git add cyclisme_training_logs/insert_analysis.py
+git add magma_cycling/config.py
+git add magma_cycling/core/duplicate_detector.py
+git add magma_cycling/insert_analysis.py
 git add tests/test_duplicate_detector.py
 
 git commit -m "feat(paranoid): Add optional duplicate detection after insertion
@@ -846,7 +846,7 @@ if __name__ == '__main__':
 ### Utilisation
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 # Audit simple (affiche rapport)
 python3 scripts/maintenance/audit_docstrings.py
@@ -860,7 +860,7 @@ python3 scripts/maintenance/audit_docstrings.py --tag
 
 # Audit projet spécifique
 python3 scripts/maintenance/audit_docstrings.py \
-    --project-root ~/cyclisme-training-logs \
+    --project-root ~/magma-cycling \
     --tag \
     --output docs/DOCSTRING_AUDIT.md
 ```
@@ -881,17 +881,17 @@ python3 scripts/maintenance/audit_docstrings.py \
 
 ## Fichiers Manquants TIME GARTNER
 
-- [ ] `cyclisme_training_logs/insert_analysis.py`
-- [ ] `cyclisme_training_logs/workflow_coach.py`
-- [ ] `cyclisme_training_logs/scripts/backfill_history.py`
+- [ ] `magma_cycling/insert_analysis.py`
+- [ ] `magma_cycling/workflow_coach.py`
+- [ ] `magma_cycling/scripts/backfill_history.py`
 ...
 
 ---
 
 ## Fichiers Conformes
 
-- [x] `cyclisme_training_logs/config.py`
-- [x] `cyclisme_training_logs/core/duplicate_detector.py`
+- [x] `magma_cycling/config.py`
+- [x] `magma_cycling/core/duplicate_detector.py`
 ...
 ```
 
@@ -927,7 +927,7 @@ exit 0
 ### Commande Git pour Activer Hook
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 # Créer le hook
 cat > .git/hooks/pre-commit << 'EOF'
@@ -946,7 +946,7 @@ chmod +x .git/hooks/pre-commit
 ## Commit Script Audit
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 git add scripts/maintenance/audit_docstrings.py
 git add .git/hooks/pre-commit

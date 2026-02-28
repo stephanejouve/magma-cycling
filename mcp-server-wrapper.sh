@@ -19,15 +19,15 @@ if [ "$MCP_DEV_MODE" = "1" ]; then
 
     # Use watchdog's watchmedo for auto-restart (works for both stdio and http)
     exec $VENV_PYTHON -m watchdog.watchmedo auto-restart \
-        -d cyclisme_training_logs \
+        -d magma_cycling \
         -p "*.py" \
         -R \
         --interval 1.0 \
         --debounce-interval 0.5 \
-        -- $VENV_PYTHON -m cyclisme_training_logs.mcp_server 2>> "$DEBUG_LOG"
+        -- $VENV_PYTHON -m magma_cycling.mcp_server 2>> "$DEBUG_LOG"
 else
     echo "[MCP] Production mode - no auto-reload" >> "$DEBUG_LOG"
 
     # Standard mode - no auto-reload
-    exec $VENV_PYTHON -m cyclisme_training_logs.mcp_server 2>> "$DEBUG_LOG"
+    exec $VENV_PYTHON -m magma_cycling.mcp_server 2>> "$DEBUG_LOG"
 fi

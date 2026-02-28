@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from cyclisme_training_logs.analysis.baseline_preliminary import BaselineAnalyzer
+from magma_cycling.analysis.baseline_preliminary import BaselineAnalyzer
 
 
 @pytest.fixture
@@ -149,7 +149,7 @@ def test_load_adherence_data_filters_by_date(analyzer, mock_adherence_data, tmp_
     assert len(analyzer.adherence_data) == 3
 
 
-@patch("cyclisme_training_logs.analysis.baseline_preliminary.create_intervals_client")
+@patch("magma_cycling.analysis.baseline_preliminary.create_intervals_client")
 def test_load_intervals_data(
     mock_client_factory, analyzer, mock_wellness_data, mock_activities_data, mock_events_data
 ):
@@ -169,7 +169,7 @@ def test_load_intervals_data(
     assert len(analyzer.events_data) == 3
 
 
-@patch("cyclisme_training_logs.analysis.baseline_preliminary.create_intervals_client")
+@patch("magma_cycling.analysis.baseline_preliminary.create_intervals_client")
 def test_load_intervals_data_handles_errors(mock_client_factory, analyzer):
     """Test that errors in API calls are handled gracefully."""
     mock_client = MagicMock()
@@ -935,7 +935,7 @@ def test_run_analysis_integration(analyzer, mock_adherence_data, tmp_path):
     analyzer.adherence_file = adherence_file
 
     # Mock Intervals client
-    with patch("cyclisme_training_logs.analysis.baseline_preliminary.create_intervals_client"):
+    with patch("magma_cycling.analysis.baseline_preliminary.create_intervals_client"):
         analyzer.client = MagicMock()
         analyzer.client.get_wellness.return_value = []
         analyzer.client.get_activities.return_value = []

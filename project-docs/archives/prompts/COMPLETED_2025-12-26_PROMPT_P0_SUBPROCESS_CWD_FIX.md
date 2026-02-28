@@ -38,7 +38,7 @@ subprocess.run(
 **Pourquoi ça échoue:**
 1. `cwd=/Users/stephanejouve/training-logs` (data repo)
 2. Poetry cherche `pyproject.toml` dans ce dossier
-3. `pyproject.toml` est dans `/Users/stephanejouve/cyclisme-training-logs` (code repo)
+3. `pyproject.toml` est dans `/Users/stephanejouve/magma-cycling` (code repo)
 4. Poetry échoue avec "could not find pyproject.toml"
 
 ---
@@ -72,11 +72,11 @@ def analyze_activity(self, activity: Dict) -> bool:
 
     # Construire commande Python directe
     # Au lieu de: poetry run workflow-coach --activity-id ...
-    # Utiliser: python -m cyclisme_training_logs.workflow_coach --activity-id ...
+    # Utiliser: python -m magma_cycling.workflow_coach --activity-id ...
 
     cmd = [
         sys.executable,  # Python actuel (même que backfill)
-        '-m', 'cyclisme_training_logs.workflow_coach',
+        '-m', 'magma_cycling.workflow_coach',
         '--activity-id', activity_id,
         '--provider', self.provider,
         '--auto',
@@ -141,7 +141,7 @@ def analyze_activity(self, activity: Dict) -> bool:
     try:
         result = subprocess.run(
             cmd,
-            cwd=str(Path.home() / 'cyclisme-training-logs'),  # ✅ Code repo pour Poetry
+            cwd=str(Path.home() / 'magma-cycling'),  # ✅ Code repo pour Poetry
             env=env,  # ✅ Data repo via env var
             capture_output=True,
             text=True,
@@ -165,7 +165,7 @@ def analyze_activity(self, activity: Dict) -> bool:
 cd ~/training-logs
 
 # Tester commande Python directe
-python3 -m cyclisme_training_logs.workflow_coach \
+python3 -m magma_cycling.workflow_coach \
   --activity-id i113315172 \
   --provider mistral_api \
   --auto \
@@ -250,7 +250,7 @@ Avec fix:
 ## NOTES
 
 **Pourquoi Python direct fonctionne:**
-- `python -m cyclisme_training_logs.workflow_coach` ne cherche PAS pyproject.toml
+- `python -m magma_cycling.workflow_coach` ne cherche PAS pyproject.toml
 - Module import fonctionne si PYTHONPATH correct (hérité du parent)
 - CWD peut être data repo sans problème
 

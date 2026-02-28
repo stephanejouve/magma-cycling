@@ -18,7 +18,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from cyclisme_training_logs.sync_intervals import WorkoutLogger, load_config
+from magma_cycling.sync_intervals import WorkoutLogger, load_config
 
 
 class TestWorkoutLoggerInit:
@@ -26,7 +26,7 @@ class TestWorkoutLoggerInit:
 
     def test_init_with_data_config(self, tmp_path):
         """Test initialization using data repo config."""
-        with patch("cyclisme_training_logs.config.get_data_config") as mock_config:
+        with patch("magma_cycling.config.get_data_config") as mock_config:
             mock_config.return_value = MagicMock(
                 data_repo_path=tmp_path,
                 workouts_history_path=tmp_path / "workouts-history.md",
@@ -51,7 +51,7 @@ class TestWorkoutLoggerInit:
     def test_init_fallback_to_default(self):
         """Test fallback to default logs directory when config fails."""
         with patch(
-            "cyclisme_training_logs.config.get_data_config",
+            "magma_cycling.config.get_data_config",
             side_effect=FileNotFoundError,
         ):
             logger = WorkoutLogger()
@@ -359,13 +359,13 @@ class TestLoadConfig:
 class TestMainFunction:
     """Test main CLI function."""
 
-    @patch("cyclisme_training_logs.sync_intervals.IntervalsAPI")
-    @patch("cyclisme_training_logs.sync_intervals.WorkoutLogger")
-    @patch("cyclisme_training_logs.sync_intervals.load_config")
+    @patch("magma_cycling.sync_intervals.IntervalsAPI")
+    @patch("magma_cycling.sync_intervals.WorkoutLogger")
+    @patch("magma_cycling.sync_intervals.load_config")
     @patch("sys.argv", ["sync-intervals", "--athlete-id", "iXXXXXX", "--api-key", "test_key"])
     def test_main_with_cli_args(self, mock_load_config, mock_logger_class, mock_api_class):
         """Test main function with CLI arguments."""
-        from cyclisme_training_logs.sync_intervals import main
+        from magma_cycling.sync_intervals import main
 
         # Mock API responses
         mock_api = MagicMock()
@@ -408,11 +408,11 @@ class TestMainFunction:
         mock_logger.update_workouts_history.assert_called_once()
         mock_logger.update_metrics_evolution.assert_called_once()
 
-    @patch("cyclisme_training_logs.sync_intervals.load_config")
+    @patch("magma_cycling.sync_intervals.load_config")
     @patch("sys.argv", ["sync-intervals"])
     def test_main_missing_credentials(self, mock_load_config):
         """Test main exits when credentials missing."""
-        from cyclisme_training_logs.sync_intervals import main
+        from magma_cycling.sync_intervals import main
 
         # Mock no config
         mock_load_config.return_value = None
@@ -423,12 +423,12 @@ class TestMainFunction:
 
         assert exc_info.value.code == 1
 
-    @patch("cyclisme_training_logs.sync_intervals.IntervalsAPI")
-    @patch("cyclisme_training_logs.sync_intervals.load_config")
+    @patch("magma_cycling.sync_intervals.IntervalsAPI")
+    @patch("magma_cycling.sync_intervals.load_config")
     @patch("sys.argv", ["sync-intervals", "--config", "test_config.json"])
     def test_main_with_config_file(self, mock_load_config, mock_api_class):
         """Test main function with config file."""
-        from cyclisme_training_logs.sync_intervals import main
+        from magma_cycling.sync_intervals import main
 
         # Mock config file
         mock_load_config.return_value = {
@@ -444,7 +444,7 @@ class TestMainFunction:
         mock_api_class.return_value = mock_api
 
         # Run main
-        with patch("cyclisme_training_logs.sync_intervals.WorkoutLogger"):
+        with patch("magma_cycling.sync_intervals.WorkoutLogger"):
             main()
 
         # Verify API was initialized with config credentials

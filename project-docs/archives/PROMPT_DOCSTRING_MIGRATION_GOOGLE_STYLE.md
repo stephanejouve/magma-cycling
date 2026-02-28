@@ -6,7 +6,7 @@ Migrer tous les docstrings du projet depuis le format custom `GARTNER_TIME` vers
 
 ## Contexte
 
-- **Projet:** `cyclisme-training-logs` (Python package)
+- **Projet:** `magma-cycling` (Python package)
 - **Format actuel:** Non-standard GARTNER_TIME
 - **Format cible:** Google Style (PEP 257 compliant)
 - **Tooling requis:** Compatible Sphinx, pydocstyle, darglint, IDEs
@@ -53,7 +53,7 @@ Metadata:
 Examples:
     Basic usage::
 
-        from cyclisme_training_logs.config import get_data_config
+        from magma_cycling.config import get_data_config
         config = get_data_config()
         print(config.data_repo_path)
 
@@ -111,7 +111,7 @@ Examples:
 
     Migrate specific directory::
 
-        python migrate_docstrings.py --input-dir cyclisme_training_logs/core/
+        python migrate_docstrings.py --input-dir magma_cycling/core/
 
 Note:
     Always run with --backup flag first to create .bak files.
@@ -175,7 +175,7 @@ class DocstringMigrator:
         Basic migration::
 
             migrator = DocstringMigrator(
-                project_root=Path('cyclisme_training_logs'),
+                project_root=Path('magma_cycling'),
                 backup=True
             )
             stats = migrator.migrate_all()
@@ -448,7 +448,7 @@ Examples:
   python migrate_docstrings.py --dry-run
 
   # Migrate specific directory
-  python migrate_docstrings.py --input-dir cyclisme_training_logs/core/
+  python migrate_docstrings.py --input-dir magma_cycling/core/
 
   # Verbose output
   python migrate_docstrings.py --backup --verbose
@@ -458,8 +458,8 @@ Examples:
     parser.add_argument(
         '--input-dir',
         type=Path,
-        default=Path.cwd() / 'cyclisme_training_logs',
-        help='Root directory to scan (default: ./cyclisme_training_logs)'
+        default=Path.cwd() / 'magma_cycling',
+        help='Root directory to scan (default: ./magma_cycling)'
     )
     parser.add_argument(
         '--backup',
@@ -659,7 +659,7 @@ def test_dry_run_mode(temp_python_file):
 
 ```python
 """
-Sphinx configuration for cyclisme-training-logs documentation.
+Sphinx configuration for magma-cycling documentation.
 
 Metadata:
     Created: 2025-12-27
@@ -754,14 +754,14 @@ pip install -q pydocstyle darglint sphinx
 
 # Check Google-style compliance
 echo "1️⃣ Checking PEP 257 compliance (Google convention)..."
-pydocstyle --convention=google cyclisme_training_logs/ || {
+pydocstyle --convention=google magma_cycling/ || {
     echo "❌ Docstring style violations found"
     exit 1
 }
 
 # Validate docstring/signature match
 echo "2️⃣ Validating docstring/code consistency..."
-darglint -v 2 cyclisme_training_logs/ || {
+darglint -v 2 magma_cycling/ || {
     echo "⚠️ Docstring/signature mismatches found"
     # Non-blocking pour l'instant
 }
@@ -786,7 +786,7 @@ echo "✅ All docstring validations passed!"
 ### Tests Manuels
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 # 1. Test dry-run (preview sans modifications)
 python scripts/maintenance/migrate_docstrings.py --dry-run --verbose
@@ -795,11 +795,11 @@ python scripts/maintenance/migrate_docstrings.py --dry-run --verbose
 python scripts/maintenance/migrate_docstrings.py --backup --verbose
 
 # 3. Vérifier un fichier migré
-cat cyclisme_training_logs/config.py | head -30
+cat magma_cycling/config.py | head -30
 
 # 4. Valider conformité Google Style
 pip install pydocstyle
-pydocstyle --convention=google cyclisme_training_logs/
+pydocstyle --convention=google magma_cycling/
 
 # 5. Générer documentation Sphinx
 cd docs
@@ -811,7 +811,7 @@ open _build/html/index.html  # macOS
 ### Tests Automatisés
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 # Lancer tests pytest
 poetry run pytest tests/test_docstring_migrator.py -v
@@ -830,7 +830,7 @@ poetry run pytest tests/test_docstring_migrator.py -v
 ### Commit 1: Script Migration
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 git add scripts/maintenance/migrate_docstrings.py
 git add tests/test_docstring_migrator.py
@@ -862,7 +862,7 @@ Related: PEP 257, Sphinx documentation
 # Après avoir vérifié la migration en dry-run
 python scripts/maintenance/migrate_docstrings.py --backup
 
-git add cyclisme_training_logs/**/*.py
+git add magma_cycling/**/*.py
 git add -u  # Stages deletions (.bak files excluded by .gitignore)
 
 git commit -m "docs: Migrate all docstrings to Google Style format

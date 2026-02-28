@@ -51,7 +51,7 @@
 
 **Commit :** `d8d383f - refactor: Standardize CLI options in weekly-analysis (--week-id)`
 
-**Fichier modifié :** `cyclisme_training_logs/workflows/workflow_weekly.py`
+**Fichier modifié :** `magma_cycling/workflows/workflow_weekly.py`
 
 **Changements :**
 ```python
@@ -108,7 +108,7 @@ parser.add_argument("--verbose", action="store_true", help="Enable verbose loggi
 
 **Commit :** `587d2b4 - refactor: Make weekly-planner provider-agnostic (5 AI assistants)`
 
-**Fichier modifié :** `cyclisme_training_logs/weekly_planner.py`
+**Fichier modifié :** `magma_cycling/weekly_planner.py`
 
 **Changements :**
 ```python
@@ -151,7 +151,7 @@ print("💡 Tip: Utilisez 'workflow-coach' pour automatisation complète")
 **Commit :** `bb28c90 - fix: Correct weekly_planner bilan path (data repo + lowercase)`
 
 **Problèmes corrigés :**
-1. **Mauvais repo** : `cyclisme-training-logs/logs` → `training-logs/`
+1. **Mauvais repo** : `magma-cycling/logs` → `training-logs/`
 2. **Mauvais répertoire** : `weekly_reports` → `weekly-reports`
 3. **Mauvais case** : `bilan_final_S074.md` → `bilan_final_s074.md`
 
@@ -161,10 +161,10 @@ print("💡 Tip: Utilisez 'workflow-coach' pour automatisation complète")
 self.logs_dir = project_root / "logs"
 self.weekly_reports_dir = self.logs_dir / "weekly_reports"
 bilan_file = self.weekly_reports_dir / prev_week / f"bilan_final_{prev_week}.md"
-# Path: /Users/.../cyclisme-training-logs/logs/weekly_reports/S074/bilan_final_S074.md
+# Path: /Users/.../magma-cycling/logs/weekly_reports/S074/bilan_final_S074.md
 
 # Après (correct)
-from cyclisme_training_logs.config import get_data_config
+from magma_cycling.config import get_data_config
 config = get_data_config()
 self.weekly_reports_dir = config.data_repo_path / "weekly-reports"
 bilan_file = self.weekly_reports_dir / prev_week / f"bilan_final_{prev_week.lower()}.md"
@@ -507,12 +507,12 @@ Après (auto)   : wp → AI coach → format-planning → wu
 
 ### Fichiers Modifiés (majeurs)
 
-**1. cyclisme_training_logs/workflows/workflow_weekly.py**
+**1. magma_cycling/workflows/workflow_weekly.py**
 - CLI standardization (`--week-id`)
 - Suppression options non-standard
 - Code cleanup
 
-**2. cyclisme_training_logs/weekly_planner.py**
+**2. magma_cycling/weekly_planner.py**
 - Provider-agnostic wording (5 AI assistants)
 - Path configuration fix (data repo)
 - Lowercase filename fix
@@ -790,7 +790,7 @@ poetry run pytest tests/maintenance/ -v
 
 # Qualité code
 poetry run ruff check .
-poetry run pydocstyle cyclisme_training_logs/
+poetry run pydocstyle magma_cycling/
 ```
 
 **Validation MOA :**

@@ -9,8 +9,8 @@ from unittest.mock import patch
 
 import pytest
 
-from cyclisme_training_logs.ai_providers.factory import AIProviderFactory
-from cyclisme_training_logs.config import get_ai_config, reset_ai_config
+from magma_cycling.ai_providers.factory import AIProviderFactory
+from magma_cycling.config import get_ai_config, reset_ai_config
 
 
 class TestFallbackChain:

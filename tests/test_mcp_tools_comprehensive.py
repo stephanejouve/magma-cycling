@@ -13,7 +13,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from cyclisme_training_logs.planning.models import Session, WeeklyPlan
+from magma_cycling.planning.models import Session, WeeklyPlan
 
 # Configure pytest-asyncio
 pytest_plugins = ("pytest_asyncio",)
@@ -90,7 +90,7 @@ class TestDailySyncComprehensive:
 
     def test_daily_sync_with_no_activities(self, mock_intervals_client):
         """Test daily-sync when no activities exist."""
-        from cyclisme_training_logs.daily_sync import DailySync
+        from magma_cycling.daily_sync import DailySync
 
         with tempfile.TemporaryDirectory() as tmpdir:
             tracking_file = Path(tmpdir) / "tracking.json"
@@ -100,7 +100,7 @@ class TestDailySyncComprehensive:
             mock_intervals_client.get_activities.return_value = []
 
             with patch(
-                "cyclisme_training_logs.config.create_intervals_client",
+                "magma_cycling.config.create_intervals_client",
                 return_value=mock_intervals_client,
             ):
                 sync = DailySync(tracking_file=tracking_file, reports_dir=reports_dir)
@@ -111,7 +111,7 @@ class TestDailySyncComprehensive:
 
     def test_daily_sync_with_multiple_activities(self, mock_intervals_client):
         """Test daily-sync with multiple activities."""
-        from cyclisme_training_logs.daily_sync import DailySync
+        from magma_cycling.daily_sync import DailySync
 
         activities = [
             {
@@ -138,7 +138,7 @@ class TestDailySyncComprehensive:
             mock_intervals_client.get_events.return_value = []
 
             with patch(
-                "cyclisme_training_logs.config.create_intervals_client",
+                "magma_cycling.config.create_intervals_client",
                 return_value=mock_intervals_client,
             ):
                 sync = DailySync(tracking_file=tracking_file, reports_dir=reports_dir)
@@ -150,7 +150,7 @@ class TestDailySyncComprehensive:
 
     def test_daily_sync_with_mixed_activity_types(self, mock_intervals_client):
         """Test daily-sync filters only cycling activities."""
-        from cyclisme_training_logs.daily_sync import DailySync
+        from magma_cycling.daily_sync import DailySync
 
         activities = [
             {
@@ -182,7 +182,7 @@ class TestDailySyncComprehensive:
             reports_dir.mkdir()
 
             with patch(
-                "cyclisme_training_logs.config.create_intervals_client",
+                "magma_cycling.config.create_intervals_client",
                 return_value=mock_intervals_client,
             ):
                 sync = DailySync(tracking_file=tracking_file, reports_dir=reports_dir)
@@ -196,7 +196,7 @@ class TestDailySyncComprehensive:
 
     def test_daily_sync_with_null_activities_in_list(self, mock_intervals_client):
         """Test daily-sync handles None entries in activity list."""
-        from cyclisme_training_logs.daily_sync import DailySync
+        from magma_cycling.daily_sync import DailySync
 
         activities = [
             {"id": "i1001", "name": "Valid Activity", "start_date_local": "2026-02-21T08:00:00"},
@@ -213,7 +213,7 @@ class TestDailySyncComprehensive:
             mock_intervals_client.get_events.return_value = []
 
             with patch(
-                "cyclisme_training_logs.config.create_intervals_client",
+                "magma_cycling.config.create_intervals_client",
                 return_value=mock_intervals_client,
             ):
                 sync = DailySync(tracking_file=tracking_file, reports_dir=reports_dir)
@@ -225,7 +225,7 @@ class TestDailySyncComprehensive:
 
     def test_daily_sync_with_malformed_dates(self, mock_intervals_client):
         """Test daily-sync with activities missing start_date_local."""
-        from cyclisme_training_logs.daily_sync import DailySync
+        from magma_cycling.daily_sync import DailySync
 
         activities = [
             {"id": "i1001", "name": "No Date Activity"},  # Missing start_date_local
@@ -240,7 +240,7 @@ class TestDailySyncComprehensive:
             mock_intervals_client.get_events.return_value = []
 
             with patch(
-                "cyclisme_training_logs.config.create_intervals_client",
+                "magma_cycling.config.create_intervals_client",
                 return_value=mock_intervals_client,
             ):
                 sync = DailySync(tracking_file=tracking_file, reports_dir=reports_dir)
@@ -264,7 +264,7 @@ class TestAnalyzeSessionAdherenceComprehensive:
         self, mock_intervals_client, sample_session, sample_weekly_plan
     ):
         """Test adherence when activity perfectly matches plan."""
-        from cyclisme_training_logs.mcp_server import handle_analyze_session_adherence
+        from magma_cycling.mcp_server import handle_analyze_session_adherence
 
         # Perfect match: same TSS and duration
         mock_intervals_client.get_activity.return_value = {
@@ -275,12 +275,10 @@ class TestAnalyzeSessionAdherenceComprehensive:
         }
 
         with patch(
-            "cyclisme_training_logs.config.create_intervals_client",
+            "magma_cycling.config.create_intervals_client",
             return_value=mock_intervals_client,
         ):
-            with patch(
-                "cyclisme_training_logs.planning.control_tower.planning_tower"
-            ) as mock_tower:
+            with patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower:
                 mock_tower.read_week.return_value = sample_weekly_plan
 
                 args = {"session_id": "S081-06", "activity_id": "i126850020"}
@@ -296,7 +294,7 @@ class TestAnalyzeSessionAdherenceComprehensive:
         self, mock_intervals_client, sample_session, sample_weekly_plan
     ):
         """Test adherence when activity exceeds plan."""
-        from cyclisme_training_logs.mcp_server import handle_analyze_session_adherence
+        from magma_cycling.mcp_server import handle_analyze_session_adherence
 
         # Over-performance: 150% TSS
         mock_intervals_client.get_activity.return_value = {
@@ -307,12 +305,10 @@ class TestAnalyzeSessionAdherenceComprehensive:
         }
 
         with patch(
-            "cyclisme_training_logs.config.create_intervals_client",
+            "magma_cycling.config.create_intervals_client",
             return_value=mock_intervals_client,
         ):
-            with patch(
-                "cyclisme_training_logs.planning.control_tower.planning_tower"
-            ) as mock_tower:
+            with patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower:
                 mock_tower.read_week.return_value = sample_weekly_plan
 
                 args = {"session_id": "S081-06", "activity_id": "i126850020"}
@@ -328,7 +324,7 @@ class TestAnalyzeSessionAdherenceComprehensive:
         self, mock_intervals_client, sample_session, sample_weekly_plan
     ):
         """Test adherence when activity is significantly below plan."""
-        from cyclisme_training_logs.mcp_server import handle_analyze_session_adherence
+        from magma_cycling.mcp_server import handle_analyze_session_adherence
 
         # Under-performance: 50% TSS
         mock_intervals_client.get_activity.return_value = {
@@ -339,12 +335,10 @@ class TestAnalyzeSessionAdherenceComprehensive:
         }
 
         with patch(
-            "cyclisme_training_logs.config.create_intervals_client",
+            "magma_cycling.config.create_intervals_client",
             return_value=mock_intervals_client,
         ):
-            with patch(
-                "cyclisme_training_logs.planning.control_tower.planning_tower"
-            ) as mock_tower:
+            with patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower:
                 mock_tower.read_week.return_value = sample_weekly_plan
 
                 args = {"session_id": "S081-06", "activity_id": "i126850020"}
@@ -358,12 +352,12 @@ class TestAnalyzeSessionAdherenceComprehensive:
     @pytest.mark.asyncio
     async def test_adherence_missing_session(self, mock_intervals_client):
         """Test adherence when session doesn't exist."""
-        from cyclisme_training_logs.mcp_server import handle_analyze_session_adherence
+        from magma_cycling.mcp_server import handle_analyze_session_adherence
 
         empty_plan = Mock(spec=WeeklyPlan)
         empty_plan.planned_sessions = []
 
-        with patch("cyclisme_training_logs.planning.control_tower.planning_tower") as mock_tower:
+        with patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower:
             mock_tower.read_week.return_value = empty_plan
 
             args = {"session_id": "S999-99", "activity_id": "i126850020"}
@@ -379,7 +373,7 @@ class TestAnalyzeSessionAdherenceComprehensive:
         self, mock_intervals_client, sample_weekly_plan
     ):
         """Test adherence when planned TSS or duration is zero."""
-        from cyclisme_training_logs.mcp_server import handle_analyze_session_adherence
+        from magma_cycling.mcp_server import handle_analyze_session_adherence
 
         # Session with zero planned TSS
         zero_session = Session(
@@ -404,12 +398,10 @@ class TestAnalyzeSessionAdherenceComprehensive:
         }
 
         with patch(
-            "cyclisme_training_logs.config.create_intervals_client",
+            "magma_cycling.config.create_intervals_client",
             return_value=mock_intervals_client,
         ):
-            with patch(
-                "cyclisme_training_logs.planning.control_tower.planning_tower"
-            ) as mock_tower:
+            with patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower:
                 mock_tower.read_week.return_value = plan
 
                 args = {"session_id": "S081-07", "activity_id": "i126850020"}
@@ -433,12 +425,12 @@ class TestUpdateAthleteProfileComprehensive:
     @pytest.mark.asyncio
     async def test_update_single_field_ftp(self, mock_intervals_client):
         """Test updating only FTP."""
-        from cyclisme_training_logs.mcp_server import handle_update_athlete_profile
+        from magma_cycling.mcp_server import handle_update_athlete_profile
 
         mock_intervals_client.update_athlete.return_value = {"ftp": 223}
 
         with patch(
-            "cyclisme_training_logs.config.create_intervals_client",
+            "magma_cycling.config.create_intervals_client",
             return_value=mock_intervals_client,
         ):
             args = {"updates": {"ftp": 223}}
@@ -453,7 +445,7 @@ class TestUpdateAthleteProfileComprehensive:
     @pytest.mark.asyncio
     async def test_update_multiple_fields(self, mock_intervals_client):
         """Test updating multiple fields at once."""
-        from cyclisme_training_logs.mcp_server import handle_update_athlete_profile
+        from magma_cycling.mcp_server import handle_update_athlete_profile
 
         mock_intervals_client.update_athlete.return_value = {
             "ftp": 223,
@@ -463,7 +455,7 @@ class TestUpdateAthleteProfileComprehensive:
         }
 
         with patch(
-            "cyclisme_training_logs.config.create_intervals_client",
+            "magma_cycling.config.create_intervals_client",
             return_value=mock_intervals_client,
         ):
             args = {"updates": {"ftp": 223, "weight": 75.5, "max_hr": 185, "resting_hr": 45}}
@@ -479,12 +471,12 @@ class TestUpdateAthleteProfileComprehensive:
     @pytest.mark.asyncio
     async def test_update_weight_only(self, mock_intervals_client):
         """Test updating only weight."""
-        from cyclisme_training_logs.mcp_server import handle_update_athlete_profile
+        from magma_cycling.mcp_server import handle_update_athlete_profile
 
         mock_intervals_client.update_athlete.return_value = {"weight": 74.0}
 
         with patch(
-            "cyclisme_training_logs.config.create_intervals_client",
+            "magma_cycling.config.create_intervals_client",
             return_value=mock_intervals_client,
         ):
             args = {"updates": {"weight": 74.0}}
@@ -498,7 +490,7 @@ class TestUpdateAthleteProfileComprehensive:
     @pytest.mark.asyncio
     async def test_update_heart_rate_fields(self, mock_intervals_client):
         """Test updating heart rate fields."""
-        from cyclisme_training_logs.mcp_server import handle_update_athlete_profile
+        from magma_cycling.mcp_server import handle_update_athlete_profile
 
         mock_intervals_client.update_athlete.return_value = {
             "max_hr": 190,
@@ -507,7 +499,7 @@ class TestUpdateAthleteProfileComprehensive:
         }
 
         with patch(
-            "cyclisme_training_logs.config.create_intervals_client",
+            "magma_cycling.config.create_intervals_client",
             return_value=mock_intervals_client,
         ):
             args = {"updates": {"max_hr": 190, "resting_hr": 42, "fthr": 170}}
@@ -521,12 +513,12 @@ class TestUpdateAthleteProfileComprehensive:
     @pytest.mark.asyncio
     async def test_update_with_empty_updates(self, mock_intervals_client):
         """Test update with empty updates dict."""
-        from cyclisme_training_logs.mcp_server import handle_update_athlete_profile
+        from magma_cycling.mcp_server import handle_update_athlete_profile
 
         mock_intervals_client.update_athlete.return_value = {}
 
         with patch(
-            "cyclisme_training_logs.config.create_intervals_client",
+            "magma_cycling.config.create_intervals_client",
             return_value=mock_intervals_client,
         ):
             args = {"updates": {}}
@@ -540,7 +532,7 @@ class TestUpdateAthleteProfileComprehensive:
     @pytest.mark.asyncio
     async def test_schema_accepts_arbitrary_fields(self):
         """Test that schema accepts arbitrary field names (additionalProperties: true)."""
-        from cyclisme_training_logs.mcp_server import list_tools
+        from magma_cycling.mcp_server import list_tools
 
         tools = await list_tools()
         update_tool = next((t for t in tools if t.name == "update-athlete-profile"), None)
@@ -556,12 +548,12 @@ class TestUpdateAthleteProfileComprehensive:
     @pytest.mark.asyncio
     async def test_update_with_custom_field(self, mock_intervals_client):
         """Test updating with custom/less common field."""
-        from cyclisme_training_logs.mcp_server import handle_update_athlete_profile
+        from magma_cycling.mcp_server import handle_update_athlete_profile
 
         mock_intervals_client.update_athlete.return_value = {"lthr": 165}
 
         with patch(
-            "cyclisme_training_logs.config.create_intervals_client",
+            "magma_cycling.config.create_intervals_client",
             return_value=mock_intervals_client,
         ):
             args = {"updates": {"lthr": 165}}  # Less common field

@@ -13,7 +13,7 @@ from unittest.mock import Mock, patch
 import pytest
 import requests
 
-from cyclisme_training_logs.api.withings_client import WithingsClient
+from magma_cycling.api.withings_client import WithingsClient
 
 
 @pytest.fixture
