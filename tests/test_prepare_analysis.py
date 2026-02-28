@@ -18,7 +18,6 @@ from magma_cycling.prepare_analysis import (
     PromptGenerator,
     analyze_batch,
     display_activity_menu,
-    load_config,
 )
 
 
@@ -864,21 +863,6 @@ class TestGeneratePromptWithPlanned:
         )
         assert "Workout Planifié vs Réalisé" in prompt
         assert "Sweet Spot 3x10" in prompt
-
-
-class TestLoadConfig:
-    """Test load_config standalone function."""
-
-    def test_load_config_existing(self, tmp_path):
-        config_file = tmp_path / "config.json"
-        config_file.write_text('{"key": "value"}', encoding="utf-8")
-
-        result = load_config(str(config_file))
-        assert result == {"key": "value"}
-
-    def test_load_config_missing(self, tmp_path):
-        result = load_config(str(tmp_path / "nonexistent.json"))
-        assert result is None
 
 
 class TestDisplayActivityMenu:

@@ -51,7 +51,6 @@ Metadata:
     Version: v2
 """
 import argparse
-import json
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -59,6 +58,7 @@ from pathlib import Path
 import requests
 
 from magma_cycling.api.intervals_client import IntervalsClient
+from magma_cycling.config import create_intervals_client
 
 # Alias for backwards compatibility
 IntervalsAPI = IntervalsClient
@@ -273,17 +273,6 @@ _Pour une mise à jour complète des tableaux, voir le fichier original._.
         print(f"   CTL/ATL/TSB: {ctl:.0f}/{atl:.0f}/{tsb:+.0f}")
 
 
-def load_config(config_file):
-    """Load la configuration depuis un fichier JSON."""
-    config_path = Path(config_file).expanduser()
-
-    if not config_path.exists():
-        return None
-
-    with open(config_path, encoding="utf-8") as f:
-        return json.load(f)
-
-
 def main():
     """Command-line entry point for syncing with Intervals.icu."""
     parser = argparse.ArgumentParser(
@@ -293,11 +282,6 @@ def main():
     parser.add_argument("--athlete-id", help="ID de l'athlète Intervals.icu (ex: i123456)")
     parser.add_argument("--api-key", help="Clé API Intervals.icu")
     parser.add_argument(
-        "--config",
-        default="~/.intervals_config.json",
-        help="Fichier de configuration JSON (défaut: ~/.intervals_config.json)",
-    )
-    parser.add_argument(
         "--last-days", type=int, default=7, help="Nombre de jours à synchroniser (défaut: 7)"
     )
     parser.add_argument(
@@ -306,21 +290,11 @@ def main():
 
     args = parser.parse_args()
 
-    # Charger la config depuis le fichier ou les arguments
-    config = load_config(args.config)
-
-    athlete_id = args.athlete_id or (config and config.get("athlete_id"))
-    api_key = args.api_key or (config and config.get("api_key"))
-
-    if not athlete_id or not api_key:
-        print("❌ Erreur: athlete_id et api_key requis")
-        print("\nOptions:")
-        print("  1. Passer --athlete-id et --api-key en arguments")
-        print(f"  2. Créer {args.config} avec:")
-        print('     {"athlete_id": "i123456", "api_key": "YOUR_KEY"}')
-        print("\nObtenir l'API key:")
-        print("  https://intervals.icu → Settings → Developer Settings → API Key")
-        sys.exit(1)
+    # Create client: CLI args override centralized config
+    if args.athlete_id and args.api_key:
+        api = IntervalsClient(athlete_id=args.athlete_id, api_key=args.api_key)
+    else:
+        api = create_intervals_client()
 
     # Calculer la plage de dates
     newest = datetime.now()
@@ -330,13 +304,11 @@ def main():
     newest_str = newest.strftime("%Y-%m-%d")
 
     print("🔄 Synchronisation Intervals.icu")
-    print(f"   Athlète: {athlete_id}")
+    print(f"   Athlète: {api.athlete_id}")
     print(f"   Période: {oldest_str} → {newest_str}")
     print()
 
     try:
-        # Connexion à l'API
-        api = IntervalsAPI(athlete_id, api_key)
 
         # Récupérer les données
         print("📥 Récupération des données...")

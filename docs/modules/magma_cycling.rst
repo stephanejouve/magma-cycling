@@ -43,15 +43,12 @@ Submodules
    magma_cycling.organize_weekly_report
    magma_cycling.planned_sessions_checker
    magma_cycling.prepare_analysis
-   magma_cycling.prepare_weekly_report
    magma_cycling.rest_and_cancellations
    magma_cycling.shift_sessions
-   magma_cycling.stats
    magma_cycling.sync_intervals
    magma_cycling.update_session_status
    magma_cycling.upload_workouts
    magma_cycling.validate_naming_convention
-   magma_cycling.weekly_analysis
    magma_cycling.weekly_planner
    magma_cycling.workflow_coach
    magma_cycling.workflow_state

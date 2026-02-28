@@ -14,17 +14,15 @@ Usage:
 """
 
 import argparse
-import logging
 import sys
 from datetime import date, timedelta
 from pathlib import Path
 
+from magma_cycling.config import get_logger, set_log_level
 from magma_cycling.reports import ReportGenerator
 from magma_cycling.reports.generator import ReportGenerationError
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def parse_args():
@@ -154,7 +152,7 @@ def main():
 
     # Configure logging level
     if args.verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
+        set_log_level("DEBUG")
         logger.debug("Verbose logging enabled")
 
     logger.info("=" * 60)

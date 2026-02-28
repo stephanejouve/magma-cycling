@@ -52,15 +52,15 @@ Metadata:
 """
 
 import argparse
-import logging
 import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from magma_cycling.analyzers.weekly_aggregator import WeeklyAggregator
 from magma_cycling.analyzers.weekly_analyzer import WeeklyAnalyzer
+from magma_cycling.config import get_logger, setup_logging
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class WeeklyWorkflow:
@@ -249,9 +249,7 @@ Examples:
     args = parser.parse_args()
 
     # Setup logging
-    logging.basicConfig(
-        level=logging.DEBUG if args.verbose else logging.INFO, format="%(levelname)s: %(message)s"
-    )
+    setup_logging(level="DEBUG" if args.verbose else "INFO")
 
     # Déterminer semaine et date
     if args.week_id == "current":

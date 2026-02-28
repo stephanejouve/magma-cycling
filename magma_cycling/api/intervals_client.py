@@ -492,3 +492,31 @@ class IntervalsClient:
         except Exception as e:
             logger.error(f"Error updating event {event_id}: {e}")
             return None
+
+    def create_activity_note(self, activity_id: str, note: str) -> bool:
+        """Post a note to an activity on Intervals.icu.
+
+        Args:
+            activity_id: Activity ID (e.g. "i126184461")
+            note: Note content (markdown supported)
+
+        Returns:
+            True if note posted successfully, False otherwise.
+        """
+        url = f"{self.BASE_URL}/athlete/{self.athlete_id}/activities/{activity_id}/notes"
+
+        try:
+            response = self.session.post(url, json={"note": note}, timeout=10)
+            response.raise_for_status()
+            logger.info(f"Note posted to activity {activity_id}")
+            return True
+
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"HTTP error posting note to {activity_id}: {e}")
+            if e.response is not None:
+                logger.error(f"Response: {e.response.text}")
+            return False
+
+        except Exception as e:
+            logger.error(f"Error posting note to {activity_id}: {e}")
+            return False

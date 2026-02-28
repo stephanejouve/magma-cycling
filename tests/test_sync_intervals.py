@@ -13,12 +13,11 @@ Author: Claude Sonnet 4.5
 Created: 2026-02-19
 """
 
-import json
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from magma_cycling.sync_intervals import WorkoutLogger, load_config
+from magma_cycling.sync_intervals import WorkoutLogger
 
 
 class TestWorkoutLoggerInit:
@@ -315,60 +314,19 @@ class TestUpdateMetricsEvolution:
         assert "83.8kg" in content  # Default weight
 
 
-class TestLoadConfig:
-    """Test load_config function."""
-
-    def test_load_config_valid_file(self, tmp_path):
-        """Test loading valid config file."""
-        config_file = tmp_path / "config.json"
-        config_data = {
-            "athlete_id": "iXXXXXX",
-            "api_key": "test_key_12345",
-        }
-
-        with open(config_file, "w") as f:
-            json.dump(config_data, f)
-
-        result = load_config(str(config_file))
-
-        assert result == config_data
-        assert result["athlete_id"] == "iXXXXXX"
-
-    def test_load_config_nonexistent_file(self, tmp_path):
-        """Test loading nonexistent config file."""
-        config_file = tmp_path / "nonexistent.json"
-
-        result = load_config(str(config_file))
-
-        assert result is None
-
-    def test_load_config_expands_tilde(self):
-        """Test that config path expands tilde."""
-        # This test verifies expanduser is called
-        with patch("pathlib.Path.expanduser") as mock_expand:
-            mock_path = MagicMock()
-            mock_path.exists.return_value = False
-            mock_expand.return_value = mock_path
-
-            result = load_config("~/config.json")
-
-            mock_expand.assert_called_once()
-            assert result is None
-
-
 class TestMainFunction:
     """Test main CLI function."""
 
-    @patch("magma_cycling.sync_intervals.IntervalsAPI")
+    @patch("magma_cycling.sync_intervals.IntervalsClient")
     @patch("magma_cycling.sync_intervals.WorkoutLogger")
-    @patch("magma_cycling.sync_intervals.load_config")
     @patch("sys.argv", ["sync-intervals", "--athlete-id", "iXXXXXX", "--api-key", "test_key"])
-    def test_main_with_cli_args(self, mock_load_config, mock_logger_class, mock_api_class):
+    def test_main_with_cli_args(self, mock_logger_class, mock_client_class):
         """Test main function with CLI arguments."""
         from magma_cycling.sync_intervals import main
 
         # Mock API responses
         mock_api = MagicMock()
+        mock_api.athlete_id = "iXXXXXX"
         mock_api.get_athlete.return_value = {"ftp": 250, "weight": 75.0}
         mock_api.get_wellness.return_value = [{"id": "2026-03-02", "ctl": 65, "atl": 55, "tsb": 10}]
         mock_api.get_activities.return_value = [
@@ -384,20 +342,17 @@ class TestMainFunction:
                 "average_heartrate": 130,
             }
         ]
-        mock_api_class.return_value = mock_api
+        mock_client_class.return_value = mock_api
 
         # Mock logger
         mock_logger = MagicMock()
         mock_logger_class.return_value = mock_logger
 
-        # Mock config (not used with CLI args)
-        mock_load_config.return_value = None
-
         # Run main
         main()
 
-        # Verify API was initialized
-        mock_api_class.assert_called_once_with("iXXXXXX", "test_key")
+        # Verify API was initialized with CLI args
+        mock_client_class.assert_called_once_with(athlete_id="iXXXXXX", api_key="test_key")
 
         # Verify data was fetched
         mock_api.get_athlete.assert_called_once()
@@ -408,44 +363,27 @@ class TestMainFunction:
         mock_logger.update_workouts_history.assert_called_once()
         mock_logger.update_metrics_evolution.assert_called_once()
 
-    @patch("magma_cycling.sync_intervals.load_config")
+    @patch("magma_cycling.sync_intervals.create_intervals_client")
+    @patch("magma_cycling.sync_intervals.WorkoutLogger")
     @patch("sys.argv", ["sync-intervals"])
-    def test_main_missing_credentials(self, mock_load_config):
-        """Test main exits when credentials missing."""
+    def test_main_with_centralized_config(self, mock_logger_class, mock_create_client):
+        """Test main function uses create_intervals_client() when no CLI args."""
         from magma_cycling.sync_intervals import main
 
-        # Mock no config
-        mock_load_config.return_value = None
-
-        # Should exit with error
-        with pytest.raises(SystemExit) as exc_info:
-            main()
-
-        assert exc_info.value.code == 1
-
-    @patch("magma_cycling.sync_intervals.IntervalsAPI")
-    @patch("magma_cycling.sync_intervals.load_config")
-    @patch("sys.argv", ["sync-intervals", "--config", "test_config.json"])
-    def test_main_with_config_file(self, mock_load_config, mock_api_class):
-        """Test main function with config file."""
-        from magma_cycling.sync_intervals import main
-
-        # Mock config file
-        mock_load_config.return_value = {
-            "athlete_id": "iXXXXXX",
-            "api_key": "test_key",
-        }
-
-        # Mock API
+        # Mock API via factory
         mock_api = MagicMock()
+        mock_api.athlete_id = "iXXXXXX"
         mock_api.get_athlete.return_value = {"ftp": 250, "weight": 75.0}
         mock_api.get_wellness.return_value = []
         mock_api.get_activities.return_value = []
-        mock_api_class.return_value = mock_api
+        mock_create_client.return_value = mock_api
+
+        # Mock logger
+        mock_logger = MagicMock()
+        mock_logger_class.return_value = mock_logger
 
         # Run main
-        with patch("magma_cycling.sync_intervals.WorkoutLogger"):
-            main()
+        main()
 
-        # Verify API was initialized with config credentials
-        mock_api_class.assert_called_once_with("iXXXXXX", "test_key")
+        # Verify factory was used
+        mock_create_client.assert_called_once()

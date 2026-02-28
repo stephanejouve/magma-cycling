@@ -62,11 +62,18 @@ Metadata:
 """
 
 import json
+import re
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
+# --- Session ID patterns (canonical source) ---
+SESSION_ID_PATTERN = r"S\d{3}-\d{2}[a-z]?"
+SESSION_ID_REGEX = re.compile(r"^" + SESSION_ID_PATTERN + r"$")
+WORKOUT_NAME_PATTERN = r"(" + SESSION_ID_PATTERN + r")-(\w+)-([^-]+)-(V\d{3})"
+WORKOUT_NAME_REGEX = re.compile(WORKOUT_NAME_PATTERN)
 
 
 class Session(BaseModel):

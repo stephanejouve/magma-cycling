@@ -455,16 +455,15 @@ class TestMainFunction:
 
     @patch("magma_cycling.planned_sessions_checker.PlannedSessionsChecker")
     @patch("magma_cycling.planned_sessions_checker.get_data_config")
-    @patch("builtins.open", create=True)
-    def test_main_with_valid_config(self, mock_open, mock_get_config, mock_checker_class):
+    @patch("magma_cycling.config.create_intervals_client")
+    def test_main_with_valid_config(self, mock_create_client, mock_get_config, mock_checker_class):
         """Test main function with valid configuration."""
-        from io import StringIO
-
         from magma_cycling.planned_sessions_checker import main
 
-        # Mock config file content
-        mock_config_data = '{"athlete_id": "iXXXXXX", "api_key": "test_key"}'
-        mock_open.return_value.__enter__.return_value = StringIO(mock_config_data)
+        # Mock client from factory
+        mock_client = MagicMock()
+        mock_client.athlete_id = "iXXXXXX"
+        mock_create_client.return_value = mock_client
 
         # Mock checker instance
         mock_checker = MagicMock()

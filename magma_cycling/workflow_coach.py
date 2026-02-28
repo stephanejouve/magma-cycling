@@ -65,8 +65,6 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
-import requests
-
 from magma_cycling.ai_providers import AIProviderFactory
 from magma_cycling.config import get_ai_config, get_data_config
 from magma_cycling.core.timeline_injector import TimelineInjector
@@ -910,31 +908,9 @@ class WorkflowCoach:
         Returns:
             List of unanalyzed activities or None if error/not found.
         """
-        config_path = Path.home() / ".intervals_config.json"
-
-        if not config_path.exists():
-            return None
-
         try:
-            with open(config_path, encoding="utf-8") as f:
-                config = json.load(f)
-
-            athlete_id = config.get("athlete_id")
-            api_key = config.get("api_key")
-
-            if not athlete_id or not api_key:
-                return None
-
-            # Connect to API
-            session = requests.Session()
-            session.auth = ("API_KEY", api_key)
-            session.headers.update({"Content-Type": "application/json"})
-
-            # Fetch recent activities
-            url = f"https://intervals.icu/api/v1/athlete/{athlete_id}/activities"
-            response = session.get(url, params={"oldest": oldest_date, "newest": newest_date})
-            response.raise_for_status()
-            activities = response.json()
+            api = self._get_api()
+            activities = api.get_activities(oldest=oldest_date, newest=newest_date)
 
             # Filter unanalyzed activities
             activities.sort(key=lambda x: x["start_date_local"], reverse=True)
@@ -946,14 +922,10 @@ class WorkflowCoach:
             print(f"⚠️  Erreur API : {e}")
             return None
 
-    def _detect_skipped_sessions(
-        self, athlete_id: str, api_key: str, oldest_date: str, newest_date: str
-    ) -> list[dict] | None:
+    def _detect_skipped_sessions(self, oldest_date: str, newest_date: str) -> list[dict] | None:
         """Detect planned sessions that were skipped (not executed).
 
         Args:
-            athlete_id: Intervals.icu athlete ID
-            api_key: Intervals.icu API key
             oldest_date: Start date for search (YYYY-MM-DD)
             newest_date: End date for search (YYYY-MM-DD)
 
@@ -961,7 +933,7 @@ class WorkflowCoach:
             List of skipped sessions or None if error/not found.
         """
         try:
-            checker = PlannedSessionsChecker(athlete_id=athlete_id, api_key=api_key)
+            checker = PlannedSessionsChecker(client=self._get_api())
 
             skipped_sessions = checker.detect_skipped_sessions(
                 start_date=oldest_date,
@@ -1256,24 +1228,10 @@ class WorkflowCoach:
         state = WorkflowState(project_root=self.project_root)
 
         # Check API config
-        config_path = Path.home() / ".intervals_config.json"
-        if not config_path.exists():
-            print("⚠️  Config API non trouvée → Skip détection")
-            self.wait_user()
-            return "exit", {"unanalyzed": [], "skipped": [], "rest_days": [], "cancelled": []}
-
-        # Load API credentials
         try:
-            with open(config_path, encoding="utf-8") as f:
-                config = json.load(f)
-            athlete_id = config.get("athlete_id")
-            api_key = config.get("api_key")
-            if not athlete_id or not api_key:
-                print("⚠️  Credentials invalides → Skip détection")
-                self.wait_user()
-                return "exit", {"unanalyzed": [], "skipped": [], "rest_days": [], "cancelled": []}
-        except Exception as e:
-            print(f"⚠️  Erreur config : {e}")
+            self._get_api()
+        except (ValueError, Exception) as e:
+            print(f"⚠️  Config API non trouvée : {e} → Skip détection")
             self.wait_user()
             return "exit", {"unanalyzed": [], "skipped": [], "rest_days": [], "cancelled": []}
 
@@ -1291,7 +1249,7 @@ class WorkflowCoach:
         )
 
         # 2. Detect skipped sessions
-        skipped = self._detect_skipped_sessions(athlete_id, api_key, oldest_date, newest_date)
+        skipped = self._detect_skipped_sessions(oldest_date, newest_date)
 
         # 3. Filter out already documented skipped sessions
         self.skipped_sessions = self._filter_documented_sessions(skipped or [], state, "skipped")
@@ -2677,35 +2635,10 @@ Retourne chaque session enrichie dans LE MÊME FORMAT MARKDOWN mais avec :
 *Date: {datetime.now().strftime('%Y-%m-%d %H:%M')}*
 """
 
-        # Get Intervals.icu credentials from config
-        intervals_config = get_data_config()
-        athlete_id = intervals_config.get("athlete_id")
-        api_key = intervals_config.get("api_key")
-
-        if not athlete_id or not api_key:
-            logger.error("Missing Intervals.icu credentials")
-            return False
-
-        # POST note via API
-        url = (
-            f"https://intervals.icu/api/v1/athlete/{athlete_id}/activities/{self.activity_id}/notes"
-        )
-        auth = ("API_KEY", api_key)
-        headers = {"Content-Type": "application/json"}
-        payload = {"note": note_content}
-
+        # POST note via API client
         try:
-            response = requests.post(url, json=payload, auth=auth, headers=headers, timeout=10)
-
-            if response.status_code in [200, 201]:
-                logger.info(f"Analysis posted to Intervals.icu activity {self.activity_id}")
-                return True
-            else:
-                logger.error(
-                    f"Failed to post note to Intervals.icu: {response.status_code} - {response.text}"
-                )
-                return False
-
+            api = self._get_api()
+            return api.create_activity_note(self.activity_id, note_content)
         except Exception as e:
             logger.error(f"Exception posting note to Intervals.icu: {e}")
             return False

@@ -570,22 +570,12 @@ class EndOfWeekWorkflow:
 
         try:
             # Import dependencies
-            import os
-
             from magma_cycling.ai_providers.factory import AIProviderFactory
+            from magma_cycling.config import get_ai_config
             from magma_cycling.weekly_planner import WeeklyPlanner
 
-            # Build provider config from environment
-            config = {
-                "claude_api_key": os.getenv("CLAUDE_API_KEY"),
-                "claude_model": os.getenv("CLAUDE_MODEL", "claude-sonnet-4-20250514"),
-                "mistral_api_key": os.getenv("MISTRAL_API_KEY"),
-                "mistral_model": os.getenv("MISTRAL_MODEL", "mistral-large-latest"),
-                "openai_api_key": os.getenv("OPENAI_API_KEY"),
-                "openai_model": os.getenv("OPENAI_MODEL", "gpt-4-turbo"),
-                "ollama_host": os.getenv("OLLAMA_HOST", "http://localhost:11434"),
-                "ollama_model": os.getenv("OLLAMA_MODEL", "mistral:7b"),
-            }
+            # Get provider config from centralized AI configuration
+            config = get_ai_config().get_provider_config(provider_name)
 
             # Validate provider config
             is_valid, message = AIProviderFactory.validate_provider_config(provider_name, config)

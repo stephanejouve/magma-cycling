@@ -996,6 +996,7 @@ async def handle_apply_workout_intervals(args: dict) -> list[TextContent]:
     import re
 
     from magma_cycling.config import create_intervals_client
+    from magma_cycling.planning.models import SESSION_ID_PATTERN
     from magma_cycling.workout_parser import (
         compute_intervals,
         load_workout_descriptions,
@@ -1053,7 +1054,7 @@ async def handle_apply_workout_intervals(args: dict) -> list[TextContent]:
             with suppress_stdout_stderr():
                 activity = client.get_activity(activity_id)
             activity_name = activity.get("name", "")
-            m = re.search(r"(S\d{3}-\d{2}[a-z]?)", activity_name)
+            m = re.search(SESSION_ID_PATTERN, activity_name)
             if not m:
                 return [
                     TextContent(
@@ -1067,7 +1068,7 @@ async def handle_apply_workout_intervals(args: dict) -> list[TextContent]:
                         ),
                     )
                 ]
-            session_id = m.group(1)
+            session_id = m.group()
 
         # Load workout description
         week_id = session_id.split("-")[0]
@@ -1301,7 +1302,7 @@ async def handle_create_remote_note(args: dict) -> list[TextContent]:
 
     from magma_cycling.config import create_intervals_client
     from magma_cycling.planning.control_tower import planning_tower
-    from magma_cycling.planning.models import Session
+    from magma_cycling.planning.models import SESSION_ID_PATTERN, Session
 
     note_date = args["date"]
     name = args["name"]
@@ -1338,7 +1339,7 @@ async def handle_create_remote_note(args: dict) -> list[TextContent]:
             created_event = client.create_event(event_data)
 
             if created_event and "id" in created_event:
-                session_id_match = re.search(r"S\d{3}-\d{2}[a-z]?", name)
+                session_id_match = re.search(SESSION_ID_PATTERN, name)
                 if session_id_match:
                     session_id = session_id_match.group()
                     week_id = session_id.split("-")[0]
@@ -1495,7 +1496,7 @@ async def handle_backfill_activities(args: dict) -> list[TextContent]:
 
         from magma_cycling.config import create_intervals_client, get_data_config
         from magma_cycling.daily_sync import DailySync
-        from magma_cycling.planning.models import WeeklyPlan
+        from magma_cycling.planning.models import SESSION_ID_PATTERN, WeeklyPlan
 
         # Determine date range
         if "week_id" in args:
@@ -1571,13 +1572,13 @@ async def handle_backfill_activities(args: dict) -> list[TextContent]:
                 continue
 
             name = activity.get("name", "")
-            match = re.search(r"(S\d{3}-\d{2}[a-z]?)", name)
+            match = re.search(SESSION_ID_PATTERN, name)
 
             if not match:
                 unmatched.append(activity_id)
                 continue
 
-            session_id = match.group(1)
+            session_id = match.group()
             week_id = session_id.split("-")[0]
 
             try:

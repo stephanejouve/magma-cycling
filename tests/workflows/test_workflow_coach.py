@@ -18,7 +18,6 @@ from pathlib import Path
 from unittest.mock import Mock, mock_open, patch
 
 import pytest
-import requests
 
 from magma_cycling.workflow_coach import WorkflowCoach
 
@@ -416,33 +415,24 @@ class TestPlanningModifications:
 class TestGapDetectionLogic:
     """Test gap detection and filtering methods."""
 
-    @patch("pathlib.Path.exists", return_value=False)
-    def test_detect_unanalyzed_activities_no_config(self, mock_exists):
-        """Test _detect_unanalyzed_activities returns None when config missing."""
+    def test_detect_unanalyzed_activities_no_api(self):
+        """Test _detect_unanalyzed_activities returns None when API not configured."""
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        coach._get_api = Mock(side_effect=ValueError("No credentials"))
         state = Mock()
 
         result = coach._detect_unanalyzed_activities(state, "2025-12-01", "2025-12-31")
 
         assert result is None
 
-    @patch("pathlib.Path.exists", return_value=True)
-    @patch(
-        "builtins.open",
-        new_callable=mock_open,
-        read_data='{"athlete_id": "i123", "api_key": "key123"}',
-    )
-    @patch("requests.Session")
-    def test_detect_unanalyzed_activities_success(self, mock_session, mock_file, mock_exists):
+    def test_detect_unanalyzed_activities_success(self):
         """Test _detect_unanalyzed_activities fetches and filters activities."""
-        # Mock API response
-        mock_response = Mock()
-        mock_response.json.return_value = [
+        # Mock API client
+        mock_api = Mock()
+        mock_api.get_activities.return_value = [
             {"id": "i12345", "start_date_local": "2025-12-20T10:00:00"},
             {"id": "i67890", "start_date_local": "2025-12-19T10:00:00"},
         ]
-        mock_session_instance = mock_session.return_value
-        mock_session_instance.get.return_value = mock_response
 
         # Mock state filtering
         state = Mock()
@@ -451,27 +441,21 @@ class TestGapDetectionLogic:
         ]
 
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        coach._get_api = Mock(return_value=mock_api)
         result = coach._detect_unanalyzed_activities(state, "2025-12-01", "2025-12-31")
 
         assert result is not None
         assert len(result) == 1
         assert result[0]["id"] == "i12345"
 
-    @patch("pathlib.Path.exists", return_value=True)
-    @patch(
-        "builtins.open",
-        new_callable=mock_open,
-        read_data='{"athlete_id": "i123", "api_key": "key123"}',
-    )
-    @patch("requests.Session")
-    def test_detect_unanalyzed_activities_api_error(self, mock_session, mock_file, mock_exists):
+    def test_detect_unanalyzed_activities_api_error(self):
         """Test _detect_unanalyzed_activities handles API errors."""
-        # Mock API error
-        mock_session_instance = mock_session.return_value
-        mock_session_instance.get.side_effect = requests.exceptions.RequestException("API Error")
+        mock_api = Mock()
+        mock_api.get_activities.side_effect = Exception("API Error")
 
         state = Mock()
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        coach._get_api = Mock(return_value=mock_api)
 
         result = coach._detect_unanalyzed_activities(state, "2025-12-01", "2025-12-31")
 
@@ -1253,36 +1237,25 @@ class TestIntervalsAPI:
 
         assert result is False
 
-    @patch("magma_cycling.workflow_coach.get_data_config")
-    @patch("requests.post")
-    def test_post_analysis_to_intervals_success(self, mock_post, mock_config):
+    def test_post_analysis_to_intervals_success(self):
         """Test _post_analysis_to_intervals posts successfully."""
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
         coach.activity_id = "act123"
         coach.analysis_result = "Great workout! Power was consistent throughout the intervals. Good recovery between sets."
 
-        mock_config_obj = Mock()
-        mock_config_obj.get.side_effect = lambda key: {
-            "athlete_id": "athlete123",
-            "api_key": "key456",
-        }.get(key)
-        mock_config.return_value = mock_config_obj
-
-        mock_response = Mock()
-        mock_response.status_code = 200
-        mock_post.return_value = mock_response
+        mock_api = Mock()
+        mock_api.create_activity_note.return_value = True
+        coach._get_api = Mock(return_value=mock_api)
 
         result = coach._post_analysis_to_intervals()
 
         assert result is True
-        assert mock_post.called
-        call_args = mock_post.call_args
-        assert "act123" in call_args[0][0]  # URL contains activity_id
-        assert "Great workout" in call_args[1]["json"]["note"]
+        mock_api.create_activity_note.assert_called_once()
+        call_args = mock_api.create_activity_note.call_args
+        assert call_args[0][0] == "act123"
+        assert "Great workout" in call_args[0][1]
 
-    @patch("magma_cycling.workflow_coach.get_data_config")
-    @patch("requests.post")
-    def test_post_analysis_to_intervals_no_activity_id(self, mock_post, mock_config):
+    def test_post_analysis_to_intervals_no_activity_id(self):
         """Test _post_analysis_to_intervals without activity_id."""
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
         coach.activity_id = None
@@ -1290,27 +1263,16 @@ class TestIntervalsAPI:
         result = coach._post_analysis_to_intervals()
 
         assert result is False
-        assert not mock_post.called
 
-    @patch("magma_cycling.workflow_coach.get_data_config")
-    @patch("requests.post")
-    def test_post_analysis_to_intervals_error(self, mock_post, mock_config):
+    def test_post_analysis_to_intervals_error(self):
         """Test _post_analysis_to_intervals handles API errors."""
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
         coach.activity_id = "act123"
         coach.analysis_result = "Analysis text here with enough content to pass the length check requirement of 50 characters."
 
-        mock_config_obj = Mock()
-        mock_config_obj.get.side_effect = lambda key: {
-            "athlete_id": "athlete123",
-            "api_key": "key456",
-        }.get(key)
-        mock_config.return_value = mock_config_obj
-
-        mock_response = Mock()
-        mock_response.status_code = 500
-        mock_response.text = "Server error"
-        mock_post.return_value = mock_response
+        mock_api = Mock()
+        mock_api.create_activity_note.return_value = False
+        coach._get_api = Mock(return_value=mock_api)
 
         result = coach._post_analysis_to_intervals()
 
@@ -1946,12 +1908,13 @@ class TestDetectSkippedSessionsException:
     def test_exception_returns_none(self):
         """Returns None when PlannedSessionsChecker raises an exception."""
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+        coach._get_api = Mock(return_value=Mock())
         with patch(
             "magma_cycling.workflow_coach.PlannedSessionsChecker",
             side_effect=Exception("API error"),
         ):
             result = coach._detect_skipped_sessions(
-                athlete_id="AT1", api_key="key", oldest_date="2026-02-17", newest_date="2026-02-24"
+                oldest_date="2026-02-17", newest_date="2026-02-24"
             )
         assert result is None
 

@@ -54,31 +54,34 @@ Metadata:
     Priority: P2
     Version: v2
 """
-import logging
 from datetime import datetime, timedelta
 
 from magma_cycling.api.intervals_client import IntervalsClient
-from magma_cycling.config import get_data_config
+from magma_cycling.config import get_data_config, get_logger
 
-# Configuration du logging
-logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class PlannedSessionsChecker:
     """Détecteur de séances planifiées mais non exécutées."""
 
-    def __init__(self, athlete_id: str, api_key: str):
+    def __init__(
+        self, athlete_id: str = "", api_key: str = "", *, client: IntervalsClient | None = None
+    ):
         """
         Initialize le checker avec credentials API.
 
         Args:
             athlete_id: ID athlète Intervals.icu
             api_key: Clé API Intervals.icu.
+            client: Pre-configured IntervalsClient (overrides athlete_id/api_key).
         """
-        self.api = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
-
-        self.athlete_id = athlete_id
+        if client is not None:
+            self.api = client
+            self.athlete_id = client.athlete_id
+        else:
+            self.api = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
+            self.athlete_id = athlete_id
 
     def get_planned_workouts(
         self, start_date: str, end_date: str, category: str = "WORKOUT"
@@ -331,32 +334,14 @@ Séance planifiée non exécutée. Raison à documenter.
 
 def main():
     """Mode interactif : détection des séances sautées + réconciliation avec planning JSON local."""
-    import json
-    from pathlib import Path
-
+    from magma_cycling.config import create_intervals_client
     from magma_cycling.rest_and_cancellations import (
         load_week_planning,
         reconcile_planned_vs_actual,
     )
 
-    # Charger credentials
-    config_path = Path.home() / ".intervals_config.json"
-    if not config_path.exists():
-        print("❌ Config API non trouvée")
-        return
-
-    with open(config_path, encoding="utf-8") as f:
-        config = json.load(f)
-
-    athlete_id = config.get("athlete_id")
-    api_key = config.get("api_key")
-
-    if not athlete_id or not api_key:
-        print("❌ Credentials invalides")
-        return
-
-    # Initialiser checker
-    checker = PlannedSessionsChecker(athlete_id, api_key)
+    # Initialiser checker via centralized config
+    checker = PlannedSessionsChecker(client=create_intervals_client())
 
     # Période de détection (dernières 3 semaines)
     end_date = datetime.now().strftime("%Y-%m-%d")
