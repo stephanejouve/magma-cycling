@@ -19,6 +19,7 @@ __all__ = [
     "handle_list_remote_events",
     "handle_get_activity_details",
     "handle_get_activity_intervals",
+    "handle_get_activity_streams",
     "handle_compare_intervals",
     "handle_apply_workout_intervals",
     "handle_update_remote_session",
@@ -737,6 +738,105 @@ async def handle_get_activity_intervals(args: dict) -> list[TextContent]:
                 text=json.dumps(
                     {
                         "error": f"Failed to get activity intervals: {str(e)}",
+                        "activity_id": activity_id,
+                    },
+                    indent=2,
+                ),
+            )
+        ]
+
+
+async def handle_get_activity_streams(args: dict) -> list[TextContent]:
+    """Get raw time-series stream data for an activity with optional slicing and type filtering."""
+    from magma_cycling.config import create_intervals_client
+
+    activity_id = args["activity_id"]
+    requested_types = args.get("types")
+    start_index = args.get("start_index", 0)
+    end_index = args.get("end_index")
+
+    try:
+        with suppress_stdout_stderr():
+            client = create_intervals_client()
+            streams = client.get_activity_streams(activity_id)
+
+        if not streams:
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "error": f"No stream data found for activity {activity_id}",
+                            "activity_id": activity_id,
+                        },
+                        indent=2,
+                    ),
+                )
+            ]
+
+        available_stream_types = [s["type"] for s in streams]
+
+        # Filter by requested types
+        missing_types = []
+        if requested_types:
+            available_set = set(available_stream_types)
+            missing_types = [t for t in requested_types if t not in available_set]
+            streams = [s for s in streams if s["type"] in set(requested_types)]
+
+        # Determine total data points from first stream
+        total_data_points = len(streams[0]["data"]) if streams else 0
+
+        # Clamp indices
+        start_index = max(0, start_index)
+        if end_index is None:
+            end_index = total_data_points
+        end_index = max(start_index, min(end_index, total_data_points))
+
+        # Slice and compute stats
+        result_streams = []
+        for stream in streams:
+            data = stream["data"][start_index:end_index]
+            stats = {}
+            if data:
+                stats["min"] = min(data)
+                stats["max"] = max(data)
+                stats["avg"] = round(sum(data) / len(data), 2)
+                non_zero = [v for v in data if v != 0]
+                stats["non_zero_count"] = len(non_zero)
+                stats["non_zero_avg"] = round(sum(non_zero) / len(non_zero), 2) if non_zero else 0
+            result_streams.append(
+                {
+                    "type": stream["type"],
+                    "data_points": len(data),
+                    "stats": stats,
+                    "data": data,
+                }
+            )
+
+        result = {
+            "activity_id": activity_id,
+            "total_data_points": total_data_points,
+            "slice": {
+                "start_index": start_index,
+                "end_index": end_index,
+                "length": end_index - start_index,
+            },
+            "available_stream_types": available_stream_types,
+            "streams": result_streams,
+        }
+
+        if missing_types:
+            result["missing_types"] = missing_types
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+
+    except Exception as e:
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps(
+                    {
+                        "error": f"Failed to get activity streams: {str(e)}",
                         "activity_id": activity_id,
                     },
                     indent=2,

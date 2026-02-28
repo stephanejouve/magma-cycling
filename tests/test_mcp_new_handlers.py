@@ -1516,3 +1516,98 @@ class TestHandleRenameSession:
         data = json.loads(result[0].text)
         assert "error" in data
         assert "not found" in data["error"]
+
+
+# =======================
+# TestHandleWithingsEnrichSession
+# =======================
+
+
+class TestHandleWithingsEnrichSession:
+    """Tests for withings-enrich-session handler (session.date → session.session_date fix)."""
+
+    @pytest.fixture
+    def mock_tower(self):
+        from magma_cycling.planning.models import Session, WeeklyPlan
+
+        session = Session(
+            session_id="S082-03",
+            session_date=date(2026, 2, 25),
+            name="SweetSpotBlocs",
+            session_type="INT",
+            tss_planned=80,
+            duration_min=75,
+            description="SweetSpot intervals",
+            status="planned",
+        )
+        plan = Mock(spec=WeeklyPlan)
+        plan.planned_sessions = [session]
+
+        tower = MagicMock()
+        tower.modify_week.return_value.__enter__ = Mock(return_value=plan)
+        tower.modify_week.return_value.__exit__ = Mock(return_value=False)
+        return tower
+
+    @pytest.mark.asyncio
+    async def test_enrich_session_success(self, mock_tower):
+        """Enrich session accesses session.session_date without AttributeError."""
+        from magma_cycling.mcp_server import handle_withings_enrich_session
+
+        mock_withings = Mock()
+        mock_withings.get_sleep.return_value = [
+            {
+                "total_sleep_hours": 7.5,
+                "sleep_score": 82,
+                "deep_sleep_minutes": 90,
+            }
+        ]
+        mock_withings.get_latest_weight.return_value = {"weight_kg": 84.2}
+        mock_withings.evaluate_training_readiness.return_value = {
+            "recommended_intensity": "high",
+            "ready_for_intense": True,
+            "veto_reasons": [],
+            "recommendations": [],
+        }
+
+        with (
+            patch(TOWER_PATCH, mock_tower),
+            patch(
+                "magma_cycling.config.create_withings_client",
+                return_value=mock_withings,
+            ),
+        ):
+            result = await handle_withings_enrich_session(
+                {
+                    "week_id": "S082",
+                    "session_id": "S082-03",
+                    "auto_readiness_check": True,
+                }
+            )
+
+        data = json.loads(result[0].text)
+        assert data["status"] == "success"
+        assert data["session_date"] == "2026-02-25"
+        assert data["health_metrics_added"]["sleep_hours"] == 7.5
+        assert data["health_metrics_added"]["weight_kg"] == 84.2
+
+    @pytest.mark.asyncio
+    async def test_enrich_session_not_found(self, mock_tower):
+        """Returns error when session not found."""
+        from magma_cycling.mcp_server import handle_withings_enrich_session
+
+        mock_withings = Mock()
+
+        with (
+            patch(TOWER_PATCH, mock_tower),
+            patch(
+                "magma_cycling.config.create_withings_client",
+                return_value=mock_withings,
+            ),
+        ):
+            result = await handle_withings_enrich_session(
+                {"week_id": "S082", "session_id": "S082-99"}
+            )
+
+        data = json.loads(result[0].text)
+        assert data["status"] == "error"
+        assert "not found" in data["error"]

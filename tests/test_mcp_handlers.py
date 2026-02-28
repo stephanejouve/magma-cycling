@@ -1117,5 +1117,211 @@ async def test_get_activity_details_decoupling_with_barely_long_enough_activity(
         assert result_json["cardiovascular_decoupling"] is not None
 
 
+# ---------------------------------------------------------------------------
+# Tests: get-activity-streams
+# ---------------------------------------------------------------------------
+
+MOCK_STREAMS = [
+    {"type": "watts", "data": [100, 200, 150, 0, 250]},
+    {"type": "heartrate", "data": [120, 130, 140, 135, 145]},
+    {"type": "cadence", "data": [80, 90, 85, 0, 95]},
+]
+
+
+@pytest.mark.asyncio
+async def test_get_activity_streams_all_no_filter(mock_intervals_client):
+    """All streams returned when no type filter or slicing is applied."""
+    mock_intervals_client.get_activity_streams = Mock(return_value=MOCK_STREAMS)
+
+    with patch(
+        "magma_cycling.config.create_intervals_client",
+        return_value=mock_intervals_client,
+    ):
+        from magma_cycling.mcp_server import handle_get_activity_streams
+
+        result = await handle_get_activity_streams({"activity_id": "i123456"})
+        r = json.loads(result[0].text)
+
+        assert r["activity_id"] == "i123456"
+        assert r["total_data_points"] == 5
+        assert r["slice"]["start_index"] == 0
+        assert r["slice"]["end_index"] == 5
+        assert r["slice"]["length"] == 5
+        assert r["available_stream_types"] == ["watts", "heartrate", "cadence"]
+        assert len(r["streams"]) == 3
+        assert r["streams"][0]["type"] == "watts"
+        assert r["streams"][0]["data"] == [100, 200, 150, 0, 250]
+
+
+@pytest.mark.asyncio
+async def test_get_activity_streams_type_filter(mock_intervals_client):
+    """Filtering by types returns only requested streams; available_stream_types lists all."""
+    mock_intervals_client.get_activity_streams = Mock(return_value=MOCK_STREAMS)
+
+    with patch(
+        "magma_cycling.config.create_intervals_client",
+        return_value=mock_intervals_client,
+    ):
+        from magma_cycling.mcp_server import handle_get_activity_streams
+
+        result = await handle_get_activity_streams(
+            {"activity_id": "i123456", "types": ["watts", "heartrate"]}
+        )
+        r = json.loads(result[0].text)
+
+        assert len(r["streams"]) == 2
+        assert {s["type"] for s in r["streams"]} == {"watts", "heartrate"}
+        assert r["available_stream_types"] == ["watts", "heartrate", "cadence"]
+
+
+@pytest.mark.asyncio
+async def test_get_activity_streams_slicing(mock_intervals_client):
+    """Slicing with start_index/end_index returns correct sub-arrays."""
+    mock_intervals_client.get_activity_streams = Mock(return_value=MOCK_STREAMS)
+
+    with patch(
+        "magma_cycling.config.create_intervals_client",
+        return_value=mock_intervals_client,
+    ):
+        from magma_cycling.mcp_server import handle_get_activity_streams
+
+        result = await handle_get_activity_streams(
+            {"activity_id": "i123456", "start_index": 1, "end_index": 3}
+        )
+        r = json.loads(result[0].text)
+
+        assert r["slice"]["start_index"] == 1
+        assert r["slice"]["end_index"] == 3
+        assert r["slice"]["length"] == 2
+        assert r["streams"][0]["data"] == [200, 150]
+        assert r["streams"][0]["data_points"] == 2
+
+
+@pytest.mark.asyncio
+async def test_get_activity_streams_clamps_invalid_indices(mock_intervals_client):
+    """Negative start is clamped to 0; end beyond data length is clamped."""
+    mock_intervals_client.get_activity_streams = Mock(return_value=MOCK_STREAMS)
+
+    with patch(
+        "magma_cycling.config.create_intervals_client",
+        return_value=mock_intervals_client,
+    ):
+        from magma_cycling.mcp_server import handle_get_activity_streams
+
+        result = await handle_get_activity_streams(
+            {"activity_id": "i123456", "start_index": -5, "end_index": 999}
+        )
+        r = json.loads(result[0].text)
+
+        assert r["slice"]["start_index"] == 0
+        assert r["slice"]["end_index"] == 5
+        assert r["slice"]["length"] == 5
+        assert r["streams"][0]["data_points"] == 5
+
+
+@pytest.mark.asyncio
+async def test_get_activity_streams_start_greater_than_end(mock_intervals_client):
+    """When start_index > end_index, end is clamped to start → empty slice."""
+    mock_intervals_client.get_activity_streams = Mock(return_value=MOCK_STREAMS)
+
+    with patch(
+        "magma_cycling.config.create_intervals_client",
+        return_value=mock_intervals_client,
+    ):
+        from magma_cycling.mcp_server import handle_get_activity_streams
+
+        result = await handle_get_activity_streams(
+            {"activity_id": "i123456", "start_index": 4, "end_index": 2}
+        )
+        r = json.loads(result[0].text)
+
+        assert r["slice"]["length"] == 0
+        assert r["streams"][0]["data"] == []
+        assert r["streams"][0]["data_points"] == 0
+        assert r["streams"][0]["stats"] == {}
+
+
+@pytest.mark.asyncio
+async def test_get_activity_streams_stats_computation(mock_intervals_client):
+    """Stats (min, max, avg, non_zero_count, non_zero_avg) are correct."""
+    mock_intervals_client.get_activity_streams = Mock(
+        return_value=[{"type": "watts", "data": [100, 200, 0, 300]}]
+    )
+
+    with patch(
+        "magma_cycling.config.create_intervals_client",
+        return_value=mock_intervals_client,
+    ):
+        from magma_cycling.mcp_server import handle_get_activity_streams
+
+        result = await handle_get_activity_streams({"activity_id": "i123456"})
+        r = json.loads(result[0].text)
+
+        stats = r["streams"][0]["stats"]
+        assert stats["min"] == 0
+        assert stats["max"] == 300
+        assert stats["avg"] == 150.0  # (100+200+0+300)/4
+        assert stats["non_zero_count"] == 3
+        assert stats["non_zero_avg"] == 200.0  # (100+200+300)/3
+
+
+@pytest.mark.asyncio
+async def test_get_activity_streams_missing_type_reported(mock_intervals_client):
+    """Requesting a nonexistent type reports it in missing_types."""
+    mock_intervals_client.get_activity_streams = Mock(return_value=MOCK_STREAMS)
+
+    with patch(
+        "magma_cycling.config.create_intervals_client",
+        return_value=mock_intervals_client,
+    ):
+        from magma_cycling.mcp_server import handle_get_activity_streams
+
+        result = await handle_get_activity_streams(
+            {"activity_id": "i123456", "types": ["watts", "nonexistent"]}
+        )
+        r = json.loads(result[0].text)
+
+        assert r["missing_types"] == ["nonexistent"]
+        assert len(r["streams"]) == 1
+        assert r["streams"][0]["type"] == "watts"
+
+
+@pytest.mark.asyncio
+async def test_get_activity_streams_empty_streams(mock_intervals_client):
+    """Empty streams list returns error message."""
+    mock_intervals_client.get_activity_streams = Mock(return_value=[])
+
+    with patch(
+        "magma_cycling.config.create_intervals_client",
+        return_value=mock_intervals_client,
+    ):
+        from magma_cycling.mcp_server import handle_get_activity_streams
+
+        result = await handle_get_activity_streams({"activity_id": "i123456"})
+        r = json.loads(result[0].text)
+
+        assert "error" in r
+        assert "No stream data" in r["error"]
+
+
+@pytest.mark.asyncio
+async def test_get_activity_streams_api_error(mock_intervals_client):
+    """API exception returns JSON error response."""
+    mock_intervals_client.get_activity_streams = Mock(side_effect=Exception("API timeout"))
+
+    with patch(
+        "magma_cycling.config.create_intervals_client",
+        return_value=mock_intervals_client,
+    ):
+        from magma_cycling.mcp_server import handle_get_activity_streams
+
+        result = await handle_get_activity_streams({"activity_id": "i123456"})
+        r = json.loads(result[0].text)
+
+        assert "error" in r
+        assert "API timeout" in r["error"]
+        assert r["activity_id"] == "i123456"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
