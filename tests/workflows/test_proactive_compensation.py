@@ -290,6 +290,36 @@ def test_collect_compensation_context_complete(mock_client):
     assert context["deficit"] == 55
 
 
+def test_collect_compensation_context_wellness_null_values(mock_client):
+    """Wellness API returns null values for metrics — should not crash."""
+    mock_client.get_wellness.return_value = {
+        "ctl": None,
+        "atl": None,
+        "sleepSecs": None,
+        "hrv": None,
+        "rpe": None,
+        "weight": None,
+    }
+    planned_events = mock_client.get_events()
+    completed = mock_client.get_activities()
+
+    context = _collect_compensation_context(
+        week_id="S078",
+        check_date=date(2026, 1, 30),
+        deficit=55,
+        planned_events=planned_events,
+        completed_activities=completed,
+        client=mock_client,
+    )
+
+    state = context["athlete_state"]
+    assert state["tsb"] == 0
+    assert state["sleep_hours"] == 0
+    assert state["hrv"] == 0
+    assert state["rpe"] == 0
+    assert state["weight"] == 0
+
+
 def test_identify_cancelled_sessions_two_missed():
     """Détecte 2 séances manquées."""
     planned = [
