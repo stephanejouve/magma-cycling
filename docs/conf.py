@@ -3,7 +3,7 @@ Sphinx configuration for magma-cycling documentation.
 
 Metadata:
     Created: 2025-12-27
-    Author: Cyclisme Training Logs Team
+    Author: Magma Cycling Team
     Category: DOCS
     Status: Production
     Priority: P1
@@ -17,11 +17,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Project information
-project = "Cyclisme Training Logs"
+project = "Magma Cycling"
 copyright = "2025-2026, Stéphane Jouve"
 author = "Stéphane Jouve"
-release = "2.1.0"
-version = "2.1"
+release = "2.3.0"
+version = "2.3"
 
 # Extensions
 extensions = [
@@ -62,7 +62,7 @@ autodoc_typehints = "description"
 
 # HTML output
 html_theme = "sphinx_rtd_theme"
-html_static_path = ["_static"]
+html_static_path = []
 
 # Todo extension
 todo_include_todos = True

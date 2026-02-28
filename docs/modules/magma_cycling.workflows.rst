@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.workflows package
+magma\_cycling.workflows package
 ==========================================
 
 Submodules

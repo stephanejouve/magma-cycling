@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.utils.hot\_reload module
+magma\_cycling.utils.hot\_reload module
 =================================================
 
 .. automodule:: magma_cycling.utils.hot_reload

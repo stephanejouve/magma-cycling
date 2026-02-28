@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.intelligence.training\_intelligence module
+magma\_cycling.intelligence.training\_intelligence module
 ===================================================================
 
 .. automodule:: magma_cycling.intelligence.training_intelligence

@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.config.thresholds module
+magma\_cycling.config.thresholds module
 =================================================
 
 .. automodule:: magma_cycling.config.thresholds

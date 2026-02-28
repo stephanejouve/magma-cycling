@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.planned\_sessions\_checker module
+magma\_cycling.planned\_sessions\_checker module
 ==========================================================
 
 .. automodule:: magma_cycling.planned_sessions_checker

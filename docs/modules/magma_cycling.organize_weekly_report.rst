@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.organize\_weekly\_report module
+magma\_cycling.organize\_weekly\_report module
 ========================================================
 
 .. automodule:: magma_cycling.organize_weekly_report

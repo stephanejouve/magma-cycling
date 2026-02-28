@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.intelligence.biomechanics module
+magma\_cycling.intelligence.biomechanics module
 =========================================================
 
 .. automodule:: magma_cycling.intelligence.biomechanics

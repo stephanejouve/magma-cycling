@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.reports.templates.workout\_history module
+magma\_cycling.reports.templates.workout\_history module
 ==================================================================
 
 .. automodule:: magma_cycling.reports.templates.workout_history

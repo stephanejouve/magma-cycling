@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.core.duplicate\_detector module
+magma\_cycling.core.duplicate\_detector module
 ========================================================
 
 .. automodule:: magma_cycling.core.duplicate_detector

@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.reports.prompts package
+magma\_cycling.reports.prompts package
 ================================================
 
 Submodules

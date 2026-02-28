@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.dashboard module
+magma\_cycling.dashboard module
 =========================================
 
 .. automodule:: magma_cycling.dashboard

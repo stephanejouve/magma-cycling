@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.reports.templates package
+magma\_cycling.reports.templates package
 ==================================================
 
 Submodules

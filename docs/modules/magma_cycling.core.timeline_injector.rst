@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.core.timeline\_injector module
+magma\_cycling.core.timeline\_injector module
 =======================================================
 
 .. automodule:: magma_cycling.core.timeline_injector

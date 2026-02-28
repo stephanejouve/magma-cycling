@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.planning.backup module
+magma\_cycling.planning.backup module
 ===============================================
 
 .. automodule:: magma_cycling.planning.backup
