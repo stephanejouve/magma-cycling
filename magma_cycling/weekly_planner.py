@@ -14,16 +14,13 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+from pydantic import ValidationError
+
+from magma_cycling.config import create_intervals_client
+from magma_cycling.planning.control_tower import planning_tower
+from magma_cycling.planning.models import WeeklyPlan
+
 logger = logging.getLogger(__name__)
-
-# Ajouter le répertoire parent au PYTHONPATH
-sys.path.insert(0, str(Path(__file__).parent))
-
-from pydantic import ValidationError  # noqa: E402
-
-from magma_cycling.config import create_intervals_client  # noqa: E402
-from magma_cycling.planning.control_tower import planning_tower  # noqa: E402
-from magma_cycling.planning.models import WeeklyPlan  # noqa: E402
 
 
 class WeeklyPlanner:
