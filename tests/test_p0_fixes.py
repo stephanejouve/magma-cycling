@@ -4,7 +4,7 @@ test_p0_fixes.py - Tests de validation des corrections P0 critiques.
 """
 import pytest
 
-from cyclisme_training_logs.rest_and_cancellations import (
+from magma_cycling.rest_and_cancellations import (
     VALID_STATUSES,
     reconcile_planned_vs_actual,
 )
@@ -63,7 +63,7 @@ def test_p0_fix3_auto_reclassification_persistence():
 
 def test_validation_with_modified_status():
     """Verify que validate_week_planning accepte status='modified'."""
-    from cyclisme_training_logs.rest_and_cancellations import validate_week_planning
+    from magma_cycling.rest_and_cancellations import validate_week_planning
 
     planning_with_modified = {
         "week_id": "S999",

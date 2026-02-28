@@ -50,7 +50,7 @@ with open(json_file, "w", encoding="utf-8") as f:
 
 **Recommandation:**
 ```python
-from cyclisme_training_logs.planning.models import WeeklyPlan
+from magma_cycling.planning.models import WeeklyPlan
 
 # Chargement sécurisé
 plan = WeeklyPlan.from_json(json_file)
@@ -97,7 +97,7 @@ def load_week_planning(week_id: str) -> dict:  # ← Retourne dict brut!
 
 **Recommandation:**
 ```python
-from cyclisme_training_logs.planning.models import WeeklyPlan
+from magma_cycling.planning.models import WeeklyPlan
 
 def load_week_planning(week_id: str) -> WeeklyPlan:  # ← Type Pydantic!
     """Charge planning avec validation Pydantic."""
@@ -132,7 +132,7 @@ for session_data in planning_data["planned_sessions"]:
 
 **Recommandation:**
 ```python
-from cyclisme_training_logs.planning.models import WeeklyPlan
+from magma_cycling.planning.models import WeeklyPlan
 
 plan = WeeklyPlan.from_json(planning_file)  # ← Validation auto
 
@@ -226,4 +226,4 @@ Après migration, vérifier:
 
 **Généré le:** 2026-02-08
 **Outil:** Grep + Analyse manuelle
-**Protection déjà en place:** `cyclisme_training_logs/planning/models.py` (10/10 tests)
+**Protection déjà en place:** `magma_cycling/planning/models.py` (10/10 tests)

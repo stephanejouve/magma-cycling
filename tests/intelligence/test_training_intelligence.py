@@ -20,7 +20,7 @@ Metadata:
 import json
 from datetime import date, datetime
 
-from cyclisme_training_logs.intelligence.training_intelligence import (
+from magma_cycling.intelligence.training_intelligence import (
     AnalysisLevel,
     ConfidenceLevel,
     Pattern,

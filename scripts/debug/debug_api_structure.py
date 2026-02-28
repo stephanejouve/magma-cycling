@@ -6,9 +6,9 @@ import sys
 from pathlib import Path
 
 # Add project to path
-sys.path.insert(0, str(Path.home() / "cyclisme-training-logs"))
+sys.path.insert(0, str(Path.home() / "magma-cycling"))
 
-from cyclisme_training_logs.sync_intervals import IntervalsAPI  # noqa: E402
+from magma_cycling.sync_intervals import IntervalsAPI  # noqa: E402
 
 
 def main():

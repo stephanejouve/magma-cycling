@@ -28,7 +28,7 @@ def setup_branch_protection():
 
     # Repository info
     owner = os.environ.get("GITHUB_OWNER", "YOUR_USERNAME")
-    repo = "cyclisme-training-logs"
+    repo = "magma-cycling"
     branch = "main"
 
     # API endpoint
@@ -121,7 +121,7 @@ def check_existing_protection():
         return False
 
     owner = os.environ.get("GITHUB_OWNER", "YOUR_USERNAME")
-    repo = "cyclisme-training-logs"
+    repo = "magma-cycling"
     branch = "main"
 
     url = f"https://api.github.com/repos/{owner}/{repo}/branches/{branch}/protection"

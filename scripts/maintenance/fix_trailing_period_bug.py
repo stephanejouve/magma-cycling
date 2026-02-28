@@ -44,8 +44,8 @@ def fix_trailing_periods(file_path: Path) -> bool:
 
 
 def main():
-    """Fix all files in cyclisme_training_logs."""
-    base_dir = Path(__file__).parent.parent / "cyclisme_training_logs"
+    """Fix all files in magma_cycling."""
+    base_dir = Path(__file__).parent.parent / "magma_cycling"
 
     print(f"🔍 Fixing trailing period bug in {base_dir}...")
 

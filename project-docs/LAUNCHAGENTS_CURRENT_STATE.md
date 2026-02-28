@@ -221,7 +221,7 @@ poetry run end-of-week --auto-calculate --provider claude_api --auto
 
 **Command**:
 ```bash
-cd ~/cyclisme-training-logs && poetry run project-clean
+cd ~/magma-cycling && poetry run project-clean
 ```
 
 **Fonction**:
@@ -288,7 +288,7 @@ cd ~/cyclisme-training-logs && poetry run project-clean
 
 **Command**:
 ```bash
-rsync -av --delete ~/cyclisme-training-logs/docs/_build/html/ ~/Sites/cyclisme-training-logs/
+rsync -av --delete ~/magma-cycling/docs/_build/html/ ~/Sites/magma-cycling/
 ```
 
 **Fonction**:

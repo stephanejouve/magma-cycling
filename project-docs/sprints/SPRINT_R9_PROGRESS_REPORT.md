@@ -212,7 +212,7 @@ client = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
 
 **Après (centralized):**
 ```python
-from cyclisme_training_logs.config import create_intervals_client
+from magma_cycling.config import create_intervals_client
 
 client = create_intervals_client()
 ```
@@ -236,7 +236,7 @@ if config_path.exists():
 
 **Après (centralized):**
 ```python
-from cyclisme_training_logs.config import load_json_config
+from magma_cycling.config import load_json_config
 
 config = load_json_config("~/.intervals_config.json")
 ```
@@ -290,7 +290,7 @@ def load_credentials(self):
 **Après (3 lignes):**
 ```python
 def load_credentials(self):
-    from cyclisme_training_logs.config import get_intervals_config, load_json_config
+    from magma_cycling.config import get_intervals_config, load_json_config
 
     # Try .intervals_config.json first (backward compatibility)
     config_file = load_json_config("~/.intervals_config.json")
@@ -336,7 +336,7 @@ def _init_api(self):
 ```python
 def _init_api(self):
     try:
-        from cyclisme_training_logs.config import create_intervals_client
+        from magma_cycling.config import create_intervals_client
 
         self.api = create_intervals_client()
     except ValueError as e:
@@ -352,7 +352,7 @@ def _init_api(self):
 - Expectations basées sur ancien comportement
 - Mocks au mauvais niveau d'import
 
-**Solution:** Mock au niveau `cyclisme_training_logs.config.*`
+**Solution:** Mock au niveau `magma_cycling.config.*`
 
 **Avant:**
 ```python
@@ -364,8 +364,8 @@ def test_load_credentials_missing(self, mock_exists):
 
 **Après:**
 ```python
-@patch("cyclisme_training_logs.config.load_json_config", return_value=None)
-@patch("cyclisme_training_logs.config.get_intervals_config")
+@patch("magma_cycling.config.load_json_config", return_value=None)
+@patch("magma_cycling.config.get_intervals_config")
 def test_load_credentials_missing(self, mock_get_config, mock_load_json):
     mock_intervals_config = Mock()
     mock_intervals_config.is_configured.return_value = False

@@ -21,7 +21,7 @@ Intégration du module `ai_providers/` depuis cyclisme-training-automation-v2 da
 
 ## Architecture
 
-### Module `cyclisme_training_logs/ai_providers/`
+### Module `magma_cycling/ai_providers/`
 
 ```
 ai_providers/

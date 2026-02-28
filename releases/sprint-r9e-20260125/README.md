@@ -83,7 +83,7 @@ poetry run pytest tests/workflows/test_end_of_week.py -v
 
 # Avec coverage
 poetry run pytest tests/workflows/test_end_of_week.py \
-  --cov=cyclisme_training_logs.workflows.end_of_week \
+  --cov=magma_cycling.workflows.end_of_week \
   --cov-report=term-missing
 ```
 
@@ -120,7 +120,7 @@ poetry run pytest tests/workflows/test_end_of_week.py \
 - **COMMIT_CONVENTIONS:** Convention [ROADMAP@sha]
 
 ### Liens GitHub
-- Repository: github.com/stephanejouve/cyclisme-training-logs
+- Repository: github.com/stephanejouve/magma-cycling
 - Branch: main
 - Release: v3.0.0
 

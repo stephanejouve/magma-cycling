@@ -34,7 +34,7 @@ Tests: Passing
 
 ### **État Actuel**
 ```
-Location: ~/cyclisme-training-logs/
+Location: ~/magma-cycling/
 Valid files: 21/51 (41.2%)
 Gartner I: 20 files
 Gartner M: 0 files (dette résolue ✅)
@@ -57,7 +57,7 @@ Remplace:
 
 ## 📋 ÉTAPE 1 : CRÉER `analyzers/weekly_aggregator.py`
 
-### **Fichier à créer :** `cyclisme_training_logs/analyzers/weekly_aggregator.py`
+### **Fichier à créer :** `magma_cycling/analyzers/weekly_aggregator.py`
 
 **Objectif :** Implémentation concrète `WeeklyDataAggregator` qui collecte et agrège données hebdomadaires
 
@@ -81,7 +81,7 @@ et génère structure pour 6 reports.
 Examples:
     Basic weekly aggregation::
 
-        from cyclisme_training_logs.analyzers.weekly_aggregator import WeeklyAggregator
+        from magma_cycling.analyzers.weekly_aggregator import WeeklyAggregator
         from datetime import date
 
         # Agréger semaine S073
@@ -123,7 +123,7 @@ Examples:
 
     Integration with analyzer::
 
-        from cyclisme_training_logs.analyzers.weekly_analyzer import WeeklyAnalyzer
+        from magma_cycling.analyzers.weekly_analyzer import WeeklyAnalyzer
 
         # Pipeline complet
         aggregator = WeeklyAggregator(week="S073", start_date=date(2025, 1, 6))
@@ -143,8 +143,8 @@ from typing import Dict, Any, List, Optional
 import json
 import logging
 
-from cyclisme_training_logs.core.data_aggregator import DataAggregator
-from cyclisme_training_logs.sync_intervals import IntervalsAPI
+from magma_cycling.core.data_aggregator import DataAggregator
+from magma_cycling.sync_intervals import IntervalsAPI
 
 logger = logging.getLogger(__name__)
 
@@ -712,7 +712,7 @@ Created: 2025-12-26
 
 import pytest
 from datetime import date
-from cyclisme_training_logs.analyzers.weekly_aggregator import WeeklyAggregator
+from magma_cycling.analyzers.weekly_aggregator import WeeklyAggregator
 
 
 @pytest.fixture
@@ -781,7 +781,7 @@ def test_process_workouts_detailed():
 
 ## 📋 ÉTAPE 2 : CRÉER `analyzers/weekly_analyzer.py`
 
-### **Fichier à créer :** `cyclisme_training_logs/analyzers/weekly_analyzer.py`
+### **Fichier à créer :** `magma_cycling/analyzers/weekly_analyzer.py`
 
 **Objectif :** Orchestrateur génération 6 reports hebdomadaires
 
@@ -804,8 +804,8 @@ training_learnings, protocol_adaptations, transition, bilan_final.
 Examples:
     Generate all 6 reports::
 
-        from cyclisme_training_logs.analyzers.weekly_analyzer import WeeklyAnalyzer
-        from cyclisme_training_logs.analyzers.weekly_aggregator import WeeklyAggregator
+        from magma_cycling.analyzers.weekly_analyzer import WeeklyAnalyzer
+        from magma_cycling.analyzers.weekly_aggregator import WeeklyAggregator
         from datetime import date
 
         # Pipeline complet
@@ -852,7 +852,7 @@ from typing import Dict, Any, List
 from datetime import datetime
 import logging
 
-from cyclisme_training_logs.core.prompt_generator import PromptGenerator
+from magma_cycling.core.prompt_generator import PromptGenerator
 
 logger = logging.getLogger(__name__)
 
@@ -1217,7 +1217,7 @@ Created: 2025-12-26
 """
 
 import pytest
-from cyclisme_training_logs.analyzers.weekly_analyzer import WeeklyAnalyzer
+from magma_cycling.analyzers.weekly_analyzer import WeeklyAnalyzer
 
 
 @pytest.fixture
@@ -1289,7 +1289,7 @@ def test_generate_all_reports(sample_weekly_data):
 
 ## 📋 ÉTAPE 3 : CRÉER `workflows/workflow_weekly.py`
 
-### **Fichier à créer :** `cyclisme_training_logs/workflows/workflow_weekly.py`
+### **Fichier à créer :** `magma_cycling/workflows/workflow_weekly.py`
 
 **Objectif :** CLI + orchestration complète workflow weekly
 
@@ -1323,7 +1323,7 @@ Examples:
 
     Programmatic usage::
 
-        from cyclisme_training_logs.workflows.workflow_weekly import run_weekly_analysis
+        from magma_cycling.workflows.workflow_weekly import run_weekly_analysis
         from datetime import date
 
         # Exécution programmatique
@@ -1338,7 +1338,7 @@ Examples:
     Integration with existing::
 
         # Compatible avec workflow actuel
-        from cyclisme_training_logs.workflows.workflow_weekly import WeeklyWorkflow
+        from magma_cycling.workflows.workflow_weekly import WeeklyWorkflow
 
         workflow = WeeklyWorkflow(week="S073", start_date=date(2025, 1, 6))
         workflow.run()
@@ -1353,9 +1353,9 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 import logging
 
-from cyclisme_training_logs.analyzers.weekly_aggregator import WeeklyAggregator
-from cyclisme_training_logs.analyzers.weekly_analyzer import WeeklyAnalyzer
-from cyclisme_training_logs.config import DataRepoConfig
+from magma_cycling.analyzers.weekly_aggregator import WeeklyAggregator
+from magma_cycling.analyzers.weekly_analyzer import WeeklyAnalyzer
+from magma_cycling.config import DataRepoConfig
 
 logger = logging.getLogger(__name__)
 
@@ -1440,7 +1440,7 @@ class WeeklyWorkflow:
     def _trigger_ai_analysis(self, reports: Dict[str, str]) -> None:
         """Trigger AI analysis via clipboard (optionnel)."""
         try:
-            from cyclisme_training_logs.ai_providers.clipboard import copy_to_clipboard
+            from magma_cycling.ai_providers.clipboard import copy_to_clipboard
 
             # Combiner prompts pour AI
             combined = "\n\n---\n\n".join([
@@ -1599,7 +1599,7 @@ Created: 2025-12-26
 
 import pytest
 from datetime import date
-from cyclisme_training_logs.workflows.workflow_weekly import (
+from magma_cycling.workflows.workflow_weekly import (
     get_current_week_info,
     run_weekly_analysis
 )
@@ -1618,7 +1618,7 @@ def test_get_current_week_info():
 
 ## 📋 ÉTAPE 4 : DEPRECATE `weekly_analysis.py`
 
-### **Fichier à modifier :** `cyclisme_training_logs/weekly_analysis.py`
+### **Fichier à modifier :** `magma_cycling/weekly_analysis.py`
 
 **Objectif :** Marquer comme deprecated (Gartner E)
 
@@ -1653,11 +1653,11 @@ New (recommended)::
 Programmatic migration::
 
     # Old
-    from cyclisme_training_logs.weekly_analysis import analyze_week
+    from magma_cycling.weekly_analysis import analyze_week
     result = analyze_week("S073")
 
     # New
-    from cyclisme_training_logs.workflows.workflow_weekly import run_weekly_analysis
+    from magma_cycling.workflows.workflow_weekly import run_weekly_analysis
     from datetime import date
     reports = run_weekly_analysis("S073", date(2025, 1, 6))
 
@@ -1691,7 +1691,7 @@ warnings.warn(
 ```toml
 [tool.poetry.scripts]
 # ... scripts existants ...
-weekly-analysis = "cyclisme_training_logs.workflows.workflow_weekly:main"
+weekly-analysis = "magma_cycling.workflows.workflow_weekly:main"
 ```
 
 ---
@@ -1801,7 +1801,7 @@ poetry run weekly-analysis --week S073 --start-date 2025-01-06 --ai-analysis
 ### **Programmateur - Integration**
 
 ```python
-from cyclisme_training_logs.workflows.workflow_weekly import run_weekly_analysis
+from magma_cycling.workflows.workflow_weekly import run_weekly_analysis
 from datetime import date
 
 # Analyse automatisée
@@ -1829,7 +1829,7 @@ for name, content in reports.items():
 - ✅ `analyzers/daily_aggregator.py` → Pattern référence
 
 **Si Phase 1 non complétée :**
-- ❌ Imports cassés (`from cyclisme_training_logs.core.data_aggregator`)
+- ❌ Imports cassés (`from magma_cycling.core.data_aggregator`)
 - ❌ Tests échouent
 - ❌ CLI non fonctionnel
 

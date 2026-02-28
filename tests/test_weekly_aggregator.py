@@ -15,7 +15,7 @@ from datetime import date
 
 import pytest
 
-from cyclisme_training_logs.analyzers.weekly_aggregator import WeeklyAggregator
+from magma_cycling.analyzers.weekly_aggregator import WeeklyAggregator
 
 
 @pytest.fixture

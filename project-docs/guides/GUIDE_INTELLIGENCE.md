@@ -77,7 +77,7 @@ Le module **Training Intelligence** crée une **mémoire partagée** accessible 
 ### Installation Module
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 # Installer dépendances (déjà incluses depuis Sprint R4)
 poetry install
@@ -95,7 +95,7 @@ Optionnel - Définir répertoire persistance intelligence :
 
 ```bash
 # Ajout facultatif à .env
-INTELLIGENCE_DATA_DIR=~/cyclisme-training-logs-data/intelligence
+INTELLIGENCE_DATA_DIR=~/magma-cycling-data/intelligence
 ```
 
 Par défaut, la persistance JSON se fait via `Path` en mémoire (pas de hardcoded paths).
@@ -126,7 +126,7 @@ LOW (1-2 obs) → MEDIUM (3-5 obs) → HIGH (6-10 obs) → VALIDATED (10+ obs)
 
 **Exemple** :
 ```python
-from cyclisme_training_logs.intelligence import TrainingIntelligence, AnalysisLevel
+from magma_cycling.intelligence import TrainingIntelligence, AnalysisLevel
 
 intelligence = TrainingIntelligence()
 
@@ -350,13 +350,13 @@ for pattern in trends["top_patterns"][:3]:
 ```python
 from datetime import date, datetime
 from pathlib import Path
-from cyclisme_training_logs.intelligence import (
+from magma_cycling.intelligence import (
     TrainingIntelligence,
     AnalysisLevel
 )
 
 # Charger intelligence (ou créer si première fois)
-intelligence_file = Path("~/cyclisme-training-logs-data/intelligence/state.json").expanduser()
+intelligence_file = Path("~/magma-cycling-data/intelligence/state.json").expanduser()
 
 if intelligence_file.exists():
     intelligence = TrainingIntelligence.load_from_file(intelligence_file)
@@ -405,10 +405,10 @@ print(f"\n💾 État sauvegardé : {intelligence_file}")
 **Code Complet** :
 ```python
 from pathlib import Path
-from cyclisme_training_logs.intelligence import TrainingIntelligence
+from magma_cycling.intelligence import TrainingIntelligence
 
 # Charger état
-intelligence_file = Path("~/cyclisme-training-logs-data/intelligence/state.json").expanduser()
+intelligence_file = Path("~/magma-cycling-data/intelligence/state.json").expanduser()
 intelligence = TrainingIntelligence.load_from_file(intelligence_file)
 
 # Synthèse semaine 2
@@ -462,10 +462,10 @@ intelligence.save_to_file(intelligence_file)
 **Code Complet** :
 ```python
 from pathlib import Path
-from cyclisme_training_logs.intelligence import TrainingIntelligence
+from magma_cycling.intelligence import TrainingIntelligence
 
 # Charger état
-intelligence_file = Path("~/cyclisme-training-logs-data/intelligence/state.json").expanduser()
+intelligence_file = Path("~/magma-cycling-data/intelligence/state.json").expanduser()
 intelligence = TrainingIntelligence.load_from_file(intelligence_file)
 
 # Tendances mois janvier 2026
@@ -522,7 +522,7 @@ intelligence.save_to_file(intelligence_file)
 **Jour 1 (5 Jan) - Découverte Initiale**
 ```python
 from datetime import date
-from cyclisme_training_logs.intelligence import TrainingIntelligence, AnalysisLevel
+from magma_cycling.intelligence import TrainingIntelligence, AnalysisLevel
 
 intelligence = TrainingIntelligence()
 
@@ -720,7 +720,7 @@ Training Intelligence peut être **pré-remplie** depuis l'historique Intervals.
 Le script `backfill-intelligence` est installé automatiquement avec le projet :
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 poetry install
 
 # Vérifier disponibilité
@@ -739,7 +739,7 @@ poetry run backfill-intelligence --help
 
 ```bash
 # Éditer .env à la racine du projet
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 nano .env
 
 # Ajouter :
@@ -767,13 +767,13 @@ poetry run backfill-intelligence \
 poetry run backfill-intelligence \
   --start-date 2024-01-01 \
   --end-date 2025-12-31 \
-  --output ~/cyclisme-training-logs-data/intelligence/intelligence_backfilled.json
+  --output ~/magma-cycling-data/intelligence/intelligence_backfilled.json
 ```
 
 **Output Attendu** :
 ```
 🚀 Starting backfill: 2024-01-01 → 2025-12-31
-📁 Output: /Users/you/cyclisme-training-logs-data/intelligence/intelligence_backfilled.json
+📁 Output: /Users/you/magma-cycling-data/intelligence/intelligence_backfilled.json
 ============================================================
 
 📥 Fetching activities from 2024-01-01 to 2025-12-31...
@@ -794,13 +794,13 @@ poetry run backfill-intelligence \
 📈 Analyzing FTP progression...
    ✅ Created learning: +10W over 24 months, confidence=high
 
-💾 Saving intelligence to /Users/you/cyclisme-training-logs-data/intelligence/intelligence_backfilled.json...
+💾 Saving intelligence to /Users/you/magma-cycling-data/intelligence/intelligence_backfilled.json...
 
 ============================================================
 ✨ Backfill complete!
    Learnings: 2
    Patterns: 2
-   Saved to: /Users/you/cyclisme-training-logs-data/intelligence/intelligence_backfilled.json
+   Saved to: /Users/you/magma-cycling-data/intelligence/intelligence_backfilled.json
 ```
 
 ---
@@ -904,10 +904,10 @@ confidence = ConfidenceLevel.HIGH
 
 ```python
 from pathlib import Path
-from cyclisme_training_logs.intelligence import TrainingIntelligence
+from magma_cycling.intelligence import TrainingIntelligence
 
 # Charger fichier backfillé
-intelligence_file = Path("~/cyclisme-training-logs-data/intelligence/intelligence_backfilled.json").expanduser()
+intelligence_file = Path("~/magma-cycling-data/intelligence/intelligence_backfilled.json").expanduser()
 intelligence = TrainingIntelligence.load_from_file(intelligence_file)
 
 print(f"Learnings : {len(intelligence.learnings)}")
@@ -947,14 +947,14 @@ Si vous avez déjà une intelligence active, vous pouvez merger le backfill :
 
 ```python
 from pathlib import Path
-from cyclisme_training_logs.intelligence import TrainingIntelligence
+from magma_cycling.intelligence import TrainingIntelligence
 
 # Charger intelligence active
-active_file = Path("~/cyclisme-training-logs-data/intelligence/state.json").expanduser()
+active_file = Path("~/magma-cycling-data/intelligence/state.json").expanduser()
 active = TrainingIntelligence.load_from_file(active_file)
 
 # Charger backfill
-backfill_file = Path("~/cyclisme-training-logs-data/intelligence/intelligence_backfilled.json").expanduser()
+backfill_file = Path("~/magma-cycling-data/intelligence/intelligence_backfilled.json").expanduser()
 backfill = TrainingIntelligence.load_from_file(backfill_file)
 
 # Merger (backfill → active)
@@ -1035,7 +1035,7 @@ elif session_count >= 3:
 Le script backfill est extensible pour analyses custom :
 
 ```python
-from cyclisme_training_logs.scripts.backfill_intelligence import IntervalsICUBackfiller
+from magma_cycling.scripts.backfill_intelligence import IntervalsICUBackfiller
 
 # Créer backfiller custom
 backfiller = IntervalsICUBackfiller(
@@ -1185,7 +1185,7 @@ else:
 **Correction Simple** :
 
 ```python
-from cyclisme_training_logs.intelligence import (
+from magma_cycling.intelligence import (
     TrainingIntelligence,
     PIDController,
     compute_pid_gains_from_intelligence
@@ -1245,7 +1245,7 @@ Training Intelligence fournit une méthode intégrée `get_pid_correction()` :
 
 ```python
 from pathlib import Path
-from cyclisme_training_logs.intelligence import TrainingIntelligence
+from magma_cycling.intelligence import TrainingIntelligence
 
 # Charger intelligence
 intelligence = TrainingIntelligence.load_from_file(
@@ -1281,7 +1281,7 @@ print(f"  {result['recommendation']}")
 
 ```python
 from pathlib import Path
-from cyclisme_training_logs.intelligence import TrainingIntelligence
+from magma_cycling.intelligence import TrainingIntelligence
 
 # Charger intelligence
 intelligence_file = Path("~/data/intelligence.json").expanduser()
@@ -1336,7 +1336,7 @@ Le contrôleur PID maintient un **état interne** (integral, prev_error). Vous d
 3. **Changement objectif FTP** (nouvelle cible)
 
 ```python
-from cyclisme_training_logs.intelligence import PIDController
+from magma_cycling.intelligence import PIDController
 
 controller = PIDController(kp=0.01, ki=0.002, kd=0.15, setpoint=260)
 
@@ -1748,7 +1748,7 @@ pattern.matches({"sleep": 5.5, "workout_type": "VO2"})  # True
 from pathlib import Path
 import json
 
-intelligence_file = Path("~/cyclisme-training-logs-data/intelligence/state.json").expanduser()
+intelligence_file = Path("~/magma-cycling-data/intelligence/state.json").expanduser()
 
 try:
     intelligence = TrainingIntelligence.load_from_file(intelligence_file)
@@ -1807,7 +1807,7 @@ Les modules existants peuvent appeler Training Intelligence :
 **Analyse quotidienne** :
 ```python
 # Dans daily_aggregator.py
-from cyclisme_training_logs.intelligence import TrainingIntelligence, AnalysisLevel
+from magma_cycling.intelligence import TrainingIntelligence, AnalysisLevel
 
 def analyze_session(session_data):
     # ... analyse existante ...

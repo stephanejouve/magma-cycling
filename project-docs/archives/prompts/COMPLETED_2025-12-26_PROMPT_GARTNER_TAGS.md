@@ -1,12 +1,12 @@
 # 🏷️ PROMPT CLAUDE CODE - INTÉGRATION TAGS GARTNER TIME
 
-**Objectif :** Intégrer le système de tags Gartner TIME dans le projet cyclisme-training-logs
+**Objectif :** Intégrer le système de tags Gartner TIME dans le projet magma-cycling
 
 **Durée estimée :** 2-3 heures
 
 **Prérequis :**
 - Documents lus : `GARTNER_TIME_INVENTORY.md` et `DOCSTRING_TEMPLATE_V2_GARTNER.md`
-- Projet : `~/cyclisme-training-logs/`
+- Projet : `~/magma-cycling/`
 
 ---
 
@@ -25,7 +25,7 @@ Intégrer le système de classification Gartner TIME dans le projet en 4 étapes
 
 ### **Fichier à créer :** `scripts/validate_gartner_tags.py`
 
-**Location :** `~/cyclisme-training-logs/scripts/validate_gartner_tags.py`
+**Location :** `~/magma-cycling/scripts/validate_gartner_tags.py`
 
 **Contenu :**
 
@@ -449,8 +449,8 @@ def main():
     parser.add_argument(
         '--project-root',
         type=str,
-        default='cyclisme_training_logs',
-        help='Project root directory (default: cyclisme_training_logs)'
+        default='magma_cycling',
+        help='Project root directory (default: magma_cycling)'
     )
 
     args = parser.parse_args()
@@ -506,7 +506,7 @@ if __name__ == '__main__':
 poetry run python scripts/validate_gartner_tags.py
 
 # Test fichier spécifique
-poetry run python scripts/validate_gartner_tags.py --file cyclisme_training_logs/config.py
+poetry run python scripts/validate_gartner_tags.py --file magma_cycling/config.py
 
 # Générer rapport HTML
 poetry run python scripts/validate_gartner_tags.py --html validation_report.html
@@ -518,7 +518,7 @@ poetry run python scripts/validate_gartner_tags.py --html validation_report.html
 
 ### **Fichier à créer :** `docs/ARCHITECTURE.md`
 
-**Location :** `~/cyclisme-training-logs/docs/ARCHITECTURE.md`
+**Location :** `~/magma-cycling/docs/ARCHITECTURE.md`
 
 **Contenu :**
 
@@ -847,12 +847,12 @@ poetry run python scripts/validate_gartner_tags.py
 
 ### **Fichiers à modifier (6 fichiers) :**
 
-1. `cyclisme_training_logs/workflow_coach.py`
-2. `cyclisme_training_logs/prepare_analysis.py`
-3. `cyclisme_training_logs/insert_analysis.py`
-4. `cyclisme_training_logs/backfill_history.py`
-5. `cyclisme_training_logs/manage_state.py`
-6. `cyclisme_training_logs/config.py`
+1. `magma_cycling/workflow_coach.py`
+2. `magma_cycling/prepare_analysis.py`
+3. `magma_cycling/insert_analysis.py`
+4. `magma_cycling/backfill_history.py`
+5. `magma_cycling/manage_state.py`
+6. `magma_cycling/config.py`
 
 ### **Transformation à appliquer :**
 
@@ -879,7 +879,7 @@ Examples:
 
     Programmatic usage::
 
-        from cyclisme_training_logs.[module] import [Class]
+        from magma_cycling.[module] import [Class]
 
         obj = [Class](param="value")
         result = obj.method()
@@ -913,7 +913,7 @@ Examples:
 
     Future usage (v2) - After migration::
 
-        from cyclisme_training_logs.core.timeline_injector import TimelineInjector
+        from magma_cycling.core.timeline_injector import TimelineInjector
 
         injector = TimelineInjector()
         injector.insert_chronologically(workout_data)
@@ -946,12 +946,12 @@ Updated: 2025-12-26 (Added Gartner TIME tags - Migration status)
 
 ```bash
 # Valider les 6 fichiers modifiés
-poetry run python scripts/validate_gartner_tags.py --file cyclisme_training_logs/workflow_coach.py
-poetry run python scripts/validate_gartner_tags.py --file cyclisme_training_logs/prepare_analysis.py
-poetry run python scripts/validate_gartner_tags.py --file cyclisme_training_logs/config.py
-poetry run python scripts/validate_gartner_tags.py --file cyclisme_training_logs/insert_analysis.py
-poetry run python scripts/validate_gartner_tags.py --file cyclisme_training_logs/backfill_history.py
-poetry run python scripts/validate_gartner_tags.py --file cyclisme_training_logs/manage_state.py
+poetry run python scripts/validate_gartner_tags.py --file magma_cycling/workflow_coach.py
+poetry run python scripts/validate_gartner_tags.py --file magma_cycling/prepare_analysis.py
+poetry run python scripts/validate_gartner_tags.py --file magma_cycling/config.py
+poetry run python scripts/validate_gartner_tags.py --file magma_cycling/insert_analysis.py
+poetry run python scripts/validate_gartner_tags.py --file magma_cycling/backfill_history.py
+poetry run python scripts/validate_gartner_tags.py --file magma_cycling/manage_state.py
 
 # Validation complète projet
 poetry run python scripts/validate_gartner_tags.py
@@ -991,19 +991,19 @@ poetry run python scripts/validate_gartner_tags.py --html validation_report.html
 ### **4.4. Git Commit**
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 # Ajouter nouveaux fichiers
 git add scripts/validate_gartner_tags.py
 git add docs/ARCHITECTURE.md
 
 # Ajouter fichiers modifiés
-git add cyclisme_training_logs/workflow_coach.py
-git add cyclisme_training_logs/prepare_analysis.py
-git add cyclisme_training_logs/config.py
-git add cyclisme_training_logs/insert_analysis.py
-git add cyclisme_training_logs/backfill_history.py
-git add cyclisme_training_logs/manage_state.py
+git add magma_cycling/workflow_coach.py
+git add magma_cycling/prepare_analysis.py
+git add magma_cycling/config.py
+git add magma_cycling/insert_analysis.py
+git add magma_cycling/backfill_history.py
+git add magma_cycling/manage_state.py
 
 # Commit
 git commit -m "feat: integrate Gartner TIME classification system

@@ -6,7 +6,7 @@ Module Sprint R2 pour calculs métriques avancés.
 metrics_advanced
 ----------------
 
-.. automodule:: cyclisme_training_logs.utils.metrics_advanced
+.. automodule:: magma_cycling.utils.metrics_advanced
    :members:
    :undoc-members:
    :show-inheritance:
@@ -33,7 +33,7 @@ Exemples
 
 .. code-block:: python
 
-    from cyclisme_training_logs.utils.metrics_advanced import (
+    from magma_cycling.utils.metrics_advanced import (
         calculate_ctl,
         calculate_tsb,
         assess_overtraining_risk

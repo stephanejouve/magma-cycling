@@ -56,7 +56,7 @@ client = IntervalsClient(athlete_id=athlete_id, api_key=api_key)
 **Devrait être:**
 ```python
 # Pattern unifié avec helper centralisé
-from cyclisme_training_logs.config import create_intervals_client
+from magma_cycling.config import create_intervals_client
 
 client = create_intervals_client()  # 1 ligne
 ```
@@ -300,7 +300,7 @@ pytest tests/workflows/test_workflow_coach.py -v
 
 **Validation:**
 ```bash
-poetry run pytest tests/ --cov=cyclisme_training_logs --cov-report=term
+poetry run pytest tests/ --cov=magma_cycling --cov-report=term
 # Coverage doit rester ≥29%
 ```
 

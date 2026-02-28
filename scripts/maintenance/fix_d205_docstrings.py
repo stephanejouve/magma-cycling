@@ -61,7 +61,7 @@ def main():
     """Run D205 fixer on all Python directories."""
     root_dir = Path(__file__).parent.parent
 
-    directories = ["cyclisme_training_logs", "tests", "scripts"]
+    directories = ["magma_cycling", "tests", "scripts"]
 
     total_files = 0
     total_fixes = 0

@@ -231,7 +231,7 @@
 - `MIGRATION_CONTROL_TOWER.md`
 - `claude_desktop_config.json.example`
 - `claude_desktop_config_dev.json.example`
-- `cyclisme_training_logs/analyzers/adherence_storage.py`
+- `magma_cycling/analyzers/adherence_storage.py`
 - ... and 51 more
 
 **Modified (524):**
@@ -245,7 +245,7 @@
 - `.ruff.toml`
 - `MIGRATION_CONTROL_TOWER.md`
 - `README.md`
-- `cyclisme_training_logs/analyzers/adherence_tracker.py`
+- `magma_cycling/analyzers/adherence_tracker.py`
 - ... and 514 more
 
 ---

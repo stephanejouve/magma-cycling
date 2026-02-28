@@ -29,7 +29,7 @@ Phase 3 successfully implemented 3 additional P0 critical fixes (#6, #7, #8) ide
 ### Problem
 The `_upload_workout_intervals()` method was using an incorrect field name `"workout_doc"` when creating events via the Intervals.icu API. The API documentation specifies that workout content should be in the `"description"` field.
 
-**File**: `cyclisme_training_logs/workflow_coach.py`
+**File**: `magma_cycling/workflow_coach.py`
 **Line**: 336
 
 ```python
@@ -172,7 +172,7 @@ Main set 3x
 ### Solution Components
 
 #### 1. Created Intervals.icu Format Validator
-**New File**: `cyclisme_training_logs/intervals_format_validator.py` (337 lines)
+**New File**: `magma_cycling/intervals_format_validator.py` (337 lines)
 
 **Class**: `IntervalsFormatValidator`
 
@@ -191,7 +191,7 @@ Main set 3x
 
 **Usage Example**:
 ```python
-from cyclisme_training_logs.intervals_format_validator import IntervalsFormatValidator
+from magma_cycling.intervals_format_validator import IntervalsFormatValidator
 
 validator = IntervalsFormatValidator()
 is_valid, errors, warnings = validator.validate_workout(workout_text)
@@ -212,7 +212,7 @@ poetry run python validate_templates.py
 **Result**: ✅ All 6 templates validated successfully
 
 #### 3. Strengthened AI Prompt
-**File**: `cyclisme_training_logs/weekly_planner.py`
+**File**: `magma_cycling/weekly_planner.py`
 **Lines**: 226-265
 
 **Added Section** (Lines 232-251):
@@ -311,7 +311,7 @@ Cooldown
 
 ## Files Modified
 
-### 1. cyclisme_training_logs/workout_coach.py
+### 1. magma_cycling/workout_coach.py
 
 **Change (Line 336)**: Fixed API field name
 ```diff
@@ -325,7 +325,7 @@ Cooldown
   }
 ```
 
-### 2. cyclisme_training_logs/weekly_planner.py
+### 2. magma_cycling/weekly_planner.py
 
 **Change #1 (Line 285)**: Updated VALID_TYPES list
 ```diff
@@ -358,7 +358,7 @@ Cooldown
 
 ## Files Created
 
-### 1. cyclisme_training_logs/intervals_format_validator.py
+### 1. magma_cycling/intervals_format_validator.py
 **Lines**: 337
 **Purpose**: Comprehensive Intervals.icu format validator
 **Classes**: `IntervalsFormatValidator`
@@ -460,7 +460,7 @@ VALIDATION TEMPLATES WORKOUT
 
 ### Validate Workout Before Upload
 ```python
-from cyclisme_training_logs.intervals_format_validator import IntervalsFormatValidator
+from magma_cycling.intervals_format_validator import IntervalsFormatValidator
 
 validator = IntervalsFormatValidator()
 
@@ -529,9 +529,9 @@ poetry run validate-workout --file workout.txt
 
 ## References
 
-- **Phase 1 Audit Report**: `/Users/stephanejouve/cyclisme-training-logs/PHASE1_AUDIT_REPORT.md`
-- **Phase 2 P0 Fixes**: `/Users/stephanejouve/cyclisme-training-logs/PHASE2_P0_FIXES_SUMMARY.md`
-- **Grafcet Workflow**: `/Users/stephanejouve/cyclisme-training-logs/GRAFCET_WORKFLOW_COMPLET.md`
+- **Phase 1 Audit Report**: `/Users/stephanejouve/magma-cycling/PHASE1_AUDIT_REPORT.md`
+- **Phase 2 P0 Fixes**: `/Users/stephanejouve/magma-cycling/PHASE2_P0_FIXES_SUMMARY.md`
+- **Grafcet Workflow**: `/Users/stephanejouve/magma-cycling/GRAFCET_WORKFLOW_COMPLET.md`
 - **Intervals.icu API Docs**: `prepare_analysis.py:108-146`
 - **Workout Builder Guide**: `David_-_Intervals_icu_-_Workout_builder_-_Guide_-_.pdf`
 

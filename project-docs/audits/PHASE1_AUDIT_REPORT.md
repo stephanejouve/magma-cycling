@@ -1,7 +1,7 @@
 # PHASE 1 - AUDIT COMPLET ET CARTOGRAPHIE WORKFLOW
 
 **Date**: 2025-12-21
-**Projet**: cyclisme-training-logs
+**Projet**: magma-cycling
 **Objectif**: Audit complet du système asservissement + détection des problèmes production
 
 ---
@@ -1191,7 +1191,7 @@ poetry run pytest tests/test_asservissement.py -v
 
 # Valider JSON planning
 python3 -c "
-from cyclisme_training_logs.rest_and_cancellations import validate_week_planning, load_week_planning
+from magma_cycling.rest_and_cancellations import validate_week_planning, load_week_planning
 from pathlib import Path
 planning = load_week_planning('S070', Path('data/week_planning'))
 print('Valid:', validate_week_planning(planning))
@@ -1203,8 +1203,8 @@ print('Valid:', validate_week_planning(planning))
 ## ANNEXE B - STRUCTURE FICHIERS
 
 ```
-cyclisme-training-logs/
-├── cyclisme_training_logs/
+magma-cycling/
+├── magma_cycling/
 │   ├── workflow_coach.py            (2360 lignes) ✅ Orchestrateur
 │   ├── workflow_state.py            (165 lignes)  ✅ Tracker analyses
 │   ├── planned_sessions_checker.py  (462 lignes)  ✅ Détection gaps

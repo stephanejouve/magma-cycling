@@ -12,52 +12,52 @@ Garantir que TOUS les scripts qui modifient des fichiers de planning passent par
 
 ### Priorité HAUTE (modifient directement planning JSON)
 
-1. **cyclisme_training_logs/update_session_status.py** ✅
+1. **magma_cycling/update_session_status.py** ✅
    - Met à jour le statut des sessions
    - Status: ✅ MIGRÉ (commit a7bfd34)
    - Permission: ✅ | Backup: ✅ | Audit: ✅
 
-2. **cyclisme_training_logs/shift_sessions.py** ✅
+2. **magma_cycling/shift_sessions.py** ✅
    - Décale/swap les sessions
    - Status: ✅ MIGRÉ (commit à venir)
    - Permission: ✅ | Backup: ✅ | Audit: ✅
 
-3. **cyclisme_training_logs/weekly_planner.py** ✅
+3. **magma_cycling/weekly_planner.py** ✅
    - Crée les plannings hebdomadaires
    - Status: ✅ MIGRÉ (commit à venir)
    - Permission: ✅ | Backup: ✅ | Audit: ✅ | Create: ✅
 
-4. **cyclisme_training_logs/daily_sync.py** ✅
+4. **magma_cycling/daily_sync.py** ✅
    - Synchronise avec Intervals.icu
    - Status: ✅ MIGRÉ (commit à venir)
    - Permission: ✅ | Backup: ✅ | Audit: ✅ | Read-only: ✅
 
-5. **cyclisme_training_logs/rest_and_cancellations.py** ✅
+5. **magma_cycling/rest_and_cancellations.py** ✅
    - Gère les repos/annulations
    - Status: ✅ MIGRÉ (commit à venir)
    - Read-only: ✅ (via planning_tower.read_week())
 
 ### Priorité MOYENNE (lisent et écrivent potentiellement)
 
-6. **cyclisme_training_logs/planned_sessions_checker.py** ✅
+6. **magma_cycling/planned_sessions_checker.py** ✅
    - Vérifie les sessions planifiées
    - Status: ✅ LECTURE SEULE (indirectement migré)
    - Utilise: load_week_planning() et reconcile_planned_vs_actual() de rest_and_cancellations.py (déjà migrés)
    - Aucune modification requise
 
-7. **cyclisme_training_logs/workflows/end_of_week.py** ✅
+7. **magma_cycling/workflows/end_of_week.py** ✅
    - Workflow fin de semaine
    - Status: ✅ MIGRÉ (commit à venir)
    - Audit log: ✅ (CREATE operation)
 
-8. **cyclisme_training_logs/workflow_coach.py** ✅
+8. **magma_cycling/workflow_coach.py** ✅
    - Coach workflow principal
    - Status: ✅ MIGRÉ (commit à venir)
    - Permission: ✅ | Backup: ✅ | Audit: ✅ | Read-only: ✅
 
 ### Priorité BASSE (principalement lecture)
 
-9. **cyclisme_training_logs/monthly_analysis.py** ✅
+9. **magma_cycling/monthly_analysis.py** ✅
    - Analyse mensuelle
    - Status: ✅ LECTURE SEULE (aucune modification requise)
    - Utilise: json.load() pour lecture directe (pas de risque)
@@ -69,7 +69,7 @@ Garantir que TOUS les scripts qui modifient des fichiers de planning passent par
 
 **AVANT:**
 ```python
-from cyclisme_training_logs.planning.models import WeeklyPlan
+from magma_cycling.planning.models import WeeklyPlan
 
 planning_file = planning_dir / f"week_planning_{week_id}.json"
 plan = WeeklyPlan.from_json(planning_file)
@@ -83,7 +83,7 @@ plan.to_json(planning_file)
 
 **APRÈS:**
 ```python
-from cyclisme_training_logs.planning.control_tower import planning_tower
+from magma_cycling.planning.control_tower import planning_tower
 
 with planning_tower.modify_week(
     week_id,
@@ -112,7 +112,7 @@ def update_session(week_id: str, session_id: str, new_status: str):
 
 **APRÈS:**
 ```python
-from cyclisme_training_logs.planning.control_tower import (
+from magma_cycling.planning.control_tower import (
     planning_tower,
     requires_tower_permission
 )
@@ -143,7 +143,7 @@ print(plan.tss_target)
 
 **APRÈS:**
 ```python
-from cyclisme_training_logs.planning.control_tower import planning_tower
+from magma_cycling.planning.control_tower import planning_tower
 
 # Pas de backup nécessaire pour lecture seule
 plan = planning_tower.read_week(week_id)
@@ -173,7 +173,7 @@ Après migration de chaque script:
 
 ```python
 # 1. Vérifier backup automatique
-from cyclisme_training_logs.planning.control_tower import planning_tower
+from magma_cycling.planning.control_tower import planning_tower
 backups_before = len(planning_tower.list_backups("S081"))
 
 # Exécuter script
@@ -183,7 +183,7 @@ backups_after = len(planning_tower.list_backups("S081"))
 assert backups_after > backups_before, "Backup non créé!"
 
 # 2. Vérifier audit log
-from cyclisme_training_logs.planning.audit_log import audit_log
+from magma_cycling.planning.audit_log import audit_log
 recent = audit_log.get_recent_operations(1, week_id="S081")
 assert recent[0].tool == "my_script_name", "Audit non logged!"
 

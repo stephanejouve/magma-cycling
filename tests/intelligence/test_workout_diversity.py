@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from cyclisme_training_logs.intelligence.workout_diversity import (
+from magma_cycling.intelligence.workout_diversity import (
     WorkoutDiversityTracker,
     WorkoutUsage,
 )

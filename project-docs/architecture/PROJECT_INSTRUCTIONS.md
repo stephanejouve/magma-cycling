@@ -6,13 +6,13 @@ Système automatisé d'entraînement cyclisme avec analyse quotidienne par AI et
 
 **Athlète** : Stéphane, 54 ans, FTP actuel 220W, objectif 260W
 **Stack** : Python 3.11, Poetry, API Intervals.icu, Git
-**Repo** : `~/cyclisme-training-logs/`
+**Repo** : `~/magma-cycling/`
 
 ---
 
 ## Structure Actuelle Repo
 ````
-~/cyclisme-training-logs/
+~/magma-cycling/
 ├── pyproject.toml                    # Package Poetry, 15 scripts configurés
 ├── poetry.lock
 ├── .gitignore
@@ -20,7 +20,7 @@ Système automatisé d'entraînement cyclisme avec analyse quotidienne par AI et
 ├── COMMANDS.md
 ├── ALIASES.md
 │
-├── cyclisme_training_logs/           # Package Python principal
+├── magma_cycling/           # Package Python principal
 │   ├── __init__.py
 │   ├── workflow_coach.py            # ⭐ Orchestrateur principal (À MODIFIER)
 │   ├── weekly_analysis.py           # Analyse hebdomadaire
@@ -719,7 +719,7 @@ def run_daily_workflow(self):
 ````python
 import pytest
 from datetime import datetime
-from cyclisme_training_logs.workflow_coach import WorkflowCoach
+from magma_cycling.workflow_coach import WorkflowCoach
 
 def test_load_remaining_sessions():
     """Test chargement planning restant"""
@@ -825,7 +825,7 @@ Body: {
 
 ### Commande
 ````bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 poetry run workflow-coach
 ````
 

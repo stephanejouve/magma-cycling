@@ -9,13 +9,13 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from cyclisme_training_logs.api.intervals_client import IntervalsClient
+from magma_cycling.api.intervals_client import IntervalsClient
 
 
 @pytest.fixture
 def mock_session():
     """Create a mock requests.Session."""
-    with patch("cyclisme_training_logs.api.intervals_client.requests.Session") as mock:
+    with patch("magma_cycling.api.intervals_client.requests.Session") as mock:
         session = MagicMock()
         mock.return_value = session
         yield session

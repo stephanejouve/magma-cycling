@@ -5,7 +5,7 @@ Author: Claude Sonnet 4.5
 Created: 2026-02-19
 """
 
-from cyclisme_training_logs.utils.ai_response_parser import parse_ai_modifications
+from magma_cycling.utils.ai_response_parser import parse_ai_modifications
 
 
 class TestParseAIModifications:

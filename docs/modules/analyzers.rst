@@ -1,7 +1,7 @@
 Analyzers Package
 =================
 
-.. automodule:: cyclisme_training_logs.analyzers
+.. automodule:: magma_cycling.analyzers
    :members:
    :undoc-members:
    :show-inheritance:
@@ -12,7 +12,7 @@ Submodules
 Weekly Analyzer
 ~~~~~~~~~~~~~~~
 
-.. automodule:: cyclisme_training_logs.analyzers.weekly_analyzer
+.. automodule:: magma_cycling.analyzers.weekly_analyzer
    :members:
    :undoc-members:
    :show-inheritance:
@@ -20,7 +20,7 @@ Weekly Analyzer
 Weekly Aggregator
 ~~~~~~~~~~~~~~~~~
 
-.. automodule:: cyclisme_training_logs.analyzers.weekly_aggregator
+.. automodule:: magma_cycling.analyzers.weekly_aggregator
    :members:
    :undoc-members:
    :show-inheritance:
@@ -28,7 +28,7 @@ Weekly Aggregator
 Daily Aggregator
 ~~~~~~~~~~~~~~~~
 
-.. automodule:: cyclisme_training_logs.analyzers.daily_aggregator
+.. automodule:: magma_cycling.analyzers.daily_aggregator
    :members:
    :undoc-members:
    :show-inheritance:

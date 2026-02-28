@@ -14,8 +14,8 @@ Thank you for contributing to Cyclisme Training Logs! This guide will help you g
 
 ```bash
 # Clone repository
-git clone https://github.com/stephanejouve/cyclisme-training-logs.git
-cd cyclisme-training-logs
+git clone https://github.com/stephanejouve/magma-cycling.git
+cd magma-cycling
 
 # Install dependencies
 poetry install
@@ -50,7 +50,7 @@ poetry run pytest tests/config/ tests/intelligence/ tests/planning/ tests/test_*
 poetry run pytest tests/ -v
 
 # With coverage
-poetry run pytest tests/ --cov=cyclisme_training_logs --cov-report=html
+poetry run pytest tests/ --cov=magma_cycling --cov-report=html
 ```
 
 ### 4. Format and Lint
@@ -59,19 +59,19 @@ Pre-commit hooks will automatically run on commit, but you can run them manually
 
 ```bash
 # Format code
-poetry run black cyclisme_training_logs/ tests/
+poetry run black magma_cycling/ tests/
 
 # Lint
-poetry run ruff check cyclisme_training_logs/ --fix
+poetry run ruff check magma_cycling/ --fix
 
 # Sort imports
-poetry run isort cyclisme_training_logs/ tests/
+poetry run isort magma_cycling/ tests/
 
 # Check docstrings
-poetry run pydocstyle cyclisme_training_logs/
+poetry run pydocstyle magma_cycling/
 
 # Type check
-poetry run mypy cyclisme_training_logs/
+poetry run mypy magma_cycling/
 ```
 
 ### 5. Commit Changes
@@ -142,8 +142,8 @@ Every push and pull request triggers our CI/CD pipeline:
 
 ### CI Status
 
-[![CI](https://github.com/stephanejouve/cyclisme-training-logs/actions/workflows/ci.yml/badge.svg)](https://github.com/stephanejouve/cyclisme-training-logs/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/stephanejouve/cyclisme-training-logs/branch/main/graph/badge.svg)](https://codecov.io/gh/stephanejouve/cyclisme-training-logs)
+[![CI](https://github.com/stephanejouve/magma-cycling/actions/workflows/ci.yml/badge.svg)](https://github.com/stephanejouve/magma-cycling/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/stephanejouve/magma-cycling/branch/main/graph/badge.svg)](https://codecov.io/gh/stephanejouve/magma-cycling)
 
 ### Required Checks
 
@@ -249,8 +249,8 @@ How was this tested?
 ## 🏗️ Project Structure
 
 ```
-cyclisme_training_logs/
-├── cyclisme_training_logs/     # Main package
+magma_cycling/
+├── magma_cycling/     # Main package
 │   ├── ai_providers/           # AI provider implementations
 │   ├── analyzers/              # Data analyzers
 │   ├── api/                    # API clients (Intervals.icu)
@@ -274,8 +274,8 @@ cyclisme_training_logs/
 
 ## 📞 Getting Help
 
-- **Issues**: [GitHub Issues](https://github.com/stephanejouve/cyclisme-training-logs/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/stephanejouve/cyclisme-training-logs/discussions)
+- **Issues**: [GitHub Issues](https://github.com/stephanejouve/magma-cycling/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/stephanejouve/magma-cycling/discussions)
 - **Documentation**: Check `/docs` and `/project-docs`
 
 ## 📄 License

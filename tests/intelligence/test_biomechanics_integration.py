@@ -10,17 +10,17 @@ Tests complete workflows combining multiple biomechanics components:
 
 import pytest
 
-from cyclisme_training_logs.config.athlete_profile import AthleteProfile
-from cyclisme_training_logs.intelligence.biomechanics import (
+from magma_cycling.config.athlete_profile import AthleteProfile
+from magma_cycling.intelligence.biomechanics import (
     PIDGrappeEnhanced,
     calculer_cadence_optimale,
     calculer_cout_energetique_from_activity,
 )
-from cyclisme_training_logs.intelligence.biomechanics_intervals import (
+from magma_cycling.intelligence.biomechanics_intervals import (
     extract_biomechanical_metrics,
     get_cadence_recommendation_from_activities,
 )
-from cyclisme_training_logs.intelligence.discrete_pid_controller import (
+from magma_cycling.intelligence.discrete_pid_controller import (
     DiscretePIDController,
 )
 

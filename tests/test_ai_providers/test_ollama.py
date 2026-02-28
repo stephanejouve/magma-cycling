@@ -9,8 +9,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 import requests
 
-from cyclisme_training_logs.ai_providers.base import AIProvider
-from cyclisme_training_logs.ai_providers.ollama import OllamaAnalyzer, WorkflowError
+from magma_cycling.ai_providers.base import AIProvider
+from magma_cycling.ai_providers.ollama import OllamaAnalyzer, WorkflowError
 
 
 @pytest.fixture
@@ -71,7 +71,7 @@ class TestOllamaAnalyzer:
 
     # === Success Tests ===
 
-    @patch("cyclisme_training_logs.ai_providers.ollama.requests.post")
+    @patch("magma_cycling.ai_providers.ollama.requests.post")
     def test_analyze_session_success(self, mock_post):
         """Test successful analysis."""
         # Mock successful response
@@ -92,7 +92,7 @@ class TestOllamaAnalyzer:
         assert call_args[1]["json"]["model"] == "mistral:7b"
         assert call_args[1]["json"]["stream"] is False
 
-    @patch("cyclisme_training_logs.ai_providers.ollama.requests.post")
+    @patch("magma_cycling.ai_providers.ollama.requests.post")
     def test_analyze_with_dataset(self, mock_post):
         """Test analysis with dataset parameter."""
         mock_response = MagicMock()
@@ -106,7 +106,7 @@ class TestOllamaAnalyzer:
 
         assert "Analyse avec données" in result
 
-    @patch("cyclisme_training_logs.ai_providers.ollama.requests.post")
+    @patch("magma_cycling.ai_providers.ollama.requests.post")
     def test_analyze_empty_prompt(self, mock_post):
         """Test analysis with empty prompt."""
         mock_response = MagicMock()
@@ -119,7 +119,7 @@ class TestOllamaAnalyzer:
 
         assert result == ""
 
-    @patch("cyclisme_training_logs.ai_providers.ollama.requests.post")
+    @patch("magma_cycling.ai_providers.ollama.requests.post")
     def test_analyze_large_prompt(self, mock_post):
         """Test analysis with very large prompt."""
         mock_response = MagicMock()
@@ -135,7 +135,7 @@ class TestOllamaAnalyzer:
         assert "Réponse" in result
         mock_post.assert_called_once()
 
-    @patch("cyclisme_training_logs.ai_providers.ollama.requests.post")
+    @patch("magma_cycling.ai_providers.ollama.requests.post")
     def test_analyze_special_characters(self, mock_post):
         """Test analysis with special characters."""
         mock_response = MagicMock()
@@ -150,7 +150,7 @@ class TestOllamaAnalyzer:
 
         assert result is not None
 
-    @patch("cyclisme_training_logs.ai_providers.ollama.requests.post")
+    @patch("magma_cycling.ai_providers.ollama.requests.post")
     def test_timeout_parameter(self, mock_post):
         """Test that timeout is set to 600s (10min)."""
         mock_response = MagicMock()
@@ -167,7 +167,7 @@ class TestOllamaAnalyzer:
 
     # === Error Handling Tests ===
 
-    @patch("cyclisme_training_logs.ai_providers.ollama.requests.post")
+    @patch("magma_cycling.ai_providers.ollama.requests.post")
     def test_analyze_connection_error(self, mock_post):
         """Test handling of connection error (server not running)."""
         mock_post.side_effect = requests.exceptions.ConnectionError("Cannot connect")
@@ -180,7 +180,7 @@ class TestOllamaAnalyzer:
         error_msg = str(exc_info.value).lower()
         assert "connect" in error_msg or "ollama" in error_msg
 
-    @patch("cyclisme_training_logs.ai_providers.ollama.requests.post")
+    @patch("magma_cycling.ai_providers.ollama.requests.post")
     def test_analyze_timeout_error(self, mock_post):
         """Test handling of timeout."""
         mock_post.side_effect = requests.exceptions.Timeout("Request timeout")
@@ -192,7 +192,7 @@ class TestOllamaAnalyzer:
 
         assert "timeout" in str(exc_info.value).lower() or "failed" in str(exc_info.value).lower()
 
-    @patch("cyclisme_training_logs.ai_providers.ollama.requests.post")
+    @patch("magma_cycling.ai_providers.ollama.requests.post")
     def test_analyze_http_error(self, mock_post):
         """Test handling of HTTP error."""
         mock_response = MagicMock()
@@ -209,7 +209,7 @@ class TestOllamaAnalyzer:
 
         assert "failed" in str(exc_info.value).lower() or "error" in str(exc_info.value).lower()
 
-    @patch("cyclisme_training_logs.ai_providers.ollama.requests.post")
+    @patch("magma_cycling.ai_providers.ollama.requests.post")
     def test_analyze_invalid_json_response(self, mock_post):
         """Test handling of invalid JSON response."""
         mock_response = MagicMock()
@@ -224,7 +224,7 @@ class TestOllamaAnalyzer:
 
         assert "failed" in str(exc_info.value).lower()
 
-    @patch("cyclisme_training_logs.ai_providers.ollama.requests.post")
+    @patch("magma_cycling.ai_providers.ollama.requests.post")
     def test_analyze_missing_response_field(self, mock_post):
         """Test handling when response field is missing."""
         mock_response = MagicMock()
@@ -240,7 +240,7 @@ class TestOllamaAnalyzer:
 
     # === Provider Info Tests ===
 
-    @patch("cyclisme_training_logs.ai_providers.ollama.requests.get")
+    @patch("magma_cycling.ai_providers.ollama.requests.get")
     def test_get_provider_info(self, mock_get):
         """Test get_provider_info returns correct information."""
         mock_response = MagicMock()
@@ -256,7 +256,7 @@ class TestOllamaAnalyzer:
         assert info["requires_api_key"] is False
         assert "$0" in info["cost_input"]
 
-    @patch("cyclisme_training_logs.ai_providers.ollama.requests.get")
+    @patch("magma_cycling.ai_providers.ollama.requests.get")
     def test_get_provider_info_structure(self, mock_get):
         """Test provider info has expected structure."""
         mock_response = MagicMock()
@@ -273,7 +273,7 @@ class TestOllamaAnalyzer:
         assert "host" in info
         assert "privacy" in info
 
-    @patch("cyclisme_training_logs.ai_providers.ollama.requests.get")
+    @patch("magma_cycling.ai_providers.ollama.requests.get")
     def test_validate_config_success(self, mock_get):
         """Test config validation returns True when server accessible."""
         mock_response = MagicMock()
@@ -288,7 +288,7 @@ class TestOllamaAnalyzer:
         # Verify it called /api/tags endpoint
         mock_get.assert_called_once_with("http://localhost:11434/api/tags", timeout=5)
 
-    @patch("cyclisme_training_logs.ai_providers.ollama.requests.get")
+    @patch("magma_cycling.ai_providers.ollama.requests.get")
     def test_validate_config_server_offline(self, mock_get):
         """Test config validation returns False when server offline."""
         mock_get.side_effect = requests.exceptions.ConnectionError("Cannot connect")
@@ -298,7 +298,7 @@ class TestOllamaAnalyzer:
 
         assert is_valid is False
 
-    @patch("cyclisme_training_logs.ai_providers.ollama.requests.get")
+    @patch("magma_cycling.ai_providers.ollama.requests.get")
     def test_validate_config_timeout(self, mock_get):
         """Test config validation returns False on timeout."""
         mock_get.side_effect = requests.exceptions.Timeout("Timeout")
@@ -308,7 +308,7 @@ class TestOllamaAnalyzer:
 
         assert is_valid is False
 
-    @patch("cyclisme_training_logs.ai_providers.ollama.requests.get")
+    @patch("magma_cycling.ai_providers.ollama.requests.get")
     def test_validate_config_http_error(self, mock_get):
         """Test config validation returns False on HTTP error."""
         mock_response = MagicMock()
@@ -365,7 +365,7 @@ class TestOllamaAnalyzer:
         assert analyzer is not None
         assert analyzer.provider == AIProvider.OLLAMA
 
-    @patch("cyclisme_training_logs.ai_providers.ollama.requests.get")
+    @patch("magma_cycling.ai_providers.ollama.requests.get")
     def test_provider_info_status_ready_when_online(self, mock_get):
         """Test that status is 'ready' when server is online."""
         mock_response = MagicMock()
@@ -378,7 +378,7 @@ class TestOllamaAnalyzer:
 
         assert info["status"] == "ready"
 
-    @patch("cyclisme_training_logs.ai_providers.ollama.requests.get")
+    @patch("magma_cycling.ai_providers.ollama.requests.get")
     def test_provider_info_status_offline_when_unavailable(self, mock_get):
         """Test that status is 'server_offline' when server unavailable."""
         mock_get.side_effect = requests.exceptions.ConnectionError("Cannot connect")

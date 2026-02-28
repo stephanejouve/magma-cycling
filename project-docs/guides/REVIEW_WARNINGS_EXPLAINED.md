@@ -102,7 +102,7 @@ exclude = [
 **Alternatives :**
 ```bash
 # Générer manuellement si nécessaire
-poetry run pydeps cyclisme_training_logs --max-bacon=2 -o deps.svg
+poetry run pydeps magma_cycling --max-bacon=2 -o deps.svg
 
 # Ou utiliser pipdeptree
 poetry run pipdeptree

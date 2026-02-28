@@ -385,7 +385,7 @@ graph TB
 # workflow_coach.py:109 (à ajouter)
 def validate_template_format(self, template: dict) -> bool:
     """Valider format Intervals.icu dans template"""
-    from cyclisme_training_logs.intervals_format_validator import IntervalsFormatValidator
+    from magma_cycling.intervals_format_validator import IntervalsFormatValidator
     validator = IntervalsFormatValidator()
 
     format_str = template.get('intervals_icu_format', '')

@@ -74,7 +74,7 @@ git commit -m "docs(roadmap): Add Test History Tracking proposal to backlog"
 # → Nouvelle version ROADMAP créée
 
 # Commit 2: Implémenter les changements de code
-git add cyclisme_training_logs/
+git add magma_cycling/
 git commit -m "feat(servo): Implement test history tracking [ROADMAP@abc1234]"
 # → Référence la nouvelle version!
 ```
@@ -83,7 +83,7 @@ git commit -m "feat(servo): Implement test history tracking [ROADMAP@abc1234]"
 
 ```bash
 # Tout dans 1 commit
-git add project-docs/ROADMAP.md cyclisme_training_logs/
+git add project-docs/ROADMAP.md magma_cycling/
 git commit -m "feat(servo): Implement feature [ROADMAP modified]"
 # → Tag spécial car ROADMAP inclus
 ```

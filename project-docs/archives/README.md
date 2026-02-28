@@ -25,7 +25,7 @@ Archives complètes du projet pour Claude Code et MOA
 Utilise le système de contrôle par flag pour déclencher l'archivage au prochain run du bot:
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 ./scripts/maintenance/request_archive.sh
 
 # Forcer création immédiate (optionnel)
@@ -41,7 +41,7 @@ poetry run project-clean
 Création directe sans passer par le bot de nettoyage:
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 ./scripts/backup/create_claude_code_archive.sh
 # Archive créée dans: project-docs/archives/claude-code/
 ```

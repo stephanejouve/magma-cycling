@@ -103,7 +103,7 @@ return result_inject.returncode == 0
 **Option 2: Utiliser TimelineInjector directement (Plus propre)**
 
 ```python
-from cyclisme_training_logs.core.timeline_injector import TimelineInjector
+from magma_cycling.core.timeline_injector import TimelineInjector
 
 def analyze_activity(self, activity: Dict) -> bool:
     """Analyze activity and inject chronologically."""

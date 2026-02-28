@@ -25,7 +25,7 @@ Le package external fournit:
 zwift_models
 ------------
 
-.. automodule:: cyclisme_training_logs.external.zwift_models
+.. automodule:: magma_cycling.external.zwift_models
    :members:
    :undoc-members:
    :show-inheritance:
@@ -33,37 +33,37 @@ zwift_models
 Enums
 ~~~~~
 
-.. autoclass:: cyclisme_training_logs.external.zwift_models.ZwiftCategory
+.. autoclass:: magma_cycling.external.zwift_models.ZwiftCategory
    :members:
    :undoc-members:
 
-.. autoclass:: cyclisme_training_logs.external.zwift_models.SegmentType
+.. autoclass:: magma_cycling.external.zwift_models.SegmentType
    :members:
    :undoc-members:
 
 Dataclasses
 ~~~~~~~~~~~
 
-.. autoclass:: cyclisme_training_logs.external.zwift_models.ZwiftWorkoutSegment
+.. autoclass:: magma_cycling.external.zwift_models.ZwiftWorkoutSegment
    :members:
    :undoc-members:
 
-.. autoclass:: cyclisme_training_logs.external.zwift_models.ZwiftWorkout
+.. autoclass:: magma_cycling.external.zwift_models.ZwiftWorkout
    :members:
    :undoc-members:
 
-.. autoclass:: cyclisme_training_logs.external.zwift_models.WorkoutSearchCriteria
+.. autoclass:: magma_cycling.external.zwift_models.WorkoutSearchCriteria
    :members:
    :undoc-members:
 
-.. autoclass:: cyclisme_training_logs.external.zwift_models.WorkoutMatch
+.. autoclass:: magma_cycling.external.zwift_models.WorkoutMatch
    :members:
    :undoc-members:
 
 zwift_client
 ------------
 
-.. automodule:: cyclisme_training_logs.external.zwift_client
+.. automodule:: magma_cycling.external.zwift_client
    :members:
    :undoc-members:
    :show-inheritance:
@@ -71,7 +71,7 @@ zwift_client
 Main Class
 ~~~~~~~~~~
 
-.. autoclass:: cyclisme_training_logs.external.zwift_client.ZwiftWorkoutClient
+.. autoclass:: magma_cycling.external.zwift_client.ZwiftWorkoutClient
    :members:
    :undoc-members:
    :special-members: __init__
@@ -79,7 +79,7 @@ Main Class
 zwift_converter
 ---------------
 
-.. automodule:: cyclisme_training_logs.external.zwift_converter
+.. automodule:: magma_cycling.external.zwift_converter
    :members:
    :undoc-members:
    :show-inheritance:
@@ -87,14 +87,14 @@ zwift_converter
 Main Class
 ~~~~~~~~~~
 
-.. autoclass:: cyclisme_training_logs.external.zwift_converter.ZwiftWorkoutConverter
+.. autoclass:: magma_cycling.external.zwift_converter.ZwiftWorkoutConverter
    :members:
    :undoc-members:
 
 zwift_scraper
 -------------
 
-.. automodule:: cyclisme_training_logs.external.zwift_scraper
+.. automodule:: magma_cycling.external.zwift_scraper
    :members:
    :undoc-members:
    :show-inheritance:
@@ -102,14 +102,14 @@ zwift_scraper
 Main Class
 ~~~~~~~~~~
 
-.. autoclass:: cyclisme_training_logs.external.zwift_scraper.ZwiftWorkoutScraper
+.. autoclass:: magma_cycling.external.zwift_scraper.ZwiftWorkoutScraper
    :members:
    :undoc-members:
 
 zwift_seed_data
 ---------------
 
-.. automodule:: cyclisme_training_logs.external.zwift_seed_data
+.. automodule:: magma_cycling.external.zwift_seed_data
    :members:
    :undoc-members:
    :show-inheritance:
@@ -122,7 +122,7 @@ Recherche Workout
 
 .. code-block:: python
 
-    from cyclisme_training_logs.external import (
+    from magma_cycling.external import (
         ZwiftWorkoutClient,
         WorkoutSearchCriteria
     )
@@ -157,7 +157,7 @@ Conversion Format
 
 .. code-block:: python
 
-    from cyclisme_training_logs.external import (
+    from magma_cycling.external import (
         ZwiftWorkoutConverter,
         ZwiftWorkout
     )
@@ -183,10 +183,10 @@ Seeding Cache
 
 .. code-block:: python
 
-    from cyclisme_training_logs.external.zwift_seed_data import (
+    from magma_cycling.external.zwift_seed_data import (
         get_zwift_camp_baseline_2025
     )
-    from cyclisme_training_logs.external import ZwiftWorkoutClient
+    from magma_cycling.external import ZwiftWorkoutClient
 
     client = ZwiftWorkoutClient()
 

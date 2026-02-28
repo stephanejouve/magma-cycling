@@ -1,10 +1,11 @@
 # Cyclisme Training Logs
 
-[![CI](https://github.com/stephanejouve/cyclisme-training-logs/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/stephanejouve/cyclisme-training-logs/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/stephanejouve/cyclisme-training-logs/branch/main/graph/badge.svg?token=K39R7YEOPN)](https://codecov.io/gh/stephanejouve/cyclisme-training-logs)
+[![CI](https://github.com/stephanejouve/magma-cycling/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/stephanejouve/magma-cycling/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/stephanejouve/magma-cycling/branch/main/graph/badge.svg?token=K39R7YEOPN)](https://codecov.io/gh/stephanejouve/magma-cycling)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Poetry](https://img.shields.io/badge/poetry-managed-blue)](https://python-poetry.org/)
 [![Quality](https://img.shields.io/badge/Quality-Production%20Ready-brightgreen)](CODING_STANDARDS.md)
+[![MCP Tools](https://img.shields.io/badge/MCP_tools-45-8A2BE2)](magma_cycling/_mcp/)
 
 A personal cycling training log system integrating Intervals.icu, AI coaching, and structured workout management.
 
@@ -13,8 +14,8 @@ A personal cycling training log system integrating Intervals.icu, AI coaching, a
 ## Quick Start
 
 ```bash
-git clone https://github.com/stephanejouve/cyclisme-training-logs.git
-cd cyclisme-training-logs
+git clone https://github.com/stephanejouve/magma-cycling.git
+cd magma-cycling
 poetry install
 cp .env.example .env  # edit with your API key and athlete ID
 poetry run workflow-coach
@@ -66,8 +67,8 @@ poetry run workflow-coach
 curl -sSL https://install.python-poetry.org | python3 -
 
 # Clone and install
-git clone https://github.com/stephanejouve/cyclisme-training-logs.git
-cd cyclisme-training-logs
+git clone https://github.com/stephanejouve/magma-cycling.git
+cd magma-cycling
 poetry install
 ```
 
@@ -97,7 +98,7 @@ OLLAMA_URL=http://localhost:11434
 
 **Get Brevo credentials (optional):** Free account at [brevo.com](https://www.brevo.com) → Settings → SMTP & API → API Keys.
 
-> All `.env` variables must be accessed through `cyclisme_training_logs/config.py`. Direct env reading in individual modules is prohibited.
+> All `.env` variables must be accessed through `magma_cycling/config.py`. Direct env reading in individual modules is prohibited.
 
 ---
 
@@ -159,8 +160,8 @@ poetry run --help
 ## Architecture
 
 ```
-cyclisme-training-logs/
-├── cyclisme_training_logs/      # Production code
+magma-cycling/
+├── magma_cycling/      # Production code
 │   ├── intelligence/            # Training intelligence (learnings, PID)
 │   ├── monitoring/              # Adherence monitoring, pattern analysis
 │   ├── planning/                # Planning manager, weekly planner
@@ -200,15 +201,15 @@ poetry run pytest tests/monitoring/ -v
 poetry run pytest tests/workflows/ -v
 
 # With coverage
-poetry run pytest tests/ --cov=cyclisme_training_logs --cov-report=html
+poetry run pytest tests/ --cov=magma_cycling --cov-report=html
 ```
 
 ### Code Quality
 
 ```bash
-poetry run ruff check cyclisme_training_logs/   # lint
-poetry run black cyclisme_training_logs/        # format
-poetry run mypy cyclisme_training_logs/         # type check
+poetry run ruff check magma_cycling/   # lint
+poetry run black magma_cycling/        # format
+poetry run mypy magma_cycling/         # type check
 poetry run poe check                            # all checks (format, lint, types, tests)
 ```
 

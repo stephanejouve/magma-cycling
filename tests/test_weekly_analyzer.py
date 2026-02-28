@@ -13,7 +13,7 @@ Created: 2025-12-26
 
 import pytest
 
-from cyclisme_training_logs.analyzers.weekly_analyzer import WeeklyAnalyzer
+from magma_cycling.analyzers.weekly_analyzer import WeeklyAnalyzer
 
 
 @pytest.fixture

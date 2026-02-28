@@ -146,7 +146,7 @@ Par défaut : **50 TSS**
 
 Pour modifier (code) :
 ```python
-# cyclisme_training_logs/daily_sync.py
+# magma_cycling/daily_sync.py
 compensation_result = evaluate_weekly_deficit(
     week_id=week_id,
     check_date=check_date,
@@ -227,7 +227,7 @@ compensation_result = evaluate_weekly_deficit(
 ### Modules Créés
 
 ```
-cyclisme_training_logs/
+magma_cycling/
 ├── workflows/
 │   └── proactive_compensation.py        # Core logic
 │       ├── evaluate_weekly_deficit()    # Détection déficit
@@ -307,8 +307,8 @@ poetry run pytest tests/workflows/test_proactive_compensation.py -v
 
 # Coverage
 poetry run pytest tests/workflows/test_proactive_compensation.py \
-  --cov=cyclisme_training_logs.workflows.proactive_compensation \
-  --cov=cyclisme_training_logs.intelligence.compensation_strategies \
+  --cov=magma_cycling.workflows.proactive_compensation \
+  --cov=magma_cycling.intelligence.compensation_strategies \
   --cov-report=term-missing
 ```
 

@@ -24,7 +24,7 @@ if: None                    # ❌ Wrong field
 
 ## TASK 1: Fix WeeklyAnalyzer Field Mapping
 
-**File:** `cyclisme_training_logs/analyzers/weekly_analyzer.py`
+**File:** `magma_cycling/analyzers/weekly_analyzer.py`
 
 **Find the section that generates workout history** (likely around line 100-150):
 ```python
@@ -71,7 +71,7 @@ def _generate_workout_history(self, data: Dict) -> str:
 
 ## TASK 3: Add Field Mapping Documentation
 
-**File:** `cyclisme_training_logs/analyzers/weekly_analyzer.py`
+**File:** `magma_cycling/analyzers/weekly_analyzer.py`
 
 **Add to class docstring:**
 ```python
@@ -152,7 +152,7 @@ poetry run pytest tests/test_weekly_analyzer.py -v
 
 ## GIT WORKFLOW
 ```bash
-git add cyclisme_training_logs/analyzers/weekly_analyzer.py
+git add magma_cycling/analyzers/weekly_analyzer.py
 git commit -m "fix(weekly): use correct ICU field names for TSS/IF in reports
 
 - Map training_load → icu_training_load (TSS)
@@ -177,7 +177,7 @@ git push origin main
 - 🔑 `icu_intensity` is percentage (needs /100 for IF)
 
 **Files Modified:**
-1. `cyclisme_training_logs/analyzers/weekly_analyzer.py` (field mapping)
+1. `magma_cycling/analyzers/weekly_analyzer.py` (field mapping)
 
 **Estimated Time:** 15-20 minutes
 

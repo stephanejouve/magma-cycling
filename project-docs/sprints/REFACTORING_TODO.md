@@ -66,7 +66,7 @@
    ```python
    """Audit .env modifications avant commit."""
    import os
-   from cyclisme_training_logs.planning.audit_log import AuditLog, OperationType
+   from magma_cycling.planning.audit_log import AuditLog, OperationType
 
    def audit_env_change():
        # Comparer .env avec .env.backup
@@ -160,7 +160,7 @@ scripts/
 **Créer un module unifié :**
 
 ```
-cyclisme_training_logs/api/
+magma_cycling/api/
 ├── __init__.py
 └── intervals_client.py  (nouveau)
 ```
@@ -339,19 +339,19 @@ class IntervalsClient:
 ### Plan de Migration
 
 **Étape 1 : Créer le module unifié**
-- [ ] Créer `cyclisme_training_logs/api/__init__.py`
-- [ ] Créer `cyclisme_training_logs/api/intervals_client.py`
+- [ ] Créer `magma_cycling/api/__init__.py`
+- [ ] Créer `magma_cycling/api/intervals_client.py`
 - [ ] Copier l'implémentation la plus complète (prepare_analysis.py)
 - [ ] Ajouter les méthodes manquantes des autres versions
 
 **Étape 2 : Migrer les imports (16 fichiers)**
 ```python
 # AVANT
-from cyclisme_training_logs.sync_intervals import IntervalsAPI
-from cyclisme_training_logs.prepare_analysis import IntervalsAPI
+from magma_cycling.sync_intervals import IntervalsAPI
+from magma_cycling.prepare_analysis import IntervalsAPI
 
 # APRÈS
-from cyclisme_training_logs.api.intervals_client import IntervalsClient
+from magma_cycling.api.intervals_client import IntervalsClient
 ```
 
 **Fichiers à modifier :**
@@ -422,7 +422,7 @@ tsb = ctl - atl
 **Créer module utilities :**
 
 ```
-cyclisme_training_logs/utils/
+magma_cycling/utils/
 ├── __init__.py
 └── metrics.py  (nouveau)
 ```
@@ -568,8 +568,8 @@ def format_metrics_summary(metrics: Dict[str, float]) -> str:
 ### Plan de Migration
 
 **Étape 1 : Créer le module**
-- [ ] Créer `cyclisme_training_logs/utils/__init__.py`
-- [ ] Créer `cyclisme_training_logs/utils/metrics.py`
+- [ ] Créer `magma_cycling/utils/__init__.py`
+- [ ] Créer `magma_cycling/utils/metrics.py`
 
 **Étape 2 : Remplacer dans weekly_aggregator.py**
 ```python
@@ -584,7 +584,7 @@ metrics.append({
 })
 
 # APRÈS
-from cyclisme_training_logs.utils.metrics import extract_fitness_metrics
+from magma_cycling.utils.metrics import extract_fitness_metrics
 metrics.append(extract_fitness_metrics(wellness))
 ```
 
@@ -636,7 +636,7 @@ metrics.append(extract_fitness_metrics(wellness))
 **Créer module planning :**
 
 ```
-cyclisme_training_logs/planning/
+magma_cycling/planning/
 ├── __init__.py
 └── manager.py  (nouveau)
 ```
@@ -655,7 +655,7 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime
 import logging
 
-from cyclisme_training_logs.config import get_data_config
+from magma_cycling.config import get_data_config
 
 logger = logging.getLogger(__name__)
 
@@ -886,8 +886,8 @@ class WeekPlanningManager:
 ### Plan de Migration
 
 **Étape 1 : Créer le module**
-- [ ] Créer `cyclisme_training_logs/planning/__init__.py`
-- [ ] Créer `cyclisme_training_logs/planning/manager.py`
+- [ ] Créer `magma_cycling/planning/__init__.py`
+- [ ] Créer `magma_cycling/planning/manager.py`
 
 **Étape 2 : Migrer weekly_planner.py**
 ```python
@@ -897,7 +897,7 @@ def save_planning_json(self, workouts_data: list = None):
     # ... 40 lignes de code
 
 # APRÈS
-from cyclisme_training_logs.planning.manager import WeekPlanningManager
+from magma_cycling.planning.manager import WeekPlanningManager
 
 def save_planning_json(self, workouts_data: list = None):
     manager = WeekPlanningManager(self.planning_dir)
@@ -956,7 +956,7 @@ start_date = reference_date + timedelta(weeks=weeks_offset)
 **Ajouter au module utilities :**
 
 ```
-cyclisme_training_logs/utils/
+magma_cycling/utils/
 ├── __init__.py
 ├── metrics.py
 └── dates.py  (nouveau)
@@ -1175,7 +1175,7 @@ def format_iso_date(date: datetime) -> str:
 ### Plan de Migration
 
 **Étape 1 : Créer le module**
-- [ ] Créer `cyclisme_training_logs/utils/dates.py`
+- [ ] Créer `magma_cycling/utils/dates.py`
 
 **Étape 2 : Remplacer dans weekly_planner.py**
 ```python
@@ -1184,7 +1184,7 @@ week_int = int(self.week_number[1:])
 next_week = f"S{week_int + 1:03d}"
 
 # APRÈS
-from cyclisme_training_logs.utils.dates import next_week_id
+from magma_cycling.utils.dates import next_week_id
 next_week = next_week_id(self.week_number)
 ```
 
@@ -1234,7 +1234,7 @@ if wellness:
 **Créer module data :**
 
 ```
-cyclisme_training_logs/data/
+magma_cycling/data/
 ├── __init__.py
 └── fetcher.py  (nouveau)
 ```
@@ -1250,9 +1250,9 @@ Facade for fetching data from Intervals.icu.
 from typing import List, Dict, Optional, Any
 from datetime import datetime
 
-from cyclisme_training_logs.api.intervals_client import IntervalsClient
-from cyclisme_training_logs.utils.metrics import extract_fitness_metrics, extract_sleep_metrics
-from cyclisme_training_logs.utils.dates import format_iso_date
+from magma_cycling.api.intervals_client import IntervalsClient
+from magma_cycling.utils.metrics import extract_fitness_metrics, extract_sleep_metrics
+from magma_cycling.utils.dates import format_iso_date
 
 
 class IntervalsFetcher:
@@ -1373,8 +1373,8 @@ class IntervalsFetcher:
 ### Plan de Migration
 
 **Étape 1 : Créer le module**
-- [ ] Créer `cyclisme_training_logs/data/__init__.py`
-- [ ] Créer `cyclisme_training_logs/data/fetcher.py`
+- [ ] Créer `magma_cycling/data/__init__.py`
+- [ ] Créer `magma_cycling/data/fetcher.py`
 
 **Étape 2 : Migrer prepare_analysis.py**
 ```python
@@ -1384,7 +1384,7 @@ wellness = wellness_list[0] if wellness_list else None
 ctl = wellness.get('ctl', 0) if wellness else 0
 
 # APRÈS
-from cyclisme_training_logs.data.fetcher import IntervalsFetcher
+from magma_cycling.data.fetcher import IntervalsFetcher
 fetcher = IntervalsFetcher(api)
 data = fetcher.fetch_wellness_for_date(date)
 ctl = data['fitness_metrics']['ctl']

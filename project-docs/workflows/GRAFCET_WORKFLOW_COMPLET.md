@@ -301,10 +301,10 @@ graph LR
 
 | Fichier | Lignes | Responsabilité | Points Clés |
 |---------|--------|----------------|-------------|
-| **cyclisme_training_logs/weekly_planner.py** | 592 | Génération planning hebdomadaire | Lines 173-473: generate_planning_prompt()<br>Lines 226-245: Règles format Intervals.icu<br>Lines 288-298: VALID_TYPES<br>Lines 484-527: run() |
-| **cyclisme_training_logs/workflow_coach.py** | 2370 | Orchestration analyse + servo mode | Lines 1855-2024: step_6b_servo_control()<br>Lines 414-482: _apply_lighten()<br>Lines 307-346: _upload_workout_intervals()<br>Lines 185-211: parse_ai_modifications() |
-| **cyclisme_training_logs/prepare_analysis.py** | 1200+ | API Intervals.icu | Lines 108-146: create_event()<br>Lines 148-171: get_events()<br>Lines 173-195: get_activities() |
-| **cyclisme_training_logs/rest_and_cancellations.py** | 589 | Validation planning | Line 41: VALID_STATUSES<br>Line 42: VALID_TYPES<br>Lines 49-86: load_week_planning()<br>Lines 88-132: validate_week_planning() |
+| **magma_cycling/weekly_planner.py** | 592 | Génération planning hebdomadaire | Lines 173-473: generate_planning_prompt()<br>Lines 226-245: Règles format Intervals.icu<br>Lines 288-298: VALID_TYPES<br>Lines 484-527: run() |
+| **magma_cycling/workflow_coach.py** | 2370 | Orchestration analyse + servo mode | Lines 1855-2024: step_6b_servo_control()<br>Lines 414-482: _apply_lighten()<br>Lines 307-346: _upload_workout_intervals()<br>Lines 185-211: parse_ai_modifications() |
+| **magma_cycling/prepare_analysis.py** | 1200+ | API Intervals.icu | Lines 108-146: create_event()<br>Lines 148-171: get_events()<br>Lines 173-195: get_activities() |
+| **magma_cycling/rest_and_cancellations.py** | 589 | Validation planning | Line 41: VALID_STATUSES<br>Line 42: VALID_TYPES<br>Lines 49-86: load_week_planning()<br>Lines 88-132: validate_week_planning() |
 
 ### 5.2 Données et Templates
 

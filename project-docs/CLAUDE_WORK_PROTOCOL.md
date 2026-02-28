@@ -20,8 +20,8 @@ poetry-scripts
 rg -i "nom_fonctionnalité" --type py
 
 # 3. Lister fichiers projet planning/workflows/scripts
-ls -la cyclisme_training_logs/planning/
-ls -la cyclisme_training_logs/workflows/
+ls -la magma_cycling/planning/
+ls -la magma_cycling/workflows/
 ls -la scripts/
 
 # 4. Chercher dans git log
@@ -109,7 +109,7 @@ def push_to_intervals(event_data):
 subprocess.run(["poetry", "run", "upload-workouts", ...])
 
 # ✅ Réutiliser intervals_client
-from cyclisme_training_logs.config import create_intervals_client
+from magma_cycling.config import create_intervals_client
 client = create_intervals_client()
 ```
 
@@ -192,7 +192,7 @@ poetry-scripts = lister scripts
 ### Fichiers Clés À Connaître
 
 ```
-cyclisme_training_logs/
+magma_cycling/
 ├── config/
 │   ├── intervals_config.py       # API Intervals.icu
 │   └── athlete_profile.py        # Profil athlète
@@ -223,7 +223,7 @@ project-docs/
 
 ```python
 # Pattern 1: Lecture Intervals.icu
-from cyclisme_training_logs.config import create_intervals_client
+from magma_cycling.config import create_intervals_client
 client = create_intervals_client()
 events = client.get_events(oldest="2026-01-01", newest="2026-01-07")
 

@@ -8,14 +8,14 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from cyclisme_training_logs.intelligence.training_intelligence import ConfidenceLevel
-from cyclisme_training_logs.scripts.backfill_intelligence import IntervalsICUBackfiller
+from magma_cycling.intelligence.training_intelligence import ConfidenceLevel
+from magma_cycling.scripts.backfill_intelligence import IntervalsICUBackfiller
 
 
 @pytest.fixture
 def mock_intervals_client():
     """Mock IntervalsClient for testing."""
-    with patch("cyclisme_training_logs.scripts.backfill_intelligence.IntervalsClient") as mock:
+    with patch("magma_cycling.scripts.backfill_intelligence.IntervalsClient") as mock:
         yield mock
 
 

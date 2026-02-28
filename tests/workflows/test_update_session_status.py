@@ -17,8 +17,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from cyclisme_training_logs.planning.models import WeeklyPlan
-from cyclisme_training_logs.update_session_status import (
+from magma_cycling.planning.models import WeeklyPlan
+from magma_cycling.update_session_status import (
     STATUSES_TO_DELETE,
     find_event_by_session,
     sync_with_intervals,
@@ -31,7 +31,7 @@ class TestUpdateSessionStatusLocal:
     @pytest.fixture
     def mock_config(self, tmp_path):
         """Mock Control Tower to use tmp_path for planning."""
-        from cyclisme_training_logs.planning.control_tower import planning_tower
+        from magma_cycling.planning.control_tower import planning_tower
 
         # Save original path
         original_planning_dir = planning_tower.planning_dir
@@ -96,7 +96,7 @@ class TestUpdateSessionStatusLocal:
 
     def test_update_session_to_completed(self, temp_planning_file, tmp_path, mock_config):
         """Test updating session status to completed."""
-        from cyclisme_training_logs.weekly_planner import WeeklyPlanner
+        from magma_cycling.weekly_planner import WeeklyPlanner
 
         # Create planner
         planner = WeeklyPlanner(
@@ -119,7 +119,7 @@ class TestUpdateSessionStatusLocal:
         self, temp_planning_file, tmp_path, mock_config
     ):
         """Test updating session to cancelled with reason."""
-        from cyclisme_training_logs.weekly_planner import WeeklyPlanner
+        from magma_cycling.weekly_planner import WeeklyPlanner
 
         planner = WeeklyPlanner(
             week_number="S999",
@@ -140,7 +140,7 @@ class TestUpdateSessionStatusLocal:
 
     def test_update_session_to_skipped(self, temp_planning_file, tmp_path, mock_config):
         """Test updating session to skipped."""
-        from cyclisme_training_logs.weekly_planner import WeeklyPlanner
+        from magma_cycling.weekly_planner import WeeklyPlanner
 
         planner = WeeklyPlanner(
             week_number="S999",
@@ -161,7 +161,7 @@ class TestUpdateSessionStatusLocal:
 
     def test_update_nonexistent_session_fails(self, temp_planning_file, tmp_path, mock_config):
         """Test that updating nonexistent session returns False."""
-        from cyclisme_training_logs.weekly_planner import WeeklyPlanner
+        from magma_cycling.weekly_planner import WeeklyPlanner
 
         planner = WeeklyPlanner(
             week_number="S999",
@@ -177,7 +177,7 @@ class TestUpdateSessionStatusLocal:
 
     def test_last_updated_is_modified(self, temp_planning_file, tmp_path, mock_config):
         """Test that last_updated timestamp is updated."""
-        from cyclisme_training_logs.weekly_planner import WeeklyPlanner
+        from magma_cycling.weekly_planner import WeeklyPlanner
 
         # Load original
         plan_before = WeeklyPlan.from_json(temp_planning_file)

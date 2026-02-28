@@ -1,7 +1,7 @@
-cyclisme_training_logs
+magma_cycling
 ======================
 
 .. toctree::
    :maxdepth: 4
 
-   cyclisme_training_logs
+   magma_cycling

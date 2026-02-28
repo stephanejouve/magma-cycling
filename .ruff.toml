@@ -1,4 +1,4 @@
-# Ruff configuration for cyclisme-training-logs
+# Ruff configuration for magma-cycling
 
 # Line length (match black's default)
 line-length = 120

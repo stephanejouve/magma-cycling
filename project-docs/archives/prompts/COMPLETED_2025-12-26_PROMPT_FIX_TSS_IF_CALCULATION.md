@@ -20,7 +20,7 @@ S052-04: Durée: 55min | TSS: 0 | IF: 0.00
 
 ## TASK 1: Refactor WeeklyAggregator to Use DailyAggregator
 
-**File:** `cyclisme_training_logs/analyzers/weekly_aggregator.py`
+**File:** `magma_cycling/analyzers/weekly_aggregator.py`
 
 **Current structure (BROKEN):**
 ```python
@@ -32,7 +32,7 @@ def collect_raw_data(self) -> Dict:
 
 **New structure (FIXED):**
 ```python
-from cyclisme_training_logs.analyzers.daily_aggregator import DailyAggregator
+from magma_cycling.analyzers.daily_aggregator import DailyAggregator
 from datetime import timedelta
 
 def collect_enriched_data(self) -> Dict:
@@ -82,7 +82,7 @@ def _aggregate_week_metrics(self, activities: List[Dict]) -> Dict:
 
 ## TASK 2: Update WeeklyWorkflow to Use New Method
 
-**File:** `cyclisme_training_logs/workflows/workflow_weekly.py`
+**File:** `magma_cycling/workflows/workflow_weekly.py`
 
 **Find:**
 ```python
@@ -98,7 +98,7 @@ enriched_data = aggregator.collect_enriched_data()
 
 ## TASK 3: Verify DailyAggregator Interface
 
-**File:** `cyclisme_training_logs/analyzers/daily_aggregator.py`
+**File:** `magma_cycling/analyzers/daily_aggregator.py`
 
 **Ensure it has:**
 ```python
@@ -121,7 +121,7 @@ class DailyAggregator:
 
 ## TASK 4: Update WeeklyAggregator Docstring
 
-**File:** `cyclisme_training_logs/analyzers/weekly_aggregator.py`
+**File:** `magma_cycling/analyzers/weekly_aggregator.py`
 
 **Update module docstring:**
 ```python
@@ -166,8 +166,8 @@ poetry run pytest tests/test_weekly_aggregator.py -v
 
 ## GIT WORKFLOW
 ```bash
-git add cyclisme_training_logs/analyzers/weekly_aggregator.py
-git add cyclisme_training_logs/workflows/workflow_weekly.py
+git add magma_cycling/analyzers/weekly_aggregator.py
+git add magma_cycling/workflows/workflow_weekly.py
 git commit -m "fix(weekly): reuse DailyAggregator logic for TSS/IF calculation
 
 - Refactor WeeklyAggregator.collect_raw_data() → collect_enriched_data()

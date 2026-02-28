@@ -52,7 +52,7 @@ Zero hard-coding - tous les seuils configurables par athlète.
 
 ## 📁 Nouveaux Modules Créés
 
-### 1. `cyclisme_training_logs/config/athlete_profile.py` (142 lignes)
+### 1. `magma_cycling/config/athlete_profile.py` (142 lignes)
 
 **Purpose:** Chargement profil athlète depuis variables d'environnement.
 
@@ -64,14 +64,14 @@ Zero hard-coding - tous les seuils configurables par athlète.
 
 **Usage Example:**
 ```python
-from cyclisme_training_logs.config import AthleteProfile
+from magma_cycling.config import AthleteProfile
 
 profile = AthleteProfile.from_env()
 print(f"Age: {profile.age}, FTP: {profile.ftp}W")
 print(f"Recovery: {profile.recovery_capacity}")
 ```
 
-### 2. `cyclisme_training_logs/config/thresholds.py` (212 lignes)
+### 2. `magma_cycling/config/thresholds.py` (212 lignes)
 
 **Purpose:** Seuils d'entraînement calibrés pour l'athlète.
 
@@ -83,14 +83,14 @@ print(f"Recovery: {profile.recovery_capacity}")
 
 **Usage Example:**
 ```python
-from cyclisme_training_logs.config import TrainingThresholds
+from magma_cycling.config import TrainingThresholds
 
 thresholds = TrainingThresholds.from_env()
 state = thresholds.get_tsb_state(tsb=-8)  # Returns "fatigued"
 risk = thresholds.is_overtraining_risk(tsb=-30, atl_ctl_ratio=2.0)  # True
 ```
 
-### 3. `cyclisme_training_logs/utils/metrics.py` (275 lignes)
+### 3. `magma_cycling/utils/metrics.py` (275 lignes)
 
 **Purpose:** Utilitaires centralisés pour manipulation CTL/ATL/TSB.
 
@@ -107,7 +107,7 @@ risk = thresholds.is_overtraining_risk(tsb=-30, atl_ctl_ratio=2.0)  # True
 
 **Usage Example:**
 ```python
-from cyclisme_training_logs.utils.metrics import (
+from magma_cycling.utils.metrics import (
     extract_wellness_metrics,
     format_metrics_display,
 )
@@ -259,7 +259,7 @@ ENABLE_RECOVERY_ANALYZER=false
 ### Before Sprint R2:
 
 ```
-cyclisme_training_logs/
+magma_cycling/
 ├── config.py  (original config)
 ├── weekly_analysis.py  (duplicate CTL/ATL/TSB logic)
 ├── rest_and_cancellations.py  (duplicate CTL/ATL/TSB logic)
@@ -270,7 +270,7 @@ cyclisme_training_logs/
 ### After Sprint R2:
 
 ```
-cyclisme_training_logs/
+magma_cycling/
 ├── config/
 │   ├── __init__.py  (exports all config functions)
 │   ├── config_base.py  (original config.py, renamed)
@@ -299,8 +299,8 @@ cyclisme_training_logs/
 
 **Proof:**
 - Tous les imports existants fonctionnent
-- `from cyclisme_training_logs.config import get_data_config` ✅
-- `from cyclisme_training_logs.config import AIProvidersConfig` ✅
+- `from magma_cycling.config import get_data_config` ✅
+- `from magma_cycling.config import AIProvidersConfig` ✅
 - 404 tests passing (0 regression)
 
 **Implementation:**
@@ -356,13 +356,13 @@ TSB_CRITICAL=-25  # Ajuster selon sensibilité athlète
 
 ```python
 # Charger configuration athlète
-from cyclisme_training_logs.config import AthleteProfile, TrainingThresholds
+from magma_cycling.config import AthleteProfile, TrainingThresholds
 
 profile = AthleteProfile.from_env()
 thresholds = TrainingThresholds.from_env()
 
 # Utiliser utilities métriques
-from cyclisme_training_logs.utils.metrics import (
+from magma_cycling.utils.metrics import (
     extract_wellness_metrics,
     calculate_tsb,
     format_metrics_display,
@@ -442,7 +442,7 @@ poetry run pytest tests/ -v
 - ✅ Zero breaking changes
 
 **Archive:**
-- 📦 `~/cyclisme-training-logs-sprint-r2-20260101.tar.gz`
+- 📦 `~/magma-cycling-sprint-r2-20260101.tar.gz`
 - Taille: 9.6 MB
 - Contenu: Projet complet (code + data)
 - Exclusions: .git, __pycache__, .venv, .cache, node_modules
@@ -450,7 +450,7 @@ poetry run pytest tests/ -v
 **Extraction:**
 ```bash
 cd ~
-tar -xzf cyclisme-training-logs-sprint-r2-20260101.tar.gz
+tar -xzf magma-cycling-sprint-r2-20260101.tar.gz
 ```
 
 **Status:** ✅ PRÊT POUR PRODUCTION

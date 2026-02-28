@@ -13,16 +13,16 @@ The Intervals.icu API returns a **list of dicts** (one per day), not a single di
 
 Find where wellness/metrics are fetched and parsed:
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 # Find wellness parsing
-grep -n "No wellness for" cyclisme_training_logs/**/*.py
+grep -n "No wellness for" magma_cycling/**/*.py
 
 # Find metrics parsing
-grep -n "No metrics for" cyclisme_training_logs/**/*.py
+grep -n "No metrics for" magma_cycling/**/*.py
 
 # Show context (20 lines before/after)
-grep -B 20 -A 10 "'list' object has no attribute 'get'" cyclisme_training_logs/**/*.py
+grep -B 20 -A 10 "'list' object has no attribute 'get'" magma_cycling/**/*.py
 ```
 
 ## Task 2: Expected API Response Format
@@ -104,20 +104,20 @@ The `weekly-planner` script doesn't load `.env` credentials.
 ## Task 1: Find Credentials Loading
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 # Find weekly_planner.py entry point
 find . -name "weekly_planner.py" -type f
 
 # Check how it loads credentials
-grep -n "IntervalsAPI" cyclisme_training_logs/weekly_planner.py
+grep -n "IntervalsAPI" magma_cycling/weekly_planner.py
 
 # Compare with working script (weekly_analysis.py)
-grep -B 5 -A 5 "IntervalsAPI" cyclisme_training_logs/weekly_analysis.py
+grep -B 5 -A 5 "IntervalsAPI" magma_cycling/weekly_analysis.py
 Task 2: Expected Pattern (from working scripts)
 Working example (weekly_analysis):
-from cyclisme_training_logs.prepare_analysis import IntervalsAPI
-from cyclisme_training_logs.utils import load_credentials
+from magma_cycling.prepare_analysis import IntervalsAPI
+from magma_cycling.utils import load_credentials
 
 # Load credentials
 athlete_id, api_key = load_credentials()
@@ -127,7 +127,7 @@ api = IntervalsAPI(athlete_id=athlete_id, api_key=api_key)
 Task 3: Apply Fix
 In weekly_planner.py, ensure credentials are loaded before IntervalsAPI init:
 # Add at top of main() or run():
-from cyclisme_training_logs.utils import load_credentials
+from magma_cycling.utils import load_credentials
 
 try:
     athlete_id, api_key = load_credentials()
@@ -137,7 +137,7 @@ except Exception as e:
     logger.warning("   Les métriques seront approximatives")
     api = None
 Task 4: Test
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 poetry run weekly-planner --week-id S074 --start-date 2025-12-29
 
 # Should show:
@@ -159,7 +159,7 @@ After inserting skipped session into workouts-history.md.
 ## Task 1: Diagnose Git State
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 # Check git status
 git status
@@ -178,13 +178,13 @@ Cause B: File not staged
 Cause C: Git user config missing
 	∙	Fix: Set user.name/user.email
 Task 3: Find Git Commit Code
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 # Find where git commit is called
-grep -n "git.*commit" cyclisme_training_logs/workflow_coach.py
+grep -n "git.*commit" magma_cycling/workflow_coach.py
 
 # Show context
-grep -B 10 -A 10 "git.*commit" cyclisme_training_logs/workflow_coach.py
+grep -B 10 -A 10 "git.*commit" magma_cycling/workflow_coach.py
 Task 4: Add Defensive Checks
 BEFORE (buggy):
 subprocess.run(['git', 'commit', '-m', message], check=True)
@@ -222,17 +222,17 @@ WARNING: Failed to fetch planned workouts: ‘IntervalsAPI’ object has no attr
 ## Task 1: Locate Bug
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 # Find where get_events is called
-grep -n "get_events" cyclisme_training_logs/**/*.py
+grep -n "get_events" magma_cycling/**/*.py
 
 # Check IntervalsAPI class definition
-grep -n "class IntervalsAPI" cyclisme_training_logs/prepare_analysis.py
-sed -n '/class IntervalsAPI/,/^class /p' cyclisme_training_logs/prepare_analysis.py
+grep -n "class IntervalsAPI" magma_cycling/prepare_analysis.py
+sed -n '/class IntervalsAPI/,/^class /p' magma_cycling/prepare_analysis.py
 Task 2: Check Method Existence
 List all methods in IntervalsAPI:
-grep -n "    def " cyclisme_training_logs/prepare_analysis.py | grep -A 2 IntervalsAPI
+grep -n "    def " magma_cycling/prepare_analysis.py | grep -A 2 IntervalsAPI
 Task 3: Add Missing Method (if needed)
 If get_events() doesn’t exist, add it:
 class IntervalsAPI:
@@ -296,7 +296,7 @@ class IntervalsAPI:
 
         return events
 Task 4: Test
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 # Re-run weekly analysis
 poetry run weekly-analysis --week S073 --start-date 2025-12-22

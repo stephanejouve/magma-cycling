@@ -45,7 +45,7 @@ import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-from cyclisme_training_logs.config import get_data_config, get_week_config
+from magma_cycling.config import get_data_config, get_week_config
 
 
 def calculate_week_start_date(week_id: str) -> date:
@@ -285,7 +285,7 @@ class EndOfWeekWorkflow:
                 print()
 
                 try:
-                    from cyclisme_training_logs.weekly_analysis import WeeklyAnalysis
+                    from magma_cycling.weekly_analysis import WeeklyAnalysis
 
                     # Run weekly-analysis programmatically
                     analysis = WeeklyAnalysis(
@@ -355,7 +355,7 @@ class EndOfWeekWorkflow:
             print()
 
             # Import and run PID evaluation
-            from cyclisme_training_logs.scripts.pid_daily_evaluation import (
+            from magma_cycling.scripts.pid_daily_evaluation import (
                 PIDDailyEvaluator,
             )
 
@@ -497,8 +497,8 @@ class EndOfWeekWorkflow:
             # Import dependencies
             import os
 
-            from cyclisme_training_logs.ai_providers.factory import AIProviderFactory
-            from cyclisme_training_logs.weekly_planner import WeeklyPlanner
+            from magma_cycling.ai_providers.factory import AIProviderFactory
+            from magma_cycling.weekly_planner import WeeklyPlanner
 
             # Build provider config from environment
             config = {
@@ -596,7 +596,7 @@ class EndOfWeekWorkflow:
         try:
             # Use upload-workouts validation (already integrated)
             # Parse workouts to validate
-            from cyclisme_training_logs.upload_workouts import WorkoutUploader
+            from magma_cycling.upload_workouts import WorkoutUploader
 
             # Create temporary uploader for validation only
             dummy_date = datetime.now()
@@ -650,7 +650,7 @@ class EndOfWeekWorkflow:
                 print(f"  📁 Fichier : {self.workouts_file}")
                 print()
 
-                from cyclisme_training_logs.upload_workouts import WorkoutUploader
+                from magma_cycling.upload_workouts import WorkoutUploader
 
                 uploader = WorkoutUploader(self.week_next, self.next_start_date)
                 workouts = uploader.parse_workouts_file(self.workouts_file)

@@ -17,7 +17,7 @@ Test Categories:
 from pathlib import Path
 from unittest.mock import Mock, mock_open, patch
 
-from cyclisme_training_logs.workflow_coach import WorkflowCoach
+from magma_cycling.workflow_coach import WorkflowCoach
 
 
 class TestWelcomeStep:
@@ -145,15 +145,15 @@ class TestMarkdownHelpers:
         assert "Tempo Session" in markdown or "ANNULÉE" in markdown
         assert "Fatigue excessive" in markdown or "2026-01-07" in markdown
 
-    @patch("cyclisme_training_logs.workflow_coach.WorkflowState")
-    @patch("cyclisme_training_logs.workflow_coach.TimelineInjector")
+    @patch("magma_cycling.workflow_coach.WorkflowState")
+    @patch("magma_cycling.workflow_coach.TimelineInjector")
     def test_insert_to_history_writes_markdown(
         self, mock_timeline_injector_class, mock_workflow_state_class
     ):
         """Test _insert_to_history calls TimelineInjector.inject_chronologically."""
         from datetime import date
 
-        from cyclisme_training_logs.core.timeline_injector import InjectionResult
+        from magma_cycling.core.timeline_injector import InjectionResult
 
         # Setup mock injector instance
         mock_injector = Mock()

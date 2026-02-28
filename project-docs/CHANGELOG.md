@@ -147,14 +147,14 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 - 0 PR/Issue references impactés (clean history)
 
 **Configuration standards**:
-- Enforcement: ALL .env access via `cyclisme_training_logs/config.py`
+- Enforcement: ALL .env access via `magma_cycling/config.py`
 - Prohibition: Direct .env reading by modules
 - Documentation: README + code comments + pre-commit reminder
 
 ### Release
 
 **GitHub Release v3.0.0** (25 Jan 2026):
-- URL: https://github.com/stephanejouve/cyclisme-training-logs/releases/tag/v3.0.0
+- URL: https://github.com/stephanejouve/magma-cycling/releases/tag/v3.0.0
 - Tag: v3.0.0
 - 206 commits depuis v2.0.0 (1er Jan 2026)
 - Release notes: Sprint R9 completion, LaunchAgents, ROADMAP reorganization
@@ -247,7 +247,7 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added - Analyse Di2 & Optimisation Synchro Shift
 
-**Extraction Données Di2** (`cyclisme_training_logs/api/intervals_client.py`, `cyclisme_training_logs/analyzers/weekly_aggregator.py`):
+**Extraction Données Di2** (`magma_cycling/api/intervals_client.py`, `magma_cycling/analyzers/weekly_aggregator.py`):
 - **IntervalsClient.get_activity_streams()** : Récupération streams temporels activités
   - Accès 17 types streams : FrontGear, RearGear, GearRatio, RearGearIndex, watts, heartrate, cadence, etc.
   - Format: List[dict] avec 'type' et 'data' fields
@@ -302,7 +302,7 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Fixed - Validateur Jours Repos
 
-**WorkoutUploader.validate_workout_notation()** (`cyclisme_training_logs/upload_workouts.py`):
+**WorkoutUploader.validate_workout_notation()** (`magma_cycling/upload_workouts.py`):
 - **Problème** : Validateur exigeait warmup/cooldown pour TOUS workouts, y compris repos
   - Jours repos (format: S076-07-REPOS) rejetés comme incomplets
   - Utilisateur forcé d'ajouter sections factices "Warmup: Repos" pour passer validation
@@ -323,7 +323,7 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Changed - Weekly Analysis
 
-**Training Learnings** (`cyclisme_training_logs/analyzers/weekly_aggregator.py`):
+**Training Learnings** (`magma_cycling/analyzers/weekly_aggregator.py`):
 - **Refactoring** : `_extract_training_learnings()` reçoit maintenant `processed["workouts"]` au lieu de `raw_data["activities"]`
   - Permet accès données enrichies : gear_metrics, pedal_balance, etc.
   - Fix data flow : extraction gear → process workouts → analyze learnings
@@ -352,7 +352,7 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added - Sprint R4++ (Backfill Historique & PID Controller)
 
-**Phase 2 - Backfill Historique** (`cyclisme_training_logs/scripts/backfill_intelligence.py`):
+**Phase 2 - Backfill Historique** (`magma_cycling/scripts/backfill_intelligence.py`):
 - **IntervalsICUBackfiller** : Extraction learnings/patterns depuis historique Intervals.icu (2024-2025)
   - `fetch_activities()` : Récupération activités via IntervalsClient API
   - `fetch_wellness()` : Récupération données sommeil/HRV
@@ -382,7 +382,7 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
   - `test_backfill_fetch_wellness` : Mock IntervalsClient.get_wellness()
   - `test_backfill_empty_data` : Gestion données vides (0 activités)
 
-**Phase 3 - PID Controller** (`cyclisme_training_logs/intelligence/pid_controller.py`):
+**Phase 3 - PID Controller** (`magma_cycling/intelligence/pid_controller.py`):
 - **PIDController** : Contrôleur PID adaptatif pour progression FTP automatique
   - `compute()` : Calcul correction PID (Proportionnel + Intégral + Dérivé)
     - Formula: `output = Kp × error + Ki × ∫error dt + Kd × d(error)/dt`
@@ -428,7 +428,7 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
   - `test_pid_controller_invalid_inputs` : Validation gains négatifs/setpoint invalide
   - `test_pid_multiple_iterations` : Convergence sur 20 semaines
 
-**Exports & Integration** (`cyclisme_training_logs/intelligence/__init__.py`):
+**Exports & Integration** (`magma_cycling/intelligence/__init__.py`):
 - Ajout exports : `PIDController`, `PIDState`, `compute_pid_gains_from_intelligence`
 - Backward compatible : Enrichit API sans breaking changes
 
@@ -459,7 +459,7 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
   - `compute_pid_gains_from_intelligence()` : Gains adaptatifs
 
 **Poetry Configuration** (pyproject.toml):
-- Script CLI `backfill-intelligence` : `cyclisme_training_logs.scripts.backfill_intelligence:main`
+- Script CLI `backfill-intelligence` : `magma_cycling.scripts.backfill_intelligence:main`
 
 **Métriques Sprint R4++**:
 - **Code** :
@@ -487,12 +487,12 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Fixed
 
-**Intervals.icu API Client** (`cyclisme_training_logs/api/intervals_client.py`):
+**Intervals.icu API Client** (`magma_cycling/api/intervals_client.py`):
 - Ajout méthode `delete_event(event_id)` : Suppression événements calendrier
 - Ajout méthode `update_event(event_id, event_data)` : Mise à jour événements calendrier
 - Support complet CRUD pour événements (Create, Read, Update, Delete)
 
-**Session Status Tool** (`cyclisme_training_logs/update_session_status.py` v2.1.0):
+**Session Status Tool** (`magma_cycling/update_session_status.py` v2.1.0):
 - Correction comportement sync Intervals.icu pour respecter spec originale
 - `cancelled`/`skipped` : Convertit event en NOTE avec tag [ANNULÉE]/[SAUTÉE] au lieu de supprimer
 - Création automatique NOTE si événement n'existe pas (traçabilité complète)
@@ -513,7 +513,7 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added - Sprint R4 (Training Intelligence & Feedback Loop)
 
-**Training Intelligence** (`cyclisme_training_logs/intelligence/training_intelligence.py`):
+**Training Intelligence** (`magma_cycling/intelligence/training_intelligence.py`):
 - `TrainingIntelligence` : Gestionnaire mémoire partagée multi-temporelle
   - `add_learning()` : Ajouter enseignements avec progression confidence (LOW→VALIDATED)
   - `identify_pattern()` : Détecter patterns récurrents avec trigger conditions
@@ -540,7 +540,7 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 **Architecture**:
 - 100% in-memory (Dict storage, 0 hardcoded paths)
-- JSON persistence optionnelle (`~/cyclisme-training-logs-data/intelligence/`)
+- JSON persistence optionnelle (`~/magma-cycling-data/intelligence/`)
 - Backward compatible (enrichit workflow existant sans breaking changes)
 - Progressive validation : 1-2 obs → LOW, 3-5 → MEDIUM, 6-10 → HIGH, 10+ → VALIDATED
 
@@ -567,7 +567,7 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added - Sprint R3 (Planning Manager & Calendar)
 
-**Planning Manager** (`cyclisme_training_logs/planning/planning_manager.py`):
+**Planning Manager** (`magma_cycling/planning/planning_manager.py`):
 - `PlanningManager` : Gestionnaire de plans d'entraînement
   - `create_training_plan()` : Création plans 4-12 semaines
   - `add_deadline()` : Ajout objectifs/échéances
@@ -579,7 +579,7 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 - **Contraintes master athletes** : Max 380 TSS/semaine, 7 points CTL/semaine
 - **21 tests unitaires** (210% over-delivery vs 8-10 attendus)
 
-**Training Calendar** (`cyclisme_training_logs/planning/calendar.py`):
+**Training Calendar** (`magma_cycling/planning/calendar.py`):
 - `TrainingCalendar` : Calendrier hebdomadaire avec gestion séances
   - `generate_weekly_calendar()` : Génération ISO weeks (semaines 1-53)
   - `mark_rest_days()` : Configuration jours repos (dimanche obligatoire master)
@@ -598,7 +598,7 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added - Sprint R2.1 (Integrations & VETO Logic)
 
-**VETO Logic** (`cyclisme_training_logs/utils/metrics_advanced.py`):
+**VETO Logic** (`magma_cycling/utils/metrics_advanced.py`):
 - Intégration détection sommeil insuffisant dans `assess_overtraining_risk()`
 - **VETO immédiat** si sommeil < 5.5h (master) ou < 6.0h (senior)
 - Recommandations prioritaires : repos obligatoire, sommeil, intensité réduite
@@ -613,7 +613,7 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
 
 ### Added - Sprint R2 (Metrics Advanced)
 
-**Nouvelles Métriques** (`cyclisme_training_logs/utils/metrics_advanced.py`):
+**Nouvelles Métriques** (`magma_cycling/utils/metrics_advanced.py`):
 - `calculate_ctl()` : Chronic Training Load (fitness 42 jours)
 - `calculate_tsb()` : Training Stress Balance (forme vs fatigue)
 - `calculate_ramp_rate()` : Rampe CTL avec validation limites
@@ -622,7 +622,7 @@ et ce projet adhère au [Semantic Versioning](https://semver.org/lang/fr/).
   - Critères : TSB, CTL ramp rate, profil athlète
   - Recommandations personnalisées
 
-**Athlete Profile** (`cyclisme_training_logs/config/athlete_profile.py`):
+**Athlete Profile** (`magma_cycling/config/athlete_profile.py`):
 - Configuration centralisée via `.env`
 - Support master/senior athletes
 - Paramètres : FTP, poids, âge, capacité récupération, dépendance sommeil

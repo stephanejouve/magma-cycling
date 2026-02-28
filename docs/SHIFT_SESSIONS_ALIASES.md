@@ -10,23 +10,23 @@ Ajouter ces alias à votre `~/.zshrc` ou `~/.bashrc`:
 # === Session Shifting Aliases ===
 
 # Shift de base (décaler sessions)
-alias shift-sessions='cd ~/cyclisme-training-logs && poetry run shift-sessions'
+alias shift-sessions='cd ~/magma-cycling && poetry run shift-sessions'
 
 # Swap (échanger deux jours)
-alias swap-days='cd ~/cyclisme-training-logs && poetry run shift-sessions --swap-days'
-alias swap-sessions='cd ~/cyclisme-training-logs && poetry run shift-sessions --swap'
+alias swap-days='cd ~/magma-cycling && poetry run shift-sessions --swap-days'
+alias swap-sessions='cd ~/magma-cycling && poetry run shift-sessions --swap'
 
 # Opérations courantes
-alias insert-rest='cd ~/cyclisme-training-logs && poetry run shift-sessions --insert-rest-day'
-alias remove-session='cd ~/cyclisme-training-logs && poetry run shift-sessions --remove-session'
+alias insert-rest='cd ~/magma-cycling && poetry run shift-sessions --insert-rest-day'
+alias remove-session='cd ~/magma-cycling && poetry run shift-sessions --remove-session'
 
 # Avec sync automatique
-alias shift-sync='cd ~/cyclisme-training-logs && poetry run shift-sessions --sync'
+alias shift-sync='cd ~/magma-cycling && poetry run shift-sessions --sync'
 alias swap-days-sync='shift-sync --swap-days'
 alias swap-sessions-sync='shift-sync --swap'
 
 # Preview (dry-run)
-alias shift-preview='cd ~/cyclisme-training-logs && poetry run shift-sessions --dry-run'
+alias shift-preview='cd ~/magma-cycling && poetry run shift-sessions --dry-run'
 ```
 
 ## Exemples d'Utilisation

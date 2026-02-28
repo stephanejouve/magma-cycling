@@ -160,9 +160,9 @@ Sommeil: 7h
 ### Vérification Pré-Séance
 
 ```python
-from cyclisme_training_logs.rest_and_cancellations import check_pre_session_veto
-from cyclisme_training_logs.config import AthleteProfile
-from cyclisme_training_logs.api.intervals_client import IntervalsClient
+from magma_cycling.rest_and_cancellations import check_pre_session_veto
+from magma_cycling.config import AthleteProfile
+from magma_cycling.api.intervals_client import IntervalsClient
 
 # 1. Charger données wellness Intervals.icu
 api = IntervalsClient(athlete_id="iXXXXXX", api_key=API_KEY)
@@ -365,8 +365,8 @@ Logger chaque VETO pour analyse tendances:
 - [RECAPITULATIF_SPRINT_R2.1.md](../project-docs/sprints/R2/RECAPITULATIF_SPRINT_R2.1.md)
 
 **Code Source:**
-- `detect_overtraining_risk()`: [cyclisme_training_logs/utils/metrics_advanced.py](../cyclisme_training_logs/utils/metrics_advanced.py)
-- `check_pre_session_veto()`: [cyclisme_training_logs/rest_and_cancellations.py](../cyclisme_training_logs/rest_and_cancellations.py)
+- `detect_overtraining_risk()`: [magma_cycling/utils/metrics_advanced.py](../magma_cycling/utils/metrics_advanced.py)
+- `check_pre_session_veto()`: [magma_cycling/rest_and_cancellations.py](../magma_cycling/rest_and_cancellations.py)
 - Tests: [tests/test_veto_integration.py](../tests/test_veto_integration.py)
 
 **Références Scientifiques:**

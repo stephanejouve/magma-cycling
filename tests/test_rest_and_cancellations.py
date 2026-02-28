@@ -3,15 +3,15 @@
 test_rest_and_cancellations.py - Tests unitaires pour le module rest_and_cancellations.
 
 Usage:
-    python3 -m pytest cyclisme_training_logs/test_rest_and_cancellations.py -v
-    python3 cyclisme_training_logs/test_rest_and_cancellations.py  # Run sans pytest
+    python3 -m pytest magma_cycling/test_rest_and_cancellations.py -v
+    python3 magma_cycling/test_rest_and_cancellations.py  # Run sans pytest
 """
 import json
 
 import pytest
 
 # Import du module à tester
-from cyclisme_training_logs.rest_and_cancellations import (
+from magma_cycling.rest_and_cancellations import (
     generate_cancelled_session_entry,
     generate_rest_day_entry,
     load_week_planning,
@@ -27,7 +27,7 @@ from cyclisme_training_logs.rest_and_cancellations import (
 @pytest.fixture
 def mock_control_tower(tmp_path):
     """Mock Control Tower to use tmp_path for planning."""
-    from cyclisme_training_logs.planning.control_tower import planning_tower
+    from magma_cycling.planning.control_tower import planning_tower
 
     # Save original path
     original_planning_dir = planning_tower.planning_dir

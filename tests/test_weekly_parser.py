@@ -5,7 +5,7 @@ Test du parser de réponse Claude pour weekly_analysis.py.
 Ce script teste le parsing d'une réponse Claude simulée.
 """
 
-from cyclisme_training_logs.weekly_analysis import WeeklyAnalysis
+from magma_cycling.weekly_analysis import WeeklyAnalysis
 
 
 def test_parser():

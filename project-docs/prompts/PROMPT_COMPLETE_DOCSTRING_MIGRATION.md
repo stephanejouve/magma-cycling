@@ -104,7 +104,7 @@ napoleon_custom_sections = [('Metadata', 'params_style')]
 
 **Commande:**
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 # Dry-run d'abord (preview)
 python scripts/maintenance/migrate_docstrings.py \
@@ -129,7 +129,7 @@ python scripts/maintenance/migrate_docstrings.py \
 
 ## Étape 6: Nettoyer Format Hybride dans config.py
 
-**Fichier:** `cyclisme_training_logs/config.py`
+**Fichier:** `magma_cycling/config.py`
 
 **Problème actuel (lignes 40-50):**
 ```python
@@ -177,7 +177,7 @@ Metadata:
 **Tests à exécuter:**
 
 ```bash
-cd ~/cyclisme-training-logs
+cd ~/magma-cycling
 
 # 1. Vérifier que tous les tests passent
 poetry run pytest tests/test_docstring_migrator.py -v
@@ -190,12 +190,12 @@ poetry run pytest tests/test_docstring_migrator.py -v
 
 # 2. Valider conformité Google Style
 pip install pydocstyle
-pydocstyle --convention=google cyclisme_training_logs/
+pydocstyle --convention=google magma_cycling/
 
 # Attendu: 0 violations (ou très peu)
 
 # 3. Vérifier qu'aucun fichier n'a l'ancien format
-grep -r "GARTNER_TIME:" cyclisme_training_logs/*.py
+grep -r "GARTNER_TIME:" magma_cycling/*.py
 
 # Attendu: Aucun résultat (exit code 1)
 
@@ -231,13 +231,13 @@ Enables Google Style validation with pydocstyle
 
 ```bash
 # Après migration réussie des 6 fichiers
-git add cyclisme_training_logs/weekly_analysis.py
-git add cyclisme_training_logs/stats.py
-git add cyclisme_training_logs/analyzers/daily_aggregator.py
-git add cyclisme_training_logs/core/data_aggregator.py
-git add cyclisme_training_logs/core/timeline_injector.py
-git add cyclisme_training_logs/core/prompt_generator.py
-git add cyclisme_training_logs/config.py  # Format hybride nettoyé
+git add magma_cycling/weekly_analysis.py
+git add magma_cycling/stats.py
+git add magma_cycling/analyzers/daily_aggregator.py
+git add magma_cycling/core/data_aggregator.py
+git add magma_cycling/core/timeline_injector.py
+git add magma_cycling/core/prompt_generator.py
+git add magma_cycling/config.py  # Format hybride nettoyé
 
 git commit -m "docs: Complete migration to Google Style docstrings
 

@@ -9,9 +9,9 @@ from unittest.mock import patch
 
 import pytest
 
-from cyclisme_training_logs.ai_providers.base import AIProvider
-from cyclisme_training_logs.ai_providers.factory import AIProviderFactory
-from cyclisme_training_logs.config import get_ai_config, reset_ai_config
+from magma_cycling.ai_providers.base import AIProvider
+from magma_cycling.ai_providers.factory import AIProviderFactory
+from magma_cycling.config import get_ai_config, reset_ai_config
 
 
 class TestWorkflowAIIntegration:
@@ -125,7 +125,7 @@ class TestWorkflowAIIntegration:
 Analyse cette séance."""
         # Mock clipboard operation
 
-        with patch("cyclisme_training_logs.ai_providers.clipboard.copy_to_clipboard") as mock_copy:
+        with patch("magma_cycling.ai_providers.clipboard.copy_to_clipboard") as mock_copy:
             mock_copy.return_value = True
 
             # Workflow calls analyze_session
@@ -239,7 +239,7 @@ class TestWorkflowEdgeCases:
         provider_config = config.get_provider_config("clipboard")
         analyzer = AIProviderFactory.create("clipboard", provider_config)
 
-        with patch("cyclisme_training_logs.ai_providers.clipboard.copy_to_clipboard") as mock_copy:
+        with patch("magma_cycling.ai_providers.clipboard.copy_to_clipboard") as mock_copy:
             mock_copy.return_value = True
 
             # Empty prompt should still work
@@ -258,7 +258,7 @@ class TestWorkflowEdgeCases:
         # Create large prompt (50KB)
         large_prompt = "X" * 50000
 
-        with patch("cyclisme_training_logs.ai_providers.clipboard.copy_to_clipboard") as mock_copy:
+        with patch("magma_cycling.ai_providers.clipboard.copy_to_clipboard") as mock_copy:
             mock_copy.return_value = True
 
             # Large prompt should work
@@ -277,7 +277,7 @@ class TestWorkflowEdgeCases:
 
         prompt = "Test 🚴‍♂️ with émojis and spéciål çhars: €$£"
 
-        with patch("cyclisme_training_logs.ai_providers.clipboard.copy_to_clipboard") as mock_copy:
+        with patch("magma_cycling.ai_providers.clipboard.copy_to_clipboard") as mock_copy:
             mock_copy.return_value = True
 
             result = analyzer.analyze_session(prompt)

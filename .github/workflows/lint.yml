@@ -31,9 +31,9 @@ jobs:
         poetry add --group dev ruff --no-interaction
 
     - name: Run Ruff linter
-      run: poetry run ruff check cyclisme_training_logs/
+      run: poetry run ruff check magma_cycling/
       continue-on-error: true
 
     - name: Run Ruff formatter check
-      run: poetry run ruff format --check cyclisme_training_logs/
+      run: poetry run ruff format --check magma_cycling/
       continue-on-error: true

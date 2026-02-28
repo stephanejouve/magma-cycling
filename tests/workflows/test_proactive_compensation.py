@@ -20,13 +20,13 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from cyclisme_training_logs.intelligence.compensation_strategies import (
+from magma_cycling.intelligence.compensation_strategies import (
     CompensationAction,
     CompensationStrategy,
     get_strategy_matrix,
     select_strategies,
 )
-from cyclisme_training_logs.workflows.proactive_compensation import (
+from magma_cycling.workflows.proactive_compensation import (
     _collect_compensation_context,
     _get_weather_forecast,
     _identify_available_rest_days,

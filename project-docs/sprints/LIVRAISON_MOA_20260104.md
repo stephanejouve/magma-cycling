@@ -136,7 +136,7 @@ jobs:
 **D400 : Missing periods (380 fixes)**
 ```bash
 # Avant : 462 errors
-poetry run pydocstyle cyclisme_training_logs/
+poetry run pydocstyle magma_cycling/
 # Après : 82 errors
 ```
 Commit : `65a8718 - docs: Fix D400 docstring errors - add missing periods`
@@ -201,7 +201,7 @@ Commit : `04ad1c1 - docs: Fix D205 docstring errors - add blank lines`
 
 **Résultat Final :**
 ```bash
-poetry run mypy cyclisme_training_logs/
+poetry run mypy magma_cycling/
 # Success: no issues found in 87 source files
 ```
 
@@ -260,7 +260,7 @@ Commit : `39beebd - docs: Add missing docstrings (D107/D103: 21 total)`
 
 **Résultat Final :**
 ```bash
-poetry run pydocstyle cyclisme_training_logs/
+poetry run pydocstyle magma_cycling/
 # 0 errors (hors warning patch file)
 ```
 
@@ -518,10 +518,10 @@ poetry run pytest
 poetry run ruff check .
 All checks passed!
 
-poetry run mypy cyclisme_training_logs/
+poetry run mypy magma_cycling/
 Success: no issues found in 87 source files
 
-poetry run pydocstyle cyclisme_training_logs/
+poetry run pydocstyle magma_cycling/
 # 0 errors (hors warning patch file)
 
 # Pre-commit hooks (all passed)

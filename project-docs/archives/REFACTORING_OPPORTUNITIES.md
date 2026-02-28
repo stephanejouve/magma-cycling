@@ -5,7 +5,7 @@ Document des opportunités d'amélioration identifiées lors de l'analyse de qua
 ## 🔴 Priorité Critique
 
 ### 1. WorkflowCoach.step_1b_detect_all_gaps()
-**Fichier:** `cyclisme_training_logs/workflow_coach.py:930`
+**Fichier:** `magma_cycling/workflow_coach.py:930`
 **Complexité:** F (48) - **Critique**
 **Taille:** ~200+ lignes
 
@@ -33,7 +33,7 @@ def _prompt_user_choice(self, gaps_data) -> str
 ## 🟠 Priorité Haute
 
 ### 2. WorkflowCoach.step_2_collect_feedback()
-**Fichier:** `cyclisme_training_logs/workflow_coach.py`
+**Fichier:** `magma_cycling/workflow_coach.py`
 **Complexité:** C (17)
 
 **Problèmes:**
@@ -47,7 +47,7 @@ def _prompt_user_choice(self, gaps_data) -> str
 ---
 
 ### 3. CasingNormalizer.run()
-**Fichier:** `cyclisme_training_logs/normalize_weekly_reports_casing.py:159`
+**Fichier:** `magma_cycling/normalize_weekly_reports_casing.py:159`
 **Complexité:** C (15)
 
 **Problèmes:**

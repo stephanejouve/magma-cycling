@@ -52,24 +52,24 @@
 1. Identifier imports locaux dans `end_of_week.py`:
    ```python
    # Production code (lignes ~150-180)
-   from cyclisme_training_logs.analysis.weekly_analysis import WeeklyAnalysis
+   from magma_cycling.analysis.weekly_analysis import WeeklyAnalysis
    ```
 
 2. Refactorer pour permettre mocking:
    ```python
    # Option A: Import au top-level
-   from cyclisme_training_logs.analysis.weekly_analysis import WeeklyAnalysis
+   from magma_cycling.analysis.weekly_analysis import WeeklyAnalysis
 
    # Option B: Dependency injection
    def step1_weekly_analysis(config, weekly_analysis_cls=None):
        if weekly_analysis_cls is None:
-           from cyclisme_training_logs.analysis.weekly_analysis import WeeklyAnalysis
+           from magma_cycling.analysis.weekly_analysis import WeeklyAnalysis
            weekly_analysis_cls = WeeklyAnalysis
    ```
 
 3. Adapter tests pour mocker correctement:
    ```python
-   @patch('cyclisme_training_logs.workflows.end_of_week.WeeklyAnalysis')
+   @patch('magma_cycling.workflows.end_of_week.WeeklyAnalysis')
    def test_step1_weekly_analysis_execution_full(mock_weekly_analysis):
        # Test implementation
        pass
@@ -216,7 +216,7 @@ poetry run pytest tests/workflows/test_end_of_week.py -v
 
 # Vérifier coverage
 poetry run pytest tests/workflows/test_end_of_week.py \
-  --cov=cyclisme_training_logs.workflows.end_of_week \
+  --cov=magma_cycling.workflows.end_of_week \
   --cov-report=term-missing \
   --cov-report=html
 
@@ -235,7 +235,7 @@ open htmlcov/index.html
 ## 📁 Fichiers à Modifier
 
 ### 1. Production Code (Si nécessaire)
-**Fichier:** `cyclisme_training_logs/workflows/end_of_week.py`
+**Fichier:** `magma_cycling/workflows/end_of_week.py`
 
 **Modifications potentielles:**
 - Refactoring imports locaux (si Option A choisie)
@@ -258,8 +258,8 @@ open htmlcov/index.html
 ```python
 from unittest.mock import patch, MagicMock
 
-@patch('cyclisme_training_logs.workflows.end_of_week.WeeklyAnalysis')
-@patch('cyclisme_training_logs.workflows.end_of_week.PIDDailyEvaluator')
+@patch('magma_cycling.workflows.end_of_week.WeeklyAnalysis')
+@patch('magma_cycling.workflows.end_of_week.PIDDailyEvaluator')
 def test_workflow_integration(mock_pid, mock_analysis):
     """Test avec mocks pour isolation complète"""
     mock_analysis.return_value.analyze.return_value = {...}
@@ -271,7 +271,7 @@ def test_workflow_integration(mock_pid, mock_analysis):
 ```python
 def test_step_with_dry_run_protection():
     """Test que dry-run ne modifie pas le système"""
-    with patch('cyclisme_training_logs.workflows.end_of_week.commit_changes') as mock_commit:
+    with patch('magma_cycling.workflows.end_of_week.commit_changes') as mock_commit:
         result = run_step(dry_run=True)
         mock_commit.assert_not_called()  # Protection simulation
 ```
@@ -391,7 +391,7 @@ git commit -m "test(workflows): Reach 80% coverage end_of_week.py [ROADMAP@fe868
 - **coverage.py:** https://coverage.readthedocs.io/
 
 ### Fichiers Projet
-- **Production code:** `cyclisme_training_logs/workflows/end_of_week.py` (437 lignes)
+- **Production code:** `magma_cycling/workflows/end_of_week.py` (437 lignes)
 - **Test suite Phase 1:** `tests/workflows/test_end_of_week.py` (815 lignes)
 - **ROADMAP:** `project-docs/ROADMAP.md` (Sprint R10 ligne 2030+)
 
@@ -433,12 +433,12 @@ poetry run pytest tests/workflows/test_end_of_week.py::test_step1_weekly_analysi
 ```bash
 # Coverage sur un module spécifique
 poetry run pytest tests/workflows/test_end_of_week.py \
-  --cov=cyclisme_training_logs.workflows.end_of_week \
+  --cov=magma_cycling.workflows.end_of_week \
   --cov-report=term-missing | grep "end_of_week.py"
 
 # Lignes non couvertes
 poetry run pytest tests/workflows/test_end_of_week.py \
-  --cov=cyclisme_training_logs.workflows.end_of_week \
+  --cov=magma_cycling.workflows.end_of_week \
   --cov-report=term-missing | grep "Missing"
 ```
 
@@ -454,10 +454,10 @@ poetry run pytest tests/workflows/test_end_of_week.py \
 2. ✅ **Coverage 80%+:** `poetry run pytest ... --cov=... --cov-report=term`
    - Résultat attendu: Coverage ≥80%
 
-3. ✅ **PEP 8 compliance:** `poetry run ruff check cyclisme_training_logs/`
+3. ✅ **PEP 8 compliance:** `poetry run ruff check magma_cycling/`
    - Résultat attendu: 0 warnings
 
-4. ✅ **Type checking:** `poetry run mypy cyclisme_training_logs/`
+4. ✅ **Type checking:** `poetry run mypy magma_cycling/`
    - Résultat attendu: 0 errors
 
 5. ✅ **Tests Phase 1 preservés:** 29 tests existants toujours green
@@ -468,7 +468,7 @@ poetry run pytest tests/workflows/test_end_of_week.py \
 
 1. **Code:**
    - `tests/workflows/test_end_of_week.py` (mis à jour, ~1000 lignes)
-   - `cyclisme_training_logs/workflows/end_of_week.py` (minimal changes si nécessaire)
+   - `magma_cycling/workflows/end_of_week.py` (minimal changes si nécessaire)
 
 2. **Documentation:**
    - Rapport Phase 1b (métriques, coverage, commits)

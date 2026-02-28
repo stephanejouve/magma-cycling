@@ -20,7 +20,7 @@ Créer un client API unifié et migrer tous les consommateurs vers ce nouveau mo
 
 **Phase 1 - Création du module unifié**
 ```
-cyclisme_training_logs/api/
+magma_cycling/api/
 ├── __init__.py
 └── intervals_client.py
 ```
@@ -37,11 +37,11 @@ Le module `intervals_client.py` doit implémenter une classe `IntervalsClient` a
 Identifier et migrer les 16 fichiers consommateurs vers `IntervalsClient` :
 ```python
 # AVANT
-from cyclisme_training_logs.sync_intervals import IntervalsAPI
+from magma_cycling.sync_intervals import IntervalsAPI
 api = IntervalsAPI(athlete_id, api_key)
 
 # APRÈS
-from cyclisme_training_logs.api.intervals_client import IntervalsClient
+from magma_cycling.api.intervals_client import IntervalsClient
 client = IntervalsClient(athlete_id, api_key)
 ```
 

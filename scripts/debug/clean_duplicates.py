@@ -79,7 +79,7 @@ def find_workouts_history_files() -> list[Path]:
     """Trouve tous les fichiers workouts-history.md possibles."""
     candidates = [
         Path("~/training-logs/workouts-history.md"),
-        Path("~/cyclisme-training-logs/logs/workouts-history.md"),
+        Path("~/magma-cycling/logs/workouts-history.md"),
     ]
 
     existing = []
@@ -97,7 +97,7 @@ def select_file(files: list[Path]) -> Path:
         print("❌ Aucun fichier workouts-history.md trouvé!")
         print("\nEmplacements recherchés:")
         print("  - ~/training-logs/workouts-history.md")
-        print("  - ~/cyclisme-training-logs/logs/workouts-history.md")
+        print("  - ~/magma-cycling/logs/workouts-history.md")
         sys.exit(1)
 
     if len(files) == 1:

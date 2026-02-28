@@ -94,7 +94,7 @@ launchctl unload ~/Library/LaunchAgents/com.cyclisme.end-of-week-oneshot.plist
   📊 Semaine analysée   : S077
   📅 Semaine planifiée  : S078
   🤖 Provider utilisé   : claude_api
-  📁 Fichier workouts   : ~/cyclisme-training-logs/week-planning/S078_workouts.txt
+  📁 Fichier workouts   : ~/magma-cycling/week-planning/S078_workouts.txt
 
   🎯 Prochaines étapes:
      1. Vérifiez les workouts dans Intervals.icu
@@ -152,7 +152,7 @@ INTERVALS_ATHLETE_ID=iXXXXXX
 
 Le workflow s'exécute dans:
 ```
-/Users/stephanejouve/cyclisme-training-logs
+/Users/stephanejouve/magma-cycling
 ```
 
 ---

@@ -410,8 +410,8 @@ def main():
     parser.add_argument(
         "--project-root",
         type=str,
-        default="cyclisme_training_logs",
-        help="Project root directory (default: cyclisme_training_logs)",
+        default="magma_cycling",
+        help="Project root directory (default: magma_cycling)",
     )
 
     args = parser.parse_args()

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from cyclisme_training_logs.config import (
+from magma_cycling.config import (
     DataRepoConfig,
     get_data_config,
     reset_data_config,

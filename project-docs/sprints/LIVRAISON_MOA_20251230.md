@@ -28,7 +28,7 @@
 ## 🐛 Bugs Corrigés
 
 ### Bug 1 : Comparaisons None vs int (CRITIQUE)
-**Fichier :** `cyclisme_training_logs/analyzers/weekly_aggregator.py`
+**Fichier :** `magma_cycling/analyzers/weekly_aggregator.py`
 **Symptôme :** `TypeError: '>' not supported between instances of 'NoneType' and 'int'`
 **Impact :** Blocage complet de l'analyse hebdomadaire
 
@@ -48,7 +48,7 @@ poetry run weekly-analysis --week S073 --start-date 2025-12-22
 ```
 
 ### Bug 2 : get_events() manquant dans sync_intervals.py
-**Fichier :** `cyclisme_training_logs/sync_intervals.py`
+**Fichier :** `magma_cycling/sync_intervals.py`
 **Symptôme :** `'IntervalsAPI' object has no attribute 'get_events'`
 **Impact :** Échec fetch planned workouts
 
@@ -63,7 +63,7 @@ api.get_events(oldest='2025-12-29', newest='2026-01-04')
 ```
 
 ### Bug 3 : JSON planning non créé (WORKFLOW)
-**Fichier :** `cyclisme_training_logs/weekly_planner.py`
+**Fichier :** `magma_cycling/weekly_planner.py`
 **Symptôme :** `week_planning_SXXX.json` jamais créé → réconciliation impossible
 **Impact :** Workflow manuel incomplet, pas de trace des planifications
 
@@ -81,13 +81,13 @@ api.get_events(oldest='2025-12-29', newest='2026-01-04')
 wp --week-id S075 --start-date 2026-01-05
 # ✅ Crée ~/training-logs/data/week_planning/week_planning_S075.json
 
-python3 cyclisme_training_logs/update_session_status.py \
+python3 magma_cycling/update_session_status.py \
   --week S074 --session S074-01 --status cancelled --reason "Test"
 # ✅ JSON mis à jour avec cancellation_reason et cancellation_date
 ```
 
 ### Bug 4 : Traceback insuffisant (DEBUG)
-**Fichier :** `cyclisme_training_logs/core/data_aggregator.py`
+**Fichier :** `magma_cycling/core/data_aggregator.py`
 **Symptôme :** Erreurs sans traceback détaillé
 **Impact :** Debugging difficile
 
@@ -96,7 +96,7 @@ python3 cyclisme_training_logs/update_session_status.py \
 - Logging complet pour analyse erreurs
 
 ### Bug 5 : Weekly planner credentials manquants (P2 - déjà corrigé session précédente)
-**Fichier :** `cyclisme_training_logs/weekly_planner.py`
+**Fichier :** `magma_cycling/weekly_planner.py`
 **Confirmation :** Fix vérifié et fonctionnel
 
 ---
@@ -167,7 +167,7 @@ python3 cyclisme_training_logs/update_session_status.py \
 ~/training-logs/data/week_planning/
 └── week_planning_S074.json  (2.3 KB)
 
-~/cyclisme-training-logs/
+~/magma-cycling/
 └── workouts_S074_generated.txt  (2.5 KB)
 ```
 
@@ -204,9 +204,9 @@ Réconciliation → trainr --week-id S074 ✅
 ### Commit 1 : b6f4f47
 **Titre :** fix: Handle None values in weekly aggregator comparisons
 **Fichiers :**
-- `cyclisme_training_logs/analyzers/weekly_aggregator.py`
-- `cyclisme_training_logs/core/data_aggregator.py`
-- `cyclisme_training_logs/sync_intervals.py`
+- `magma_cycling/analyzers/weekly_aggregator.py`
+- `magma_cycling/core/data_aggregator.py`
+- `magma_cycling/sync_intervals.py`
 **Lignes :** +82, -40
 
 ### Commit 2 : b1ab8b8
@@ -218,8 +218,8 @@ Réconciliation → trainr --week-id S074 ✅
 ### Commit 3 : 4bc97e3
 **Titre :** feat: Auto-save planning JSON + session status update
 **Fichiers :**
-- `cyclisme_training_logs/weekly_planner.py`
-- `cyclisme_training_logs/update_session_status.py` (nouveau)
+- `magma_cycling/weekly_planner.py`
+- `magma_cycling/update_session_status.py` (nouveau)
 **Lignes :** +203, -4
 
 ### Commit 4 : 409ff23
@@ -315,9 +315,9 @@ planner.update_session_status('S074-01', 'cancelled', 'Contrainte extra-sportive
 
 ## 📦 Contenu Archive
 
-### Code Source (cyclisme-training-logs/)
+### Code Source (magma-cycling/)
 ```
-cyclisme_training_logs/
+magma_cycling/
 ├── analyzers/
 │   └── weekly_aggregator.py       (modifié - None handling)
 ├── core/
@@ -405,7 +405,7 @@ R : ✅ Oui, à chaque `wp --week-id SXXX`, le fichier `week_planning_SXXX.json`
 **Q : Comment annuler une séance ?**
 R : Utiliser le helper CLI :
 ```bash
-python3 cyclisme_training_logs/update_session_status.py \
+python3 magma_cycling/update_session_status.py \
   --week S074 --session S074-01 --status cancelled --reason "..."
 ```
 
@@ -418,7 +418,7 @@ R : `cat ~/training-logs/weekly-reports/S074/analyse_impact_annulations.md`
 ### Contact MOE
 - **Outil :** Claude Code (Anthropic)
 - **Session :** 30 décembre 2025
-- **Repository :** https://github.com/stephanejouve/cyclisme-training-logs
+- **Repository :** https://github.com/stephanejouve/magma-cycling
 
 ---
 
