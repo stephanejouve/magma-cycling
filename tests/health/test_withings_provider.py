@@ -36,6 +36,40 @@ class TestWithingsProviderABC:
         assert provider.client is mock_client
 
 
+class TestNormalizeSleepData:
+    """Test _normalize_sleep_data handles Withings API ratio → percentage."""
+
+    def test_ratio_converted_to_percentage(self):
+        data = {"sleep_efficiency": 0.96}
+        result = WithingsProvider._normalize_sleep_data(data)
+        assert result["sleep_efficiency"] == 96
+
+    def test_ratio_zero_stays_zero(self):
+        data = {"sleep_efficiency": 0.0}
+        result = WithingsProvider._normalize_sleep_data(data)
+        assert result["sleep_efficiency"] == 0
+
+    def test_ratio_one_becomes_100(self):
+        data = {"sleep_efficiency": 1.0}
+        result = WithingsProvider._normalize_sleep_data(data)
+        assert result["sleep_efficiency"] == 100
+
+    def test_already_percentage_stays_unchanged(self):
+        data = {"sleep_efficiency": 92}
+        result = WithingsProvider._normalize_sleep_data(data)
+        assert result["sleep_efficiency"] == 92
+
+    def test_none_stays_none(self):
+        data = {"sleep_efficiency": None}
+        result = WithingsProvider._normalize_sleep_data(data)
+        assert result["sleep_efficiency"] is None
+
+    def test_missing_key_no_error(self):
+        data = {"total_sleep_hours": 7.5}
+        result = WithingsProvider._normalize_sleep_data(data)
+        assert "sleep_efficiency" not in result
+
+
 class TestGetSleepSummary:
     def test_returns_sleep_data(self, mock_client, provider):
         mock_client.get_last_night_sleep.return_value = {
@@ -50,6 +84,20 @@ class TestGetSleepSummary:
         assert isinstance(result, SleepData)
         assert result.total_sleep_hours == 7.5
         assert result.sleep_score == 85
+
+    def test_normalizes_sleep_efficiency_ratio(self, mock_client, provider):
+        """Withings returns sleep_efficiency as 0-1 ratio, model expects 0-100 int."""
+        mock_client.get_last_night_sleep.return_value = {
+            "date": "2026-02-28",
+            "start_datetime": "2026-02-27T23:00:00",
+            "end_datetime": "2026-02-28T06:30:00",
+            "total_sleep_hours": 7.5,
+            "wakeup_count": 1,
+            "sleep_efficiency": 0.96,
+        }
+        result = provider.get_sleep_summary(date(2026, 2, 28))
+        assert isinstance(result, SleepData)
+        assert result.sleep_efficiency == 96
 
     def test_returns_none_when_no_data(self, mock_client, provider):
         mock_client.get_last_night_sleep.return_value = None
