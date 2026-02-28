@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.mcp\_server module
+magma\_cycling.mcp\_server module
 ===========================================
 
 .. automodule:: magma_cycling.mcp_server

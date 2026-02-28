@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.analysis.baseline\_preliminary module
+magma\_cycling.analysis.baseline\_preliminary module
 ==============================================================
 
 .. automodule:: magma_cycling.analysis.baseline_preliminary

@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.planning.alert\_messages module
+magma\_cycling.planning.alert\_messages module
 ========================================================
 
 .. automodule:: magma_cycling.planning.alert_messages

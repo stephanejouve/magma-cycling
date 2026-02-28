@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.intervals\_format\_validator module
+magma\_cycling.intervals\_format\_validator module
 ============================================================
 
 .. automodule:: magma_cycling.intervals_format_validator

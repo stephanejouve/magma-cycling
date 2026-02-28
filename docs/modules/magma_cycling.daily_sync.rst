@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.daily\_sync module
+magma\_cycling.daily\_sync module
 ===========================================
 
 .. automodule:: magma_cycling.daily_sync

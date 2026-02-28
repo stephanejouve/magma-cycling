@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.ai\_providers package
+magma\_cycling.ai\_providers package
 ==============================================
 
 Submodules

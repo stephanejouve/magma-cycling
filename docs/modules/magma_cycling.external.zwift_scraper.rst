@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.external.zwift\_scraper module
+magma\_cycling.external.zwift\_scraper module
 =======================================================
 
 .. automodule:: magma_cycling.external.zwift_scraper

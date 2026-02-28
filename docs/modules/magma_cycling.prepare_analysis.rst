@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.prepare\_analysis module
+magma\_cycling.prepare\_analysis module
 =================================================
 
 .. automodule:: magma_cycling.prepare_analysis

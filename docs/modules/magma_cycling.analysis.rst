@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.analysis package
+magma\_cycling.analysis package
 =========================================
 
 Submodules

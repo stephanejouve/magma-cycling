@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.scripts.backfill\_history module
+magma\_cycling.scripts.backfill\_history module
 =========================================================
 
 .. automodule:: magma_cycling.scripts.backfill_history

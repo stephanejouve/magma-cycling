@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.external.zwift\_converter module
+magma\_cycling.external.zwift\_converter module
 =========================================================
 
 .. automodule:: magma_cycling.external.zwift_converter

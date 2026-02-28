@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.utils.metrics module
+magma\_cycling.utils.metrics module
 =============================================
 
 .. automodule:: magma_cycling.utils.metrics

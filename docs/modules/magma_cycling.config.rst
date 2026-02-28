@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.config package
+magma\_cycling.config package
 =======================================
 
 Submodules

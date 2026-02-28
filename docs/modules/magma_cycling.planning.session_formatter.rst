@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.planning.session\_formatter module
+magma\_cycling.planning.session\_formatter module
 ===========================================================
 
 .. automodule:: magma_cycling.planning.session_formatter

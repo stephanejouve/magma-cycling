@@ -1,4 +1,4 @@
-cyclisme\_training\_logs.ai\_providers.ollama module
+magma\_cycling.ai\_providers.ollama module
 ====================================================
 
 .. automodule:: magma_cycling.ai_providers.ollama

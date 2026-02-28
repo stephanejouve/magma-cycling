@@ -1,4 +1,4 @@
-cyclisme\_training\_logs package
+magma\_cycling package
 ================================
 
 Subpackages
