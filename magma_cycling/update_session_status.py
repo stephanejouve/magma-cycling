@@ -37,14 +37,10 @@ Metadata:
 """
 import argparse
 import sys
-from pathlib import Path
 
-# Add parent to path
-sys.path.insert(0, str(Path(__file__).parent))
-
-from magma_cycling.api.intervals_client import IntervalsClient  # noqa: E402
-from magma_cycling.config import create_intervals_client  # noqa: E402
-from magma_cycling.planning.control_tower import planning_tower  # noqa: E402
+from magma_cycling.api.intervals_client import IntervalsClient
+from magma_cycling.config import create_intervals_client
+from magma_cycling.planning.control_tower import planning_tower
 
 # Statuses that should remove the event from Intervals.icu
 STATUSES_TO_DELETE = ["cancelled", "skipped", "replaced"]

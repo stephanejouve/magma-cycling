@@ -29,11 +29,8 @@ import argparse
 import sys
 from pathlib import Path
 
-# Add project to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
-from magma_cycling.external.zwift_client import ZwiftWorkoutClient  # noqa: E402
-from magma_cycling.external.zwift_seed_data import (  # noqa: E402
+from magma_cycling.external.zwift_client import ZwiftWorkoutClient
+from magma_cycling.external.zwift_seed_data import (
     get_all_seed_workouts,
 )
 

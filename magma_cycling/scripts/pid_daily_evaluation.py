@@ -40,16 +40,13 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-# Add project to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
-from magma_cycling.api.intervals_client import IntervalsClient  # noqa: E402
-from magma_cycling.config import get_intervals_config  # noqa: E402
-from magma_cycling.intelligence.discrete_pid_controller import (  # noqa: E402
+from magma_cycling.api.intervals_client import IntervalsClient
+from magma_cycling.config import get_intervals_config
+from magma_cycling.intelligence.discrete_pid_controller import (
     DiscretePIDController,
     compute_discrete_pid_gains_from_intelligence,
 )
-from magma_cycling.intelligence.training_intelligence import (  # noqa: E402
+from magma_cycling.intelligence.training_intelligence import (
     AnalysisLevel,
     ConfidenceLevel,
     TrainingIntelligence,
