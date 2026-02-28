@@ -65,8 +65,6 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from magma_cycling.planning.backup import auto_backup
-
 
 def calculate_week_start_date(week_id: str) -> datetime:
     """
@@ -660,6 +658,8 @@ def main():
     # 🔒 AUTOMATIC BACKUP before any upload
     if not args.dry_run:
         try:
+            from magma_cycling.planning.backup import auto_backup
+
             backups = auto_backup(args.week_id)
             if backups:
                 print("🔒 Backup créé:")
