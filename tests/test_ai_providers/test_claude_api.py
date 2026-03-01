@@ -301,3 +301,50 @@ class TestClaudeAPIAnalyzer:
 
         assert analyzer.provider == AIProvider.CLAUDE
         assert analyzer.provider.value == "claude_api"
+
+    # === system_prompt Tests ===
+
+    def test_system_prompt_passed_to_api(self, valid_api_key, mock_anthropic):
+        """Test that system_prompt is passed as Anthropic system parameter."""
+        mock_message = MagicMock()
+        mock_content = MagicMock()
+        mock_content.text = "Analysis with system prompt."
+        mock_message.content = [mock_content]
+        mock_anthropic.messages.create.return_value = mock_message
+
+        analyzer = ClaudeAPIAnalyzer(api_key=valid_api_key)
+        analyzer.analyze_session("User prompt", system_prompt="You are a coach.")
+
+        call_kwargs = mock_anthropic.messages.create.call_args[1]
+        assert call_kwargs["system"] == "You are a coach."
+
+    def test_no_system_prompt_omits_system_param(self, valid_api_key, mock_anthropic):
+        """Test that system param is absent when system_prompt is None."""
+        mock_message = MagicMock()
+        mock_content = MagicMock()
+        mock_content.text = "Analysis."
+        mock_message.content = [mock_content]
+        mock_anthropic.messages.create.return_value = mock_message
+
+        analyzer = ClaudeAPIAnalyzer(api_key=valid_api_key)
+        analyzer.analyze_session("User prompt")
+
+        call_kwargs = mock_anthropic.messages.create.call_args[1]
+        assert "system" not in call_kwargs
+
+    def test_system_prompt_not_in_user_messages(self, valid_api_key, mock_anthropic):
+        """System prompt text must not leak into user messages."""
+        mock_message = MagicMock()
+        mock_content = MagicMock()
+        mock_content.text = "OK"
+        mock_message.content = [mock_content]
+        mock_anthropic.messages.create.return_value = mock_message
+
+        system_text = "UNIQUE_SYSTEM_MARKER_XYZ"
+        analyzer = ClaudeAPIAnalyzer(api_key=valid_api_key)
+        analyzer.analyze_session("User data", system_prompt=system_text)
+
+        call_kwargs = mock_anthropic.messages.create.call_args[1]
+        for msg in call_kwargs["messages"]:
+            if msg["role"] == "user":
+                assert system_text not in msg["content"]

@@ -301,3 +301,51 @@ class TestOpenAIAnalyzer:
         analyzer = OpenAIAnalyzer(api_key=valid_api_key)
 
         assert analyzer.model == "gpt-4-turbo"
+
+    # === system_prompt Tests ===
+
+    def test_system_prompt_adds_system_message(self, valid_api_key, mock_openai_client):
+        """Test that system_prompt adds a system role message."""
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = "Analysis result."
+        mock_openai_client.chat.completions.create.return_value = mock_response
+
+        analyzer = OpenAIAnalyzer(api_key=valid_api_key)
+        analyzer.analyze_session("User prompt", system_prompt="You are a coach.")
+
+        call_kwargs = mock_openai_client.chat.completions.create.call_args[1]
+        messages = call_kwargs["messages"]
+        assert len(messages) == 2
+        assert messages[0] == {"role": "system", "content": "You are a coach."}
+        assert messages[1] == {"role": "user", "content": "User prompt"}
+
+    def test_no_system_prompt_only_user_message(self, valid_api_key, mock_openai_client):
+        """Without system_prompt, only user message is sent."""
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = "Result."
+        mock_openai_client.chat.completions.create.return_value = mock_response
+
+        analyzer = OpenAIAnalyzer(api_key=valid_api_key)
+        analyzer.analyze_session("User prompt")
+
+        call_kwargs = mock_openai_client.chat.completions.create.call_args[1]
+        messages = call_kwargs["messages"]
+        assert len(messages) == 1
+        assert messages[0]["role"] == "user"
+
+    def test_user_prompt_not_in_system_message(self, valid_api_key, mock_openai_client):
+        """User prompt must not leak into system message."""
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = "Result."
+        mock_openai_client.chat.completions.create.return_value = mock_response
+
+        analyzer = OpenAIAnalyzer(api_key=valid_api_key)
+        analyzer.analyze_session("UNIQUE_USER_DATA_ABC", system_prompt="System context only")
+
+        call_kwargs = mock_openai_client.chat.completions.create.call_args[1]
+        messages = call_kwargs["messages"]
+        system_msg = messages[0]
+        assert "UNIQUE_USER_DATA_ABC" not in system_msg["content"]

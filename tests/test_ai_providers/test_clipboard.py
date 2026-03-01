@@ -262,3 +262,56 @@ Line 3"""
         # Should preserve formatting
         mock_copy.assert_called_once_with(prompt)
         assert result is not None
+
+    # === system_prompt Tests ===
+
+    @patch("magma_cycling.ai_providers.clipboard.copy_to_clipboard")
+    def test_no_system_prompt_copies_prompt_only(self, mock_copy):
+        """Without system_prompt, only the user prompt is copied."""
+        mock_copy.return_value = True
+
+        analyzer = ClipboardAnalyzer()
+        analyzer.analyze_session("User prompt only")
+
+        mock_copy.assert_called_once_with("User prompt only")
+
+    @patch("magma_cycling.ai_providers.clipboard.copy_to_clipboard")
+    def test_system_prompt_concatenated_readable(self, mock_copy):
+        """With system_prompt, both are concatenated and copied."""
+        mock_copy.return_value = True
+
+        analyzer = ClipboardAnalyzer()
+        analyzer.analyze_session("User data", system_prompt="Coach role context")
+
+        copied_text = mock_copy.call_args[0][0]
+        assert "Coach role context" in copied_text
+        assert "User data" in copied_text
+
+    @patch("magma_cycling.ai_providers.clipboard.copy_to_clipboard")
+    def test_clipboard_output_is_self_contained(self, mock_copy):
+        """Copied text contains both system context and user data."""
+        mock_copy.return_value = True
+
+        system = "Tu es un coach cyclisme. Profil: FTP 223W."
+        user = "TSS Cible: 300, TSS Realise: 250"
+
+        analyzer = ClipboardAnalyzer()
+        analyzer.analyze_session(user, system_prompt=system)
+
+        copied_text = mock_copy.call_args[0][0]
+        assert "coach cyclisme" in copied_text
+        assert "FTP 223W" in copied_text
+        assert "TSS Cible" in copied_text
+
+    @patch("magma_cycling.ai_providers.clipboard.copy_to_clipboard")
+    def test_clipboard_output_no_api_keys(self, mock_copy):
+        """Clipboard output must not contain API key patterns."""
+        mock_copy.return_value = True
+
+        analyzer = ClipboardAnalyzer()
+        analyzer.analyze_session("Data", system_prompt="Coach context")
+
+        copied_text = mock_copy.call_args[0][0]
+        assert "sk-" not in copied_text
+        assert "api_key" not in copied_text
+        assert "Bearer" not in copied_text
