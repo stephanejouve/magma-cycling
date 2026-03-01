@@ -27,6 +27,7 @@ Created: 2026-01-01.
 """
 import argparse
 import json
+import logging
 import sys
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -35,6 +36,9 @@ from typing import Any
 
 from magma_cycling.ai_providers.factory import AIProviderFactory
 from magma_cycling.config import get_ai_config, get_data_config
+from magma_cycling.prompts import build_prompt
+
+logger = logging.getLogger(__name__)
 
 
 class MonthlyAnalyzer:
@@ -336,6 +340,41 @@ Sois concret, direct et orienté action. Utilise des emojis pour la lisibilité.
 """
         return prompt
 
+    def _load_current_metrics(self) -> dict:
+        """Load current athlete metrics for prompt enrichment.
+
+        Returns:
+            Dict with ftp, weight, ctl, atl, ramp_rate keys.
+            Empty dict on failure (graceful degradation).
+        """
+        metrics: dict = {}
+        # Load FTP/weight from AthleteProfile
+        try:
+            from magma_cycling.config import AthleteProfile
+
+            profile = AthleteProfile.from_env()
+            metrics["ftp"] = profile.ftp
+            metrics["weight"] = profile.weight
+        except Exception:
+            logger.debug("Could not load AthleteProfile, skipping FTP/weight")
+
+        # Load CTL/ATL from Intervals.icu
+        try:
+            from magma_cycling.config import create_intervals_client
+
+            today = datetime.now().strftime("%Y-%m-%d")
+            client = create_intervals_client()
+            wellness = client.get_wellness(oldest=today, newest=today)
+            if wellness:
+                day = wellness[0]
+                metrics["ctl"] = day.get("ctl")
+                metrics["atl"] = day.get("atl")
+                metrics["ramp_rate"] = day.get("rampRate")
+        except Exception:
+            logger.debug("Could not load Intervals.icu metrics, skipping CTL/ATL")
+
+        return metrics
+
     def run(self) -> str:
         """Execute monthly analysis and return report."""
         print(f"\n{'=' * 70}")
@@ -377,8 +416,16 @@ Sois concret, direct et orienté action. Utilise des emojis pour la lisibilité.
         if not self.no_ai and self.ai_analyzer:
             print(f"\n🤖 Génération analyse IA ({self.provider})...")
             try:
-                prompt = self.generate_ai_prompt(stats)
-                ai_analysis = self.ai_analyzer.analyze_session(prompt)
+                workflow_data = self.generate_ai_prompt(stats)
+                current_metrics = self._load_current_metrics()
+                system_prompt, user_prompt = build_prompt(
+                    mission="mesocycle_analysis",
+                    current_metrics=current_metrics,
+                    workflow_data=workflow_data,
+                )
+                ai_analysis = self.ai_analyzer.analyze_session(
+                    user_prompt, system_prompt=system_prompt
+                )
                 print("✅ Analyse IA générée")
             except Exception as e:
                 print(f"⚠️  Erreur analyse IA : {e}")
