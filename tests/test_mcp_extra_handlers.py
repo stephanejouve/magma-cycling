@@ -935,7 +935,7 @@ class TestDailySyncMCPAiParam:
 # TestSessionPrescription
 # =======================
 
-DAILY_SYNC_TOWER_PATCH = "magma_cycling.daily_sync.planning_tower"
+DAILY_SYNC_TOWER_PATCH = "magma_cycling.workflows.sync.ai_analysis.planning_tower"
 
 
 class TestSessionPrescription:

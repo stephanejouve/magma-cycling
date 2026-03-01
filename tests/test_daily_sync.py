@@ -900,13 +900,13 @@ class TestCheckPlanningChangesErrors:
         return _make_ds(tmp_path)
 
     def test_file_not_found_returns_status_none(self, ds):
-        with patch("magma_cycling.daily_sync.planning_tower") as mock_tower:
+        with patch("magma_cycling.workflows.sync.session_updates.planning_tower") as mock_tower:
             mock_tower.read_week.side_effect = FileNotFoundError("no file")
             result = ds.check_planning_changes("S999", date(2026, 2, 17), date(2026, 2, 23))
         assert result == {"status": None, "diff": None}
 
     def test_json_decode_error_returns_status_none(self, ds):
-        with patch("magma_cycling.daily_sync.planning_tower") as mock_tower:
+        with patch("magma_cycling.workflows.sync.session_updates.planning_tower") as mock_tower:
             mock_tower.read_week.side_effect = json.JSONDecodeError("err", "", 0)
             result = ds.check_planning_changes("S999", date(2026, 2, 17), date(2026, 2, 23))
         assert result == {"status": None, "diff": None}
@@ -993,7 +993,7 @@ class TestUpdateCompletedSessions:
         mock_plan = Mock()
         mock_plan.planned_sessions = [mock_session]
 
-        with patch("magma_cycling.daily_sync.planning_tower") as mock_tower:
+        with patch("magma_cycling.workflows.sync.session_updates.planning_tower") as mock_tower:
             mock_tower.modify_week.return_value.__enter__ = Mock(return_value=mock_plan)
             mock_tower.modify_week.return_value.__exit__ = Mock(return_value=False)
             ds.update_completed_sessions(activities)
@@ -1024,7 +1024,7 @@ class TestUpdateCompletedSessions:
         mock_plan = Mock()
         mock_plan.planned_sessions = [mock_session]
 
-        with patch("magma_cycling.daily_sync.planning_tower") as mock_tower:
+        with patch("magma_cycling.workflows.sync.session_updates.planning_tower") as mock_tower:
             mock_tower.modify_week.return_value.__enter__ = Mock(return_value=mock_plan)
             mock_tower.modify_week.return_value.__exit__ = Mock(return_value=False)
             ds.update_completed_sessions(activities)
@@ -1049,7 +1049,7 @@ class TestUpdateCompletedSessions:
                 "start_date_local": "2026-02-24T10:00:00+00:00",
             },
         ]
-        with patch("magma_cycling.daily_sync.planning_tower") as mock_tower:
+        with patch("magma_cycling.workflows.sync.session_updates.planning_tower") as mock_tower:
             mock_tower.modify_week.side_effect = FileNotFoundError("no planning")
             result = ds.update_completed_sessions(activities)
 
@@ -1288,7 +1288,7 @@ class TestGenerateReport:
         """Compensation section written when compensation_result provided."""
         compensation_result = {"context": Mock(), "recommendations": Mock()}
         with patch(
-            "magma_cycling.daily_sync.format_compensation_section",
+            "magma_cycling.workflows.sync.reporting.format_compensation_section",
             return_value="## Compensation\n\nAugmenter volume.\n",
         ):
             report = ds.generate_report(
@@ -1317,11 +1317,11 @@ class TestGenerateReport:
         }
         with (
             patch(
-                "magma_cycling.daily_sync.format_phase_recommendation",
+                "magma_cycling.workflows.sync.reporting.format_phase_recommendation",
                 return_value="Phase: Build\n",
             ),
             patch(
-                "magma_cycling.daily_sync.format_integrated_recommendation",
+                "magma_cycling.workflows.sync.reporting.format_integrated_recommendation",
                 return_value="PID: +3 CTL/week\n",
             ),
         ):
@@ -1371,7 +1371,7 @@ class TestUpdateCompletedSessionsEdgeCases:
         mock_plan = Mock()
         mock_plan.planned_sessions = []  # No sessions → not found in planning
 
-        with patch("magma_cycling.daily_sync.planning_tower") as mock_tower:
+        with patch("magma_cycling.workflows.sync.session_updates.planning_tower") as mock_tower:
             mock_tower.modify_week.return_value.__enter__ = Mock(return_value=mock_plan)
             mock_tower.modify_week.return_value.__exit__ = Mock(return_value=False)
             result = ds.update_completed_sessions(self._activities())
@@ -1383,7 +1383,7 @@ class TestUpdateCompletedSessionsEdgeCases:
         """Generic exception from planning_tower.modify_week is caught."""
         ds.client.get_events.return_value = self._workouts()
 
-        with patch("magma_cycling.daily_sync.planning_tower") as mock_tower:
+        with patch("magma_cycling.workflows.sync.session_updates.planning_tower") as mock_tower:
             mock_tower.modify_week.side_effect = RuntimeError("unexpected error")
             result = ds.update_completed_sessions(self._activities())
 
@@ -1410,10 +1410,15 @@ class TestCheckPlanningChangesSuccess:
         mock_sync_instance.get_sync_status.return_value = mock_status
 
         with (
-            patch("magma_cycling.daily_sync.planning_tower") as mock_tower,
-            patch("magma_cycling.daily_sync.AthleteProfile") as mock_ap,
-            patch("magma_cycling.daily_sync.TrainingCalendar", return_value=Mock()),
-            patch("magma_cycling.daily_sync.IntervalsSync", return_value=mock_sync_instance),
+            patch("magma_cycling.workflows.sync.session_updates.planning_tower") as mock_tower,
+            patch("magma_cycling.workflows.sync.session_updates.AthleteProfile") as mock_ap,
+            patch(
+                "magma_cycling.workflows.sync.session_updates.TrainingCalendar", return_value=Mock()
+            ),
+            patch(
+                "magma_cycling.workflows.sync.session_updates.IntervalsSync",
+                return_value=mock_sync_instance,
+            ),
         ):
             mock_tower.read_week.return_value = mock_plan
             mock_ap.from_env.return_value = Mock()
@@ -1445,10 +1450,16 @@ class TestCheckPlanningChangesSuccess:
         mock_calendar.add_session.return_value = mock_cal_session
 
         with (
-            patch("magma_cycling.daily_sync.planning_tower") as mock_tower,
-            patch("magma_cycling.daily_sync.AthleteProfile") as mock_ap,
-            patch("magma_cycling.daily_sync.TrainingCalendar", return_value=mock_calendar),
-            patch("magma_cycling.daily_sync.IntervalsSync", return_value=mock_sync_instance),
+            patch("magma_cycling.workflows.sync.session_updates.planning_tower") as mock_tower,
+            patch("magma_cycling.workflows.sync.session_updates.AthleteProfile") as mock_ap,
+            patch(
+                "magma_cycling.workflows.sync.session_updates.TrainingCalendar",
+                return_value=mock_calendar,
+            ),
+            patch(
+                "magma_cycling.workflows.sync.session_updates.IntervalsSync",
+                return_value=mock_sync_instance,
+            ),
         ):
             mock_tower.read_week.return_value = mock_plan
             mock_ap.from_env.return_value = Mock()
@@ -1495,10 +1506,16 @@ class TestCheckPlanningChangesSundaySession:
         mock_calendar = Mock()
 
         with (
-            patch("magma_cycling.daily_sync.planning_tower") as mock_tower,
-            patch("magma_cycling.daily_sync.AthleteProfile") as mock_ap,
-            patch("magma_cycling.daily_sync.TrainingCalendar", return_value=mock_calendar),
-            patch("magma_cycling.daily_sync.IntervalsSync", return_value=mock_sync_instance),
+            patch("magma_cycling.workflows.sync.session_updates.planning_tower") as mock_tower,
+            patch("magma_cycling.workflows.sync.session_updates.AthleteProfile") as mock_ap,
+            patch(
+                "magma_cycling.workflows.sync.session_updates.TrainingCalendar",
+                return_value=mock_calendar,
+            ),
+            patch(
+                "magma_cycling.workflows.sync.session_updates.IntervalsSync",
+                return_value=mock_sync_instance,
+            ),
         ):
             mock_tower.read_week.return_value = mock_plan
             mock_ap.from_env.return_value = Mock()
