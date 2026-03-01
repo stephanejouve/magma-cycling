@@ -1018,11 +1018,8 @@ class WithingsConfig:
             if not all(k in creds for k in ["access_token", "refresh_token", "token_expiry"]):
                 return False
 
-            # Check if token is expired (within 5 minutes buffer)
-            import time
-
-            token_expiry = creds.get("token_expiry", 0)
-            return token_expiry > (time.time() + 300)
+            # A refresh_token is sufficient — the client refreshes automatically
+            return True
 
         except Exception:
             return False
