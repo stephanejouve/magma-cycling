@@ -1,11 +1,15 @@
 """Withings health data handlers."""
 
+from __future__ import annotations
+
 import json
 from datetime import date, timedelta
+from typing import TYPE_CHECKING
 
-from mcp.types import TextContent
+from magma_cycling._mcp._utils import mcp_response, suppress_stdout_stderr
 
-from magma_cycling._mcp._utils import suppress_stdout_stderr
+if TYPE_CHECKING:
+    from mcp.types import TextContent
 
 __all__ = [
     "handle_withings_auth_status",
@@ -59,7 +63,7 @@ async def handle_withings_auth_status(args: dict) -> list[TextContent]:
             except Exception:
                 pass
 
-    return [TextContent(type="text", text=json.dumps(status, indent=2))]
+    return mcp_response(status)
 
 
 async def handle_withings_authorize(args: dict) -> list[TextContent]:
@@ -103,7 +107,7 @@ async def handle_withings_authorize(args: dict) -> list[TextContent]:
             except Exception as e:
                 result = {"step": "authorization_failed", "status": "error", "error": str(e)}
 
-    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+    return mcp_response(result)
 
 
 async def handle_withings_get_sleep(args: dict) -> list[TextContent]:
@@ -141,7 +145,7 @@ async def handle_withings_get_sleep(args: dict) -> list[TextContent]:
                 "count": len(sessions),
             }
 
-    return [TextContent(type="text", text=json.dumps(result, indent=2, default=str))]
+    return mcp_response(result, default=str)
 
 
 async def handle_withings_get_weight(args: dict) -> list[TextContent]:
@@ -179,7 +183,7 @@ async def handle_withings_get_weight(args: dict) -> list[TextContent]:
                 "count": len(measurements),
             }
 
-    return [TextContent(type="text", text=json.dumps(result, indent=2, default=str))]
+    return mcp_response(result, default=str)
 
 
 async def handle_withings_get_readiness(args: dict) -> list[TextContent]:
@@ -207,7 +211,7 @@ async def handle_withings_get_readiness(args: dict) -> list[TextContent]:
                 "readiness": readiness.model_dump(),
             }
 
-    return [TextContent(type="text", text=json.dumps(result, indent=2, default=str))]
+    return mcp_response(result, default=str)
 
 
 async def handle_withings_sync_to_intervals(args: dict) -> list[TextContent]:
@@ -295,7 +299,7 @@ async def handle_withings_sync_to_intervals(args: dict) -> list[TextContent]:
             "status": "success" if not errors else "partial_success",
         }
 
-    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+    return mcp_response(result)
 
 
 async def handle_withings_analyze_trends(args: dict) -> list[TextContent]:
@@ -322,7 +326,7 @@ async def handle_withings_analyze_trends(args: dict) -> list[TextContent]:
                     "error": "start_date and end_date required for custom period",
                     "status": "error",
                 }
-                return [TextContent(type="text", text=json.dumps(result, indent=2))]
+                return mcp_response(result)
 
             start_date_val = date.fromisoformat(start_date_str)
             end_date_val = date.fromisoformat(end_date_str)
@@ -405,7 +409,7 @@ async def handle_withings_analyze_trends(args: dict) -> list[TextContent]:
             "alerts": alerts,
         }
 
-    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+    return mcp_response(result)
 
 
 async def handle_withings_enrich_session(args: dict) -> list[TextContent]:
@@ -436,7 +440,7 @@ async def handle_withings_enrich_session(args: dict) -> list[TextContent]:
                     "error": f"Session {session_id} not found in week {week_id}",
                     "status": "error",
                 }
-                return [TextContent(type="text", text=json.dumps(result, indent=2))]
+                return mcp_response(result)
 
             # Get session date
             session_date = session.session_date
@@ -480,4 +484,4 @@ async def handle_withings_enrich_session(args: dict) -> list[TextContent]:
                 "status": "success",
             }
 
-    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+    return mcp_response(result)

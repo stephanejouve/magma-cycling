@@ -1,12 +1,16 @@
 """Analysis and backup handlers."""
 
+from __future__ import annotations
+
 import json
 from datetime import timedelta
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from mcp.types import TextContent
+from magma_cycling._mcp._utils import mcp_response, suppress_stdout_stderr
 
-from magma_cycling._mcp._utils import suppress_stdout_stderr
+if TYPE_CHECKING:
+    from mcp.types import TextContent
 
 __all__ = [
     "handle_validate_week_consistency",
@@ -83,18 +87,11 @@ async def handle_validate_week_consistency(args: dict) -> list[TextContent]:
                 ),
             }
 
-        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+        return mcp_response(result)
 
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(
-                    {"error": f"Validation error: {str(e)}", "week_id": week_id},
-                    indent=2,
-                ),
-            )
-        ]
+        error = {"error": f"Validation error: {str(e)}", "week_id": week_id}
+        return mcp_response(error)
 
 
 async def handle_get_recommendations(args: dict) -> list[TextContent]:
@@ -127,18 +124,11 @@ async def handle_get_recommendations(args: dict) -> list[TextContent]:
                     "planning_notes": plan.notes if hasattr(plan, "notes") else None,
                 }
 
-        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+        return mcp_response(result)
 
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(
-                    {"error": f"Failed to get recommendations: {str(e)}", "week_id": week_id},
-                    indent=2,
-                ),
-            )
-        ]
+        error = {"error": f"Failed to get recommendations: {str(e)}", "week_id": week_id}
+        return mcp_response(error)
 
 
 async def handle_analyze_session_adherence(args: dict) -> list[TextContent]:
@@ -162,15 +152,8 @@ async def handle_analyze_session_adherence(args: dict) -> list[TextContent]:
                     break
 
             if not planned_session:
-                return [
-                    TextContent(
-                        type="text",
-                        text=json.dumps(
-                            {"error": f"Session {session_id} not found in week {week_id}"},
-                            indent=2,
-                        ),
-                    )
-                ]
+                error = {"error": f"Session {session_id} not found in week {week_id}"}
+                return mcp_response(error)
 
             # Get completed activity
             client = create_intervals_client()
@@ -219,22 +202,15 @@ async def handle_analyze_session_adherence(args: dict) -> list[TextContent]:
                 "message": f"Adherence: {adherence_quality} (TSS: {tss_adherence:.1f}%, Duration: {duration_adherence:.1f}%)",
             }
 
-        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+        return mcp_response(result)
 
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(
-                    {
-                        "error": f"Adherence analysis error: {str(e)}",
-                        "session_id": session_id,
-                        "activity_id": activity_id,
-                    },
-                    indent=2,
-                ),
-            )
-        ]
+        error = {
+            "error": f"Adherence analysis error: {str(e)}",
+            "session_id": session_id,
+            "activity_id": activity_id,
+        }
+        return mcp_response(error)
 
 
 async def handle_get_training_statistics(args: dict) -> list[TextContent]:
@@ -291,22 +267,15 @@ async def handle_get_training_statistics(args: dict) -> list[TextContent]:
                 },
             }
 
-        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+        return mcp_response(result)
 
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(
-                    {
-                        "error": f"Failed to get training statistics: {str(e)}",
-                        "start_date": start_date,
-                        "end_date": end_date,
-                    },
-                    indent=2,
-                ),
-            )
-        ]
+        error = {
+            "error": f"Failed to get training statistics: {str(e)}",
+            "start_date": start_date,
+            "end_date": end_date,
+        }
+        return mcp_response(error)
 
 
 async def handle_export_week_to_json(args: dict) -> list[TextContent]:
@@ -352,18 +321,11 @@ async def handle_export_week_to_json(args: dict) -> list[TextContent]:
                 "message": f"✅ Week {week_id} exported to {output_file}",
             }
 
-        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+        return mcp_response(result)
 
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(
-                    {"error": f"Export error: {str(e)}", "week_id": week_id},
-                    indent=2,
-                ),
-            )
-        ]
+        error = {"error": f"Export error: {str(e)}", "week_id": week_id}
+        return mcp_response(error)
 
 
 async def handle_restore_week_from_backup(args: dict) -> list[TextContent]:
@@ -378,35 +340,21 @@ async def handle_restore_week_from_backup(args: dict) -> list[TextContent]:
     confirm = args.get("confirm", False)
 
     if not confirm:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(
-                    {
-                        "error": "Restore requires explicit confirmation",
-                        "week_id": week_id,
-                        "message": "Set confirm=true to proceed with restore",
-                        "warning": "This will OVERWRITE current planning",
-                    },
-                    indent=2,
-                ),
-            )
-        ]
+        error = {
+            "error": "Restore requires explicit confirmation",
+            "week_id": week_id,
+            "message": "Set confirm=true to proceed with restore",
+            "warning": "This will OVERWRITE current planning",
+        }
+        return mcp_response(error)
 
     try:
         with suppress_stdout_stderr():
             # Read backup file
             backup_file = Path(backup_path)
             if not backup_file.exists():
-                return [
-                    TextContent(
-                        type="text",
-                        text=json.dumps(
-                            {"error": f"Backup file not found: {backup_path}"},
-                            indent=2,
-                        ),
-                    )
-                ]
+                error = {"error": f"Backup file not found: {backup_path}"}
+                return mcp_response(error)
 
             backup_data = json.loads(backup_file.read_text())
 
@@ -451,18 +399,11 @@ async def handle_restore_week_from_backup(args: dict) -> list[TextContent]:
                 "message": f"✅ Week {week_id} restored from {backup_file.name}",
             }
 
-        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+        return mcp_response(result)
 
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(
-                    {"error": f"Restore error: {str(e)}", "week_id": week_id},
-                    indent=2,
-                ),
-            )
-        ]
+        error = {"error": f"Restore error: {str(e)}", "week_id": week_id}
+        return mcp_response(error)
 
 
 async def handle_analyze_training_patterns(args: dict) -> list[TextContent]:
@@ -646,19 +587,12 @@ async def handle_analyze_training_patterns(args: dict) -> list[TextContent]:
             result["analysis_depth"] = depth
             result["message"] = f"✅ Loaded {depth} analysis data for {week_id}"
 
-        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+        return mcp_response(result)
 
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(
-                    {
-                        "error": f"Analysis error: {str(e)}",
-                        "week_id": week_id,
-                        "depth": depth,
-                    },
-                    indent=2,
-                ),
-            )
-        ]
+        error = {
+            "error": f"Analysis error: {str(e)}",
+            "week_id": week_id,
+            "depth": depth,
+        }
+        return mcp_response(error)

@@ -1,10 +1,13 @@
 """Athlete profile handlers."""
 
-import json
+from __future__ import annotations
 
-from mcp.types import TextContent
+from typing import TYPE_CHECKING
 
-from magma_cycling._mcp._utils import suppress_stdout_stderr
+from magma_cycling._mcp._utils import mcp_response, suppress_stdout_stderr
+
+if TYPE_CHECKING:
+    from mcp.types import TextContent
 
 __all__ = [
     "handle_get_athlete_profile",
@@ -59,15 +62,10 @@ async def handle_get_athlete_profile(args: dict) -> list[TextContent]:
                 "hr_zones": hr_zones,
             }
 
-        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+        return mcp_response(result)
 
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps({"error": f"Failed to get athlete profile: {str(e)}"}, indent=2),
-            )
-        ]
+        return mcp_response({"error": f"Failed to get athlete profile: {str(e)}"})
 
 
 async def handle_update_athlete_profile(args: dict) -> list[TextContent]:
@@ -88,18 +86,12 @@ async def handle_update_athlete_profile(args: dict) -> list[TextContent]:
                 "current_values": {field: updated_athlete.get(field) for field in updates.keys()},
             }
 
-        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+        return mcp_response(result)
 
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(
-                    {
-                        "error": f"Failed to update athlete profile: {str(e)}",
-                        "updates": updates,
-                    },
-                    indent=2,
-                ),
-            )
-        ]
+        return mcp_response(
+            {
+                "error": f"Failed to update athlete profile: {str(e)}",
+                "updates": updates,
+            }
+        )

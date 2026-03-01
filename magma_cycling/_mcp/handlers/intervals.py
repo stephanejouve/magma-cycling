@@ -1,17 +1,21 @@
 """Intervals.icu integration handlers."""
 
-import json
+from __future__ import annotations
+
 from collections import defaultdict
 from datetime import date, timedelta
-
-from mcp.types import TextContent
+from typing import TYPE_CHECKING
 
 from magma_cycling._mcp._utils import (
     SYNCABLE_STATUSES,
     compute_start_time,
     load_workout_descriptions,
+    mcp_response,
     suppress_stdout_stderr,
 )
+
+if TYPE_CHECKING:
+    from mcp.types import TextContent
 
 __all__ = [
     "handle_sync_week_to_intervals",
@@ -281,22 +285,14 @@ async def handle_sync_week_to_intervals(args: dict) -> list[TextContent]:
             "message": f"Sync {'preview' if dry_run else 'completed'} for {week_id}",
         }
 
-        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+        return mcp_response(result)
 
     except FileNotFoundError:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps({"error": f"Planning file not found for week {week_id}"}, indent=2),
-            )
-        ]
+        error = {"error": f"Planning file not found for week {week_id}"}
+        return mcp_response(error)
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps({"error": f"Sync error: {str(e)}"}, indent=2),
-            )
-        ]
+        error = {"error": f"Sync error: {str(e)}"}
+        return mcp_response(error)
 
 
 async def handle_delete_remote_session(args: dict) -> list[TextContent]:
@@ -308,20 +304,13 @@ async def handle_delete_remote_session(args: dict) -> list[TextContent]:
     confirm = args.get("confirm", False)
 
     if not confirm:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(
-                    {
-                        "error": "Deletion requires explicit confirmation",
-                        "event_id": event_id,
-                        "message": "Set confirm=true to proceed with deletion",
-                        "warning": "This action is PERMANENT and cannot be undone",
-                    },
-                    indent=2,
-                ),
-            )
-        ]
+        error = {
+            "error": "Deletion requires explicit confirmation",
+            "event_id": event_id,
+            "message": "Set confirm=true to proceed with deletion",
+            "warning": "This action is PERMANENT and cannot be undone",
+        }
+        return mcp_response(error)
 
     try:
         with suppress_stdout_stderr():
@@ -337,23 +326,16 @@ async def handle_delete_remote_session(args: dict) -> list[TextContent]:
                         for session in plan.planned_sessions:
                             if session.intervals_id == event_id:
                                 if session.status == "completed":
-                                    return [
-                                        TextContent(
-                                            type="text",
-                                            text=json.dumps(
-                                                {
-                                                    "error": "Cannot delete completed session",
-                                                    "event_id": event_id,
-                                                    "session_id": session.session_id,
-                                                    "session_name": session.name,
-                                                    "status": session.status,
-                                                    "message": f"🛡️ PROTECTION: Session {session.session_id} is COMPLETED and cannot be deleted from Intervals.icu",
-                                                    "reason": "Completed sessions are protected to preserve training history",
-                                                },
-                                                indent=2,
-                                            ),
-                                        )
-                                    ]
+                                    error = {
+                                        "error": "Cannot delete completed session",
+                                        "event_id": event_id,
+                                        "session_id": session.session_id,
+                                        "session_name": session.name,
+                                        "status": session.status,
+                                        "message": f"🛡️ PROTECTION: Session {session.session_id} is COMPLETED and cannot be deleted from Intervals.icu",
+                                        "reason": "Completed sessions are protected to preserve training history",
+                                    }
+                                    return mcp_response(error)
                                 found_week_id = week_id
                                 found_session = session
                                 break
@@ -370,19 +352,12 @@ async def handle_delete_remote_session(args: dict) -> list[TextContent]:
             success = client.delete_event(event_id)
 
             if not success:
-                return [
-                    TextContent(
-                        type="text",
-                        text=json.dumps(
-                            {
-                                "success": False,
-                                "event_id": event_id,
-                                "message": f"❌ Failed to delete event {event_id} from Intervals.icu (check logs for details)",
-                            },
-                            indent=2,
-                        ),
-                    )
-                ]
+                error = {
+                    "success": False,
+                    "event_id": event_id,
+                    "message": f"❌ Failed to delete event {event_id} from Intervals.icu (check logs for details)",
+                }
+                return mcp_response(error)
 
             # WRITE-BACK: If we found a local session, update it via Control Tower
             local_update_status = None
@@ -429,26 +404,14 @@ async def handle_delete_remote_session(args: dict) -> list[TextContent]:
                 "local_planning_update": local_update_status,
             }
 
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(result, indent=2),
-            )
-        ]
+        return mcp_response(result)
 
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(
-                    {
-                        "error": f"Delete error: {str(e)}",
-                        "event_id": event_id,
-                    },
-                    indent=2,
-                ),
-            )
-        ]
+        error = {
+            "error": f"Delete error: {str(e)}",
+            "event_id": event_id,
+        }
+        return mcp_response(error)
 
 
 async def handle_list_remote_events(args: dict) -> list[TextContent]:
@@ -489,27 +452,15 @@ async def handle_list_remote_events(args: dict) -> list[TextContent]:
             if category_filter:
                 result["filtered_by"] = category_filter
 
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(result, indent=2),
-            )
-        ]
+        return mcp_response(result)
 
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(
-                    {
-                        "error": f"Failed to list remote events: {str(e)}",
-                        "start_date": start_date_str,
-                        "end_date": end_date_str,
-                    },
-                    indent=2,
-                ),
-            )
-        ]
+        error = {
+            "error": f"Failed to list remote events: {str(e)}",
+            "start_date": start_date_str,
+            "end_date": end_date_str,
+        }
+        return mcp_response(error)
 
 
 async def handle_get_activity_details(args: dict) -> list[TextContent]:
@@ -661,21 +612,14 @@ async def handle_get_activity_details(args: dict) -> list[TextContent]:
                     {"type": s["type"], "data_points": len(s["data"])} for s in streams
                 ]
 
-        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+        return mcp_response(result)
 
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(
-                    {
-                        "error": f"Failed to get activity details: {str(e)}",
-                        "activity_id": activity_id,
-                    },
-                    indent=2,
-                ),
-            )
-        ]
+        error = {
+            "error": f"Failed to get activity details: {str(e)}",
+            "activity_id": activity_id,
+        }
+        return mcp_response(error)
 
 
 async def handle_get_activity_intervals(args: dict) -> list[TextContent]:
@@ -730,21 +674,14 @@ async def handle_get_activity_intervals(args: dict) -> list[TextContent]:
             "intervals": intervals,
         }
 
-        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+        return mcp_response(result)
 
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(
-                    {
-                        "error": f"Failed to get activity intervals: {str(e)}",
-                        "activity_id": activity_id,
-                    },
-                    indent=2,
-                ),
-            )
-        ]
+        error = {
+            "error": f"Failed to get activity intervals: {str(e)}",
+            "activity_id": activity_id,
+        }
+        return mcp_response(error)
 
 
 async def handle_get_activity_streams(args: dict) -> list[TextContent]:
@@ -762,18 +699,11 @@ async def handle_get_activity_streams(args: dict) -> list[TextContent]:
             streams = client.get_activity_streams(activity_id)
 
         if not streams:
-            return [
-                TextContent(
-                    type="text",
-                    text=json.dumps(
-                        {
-                            "error": f"No stream data found for activity {activity_id}",
-                            "activity_id": activity_id,
-                        },
-                        indent=2,
-                    ),
-                )
-            ]
+            error = {
+                "error": f"No stream data found for activity {activity_id}",
+                "activity_id": activity_id,
+            }
+            return mcp_response(error)
 
         available_stream_types = [s["type"] for s in streams]
 
@@ -829,21 +759,14 @@ async def handle_get_activity_streams(args: dict) -> list[TextContent]:
         if missing_types:
             result["missing_types"] = missing_types
 
-        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+        return mcp_response(result)
 
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(
-                    {
-                        "error": f"Failed to get activity streams: {str(e)}",
-                        "activity_id": activity_id,
-                    },
-                    indent=2,
-                ),
-            )
-        ]
+        error = {
+            "error": f"Failed to get activity streams: {str(e)}",
+            "activity_id": activity_id,
+        }
+        return mcp_response(error)
 
 
 async def handle_compare_intervals(args: dict) -> list[TextContent]:
@@ -881,33 +804,19 @@ async def handle_compare_intervals(args: dict) -> list[TextContent]:
     requested_metrics = args.get("metrics")
 
     if not activity_ids and not name_pattern:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(
-                    {
-                        "error": "Either 'activity_ids' or 'name_pattern' is required.",
-                    },
-                    indent=2,
-                ),
-            )
-        ]
+        error = {
+            "error": "Either 'activity_ids' or 'name_pattern' is required.",
+        }
+        return mcp_response(error)
 
     if requested_metrics:
         invalid = [m for m in requested_metrics if m not in NUMERIC_METRICS]
         if invalid:
-            return [
-                TextContent(
-                    type="text",
-                    text=json.dumps(
-                        {
-                            "error": f"Invalid metrics: {invalid}",
-                            "available_metrics": sorted(NUMERIC_METRICS),
-                        },
-                        indent=2,
-                    ),
-                )
-            ]
+            error = {
+                "error": f"Invalid metrics: {invalid}",
+                "available_metrics": sorted(NUMERIC_METRICS),
+            }
+            return mcp_response(error)
 
     try:
         with suppress_stdout_stderr():
@@ -946,17 +855,10 @@ async def handle_compare_intervals(args: dict) -> list[TextContent]:
             resolved.sort(key=lambda x: x["date"])
 
             if not resolved:
-                return [
-                    TextContent(
-                        type="text",
-                        text=json.dumps(
-                            {
-                                "error": f"No activities matching '{name_pattern}' in the last {weeks_back} weeks.",
-                            },
-                            indent=2,
-                        ),
-                    )
-                ]
+                error = {
+                    "error": f"No activities matching '{name_pattern}' in the last {weeks_back} weeks.",
+                }
+                return mcp_response(error)
 
         # Fetch intervals for each activity
         activity_intervals = {}
@@ -1078,18 +980,11 @@ async def handle_compare_intervals(args: dict) -> list[TextContent]:
             "comparison": comparison,
         }
 
-        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+        return mcp_response(result)
 
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(
-                    {"error": f"Failed to compare intervals: {str(e)}"},
-                    indent=2,
-                ),
-            )
-        ]
+        error = {"error": f"Failed to compare intervals: {str(e)}"}
+        return mcp_response(error)
 
 
 async def handle_apply_workout_intervals(args: dict) -> list[TextContent]:
@@ -1115,39 +1010,25 @@ async def handle_apply_workout_intervals(args: dict) -> list[TextContent]:
         # --- Manual mode ---
         if manual_intervals is not None:
             if dry_run:
-                return [
-                    TextContent(
-                        type="text",
-                        text=json.dumps(
-                            {
-                                "mode": "manual",
-                                "dry_run": True,
-                                "activity_id": activity_id,
-                                "intervals_count": len(manual_intervals),
-                                "intervals": manual_intervals,
-                                "message": "Preview only. Set dry_run=false to apply.",
-                            },
-                            indent=2,
-                        ),
-                    )
-                ]
+                preview = {
+                    "mode": "manual",
+                    "dry_run": True,
+                    "activity_id": activity_id,
+                    "intervals_count": len(manual_intervals),
+                    "intervals": manual_intervals,
+                    "message": "Preview only. Set dry_run=false to apply.",
+                }
+                return mcp_response(preview)
             with suppress_stdout_stderr():
                 result = client.put_activity_intervals(activity_id, manual_intervals)
-            return [
-                TextContent(
-                    type="text",
-                    text=json.dumps(
-                        {
-                            "mode": "manual",
-                            "dry_run": False,
-                            "activity_id": activity_id,
-                            "applied": True,
-                            "result": result,
-                        },
-                        indent=2,
-                    ),
-                )
-            ]
+            applied = {
+                "mode": "manual",
+                "dry_run": False,
+                "activity_id": activity_id,
+                "applied": True,
+                "result": result,
+            }
+            return mcp_response(applied)
 
         # --- Auto mode ---
         session_id = args.get("session_id")
@@ -1157,18 +1038,11 @@ async def handle_apply_workout_intervals(args: dict) -> list[TextContent]:
             activity_name = activity.get("name", "")
             m = re.search(SESSION_ID_PATTERN, activity_name)
             if not m:
-                return [
-                    TextContent(
-                        type="text",
-                        text=json.dumps(
-                            {
-                                "error": f"Cannot extract session_id from activity name: '{activity_name}'",
-                                "hint": "Provide session_id parameter explicitly (e.g. S082-02)",
-                            },
-                            indent=2,
-                        ),
-                    )
-                ]
+                error = {
+                    "error": f"Cannot extract session_id from activity name: '{activity_name}'",
+                    "hint": "Provide session_id parameter explicitly (e.g. S082-02)",
+                }
+                return mcp_response(error)
             session_id = m.group()
 
         # Load workout description
@@ -1182,50 +1056,29 @@ async def handle_apply_workout_intervals(args: dict) -> list[TextContent]:
                 break
 
         if workout_text is None:
-            return [
-                TextContent(
-                    type="text",
-                    text=json.dumps(
-                        {
-                            "error": f"No workout found for session {session_id} in {week_id}_workouts.txt",
-                            "available_workouts": list(descriptions.keys()),
-                        },
-                        indent=2,
-                    ),
-                )
-            ]
+            error = {
+                "error": f"No workout found for session {session_id} in {week_id}_workouts.txt",
+                "available_workouts": list(descriptions.keys()),
+            }
+            return mcp_response(error)
 
         # Parse workout
         blocks = parse_workout_text(workout_text)
         if not blocks:
-            return [
-                TextContent(
-                    type="text",
-                    text=json.dumps(
-                        {
-                            "error": f"Workout {session_id} is a rest day (no blocks to apply)",
-                        },
-                        indent=2,
-                    ),
-                )
-            ]
+            error = {
+                "error": f"Workout {session_id} is a rest day (no blocks to apply)",
+            }
+            return mcp_response(error)
 
         # Get stream to determine total points
         with suppress_stdout_stderr():
             streams = client.get_activity_streams(activity_id)
 
         if not streams or not streams[0].get("data"):
-            return [
-                TextContent(
-                    type="text",
-                    text=json.dumps(
-                        {
-                            "error": f"No stream data found for activity {activity_id}",
-                        },
-                        indent=2,
-                    ),
-                )
-            ]
+            error = {
+                "error": f"No stream data found for activity {activity_id}",
+            }
+            return mcp_response(error)
         total_points = len(streams[0]["data"])
 
         # Compute intervals
@@ -1262,27 +1115,20 @@ async def handle_apply_workout_intervals(args: dict) -> list[TextContent]:
 
         if dry_run:
             summary["message"] = "Preview only. Set dry_run=false to apply."
-            return [TextContent(type="text", text=json.dumps(summary, indent=2))]
+            return mcp_response(summary)
 
         with suppress_stdout_stderr():
             result = client.put_activity_intervals(activity_id, interval_dicts)
         summary["applied"] = True
         summary["result"] = result
-        return [TextContent(type="text", text=json.dumps(summary, indent=2))]
+        return mcp_response(summary)
 
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(
-                    {
-                        "error": f"Failed to apply workout intervals: {str(e)}",
-                        "activity_id": activity_id,
-                    },
-                    indent=2,
-                ),
-            )
-        ]
+        error = {
+            "error": f"Failed to apply workout intervals: {str(e)}",
+            "activity_id": activity_id,
+        }
+        return mcp_response(error)
 
 
 async def handle_update_remote_session(args: dict) -> list[TextContent]:
@@ -1309,20 +1155,13 @@ async def handle_update_remote_session(args: dict) -> list[TextContent]:
                         for session in plan.planned_sessions:
                             if session.intervals_id == event_id:
                                 if session.status == "completed":
-                                    return [
-                                        TextContent(
-                                            type="text",
-                                            text=json.dumps(
-                                                {
-                                                    "error": "Cannot update completed session",
-                                                    "event_id": event_id,
-                                                    "session_id": session.session_id,
-                                                    "message": f"🛡️ PROTECTION: Session {session.session_id} is COMPLETED",
-                                                },
-                                                indent=2,
-                                            ),
-                                        )
-                                    ]
+                                    error = {
+                                        "error": "Cannot update completed session",
+                                        "event_id": event_id,
+                                        "session_id": session.session_id,
+                                        "message": f"🛡️ PROTECTION: Session {session.session_id} is COMPLETED",
+                                    }
+                                    return mcp_response(error)
                                 target_week_id = week_id
                                 target_session = session
                                 break
@@ -1383,18 +1222,11 @@ async def handle_update_remote_session(args: dict) -> list[TextContent]:
                     "message": f"❌ Failed to update event {event_id}",
                 }
 
-        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+        return mcp_response(result)
 
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(
-                    {"error": f"Update error: {str(e)}", "event_id": event_id},
-                    indent=2,
-                ),
-            )
-        ]
+        error = {"error": f"Update error: {str(e)}", "event_id": event_id}
+        return mcp_response(error)
 
 
 async def handle_create_remote_note(args: dict) -> list[TextContent]:
@@ -1411,20 +1243,13 @@ async def handle_create_remote_note(args: dict) -> list[TextContent]:
 
     ALLOWED_PREFIXES = ["[ANNULÉE]", "[SAUTÉE]", "[REMPLACÉE]"]
     if not any(name.startswith(prefix) for prefix in ALLOWED_PREFIXES):
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(
-                    {
-                        "success": False,
-                        "error": f"Invalid NOTE name. Name must start with one of: {', '.join(ALLOWED_PREFIXES)}",
-                        "provided_name": name,
-                        "allowed_prefixes": ALLOWED_PREFIXES,
-                    },
-                    indent=2,
-                ),
-            )
-        ]
+        error = {
+            "success": False,
+            "error": f"Invalid NOTE name. Name must start with one of: {', '.join(ALLOWED_PREFIXES)}",
+            "provided_name": name,
+            "allowed_prefixes": ALLOWED_PREFIXES,
+        }
+        return mcp_response(error)
 
     try:
         with suppress_stdout_stderr():
@@ -1499,22 +1324,15 @@ async def handle_create_remote_note(args: dict) -> list[TextContent]:
                     "message": "❌ Failed to create NOTE - no ID returned from Intervals.icu",
                 }
 
-        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+        return mcp_response(result)
 
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(
-                    {
-                        "error": f"Failed to create NOTE: {str(e)}",
-                        "date": note_date,
-                        "name": name,
-                    },
-                    indent=2,
-                ),
-            )
-        ]
+        error = {
+            "error": f"Failed to create NOTE: {str(e)}",
+            "date": note_date,
+            "name": name,
+        }
+        return mcp_response(error)
 
 
 async def handle_sync_remote_to_local(args: dict) -> list[TextContent]:
@@ -1568,25 +1386,13 @@ async def handle_sync_remote_to_local(args: dict) -> list[TextContent]:
 
             result["changes"] = changes
 
-            return [
-                TextContent(
-                    type="text",
-                    text=json.dumps(result, indent=2),
-                )
-            ]
+            return mcp_response(result)
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(
-                    {
-                        "error": str(e),
-                        "week_id": args.get("week_id"),
-                    },
-                    indent=2,
-                ),
-            )
-        ]
+        error = {
+            "error": str(e),
+            "week_id": args.get("week_id"),
+        }
+        return mcp_response(error)
 
 
 async def handle_backfill_activities(args: dict) -> list[TextContent]:
@@ -1607,15 +1413,8 @@ async def handle_backfill_activities(args: dict) -> list[TextContent]:
             planning_file = data_config.week_planning_dir / f"week_planning_{week_id}.json"
 
             if not planning_file.exists():
-                return [
-                    TextContent(
-                        type="text",
-                        text=json.dumps(
-                            {"error": f"Planning file not found for {week_id}"},
-                            indent=2,
-                        ),
-                    )
-                ]
+                error = {"error": f"Planning file not found for {week_id}"}
+                return mcp_response(error)
 
             plan = WeeklyPlan.from_json(planning_file)
             start_date_val = plan.start_date
@@ -1631,20 +1430,13 @@ async def handle_backfill_activities(args: dict) -> list[TextContent]:
         activities = client.get_activities(oldest=start_date_val, newest=end_date_val)
 
         if not activities:
-            return [
-                TextContent(
-                    type="text",
-                    text=json.dumps(
-                        {
-                            "message": f"No activities found for {date_source}",
-                            "start_date": str(start_date_val),
-                            "end_date": str(end_date_val),
-                            "activities_count": 0,
-                        },
-                        indent=2,
-                    ),
-                )
-            ]
+            info = {
+                "message": f"No activities found for {date_source}",
+                "start_date": str(start_date_val),
+                "end_date": str(end_date_val),
+                "activities_count": 0,
+            }
+            return mcp_response(info)
 
         data_config = get_data_config()
         tracking_file = data_config.data_repo_path / ".backfill_tracking.json"
@@ -1755,9 +1547,4 @@ async def handle_backfill_activities(args: dict) -> list[TextContent]:
                     }
                 )
 
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(result, indent=2),
-            )
-        ]
+        return mcp_response(result)

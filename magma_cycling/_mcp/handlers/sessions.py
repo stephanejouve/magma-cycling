@@ -1,10 +1,13 @@
 """Session manipulation handlers (duplicate, swap, attach-workout)."""
 
-import json
+from __future__ import annotations
 
-from mcp.types import TextContent
+from typing import TYPE_CHECKING
 
-from magma_cycling._mcp._utils import compute_start_time, suppress_stdout_stderr
+from magma_cycling._mcp._utils import compute_start_time, mcp_response, suppress_stdout_stderr
+
+if TYPE_CHECKING:
+    from mcp.types import TextContent
 
 __all__ = [
     "handle_duplicate_session",
@@ -94,29 +97,17 @@ async def handle_duplicate_session(args: dict) -> list[TextContent]:
             "message": f"Session duplicated successfully: {source_session_id} -> {new_session_id}",
         }
 
-        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+        return mcp_response(result)
 
     except FileNotFoundError:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps({"error": f"Planning file not found for week {week_id}"}, indent=2),
-            )
-        ]
+        error = {"error": f"Planning file not found for week {week_id}"}
+        return mcp_response(error)
     except ValueError as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps({"error": str(e)}, indent=2),
-            )
-        ]
+        error = {"error": str(e)}
+        return mcp_response(error)
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps({"error": f"Error duplicating session: {str(e)}"}, indent=2),
-            )
-        ]
+        error = {"error": f"Error duplicating session: {str(e)}"}
+        return mcp_response(error)
 
 
 async def handle_swap_sessions(args: dict) -> list[TextContent]:
@@ -232,29 +223,17 @@ async def handle_swap_sessions(args: dict) -> list[TextContent]:
             + (" (+ remote events updated)" if remote_updated else ""),
         }
 
-        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+        return mcp_response(result)
 
     except FileNotFoundError:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps({"error": f"Planning file not found for week {week_id}"}, indent=2),
-            )
-        ]
+        error = {"error": f"Planning file not found for week {week_id}"}
+        return mcp_response(error)
     except ValueError as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps({"error": str(e)}, indent=2),
-            )
-        ]
+        error = {"error": str(e)}
+        return mcp_response(error)
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps({"error": f"Error swapping sessions: {str(e)}"}, indent=2),
-            )
-        ]
+        error = {"error": f"Error swapping sessions: {str(e)}"}
+        return mcp_response(error)
 
 
 async def handle_attach_workout(args: dict) -> list[TextContent]:
@@ -291,12 +270,8 @@ async def handle_attach_workout(args: dict) -> list[TextContent]:
             "message": f"Workout attached successfully: {filename}",
         }
 
-        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+        return mcp_response(result)
 
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps({"error": f"Error attaching workout: {str(e)}"}, indent=2),
-            )
-        ]
+        error = {"error": f"Error attaching workout: {str(e)}"}
+        return mcp_response(error)

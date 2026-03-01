@@ -1,8 +1,12 @@
 """Shared utilities for MCP handlers."""
 
+import json
 import sys
 from contextlib import contextmanager
+from datetime import date, datetime
 from io import StringIO
+
+from mcp.types import TextContent
 
 
 @contextmanager
@@ -55,3 +59,14 @@ def load_workout_descriptions(week_id: str) -> dict[str, str]:
     from magma_cycling.workout_parser import load_workout_descriptions as _load
 
     return _load(week_id)
+
+
+def mcp_response(result: dict, **json_kwargs) -> list[TextContent]:
+    """Wrap a result dict with _metadata and return as MCP TextContent."""
+    now = datetime.now()
+    result["_metadata"] = {
+        "response_date": date.today().isoformat(),
+        "response_timestamp": now.isoformat(),
+    }
+    json_kwargs.setdefault("indent", 2)
+    return [TextContent(type="text", text=json.dumps(result, **json_kwargs))]
