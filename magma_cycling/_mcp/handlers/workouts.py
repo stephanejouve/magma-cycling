@@ -1,10 +1,13 @@
 """Workout handlers."""
 
-import json
+from __future__ import annotations
 
-from mcp.types import TextContent
+from typing import TYPE_CHECKING
 
-from magma_cycling._mcp._utils import suppress_stdout_stderr
+from magma_cycling._mcp._utils import mcp_response, suppress_stdout_stderr
+
+if TYPE_CHECKING:
+    from mcp.types import TextContent
 
 __all__ = [
     "handle_get_workout",
@@ -44,38 +47,25 @@ async def handle_get_workout(args: dict) -> list[TextContent]:
                 except Exception:
                     pass
 
-                return [
-                    TextContent(
-                        type="text",
-                        text=json.dumps(
-                            {
-                                "found": False,
-                                "session_id": session_id,
-                                "structured_file": None,
-                                "message": "No structured workout file (.zwo) found. "
-                                "Session is defined via text description in the planning.",
-                                "session_definition": (
-                                    {
-                                        "name": session_def.name if session_def else None,
-                                        "type": (session_def.session_type if session_def else None),
-                                        "description": (
-                                            session_def.description if session_def else None
-                                        ),
-                                        "tss_planned": (
-                                            session_def.tss_planned if session_def else None
-                                        ),
-                                        "duration_min": (
-                                            session_def.duration_min if session_def else None
-                                        ),
-                                    }
-                                    if session_def
-                                    else None
-                                ),
-                            },
-                            indent=2,
-                        ),
-                    )
-                ]
+                result = {
+                    "found": False,
+                    "session_id": session_id,
+                    "structured_file": None,
+                    "message": "No structured workout file (.zwo) found. "
+                    "Session is defined via text description in the planning.",
+                    "session_definition": (
+                        {
+                            "name": session_def.name if session_def else None,
+                            "type": (session_def.session_type if session_def else None),
+                            "description": (session_def.description if session_def else None),
+                            "tss_planned": (session_def.tss_planned if session_def else None),
+                            "duration_min": (session_def.duration_min if session_def else None),
+                        }
+                        if session_def
+                        else None
+                    ),
+                }
+                return mcp_response(result)
 
             # If multiple files, return the first one (or could return all)
             workout_file = workout_files[0]
@@ -92,15 +82,10 @@ async def handle_get_workout(args: dict) -> list[TextContent]:
             "message": f"Workout retrieved: {workout_file.name}",
         }
 
-        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+        return mcp_response(result)
 
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps({"error": f"Error retrieving workout: {str(e)}"}, indent=2),
-            )
-        ]
+        return mcp_response({"error": f"Error retrieving workout: {str(e)}"})
 
 
 async def handle_validate_workout(args: dict) -> list[TextContent]:
@@ -152,17 +137,7 @@ async def handle_validate_workout(args: dict) -> list[TextContent]:
                         "Workout format has errors (use auto_fix:true to attempt automatic correction)"
                     )
 
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(result, indent=2),
-            )
-        ]
+        return mcp_response(result)
 
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps({"error": f"Validation error: {str(e)}"}, indent=2),
-            )
-        ]
+        return mcp_response({"error": f"Validation error: {str(e)}"})
