@@ -1,0 +1,117 @@
+"""AI coaching prompt assembly.
+
+Builds (system_prompt, user_prompt) tuples for each workflow mission.
+System prompt = base_system.txt + formatted athlete profile + mission.txt
+User prompt = workflow-specific data (stats, session data, etc.)
+"""
+
+import logging
+from pathlib import Path
+
+from magma_cycling.config.athlete_context import load_athlete_context
+
+logger = logging.getLogger(__name__)
+
+PROMPTS_DIR = Path(__file__).parent
+
+VALID_MISSIONS = frozenset(
+    {"mesocycle_analysis", "weekly_planning", "daily_feedback", "weekly_review"}
+)
+
+
+def build_prompt(
+    mission: str,
+    current_metrics: dict,
+    workflow_data: str,
+    athlete_context: dict | None = None,
+) -> tuple[str, str]:
+    """Assemble (system_prompt, user_prompt) for a given workflow.
+
+    Args:
+        mission: One of VALID_MISSIONS.
+        current_metrics: Runtime metrics (ftp, weight, ctl, atl, etc.).
+        workflow_data: Workflow-specific data string (stats, session, etc.).
+        athlete_context: Override for athlete context dict. If None, loads
+            from default YAML.
+
+    Returns:
+        Tuple of (system_prompt, user_prompt).
+
+    Raises:
+        ValueError: If mission is not in VALID_MISSIONS.
+        FileNotFoundError: If a required prompt template file is missing.
+    """
+    if mission not in VALID_MISSIONS:
+        raise ValueError(f"Unknown mission '{mission}'. Valid: {sorted(VALID_MISSIONS)}")
+
+    context = athlete_context if athlete_context is not None else load_athlete_context()
+
+    # Load template files
+    base_text = (PROMPTS_DIR / "base_system.txt").read_text(encoding="utf-8")
+    mission_text = (PROMPTS_DIR / f"{mission}.txt").read_text(encoding="utf-8")
+
+    # Assemble system prompt
+    profile_text = format_athlete_profile(context, current_metrics)
+    system_prompt = f"{base_text}\n\n## Profil athlete\n{profile_text}\n\n{mission_text}"
+
+    return system_prompt, workflow_data
+
+
+def format_athlete_profile(context: dict, metrics: dict) -> str:
+    """Format athlete profile for prompt injection.
+
+    Args:
+        context: Static athlete context from YAML.
+        metrics: Runtime metrics dict with keys like ftp, weight, ctl, atl.
+
+    Returns:
+        Formatted multi-line string for prompt injection.
+    """
+    if not context:
+        return "(Contexte athlete non disponible)"
+
+    ftp = metrics.get("ftp")
+    weight = metrics.get("weight")
+    if isinstance(ftp, (int, float)) and isinstance(weight, (int, float)) and weight > 0:
+        w_per_kg = f"{ftp / weight:.2f}"
+    else:
+        w_per_kg = "?"
+
+    lines = [
+        f"- {context.get('name', 'Athlete')}, {context.get('age', '?')} ans",
+        f"- FTP: {ftp if ftp is not None else '?'}W ({w_per_kg} W/kg)"
+        f" - Poids: {weight if weight is not None else '?'}kg",
+        f"- Entrainement structure depuis {context.get('training_since', '?')}",
+        f"- Plateforme: {context.get('platform', '?')}",
+        f"- Objectifs: {context.get('objectives', 'Non definis')}",
+    ]
+
+    # Dynamic metrics line
+    ctl = metrics.get("ctl")
+    atl = metrics.get("atl")
+    ramp = metrics.get("ramp_rate")
+    metrics_parts = []
+    if ctl is not None:
+        metrics_parts.append(f"CTL: {ctl:.1f}" if isinstance(ctl, float) else f"CTL: {ctl}")
+    if atl is not None:
+        metrics_parts.append(f"ATL: {atl:.1f}" if isinstance(atl, float) else f"ATL: {atl}")
+    if ramp is not None:
+        metrics_parts.append(f"Ramp: {ramp}")
+    if metrics_parts:
+        lines.append(f"- {' | '.join(metrics_parts)}")
+
+    # Constraints
+    constraints = context.get("constraints", [])
+    if constraints:
+        lines.append("")
+        lines.append("Contraintes connues:")
+        for c in constraints:
+            lines.append(f"  - {c}")
+
+    # System context
+    sys_ctx = context.get("system_context", "")
+    if sys_ctx:
+        lines.append("")
+        lines.append(sys_ctx.strip())
+
+    return "\n".join(lines)

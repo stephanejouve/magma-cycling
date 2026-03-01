@@ -387,3 +387,36 @@ class TestOllamaAnalyzer:
         info = analyzer.get_provider_info()
 
         assert info["status"] == "server_offline"
+
+    # === system_prompt Tests ===
+
+    @patch("magma_cycling.ai_providers.ollama.requests.post")
+    def test_system_prompt_prepended_to_prompt(self, mock_post):
+        """Test that system_prompt is prepended to the prompt."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"response": "Analysis."}
+        mock_post.return_value = mock_response
+
+        analyzer = OllamaAnalyzer()
+        analyzer.analyze_session("User data", system_prompt="You are a coach.")
+
+        call_kwargs = mock_post.call_args[1]
+        sent_prompt = call_kwargs["json"]["prompt"]
+        assert sent_prompt.startswith("You are a coach.")
+        assert "User data" in sent_prompt
+
+    @patch("magma_cycling.ai_providers.ollama.requests.post")
+    def test_no_system_prompt_sends_raw_prompt(self, mock_post):
+        """Without system_prompt, only the raw user prompt is sent."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"response": "Analysis."}
+        mock_post.return_value = mock_response
+
+        analyzer = OllamaAnalyzer()
+        analyzer.analyze_session("Raw user prompt only")
+
+        call_kwargs = mock_post.call_args[1]
+        sent_prompt = call_kwargs["json"]["prompt"]
+        assert sent_prompt == "Raw user prompt only"

@@ -130,12 +130,16 @@ class ClaudeAPIAnalyzer(AIAnalyzer):
         except Exception as e:
             raise WorkflowError(f"Failed to initialize Claude API client: {e}") from e
 
-    def analyze_session(self, prompt: str, dataset: dict | None = None) -> str:
+    def analyze_session(
+        self, prompt: str, dataset: dict | None = None, *, system_prompt: str | None = None
+    ) -> str:
         """Analyze session using Claude API.
 
         Args:
             prompt: Structured session analysis prompt
             dataset: Optional session dataset (unused, prompt already complete)
+            system_prompt: Optional system-level prompt passed as Anthropic
+                ``system`` parameter for dedicated role/context framing.
 
         Returns:
             AI-generated analysis markdown
@@ -157,11 +161,14 @@ class ClaudeAPIAnalyzer(AIAnalyzer):
 
         try:
             # Call Claude API
-            response = self.client.messages.create(
-                model=self.model,
-                max_tokens=self.max_tokens,
-                messages=[{"role": "user", "content": prompt}],
-            )
+            kwargs = {
+                "model": self.model,
+                "max_tokens": self.max_tokens,
+                "messages": [{"role": "user", "content": prompt}],
+            }
+            if system_prompt:
+                kwargs["system"] = system_prompt
+            response = self.client.messages.create(**kwargs)
 
             # Extract analysis text
             content = response.content[0]

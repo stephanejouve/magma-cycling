@@ -59,14 +59,25 @@ class OpenAIAnalyzer(AIAnalyzer):
         except Exception as e:
             raise WorkflowError(f"Failed to initialize OpenAI client: {e}") from e
 
-    def analyze_session(self, prompt: str, dataset: dict | None = None) -> str:
-        """Analyze session using OpenAI API."""
+    def analyze_session(
+        self, prompt: str, dataset: dict | None = None, *, system_prompt: str | None = None
+    ) -> str:
+        """Analyze session using OpenAI API.
+
+        Args:
+            prompt: Structured session analysis prompt
+            dataset: Optional session dataset (unused)
+            system_prompt: Optional system-level prompt added as a
+                ``{"role": "system"}`` message before the user message.
+        """
         logger.info(f"Sending prompt to OpenAI API ({len(prompt)} chars)")
 
         try:
-            response = self.client.chat.completions.create(
-                model=self.model, messages=[{"role": "user", "content": prompt}]
-            )
+            messages = []
+            if system_prompt:
+                messages.append({"role": "system", "content": system_prompt})
+            messages.append({"role": "user", "content": prompt})
+            response = self.client.chat.completions.create(model=self.model, messages=messages)
 
             analysis = response.choices[0].message.content
             if analysis is None:

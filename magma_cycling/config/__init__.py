@@ -10,6 +10,9 @@ This package consolidates:
 
 # Original config functions and classes (from config_base.py)
 
+# Athlete context for AI prompts
+from magma_cycling.config.athlete_context import load_athlete_context
+
 # New Sprint R2 modules
 from magma_cycling.config.athlete_profile import AthleteProfile
 from magma_cycling.config.config_base import (
@@ -72,6 +75,8 @@ __all__ = [
     "create_withings_client",
     "create_health_provider",
     "load_json_config",
+    # Athlete context
+    "load_athlete_context",
     # Sprint R2 additions
     "AthleteProfile",
     "TrainingThresholds",
