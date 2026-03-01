@@ -365,8 +365,8 @@ class TestHandleSyncWeekToIntervals:
         assert data["summary"]["warnings"] == 1
 
     @pytest.mark.asyncio
-    async def test_update_payload_excludes_description(self, mock_plan, mock_session):
-        """Bug 3: Update payload sends only name + start_date_local, not description."""
+    async def test_update_payload_includes_description(self, mock_plan, mock_session):
+        """Update payload sends name + description + start_date_local."""
         from magma_cycling.mcp_server import handle_sync_week_to_intervals
 
         mock_session.intervals_id = "evt123"
@@ -396,10 +396,11 @@ class TestHandleSyncWeekToIntervals:
                     result = await handle_sync_week_to_intervals(args)
         data = json.loads(result[0].text)
         assert data["summary"]["updated"] == 1
-        # Verify the update_event was called without description
+        # Verify the update_event was called with description
         update_call = mock_client.update_event.call_args
         event_data = update_call[0][1]
-        assert "description" not in event_data
+        assert "description" in event_data
+        assert event_data["description"] == "Short desc"
         assert "name" in event_data
         assert "start_date_local" in event_data
 
