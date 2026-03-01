@@ -306,7 +306,7 @@ class DailySync(
         ctl_analysis = None
         if self.enable_ai_analysis:
             print("\n🔍 Analyse CTL selon principes Peaks Coaching...")
-            ctl_analysis = self.analyze_ctl_peaks()
+            ctl_analysis = self.analyze_ctl_peaks(check_date=check_date)
 
             if ctl_analysis and ctl_analysis.get("alerts"):
                 print(f"\n⚠️  {len(ctl_analysis['alerts'])} alerte(s) CTL détectée(s)")
