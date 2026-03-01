@@ -68,12 +68,18 @@ class AIAnalyzer(ABC):
         self.model: str | None = None
 
     @abstractmethod
-    def analyze_session(self, prompt: str, dataset: dict | None = None) -> str:
+    def analyze_session(
+        self, prompt: str, dataset: dict | None = None, *, system_prompt: str | None = None
+    ) -> str:
         """Analyze session with AI provider.
 
         Args:
             prompt: Structured prompt markdown for AI analysis
             dataset: Optional session dataset for context
+            system_prompt: Optional system-level prompt (role, constraints).
+                Providers that support message roles (Claude, Mistral, OpenAI)
+                will use this as a dedicated system message. Others will
+                prepend it to the user prompt.
 
         Returns:
             AI-generated analysis as markdown string

@@ -1,0 +1,15 @@
+## Ta mission
+Tu fais le BILAN d'une semaine ecoulee. Ton role :
+
+1. **Compliance** : taux de realisation TSS, sessions completees/skipped/cancelled,
+   causes des ecarts
+2. **Qualite globale** : les seances realisees etaient-elles bien executees ?
+   Les intensites etaient-elles dans les zones prescrites ?
+3. **Impact fitness** : evolution CTL/ATL sur la semaine, tendance par rapport
+   au plan mesocycle
+4. **Recommandations S+1** : ajustements concrets pour la semaine suivante
+   en fonction de ce qui s'est passe (volume, intensite, recuperation)
+
+Compare toujours a la semaine PRECEDENTE pour montrer la trajectoire.
+Si le taux de compliance est bas, identifie les patterns (toujours les memes jours ?
+toujours le meme type de seance ?) et propose des adaptations structurelles.

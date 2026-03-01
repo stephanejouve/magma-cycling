@@ -332,3 +332,52 @@ class TestMistralAPIAnalyzer:
 
         assert analyzer.provider == AIProvider.MISTRAL
         assert analyzer.provider.value == "mistral_api"
+
+    # === system_prompt Tests ===
+
+    def test_system_prompt_replaces_default(self, valid_api_key, mock_mistral_client):
+        """Test that system_prompt replaces the default system message."""
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = "Analysis result."
+        mock_mistral_client.chat.complete.return_value = mock_response
+
+        analyzer = MistralAPIAnalyzer(api_key=valid_api_key)
+        analyzer.analyze_session("User prompt", system_prompt="Custom coach system.")
+
+        call_kwargs = mock_mistral_client.chat.complete.call_args[1]
+        messages = call_kwargs["messages"]
+        assert messages[0]["role"] == "system"
+        assert messages[0]["content"] == "Custom coach system."
+
+    def test_no_system_prompt_uses_default(self, valid_api_key, mock_mistral_client):
+        """Without system_prompt, default system message is used."""
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = "Result."
+        mock_mistral_client.chat.complete.return_value = mock_response
+
+        analyzer = MistralAPIAnalyzer(api_key=valid_api_key)
+        analyzer.analyze_session("User prompt")
+
+        call_kwargs = mock_mistral_client.chat.complete.call_args[1]
+        messages = call_kwargs["messages"]
+        assert messages[0]["role"] == "system"
+        assert "analyse d'entraînement" in messages[0]["content"]
+
+    def test_system_and_user_are_separate_messages(self, valid_api_key, mock_mistral_client):
+        """System and user prompts must be separate messages."""
+        mock_response = MagicMock()
+        mock_response.choices = [MagicMock()]
+        mock_response.choices[0].message.content = "Result."
+        mock_mistral_client.chat.complete.return_value = mock_response
+
+        analyzer = MistralAPIAnalyzer(api_key=valid_api_key)
+        analyzer.analyze_session("User data", system_prompt="System context")
+
+        call_kwargs = mock_mistral_client.chat.complete.call_args[1]
+        messages = call_kwargs["messages"]
+        assert len(messages) == 2
+        assert messages[0]["role"] == "system"
+        assert messages[1]["role"] == "user"
+        assert "User data" not in messages[0]["content"]
