@@ -76,21 +76,18 @@ def main() -> int:
         log("No session today, exit")
         return 0
 
-    session = todays_sessions[0]
-    sid = session.session_id
-    status = session.status
+    # Step 3: Classify sessions (supports double sessions)
+    terminal = ("completed", "cancelled", "skipped", "rest_day")
+    actionable = [s for s in todays_sessions if s.status not in terminal]
+    completed_count = sum(1 for s in todays_sessions if s.status == "completed")
+    session_ids = ", ".join(s.session_id for s in todays_sessions)
 
-    # Step 3: Already processed by a previous run
-    if status == "completed":
-        log(f"{sid} status=completed, already processed, exit")
+    # All sessions are in terminal state — nothing to do
+    if not actionable:
+        log(f"{session_ids} all terminal, already processed, exit")
         return 0
 
-    # Step 4: Session cancelled/skipped/rest_day — nothing to do
-    if status in ("cancelled", "skipped", "rest_day"):
-        log(f"{sid} status={status}, exit")
-        return 0
-
-    # Step 5: Check Intervals.icu for completed cycling activity today
+    # Step 4: Check Intervals.icu for completed cycling activities today
     try:
         client = create_intervals_client()
         date_str = today.isoformat()
@@ -104,14 +101,16 @@ def main() -> int:
         log(f"Error querying Intervals.icu: {e}")
         return 0
 
-    # Step 6: No activity yet — wait for next poll
-    if not cycling:
-        log(f"{sid} status={status}, no activity found, waiting")
+    # Step 5: Compare activities vs already-completed sessions
+    # New activity = more activities on Intervals.icu than sessions marked completed
+    if len(cycling) <= completed_count:
+        waiting_ids = ", ".join(s.session_id for s in actionable)
+        log(f"{waiting_ids} waiting ({len(cycling)} activities, {completed_count} completed)")
         return 0
 
-    activity = cycling[0]
-    activity_id = activity.get("id", "?")
-    log(f"Activity {activity_id} detected for {sid}")
+    new_activity = cycling[completed_count]  # first unprocessed activity
+    activity_id = new_activity.get("id", "?")
+    log(f"Activity {activity_id} detected ({len(cycling)} activities, {completed_count} completed)")
 
     # Step 7a: Trigger daily-sync
     try:
