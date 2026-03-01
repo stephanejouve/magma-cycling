@@ -127,9 +127,16 @@ class MonthlyAnalyzer:
 
         return weekly_data
 
-    def aggregate_statistics(self, weekly_data: list[dict]) -> dict:
-        """
-        Aggregate monthly statistics from weekly data.
+    def aggregate_statistics(
+        self, weekly_data: list[dict], actual_tss_map: dict | None = None
+    ) -> dict:
+        """Aggregate monthly statistics from weekly data.
+
+        Args:
+            weekly_data: List of weekly planning dicts.
+            actual_tss_map: Optional mapping {intervals_id: actual_tss} from
+                Intervals.icu. When provided, completed/modified sessions with
+                an intervals_id use real TSS instead of tss_planned.
 
         Returns:
             Dictionary with monthly metrics.
@@ -142,7 +149,7 @@ class MonthlyAnalyzer:
             "cancelled": 0,
             "modified": 0,
             "rest_days": 0,
-            "tss_planned": 0,
+            "tss_realized": 0,
             "tss_target_total": 0,
             "sessions_by_type": defaultdict(int),
             "sessions_by_status": defaultdict(int),
@@ -166,14 +173,21 @@ class MonthlyAnalyzer:
                 stats["total_sessions"] += 1
                 status = session.get("status", "unknown")
                 session_type = session.get("type", "unknown")
-                tss = session.get("tss_planned", 0)
+
+                tss_planned = session.get("tss_planned", 0)
+                intervals_id = session.get("intervals_id")
+                # Use actual TSS for completed/modified sessions when available
+                if intervals_id and actual_tss_map and f"i{intervals_id}" in actual_tss_map:
+                    tss = actual_tss_map[f"i{intervals_id}"]
+                else:
+                    tss = tss_planned
 
                 # Count by status
                 stats["sessions_by_status"][status] += 1
 
                 if status == "completed":
                     stats["completed"] += 1
-                    stats["tss_planned"] += tss
+                    stats["tss_realized"] += tss
                     week_stats["tss_actual"] += tss
                 elif status == "skipped":
                     stats["skipped"] += 1
@@ -181,7 +195,7 @@ class MonthlyAnalyzer:
                     stats["cancelled"] += 1
                 elif status == "modified":
                     stats["modified"] += 1
-                    stats["tss_planned"] += tss
+                    stats["tss_realized"] += tss
                     week_stats["tss_actual"] += tss
                 elif status == "rest_day":
                     stats["rest_days"] += 1
@@ -204,7 +218,7 @@ class MonthlyAnalyzer:
 
         # Calculate TSS achievement rate
         if stats["tss_target_total"] > 0:
-            stats["tss_achievement_rate"] = stats["tss_planned"] / stats["tss_target_total"] * 100
+            stats["tss_achievement_rate"] = stats["tss_realized"] / stats["tss_target_total"] * 100
         else:
             stats["tss_achievement_rate"] = 0
 
@@ -223,7 +237,7 @@ class MonthlyAnalyzer:
 
 ### Charge d'Entraînement (TSS)
 - **TSS Cible :** {stats['tss_target_total']}
-- **TSS Réalisé :** {stats['tss_planned']}
+- **TSS Réalisé :** {stats['tss_realized']}
 - **Taux de réalisation :** {stats['tss_achievement_rate']:.1f}%
 
 ### Sessions
@@ -293,7 +307,7 @@ class MonthlyAnalyzer:
 📊 DONNÉES MENSUELLES :
 - {stats['total_weeks']} semaines analysées
 - TSS Cible : {stats['tss_target_total']}
-- TSS Réalisé : {stats['tss_planned']} ({stats['tss_achievement_rate']:.1f}%)
+- TSS Réalisé : {stats['tss_realized']} ({stats['tss_achievement_rate']:.1f}%)
 - Taux d'adhérence : {stats['adherence_rate']:.1f}%
 - Sessions complétées : {stats['completed']}/{stats['total_sessions']}
 - Sessions sautées : {stats['skipped']}
@@ -339,6 +353,26 @@ ANALYSE DEMANDÉE (format markdown) :
 Sois concret, direct et orienté action. Utilise des emojis pour la lisibilité.
 """
         return prompt
+
+    def _fetch_actual_tss(self, weekly_data: list[dict]) -> dict[str, int]:
+        """Fetch actual TSS from Intervals.icu for completed activities.
+
+        Returns:
+            Mapping {intervals_id: actual_tss} for all activities in the month.
+            Empty dict on failure (graceful degradation → fallback to tss_planned).
+        """
+        try:
+            from magma_cycling.config import create_intervals_client
+
+            start = min(w["start_date"] for w in weekly_data)
+            end = max(w["end_date"] for w in weekly_data)
+            client = create_intervals_client()
+            activities = client.get_activities(oldest=start, newest=end)
+
+            return {a["id"]: a.get("icu_training_load", 0) or 0 for a in activities}
+        except Exception:
+            logger.warning("Could not fetch activities from Intervals.icu, using planned TSS")
+            return {}
 
     def _load_current_metrics(self) -> dict:
         """Load current athlete metrics for prompt enrichment.
@@ -400,12 +434,20 @@ Sois concret, direct et orienté action. Utilise des emojis pour la lisibilité.
         weekly_data = self.load_weekly_data(week_files)
         print(f"✅ {len(weekly_data)} semaine(s) chargée(s)")
 
+        # Fetch actual TSS from Intervals.icu
+        print("\n📡 Récupération TSS réels (Intervals.icu)...")
+        actual_tss_map = self._fetch_actual_tss(weekly_data)
+        if actual_tss_map:
+            print(f"✅ {len(actual_tss_map)} activités trouvées")
+        else:
+            print("⚠️  Fallback sur TSS planifiés")
+
         # Aggregate statistics
         print("\n📊 Calcul des statistiques...")
-        stats = self.aggregate_statistics(weekly_data)
+        stats = self.aggregate_statistics(weekly_data, actual_tss_map)
         print("✅ Statistiques calculées")
         print(
-            f"   - TSS : {stats['tss_planned']}/{stats['tss_target_total']} ({stats['tss_achievement_rate']:.1f}%)"
+            f"   - TSS : {stats['tss_realized']}/{stats['tss_target_total']} ({stats['tss_achievement_rate']:.1f}%)"
         )
         print(
             f"   - Sessions : {stats['completed']}/{stats['total_sessions']} ({stats['adherence_rate']:.1f}%)"
