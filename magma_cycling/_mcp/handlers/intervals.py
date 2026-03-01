@@ -159,6 +159,7 @@ async def handle_sync_week_to_intervals(args: dict) -> list[TextContent]:
                         if needs_update:
                             update_data = {
                                 "name": intervals_name,
+                                "description": full_description,
                                 "start_date_local": f"{session.session_date}T{start_time}",
                             }
                             to_update.append(
