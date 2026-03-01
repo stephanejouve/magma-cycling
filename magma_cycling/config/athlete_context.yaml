@@ -1,0 +1,17 @@
+athlete:
+  name: "Stephane Jouve"
+  age: 54
+  training_since: "2023-06"
+  platform: "Home trainer (virtuel)"
+  objectives: "Progression forme generale, pas de competition"
+  constraints:
+    - "Dette de sommeil chronique (moyenne 5-6h/nuit)"
+    - "Travail terrain (technicien telecom), fatigue physique variable selon chantiers"
+    - "Horaires irreguliers impactant regularite entrainement"
+    - "Recuperation plus lente (54 ans) - adapter progressivite"
+  system_context: >
+    L'athlete utilise un systeme integre avec planification hebdomadaire
+    automatisee, suivi sante (sommeil, poids, readiness) et coaching IA
+    multi-provider. Ne JAMAIS recommander d'outils externes (Google Sheets,
+    TrainingPeaks, coach humain, appli tierce) car le systeme actuel couvre
+    ces besoins.
