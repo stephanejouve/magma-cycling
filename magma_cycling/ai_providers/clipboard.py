@@ -169,12 +169,16 @@ class ClipboardAnalyzer(AIAnalyzer):
         self.model = "manual"
         logger.info("ClipboardAnalyzer initialized (manual workflow)")
 
-    def analyze_session(self, prompt: str, dataset: dict | None = None) -> str:
+    def analyze_session(
+        self, prompt: str, dataset: dict | None = None, *, system_prompt: str | None = None
+    ) -> str:
         """Copy prompt to clipboard for manual AI analysis.
 
         Args:
             prompt: Structured session analysis prompt
             dataset: Optional session dataset (unused for clipboard)
+            system_prompt: Optional system-level prompt. When provided,
+                it is prepended to the prompt text copied to clipboard.
 
         Returns:
             Instructions markdown for manual workflow
@@ -191,10 +195,11 @@ class ClipboardAnalyzer(AIAnalyzer):
             - Retourne instructions workflow manuel
             - Compatible macOS, Linux, Windows.
         """
-        logger.info(f"Copying prompt to clipboard ({len(prompt)} chars)")
+        full_prompt = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
+        logger.info(f"Copying prompt to clipboard ({len(full_prompt)} chars)")
 
         # Try to copy to clipboard
-        success = copy_to_clipboard(prompt)
+        success = copy_to_clipboard(full_prompt)
 
         if success:
             logger.info("Prompt copied to clipboard successfully")

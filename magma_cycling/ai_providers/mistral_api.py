@@ -148,12 +148,16 @@ class MistralAPIAnalyzer(AIAnalyzer):
         except Exception as e:
             raise WorkflowError(f"Failed to initialize Mistral API client: {e}") from e
 
-    def analyze_session(self, prompt: str, dataset: dict | None = None) -> str:
+    def analyze_session(
+        self, prompt: str, dataset: dict | None = None, *, system_prompt: str | None = None
+    ) -> str:
         """Analyze session using Mistral API.
 
         Args:
             prompt: Structured session analysis prompt
             dataset: Optional session dataset (unused)
+            system_prompt: Optional system-level prompt. When provided,
+                replaces the default system message.
 
         Returns:
             AI-generated analysis markdown
@@ -177,8 +181,8 @@ class MistralAPIAnalyzer(AIAnalyzer):
         )
 
         try:
-            # System message to enforce strict format compliance
-            system_message = (
+            # Use provided system_prompt or default format-enforcement message
+            system_message = system_prompt or (
                 "Tu es un assistant d'analyse d'entraînement cyclisme. "
                 "Tu DOIS respecter EXACTEMENT le format markdown demandé dans le prompt. "
                 "N'omets AUCUNE section demandée (Date, Métriques, Analyse, etc.). "

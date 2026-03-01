@@ -86,12 +86,17 @@ class OllamaAnalyzer(AIAnalyzer):
 
         logger.info(f"OllamaAnalyzer initialized with model {model} at {host}")
 
-    def analyze_session(self, prompt: str, dataset: dict | None = None) -> str:
+    def analyze_session(
+        self, prompt: str, dataset: dict | None = None, *, system_prompt: str | None = None
+    ) -> str:
         """Analyze session using Ollama local LLM.
 
         Args:
             prompt: Structured session analysis prompt
             dataset: Optional session dataset (unused)
+            system_prompt: Optional system-level prompt. Ollama does not
+                support message roles natively, so it is prepended to the
+                user prompt when provided.
 
         Returns:
             AI-generated analysis markdown
@@ -109,13 +114,14 @@ class OllamaAnalyzer(AIAnalyzer):
             - No rate limits
             - No API costs
         """
-        logger.info(f"Sending prompt to Ollama ({len(prompt)} chars, model: {self.model})")
+        full_prompt = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
+        logger.info(f"Sending prompt to Ollama ({len(full_prompt)} chars, model: {self.model})")
 
         try:
             # Call Ollama API (10min timeout for slow local models)
             response = requests.post(
                 self.api_url,
-                json={"model": self.model, "prompt": prompt, "stream": False},
+                json={"model": self.model, "prompt": full_prompt, "stream": False},
                 timeout=600,
             )
 
