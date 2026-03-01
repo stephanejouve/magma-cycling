@@ -109,8 +109,9 @@
 | `mcp_server.py` | 4 574L | ~500L façade + handlers modulaires | Split par domaine |
 | `workflow_coach.py` | 3 700L | 513L façade + mixins | Mixin decomposition |
 | `daily_sync.py` | 2 159L | 448L façade + 7 mixins | Mixin decomposition |
+| `end_of_week.py` | 1 102L | 425L façade + 5 mixins (`eow/`) | Mixin decomposition |
 
-**Résultats validés :** 1 809 tests passing, 15/15 pre-commit hooks, rétrocompatibilité préservée.
+**Résultats validés :** 1 872 tests passing, 15/15 pre-commit hooks, rétrocompatibilité préservée.
 
 #### Candidats restants
 
@@ -120,7 +121,7 @@
 | `analysis/baseline_preliminary.py` | 1 535 | God class (30+ méthodes) | HIGH |
 | `prepare_analysis.py` | 1 500 | God class (40+ méthodes) | HIGH |
 | `config/config_base.py` | 1 158 | 6 dataclasses + 23 fonctions | HIGH |
-| `workflows/end_of_week.py` | 1 102 | Orchestrateur dense | HIGH |
+| ~~`workflows/end_of_week.py`~~ | ~~1 102~~ | ~~Orchestrateur dense~~ | ✅ Done |
 | `scripts/pid_daily_evaluation.py` | 1 025 | God class PID | HIGH |
 | `rest_and_cancellations.py` | 1 012 | Module utilitaire | HIGH |
 | `_mcp/handlers/planning.py` | 904 | 11 handlers | MEDIUM |
@@ -349,14 +350,14 @@ Items long-terme, priorisés après déploiement Phase 4.
 
 | Métrique | Valeur | Status |
 |----------|--------|--------|
-| **Tests passing** | 1 809+ | ✅ |
+| **Tests passing** | 1 872+ | ✅ |
 | **Pre-commit hooks** | 15 actifs | ✅ |
 | **PEP 8/257 violations** | 0 | ✅ |
 | **MyPy errors** | 0 | ✅ |
 | **MCP tools** | 28+ opérationnels | ✅ |
 | **AI providers** | 4 (Claude, Mistral, OpenAI, Ollama) | ✅ |
 | **Health providers** | 1 + NullProvider (agnostique) | ✅ |
-| **God scripts refactorés** | 3/10 (mcp_server, workflow_coach, daily_sync) | 🔧 |
+| **God scripts refactorés** | 4/10 (mcp_server, workflow_coach, daily_sync, end_of_week) | 🔧 |
 
 ### Progression athlète
 
@@ -405,7 +406,7 @@ Solution : module centralisé `intervals_scales.py` (même pattern applicable au
 
 **Priorité :** P1 | **Status :** En cours (voir section 3.1)
 
-7 fichiers HIGH priority + 3 MEDIUM restants après les 3 premiers complétés.
+6 fichiers HIGH priority + 3 MEDIUM restants après les 4 premiers complétés.
 Pattern validé : mixin decomposition + façade légère.
 
 ---
