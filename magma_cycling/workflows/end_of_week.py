@@ -43,7 +43,7 @@ Metadata:
 
 import argparse
 import sys
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from magma_cycling.config import get_data_config, get_week_config
@@ -201,6 +201,12 @@ class EndOfWeekWorkflow(
         Returns:
             True si succès, False sinon
         """
+        # Idempotence: skip if already completed for this week
+        marker = self.planning_dir / f".eow_done_{self.week_completed}"
+        if marker.exists():
+            print(f"⚠️  End-of-week déjà exécuté pour {self.week_completed} — skip")
+            return True
+
         print("=" * 80)
         print(f"🏁 END-OF-WEEK WORKFLOW: {self.week_completed} → {self.week_next}")
         print("=" * 80)
@@ -255,6 +261,11 @@ class EndOfWeekWorkflow(
 
             # Success summary
             self._print_success_summary()
+
+            # Write idempotence marker (skip in dry-run — no real work done)
+            if not self.dry_run:
+                marker.write_text(datetime.now().isoformat())
+
             return True
 
         except KeyboardInterrupt:
