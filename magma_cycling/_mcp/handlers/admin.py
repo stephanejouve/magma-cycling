@@ -1,8 +1,13 @@
 """Admin handlers."""
 
-import json
+from __future__ import annotations
 
-from mcp.types import TextContent
+from typing import TYPE_CHECKING
+
+from magma_cycling._mcp._utils import mcp_response
+
+if TYPE_CHECKING:
+    from mcp.types import TextContent
 
 __all__ = [
     "handle_reload_server",
@@ -49,18 +54,12 @@ async def handle_reload_server(args: dict) -> list[TextContent]:
             "note": "MCP server handlers NOT reloaded (requires watchdog auto-restart or manual restart)",
         }
 
-        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+        return mcp_response(result)
 
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(
-                    {
-                        "error": f"Reload failed: {str(e)}",
-                        "message": "⚠️ Module reload error - may need full restart",
-                    },
-                    indent=2,
-                ),
-            )
-        ]
+        return mcp_response(
+            {
+                "error": f"Reload failed: {str(e)}",
+                "message": "⚠️ Module reload error - may need full restart",
+            }
+        )

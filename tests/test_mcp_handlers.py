@@ -19,6 +19,51 @@ from magma_cycling.planning.models import Session, WeeklyPlan
 pytest_plugins = ("pytest_asyncio",)
 
 
+# ---------------------------------------------------------------------------
+# Tests: mcp_response() utility
+# ---------------------------------------------------------------------------
+
+
+def test_mcp_response_basic():
+    """mcp_response wraps a dict with _metadata and returns TextContent list."""
+    from magma_cycling._mcp._utils import mcp_response
+
+    result = mcp_response({"key": "value"})
+
+    assert len(result) == 1
+    payload = json.loads(result[0].text)
+    assert payload["key"] == "value"
+    assert "_metadata" in payload
+    assert "response_date" in payload["_metadata"]
+    assert "response_timestamp" in payload["_metadata"]
+    # Date is ISO format YYYY-MM-DD
+    date.fromisoformat(payload["_metadata"]["response_date"])
+    # Timestamp is ISO datetime
+    datetime.fromisoformat(payload["_metadata"]["response_timestamp"])
+
+
+def test_mcp_response_default_str():
+    """mcp_response forwards default=str for non-serializable values."""
+    from magma_cycling._mcp._utils import mcp_response
+
+    result = mcp_response({"d": date(2026, 3, 1)}, default=str)
+
+    payload = json.loads(result[0].text)
+    assert payload["d"] == "2026-03-01"
+    assert "_metadata" in payload
+
+
+def test_mcp_response_error():
+    """mcp_response works with error payloads too."""
+    from magma_cycling._mcp._utils import mcp_response
+
+    result = mcp_response({"error": "something went wrong"})
+
+    payload = json.loads(result[0].text)
+    assert payload["error"] == "something went wrong"
+    assert "_metadata" in payload
+
+
 # Fixtures
 
 

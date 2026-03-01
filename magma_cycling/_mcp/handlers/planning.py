@@ -1,12 +1,16 @@
 """Planning tool handlers."""
 
+from __future__ import annotations
+
 import json
 from datetime import date, datetime, timedelta
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from mcp.types import TextContent
+from magma_cycling._mcp._utils import compute_start_time, mcp_response, suppress_stdout_stderr
 
-from magma_cycling._mcp._utils import compute_start_time, suppress_stdout_stderr
+if TYPE_CHECKING:
+    from mcp.types import TextContent
 
 __all__ = [
     "handle_weekly_planner",
@@ -63,7 +67,7 @@ async def handle_weekly_planner(args: dict) -> list[TextContent]:
     if provider == "clipboard":
         result["prompt"] = prompt[:500] + "..." if len(prompt) > 500 else prompt
 
-    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+    return mcp_response(result)
 
 
 async def handle_monthly_analysis(args: dict) -> list[TextContent]:
@@ -80,12 +84,8 @@ async def handle_monthly_analysis(args: dict) -> list[TextContent]:
         report = analyzer.run()
 
     if not report:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps({"error": f"No planning data found for {month}"}, indent=2),
-            )
-        ]
+        error = {"error": f"No planning data found for {month}"}
+        return mcp_response(error)
 
     # Extract key metrics from report
     result = {
@@ -94,7 +94,7 @@ async def handle_monthly_analysis(args: dict) -> list[TextContent]:
         "report": report,
     }
 
-    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+    return mcp_response(result)
 
 
 async def handle_daily_sync(args: dict) -> list[TextContent]:
@@ -198,7 +198,7 @@ async def handle_daily_sync(args: dict) -> list[TextContent]:
         "message": f"Sync completed for {check_date.isoformat()}",
     }
 
-    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+    return mcp_response(result)
 
 
 async def handle_update_session(args: dict) -> list[TextContent]:
@@ -328,7 +328,7 @@ async def handle_update_session(args: dict) -> list[TextContent]:
         "sync_result": sync_result if sync_to_intervals else None,
     }
 
-    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+    return mcp_response(result)
 
 
 async def handle_list_weeks(args: dict) -> list[TextContent]:
@@ -370,7 +370,7 @@ async def handle_list_weeks(args: dict) -> list[TextContent]:
         "weeks": weeks,
     }
 
-    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+    return mcp_response(result)
 
 
 async def handle_get_metrics(args: dict) -> list[TextContent]:
@@ -389,7 +389,7 @@ async def handle_get_metrics(args: dict) -> list[TextContent]:
     wellness_data = client.get_wellness(oldest=oldest, newest=newest)
 
     if wellness_data:
-        latest = wellness_data[0]  # Most recent
+        latest = wellness_data[-1]  # Most recent
         result = {
             "date": latest.get("id"),
             "ctl": latest.get("ctl"),
@@ -402,7 +402,7 @@ async def handle_get_metrics(args: dict) -> list[TextContent]:
     else:
         result = {"error": "No wellness data found"}
 
-    return [TextContent(type="text", text=json.dumps(result, indent=2))]
+    return mcp_response(result)
 
 
 async def handle_get_week_details(args: dict) -> list[TextContent]:
@@ -445,22 +445,14 @@ async def handle_get_week_details(args: dict) -> list[TextContent]:
             ],
         }
 
-        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+        return mcp_response(result)
 
     except FileNotFoundError:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps({"error": f"Planning file not found for week {week_id}"}, indent=2),
-            )
-        ]
+        error = {"error": f"Planning file not found for week {week_id}"}
+        return mcp_response(error)
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps({"error": f"Error reading planning: {str(e)}"}, indent=2),
-            )
-        ]
+        error = {"error": f"Error reading planning: {str(e)}"}
+        return mcp_response(error)
 
 
 async def handle_modify_session_details(args: dict) -> list[TextContent]:
@@ -537,29 +529,17 @@ async def handle_modify_session_details(args: dict) -> list[TextContent]:
             "message": f"Session {session_id} updated successfully",
         }
 
-        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+        return mcp_response(result)
 
     except FileNotFoundError:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps({"error": f"Planning file not found for week {week_id}"}, indent=2),
-            )
-        ]
+        error = {"error": f"Planning file not found for week {week_id}"}
+        return mcp_response(error)
     except ValueError as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps({"error": str(e)}, indent=2),
-            )
-        ]
+        error = {"error": str(e)}
+        return mcp_response(error)
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps({"error": f"Error modifying session: {str(e)}"}, indent=2),
-            )
-        ]
+        error = {"error": f"Error modifying session: {str(e)}"}
+        return mcp_response(error)
 
 
 async def handle_rename_session(args: dict) -> list[TextContent]:
@@ -575,34 +555,19 @@ async def handle_rename_session(args: dict) -> list[TextContent]:
 
     # Validate format
     if not SESSION_ID_REGEX.match(new_session_id):
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(
-                    {
-                        "error": f"Invalid session_id format: '{new_session_id}'. "
-                        f"Expected: S###-##[a-z]"
-                    },
-                    indent=2,
-                ),
-            )
-        ]
+        error = {
+            "error": f"Invalid session_id format: '{new_session_id}'. " f"Expected: S###-##[a-z]"
+        }
+        return mcp_response(error)
 
     # Validate same week
     new_week = new_session_id.split("-")[0]
     if new_week != week_id:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(
-                    {
-                        "error": f"Cannot rename across weeks: "
-                        f"{session_id} ({week_id}) → {new_session_id} ({new_week})"
-                    },
-                    indent=2,
-                ),
-            )
-        ]
+        error = {
+            "error": f"Cannot rename across weeks: "
+            f"{session_id} ({week_id}) → {new_session_id} ({new_week})"
+        }
+        return mcp_response(error)
 
     remote_updated = False
     old_intervals_name = None
@@ -665,65 +630,36 @@ async def handle_rename_session(args: dict) -> list[TextContent]:
                 )
                 remote_updated = True
             except Exception as e:
-                return [
-                    TextContent(
-                        type="text",
-                        text=json.dumps(
-                            {
-                                "status": "partial",
-                                "message": f"Session renamed locally but remote update failed: {e}",
-                                "week_id": week_id,
-                                "old_session_id": session_id,
-                                "new_session_id": new_session_id,
-                            },
-                            indent=2,
-                        ),
-                    )
-                ]
+                partial = {
+                    "status": "partial",
+                    "message": f"Session renamed locally but remote update failed: {e}",
+                    "week_id": week_id,
+                    "old_session_id": session_id,
+                    "new_session_id": new_session_id,
+                }
+                return mcp_response(partial)
 
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(
-                    {
-                        "status": "success",
-                        "week_id": week_id,
-                        "old_session_id": session_id,
-                        "new_session_id": new_session_id,
-                        "old_intervals_name": old_intervals_name,
-                        "new_intervals_name": new_intervals_name,
-                        "remote_updated": remote_updated,
-                        "intervals_id": intervals_id,
-                    },
-                    indent=2,
-                ),
-            )
-        ]
+        result = {
+            "status": "success",
+            "week_id": week_id,
+            "old_session_id": session_id,
+            "new_session_id": new_session_id,
+            "old_intervals_name": old_intervals_name,
+            "new_intervals_name": new_intervals_name,
+            "remote_updated": remote_updated,
+            "intervals_id": intervals_id,
+        }
+        return mcp_response(result)
 
     except FileNotFoundError:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps(
-                    {"error": f"Planning file not found for week {week_id}"},
-                    indent=2,
-                ),
-            )
-        ]
+        error = {"error": f"Planning file not found for week {week_id}"}
+        return mcp_response(error)
     except ValueError as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps({"error": str(e)}, indent=2),
-            )
-        ]
+        error = {"error": str(e)}
+        return mcp_response(error)
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps({"error": f"Error renaming session: {str(e)}"}, indent=2),
-            )
-        ]
+        error = {"error": f"Error renaming session: {str(e)}"}
+        return mcp_response(error)
 
 
 async def handle_create_session(args: dict) -> list[TextContent]:
@@ -811,22 +747,14 @@ async def handle_create_session(args: dict) -> list[TextContent]:
             "message": f"Session {session_id} created successfully",
         }
 
-        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+        return mcp_response(result)
 
     except FileNotFoundError:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps({"error": f"Planning file not found for week {week_id}"}, indent=2),
-            )
-        ]
+        error = {"error": f"Planning file not found for week {week_id}"}
+        return mcp_response(error)
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps({"error": f"Error creating session: {str(e)}"}, indent=2),
-            )
-        ]
+        error = {"error": f"Error creating session: {str(e)}"}
+        return mcp_response(error)
 
 
 async def handle_delete_session(args: dict) -> list[TextContent]:
@@ -879,26 +807,14 @@ async def handle_delete_session(args: dict) -> list[TextContent]:
             "message": f"Session {session_id} deleted successfully",
         }
 
-        return [TextContent(type="text", text=json.dumps(result, indent=2))]
+        return mcp_response(result)
 
     except FileNotFoundError:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps({"error": f"Planning file not found for week {week_id}"}, indent=2),
-            )
-        ]
+        error = {"error": f"Planning file not found for week {week_id}"}
+        return mcp_response(error)
     except ValueError as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps({"error": str(e)}, indent=2),
-            )
-        ]
+        error = {"error": str(e)}
+        return mcp_response(error)
     except Exception as e:
-        return [
-            TextContent(
-                type="text",
-                text=json.dumps({"error": f"Error deleting session: {str(e)}"}, indent=2),
-            )
-        ]
+        error = {"error": f"Error deleting session: {str(e)}"}
+        return mcp_response(error)
