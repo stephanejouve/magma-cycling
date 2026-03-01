@@ -110,6 +110,7 @@
 | `workflow_coach.py` | 3 700L | 513L façade + mixins | Mixin decomposition |
 | `daily_sync.py` | 2 159L | 448L façade + 7 mixins | Mixin decomposition |
 | `end_of_week.py` | 1 102L | 425L façade + 5 mixins (`eow/`) | Mixin decomposition |
+| `baseline_preliminary.py` | 1 535L | ~145L façade + 5 mixins (`baseline/`) | Mixin decomposition |
 
 **Résultats validés :** 1 872 tests passing, 15/15 pre-commit hooks, rétrocompatibilité préservée.
 
@@ -118,7 +119,7 @@
 | Fichier | Lignes | Type | Priorité |
 |---------|--------|------|----------|
 | `_mcp/handlers/intervals.py` | 1 762 | 12 handlers monolithique | HIGH |
-| `analysis/baseline_preliminary.py` | 1 535 | God class (30+ méthodes) | HIGH |
+| ~~`analysis/baseline_preliminary.py`~~ | ~~1 535~~ | ~~God class (30+ méthodes)~~ | ✅ Done |
 | `prepare_analysis.py` | 1 500 | God class (40+ méthodes) | HIGH |
 | `config/config_base.py` | 1 158 | 6 dataclasses + 23 fonctions | HIGH |
 | ~~`workflows/end_of_week.py`~~ | ~~1 102~~ | ~~Orchestrateur dense~~ | ✅ Done |
@@ -357,7 +358,7 @@ Items long-terme, priorisés après déploiement Phase 4.
 | **MCP tools** | 28+ opérationnels | ✅ |
 | **AI providers** | 4 (Claude, Mistral, OpenAI, Ollama) | ✅ |
 | **Health providers** | 1 + NullProvider (agnostique) | ✅ |
-| **God scripts refactorés** | 4/10 (mcp_server, workflow_coach, daily_sync, end_of_week) | 🔧 |
+| **God scripts refactorés** | 5/10 (mcp_server, workflow_coach, daily_sync, end_of_week, baseline_preliminary) | 🔧 |
 
 ### Progression athlète
 
@@ -406,7 +407,7 @@ Solution : module centralisé `intervals_scales.py` (même pattern applicable au
 
 **Priorité :** P1 | **Status :** En cours (voir section 3.1)
 
-6 fichiers HIGH priority + 3 MEDIUM restants après les 4 premiers complétés.
+5 fichiers HIGH priority + 3 MEDIUM restants après les 5 premiers complétés.
 Pattern validé : mixin decomposition + façade légère.
 
 ---
