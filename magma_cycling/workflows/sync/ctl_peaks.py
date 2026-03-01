@@ -1,5 +1,6 @@
 """CTLPeaksMixin — CTL/ATL/TSB analysis using Peaks Coaching principles."""
 
+from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -12,7 +13,7 @@ from magma_cycling.workflows.pid_peaks_integration import compute_integrated_cor
 class CTLPeaksMixin:
     """Mixin for CTL/ATL/TSB analysis according to Peaks Coaching principles."""
 
-    def analyze_ctl_peaks(self) -> dict[str, Any] | None:
+    def analyze_ctl_peaks(self, check_date: date | None = None) -> dict[str, Any] | None:
         """
         Analyze CTL/ATL/TSB metrics according to Peaks Coaching principles.
 
@@ -20,6 +21,9 @@ class CTLPeaksMixin:
         and generates alerts if critical conditions detected.
 
         NEW: Integrates PID + Peaks hierarchical recommendation system.
+
+        Args:
+            check_date: Date for wellness lookup (defaults to today)
 
         Returns:
             Dict with analysis results and alerts, or None if failed
@@ -42,14 +46,12 @@ class CTLPeaksMixin:
             ftp_current = athlete_profile.ftp
             ftp_target = athlete_profile.ftp_target
 
-            # Get latest wellness for CTL/ATL/TSB
-            from datetime import date, timedelta
-
-            today = date.today()
-            yesterday = today - timedelta(days=1)
+            # Get wellness for CTL/ATL/TSB at check_date
+            target_date = check_date or date.today()
+            day_before = target_date - timedelta(days=1)
 
             wellness_data = self.client.get_wellness(
-                oldest=yesterday.isoformat(), newest=today.isoformat()
+                oldest=day_before.isoformat(), newest=target_date.isoformat()
             )
 
             if not wellness_data:
