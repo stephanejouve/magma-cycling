@@ -46,6 +46,19 @@ async def handle_withings_auth_status(args: dict) -> list[TextContent]:
             status["message"] = "Authenticated and ready"
             status["credentials_path"] = str(config.credentials_path)
 
+            # Add token expiry info for diagnostics
+            import time
+
+            try:
+                with open(config.credentials_path, encoding="utf-8") as f:
+                    creds = json.load(f)
+                token_expiry = creds.get("token_expiry", 0)
+                now = time.time()
+                status["access_token_expired"] = token_expiry <= now
+                status["auto_refresh"] = "refresh_token present, auto-refresh on next API call"
+            except Exception:
+                pass
+
     return [TextContent(type="text", text=json.dumps(status, indent=2))]
 
 

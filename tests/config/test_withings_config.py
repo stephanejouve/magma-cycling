@@ -151,12 +151,12 @@ class TestWithingsConfigValidation:
 
             assert config.has_valid_credentials() is True
 
-    def test_has_valid_credentials_with_expired_token(self, monkeypatch, tmp_path):
-        """Should return False when token is expired."""
+    def test_has_valid_credentials_with_expired_token_but_refresh(self, monkeypatch, tmp_path):
+        """Should return True when access token expired but refresh_token exists."""
         monkeypatch.setenv("WITHINGS_CLIENT_ID", "test_client_id")
         monkeypatch.setenv("WITHINGS_CLIENT_SECRET", "test_secret")
 
-        # Create expired credentials file
+        # Create expired credentials file (refresh_token present → still valid)
         creds_file = tmp_path / ".withings_credentials.json"
         creds_data = {
             "access_token": "expired_token",
@@ -172,7 +172,7 @@ class TestWithingsConfigValidation:
             reset_withings_config()
             config = get_withings_config()
 
-            assert config.has_valid_credentials() is False
+            assert config.has_valid_credentials() is True
 
     def test_has_valid_credentials_missing_fields(self, monkeypatch, tmp_path):
         """Should return False when credentials file is missing required fields."""
