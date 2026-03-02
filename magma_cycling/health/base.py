@@ -7,6 +7,7 @@ from datetime import date
 from typing import Any
 
 from magma_cycling.models.withings_models import (
+    BloodPressureMeasurement,
     SleepData,
     TrainingReadiness,
     WeightMeasurement,
@@ -37,6 +38,12 @@ class HealthProvider(ABC):
         self, start_date: date, end_date: date
     ) -> list[WeightMeasurement]:
         """Body composition measurements over a date range."""
+
+    @abstractmethod
+    def get_blood_pressure_range(
+        self, start_date: date, end_date: date
+    ) -> list[BloodPressureMeasurement]:
+        """Blood pressure measurements over a date range."""
 
     @abstractmethod
     def get_readiness(self, target_date: date | None = None) -> TrainingReadiness | None:

@@ -7,6 +7,7 @@ from typing import Any
 
 from magma_cycling.health.base import HealthProvider
 from magma_cycling.models.withings_models import (
+    BloodPressureMeasurement,
     SleepData,
     TrainingReadiness,
     WeightMeasurement,
@@ -32,6 +33,12 @@ class NullProvider(HealthProvider):
         self, start_date: date, end_date: date
     ) -> list[WeightMeasurement]:
         """Return empty list — no body composition data available."""
+        return []
+
+    def get_blood_pressure_range(
+        self, start_date: date, end_date: date
+    ) -> list[BloodPressureMeasurement]:
+        """Return empty list — no blood pressure data available."""
         return []
 
     def get_readiness(self, target_date: date | None = None) -> TrainingReadiness | None:
