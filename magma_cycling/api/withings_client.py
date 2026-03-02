@@ -630,6 +630,7 @@ class WithingsClient:
             fat_mass_kg = None
             muscle_mass_kg = None
             bone_mass_kg = None
+            body_water_kg = None
 
             for measure in grp.get("measures", []):
                 measure_type = measure.get("type")
@@ -648,6 +649,8 @@ class WithingsClient:
                     fat_mass_kg = actual_value
                 elif measure_type == 76:  # Muscle Mass
                     muscle_mass_kg = actual_value
+                elif measure_type == 77:  # Hydration (Body Water)
+                    body_water_kg = actual_value
                 elif measure_type == 88:  # Bone Mass
                     bone_mass_kg = actual_value
 
@@ -660,6 +663,7 @@ class WithingsClient:
                         "fat_mass_kg": round(fat_mass_kg, 2) if fat_mass_kg else None,
                         "muscle_mass_kg": round(muscle_mass_kg, 2) if muscle_mass_kg else None,
                         "bone_mass_kg": round(bone_mass_kg, 2) if bone_mass_kg else None,
+                        "body_water_kg": round(body_water_kg, 2) if body_water_kg else None,
                     }
                 )
 
@@ -681,13 +685,95 @@ class WithingsClient:
         end = date.today()
         start = end - timedelta(days=30)
 
-        measurements = self.get_measurements(start, end, measure_types=[1, 6, 8, 76, 88])
+        measurements = self.get_measurements(start, end, measure_types=[1, 6, 8, 76, 77, 88])
 
         if not measurements:
             return None
 
         # Return most recent
         return max(measurements, key=lambda m: m["datetime"])
+
+    def get_blood_pressure(
+        self,
+        start_date: date,
+        end_date: date | None = None,
+    ) -> list[dict[str, Any]]:
+        """Get blood pressure measurements.
+
+        Args:
+            start_date: Start date (inclusive)
+            end_date: End date (inclusive, default: today)
+
+        Returns:
+            List of blood pressure measurements as dictionaries.
+            Each dict contains: date, datetime, systolic, diastolic, heart_pulse (optional).
+
+        Example:
+            >>> bp_data = client.get_blood_pressure(date(2026, 2, 1), date(2026, 2, 28))
+            >>> for bp in bp_data:
+            ...     print(f"{bp['date']}: {bp['systolic']}/{bp['diastolic']}")
+        """
+        if end_date is None:
+            end_date = date.today()
+
+        startdate = int(datetime.combine(start_date, datetime.min.time()).timestamp())
+        enddate = int(datetime.combine(end_date, datetime.max.time()).timestamp())
+
+        params = {
+            "action": "getmeas",
+            "startdate": startdate,
+            "enddate": enddate,
+            "meastypes": "9,10,11",  # 9=diastolic, 10=systolic, 11=heart_pulse
+        }
+
+        body = self._make_request("measure", params)
+
+        measurements = []
+        measuregrps = body.get("measuregrps", [])
+
+        for grp in measuregrps:
+            measure_date_ts = grp.get("date")
+            if not measure_date_ts:
+                continue
+
+            measure_dt = datetime.fromtimestamp(measure_date_ts)
+            measure_date_obj = measure_dt.date()
+
+            systolic = None
+            diastolic = None
+            heart_pulse = None
+
+            for measure in grp.get("measures", []):
+                measure_type = measure.get("type")
+                value = measure.get("value")
+                unit = measure.get("unit", 0)
+
+                if value is None:
+                    continue
+
+                actual_value = value * (10**unit)
+
+                if measure_type == 9:  # Diastolic
+                    diastolic = round(actual_value)
+                elif measure_type == 10:  # Systolic
+                    systolic = round(actual_value)
+                elif measure_type == 11:  # Heart Pulse
+                    heart_pulse = round(actual_value)
+
+            # Only include if both systolic and diastolic are present
+            if systolic is not None and diastolic is not None:
+                measurements.append(
+                    {
+                        "date": measure_date_obj.isoformat(),
+                        "datetime": measure_dt.isoformat(),
+                        "systolic": systolic,
+                        "diastolic": diastolic,
+                        "heart_pulse": heart_pulse,
+                    }
+                )
+
+        logger.info(f"Retrieved {len(measurements)} blood pressure measurements")
+        return measurements
 
     def evaluate_training_readiness(self, sleep_data: dict[str, Any]) -> dict[str, Any]:
         """Evaluate training readiness based on sleep quality.
