@@ -221,6 +221,8 @@ async def handle_update_session(args: dict) -> list[TextContent]:
     session_type = None
     session_version = None
     session_description = None
+    session_tss = None
+    session_duration = None
 
     # Suppress all output to prevent JSON protocol pollution
     with suppress_stdout_stderr():
@@ -239,6 +241,8 @@ async def handle_update_session(args: dict) -> list[TextContent]:
                     session_type = session.session_type
                     session_version = session.version
                     session_description = session.description
+                    session_tss = session.tss_planned
+                    session_duration = session.duration_min
 
                     # PROTECTION: Never modify completed sessions in Intervals.icu
                     if sync_to_intervals and old_status == "completed":
@@ -264,56 +268,85 @@ async def handle_update_session(args: dict) -> list[TextContent]:
             try:
                 client = create_intervals_client()
 
-                # Prepare event data
-                # Determine start time based on day and session suffix
-                day_of_week = session_date.weekday()  # 0=Monday, 5=Saturday
-                session_day_part = session_id.split("-")[-1]  # e.g., "04" or "06a"
+                if new_status in ("skipped", "cancelled", "replaced", "modified"):
+                    # Delegate to CLI sync function which handles
+                    # NOTE conversion (skipped/cancelled/replaced)
+                    # and description update (modified) correctly.
+                    # print() calls are captured by suppress_stdout_stderr().
+                    from magma_cycling.update_session_status import (
+                        sync_with_intervals,
+                    )
 
-                # Check if session has letter suffix (double session)
-                session_suffix = session_day_part[-1] if session_day_part[-1].isalpha() else None
+                    session_info = {
+                        "name": session_name,
+                        "type": session_type,
+                        "version": session_version,
+                        "description": session_description,
+                        "tss_planned": session_tss,
+                        "duration_min": session_duration,
+                    }
 
-                # Double session (a/b)
-                if session_suffix == "a":
-                    start_time = "09:00:00"  # Morning
-                elif session_suffix == "b":
-                    start_time = "15:00:00"  # Afternoon
-                else:
-                    # Saturday → 09:00, other days → 17:00
-                    start_time = "09:00:00" if day_of_week == 5 else "17:00:00"
+                    sync_ok = sync_with_intervals(
+                        client=client,
+                        session_id=session_id,
+                        session_date=str(session_date),
+                        new_status=new_status,
+                        reason=reason,
+                        session_info=session_info,
+                    )
 
-                # Build Intervals.icu event name: S082-03-INT-SweetSpotBlocs-V001
-                intervals_name = f"{session_id}-{session_type}-{session_name}-{session_version}"
+                    status_label = {
+                        "skipped": "SAUTÉE",
+                        "cancelled": "ANNULÉE",
+                        "replaced": "REMPLACÉE",
+                        "modified": "modified",
+                    }.get(new_status, new_status)
 
-                event_data = {
-                    "category": "WORKOUT",
-                    "type": "VirtualRide",
-                    "name": intervals_name,
-                    "description": session_description,
-                    "start_date_local": f"{session_date}T{start_time}",
-                }
-
-                if intervals_id:
-                    # Update existing event
-                    client.update_event(intervals_id, event_data)
-                    sync_result = f"Updated Intervals.icu event {intervals_id}"
-                else:
-                    # Create new event
-                    created = client.create_event(event_data)
-                    if created and "id" in created:
-                        new_intervals_id = created["id"]
-                        # Save intervals_id back to planning
-                        with planning_tower.modify_week(
-                            week_id,
-                            requesting_script="mcp-server",
-                            reason=f"MCP: Save Intervals.icu ID {new_intervals_id} for {session_id}",
-                        ) as plan:
-                            for session in plan.planned_sessions:
-                                if session.session_id == session_id:
-                                    session.intervals_id = new_intervals_id
-                                    break
-                        sync_result = f"Created Intervals.icu event {new_intervals_id}"
+                    if sync_ok:
+                        sync_result = (
+                            f"Converted Intervals.icu event to NOTE "
+                            f"[{status_label}] for {session_id}"
+                        )
                     else:
-                        sync_result = "Failed to create Intervals.icu event"
+                        sync_result = f"Failed to convert Intervals.icu event " f"for {session_id}"
+
+                else:
+                    # For planned/uploaded/pending: WORKOUT create/update
+                    start_time = compute_start_time(session_date, session_id)
+                    intervals_name = (
+                        f"{session_id}-{session_type}-" f"{session_name}-{session_version}"
+                    )
+
+                    event_data = {
+                        "category": "WORKOUT",
+                        "type": "VirtualRide",
+                        "name": intervals_name,
+                        "description": session_description,
+                        "start_date_local": f"{session_date}T{start_time}",
+                    }
+
+                    if intervals_id:
+                        client.update_event(intervals_id, event_data)
+                        sync_result = f"Updated Intervals.icu event {intervals_id}"
+                    else:
+                        created = client.create_event(event_data)
+                        if created and "id" in created:
+                            new_intervals_id = created["id"]
+                            with planning_tower.modify_week(
+                                week_id,
+                                requesting_script="mcp-server",
+                                reason=(
+                                    f"MCP: Save Intervals.icu ID "
+                                    f"{new_intervals_id} for {session_id}"
+                                ),
+                            ) as plan:
+                                for session in plan.planned_sessions:
+                                    if session.session_id == session_id:
+                                        session.intervals_id = new_intervals_id
+                                        break
+                            sync_result = f"Created Intervals.icu event {new_intervals_id}"
+                        else:
+                            sync_result = "Failed to create Intervals.icu event"
 
             except Exception as e:
                 sync_result = f"Sync error: {str(e)}"

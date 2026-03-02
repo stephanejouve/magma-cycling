@@ -51,6 +51,39 @@ def run_command(label: str, args: list[str]) -> bool:
         return False
 
 
+def _get_event_cutoff(client: object, session_ids: list[str], today_str: str) -> int | None:
+    """Get cutoff hour from the planned event's start time on Intervals.icu.
+
+    Looks up today's events, finds the one matching an actionable session,
+    parses start_date_local, and returns start_hour + 3 (buffer).
+
+    Returns None if no matching event or no parseable time (caller uses fallback).
+    """
+    try:
+        events = client.get_events(oldest=today_str, newest=today_str)
+        for event in events:
+            event_name = event.get("name", "")
+            if any(sid in event_name for sid in session_ids):
+                start_local = event.get("start_date_local", "")
+                if "T" in start_local:
+                    hour = int(start_local.split("T")[1].split(":")[0])
+                    return min(hour + 3, 23)  # cap at 23h
+        return None
+    except Exception:
+        return None
+
+
+def _fallback_cutoff(day_of_week: int) -> int:
+    """Static fallback cutoff when no event time is available.
+
+    Saturday/Sunday: 14h (morning sessions).
+    Weekdays: 21h (sessions between 17h-20h).
+    """
+    if day_of_week in (5, 6):
+        return 14
+    return 21
+
+
 def main() -> int:
     """Entry point."""
     now = datetime.now()
@@ -105,6 +138,19 @@ def main() -> int:
     # New activity = more activities on Intervals.icu than sessions marked completed
     if len(cycling) <= completed_count:
         waiting_ids = ", ".join(s.session_id for s in actionable)
+
+        # Smart cutoff: read planned event time from Intervals.icu, add 3h buffer
+        actionable_ids = [s.session_id for s in actionable]
+        cutoff = _get_event_cutoff(client, actionable_ids, date_str)
+        if cutoff is None:
+            cutoff = _fallback_cutoff(today.weekday())
+
+        if now.hour >= cutoff:
+            log(
+                f"{waiting_ids} no activity past cutoff ({cutoff}h), " f"stopping monitor for today"
+            )
+            return 0
+
         log(f"{waiting_ids} waiting ({len(cycling)} activities, {completed_count} completed)")
         return 0
 
