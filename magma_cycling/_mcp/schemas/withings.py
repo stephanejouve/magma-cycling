@@ -91,7 +91,7 @@ def get_tools() -> list[Tool]:
         ),
         Tool(
             name="withings-sync-to-intervals",
-            description="Synchronize Withings health data (sleep, weight) to Intervals.icu wellness fields",
+            description="Synchronize Withings health data (sleep, weight, blood pressure) to Intervals.icu wellness fields",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -107,7 +107,10 @@ def get_tools() -> list[Tool]:
                     },
                     "data_types": {
                         "type": "array",
-                        "items": {"type": "string", "enum": ["sleep", "weight", "all"]},
+                        "items": {
+                            "type": "string",
+                            "enum": ["sleep", "weight", "blood_pressure", "all"],
+                        },
                         "description": "Data types to sync (default: all)",
                     },
                 },

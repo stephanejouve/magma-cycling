@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import json
+import time
 from datetime import date, timedelta
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
+
+import requests
 
 from magma_cycling._mcp._utils import mcp_response, suppress_stdout_stderr
 
@@ -214,6 +217,86 @@ async def handle_withings_get_readiness(args: dict) -> list[TextContent]:
     return mcp_response(result, default=str)
 
 
+def _sleep_score_to_quality(score: int | None) -> int | None:
+    """Convert Withings sleep_score (0-100) to Intervals.icu sleepQuality (1-4).
+
+    Intervals.icu uses an inverted 1-4 scale:
+      1 = Excellent (score >= 90)
+      2 = Good      (score >= 75)
+      3 = Average   (score >= 60)
+      4 = Poor      (score < 60)
+    """
+    if score is None:
+        return None
+    if score >= 90:
+        return 1
+    if score >= 75:
+        return 2
+    if score >= 60:
+        return 3
+    return 4
+
+
+def _extract_422_detail(http_err: requests.exceptions.HTTPError) -> str:
+    """Extract error detail from a 422 response body."""
+    try:
+        if http_err.response is not None:
+            return http_err.response.text[:500]
+    except Exception:
+        pass
+    return "no response body"
+
+
+def _put_wellness_defensive(
+    client: Any, date_str: str, wellness: dict[str, Any]
+) -> dict[str, Any] | None:
+    """PUT wellness with 422 fallback and 429 retry.
+
+    On 422 (unknown fields): retry without custom fields (muscleMass, boneMass, bodyWater).
+    On 429 (rate limit): exponential backoff (5s, 10s, 20s) up to 3 attempts.
+
+    Returns None on success, or a diagnostic dict on failure.
+    """
+    custom_fields = ("muscleMass", "boneMass", "bodyWater")
+    max_retries = 3
+    base_delay = 5
+
+    for attempt in range(max_retries):
+        try:
+            client.update_wellness(date_str, wellness)
+            return None
+        except requests.exceptions.HTTPError as http_err:
+            status = http_err.response.status_code if http_err.response is not None else 0
+            if status == 422:
+                stripped = {k: v for k, v in wellness.items() if k not in custom_fields}
+                if stripped:
+                    try:
+                        client.update_wellness(date_str, stripped)
+                        return None
+                    except requests.exceptions.HTTPError as retry_err:
+                        return {
+                            "stage": "422_retry_failed",
+                            "original_payload": wellness,
+                            "stripped_payload": stripped,
+                            "retry_status": (
+                                retry_err.response.status_code
+                                if retry_err.response is not None
+                                else 0
+                            ),
+                            "retry_detail": _extract_422_detail(retry_err),
+                        }
+                return {
+                    "stage": "422_empty_after_strip",
+                    "original_payload": wellness,
+                }
+            if status == 429 and attempt < max_retries - 1:
+                wait = base_delay * (2**attempt)
+                time.sleep(wait)
+                continue
+            raise
+    return None
+
+
 async def handle_withings_sync_to_intervals(args: dict) -> list[TextContent]:
     """Synchronize health data to Intervals.icu wellness via HealthProvider."""
     with suppress_stdout_stderr():
@@ -233,6 +316,7 @@ async def handle_withings_sync_to_intervals(args: dict) -> list[TextContent]:
         # Determine what to sync
         sync_sleep = "all" in data_types or "sleep" in data_types
         sync_weight = "all" in data_types or "weight" in data_types
+        sync_bp = "all" in data_types or "blood_pressure" in data_types
 
         synced_dates = []
         errors = []
@@ -240,6 +324,7 @@ async def handle_withings_sync_to_intervals(args: dict) -> list[TextContent]:
         # Fetch data via provider
         sleep_data_list = []
         weight_data_list = []
+        bp_data_list = []
 
         if sync_sleep:
             sleep_data_list = [
@@ -252,40 +337,69 @@ async def handle_withings_sync_to_intervals(args: dict) -> list[TextContent]:
                 for m in provider.get_body_composition_range(start_date_val, end_date_val)
             ]
 
+        if sync_bp:
+            bp_data_list = [
+                bp.model_dump()
+                for bp in provider.get_blood_pressure_range(start_date_val, end_date_val)
+            ]
+
         # Create lookup dictionaries
         sleep_by_date = {str(s["date"]): s for s in sleep_data_list}
         weight_by_date = {str(w["date"]): w for w in weight_data_list}
+        bp_by_date = {str(bp["date"]): bp for bp in bp_data_list}
 
         # Iterate through each date and sync
         current_date = start_date_val
         while current_date <= end_date_val:
             date_str = current_date.isoformat()
+            has_data = False
 
             try:
-                # Get current wellness data for this date
-                wellness = intervals_client.get_wellness(date_str)
-
-                if wellness is None:
-                    wellness = {}
+                wellness: dict[str, Any] = {}
 
                 # Update with sleep data
                 if sync_sleep and date_str in sleep_by_date:
                     sleep_info = sleep_by_date[date_str]
                     wellness["sleepSecs"] = int(sleep_info["total_sleep_hours"] * 3600)
-                    wellness["sleepQuality"] = sleep_info.get("sleep_score")
+                    quality = _sleep_score_to_quality(sleep_info.get("sleep_score"))
+                    if quality is not None:
+                        wellness["sleepQuality"] = quality
+                    if sleep_info.get("hr_min"):
+                        wellness["restingHR"] = sleep_info["hr_min"]
+                    has_data = True
 
                 # Update with weight data
                 if sync_weight and date_str in weight_by_date:
                     weight_info = weight_by_date[date_str]
                     wellness["weight"] = weight_info["weight_kg"]
+                    if weight_info.get("muscle_mass_kg"):
+                        wellness["muscleMass"] = weight_info["muscle_mass_kg"]
+                    if weight_info.get("bone_mass_kg"):
+                        wellness["boneMass"] = weight_info["bone_mass_kg"]
+                    if weight_info.get("body_water_kg"):
+                        wellness["bodyWater"] = weight_info["body_water_kg"]
+                    has_data = True
+
+                # Update with blood pressure data
+                if sync_bp and date_str in bp_by_date:
+                    bp_info = bp_by_date[date_str]
+                    wellness["systolic"] = bp_info["systolic"]
+                    wellness["diastolic"] = bp_info["diastolic"]
+                    has_data = True
 
                 # Only update if we have data to sync
-                if date_str in sleep_by_date or date_str in weight_by_date:
-                    intervals_client.update_wellness(date_str, wellness)
-                    synced_dates.append(date_str)
+                if has_data:
+                    diag = _put_wellness_defensive(intervals_client, date_str, wellness)
+                    if diag is not None:
+                        errors.append({"date": date_str, **diag})
+                    else:
+                        synced_dates.append(date_str)
+
+                    # Throttle: avoid saturating Intervals.icu API
+                    time.sleep(1)
 
             except Exception as e:
-                errors.append({"date": date_str, "error": str(e)})
+                errors.append({"date": date_str, "error": str(e), "payload": wellness})
 
             current_date = current_date + timedelta(days=1)
 

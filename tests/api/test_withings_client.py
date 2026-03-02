@@ -366,7 +366,7 @@ class TestWeightData:
         mock_request.assert_called_once()
         call_action, call_params = mock_request.call_args[0]
         assert call_action == "measure"
-        assert call_params["meastypes"] == "1,6,8,76,88"
+        assert call_params["meastypes"] == "1,6,8,76,77,88"
         # Verify date window spans 30 days ending today
         today = date.today()
         start = today - timedelta(days=30)
