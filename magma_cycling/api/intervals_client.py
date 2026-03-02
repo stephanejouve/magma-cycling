@@ -291,6 +291,35 @@ class IntervalsClient:
         response.raise_for_status()
         return response.json()
 
+    def update_wellness(self, date: str, wellness_data: dict[str, Any]) -> dict[str, Any]:
+        """Update wellness data for a specific date.
+
+        Args:
+            date: Date in YYYY-MM-DD format
+            wellness_data: Dictionary with wellness fields to update.
+                Standard fields: weight, sleepSecs, sleepQuality, restingHR,
+                systolic, diastolic, etc.
+                Custom fields: muscleMass, boneMass, bodyWater, etc.
+
+        Returns:
+            Updated wellness data from Intervals.icu
+
+        Raises:
+            requests.HTTPError: If API request fails
+
+        Example:
+            >>> client.update_wellness("2026-03-01", {
+            ...     "weight": 75.0,
+            ...     "sleepSecs": 28800,
+            ...     "restingHR": 52,
+            ... })
+        """
+        url = f"{self.BASE_URL}/athlete/{self.athlete_id}/wellness/{date}"
+
+        response = self.session.put(url, json=wellness_data)
+        response.raise_for_status()
+        return response.json()
+
     def get_events(
         self, oldest: str | None = None, newest: str | None = None
     ) -> list[dict[str, Any]]:

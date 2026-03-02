@@ -111,6 +111,28 @@ class WeightMeasurement(BaseModel):
     fat_mass_kg: float | None = Field(default=None, ge=0, description="Fat mass in kg")
     bone_mass_kg: float | None = Field(default=None, ge=0, description="Bone mass in kg")
     muscle_mass_kg: float | None = Field(default=None, ge=0, description="Muscle mass in kg")
+    body_water_kg: float | None = Field(default=None, ge=0, description="Body water in kg")
+
+
+class BloodPressureMeasurement(BaseModel):
+    """Blood pressure measurement from Withings BPM device.
+
+    Represents a single blood pressure reading with systolic, diastolic,
+    and optional heart pulse values.
+
+    Attributes:
+        date: Measurement date
+        datetime: Measurement timestamp (ISO format)
+        systolic: Systolic blood pressure in mmHg
+        diastolic: Diastolic blood pressure in mmHg
+        heart_pulse: Heart pulse in bpm (optional)
+    """
+
+    date: DateType = Field(description="Measurement date")
+    datetime: DateTimeType = Field(description="Measurement timestamp")
+    systolic: int = Field(gt=0, description="Systolic blood pressure in mmHg")
+    diastolic: int = Field(gt=0, description="Diastolic blood pressure in mmHg")
+    heart_pulse: int | None = Field(default=None, gt=0, description="Heart pulse in bpm")
 
 
 class TrainingReadiness(BaseModel):

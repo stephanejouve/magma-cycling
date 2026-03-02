@@ -8,6 +8,7 @@ from typing import Any
 from magma_cycling.api.withings_client import WithingsClient
 from magma_cycling.health.base import HealthProvider
 from magma_cycling.models.withings_models import (
+    BloodPressureMeasurement,
     SleepData,
     TrainingReadiness,
     WeightMeasurement,
@@ -67,6 +68,17 @@ class WithingsProvider(HealthProvider):
             for m in self._client.get_measurements(
                 start_date, end_date, measure_types=[1, 6, 8, 76, 88]
             )
+        ]
+
+    # -- blood pressure ------------------------------------------------------
+
+    def get_blood_pressure_range(
+        self, start_date: date, end_date: date
+    ) -> list[BloodPressureMeasurement]:
+        """Get blood pressure measurements over a date range from Withings."""
+        return [
+            BloodPressureMeasurement(**bp)
+            for bp in self._client.get_blood_pressure(start_date, end_date)
         ]
 
     # -- readiness -----------------------------------------------------------
