@@ -7,7 +7,12 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from magma_cycling._mcp._utils import compute_start_time, mcp_response, suppress_stdout_stderr
+from magma_cycling._mcp._utils import (
+    compute_start_time,
+    load_workout_descriptions,
+    mcp_response,
+    suppress_stdout_stderr,
+)
 
 if TYPE_CHECKING:
     from mcp.types import TextContent
@@ -317,11 +322,16 @@ async def handle_update_session(args: dict) -> list[TextContent]:
                         f"{session_id}-{session_type}-" f"{session_name}-{session_version}"
                     )
 
+                    # Load full workout description from {week_id}_workouts.txt
+                    # Fallback to short session_description if not found
+                    full_descriptions = load_workout_descriptions(week_id)
+                    full_desc = full_descriptions.get(intervals_name, session_description)
+
                     event_data = {
                         "category": "WORKOUT",
                         "type": "VirtualRide",
                         "name": intervals_name,
-                        "description": session_description,
+                        "description": full_desc,
                         "start_date_local": f"{session_date}T{start_time}",
                     }
 
