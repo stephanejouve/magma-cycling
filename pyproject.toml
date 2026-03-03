@@ -100,6 +100,9 @@ session-monitor = "magma_cycling.session_monitor:main"
 check-workout-adherence = "scripts.monitoring.check_workout_adherence:main"
 pid-daily-evaluation = "magma_cycling.scripts.pid_daily_evaluation:main"
 
+# === Health ===
+withings-presync = "magma_cycling.scripts.withings_presync:main"
+
 # === Analysis ===
 analyze-baseline = "magma_cycling.analysis.baseline_preliminary:main"
 

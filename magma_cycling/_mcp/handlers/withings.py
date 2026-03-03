@@ -23,6 +23,7 @@ __all__ = [
     "handle_withings_sync_to_intervals",
     "handle_withings_analyze_trends",
     "handle_withings_enrich_session",
+    "sync_withings_to_intervals",
 ]
 
 
@@ -297,121 +298,134 @@ def _put_wellness_defensive(
     return None
 
 
+def sync_withings_to_intervals(
+    start_date: date,
+    end_date: date | None = None,
+    data_types: list[str] | None = None,
+) -> dict:
+    """Synchronize Withings health data to Intervals.icu wellness fields.
+
+    Reusable synchronous function. Fetches data via HealthProvider, transforms,
+    and PUTs to Intervals.icu with defensive 422/429 handling.
+
+    Returns a result dict with synced_dates, errors, and status.
+    """
+    from magma_cycling.config import create_intervals_client
+    from magma_cycling.health import create_health_provider
+
+    provider = create_health_provider()
+    intervals_client = create_intervals_client()
+
+    end_date_val = end_date if end_date is not None else date.today()
+    types = data_types or ["all"]
+
+    sync_sleep = "all" in types or "sleep" in types
+    sync_weight = "all" in types or "weight" in types
+    sync_bp = "all" in types or "blood_pressure" in types
+
+    synced_dates: list[str] = []
+    errors: list[dict] = []
+
+    # Fetch data via provider
+    sleep_data_list = []
+    weight_data_list = []
+    bp_data_list = []
+
+    if sync_sleep:
+        sleep_data_list = [
+            s.model_dump() for s in provider.get_sleep_range(start_date, end_date_val)
+        ]
+
+    if sync_weight:
+        weight_data_list = [
+            m.model_dump() for m in provider.get_body_composition_range(start_date, end_date_val)
+        ]
+
+    if sync_bp:
+        bp_data_list = [
+            bp.model_dump() for bp in provider.get_blood_pressure_range(start_date, end_date_val)
+        ]
+
+    # Create lookup dictionaries
+    sleep_by_date = {str(s["date"]): s for s in sleep_data_list}
+    weight_by_date = {str(w["date"]): w for w in weight_data_list}
+    bp_by_date = {str(bp["date"]): bp for bp in bp_data_list}
+
+    # Iterate through each date and sync
+    current_date = start_date
+    while current_date <= end_date_val:
+        date_str = current_date.isoformat()
+        has_data = False
+
+        try:
+            wellness: dict[str, Any] = {}
+
+            # Update with sleep data
+            if sync_sleep and date_str in sleep_by_date:
+                sleep_info = sleep_by_date[date_str]
+                wellness["sleepSecs"] = int(sleep_info["total_sleep_hours"] * 3600)
+                quality = _sleep_score_to_quality(sleep_info.get("sleep_score"))
+                if quality is not None:
+                    wellness["sleepQuality"] = quality
+                if sleep_info.get("hr_min"):
+                    wellness["restingHR"] = sleep_info["hr_min"]
+                has_data = True
+
+            # Update with weight data
+            if sync_weight and date_str in weight_by_date:
+                weight_info = weight_by_date[date_str]
+                wellness["weight"] = weight_info["weight_kg"]
+                if weight_info.get("muscle_mass_kg"):
+                    wellness["muscleMass"] = weight_info["muscle_mass_kg"]
+                if weight_info.get("bone_mass_kg"):
+                    wellness["boneMass"] = weight_info["bone_mass_kg"]
+                if weight_info.get("body_water_kg"):
+                    wellness["bodyWater"] = weight_info["body_water_kg"]
+                has_data = True
+
+            # Update with blood pressure data
+            if sync_bp and date_str in bp_by_date:
+                bp_info = bp_by_date[date_str]
+                wellness["systolic"] = bp_info["systolic"]
+                wellness["diastolic"] = bp_info["diastolic"]
+                has_data = True
+
+            # Only update if we have data to sync
+            if has_data:
+                diag = _put_wellness_defensive(intervals_client, date_str, wellness)
+                if diag is not None:
+                    errors.append({"date": date_str, **diag})
+                else:
+                    synced_dates.append(date_str)
+
+                # Throttle: avoid saturating Intervals.icu API
+                time.sleep(1)
+
+        except Exception as e:
+            errors.append({"date": date_str, "error": str(e), "payload": wellness})
+
+        current_date = current_date + timedelta(days=1)
+
+    return {
+        "start_date": start_date.isoformat(),
+        "end_date": end_date_val.isoformat(),
+        "data_types": types,
+        "synced_dates": synced_dates,
+        "synced_count": len(synced_dates),
+        "errors": errors,
+        "status": "success" if not errors else "partial_success",
+    }
+
+
 async def handle_withings_sync_to_intervals(args: dict) -> list[TextContent]:
     """Synchronize health data to Intervals.icu wellness via HealthProvider."""
     with suppress_stdout_stderr():
-        from magma_cycling.config import create_intervals_client
-        from magma_cycling.health import create_health_provider
-
-        provider = create_health_provider()
-        intervals_client = create_intervals_client()
-
-        start_date_str = args["start_date"]
+        start_date_val = date.fromisoformat(args["start_date"])
         end_date_str = args.get("end_date")
+        end_date_val = date.fromisoformat(end_date_str) if end_date_str else None
         data_types = args.get("data_types", ["all"])
 
-        start_date_val = date.fromisoformat(start_date_str)
-        end_date_val = date.fromisoformat(end_date_str) if end_date_str else date.today()
-
-        # Determine what to sync
-        sync_sleep = "all" in data_types or "sleep" in data_types
-        sync_weight = "all" in data_types or "weight" in data_types
-        sync_bp = "all" in data_types or "blood_pressure" in data_types
-
-        synced_dates = []
-        errors = []
-
-        # Fetch data via provider
-        sleep_data_list = []
-        weight_data_list = []
-        bp_data_list = []
-
-        if sync_sleep:
-            sleep_data_list = [
-                s.model_dump() for s in provider.get_sleep_range(start_date_val, end_date_val)
-            ]
-
-        if sync_weight:
-            weight_data_list = [
-                m.model_dump()
-                for m in provider.get_body_composition_range(start_date_val, end_date_val)
-            ]
-
-        if sync_bp:
-            bp_data_list = [
-                bp.model_dump()
-                for bp in provider.get_blood_pressure_range(start_date_val, end_date_val)
-            ]
-
-        # Create lookup dictionaries
-        sleep_by_date = {str(s["date"]): s for s in sleep_data_list}
-        weight_by_date = {str(w["date"]): w for w in weight_data_list}
-        bp_by_date = {str(bp["date"]): bp for bp in bp_data_list}
-
-        # Iterate through each date and sync
-        current_date = start_date_val
-        while current_date <= end_date_val:
-            date_str = current_date.isoformat()
-            has_data = False
-
-            try:
-                wellness: dict[str, Any] = {}
-
-                # Update with sleep data
-                if sync_sleep and date_str in sleep_by_date:
-                    sleep_info = sleep_by_date[date_str]
-                    wellness["sleepSecs"] = int(sleep_info["total_sleep_hours"] * 3600)
-                    quality = _sleep_score_to_quality(sleep_info.get("sleep_score"))
-                    if quality is not None:
-                        wellness["sleepQuality"] = quality
-                    if sleep_info.get("hr_min"):
-                        wellness["restingHR"] = sleep_info["hr_min"]
-                    has_data = True
-
-                # Update with weight data
-                if sync_weight and date_str in weight_by_date:
-                    weight_info = weight_by_date[date_str]
-                    wellness["weight"] = weight_info["weight_kg"]
-                    if weight_info.get("muscle_mass_kg"):
-                        wellness["muscleMass"] = weight_info["muscle_mass_kg"]
-                    if weight_info.get("bone_mass_kg"):
-                        wellness["boneMass"] = weight_info["bone_mass_kg"]
-                    if weight_info.get("body_water_kg"):
-                        wellness["bodyWater"] = weight_info["body_water_kg"]
-                    has_data = True
-
-                # Update with blood pressure data
-                if sync_bp and date_str in bp_by_date:
-                    bp_info = bp_by_date[date_str]
-                    wellness["systolic"] = bp_info["systolic"]
-                    wellness["diastolic"] = bp_info["diastolic"]
-                    has_data = True
-
-                # Only update if we have data to sync
-                if has_data:
-                    diag = _put_wellness_defensive(intervals_client, date_str, wellness)
-                    if diag is not None:
-                        errors.append({"date": date_str, **diag})
-                    else:
-                        synced_dates.append(date_str)
-
-                    # Throttle: avoid saturating Intervals.icu API
-                    time.sleep(1)
-
-            except Exception as e:
-                errors.append({"date": date_str, "error": str(e), "payload": wellness})
-
-            current_date = current_date + timedelta(days=1)
-
-        result = {
-            "start_date": start_date_val.isoformat(),
-            "end_date": end_date_val.isoformat(),
-            "data_types": data_types,
-            "synced_dates": synced_dates,
-            "synced_count": len(synced_dates),
-            "errors": errors,
-            "status": "success" if not errors else "partial_success",
-        }
+        result = sync_withings_to_intervals(start_date_val, end_date_val, data_types)
 
     return mcp_response(result)
 
