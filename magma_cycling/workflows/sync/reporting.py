@@ -1,5 +1,6 @@
 """ReportingMixin — report generation, backup, and email sending."""
 
+import re
 import shutil
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -12,6 +13,32 @@ from magma_cycling.config import get_email_config
 from magma_cycling.planning.peaks_phases import format_phase_recommendation
 from magma_cycling.workflows.pid_peaks_integration import format_integrated_recommendation
 from magma_cycling.workflows.proactive_compensation import format_compensation_section
+
+
+def _normalize_analysis_for_report(analysis: str) -> str:
+    """Strip duplicate header and adjust heading levels for report insertion.
+
+    Analysis from workouts-history.md starts with::
+
+        ### SessionName
+        ID : xxx
+        Date : dd/mm/yyyy
+
+        #### Section...
+
+    The session name/ID/date are already shown in the activity section,
+    so we strip them and downgrade ``####`` → ``#####`` to sit properly
+    under the ``#### 🤖 Analyse AI`` heading.
+    """
+    # Strip leading ### header + ID + Date lines
+    cleaned = re.sub(
+        r"^###\s+.+\nID\s*:.+\nDate\s*:.+\n*",
+        "",
+        analysis.strip(),
+    )
+    # Downgrade #### to ##### (exactly 4 # followed by space)
+    cleaned = re.sub(r"^#### ", "##### ", cleaned, flags=re.MULTILINE)
+    return cleaned.strip()
 
 
 class ReportingMixin:
@@ -107,7 +134,7 @@ class ReportingMixin:
                     # Add AI analysis if available
                     if analyses and activity["id"] in analyses:
                         f.write("#### 🤖 Analyse AI\n\n")
-                        f.write(analyses[activity["id"]])
+                        f.write(_normalize_analysis_for_report(analyses[activity["id"]]))
                         f.write("\n\n")
             else:
                 f.write("*Aucune nouvelle activité détectée*\n\n")

@@ -1082,6 +1082,44 @@ class TestBackupExistingReport:
         assert "backups" in str(backup.parent)
 
 
+class TestNormalizeAnalysisForReport:
+    """Test _normalize_analysis_for_report heading normalization."""
+
+    def test_strips_duplicate_header_and_downgrades_headings(self):
+        from magma_cycling.workflows.sync.reporting import _normalize_analysis_for_report
+
+        raw = (
+            "### Sweet Spot 3x12\n"
+            "ID : i129293324\n"
+            "Date : 03/03/2026\n"
+            "\n"
+            "#### Métriques\n"
+            "- CTL : 43\n"
+            "\n"
+            "#### Exécution\n"
+            "- Durée : 79min\n"
+        )
+        result = _normalize_analysis_for_report(raw)
+        assert not result.startswith("### ")
+        assert "##### Métriques" in result
+        assert "##### Exécution" in result
+        # No standalone #### (level 4) lines remain
+        assert "\n#### " not in result
+
+    def test_passthrough_when_no_header(self):
+        from magma_cycling.workflows.sync.reporting import _normalize_analysis_for_report
+
+        raw = "Excellente séance de sweet spot."
+        assert _normalize_analysis_for_report(raw) == raw
+
+    def test_preserves_content_after_header(self):
+        from magma_cycling.workflows.sync.reporting import _normalize_analysis_for_report
+
+        raw = "### Session\n" "ID : i123\n" "Date : 01/01/2026\n" "\n" "#### Points\n" "- Point 1\n"
+        result = _normalize_analysis_for_report(raw)
+        assert "- Point 1" in result
+
+
 class TestGenerateReport:
     """Test generate_report — writes markdown to file."""
 
@@ -1141,6 +1179,47 @@ class TestGenerateReport:
         )
         content = report.read_text()
         assert "Excellente séance" in content
+
+    def test_report_analysis_heading_hierarchy(self, ds):
+        """AI analysis from workouts-history.md must not break heading hierarchy."""
+        activities = [
+            {
+                "id": 123,
+                "name": "S083-02-INT-SweetSpotBlocs-V001",
+                "type": "VirtualRide",
+                "icu_training_load": 81,
+                "moving_time": 4740,
+                "paired_activity_id": None,
+            },
+        ]
+        # Realistic analysis content as stored in workouts-history.md
+        raw_analysis = (
+            "### S083-02-INT-SweetSpotBlocs-V001\n"
+            "ID : i129293324\n"
+            "Date : 03/03/2026\n"
+            "\n"
+            "#### Métriques Pré-séance\n"
+            "- CTL : 43\n"
+            "\n"
+            "#### Exécution\n"
+            "- Durée : 79min\n"
+        )
+        analyses = {123: raw_analysis}
+        report = ds.generate_report(
+            check_date=date(2026, 2, 24),
+            new_activities=activities,
+            planning_changes={"diff": None, "status": None},
+            analyses=analyses,
+        )
+        content = report.read_text()
+        # Duplicate ### session name must be stripped
+        assert content.count("### S083-02-INT-SweetSpotBlocs-V001") == 1
+        # #### must be downgraded to ##### under #### 🤖 Analyse AI
+        assert "##### Métriques Pré-séance" in content
+        assert "##### Exécution" in content
+        # No standalone #### analysis headers remain (only ##### allowed)
+        assert "\n#### Métriques" not in content
+        assert "\n#### Exécution" not in content
 
     def test_report_with_servo_no_modifications(self, ds):
         servo_result = {"modifications": [], "ai_response": ""}
