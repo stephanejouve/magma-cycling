@@ -158,6 +158,9 @@ def main() -> int:
     activity_id = new_activity.get("id", "?")
     log(f"Activity {activity_id} detected ({len(cycling)} activities, {completed_count} completed)")
 
+    # Step 6: Pre-sync Withings → Intervals.icu
+    run_command("withings-presync", [POETRY, "run", "withings-presync"])
+
     # Step 7a: Trigger daily-sync
     try:
         run_command(
