@@ -2,6 +2,7 @@
 
 from magma_cycling.planning.session_formatter import format_remaining_sessions_compact
 from magma_cycling.utils.ai_response_parser import parse_ai_modifications
+from magma_cycling.utils.intervals_scales import format_feel
 
 
 class ServoEvaluationMixin:
@@ -164,14 +165,7 @@ class ServoEvaluationMixin:
         # Criterion 3: Feel (subjective) - Intervals.icu 1-5 scale
         if metrics.get("feel") is not None:
             if metrics["feel"] >= self.servo_criteria["feel_threshold"]:
-                feel_labels = {
-                    1: "Excellent",
-                    2: "Bien",
-                    3: "Moyen",
-                    4: "Passable",
-                    5: "Mauvais",
-                }
-                feel_label = feel_labels.get(metrics["feel"], "Unknown")
+                feel_label = format_feel(metrics["feel"])
                 reasons.append(f"Ressenti négatif ({feel_label} - {metrics['feel']}/5)")
 
         # Criterion 4: TSB
