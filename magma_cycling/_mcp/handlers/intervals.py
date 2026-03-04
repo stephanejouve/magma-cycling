@@ -13,6 +13,7 @@ from magma_cycling._mcp._utils import (
     mcp_response,
     suppress_stdout_stderr,
 )
+from magma_cycling.utils.event_sync import evaluate_sync
 
 if TYPE_CHECKING:
     from mcp.types import TextContent
@@ -128,68 +129,65 @@ async def handle_sync_week_to_intervals(args: dict) -> list[TextContent]:
                         )
                         continue
 
-                if session.intervals_id:
-                    # Check if event exists remotely
-                    if session.intervals_id in remote_workouts:
-                        # Event exists - check for conflicts
-                        remote_event = remote_workouts[session.intervals_id]
+                # Find existing remote event (if any)
+                existing_event = None
+                if session.intervals_id and session.intervals_id in remote_workouts:
+                    existing_event = remote_workouts[session.intervals_id]
 
-                        # VALIDATION: Detect if remote was manually modified
-                        remote_name = remote_event.get("name", "")
-                        remote_start = remote_event.get("start_date_local", "")
-                        local_start = f"{session.session_date}T{start_time}"
+                decision = evaluate_sync(event_data, existing_event, force_update=force_update)
 
-                        has_remote_changes = (
-                            remote_name != intervals_name or remote_start != local_start
-                        )
+                if decision.action == "skip":
+                    to_skip_protected.append(
+                        {
+                            "session_id": session.session_id,
+                            "name": session.name,
+                            "status": "remote_protected",
+                            "reason": decision.reason,
+                        }
+                    )
+                    continue
 
-                        if has_remote_changes and not force_update:
-                            warnings.append(
-                                {
-                                    "session_id": session.session_id,
-                                    "intervals_id": session.intervals_id,
-                                    "type": "remote_modification_detected",
-                                    "message": f"⚠️ Remote event {session.intervals_id} has been manually modified in Intervals.icu",
-                                    "local_name": intervals_name,
-                                    "remote_name": remote_name,
-                                    "suggestion": "Use force_update=true to overwrite remote changes",
-                                }
-                            )
-                            continue
-
-                        # Check if update needed
-                        needs_update = force_update or has_remote_changes
-
-                        if needs_update:
-                            update_data = {
-                                "name": intervals_name,
-                                "description": full_description,
-                                "start_date_local": f"{session.session_date}T{start_time}",
-                            }
-                            to_update.append(
-                                {
-                                    "session_id": session.session_id,
-                                    "intervals_id": session.intervals_id,
-                                    "name": session.name,
-                                    "event_data": update_data,
-                                }
-                            )
-                    else:
-                        # intervals_id set but event doesn't exist remotely
-                        to_create.append(
+                # Post-check: warn if remote was manually modified (MCP-specific)
+                if decision.action == "update" and existing_event and not force_update:
+                    remote_name = existing_event.get("name", "")
+                    remote_start = existing_event.get("start_date_local", "")
+                    if (
+                        remote_name != intervals_name
+                        or remote_start != event_data["start_date_local"]
+                    ):
+                        warnings.append(
                             {
                                 "session_id": session.session_id,
-                                "name": session.name,
-                                "event_data": event_data,
+                                "intervals_id": session.intervals_id,
+                                "type": "remote_modification_detected",
+                                "message": f"⚠️ Remote event {session.intervals_id} has been manually modified in Intervals.icu",
+                                "local_name": intervals_name,
+                                "remote_name": remote_name,
+                                "suggestion": "Use force_update=true to overwrite remote changes",
                             }
                         )
-                else:
-                    # No intervals_id - create new event
+                        continue
+
+                if decision.action == "create":
                     to_create.append(
                         {
                             "session_id": session.session_id,
                             "name": session.name,
                             "event_data": event_data,
+                        }
+                    )
+                elif decision.action == "update":
+                    update_data = {
+                        "name": intervals_name,
+                        "description": full_description,
+                        "start_date_local": f"{session.session_date}T{start_time}",
+                    }
+                    to_update.append(
+                        {
+                            "session_id": session.session_id,
+                            "intervals_id": decision.existing_event_id,
+                            "name": session.name,
+                            "event_data": update_data,
                         }
                     )
 

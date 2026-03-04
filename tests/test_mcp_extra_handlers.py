@@ -237,12 +237,13 @@ class TestHandleSyncWeekToIntervals:
         mock_plan.planned_sessions = [mock_session]
         tower = make_tower(mock_plan)
         mock_client = Mock()
-        # Remote event with full intervals_name and matching start_date (no conflict)
+        # Remote event with full intervals_name, matching start_date and description (no conflict)
         mock_client.get_events.return_value = [
             {
                 "id": "evt123",
                 "category": "WORKOUT",
                 "name": "S081-03-INT-TempoCourt-V001",
+                "description": "Tempo 3x10min",
                 "start_date_local": "2026-02-19T17:00:00",
             },
         ]
