@@ -1,12 +1,45 @@
 """Upload mixin for WorkoutUploader."""
 
-import hashlib
 from datetime import datetime, timedelta
 
+from magma_cycling.utils.event_sync import (
+    calculate_description_hash,
+    compute_start_time,
+    evaluate_sync,
+)
 
-def _calculate_description_hash(description: str) -> str:
-    """Calculate SHA256 hash of workout description for change detection."""
-    return hashlib.sha256(description.encode("utf-8")).hexdigest()[:16]
+
+def _find_matching_event(
+    existing_events: list[dict], workout_name: str, suffix: str
+) -> dict | None:
+    """Find an existing WORKOUT event matching the given workout.
+
+    For double sessions (suffix a/b), match by exact name.
+    For single sessions, match by session_id prefix (SXXX-NN).
+
+    Args:
+        existing_events: List of remote events for the date.
+        workout_name: Local workout name.
+        suffix: Session suffix ("a", "b", or "").
+
+    Returns:
+        Matching remote event dict, or None.
+    """
+    session_id = "-".join(workout_name.split("-")[:2])
+
+    for event in existing_events:
+        if event.get("category") != "WORKOUT":
+            continue
+        event_name = event.get("name", "")
+        if suffix:
+            if event_name == workout_name:
+                return event
+        else:
+            event_session_id = "-".join(event_name.split("-")[:2])
+            if event_session_id == session_id:
+                return event
+
+    return None
 
 
 class UploadMixin:
@@ -15,19 +48,17 @@ class UploadMixin:
     def upload_workout(self, workout: dict) -> bool:
         """Upload un workout sur Intervals.icu with duplicate detection."""
         try:
-            # Déterminer l'heure de début selon le jour de la semaine et le suffixe
+            # Build session_id for compute_start_time
             workout_date = datetime.strptime(workout["date"], "%Y-%m-%d")
-            day_of_week = workout_date.weekday()  # 0=Lundi, 5=Samedi, 6=Dimanche
+            workout_name = workout["name"]
+            session_id = "-".join(workout_name.split("-")[:2])
             suffix = workout.get("suffix", "")
-
-            # Gestion double séance (a/b)
-            if suffix == "a":
-                start_time = "09:00:00"  # Matin
-            elif suffix == "b":
-                start_time = "15:00:00"  # Après-midi
+            if suffix:
+                session_id_full = f"{session_id}{suffix}"
             else:
-                # Samedi (5) → 09:00, autres jours → 17:00
-                start_time = "09:00:00" if day_of_week == 5 else "17:00:00"
+                session_id_full = session_id
+
+            start_time = compute_start_time(workout_date, session_id_full)
 
             if self.api is None:
                 print("  ❌ Erreur : API non initialisée")
@@ -35,28 +66,7 @@ class UploadMixin:
 
             # Check for existing workout on this date (duplicate detection)
             existing_events = self.api.get_events(oldest=workout["date"], newest=workout["date"])
-
-            # Look for existing WORKOUT on same date
-            # Pour doubles séances (a/b), matcher le nom exact
-            # Pour séances simples, matcher le préfixe semaine+jour (ex: S081-05)
-            workout_name = workout["name"]
-            session_id = "-".join(workout_name.split("-")[:2])  # Ex: S081-06a → S081-06a
-
-            existing_workout = None
-            for event in existing_events:
-                if event.get("category") == "WORKOUT":
-                    event_name = event.get("name", "")
-                    # Matcher le nom exact pour les doubles séances
-                    if suffix:
-                        if event_name == workout_name:
-                            existing_workout = event
-                            break
-                    else:
-                        # Pour séances simples, matcher le session_id (SXXX-NN)
-                        event_session_id = "-".join(event_name.split("-")[:2])
-                        if event_session_id == session_id:
-                            existing_workout = event
-                            break
+            existing_workout = _find_matching_event(existing_events, workout_name, suffix)
 
             event_data = {
                 "category": "WORKOUT",
@@ -66,53 +76,44 @@ class UploadMixin:
                 "start_date_local": f"{workout['date']}T{start_time}",
             }
 
-            # Calculate hash for comparison
-            new_hash = _calculate_description_hash(workout["description"])
+            decision = evaluate_sync(event_data, existing_workout)
+            new_hash = calculate_description_hash(workout["description"])
 
-            if existing_workout:
-                # PROTECTION: Ne jamais écraser un workout déjà réalisé
-                if existing_workout.get("paired_activity_id"):
-                    activity_id = existing_workout.get("paired_activity_id")
-                    print(
-                        f"  🔒 Protégé (réalisé) : {workout['name']} ({workout['date']}) [Activity: {activity_id}]"
-                    )
-                    workout["description_hash"] = _calculate_description_hash(
-                        existing_workout.get("description", "")
-                    )
-                    workout["intervals_id"] = existing_workout.get("id")
-                    return True
-
-                existing_hash = _calculate_description_hash(existing_workout.get("description", ""))
-
-                if existing_hash == new_hash:
-                    # Identical content - skip
-                    print(f"  ⏭️  Ignoré (identique) : {workout['name']} ({workout['date']})")
-                    workout["description_hash"] = new_hash
-                    workout["intervals_id"] = existing_workout.get("id")
-                    return True
-                else:
-                    # Different content - update
-                    response = self.api.update_event(existing_workout.get("id"), event_data)
-                    if response:
-                        workout["description_hash"] = new_hash
-                        workout["intervals_id"] = response.get("id")
-                        print(f"  🔄 Mis à jour : {workout['name']} ({workout['date']})")
-                        return True
-                    else:
-                        print(f"  ❌ Échec mise à jour : {workout['name']}")
-                        return False
-            else:
-                # No existing workout - create new
+            if decision.action == "create":
                 response = self.api.create_event(event_data)
-
                 if response:
-                    # Store hash and event_id for sync tracking
                     workout["description_hash"] = new_hash
                     workout["intervals_id"] = response.get("id")
                     print(f"  ✅ Créé : {workout['name']} ({workout['date']})")
                     return True
                 else:
                     print(f"  ❌ Échec création : {workout['name']}")
+                    return False
+
+            elif decision.action == "skip":
+                if "protected" in decision.reason:
+                    activity_id = existing_workout.get("paired_activity_id")
+                    print(
+                        f"  🔒 Protégé (réalisé) : {workout['name']} ({workout['date']}) [Activity: {activity_id}]"
+                    )
+                    workout["description_hash"] = calculate_description_hash(
+                        existing_workout.get("description", "")
+                    )
+                else:
+                    print(f"  ⏭️  Ignoré (identique) : {workout['name']} ({workout['date']})")
+                    workout["description_hash"] = new_hash
+                workout["intervals_id"] = decision.existing_event_id
+                return True
+
+            else:  # update
+                response = self.api.update_event(decision.existing_event_id, event_data)
+                if response:
+                    workout["description_hash"] = new_hash
+                    workout["intervals_id"] = response.get("id")
+                    print(f"  🔄 Mis à jour : {workout['name']} ({workout['date']})")
+                    return True
+                else:
+                    print(f"  ❌ Échec mise à jour : {workout['name']}")
                     return False
 
         except Exception as e:
