@@ -1,5 +1,7 @@
 """Metric extraction and formatting helpers for PromptGenerator."""
 
+from magma_cycling.utils.intervals_scales import format_feel
+
 
 class MetricHelpersMixin:
     """Unit-level metric extraction and formatting."""
@@ -13,18 +15,7 @@ class MetricHelpersMixin:
         Returns:
             Formatted string with emoji
         """
-        if feel_value is None:
-            return "_Non renseigné_"
-
-        feel_map = {
-            1: "😊 Excellent (1/5)",
-            2: "🙂 Bien (2/5)",
-            3: "😐 Moyen (3/5)",
-            4: "😕 Passable (4/5)",
-            5: "😣 Mauvais (5/5)",
-        }
-
-        return feel_map.get(feel_value, f"_Valeur inconnue: {feel_value}_")
+        return format_feel(feel_value, with_emoji=True)
 
     def _format_athlete_notes(self, activity_description, wellness_comments):
         """Format athlete notes with wellness comments as fallback.
