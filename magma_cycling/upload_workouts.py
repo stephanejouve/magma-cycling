@@ -59,11 +59,11 @@ Metadata:
     Version: v2
 """
 import argparse
-import hashlib
 import sys
 from datetime import datetime
 from pathlib import Path
 
+from magma_cycling.utils.event_sync import calculate_description_hash  # noqa: F401 — re-export
 from magma_cycling.workflows.uploader.parsing import ParsingMixin
 from magma_cycling.workflows.uploader.upload import UploadMixin
 from magma_cycling.workflows.uploader.validation import ValidationMixin
@@ -104,19 +104,6 @@ def calculate_week_start_date(week_id: str) -> datetime:
         raise ValueError(f"Calculated date {target_monday} is not a Monday")
 
     return target_monday
-
-
-def calculate_description_hash(description: str) -> str:
-    """
-    Calculate SHA256 hash of workout description for change detection.
-
-    Args:
-        description: Workout description text
-
-    Returns:
-        16-character hex hash of description (first 16 chars of SHA256)
-    """
-    return hashlib.sha256(description.encode("utf-8")).hexdigest()[:16]
 
 
 class WorkoutUploader(
