@@ -6,6 +6,7 @@ from magma_cycling.prompts.prompt_builder import (
     VALID_MISSIONS,
     build_prompt,
     format_athlete_profile,
+    load_current_metrics,
 )
 
 
@@ -502,3 +503,241 @@ class TestMonthlyAnalysisIntegration:
         # Report should still be generated, just without AI section
         assert len(report) > 0
         assert "Analyse IA" not in report
+
+
+class TestLoadCurrentMetrics:
+    """Tests for load_current_metrics()."""
+
+    def test_returns_dict(self):
+        """load_current_metrics always returns a dict."""
+        result = load_current_metrics()
+        assert isinstance(result, dict)
+
+    def test_graceful_without_env(self):
+        """Without env vars / API, returns empty dict."""
+        result = load_current_metrics()
+        assert isinstance(result, dict)
+
+    def test_includes_ftp_when_available(self):
+        """With mocked AthleteProfile, returns ftp/weight."""
+        from unittest.mock import MagicMock, patch
+
+        mock_profile = MagicMock()
+        mock_profile.ftp = 230
+        mock_profile.weight = 85.0
+
+        mock_cls = MagicMock()
+        mock_cls.from_env.return_value = mock_profile
+
+        with (
+            patch("magma_cycling.config.AthleteProfile", mock_cls),
+            patch(
+                "magma_cycling.config.create_intervals_client",
+                side_effect=Exception("no API"),
+            ),
+        ):
+            result = load_current_metrics()
+
+        assert result["ftp"] == 230
+        assert result["weight"] == 85.0
+
+    def test_includes_ctl_atl_when_available(self):
+        """With mocked Intervals.icu, returns ctl/atl/ramp_rate."""
+        from unittest.mock import MagicMock, patch
+
+        mock_client = MagicMock()
+        mock_client.get_wellness.return_value = [{"ctl": 42.5, "atl": 38.0, "rampRate": 3.2}]
+
+        with (
+            patch(
+                "magma_cycling.config.AthleteProfile",
+                side_effect=Exception("no env"),
+            ),
+            patch(
+                "magma_cycling.config.create_intervals_client",
+                return_value=mock_client,
+            ),
+        ):
+            result = load_current_metrics()
+
+        assert result["ctl"] == 42.5
+        assert result["atl"] == 38.0
+        assert result["ramp_rate"] == 3.2
+
+
+class TestDailySyncIntegration:
+    """Integration tests for daily-sync AI analysis system_prompt."""
+
+    def test_daily_sync_passes_system_prompt(self):
+        """daily-sync AI analysis passes system_prompt to analyzer."""
+        from unittest.mock import MagicMock, patch
+
+        from magma_cycling.workflows.sync.ai_analysis import AIAnalysisMixin
+
+        mixin = AIAnalysisMixin()
+        mixin.enable_ai_analysis = True
+        mixin.ai_analyzer = MagicMock()
+        mixin.ai_analyzer.analyze_session.return_value = "AI result text here"
+        mixin.history_manager = MagicMock()
+        mixin.history_manager.read_history.return_value = ""
+        mixin.history_manager.insert_analysis.return_value = True
+        mixin.client = MagicMock()
+        mixin.client.get_wellness.return_value = [{}]
+        mixin.client.get_planned_workout.return_value = None
+        mixin.prompt_generator = MagicMock()
+        mixin.prompt_generator.load_athlete_context.return_value = {}
+        mixin.prompt_generator.load_recent_workouts.return_value = []
+        mixin.prompt_generator.format_activity_data.return_value = {}
+        mixin.prompt_generator.load_periodization_context.return_value = {}
+        mixin.prompt_generator.generate_prompt.return_value = "user prompt"
+
+        activity = {
+            "id": "i999",
+            "name": "Test Activity",
+            "start_date_local": "2026-03-05T08:00:00",
+        }
+
+        with (
+            patch(
+                "magma_cycling.workflows.sync.ai_analysis.load_current_metrics",
+                return_value={"ftp": 220},
+            ),
+            patch(
+                "magma_cycling.workflows.sync.ai_analysis.build_prompt",
+                return_value=("system prompt", ""),
+            ) as mock_build,
+        ):
+            result = mixin.analyze_activity(activity)
+
+        mock_build.assert_called_once_with(
+            mission="daily_feedback",
+            current_metrics={"ftp": 220},
+            workflow_data="",
+        )
+        mixin.ai_analyzer.analyze_session.assert_called_once_with(
+            "user prompt", system_prompt="system prompt"
+        )
+        assert result is not None
+
+
+class TestEndOfWeekIntegration:
+    """Integration tests for end-of-week AI workout generation system_prompt."""
+
+    def test_eow_passes_system_prompt(self, tmp_path):
+        """end-of-week workout gen passes system_prompt to analyzer."""
+        from datetime import date
+        from unittest.mock import MagicMock, patch
+
+        from magma_cycling.workflows.eow.ai_workouts import AIWorkoutsMixin
+
+        mixin = AIWorkoutsMixin()
+        mixin.provider = "claude_api"
+        mixin.dry_run = False
+        mixin.week_next = "S095"
+        mixin.next_start_date = date(2026, 3, 9)
+        mixin.planning_dir = tmp_path
+
+        mock_analyzer = MagicMock()
+        mock_analyzer.analyze_session.return_value = "workout content"
+        mock_analyzer.get_provider_info.return_value = {
+            "provider": "claude_api",
+            "model": "claude-3",
+        }
+
+        mock_planner = MagicMock()
+        mock_planner.generate_planning_prompt.return_value = "planning prompt"
+
+        mock_ai_config = MagicMock()
+        mock_ai_config.get_provider_config.return_value = {}
+
+        with (
+            patch(
+                "magma_cycling.workflows.eow.ai_workouts.load_current_metrics",
+                return_value={"ftp": 220},
+            ),
+            patch(
+                "magma_cycling.workflows.eow.ai_workouts.build_prompt",
+                return_value=("system prompt", ""),
+            ) as mock_build,
+            patch(
+                "magma_cycling.ai_providers.factory.AIProviderFactory.validate_provider_config",
+                return_value=(True, "OK"),
+            ),
+            patch(
+                "magma_cycling.ai_providers.factory.AIProviderFactory.create",
+                return_value=mock_analyzer,
+            ),
+            patch("magma_cycling.config.get_ai_config", return_value=mock_ai_config),
+            patch("magma_cycling.weekly_planner.WeeklyPlanner", return_value=mock_planner),
+        ):
+            result = mixin._get_workouts_api("claude_api")
+
+        mock_build.assert_called_once_with(
+            mission="weekly_planning",
+            current_metrics={"ftp": 220},
+            workflow_data="",
+        )
+        mock_analyzer.analyze_session.assert_called_once_with(
+            "planning prompt", system_prompt="system prompt"
+        )
+        assert result is True
+
+
+class TestWorkflowCoachIntegration:
+    """Integration tests for workflow_coach step 3 system_prompt."""
+
+    def test_coach_passes_system_prompt(self):
+        """workflow_coach step 3 passes system_prompt to analyzer."""
+        from unittest.mock import MagicMock, patch
+
+        from magma_cycling.workflows.coach.ai_analysis import AIAnalysisMixin
+
+        mixin = AIAnalysisMixin()
+        mixin.current_provider = "claude_api"
+        mixin.activity_name = None
+        mixin.activity_id = "i999"
+        mixin.ai_analyzer = MagicMock()
+        mixin.ai_analyzer.analyze_session.return_value = "analysis result"
+        mixin.ai_config = MagicMock()
+
+        # Mock clipboard read
+        mock_clipboard = MagicMock()
+        mock_clipboard.stdout = "prompt from clipboard"
+
+        with (
+            patch(
+                "magma_cycling.workflows.coach.ai_analysis.load_current_metrics",
+                return_value={"ftp": 220},
+            ),
+            patch(
+                "magma_cycling.workflows.coach.ai_analysis.build_prompt",
+                return_value=("system prompt", ""),
+            ) as mock_build,
+            patch("subprocess.run") as mock_run,
+        ):
+            # Mock prepare_analysis subprocess (returncode 0)
+            mock_prepare = MagicMock()
+            mock_prepare.returncode = 0
+            # Mock pbpaste
+            mock_pbpaste = MagicMock()
+            mock_pbpaste.stdout = "prompt from clipboard"
+            mock_run.side_effect = [mock_prepare, mock_pbpaste]
+
+            # Mock wait_user to avoid interactive input
+            mixin.clear_screen = MagicMock()
+            mixin.print_header = MagicMock()
+            mixin.print_separator = MagicMock()
+            mixin.wait_user = MagicMock()
+
+            mixin.step_3_prepare_analysis()
+
+        mock_build.assert_called_once_with(
+            mission="daily_feedback",
+            current_metrics={"ftp": 220},
+            workflow_data="",
+        )
+        mixin.ai_analyzer.analyze_session.assert_called_once_with(
+            "prompt from clipboard",
+            dataset=None,
+            system_prompt="system prompt",
+        )

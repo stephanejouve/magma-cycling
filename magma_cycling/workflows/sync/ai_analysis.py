@@ -3,6 +3,7 @@
 from datetime import date, timedelta
 
 from magma_cycling.planning.control_tower import planning_tower
+from magma_cycling.prompts.prompt_builder import build_prompt, load_current_metrics
 
 
 class AIAnalysisMixin:
@@ -177,8 +178,16 @@ class AIAnalysisMixin:
                 session_prescription=session_prescription,
             )
 
+            # Build system_prompt for AI framing
+            current_metrics = load_current_metrics()
+            system_prompt, _ = build_prompt(
+                mission="daily_feedback",
+                current_metrics=current_metrics,
+                workflow_data="",
+            )
+
             # Get AI analysis
-            analysis = self.ai_analyzer.analyze_session(prompt)
+            analysis = self.ai_analyzer.analyze_session(prompt, system_prompt=system_prompt)
 
             if analysis:
                 print(f"     ✅ Analyse générée ({len(analysis)} caractères)")

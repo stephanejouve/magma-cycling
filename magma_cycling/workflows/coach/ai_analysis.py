@@ -8,6 +8,7 @@ from pathlib import Path
 
 from magma_cycling.ai_providers import AIProviderFactory
 from magma_cycling.config import get_data_config
+from magma_cycling.prompts.prompt_builder import build_prompt, load_current_metrics
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +92,15 @@ class AIAnalysisMixin:
             print()
 
             try:
-                self.analysis_result = self.ai_analyzer.analyze_session(prompt, dataset=None)
+                current_metrics = load_current_metrics()
+                system_prompt, _ = build_prompt(
+                    mission="daily_feedback",
+                    current_metrics=current_metrics,
+                    workflow_data="",
+                )
+                self.analysis_result = self.ai_analyzer.analyze_session(
+                    prompt, dataset=None, system_prompt=system_prompt
+                )
                 print("✅ Analyse terminée !")
                 print(f"   Longueur réponse : {len(self.analysis_result)} caractères")
                 print()

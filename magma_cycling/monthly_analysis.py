@@ -375,39 +375,10 @@ Sois concret, direct et orienté action. Utilise des emojis pour la lisibilité.
             return {}
 
     def _load_current_metrics(self) -> dict:
-        """Load current athlete metrics for prompt enrichment.
+        """Load current athlete metrics for prompt enrichment."""
+        from magma_cycling.prompts.prompt_builder import load_current_metrics
 
-        Returns:
-            Dict with ftp, weight, ctl, atl, ramp_rate keys.
-            Empty dict on failure (graceful degradation).
-        """
-        metrics: dict = {}
-        # Load FTP/weight from AthleteProfile
-        try:
-            from magma_cycling.config import AthleteProfile
-
-            profile = AthleteProfile.from_env()
-            metrics["ftp"] = profile.ftp
-            metrics["weight"] = profile.weight
-        except Exception:
-            logger.debug("Could not load AthleteProfile, skipping FTP/weight")
-
-        # Load CTL/ATL from Intervals.icu
-        try:
-            from magma_cycling.config import create_intervals_client
-
-            today = datetime.now().strftime("%Y-%m-%d")
-            client = create_intervals_client()
-            wellness = client.get_wellness(oldest=today, newest=today)
-            if wellness:
-                day = wellness[0]
-                metrics["ctl"] = day.get("ctl")
-                metrics["atl"] = day.get("atl")
-                metrics["ramp_rate"] = day.get("rampRate")
-        except Exception:
-            logger.debug("Could not load Intervals.icu metrics, skipping CTL/ATL")
-
-        return metrics
+        return load_current_metrics()
 
     def run(self) -> str:
         """Execute monthly analysis and return report."""
