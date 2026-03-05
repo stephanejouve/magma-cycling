@@ -4,6 +4,7 @@ import subprocess
 
 from magma_cycling.planning.control_tower import planning_tower
 from magma_cycling.planning.session_formatter import format_remaining_sessions_compact
+from magma_cycling.prompts.prompt_builder import build_prompt, load_current_metrics
 from magma_cycling.utils.ai_response_parser import parse_ai_modifications
 from magma_cycling.utils.date_helpers import extract_day_number
 
@@ -343,9 +344,18 @@ Réponds maintenant."""
             print()
 
             try:
+                # Build system_prompt for AI framing
+                current_metrics = load_current_metrics()
+                system_prompt, _ = build_prompt(
+                    mission="daily_feedback",
+                    current_metrics=current_metrics,
+                    workflow_data="",
+                )
                 # Call AI provider with supplementary prompt
                 ai_response = self.ai_analyzer.analyze_session(
-                    prompt=supplementary_prompt, dataset=None
+                    prompt=supplementary_prompt,
+                    dataset=None,
+                    system_prompt=system_prompt,
                 )
                 import logging
 
