@@ -3,6 +3,8 @@
 import sys
 from pathlib import Path
 
+from magma_cycling.prompts.prompt_builder import build_prompt, load_current_metrics
+
 
 class AIWorkoutsMixin:
     """Génération de workouts via AI providers (clipboard, Claude, Mistral)."""
@@ -153,7 +155,13 @@ class AIWorkoutsMixin:
             print("  ⏳ Cela peut prendre 30-60 secondes...")
             print()
 
-            workouts_response = analyzer.analyze_session(prompt)
+            current_metrics = load_current_metrics()
+            system_prompt, _ = build_prompt(
+                mission="weekly_planning",
+                current_metrics=current_metrics,
+                workflow_data="",
+            )
+            workouts_response = analyzer.analyze_session(prompt, system_prompt=system_prompt)
 
             print(f"  ✅ Workouts générés ({len(workouts_response)} caractères)")
             print()
