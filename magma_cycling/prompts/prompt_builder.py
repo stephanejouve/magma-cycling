@@ -6,6 +6,7 @@ User prompt = workflow-specific data (stats, session data, etc.)
 """
 
 import logging
+from datetime import datetime
 from pathlib import Path
 
 from magma_cycling.config.athlete_context import load_athlete_context
@@ -17,6 +18,40 @@ PROMPTS_DIR = Path(__file__).parent
 VALID_MISSIONS = frozenset(
     {"mesocycle_analysis", "weekly_planning", "daily_feedback", "weekly_review"}
 )
+
+
+def load_current_metrics() -> dict:
+    """Load FTP, weight, CTL, ATL, ramp_rate from env + Intervals.icu API.
+
+    Returns:
+        Dict with ftp, weight, ctl, atl, ramp_rate keys.
+        Empty dict on failure (graceful degradation).
+    """
+    metrics: dict = {}
+    try:
+        from magma_cycling.config import AthleteProfile
+
+        profile = AthleteProfile.from_env()
+        metrics["ftp"] = profile.ftp
+        metrics["weight"] = profile.weight
+    except Exception:
+        logger.debug("Could not load AthleteProfile, skipping FTP/weight")
+
+    try:
+        from magma_cycling.config import create_intervals_client
+
+        today = datetime.now().strftime("%Y-%m-%d")
+        client = create_intervals_client()
+        wellness = client.get_wellness(oldest=today, newest=today)
+        if wellness:
+            day = wellness[0]
+            metrics["ctl"] = day.get("ctl")
+            metrics["atl"] = day.get("atl")
+            metrics["ramp_rate"] = day.get("rampRate")
+    except Exception:
+        logger.debug("Could not load Intervals.icu metrics, skipping CTL/ATL")
+
+    return metrics
 
 
 def build_prompt(
