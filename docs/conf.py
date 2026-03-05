@@ -11,6 +11,7 @@ Metadata:
 """
 
 import sys
+from datetime import datetime
 from pathlib import Path
 
 # Add project root to path
@@ -59,6 +60,11 @@ autodoc_default_options = {
     "exclude-members": "__weakref__",
 }
 autodoc_typehints = "description"
+
+# RST substitutions (available in all .rst files)
+rst_epilog = f"""
+.. |today_date| replace:: {datetime.now().strftime("%Y-%m-%d")}
+"""
 
 # HTML output
 html_theme = "sphinx_rtd_theme"

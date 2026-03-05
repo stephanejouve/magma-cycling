@@ -11,11 +11,13 @@ MCP & Dashboard
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: magma_cycling.dashboard
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 Main Workflows
 --------------
@@ -24,21 +26,25 @@ Main Workflows
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: magma_cycling.monthly_analysis
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: magma_cycling.upload_workouts
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: magma_cycling.prepare_analysis
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 Automation & Coaching
 ---------------------
@@ -47,26 +53,31 @@ Automation & Coaching
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: magma_cycling.workflow_coach
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: magma_cycling.workflows.end_of_week
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: magma_cycling.daily_sync
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: magma_cycling.insert_analysis
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 State & Session Management
 --------------------------
@@ -75,26 +86,31 @@ State & Session Management
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: magma_cycling.sync_intervals
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: magma_cycling.planned_sessions_checker
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: magma_cycling.update_session_status
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: magma_cycling.shift_sessions
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 Reports & Planning
 ------------------
@@ -103,26 +119,31 @@ Reports & Planning
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: magma_cycling.weekly_planner
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: magma_cycling.reports.cli
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: magma_cycling.session_monitor
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: magma_cycling.scripts.pid_daily_evaluation
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 External Data & Health
 ----------------------
@@ -131,11 +152,13 @@ External Data & Health
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: magma_cycling.analysis.baseline_preliminary
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 Debug & Maintenance Tools
 -------------------------
@@ -144,73 +167,88 @@ Debug & Maintenance Tools
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: magma_cycling.scripts.validate_templates
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: magma_cycling.scripts.backfill_intelligence
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: magma_cycling.scripts.search_zwift_workouts
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: magma_cycling.scripts.populate_zwift_cache
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: magma_cycling.scripts.seed_zwift_workouts
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: magma_cycling.check_activity_sources
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: magma_cycling.validate_naming_convention
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: magma_cycling.normalize_weekly_reports_casing
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: scripts.monitoring.check_workout_adherence
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: scripts.maintenance.cleanup_old_archives
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: scripts.maintenance.project_cleaner
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: scripts.maintenance.clear_week_planning
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: scripts.maintenance.check_tools_documentation
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
 
 .. automodule:: scripts.maintenance.format_planning
    :members:
    :undoc-members:
    :show-inheritance:
+   :noindex:
