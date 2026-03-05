@@ -716,14 +716,50 @@ class TestHandleGetWorkout:
         tower_mock = Mock()
         tower_mock.read_week.return_value = mock_plan
 
-        with patch(DATA_CONFIG_PATCH, return_value=mc), patch(TOWER_PATCH, tower_mock):
+        with (
+            patch(DATA_CONFIG_PATCH, return_value=mc),
+            patch(TOWER_PATCH, tower_mock),
+            patch(
+                "magma_cycling.workout_parser.load_workout_descriptions",
+                return_value={},
+            ),
+        ):
             result = await handle_get_workout({"session_id": "S081-03"})
         data = json.loads(result[0].text)
-        assert data["found"] is False
+        assert data["found"] is True
         assert data["structured_file"] is None
         assert data["session_definition"]["name"] == "EnduranceBase"
         assert data["session_definition"]["description"] == "2h endurance Z2"
         assert data["session_definition"]["tss_planned"] == 80
+        assert data["full_description"] is None
+
+    @pytest.mark.asyncio
+    async def test_workout_fallback_loads_workouts_txt(self, tmp_path):
+        """get-workout loads full description from {week_id}_workouts.txt."""
+        from magma_cycling.mcp_server import handle_get_workout
+
+        mc = Mock()
+        mc.data_repo_path = tmp_path
+        (tmp_path / "workouts").mkdir()
+
+        tower_mock = Mock()
+        tower_mock.read_week.side_effect = Exception("no plan")
+
+        full_desc = "2x20min @ 85% FTP\nRecup 5min entre series"
+
+        with (
+            patch(DATA_CONFIG_PATCH, return_value=mc),
+            patch(TOWER_PATCH, tower_mock),
+            patch(
+                "magma_cycling.workout_parser.load_workout_descriptions",
+                return_value={"S081-03": full_desc},
+            ),
+        ):
+            result = await handle_get_workout({"session_id": "S081-03"})
+        data = json.loads(result[0].text)
+        assert data["found"] is True
+        assert data["full_description"] == full_desc
+        assert data["session_definition"] is None
 
     @pytest.mark.asyncio
     async def test_workout_found_returns_content(self, tmp_path):

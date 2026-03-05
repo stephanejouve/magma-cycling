@@ -33,8 +33,9 @@ async def handle_get_workout(args: dict) -> list[TextContent]:
             workout_files = list(workouts_dir.glob(f"{session_id}-*"))
 
             if not workout_files:
-                # No .zwo file — fall back to session description from planning
+                # No .zwo file — fall back to planning + workouts.txt
                 from magma_cycling.planning.control_tower import planning_tower
+                from magma_cycling.workout_parser import load_workout_descriptions
 
                 week_id = session_id[:4]  # "S082-02" → "S082"
                 session_def = None
@@ -47,12 +48,24 @@ async def handle_get_workout(args: dict) -> list[TextContent]:
                 except Exception:
                     pass
 
+                # Load full workout description from {week_id}_workouts.txt
+                full_description = None
+                try:
+                    descriptions = load_workout_descriptions(week_id)
+                    full_description = descriptions.get(session_id)
+                except Exception:
+                    pass
+
                 result = {
-                    "found": False,
+                    "found": bool(full_description or session_def),
                     "session_id": session_id,
                     "structured_file": None,
-                    "message": "No structured workout file (.zwo) found. "
-                    "Session is defined via text description in the planning.",
+                    "message": (
+                        "Workout description loaded from planning."
+                        if full_description or session_def
+                        else "No workout file or description found."
+                    ),
+                    "full_description": full_description,
                     "session_definition": (
                         {
                             "name": session_def.name if session_def else None,
