@@ -5,7 +5,7 @@ Documentation auto-générée depuis les docstrings Google Style du code source.
 
 **Version :** 2.3.0
 
-**Dernière mise à jour :** 2026-02-28
+**Dernière mise à jour :** |today_date|
 
 .. toctree::
    :maxdepth: 2
@@ -58,6 +58,12 @@ Documentation auto-générée depuis les docstrings Google Style du code source.
    :caption: Utilities:
 
    modules/magma_cycling.utils
+
+.. toctree::
+   :maxdepth: 2
+   :caption: CLI Tools:
+
+   modules/tools
 
 Documentation Projet
 ====================
