@@ -76,11 +76,8 @@ def test_timeline_injector():
             workout_entry=new_entry, workout_date=date(2025, 1, 7)
         )
 
-        if result.success:
-            print(f"✓ Injection successful at line {result.line_number}")
-        else:
-            print(f"✗ Injection failed: {result.error}")
-            return False
+        assert result.success, f"Injection failed: {result.error}"
+        print(f"✓ Injection successful at line {result.line_number}")
 
         # Verify chronological order
         with open(test_file) as f:
@@ -93,13 +90,11 @@ def test_timeline_injector():
 
         # File is in reverse chronological order (newest first)
         # So: S073-03 (Jan 8) < S073-02 (Jan 7) < S073-01 (Jan 6)
-        if s03_pos < s02_pos < s01_pos:
-            print("✓ Reverse chronological order maintained correctly")
-            print(f"  Positions: S073-03={s03_pos}, S073-02={s02_pos}, S073-01={s01_pos}")
-        else:
-            print("✗ Chronological order incorrect")
-            print(f"  Positions: S073-01={s01_pos}, S073-02={s02_pos}, S073-03={s03_pos}")
-            return False
+        assert (
+            s03_pos < s02_pos < s01_pos
+        ), f"Chronological order incorrect: S073-01={s01_pos}, S073-02={s02_pos}, S073-03={s03_pos}"
+        print("✓ Reverse chronological order maintained correctly")
+        print(f"  Positions: S073-03={s03_pos}, S073-02={s02_pos}, S073-01={s01_pos}")
 
         # Test duplicate detection
         print("\nTesting duplicate detection...")
@@ -107,14 +102,10 @@ def test_timeline_injector():
             workout_entry=new_entry, workout_date=date(2025, 1, 7)
         )
 
-        if duplicate_result.duplicate_found:
-            print("✓ Duplicate detection working")
-        else:
-            print("✗ Duplicate detection failed")
-            return False
+        assert duplicate_result.duplicate_found, "Duplicate detection failed"
+        print("✓ Duplicate detection working")
 
         print("\n✅ TimelineInjector: ALL TESTS PASSED")
-        return True
 
     finally:
         # Cleanup
@@ -172,10 +163,7 @@ def test_daily_aggregator():
         print("\nRunning aggregation pipeline...")
         result = aggregator.aggregate()
 
-        if not result.success:
-            print(f"✗ Aggregation failed: {result.errors}")
-            return False
-
+        assert result.success, f"Aggregation failed: {result.errors}"
         print("✓ Aggregation completed successfully")
 
         # Validate raw data collection
@@ -213,7 +201,6 @@ def test_daily_aggregator():
         print(f"  - Contains feedback: {'✓' if 'Feedback' in formatted else '✗'}")
 
         print("\n✅ DailyAggregator: ALL TESTS PASSED")
-        return True
 
     finally:
         # Cleanup
@@ -274,7 +261,6 @@ def test_prompt_generator():
     print(f"  - Well-structured: {'✓' if len(sections) >= 5 else '✗'}")
 
     print("\n✅ PromptGenerator: ALL TESTS PASSED")
-    return True
 
 
 def test_full_workflow_integration():
@@ -321,10 +307,7 @@ def test_full_workflow_integration():
 
         agg_result = aggregator.aggregate()
 
-        if not agg_result.success:
-            print(f"✗ Aggregation failed: {agg_result.errors}")
-            return False
-
+        assert agg_result.success, f"Aggregation failed: {agg_result.errors}"
         print("✓ Data aggregation successful")
 
         # Step 2: Generate AI prompt
@@ -350,10 +333,7 @@ def test_full_workflow_integration():
             workout_entry=formatted_output, workout_date=date.today()
         )
 
-        if not inject_result.success:
-            print(f"✗ Injection failed: {inject_result.error}")
-            return False
-
+        assert inject_result.success, f"Injection failed: {inject_result.error}"
         print(f"✓ Workout injected at line {inject_result.line_number}")
 
         # Verify complete workflow
@@ -381,7 +361,6 @@ def test_full_workflow_integration():
         print(f"  - Warnings logged: {'✓' if has_warnings else 'No warnings'}")
 
         print("\n✅ Full Workflow Integration: ALL TESTS PASSED")
-        return True
 
     finally:
         # Cleanup
@@ -414,8 +393,8 @@ Testing modules:
 
     for test_name, test_func in tests:
         try:
-            result = test_func()
-            results.append((test_name, result))
+            test_func()
+            results.append((test_name, True))
         except Exception as e:
             print(f"\n❌ {test_name} CRASHED: {e}")
             import traceback

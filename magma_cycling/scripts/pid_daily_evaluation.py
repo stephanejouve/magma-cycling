@@ -440,9 +440,13 @@ class PIDDailyEvaluator:
         print(f"   Ki: {gains['ki']:.4f}")
         print(f"   Kd: {gains['kd']:.4f}")
 
-        # TODO: Get FTP setpoint from athlete profile or config
-        # For now, use a reasonable default
-        setpoint = 260  # Example FTP target
+        # Get FTP setpoint from athlete profile (fallback to measured)
+        try:
+            from magma_cycling.config import AthleteProfile
+
+            setpoint = AthleteProfile.from_env().ftp
+        except Exception:
+            setpoint = measured_ftp
 
         # Create PID controller
         controller = DiscretePIDController(
