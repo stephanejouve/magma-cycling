@@ -37,6 +37,7 @@ def load_current_metrics() -> dict:
     except Exception:
         logger.debug("Could not load AthleteProfile, skipping FTP/weight")
 
+    day = {}
     try:
         from magma_cycling.config import create_intervals_client
 
@@ -50,6 +51,46 @@ def load_current_metrics() -> dict:
             metrics["ramp_rate"] = day.get("rampRate")
     except Exception:
         logger.debug("Could not load Intervals.icu metrics, skipping CTL/ATL")
+
+    # --- Derived metrics from existing data (no extra API call) ---
+    ctl = metrics.get("ctl")
+    atl = metrics.get("atl")
+    if isinstance(ctl, (int, float)) and isinstance(atl, (int, float)) and ctl > 0:
+        from magma_cycling.utils.metrics_advanced import (
+            detect_overtraining_risk,
+            get_recovery_recommendation,
+        )
+
+        tsb = ctl - atl
+        ratio = atl / ctl
+        metrics["atl_ctl_ratio"] = round(ratio, 2)
+        metrics["tsb"] = round(tsb, 1)
+
+        sleep_secs = day.get("sleepSecs") if day else None
+        sleep_hours = sleep_secs / 3600 if sleep_secs else None
+
+        try:
+            risk = detect_overtraining_risk(
+                ctl=ctl,
+                atl=atl,
+                tsb=tsb,
+                sleep_hours=sleep_hours,
+                profile={"age": 54, "category": "master", "sleep_dependent": True},
+            )
+            metrics["overtraining_risk"] = risk["risk_level"]
+            metrics["overtraining_veto"] = risk["veto"]
+            metrics["overtraining_factors"] = risk["factors"]
+
+            recovery = get_recovery_recommendation(
+                tsb=tsb,
+                atl_ctl_ratio=ratio,
+                profile={"age": 54, "category": "master"},
+            )
+            metrics["recovery_priority"] = recovery["priority"]
+            metrics["recovery_recommendation"] = recovery["recommendation"]
+            metrics["intensity_limit_pct"] = recovery["intensity_limit"]
+        except Exception:
+            logger.debug("Could not compute overtraining/recovery metrics")
 
     return metrics
 
@@ -134,6 +175,29 @@ def format_athlete_profile(context: dict, metrics: dict) -> str:
         metrics_parts.append(f"Ramp: {ramp}")
     if metrics_parts:
         lines.append(f"- {' | '.join(metrics_parts)}")
+
+    # Load indicators (derived metrics)
+    risk = metrics.get("overtraining_risk")
+    if risk:
+        tsb = metrics.get("tsb")
+        ratio = metrics.get("atl_ctl_ratio")
+        lines.append("")
+        lines.append("Indicateurs de charge:")
+        lines.append(f"  - TSB: {tsb:+.1f}")
+        lines.append(f"  - ATL/CTL ratio: {ratio:.2f}")
+        lines.append(f"  - Risque surentrainement: {risk.upper()}")
+        if metrics.get("overtraining_veto"):
+            lines.append("  - VETO ACTIF: repos ou Z1 uniquement")
+        factors = metrics.get("overtraining_factors", [])
+        if factors:
+            for f in factors:
+                lines.append(f"  - Signal: {f}")
+        rec = metrics.get("recovery_recommendation")
+        if rec:
+            lines.append(f"  - Prescription recup: {rec}")
+            limit = metrics.get("intensity_limit_pct")
+            if limit and limit < 100:
+                lines.append(f"  - Intensite max: {limit}% FTP")
 
     # Constraints
     constraints = context.get("constraints", [])
