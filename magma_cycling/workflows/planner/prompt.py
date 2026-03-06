@@ -201,7 +201,7 @@ Si une adaptation recommande un test FTP avec affûtage, suivre ce timing préci
 
 3. **Semaine APRÈS ({self._week_after_next()})**:
    - Test FTP samedi (jour 6)
-   - Repos dimanche
+   - Repos la veille du test
    - TSB optimal pour test: +5 à +15
 
 **Autres adaptations:**
@@ -403,7 +403,7 @@ Cooldown
 
 ### Contraintes Obligatoires
 
-1. **Dimanche = REPOS OBLIGATOIRE** (aucune séance)
+1. **Minimum 1 jour REPOS par semaine** (placement selon etat de fatigue et directives recuperation)
 2. **TSB Management** :
    - Si TSB actuel < +5 : Pas de VO2 max
    - Si TSB < 0 : Prioriser récupération/endurance
@@ -421,7 +421,7 @@ Cooldown
 - **Jeudi** : Endurance progressive ou Force
 - **Vendredi** : Activation ou Sweet-Spot léger
 - **Samedi** : Volume (endurance longue) ou Intensité haute si TSB favorable
-- **Dimanche** : **REPOS COMPLET**
+- **Dimanche** : Repos OU seance legere selon fatigue residuelle
 
 ### Règles Intensité
 
@@ -512,7 +512,7 @@ Cooldown
 
 ## Livrables Attendus
 
-Génère **7 blocs WORKOUT** (un par jour, dimanche = mention repos) au format texte pur Intervals.icu.
+Génère **7 blocs WORKOUT** (un par jour, jour(s) repos selon directives recuperation) au format texte pur Intervals.icu.
 
 **Exemple de format attendu** :
 

@@ -4,6 +4,7 @@ import pytest
 
 from magma_cycling.prompts.prompt_builder import (
     VALID_MISSIONS,
+    _build_recovery_directives,
     build_prompt,
     format_athlete_profile,
     load_current_metrics,
@@ -957,3 +958,168 @@ class TestWorkflowCoachIntegration:
             dataset=None,
             system_prompt="system prompt",
         )
+
+
+class TestBuildRecoveryDirectives:
+    """Tests for _build_recovery_directives() helper."""
+
+    def test_empty_when_low_risk(self):
+        """Low risk and < 3 consecutive days produces empty list."""
+        result = _build_recovery_directives(
+            risk="low", consecutive_days=2, veto=False, recovery_priority="low"
+        )
+        assert result == []
+
+    def test_empty_when_none(self):
+        """All None parameters produce empty list."""
+        result = _build_recovery_directives(
+            risk=None, consecutive_days=None, veto=None, recovery_priority=None
+        )
+        assert result == []
+
+    def test_veto_directive(self):
+        """Veto=True adds JOUR 1 directive."""
+        result = _build_recovery_directives(
+            risk="critical", consecutive_days=0, veto=True, recovery_priority=None
+        )
+        assert any("JOUR 1" in d for d in result)
+
+    def test_critical_risk(self):
+        """Critical risk adds max 3 sessions directive."""
+        result = _build_recovery_directives(
+            risk="critical", consecutive_days=0, veto=False, recovery_priority=None
+        )
+        assert any("Maximum 3 seances" in d for d in result)
+        assert any("1 jour repos" in d for d in result)
+
+    def test_high_risk(self):
+        """High risk adds max 4 sessions directive."""
+        result = _build_recovery_directives(
+            risk="high", consecutive_days=0, veto=False, recovery_priority=None
+        )
+        assert any("Maximum 4 seances" in d for d in result)
+        assert any("1 jour repos" in d for d in result)
+
+    def test_consecutive_4_days(self):
+        """4+ consecutive days adds REPOS OBLIGATOIRE."""
+        result = _build_recovery_directives(
+            risk="low", consecutive_days=4, veto=False, recovery_priority=None
+        )
+        assert any("REPOS OBLIGATOIRE" in d for d in result)
+        assert any("4 jours consecutifs" in d for d in result)
+
+    def test_consecutive_3_accumulates(self):
+        """3+ consecutive days adds Alterner AND Pas d'intensite."""
+        result = _build_recovery_directives(
+            risk="low", consecutive_days=3, veto=False, recovery_priority=None
+        )
+        assert any("Alterner" in d for d in result)
+        assert any("Pas d'intensite" in d for d in result)
+
+    def test_recovery_priority_high(self):
+        """High recovery priority adds TSS reduction directive."""
+        result = _build_recovery_directives(
+            risk="low", consecutive_days=0, veto=False, recovery_priority="high"
+        )
+        assert any("reduire TSS" in d for d in result)
+
+    def test_recovery_priority_critical(self):
+        """Critical recovery priority adds TSS reduction directive."""
+        result = _build_recovery_directives(
+            risk="low", consecutive_days=0, veto=False, recovery_priority="critical"
+        )
+        assert any("reduire TSS" in d for d in result)
+
+
+class TestRecoveryDirectivesInProfile:
+    """Tests for recovery directives injection in format_athlete_profile()."""
+
+    def test_veto_in_profile(self):
+        """Veto=True injects JOUR 1 directive in profile."""
+        context = {"name": "Test", "age": 54}
+        metrics = {
+            "overtraining_risk": "critical",
+            "overtraining_veto": True,
+            "overtraining_factors": [],
+            "atl_ctl_ratio": 1.85,
+            "tsb": -28.0,
+        }
+        result = format_athlete_profile(context, metrics)
+        assert "Directives de recuperation (OBLIGATOIRES pour le planning):" in result
+        assert "JOUR 1 = repos" in result
+
+    def test_high_risk_in_profile(self):
+        """High risk injects recovery directives in profile."""
+        context = {"name": "Test", "age": 54}
+        metrics = {
+            "overtraining_risk": "high",
+            "overtraining_veto": False,
+            "overtraining_factors": [],
+            "atl_ctl_ratio": 1.4,
+            "tsb": -18.0,
+        }
+        result = format_athlete_profile(context, metrics)
+        assert "Maximum 4 seances" in result
+        assert "1 jour repos" in result
+
+    def test_consecutive_4_in_profile(self):
+        """4 consecutive days injects REPOS OBLIGATOIRE in profile."""
+        context = {"name": "Test", "age": 54}
+        metrics = {
+            "overtraining_risk": "medium",
+            "overtraining_veto": False,
+            "overtraining_factors": [],
+            "atl_ctl_ratio": 1.1,
+            "tsb": -5.0,
+            "consecutive_training_days": 4,
+        }
+        result = format_athlete_profile(context, metrics)
+        assert "REPOS OBLIGATOIRE" in result
+        assert "4 jours consecutifs" in result
+
+    def test_consecutive_3_in_profile(self):
+        """3 consecutive days injects Alterner + Pas d'intensite."""
+        context = {"name": "Test", "age": 54}
+        metrics = {
+            "overtraining_risk": "medium",
+            "overtraining_veto": False,
+            "overtraining_factors": [],
+            "atl_ctl_ratio": 1.05,
+            "tsb": -2.0,
+            "consecutive_training_days": 3,
+        }
+        result = format_athlete_profile(context, metrics)
+        assert "Alterner" in result
+        assert "Pas d'intensite" in result
+
+    def test_no_directives_low_risk(self):
+        """Low risk, consec < 3 → no directives section."""
+        context = {"name": "Test", "age": 54}
+        metrics = {
+            "overtraining_risk": "low",
+            "overtraining_veto": False,
+            "overtraining_factors": [],
+            "atl_ctl_ratio": 0.95,
+            "tsb": 3.0,
+            "consecutive_training_days": 1,
+        }
+        result = format_athlete_profile(context, metrics)
+        assert "Directives de recuperation" not in result
+
+    def test_combined_high_risk_consecutive_4(self):
+        """High risk + 4 consec days → multiple directives."""
+        context = {"name": "Test", "age": 54}
+        metrics = {
+            "overtraining_risk": "high",
+            "overtraining_veto": False,
+            "overtraining_factors": [],
+            "atl_ctl_ratio": 1.4,
+            "tsb": -18.0,
+            "consecutive_training_days": 4,
+            "recovery_priority": "high",
+        }
+        result = format_athlete_profile(context, metrics)
+        assert "Maximum 4 seances" in result
+        assert "REPOS OBLIGATOIRE" in result
+        assert "Alterner" in result
+        assert "reduire TSS" in result
