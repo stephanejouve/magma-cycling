@@ -11,7 +11,7 @@ References:
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from statistics import mean, stdev
 
 
@@ -76,4 +76,62 @@ def compute_training_load(activities_28d: list[dict]) -> dict:
         "strain": strain,
         "acute_load": round(acute_load, 1),
         "chronic_load": round(chronic_load, 1),
+    }
+
+
+def count_consecutive_training_days(
+    activities_28d: list[dict],
+    min_tss: float = 20.0,
+) -> dict:
+    """Count current streak of consecutive training days ending today.
+
+    Args:
+        activities_28d: Activity list from Intervals.icu API.
+        min_tss: Minimum daily TSS to count as a training day (default 20).
+
+    Returns:
+        Dict with consecutive_days, streak_dates, streak_tss.
+        Empty dict on failure.
+    """
+    if not activities_28d:
+        return {}
+
+    # Aggregate TSS per day
+    today = date.today()
+    daily_tss: dict[date, float] = {}
+    for act in activities_28d:
+        tss = act.get("icu_training_load")
+        if tss is None:
+            continue
+        date_str = act.get("start_date_local", "")[:10]
+        if not date_str:
+            continue
+        try:
+            d = date.fromisoformat(date_str)
+        except ValueError:
+            continue
+        daily_tss[d] = daily_tss.get(d, 0.0) + float(tss)
+
+    if not daily_tss:
+        return {}
+
+    # Walk backwards from today counting consecutive days with TSS >= min_tss
+    streak_dates: list[str] = []
+    streak_tss = 0.0
+    current = today
+    while True:
+        day_tss = daily_tss.get(current, 0.0)
+        if day_tss < min_tss:
+            break
+        streak_dates.append(current.isoformat())
+        streak_tss += day_tss
+        current -= timedelta(days=1)
+
+    if not streak_dates:
+        return {}
+
+    return {
+        "consecutive_days": len(streak_dates),
+        "streak_dates": list(reversed(streak_dates)),
+        "streak_tss": round(streak_tss, 1),
     }

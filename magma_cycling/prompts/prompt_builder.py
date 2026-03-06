@@ -52,6 +52,35 @@ def load_current_metrics() -> dict:
     except Exception:
         logger.debug("Could not load Intervals.icu metrics, skipping CTL/ATL")
 
+    # --- ACWR / Monotony / Strain + consecutive days (1 extra API call: 28d activities) ---
+    activities = []
+    try:
+        from datetime import timedelta
+
+        from magma_cycling.utils.training_load import (
+            compute_training_load,
+            count_consecutive_training_days,
+        )
+
+        if "client" not in locals():
+            from magma_cycling.config import create_intervals_client
+
+            client = create_intervals_client()
+            today = datetime.now().strftime("%Y-%m-%d")
+
+        oldest_28d = (datetime.now() - timedelta(days=28)).strftime("%Y-%m-%d")
+        activities = client.get_activities(oldest=oldest_28d, newest=today)
+        load = compute_training_load(activities)
+        if load:
+            metrics["acwr"] = load["acwr"]
+            metrics["monotony"] = load["monotony"]
+            metrics["strain"] = load["strain"]
+        consec = count_consecutive_training_days(activities)
+        if consec:
+            metrics["consecutive_training_days"] = consec["consecutive_days"]
+    except Exception:
+        logger.debug("Could not compute training load indicators")
+
     # --- Derived metrics from existing data (no extra API call) ---
     ctl = metrics.get("ctl")
     atl = metrics.get("atl")
@@ -75,6 +104,7 @@ def load_current_metrics() -> dict:
                 atl=atl,
                 tsb=tsb,
                 sleep_hours=sleep_hours,
+                consecutive_days=metrics.get("consecutive_training_days"),
                 profile={"age": 54, "category": "master", "sleep_dependent": True},
             )
             metrics["overtraining_risk"] = risk["risk_level"]
@@ -91,28 +121,6 @@ def load_current_metrics() -> dict:
             metrics["intensity_limit_pct"] = recovery["intensity_limit"]
         except Exception:
             logger.debug("Could not compute overtraining/recovery metrics")
-
-    # --- ACWR / Monotony / Strain (1 extra API call: 28d activities) ---
-    try:
-        from datetime import timedelta
-
-        from magma_cycling.utils.training_load import compute_training_load
-
-        if "client" not in locals():
-            from magma_cycling.config import create_intervals_client
-
-            client = create_intervals_client()
-            today = datetime.now().strftime("%Y-%m-%d")
-
-        oldest_28d = (datetime.now() - timedelta(days=28)).strftime("%Y-%m-%d")
-        activities = client.get_activities(oldest=oldest_28d, newest=today)
-        load = compute_training_load(activities)
-        if load:
-            metrics["acwr"] = load["acwr"]
-            metrics["monotony"] = load["monotony"]
-            metrics["strain"] = load["strain"]
-    except Exception:
-        logger.debug("Could not compute training load indicators")
 
     return metrics
 
@@ -239,6 +247,9 @@ def format_athlete_profile(context: dict, metrics: dict) -> str:
         if strain is not None:
             strain_label = "ALERTE" if strain > 3500 else "OK"
             lines.append(f"  - Strain: {strain:.0f} ({strain_label})")
+        consec = metrics.get("consecutive_training_days")
+        if consec and consec >= 2:
+            lines.append(f"  - Jours consecutifs: {consec}")
 
     # Constraints
     constraints = context.get("constraints", [])
