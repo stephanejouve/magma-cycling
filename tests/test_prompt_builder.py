@@ -439,6 +439,34 @@ class TestFormatAthleteProfile:
         result = format_athlete_profile(context, metrics)
         assert "Intensite max" not in result
 
+    def test_consecutive_days_displayed(self):
+        """Consecutive days >= 2 appear in load indicators."""
+        context = {"name": "Test", "age": 54}
+        metrics = {
+            "overtraining_risk": "medium",
+            "overtraining_veto": False,
+            "overtraining_factors": ["Consecutive training: 3 days"],
+            "atl_ctl_ratio": 1.07,
+            "tsb": -3.0,
+            "consecutive_training_days": 3,
+        }
+        result = format_athlete_profile(context, metrics)
+        assert "Jours consecutifs: 3" in result
+
+    def test_consecutive_days_one_not_displayed(self):
+        """Consecutive days < 2 not displayed."""
+        context = {"name": "Test", "age": 54}
+        metrics = {
+            "overtraining_risk": "low",
+            "overtraining_veto": False,
+            "overtraining_factors": [],
+            "atl_ctl_ratio": 0.95,
+            "tsb": 3.0,
+            "consecutive_training_days": 1,
+        }
+        result = format_athlete_profile(context, metrics)
+        assert "Jours consecutifs" not in result
+
 
 class TestLoadCurrentMetricsDerived:
     """Tests for derived metrics in load_current_metrics()."""
