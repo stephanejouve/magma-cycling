@@ -163,6 +163,43 @@ def build_prompt(
     return system_prompt, workflow_data
 
 
+def _build_recovery_directives(
+    risk: str | None,
+    consecutive_days: int | None,
+    veto: bool | None,
+    recovery_priority: str | None,
+) -> list[str]:
+    """Build prescriptive recovery directives for weekly planning."""
+    directives: list[str] = []
+
+    if veto:
+        directives.append("JOUR 1 = repos complet ou Z1 uniquement (<55% FTP, <45min)")
+
+    if risk in ("critical", "high"):
+        directives.append("Commencer la semaine par 1 jour repos avant toute intensite")
+
+    if risk == "critical":
+        directives.append("Maximum 3 seances cette semaine, 2 jours repos minimum espaces")
+
+    if risk == "high":
+        directives.append("Maximum 4 seances, pas d'INT avant 1 jour complet de recup")
+
+    consec = consecutive_days or 0
+    if consec >= 4:
+        directives.append(
+            f"REPOS OBLIGATOIRE jour 1 : surcharge neuromusculaire ({consec} jours consecutifs)"
+        )
+
+    if consec >= 3:
+        directives.append("Alterner : maximum 2 jours ON consecutifs, puis 1 jour OFF")
+        directives.append("Pas d'intensite (>85% FTP) avant 1 jour de repos complet")
+
+    if recovery_priority in ("high", "critical"):
+        directives.append("Semaine allegee : reduire TSS cible de 20-30%")
+
+    return directives
+
+
 def format_athlete_profile(context: dict, metrics: dict) -> str:
     """Format athlete profile for prompt injection.
 
@@ -264,5 +301,18 @@ def format_athlete_profile(context: dict, metrics: dict) -> str:
     if sys_ctx:
         lines.append("")
         lines.append(sys_ctx.strip())
+
+    # Recovery directives (prescriptive section for weekly planning)
+    directives = _build_recovery_directives(
+        risk=metrics.get("overtraining_risk"),
+        consecutive_days=metrics.get("consecutive_training_days"),
+        veto=metrics.get("overtraining_veto"),
+        recovery_priority=metrics.get("recovery_priority"),
+    )
+    if directives:
+        lines.append("")
+        lines.append("Directives de recuperation (OBLIGATOIRES pour le planning):")
+        for d in directives:
+            lines.append(f"  - {d}")
 
     return "\n".join(lines)
