@@ -343,6 +343,194 @@ class TestFormatAthleteProfile:
         result = format_athlete_profile({}, {})
         assert "non disponible" in result
 
+    def test_includes_overtraining_risk(self):
+        """Overtraining risk indicators appear in profile."""
+        context = {"name": "Test", "age": 54}
+        metrics = {
+            "ftp": 220,
+            "weight": 84.0,
+            "ctl": 45.0,
+            "atl": 60.0,
+            "overtraining_risk": "high",
+            "overtraining_veto": False,
+            "overtraining_factors": ["ATL/CTL ratio elevated (1.33)"],
+            "atl_ctl_ratio": 1.33,
+            "tsb": -15.0,
+            "recovery_priority": "medium",
+            "recovery_recommendation": "Reduce intensity -10% OR duration -15%.",
+            "intensity_limit_pct": 90,
+        }
+        result = format_athlete_profile(context, metrics)
+        assert "Indicateurs de charge:" in result
+        assert "TSB: -15.0" in result
+        assert "ATL/CTL ratio: 1.33" in result
+        assert "Risque surentrainement: HIGH" in result
+        assert "Prescription recup:" in result
+        assert "Intensite max: 90% FTP" in result
+
+    def test_veto_displayed_when_active(self):
+        """VETO message appears when overtraining_veto is True."""
+        context = {"name": "Test", "age": 54}
+        metrics = {
+            "overtraining_risk": "critical",
+            "overtraining_veto": True,
+            "overtraining_factors": [],
+            "atl_ctl_ratio": 1.85,
+            "tsb": -28.0,
+            "recovery_recommendation": "VETO: rest required",
+            "intensity_limit_pct": 55,
+        }
+        result = format_athlete_profile(context, metrics)
+        assert "VETO ACTIF" in result
+
+    def test_no_indicators_without_risk(self):
+        """No 'Indicateurs de charge' section if no overtraining_risk."""
+        context = {"name": "Test", "age": 54}
+        metrics = {"ftp": 220, "weight": 84.0}
+        result = format_athlete_profile(context, metrics)
+        assert "Indicateurs de charge" not in result
+
+    def test_acwr_monotony_strain_displayed(self):
+        """ACWR, Monotony, Strain appear in load indicators."""
+        context = {"name": "Test", "age": 54}
+        metrics = {
+            "overtraining_risk": "low",
+            "overtraining_veto": False,
+            "overtraining_factors": [],
+            "atl_ctl_ratio": 0.95,
+            "tsb": 3.0,
+            "recovery_recommendation": "Normal training.",
+            "intensity_limit_pct": 100,
+            "acwr": 1.1,
+            "monotony": 1.5,
+            "strain": 2800,
+        }
+        result = format_athlete_profile(context, metrics)
+        assert "ACWR: 1.10 (optimal)" in result
+        assert "Monotonie: 1.50 (OK)" in result
+        assert "Strain: 2800 (OK)" in result
+
+    def test_acwr_danger_label(self):
+        """ACWR > 1.5 shows DANGER label."""
+        context = {"name": "Test", "age": 54}
+        metrics = {
+            "overtraining_risk": "high",
+            "overtraining_veto": False,
+            "overtraining_factors": [],
+            "atl_ctl_ratio": 1.6,
+            "tsb": -18.0,
+            "acwr": 1.8,
+        }
+        result = format_athlete_profile(context, metrics)
+        assert "ACWR: 1.80 (DANGER)" in result
+
+    def test_intensity_100_not_displayed(self):
+        """Intensity limit of 100% is not displayed (normal training)."""
+        context = {"name": "Test", "age": 54}
+        metrics = {
+            "overtraining_risk": "low",
+            "overtraining_veto": False,
+            "overtraining_factors": [],
+            "atl_ctl_ratio": 0.95,
+            "tsb": 3.0,
+            "recovery_recommendation": "Normal training.",
+            "intensity_limit_pct": 100,
+        }
+        result = format_athlete_profile(context, metrics)
+        assert "Intensite max" not in result
+
+
+class TestLoadCurrentMetricsDerived:
+    """Tests for derived metrics in load_current_metrics()."""
+
+    def test_derived_metrics_computed_from_ctl_atl(self):
+        """When CTL/ATL available, derived metrics are computed."""
+        from unittest.mock import MagicMock, patch
+
+        mock_client = MagicMock()
+        mock_client.get_wellness.return_value = [
+            {"ctl": 50.0, "atl": 65.0, "rampRate": 4.0, "sleepSecs": 25200}
+        ]
+        mock_client.get_activities.return_value = []
+
+        with (
+            patch(
+                "magma_cycling.config.AthleteProfile",
+                side_effect=Exception("no env"),
+            ),
+            patch(
+                "magma_cycling.config.create_intervals_client",
+                return_value=mock_client,
+            ),
+        ):
+            result = load_current_metrics()
+
+        assert result["atl_ctl_ratio"] == 1.3
+        assert result["tsb"] == -15.0
+        assert result["overtraining_risk"] in ("low", "medium", "high", "critical")
+        assert isinstance(result["overtraining_veto"], bool)
+        assert isinstance(result["recovery_priority"], str)
+        assert isinstance(result["recovery_recommendation"], str)
+        assert isinstance(result["intensity_limit_pct"], int)
+
+    def test_no_derived_metrics_without_ctl(self):
+        """Without CTL, no derived metrics are computed."""
+        from unittest.mock import MagicMock, patch
+
+        mock_client = MagicMock()
+        mock_client.get_wellness.return_value = [{"rampRate": 4.0}]
+
+        with (
+            patch(
+                "magma_cycling.config.AthleteProfile",
+                side_effect=Exception("no env"),
+            ),
+            patch(
+                "magma_cycling.config.create_intervals_client",
+                return_value=mock_client,
+            ),
+        ):
+            result = load_current_metrics()
+
+        assert "overtraining_risk" not in result
+        assert "atl_ctl_ratio" not in result
+
+    def test_acwr_computed_with_activities(self):
+        """ACWR/Monotony/Strain computed when activities available."""
+        from datetime import datetime, timedelta
+        from unittest.mock import MagicMock, patch
+
+        mock_client = MagicMock()
+        mock_client.get_wellness.return_value = [{"ctl": 50.0, "atl": 45.0, "rampRate": 3.0}]
+        today = datetime.now().date()
+        activities = []
+        for i in range(28):
+            d = today - timedelta(days=27 - i)
+            activities.append(
+                {
+                    "start_date_local": d.isoformat() + "T08:00:00",
+                    "icu_training_load": 50.0,
+                }
+            )
+        mock_client.get_activities.return_value = activities
+
+        with (
+            patch(
+                "magma_cycling.config.AthleteProfile",
+                side_effect=Exception("no env"),
+            ),
+            patch(
+                "magma_cycling.config.create_intervals_client",
+                return_value=mock_client,
+            ),
+        ):
+            result = load_current_metrics()
+
+        assert "acwr" in result
+        assert result["acwr"] == 1.0  # Uniform load
+        assert "monotony" in result
+        assert "strain" in result
+
 
 class TestMonthlyAnalysisIntegration:
     """Integration tests for monthly_analysis prompt enrichment."""
