@@ -181,6 +181,7 @@ prompts/
 | Workflow Diversity Integration (S4) | P1 | 2-3h | 📋 Planifié |
 | Test History Tracking | P2 | 2-4h | 📋 Backlog |
 | Indoor/Outdoor Adaptive Analysis | P1 | 3-4h | 📋 Backlog |
+| Auto-rest: directives récup → statut planning | P2 | 4-6h | 📋 Backlog |
 
 ---
 
