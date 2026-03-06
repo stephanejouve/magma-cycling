@@ -4,7 +4,10 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from magma_cycling.utils.training_load import compute_training_load
+from magma_cycling.utils.training_load import (
+    compute_training_load,
+    count_consecutive_training_days,
+)
 
 
 def _make_activities(daily_tss: list[float], days_back: int = 28) -> list[dict]:
@@ -136,3 +139,105 @@ class TestComputeTrainingLoad:
         ]
         result = compute_training_load(activities)
         assert result["acute_load"] == 0.0
+
+
+class TestCountConsecutiveTrainingDays:
+    """Tests for count_consecutive_training_days()."""
+
+    def test_empty_returns_empty(self):
+        """Empty activity list returns empty dict."""
+        assert count_consecutive_training_days([]) == {}
+
+    def test_no_recent_training(self):
+        """Activities only far in the past return empty dict."""
+        today = datetime.now().date()
+        activities = [
+            {
+                "start_date_local": (today - timedelta(days=10)).isoformat() + "T08:00:00",
+                "icu_training_load": 80,
+            },
+        ]
+        assert count_consecutive_training_days(activities) == {}
+
+    def test_single_day(self):
+        """One activity today gives consecutive_days=1."""
+        today = datetime.now().date()
+        activities = [
+            {
+                "start_date_local": today.isoformat() + "T08:00:00",
+                "icu_training_load": 50,
+            },
+        ]
+        result = count_consecutive_training_days(activities)
+        assert result["consecutive_days"] == 1
+        assert result["streak_tss"] == 50.0
+
+    def test_three_consecutive(self):
+        """Three consecutive days returns consecutive_days=3."""
+        today = datetime.now().date()
+        activities = [
+            {
+                "start_date_local": (today - timedelta(days=2)).isoformat() + "T08:00:00",
+                "icu_training_load": 85,
+            },
+            {
+                "start_date_local": (today - timedelta(days=1)).isoformat() + "T08:00:00",
+                "icu_training_load": 45,
+            },
+            {
+                "start_date_local": today.isoformat() + "T08:00:00",
+                "icu_training_load": 72,
+            },
+        ]
+        result = count_consecutive_training_days(activities)
+        assert result["consecutive_days"] == 3
+        assert result["streak_tss"] == pytest.approx(85 + 45 + 72, rel=0.01)
+
+    def test_gap_breaks_streak(self):
+        """A rest day breaks the streak."""
+        today = datetime.now().date()
+        activities = [
+            {
+                "start_date_local": (today - timedelta(days=3)).isoformat() + "T08:00:00",
+                "icu_training_load": 80,
+            },
+            # day -2: rest day (gap)
+            {
+                "start_date_local": (today - timedelta(days=1)).isoformat() + "T08:00:00",
+                "icu_training_load": 60,
+            },
+            {
+                "start_date_local": today.isoformat() + "T08:00:00",
+                "icu_training_load": 50,
+            },
+        ]
+        result = count_consecutive_training_days(activities)
+        assert result["consecutive_days"] == 2
+
+    def test_below_min_tss_not_counted(self):
+        """TSS below min_tss does not count as training."""
+        today = datetime.now().date()
+        activities = [
+            {
+                "start_date_local": (today - timedelta(days=1)).isoformat() + "T08:00:00",
+                "icu_training_load": 15,  # Below default 20 threshold
+            },
+            {
+                "start_date_local": today.isoformat() + "T08:00:00",
+                "icu_training_load": 50,
+            },
+        ]
+        result = count_consecutive_training_days(activities)
+        assert result["consecutive_days"] == 1
+
+    def test_multiple_activities_same_day(self):
+        """Two activities on same day count as 1 day."""
+        today = datetime.now().date()
+        date_str = today.isoformat() + "T08:00:00"
+        activities = [
+            {"start_date_local": date_str, "icu_training_load": 15},
+            {"start_date_local": date_str, "icu_training_load": 10},
+        ]
+        result = count_consecutive_training_days(activities)
+        assert result["consecutive_days"] == 1
+        assert result["streak_tss"] == 25.0

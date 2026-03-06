@@ -422,3 +422,83 @@ def test_overtraining_risk_custom_thresholds():
     # Should be critical with custom threshold of -20
     assert result["risk_level"] == "critical"
     assert result["veto"] is True
+
+
+# ============================================================================
+# Test detect_overtraining_risk: consecutive_days
+# ============================================================================
+
+
+class TestDetectOvertrainingRiskConsecutiveDays:
+    """Tests for consecutive_days parameter in detect_overtraining_risk()."""
+
+    def test_consecutive_days_warning_factor(self):
+        """3 consecutive days adds a fatigue accumulation factor."""
+        result = detect_overtraining_risk(
+            ctl=43,
+            atl=46,
+            tsb=-3,
+            consecutive_days=3,
+            profile={"age": 30, "category": "senior"},
+        )
+        assert any("Consecutive training: 3 days" in f for f in result["factors"])
+        assert result["risk_level"] in ("medium", "high")
+
+    def test_consecutive_days_critical_master(self):
+        """4 consecutive days = high risk for master athlete."""
+        result = detect_overtraining_risk(
+            ctl=43,
+            atl=46,
+            tsb=-3,
+            consecutive_days=4,
+            profile={"age": 54, "category": "master"},
+        )
+        assert any("neuromuscular overload" in f for f in result["factors"])
+        assert result["risk_level"] == "high"
+
+    def test_consecutive_days_combined_with_sleep(self):
+        """3 consecutive days + sleep < 7h escalates to high for master."""
+        result = detect_overtraining_risk(
+            ctl=43,
+            atl=46,
+            tsb=-3,
+            sleep_hours=6.5,
+            consecutive_days=3,
+            profile={"age": 54, "category": "master", "sleep_dependent": True},
+        )
+        assert result["risk_level"] == "high"
+        assert any("Combined" in f for f in result["factors"])
+
+    def test_no_consecutive_days_no_factor(self):
+        """Without consecutive_days, no consecutive factor added."""
+        result = detect_overtraining_risk(
+            ctl=43,
+            atl=46,
+            tsb=-3,
+            profile={"age": 54, "category": "master"},
+        )
+        assert not any("Consecutive" in f for f in result["factors"])
+
+    def test_two_consecutive_days_no_warning(self):
+        """2 consecutive days below threshold, no factor added."""
+        result = detect_overtraining_risk(
+            ctl=43,
+            atl=46,
+            tsb=-3,
+            consecutive_days=2,
+            profile={"age": 54, "category": "master"},
+        )
+        assert not any("Consecutive" in f for f in result["factors"])
+
+    def test_simulation_s083_04(self):
+        """Simulate S083-04: 3 days + sleep 6.5h should detect risk."""
+        result = detect_overtraining_risk(
+            ctl=43,
+            atl=46,
+            tsb=-3,
+            sleep_hours=6.5,
+            consecutive_days=3,
+            profile={"age": 54, "category": "master", "sleep_dependent": True},
+        )
+        assert result["risk_level"] in ("medium", "high")
+        assert any("Consecutive" in f for f in result["factors"])

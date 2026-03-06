@@ -359,6 +359,7 @@ def detect_overtraining_risk(
     atl: float,
     tsb: float,
     sleep_hours: float | None = None,
+    consecutive_days: int | None = None,
     profile: dict[str, Any] | None = None,
     thresholds: dict[str, float] | None = None,
 ) -> dict[str, Any]:
@@ -375,6 +376,7 @@ def detect_overtraining_risk(
         atl: Current Acute Training Load (Fatigue)
         tsb: Current Training Stress Balance (Form)
         sleep_hours: Sleep duration from previous night (optional but recommended)
+        consecutive_days: Number of consecutive training days ending today (optional)
         profile: Athlete profile dict with keys:
                  - age: int
                  - category: 'junior' | 'senior' | 'master'
@@ -439,6 +441,8 @@ def detect_overtraining_risk(
             "ratio_optimal": 1.3,
             "sleep_critical": 6.0,
             "sleep_veto": 5.5,
+            "consecutive_days_warning": 3,
+            "consecutive_days_critical": 4,
         }
 
     # Default profile
@@ -507,6 +511,37 @@ def detect_overtraining_risk(
             if sleep_hours < 7.0:
                 factors.append(f"Sleep below optimal ({sleep_hours:.1f}h < 7h)")
                 risk_level = "medium" if risk_level == "low" else risk_level
+
+        # Consecutive training days check
+        if consecutive_days is not None:
+            if is_master and consecutive_days >= thresholds["consecutive_days_critical"]:
+                factors.append(
+                    f"Consecutive training: {consecutive_days} days "
+                    f"(>={thresholds['consecutive_days_critical']:.0f}"
+                    f" = neuromuscular overload)"
+                )
+                risk_level = "high"
+            elif consecutive_days >= thresholds["consecutive_days_warning"]:
+                factors.append(
+                    f"Consecutive training: {consecutive_days} days "
+                    f"(>={thresholds['consecutive_days_warning']:.0f}"
+                    f" = fatigue accumulation)"
+                )
+                risk_level = "medium" if risk_level == "low" else risk_level
+
+        # Combined: consecutive days + poor sleep → escalate for master
+        if (
+            consecutive_days is not None
+            and sleep_hours is not None
+            and is_master
+            and consecutive_days >= thresholds["consecutive_days_warning"]
+            and sleep_hours < 7.0
+        ):
+            factors.append(
+                f"Combined: {consecutive_days} consecutive days "
+                f"+ low sleep ({sleep_hours:.1f}h)"
+            )
+            risk_level = "high"
 
     # MEDIUM RISK CHECKS
 
