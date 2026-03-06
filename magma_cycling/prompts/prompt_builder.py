@@ -92,6 +92,28 @@ def load_current_metrics() -> dict:
         except Exception:
             logger.debug("Could not compute overtraining/recovery metrics")
 
+    # --- ACWR / Monotony / Strain (1 extra API call: 28d activities) ---
+    try:
+        from datetime import timedelta
+
+        from magma_cycling.utils.training_load import compute_training_load
+
+        if "client" not in locals():
+            from magma_cycling.config import create_intervals_client
+
+            client = create_intervals_client()
+            today = datetime.now().strftime("%Y-%m-%d")
+
+        oldest_28d = (datetime.now() - timedelta(days=28)).strftime("%Y-%m-%d")
+        activities = client.get_activities(oldest=oldest_28d, newest=today)
+        load = compute_training_load(activities)
+        if load:
+            metrics["acwr"] = load["acwr"]
+            metrics["monotony"] = load["monotony"]
+            metrics["strain"] = load["strain"]
+    except Exception:
+        logger.debug("Could not compute training load indicators")
+
     return metrics
 
 
@@ -198,6 +220,25 @@ def format_athlete_profile(context: dict, metrics: dict) -> str:
             limit = metrics.get("intensity_limit_pct")
             if limit and limit < 100:
                 lines.append(f"  - Intensite max: {limit}% FTP")
+        acwr = metrics.get("acwr")
+        if acwr is not None:
+            if acwr < 0.8:
+                acwr_label = "sous-entrainement"
+            elif acwr <= 1.3:
+                acwr_label = "optimal"
+            elif acwr <= 1.5:
+                acwr_label = "attention"
+            else:
+                acwr_label = "DANGER"
+            lines.append(f"  - ACWR: {acwr:.2f} ({acwr_label})")
+        monotony = metrics.get("monotony")
+        if monotony is not None:
+            mono_label = "elevee (risque)" if monotony > 2.0 else "OK"
+            lines.append(f"  - Monotonie: {monotony:.2f} ({mono_label})")
+        strain = metrics.get("strain")
+        if strain is not None:
+            strain_label = "ALERTE" if strain > 3500 else "OK"
+            lines.append(f"  - Strain: {strain:.0f} ({strain_label})")
 
     # Constraints
     constraints = context.get("constraints", [])
