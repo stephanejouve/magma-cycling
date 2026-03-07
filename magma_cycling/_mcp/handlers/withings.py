@@ -216,6 +216,22 @@ async def handle_withings_get_readiness(args: dict) -> list[TextContent]:
                 "readiness": readiness.model_dump(),
             }
 
+            # Sleep fragmentation warning
+            sleep = provider.get_sleep_summary(eval_date)
+            seg_count = getattr(sleep, "segments_count", None)
+            if sleep and isinstance(seg_count, int) and seg_count > 1 and sleep.segments_detail:
+                detail = " + ".join(f"{s['start']}\u2192{s['end']}" for s in sleep.segments_detail)
+                first_seg = sleep.segments_detail[0]
+                dur_h = int(first_seg["duration_hours"])
+                dur_m = int((first_seg["duration_hours"] % 1) * 60)
+                result["sleep_fragmentation"] = (
+                    f"Nuit multi-segments d\u00e9tect\u00e9e "
+                    f"({sleep.segments_count} segments fusionn\u00e9s). "
+                    f"L\u2019app mobile Withings peut afficher uniquement le "
+                    f"premier segment ({dur_h}h{dur_m:02d}) "
+                    f"\u2014 les donn\u00e9es Magma sont correctes ({detail})."
+                )
+
     return mcp_response(result, default=str)
 
 
