@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any
 import requests
 
 from magma_cycling._mcp._utils import mcp_response, suppress_stdout_stderr
+from magma_cycling.utils.intervals_scales import sleep_score_to_quality
 
 if TYPE_CHECKING:
     from mcp.types import TextContent
@@ -218,26 +219,6 @@ async def handle_withings_get_readiness(args: dict) -> list[TextContent]:
     return mcp_response(result, default=str)
 
 
-def _sleep_score_to_quality(score: int | None) -> int | None:
-    """Convert Withings sleep_score (0-100) to Intervals.icu sleepQuality (1-4).
-
-    Intervals.icu uses an inverted 1-4 scale:
-      1 = Excellent (score >= 90)
-      2 = Good      (score >= 75)
-      3 = Average   (score >= 60)
-      4 = Poor      (score < 60)
-    """
-    if score is None:
-        return None
-    if score >= 90:
-        return 1
-    if score >= 75:
-        return 2
-    if score >= 60:
-        return 3
-    return 4
-
-
 def _extract_422_detail(http_err: requests.exceptions.HTTPError) -> str:
     """Extract error detail from a 422 response body."""
     try:
@@ -364,7 +345,7 @@ def sync_withings_to_intervals(
             if sync_sleep and date_str in sleep_by_date:
                 sleep_info = sleep_by_date[date_str]
                 wellness["sleepSecs"] = int(sleep_info["total_sleep_hours"] * 3600)
-                quality = _sleep_score_to_quality(sleep_info.get("sleep_score"))
+                quality = sleep_score_to_quality(sleep_info.get("sleep_score"))
                 if quality is not None:
                     wellness["sleepQuality"] = quality
                 if sleep_info.get("hr_min"):
