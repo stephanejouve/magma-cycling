@@ -180,6 +180,76 @@ class ServoEvaluationMixin:
 
         return should_trigger, reasons
 
+    def _apply_auto_rest_day(self, mod: dict, week_id: str):
+        """Applique automatiquement un jour de repos (daily-sync non-interactif).
+
+        Args:
+            mod: Modification dict avec target_date, current_workout, reason
+            week_id: ID semaine.
+        """
+        from magma_cycling.config import create_intervals_client
+        from magma_cycling.planning.control_tower import planning_tower
+        from magma_cycling.update_session_status import sync_with_intervals
+
+        target_date = mod.get("target_date", "N/A")
+        reason = mod.get("reason", "N/A")
+
+        print(f"\n  😴 Application automatique repos : {target_date}")
+        print(f"     Raison : {reason}")
+
+        # 1. Update planning JSON
+        try:
+            with planning_tower.modify_week(
+                week_id,
+                requesting_script="daily-sync",
+                reason=f"Auto rest_day: {mod.get('current_workout', 'N/A')} → repos ({reason})",
+            ) as plan:
+                session_found = False
+                session_info = None
+                session_id = None
+                for session in plan.planned_sessions:
+                    if str(session.session_date) == target_date:
+                        session_id = session.session_id
+                        session_info = {
+                            "name": session.name,
+                            "type": session.session_type,
+                            "version": session.version,
+                            "description": session.description,
+                            "tss_planned": session.tss_planned,
+                            "duration_min": session.duration_min,
+                        }
+                        session.status = "rest_day"
+                        session.skip_reason = reason
+                        session_found = True
+                        break
+
+                if not session_found:
+                    print(f"     ⚠️  Session non trouvée pour date {target_date}")
+                    return
+
+            print("     📝 Planning JSON mis à jour (status=rest_day)")
+        except Exception as e:
+            print(f"     ⚠️  Erreur mise à jour planning : {e}")
+            return
+
+        # 2. Sync with Intervals.icu
+        try:
+            client = create_intervals_client()
+            sync_success = sync_with_intervals(
+                client=client,
+                session_id=session_id,
+                session_date=target_date,
+                new_status="rest_day",
+                reason=reason,
+                session_info=session_info,
+            )
+            if sync_success:
+                print("     ✅ Jour de repos appliqué automatiquement")
+            else:
+                print("     ⚠️  Sync Intervals.icu échouée (planning local mis à jour)")
+        except Exception as e:
+            print(f"     ⚠️  Erreur sync Intervals.icu : {e}")
+
     def run_servo_adjustment(
         self, week_id: str, activity: dict, metrics: dict, analysis: str | None
     ) -> dict | None:
@@ -289,6 +359,16 @@ Critères de décision:
 }}]}}
 ```
 
+**Action `rest_day`** (convertir séance en jour de repos) :
+```json
+{{"modifications": [{{
+  "action": "rest_day",
+  "target_date": "YYYY-MM-DD",
+  "current_workout": "CODE",
+  "reason": "TSB -22, sommeil 4.8h, récupération prioritaire"
+}}]}}
+```
+
 **Si aucune modification nécessaire** : Ne rien ajouter (pas de JSON).
 
 Réponds maintenant."""
@@ -320,6 +400,11 @@ Réponds maintenant."""
                     target_date = mod.get("target_date", "N/A")
                     reason = mod.get("reason", "N/A")
                     print(f"  • {target_date}: {action} - {reason}")
+
+                # Auto-apply rest_day/cancel actions (daily-sync is non-interactive)
+                for mod in modifications:
+                    if mod.get("action") in ("rest_day", "cancel"):
+                        self._apply_auto_rest_day(mod, week_id)
             else:
                 print("✅ Aucune modification recommandée - planning maintenu")
 
