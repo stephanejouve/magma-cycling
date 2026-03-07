@@ -354,7 +354,7 @@ Pas de variables externes (vent, terrain, trafic). L'adhérence au plan doit êt
             discipline_md = format_discipline_report(report)
 
             return f"""
-## 🌳 {discipline_md}
+{discipline_md}
 
 **Consigne** : En outdoor, évaluer la capacité à respecter l'intensité cible.
 Déviation >10% = échec discipline (surcharge). Recommander indoor si récidive.
