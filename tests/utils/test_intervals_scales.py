@@ -2,7 +2,14 @@
 
 import pytest
 
-from magma_cycling.utils.intervals_scales import FEEL_EMOJIS, FEEL_LABELS, format_feel
+from magma_cycling.utils.intervals_scales import (
+    FEEL_EMOJIS,
+    FEEL_LABELS,
+    SLEEP_QUALITY_LABELS,
+    format_feel,
+    format_sleep_quality,
+    sleep_score_to_quality,
+)
 
 
 class TestFeelLabels:
@@ -62,3 +69,61 @@ class TestFormatFeel:
 
     def test_zero_returns_valeur_inconnue(self):
         assert format_feel(0) == "_Valeur inconnue: 0_"
+
+
+class TestSleepQualityLabels:
+    """Tests for SLEEP_QUALITY_LABELS constant."""
+
+    def test_labels_cover_1_to_4(self):
+        assert set(SLEEP_QUALITY_LABELS.keys()) == {1, 2, 3, 4}
+
+    def test_label_values(self):
+        assert SLEEP_QUALITY_LABELS[1] == "Excellent"
+        assert SLEEP_QUALITY_LABELS[2] == "Good"
+        assert SLEEP_QUALITY_LABELS[3] == "Average"
+        assert SLEEP_QUALITY_LABELS[4] == "Poor"
+
+
+class TestSleepScoreToQuality:
+    """Tests for sleep_score_to_quality conversion."""
+
+    def test_none_returns_none(self):
+        assert sleep_score_to_quality(None) is None
+
+    @pytest.mark.parametrize(
+        "score,expected",
+        [
+            (0, 4),
+            (59, 4),
+            (60, 3),
+            (74, 3),
+            (75, 2),
+            (89, 2),
+            (90, 1),
+            (100, 1),
+        ],
+    )
+    def test_score_thresholds(self, score, expected):
+        assert sleep_score_to_quality(score) == expected
+
+
+class TestFormatSleepQuality:
+    """Tests for format_sleep_quality function."""
+
+    def test_none_returns_non_renseigne(self):
+        assert format_sleep_quality(None) == "_Non renseigné_"
+
+    @pytest.mark.parametrize(
+        "value,expected",
+        [
+            (1, "Excellent"),
+            (2, "Good"),
+            (3, "Average"),
+            (4, "Poor"),
+        ],
+    )
+    def test_valid_values(self, value, expected):
+        assert format_sleep_quality(value) == expected
+
+    def test_invalid_value_returns_valeur_inconnue(self):
+        assert format_sleep_quality(99) == "_Valeur inconnue: 99_"
