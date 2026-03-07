@@ -43,7 +43,7 @@ from magma_cycling.config import create_intervals_client
 from magma_cycling.planning.control_tower import planning_tower
 
 # Statuses that should remove the event from Intervals.icu
-STATUSES_TO_DELETE = ["cancelled", "skipped", "replaced"]
+STATUSES_TO_DELETE = ["cancelled", "skipped", "replaced", "rest_day"]
 
 
 def find_event_by_session(
@@ -113,7 +113,10 @@ def sync_with_intervals(
             print(f"   Found event: {event_name} (ID: {event_id}, Type: {event_category})")
 
             # Check if already marked as cancelled/skipped/replaced
-            if any(event_name.startswith(tag) for tag in ["[ANNULÉE]", "[SAUTÉE]", "[REMPLACÉE]"]):
+            if any(
+                event_name.startswith(tag)
+                for tag in ["[ANNULÉE]", "[SAUTÉE]", "[REMPLACÉE]", "[REPOS]"]
+            ):
                 print(f"   ℹ️  Event already marked (current: {event_name.split(']')[0]}])")
                 return True
 
@@ -124,6 +127,9 @@ def sync_with_intervals(
             elif new_status == "skipped":
                 status_emoji = "⏭️"
                 status_text = "SAUTÉE"
+            elif new_status == "rest_day":
+                status_emoji = "😴"
+                status_text = "REPOS"
             else:  # replaced
                 status_emoji = "🔄"
                 status_text = "REMPLACÉE"
@@ -168,6 +174,9 @@ def sync_with_intervals(
             elif new_status == "skipped":
                 status_emoji = "⏭️"
                 status_text = "SAUTÉE"
+            elif new_status == "rest_day":
+                status_emoji = "😴"
+                status_text = "REPOS"
             else:  # replaced
                 status_emoji = "🔄"
                 status_text = "REMPLACÉE"
