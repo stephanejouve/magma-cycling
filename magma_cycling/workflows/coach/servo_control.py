@@ -156,6 +156,114 @@ class ServoControlMixin:
         else:
             print("   ⚠️  Échec mise à jour planning JSON")
 
+    def _apply_rest_day(self, mod: dict, week_id: str):
+        """Applique conversion en jour de repos.
+
+        Args:
+            mod: Modification dict avec target_date, current_workout, reason
+            week_id: ID semaine.
+        """
+        import sys
+
+        print("\n😴 Conversion en jour de repos")
+        print(f"   Date : {mod['target_date']}")
+        print(f"   Séance remplacée : {mod.get('current_workout', 'N/A')}")
+        print(f"   Raison : {mod['reason']}")
+
+        # Check if non-interactive mode (LaunchAgent or auto_mode)
+        is_non_interactive = self.auto_mode or not sys.stdin.isatty()
+
+        if is_non_interactive:
+            print("   ℹ️  Mode automatique : recommandation enregistrée (pas d'application)")
+            print("   💡 Lancer manuellement : poetry run workflow-coach --servo-mode")
+            if not hasattr(self, "_servo_recommendations"):
+                self._servo_recommendations = []
+            self._servo_recommendations.append(
+                {
+                    "action": "rest_day",
+                    "date": mod["target_date"],
+                    "current_workout": mod.get("current_workout", "N/A"),
+                    "reason": mod["reason"],
+                    "status": "pending_manual_application",
+                }
+            )
+            return
+
+        # Interactive mode: Ask for confirmation
+        confirm = input("   Appliquer repos ? (o/n) : ").strip().lower()
+        if confirm != "o":
+            print("   ❌ Ignoré")
+            return
+
+        self._execute_rest_day(mod, week_id)
+
+    def _execute_rest_day(self, mod: dict, week_id: str):
+        """Exécute la conversion en jour de repos (planning + Intervals.icu).
+
+        Args:
+            mod: Modification dict
+            week_id: ID semaine.
+        """
+        from magma_cycling.config import create_intervals_client
+        from magma_cycling.update_session_status import sync_with_intervals
+
+        target_date = mod["target_date"]
+        reason = mod["reason"]
+
+        # 1. Update planning JSON via Control Tower
+        try:
+            with planning_tower.modify_week(
+                week_id,
+                requesting_script="workflow-coach",
+                reason=f"AI Coach rest_day: {mod.get('current_workout', 'N/A')} → repos ({reason})",
+            ) as plan:
+                session_found = False
+                session_info = None
+                session_id = None
+                for session in plan.planned_sessions:
+                    if str(session.session_date) == target_date:
+                        session_id = session.session_id
+                        session_info = {
+                            "name": session.name,
+                            "type": session.session_type,
+                            "version": session.version,
+                            "description": session.description,
+                            "tss_planned": session.tss_planned,
+                            "duration_min": session.duration_min,
+                        }
+                        session.status = "rest_day"
+                        session.skip_reason = reason
+                        session_found = True
+                        break
+
+                if not session_found:
+                    print(f"   ⚠️  Session non trouvée pour date {target_date}")
+                    return
+
+            print("   📝 Planning JSON mis à jour (status=rest_day)")
+        except Exception as e:
+            print(f"   ⚠️  Erreur mise à jour planning : {e}")
+            return
+
+        # 2. Sync with Intervals.icu (convert WORKOUT → NOTE [REPOS])
+        try:
+            client = create_intervals_client()
+            sync_success = sync_with_intervals(
+                client=client,
+                session_id=session_id,
+                session_date=target_date,
+                new_status="rest_day",
+                reason=reason,
+                session_info=session_info,
+            )
+            if sync_success:
+                print("   ✅ Jour de repos appliqué")
+            else:
+                print("   ⚠️  Sync Intervals.icu échouée (planning local mis à jour)")
+        except Exception as e:
+            print(f"   ⚠️  Erreur sync Intervals.icu : {e}")
+            print("   📝 Planning local mis à jour (sync manuelle nécessaire)")
+
     def apply_planning_modifications(self, modifications: list, week_id: str):
         """Applique modifications planning.
 
@@ -174,9 +282,8 @@ class ServoControlMixin:
 
             if action == "lighten":
                 self._apply_lighten(mod, week_id)
-            elif action == "cancel":
-                # TODO: Implémenter cancel si nécessaire
-                print(f"⚠️  Action 'cancel' non implémentée: {mod}")
+            elif action in ("rest_day", "cancel"):
+                self._apply_rest_day(mod, week_id)
             elif action == "reschedule":
                 # TODO: Implémenter reschedule si nécessaire
                 print(f"⚠️  Action 'reschedule' non implémentée: {mod}")
@@ -326,6 +433,16 @@ Critères de décision:
   "current_workout": "CODE",
   "template_id": "recovery_active_30tss",
   "reason": "Découplage 11.2%, prioriser récupération"
+}}]}}
+```
+
+**Action `rest_day`** (convertir séance en jour de repos) :
+```json
+{{"modifications": [{{
+  "action": "rest_day",
+  "target_date": "YYYY-MM-DD",
+  "current_workout": "CODE",
+  "reason": "TSB -22, sommeil 4.8h, récupération prioritaire"
 }}]}}
 ```
 
