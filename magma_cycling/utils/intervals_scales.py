@@ -39,3 +39,50 @@ def format_feel(value: int | None, with_emoji: bool = False) -> str:
         return f"{emoji} {label} ({value}/5)"
 
     return label
+
+
+SLEEP_QUALITY_LABELS: dict[int, str] = {
+    1: "Excellent",
+    2: "Good",
+    3: "Average",
+    4: "Poor",
+}
+
+
+def sleep_score_to_quality(score: int | None) -> int | None:
+    """Convert Withings sleep_score (0-100) to Intervals.icu sleepQuality (1-4).
+
+    Intervals.icu uses an inverted 1-4 scale:
+      1 = Excellent (score >= 90)
+      2 = Good      (score >= 75)
+      3 = Average   (score >= 60)
+      4 = Poor      (score < 60)
+    """
+    if score is None:
+        return None
+    if score >= 90:
+        return 1
+    if score >= 75:
+        return 2
+    if score >= 60:
+        return 3
+    return 4
+
+
+def format_sleep_quality(value: int | None) -> str:
+    """Format sleepQuality value (1-4 Intervals.icu scale).
+
+    Args:
+        value: Sleep quality value 1-4 or None (1=Excellent, 4=Poor).
+
+    Returns:
+        Formatted label string.
+    """
+    if value is None:
+        return "_Non renseigné_"
+
+    label = SLEEP_QUALITY_LABELS.get(value)
+    if label is None:
+        return f"_Valeur inconnue: {value}_"
+
+    return label
