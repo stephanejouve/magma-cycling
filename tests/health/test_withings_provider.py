@@ -104,6 +104,38 @@ class TestGetSleepSummary:
         assert provider.get_sleep_summary(date(2026, 2, 28)) is None
 
 
+class TestSleepDataWithSegments:
+    def test_sleep_data_accepts_segments_fields(self):
+        data = SleepData(
+            date="2026-03-07",
+            start_datetime="2026-03-06T22:08:00",
+            end_datetime="2026-03-07T07:09:00",
+            total_sleep_hours=8.7,
+            wakeup_count=3,
+            segments_count=2,
+            segments_detail=[
+                {"start": "22:08", "end": "01:30", "duration_hours": 3.2},
+                {"start": "01:30", "end": "07:09", "duration_hours": 5.5},
+            ],
+        )
+        assert data.segments_count == 2
+        assert len(data.segments_detail) == 2
+        dumped = data.model_dump()
+        assert dumped["segments_count"] == 2
+        assert dumped["segments_detail"][0]["start"] == "22:08"
+
+    def test_sleep_data_defaults_single_segment(self):
+        data = SleepData(
+            date="2026-03-07",
+            start_datetime="2026-03-06T23:00:00",
+            end_datetime="2026-03-07T06:30:00",
+            total_sleep_hours=7.5,
+            wakeup_count=1,
+        )
+        assert data.segments_count == 1
+        assert data.segments_detail is None
+
+
 class TestGetSleepRange:
     def test_returns_list_of_sleep_data(self, mock_client, provider):
         mock_client.get_sleep.return_value = [

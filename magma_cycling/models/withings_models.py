@@ -79,6 +79,15 @@ class SleepData(BaseModel):
         default=None, ge=0, description="Number of times out of bed"
     )
 
+    # Fragmentation tracking
+    segments_count: int = Field(
+        default=1, ge=1, description="Number of raw Withings segments merged"
+    )
+    segments_detail: list[dict] | None = Field(
+        default=None,
+        description="Segment breakdown when segments_count > 1",
+    )
+
     @field_validator("total_sleep_hours")
     @classmethod
     def validate_sleep_hours(cls, v: float) -> float:
