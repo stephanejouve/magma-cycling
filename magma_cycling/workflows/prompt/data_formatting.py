@@ -13,6 +13,10 @@ class DataFormattingMixin:
         # Vérifier si l'activité vient de Strava
         is_strava = activity.get("source") == "STRAVA"
 
+        # Détecter l'environnement indoor/outdoor
+        activity_type = activity.get("type", "")
+        is_indoor = activity_type == "VirtualRide"
+
         data = {
             "id": activity.get("id", "Non spécifié"),
             "name": activity.get("name", "Séance"),
@@ -37,6 +41,8 @@ class DataFormattingMixin:
             "feel": activity.get("feel"),  # 1-5 scale Intervals.icu (1=Excellent, 5=Poor)
             "is_strava": is_strava,
             "source": activity.get("source", "Unknown"),
+            "environment": "indoor" if is_indoor else "outdoor",
+            "is_indoor": is_indoor,
         }
 
         return data
