@@ -1,6 +1,13 @@
 """Prompt assembly and output methods for PromptGenerator."""
 
 import subprocess
+from datetime import date
+
+from magma_cycling.planning.outdoor_discipline import (
+    check_discipline,
+    format_discipline_report,
+    generate_discipline_report,
+)
 
 
 class PromptAssemblyMixin:
@@ -94,6 +101,7 @@ Certaines métriques (puissance, découplage) peuvent être manquantes ou incomp
 - **Type** : {act['type']}
 - **Date** : {act['date']}
 - **Source** : {act['source']}
+- **Environnement** : {"Indoor (Home Trainer)" if act.get('is_indoor') else "Outdoor"}
 
 ### Métriques Pré-séance
 - CTL : {w_pre['ctl']:.0f}
@@ -180,6 +188,9 @@ ci-dessus. Identifier les écarts entre intention et réalisation.
 
 ---.
 """
+        # Ajouter section discipline environnement
+        prompt += self._build_environment_section(act, planned)
+
         # Ajouter contexte de périodisation si disponible
         if periodization_context:
             pc = periodization_context
@@ -315,6 +326,66 @@ Date : {act['date']}
 Génère maintenant l'entrée d'analyse.
 """
         return prompt
+
+    def _build_environment_section(self, act, planned):
+        """Construit la section environnement indoor/outdoor pour le prompt."""
+        is_indoor = act.get("is_indoor", False)
+
+        if is_indoor:
+            return """
+## 🏠 Environnement : Indoor (Home Trainer)
+
+→ Conditions contrôlées. Évaluer la précision d'exécution par rapport au plan.
+Pas de variables externes (vent, terrain, trafic). L'adhérence au plan doit être optimale.
+
+---
+"""
+        # Outdoor : ajouter analyse discipline si planned workout avec IF
+        if planned and planned.get("intensity_planned", 0) > 0 and act.get("intensity", 0) > 0:
+            discipline_check = check_discipline(
+                workout_name=act.get("name", "Séance"),
+                workout_date=date.fromisoformat(act["date_iso"]),
+                intensity_zone=self._guess_intensity_zone(act.get("intensity", 0)),
+                environment="outdoor",
+                if_planned=planned["intensity_planned"],
+                if_actual=act["intensity"],
+            )
+            report = generate_discipline_report(discipline_check)
+            discipline_md = format_discipline_report(report)
+
+            return f"""
+## 🌳 {discipline_md}
+
+**Consigne** : En outdoor, évaluer la capacité à respecter l'intensité cible.
+Déviation >10% = échec discipline (surcharge). Recommander indoor si récidive.
+
+---
+"""
+        # Outdoor sans planned workout
+        return """
+## 🌳 Environnement : Outdoor
+
+→ Variables externes possibles (vent, dénivelé, trafic).
+Tenir compte de ces facteurs dans l'évaluation de l'exécution.
+
+---
+"""
+
+    @staticmethod
+    def _guess_intensity_zone(intensity_factor):
+        """Détermine la zone d'intensité à partir de l'IF."""
+        if intensity_factor >= 1.05:
+            return "VO2"
+        elif intensity_factor >= 0.91:
+            return "FTP"
+        elif intensity_factor >= 0.84:
+            return "Sweet-Spot"
+        elif intensity_factor >= 0.76:
+            return "Tempo"
+        elif intensity_factor >= 0.56:
+            return "Endurance"
+        else:
+            return "Recovery"
 
     def copy_to_clipboard(self, text):
         """Copy le texte dans le presse-papier macOS."""
