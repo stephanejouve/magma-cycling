@@ -177,7 +177,7 @@ prompts/
 | Item | Priorité | Effort | Status |
 |------|----------|--------|--------|
 | PID Calibration post-S080 (R10) | P1 | 5-7j | 📋 Planifié |
-| DRY violation Intervals.icu scales | P2 | 2-3h | 📋 Backlog |
+| DRY violation Intervals.icu scales | P2 | 2-3h | ✅ Résolu |
 | Workflow Diversity Integration (S4) | P1 | 2-3h | 📋 Planifié |
 | Test History Tracking | P2 | 2-4h | 📋 Backlog |
 | Indoor/Outdoor Adaptive Analysis | P1 | 3-4h | 📋 Backlog |
@@ -388,12 +388,12 @@ Items long-terme, priorisés après déploiement Phase 4.
 
 ## 🔧 Dette Technique
 
-### DRY Violation: Intervals.icu Scales
+### ~~DRY Violation: Intervals.icu Scales~~
 
-**Priorité :** P2 | **Effort :** 2-3h | **Status :** Backlog
+**Priorité :** P2 | **Effort :** 2-3h | **Status :** ✅ Résolu
 
-Échelle Feel d'Intervals.icu (1-5) dupliquée dans `prepare_analysis.py` et `daily_sync.py`.
-Solution : module centralisé `intervals_scales.py` (même pattern applicable aux autres échelles).
+Module centralisé `utils/intervals_scales.py` : Feel 1-5 (PR #83-84) + Sleep Quality 1-4 consolidés.
+`FEEL_LABELS`, `FEEL_EMOJIS`, `format_feel()`, `SLEEP_QUALITY_LABELS`, `sleep_score_to_quality()`, `format_sleep_quality()`.
 
 ### ~~sync-week-to-intervals force_update incomplete~~
 
