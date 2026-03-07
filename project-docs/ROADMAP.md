@@ -401,16 +401,14 @@ Module centralisé `utils/intervals_scales.py` : Feel 1-5 (PR #83-84) + Sleep Qu
 
 `force_update` ne poussait que `name` + `start_date_local`, la description était silencieusement ignorée. Ajout de `"description": full_description` dans `update_data`.
 
-### DRY Violation: Upload Workouts dupliqué dans MCP handler
+### ~~DRY Violation: Upload Workouts dupliqué dans MCP handler~~
 
-**Priorité :** P2 | **Effort :** 2-3h | **Status :** Backlog
+**Priorité :** P2 | **Effort :** 2-3h | **Status :** ✅ Résolu (PR #83-84)
 
-`_mcp/handlers/intervals.py::handle_sync_week_to_intervals()` réimplémente la logique d'upload vers Intervals.icu (create/update WORKOUT events, détection duplicats) au lieu de déléguer à `WorkoutUploader`.
-Deux flux parallèles font la même chose :
-- `upload_workouts.py` (CLI) — détection duplicats via hash, protection `paired_activity_id`
-- `intervals.py` handler MCP — sa propre logique de sync avec `force_update`
-
-Solution : faire déléguer le handler MCP à `WorkoutUploader` (même pattern que `eow/upload.py` qui délègue déjà correctement).
+Logique de sync factorisée dans modules partagés :
+- `utils/event_sync.py` : `evaluate_sync()`, `compute_start_time()`, `calculate_description_hash()`
+- `workout_parser.py` : `load_workout_descriptions()`
+Le handler MCP et `UploadMixin` délèguent tous deux aux mêmes helpers.
 
 ### ~~Refactoring Massif - God Scripts~~
 
