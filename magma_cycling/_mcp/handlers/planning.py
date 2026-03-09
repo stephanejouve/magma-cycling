@@ -61,16 +61,24 @@ async def handle_weekly_planner(args: dict) -> list[TextContent]:
         "provider": provider,
         "prompt_length": len(prompt),
         "message": f"Planning prompt generated for {week_id}",
-        "next_steps": [
-            f"Copy prompt and paste to {provider}",
-            "Generate 7 workouts",
-            "Save workouts to file",
-            "Run upload-workouts to sync to Intervals.icu",
-        ],
     }
 
     if provider == "clipboard":
         result["prompt"] = prompt[:500] + "..." if len(prompt) > 500 else prompt
+        result["next_steps"] = [
+            f"Copy prompt and paste to {provider}",
+            "Generate 7 workouts",
+            "Save workouts to file",
+            "Run upload-workouts to sync to Intervals.icu",
+        ]
+    else:
+        # Full prompt for AI providers — any MCP client can consume it
+        result["prompt"] = prompt
+        result["next_steps"] = [
+            "Use the prompt field to generate 7 structured workouts",
+            "Call modify-session-details for each session with the workout description",
+            "Call sync-week-to-intervals to upload to Intervals.icu",
+        ]
 
     return mcp_response(result)
 
