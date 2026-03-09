@@ -12,6 +12,7 @@ Test strategy:
 - Error handling and edge cases
 """
 
+import json
 from datetime import date, timedelta
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -608,6 +609,117 @@ class TestEndOfWeekWorkflowSteps:
 
         # Dry-run should skip actual archiving
         assert workflow_dry_run.dry_run is True
+
+
+# =============================================================================
+# Tests: Next Week Precondition
+# =============================================================================
+
+
+class TestNextWeekPrecondition:
+    """Test _check_next_week_already_planned() precondition."""
+
+    @pytest.fixture
+    def workflow(self, tmp_path):
+        """Create workflow instance with tmp planning dir."""
+        with (
+            patch("magma_cycling.workflows.end_of_week.get_data_config") as mock_data_config,
+            patch("magma_cycling.workflows.end_of_week.calculate_week_start_date") as mock_calc,
+        ):
+            mock_calc.side_effect = [date(2026, 3, 2), date(2026, 3, 9)]
+            mock_config = Mock()
+            mock_config.data_repo_path = tmp_path / "data"
+            mock_config.week_planning_dir = tmp_path / "planning"
+            mock_data_config.return_value = mock_config
+            (tmp_path / "planning").mkdir(parents=True)
+
+            return EndOfWeekWorkflow(
+                week_completed="S083",
+                week_next="S084",
+                dry_run=False,
+            )
+
+    def _write_planning(self, planning_dir, week_id, sessions, **extra):
+        """Helper to write a planning JSON file."""
+        data = {
+            "week_id": week_id,
+            "start_date": "2026-03-09",
+            "end_date": "2026-03-15",
+            "created_at": "2026-03-08T20:00:00",
+            "last_updated": "2026-03-08T20:00:00",
+            "version": 1,
+            "athlete_id": "i999999",
+            "tss_target": 300,
+            "planned_sessions": sessions,
+            **extra,
+        }
+        path = planning_dir / f"week_planning_{week_id}.json"
+        path.write_text(json.dumps(data), encoding="utf-8")
+
+    def test_next_week_not_planned_continues(self, workflow):
+        """No planning file exists — should continue."""
+        assert workflow._check_next_week_already_planned() is False
+
+    def test_next_week_empty_template_continues(self, workflow):
+        """Planning file with only planned/pending sessions and no intervals_id — continue."""
+        sessions = [
+            {
+                "session_id": "S084-01",
+                "date": "2026-03-09",
+                "name": "Endurance",
+                "type": "END",
+                "tss_planned": 50,
+                "duration_min": 60,
+                "status": "planned",
+            },
+            {
+                "session_id": "S084-02",
+                "date": "2026-03-10",
+                "name": "Repos",
+                "type": "REC",
+                "tss_planned": 0,
+                "duration_min": 0,
+                "status": "pending",
+            },
+        ]
+        self._write_planning(workflow.planning_dir, "S084", sessions)
+
+        assert workflow._check_next_week_already_planned() is False
+
+    def test_next_week_with_intervals_id_skips(self, workflow):
+        """Planning has a session with intervals_id — should skip."""
+        sessions = [
+            {
+                "session_id": "S084-01",
+                "date": "2026-03-09",
+                "name": "Endurance",
+                "type": "END",
+                "tss_planned": 50,
+                "duration_min": 60,
+                "status": "planned",
+                "intervals_id": 12345678,
+            },
+        ]
+        self._write_planning(workflow.planning_dir, "S084", sessions)
+
+        assert workflow._check_next_week_already_planned() is True
+
+    def test_next_week_with_active_status_skips(self, workflow):
+        """Planning has a session with status=uploaded — should skip."""
+        sessions = [
+            {
+                "session_id": "S084-01",
+                "date": "2026-03-09",
+                "name": "Endurance",
+                "type": "END",
+                "tss_planned": 50,
+                "duration_min": 60,
+                "status": "uploaded",
+            },
+        ]
+        self._write_planning(workflow.planning_dir, "S084", sessions)
+
+        assert workflow._check_next_week_already_planned() is True
 
 
 # =============================================================================
