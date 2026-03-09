@@ -107,6 +107,9 @@ class IntervalsFormatValidator:
         # Check 3: Format intervalles
         self._check_interval_format(lines)
 
+        # Check 4: Structure minimale
+        self._check_minimal_structure(lines)
+
         return (len(self.errors) == 0, self.errors, self.warnings)
 
     def _check_repetition_format(self, lines: list[str]):
@@ -188,6 +191,16 @@ class IntervalsFormatValidator:
             # Vérifier présence durée
             if not re.search(r"\d+[msh]", stripped):
                 self.warnings.append(f"Ligne {i + 1}: Aucune durée détectée dans '{stripped}'")
+
+    def _check_minimal_structure(self, lines: list[str]):
+        """Verify presence of at least one interval line."""
+        has_interval = any(re.match(self.INTERVAL_PATTERN, line) for line in lines)
+        if not has_interval:
+            self.errors.append(
+                "Aucune ligne d'intervalle détectée "
+                "(format attendu: '- Xm Y% Zrpm'). "
+                "Le texte libre n'est pas un format workout valide."
+            )
 
     def fix_repetition_format(self, workout_text: str) -> str:
         """
