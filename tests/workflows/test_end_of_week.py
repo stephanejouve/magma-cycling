@@ -102,20 +102,60 @@ class TestCalculateWeeklyTransition:
 
     @patch("magma_cycling.workflows.end_of_week.get_week_config")
     def test_calculate_weekly_transition_monday(self, mock_config):
-        """Test transition calculation on Monday."""
+        """Test transition on Monday gives same result as Sunday."""
         mock_week_config = Mock()
         mock_week_config.get_s001_date_obj.return_value = date(2024, 8, 5)
         mock_config.return_value = mock_week_config
 
-        # Monday 2026-01-26 (S078 start)
+        # Monday 2026-01-26 (first day of S078)
+        # The completed week is S077 (just ended), not S078 (just started)
         reference_date = date(2026, 1, 26)
 
         week_completed, week_next, completed_start, next_start = calculate_weekly_transition(
             reference_date
         )
 
+        assert week_completed == "S077"
+        assert week_next == "S078"
+        assert completed_start == date(2026, 1, 19)
+        assert next_start == date(2026, 1, 26)
+
+    @patch("magma_cycling.workflows.end_of_week.get_week_config")
+    def test_calculate_weekly_transition_midweek(self, mock_config):
+        """Test transition mid-week (Wednesday)."""
+        mock_week_config = Mock()
+        mock_week_config.get_s001_date_obj.return_value = date(2024, 8, 5)
+        mock_config.return_value = mock_week_config
+
+        # Wednesday 2026-01-28 (mid-S078)
+        reference_date = date(2026, 1, 28)
+
+        week_completed, week_next, _, _ = calculate_weekly_transition(reference_date)
+
         assert week_completed == "S078"
         assert week_next == "S079"
+
+    @patch("magma_cycling.workflows.end_of_week.get_week_config")
+    def test_calculate_weekly_transition_s084_monday_bug(self, mock_config):
+        """Regression test: Monday March 9 must return S083 completed, not S084.
+
+        This is the exact scenario that caused the S084 incident.
+        """
+        mock_week_config = Mock()
+        mock_week_config.get_s001_date_obj.return_value = date(2024, 8, 5)
+        mock_config.return_value = mock_week_config
+
+        # Monday 2026-03-09 = first day of S084
+        reference_date = date(2026, 3, 9)
+
+        week_completed, week_next, completed_start, next_start = calculate_weekly_transition(
+            reference_date
+        )
+
+        assert week_completed == "S083"
+        assert week_next == "S084"
+        assert completed_start == date(2026, 3, 2)
+        assert next_start == date(2026, 3, 9)
 
     @patch("magma_cycling.workflows.end_of_week.get_week_config")
     @patch("magma_cycling.workflows.end_of_week.date")
