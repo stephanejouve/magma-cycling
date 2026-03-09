@@ -113,7 +113,13 @@ async def handle_sync_week_to_intervals(args: dict) -> list[TextContent]:
                 }
 
                 # Validate workout description before creating remote event
-                if full_description and full_description.strip():
+                # Skip validation for rest days (no structured workout expected)
+                if (
+                    session.duration_min
+                    and session.duration_min > 0
+                    and full_description
+                    and full_description.strip()
+                ):
                     from magma_cycling.intervals_format_validator import (
                         IntervalsFormatValidator,
                     )

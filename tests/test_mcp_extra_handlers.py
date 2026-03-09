@@ -34,7 +34,7 @@ def mock_session():
     s.version = "V001"
     s.tss_planned = 65
     s.duration_min = 60
-    s.description = "Tempo 3x10min"
+    s.description = "Warmup\n- 10m ramp 50-75% 85rpm\n\nMain set 3x\n- 10m 88% 90rpm\n- 3m 60% 85rpm\n\nCooldown\n- 10m ramp 70-50% 85rpm"
     s.status = "pending"
     s.intervals_id = None
     s.skip_reason = None
@@ -233,7 +233,8 @@ class TestHandleSyncWeekToIntervals:
         mock_session.intervals_id = "evt123"
         mock_session.status = "pending"
         mock_session.name = "TempoCourt"
-        mock_session.description = "Tempo 3x10min"
+        valid_desc = "Warmup\n- 10m ramp 50-75% 85rpm\n\nMain set 3x\n- 10m 88% 90rpm\n- 3m 60% 85rpm\n\nCooldown\n- 10m ramp 70-50% 85rpm"
+        mock_session.description = valid_desc
         mock_plan.planned_sessions = [mock_session]
         tower = make_tower(mock_plan)
         mock_client = Mock()
@@ -243,7 +244,7 @@ class TestHandleSyncWeekToIntervals:
                 "id": "evt123",
                 "category": "WORKOUT",
                 "name": "S081-03-INT-TempoCourt-V001",
-                "description": "Tempo 3x10min",
+                "description": valid_desc,
                 "start_date_local": "2026-02-19T17:00:00",
             },
         ]
@@ -266,7 +267,7 @@ class TestHandleSyncWeekToIntervals:
         mock_session.intervals_id = "evt123"
         mock_session.status = "pending"
         mock_session.name = "TempoCourt"
-        mock_session.description = "Tempo 3x10min"
+        mock_session.description = "Warmup\n- 10m ramp 50-75% 85rpm\n\nMain set 3x\n- 10m 88% 90rpm\n- 3m 60% 85rpm\n\nCooldown\n- 10m ramp 70-50% 85rpm"
         mock_plan.planned_sessions = [mock_session]
         tower = make_tower(mock_plan)
         mock_client = Mock()
@@ -375,7 +376,8 @@ class TestHandleSyncWeekToIntervals:
         mock_session.name = "TempoCourt"
         mock_session.session_type = "INT"
         mock_session.version = "V001"
-        mock_session.description = "Short desc"
+        valid_desc = "Warmup\n- 10m ramp 50-75% 85rpm\n\nMain set 3x\n- 10m 88% 90rpm\n- 3m 60% 85rpm\n\nCooldown\n- 10m ramp 70-50% 85rpm"
+        mock_session.description = valid_desc
         mock_plan.planned_sessions = [mock_session]
         tower = make_tower(mock_plan)
         mock_client = Mock()
@@ -401,7 +403,7 @@ class TestHandleSyncWeekToIntervals:
         update_call = mock_client.update_event.call_args
         event_data = update_call[0][1]
         assert "description" in event_data
-        assert event_data["description"] == "Short desc"
+        assert event_data["description"] == valid_desc
         assert "name" in event_data
         assert "start_date_local" in event_data
 
@@ -417,9 +419,12 @@ class TestHandleSyncWeekToIntervals:
         session2.name = "EnduranceLongue"
         session2.session_type = "END"
         session2.version = "V001"
-        session2.description = "90min endurance"
+        session2.description = "Warmup\n- 15m ramp 50-70% 85rpm\n\nMain set\n- 60m 68% 85rpm\n\nCooldown\n- 15m ramp 65-50% 85rpm"
+        session2.duration_min = 90
+        session2.tss_planned = 55
         session2.status = "pending"
         session2.intervals_id = None
+        session2.skip_reason = None
         mock_session.intervals_id = None
         mock_plan.planned_sessions = [mock_session, session2]
         tower = make_tower(mock_plan)
