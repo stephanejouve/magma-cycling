@@ -194,6 +194,7 @@ class UploadMixin:
                 "version": 1,
                 "athlete_id": config.athlete_id,
                 "tss_target": 0,
+                "source": "eow",
                 "planned_sessions": [],
             }
 
