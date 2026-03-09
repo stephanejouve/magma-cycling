@@ -195,6 +195,10 @@ class WeeklyPlan(BaseModel):
     version: int = Field(ge=1, description="Plan version number")
     athlete_id: str = Field(description="Athlete identifier (e.g., iXXXXXX)")
     tss_target: int = Field(ge=0, le=2000, description="Target weekly TSS")
+    source: str | None = Field(
+        default=None,
+        description="Origin of planning creation (eow, mcp, planner, manual)",
+    )
     planned_sessions: list[Session] = Field(
         default_factory=list, alias="planned_sessions", description="List of planned sessions"
     )

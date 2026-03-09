@@ -214,6 +214,11 @@ class EndOfWeekWorkflow(
         except Exception:
             return False
 
+        # Explicit source check — non-EOW plannings are always respected
+        if plan.source and plan.source != "eow":
+            return True
+
+        # Heuristic fallback for legacy files without source field
         for session in plan.planned_sessions:
             if session.intervals_id is not None:
                 return True
