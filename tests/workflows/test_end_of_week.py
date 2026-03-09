@@ -721,6 +721,40 @@ class TestNextWeekPrecondition:
 
         assert workflow._check_next_week_already_planned() is True
 
+    def test_next_week_source_mcp_skips(self, workflow):
+        """Planning with source=mcp should skip even if sessions are planned."""
+        sessions = [
+            {
+                "session_id": "S084-01",
+                "date": "2026-03-09",
+                "name": "Endurance",
+                "type": "END",
+                "tss_planned": 50,
+                "duration_min": 60,
+                "status": "planned",
+            },
+        ]
+        self._write_planning(workflow.planning_dir, "S084", sessions, source="mcp")
+
+        assert workflow._check_next_week_already_planned() is True
+
+    def test_next_week_source_eow_with_empty_sessions_continues(self, workflow):
+        """Planning with source=eow and template sessions — should continue."""
+        sessions = [
+            {
+                "session_id": "S084-01",
+                "date": "2026-03-09",
+                "name": "Endurance",
+                "type": "END",
+                "tss_planned": 50,
+                "duration_min": 60,
+                "status": "planned",
+            },
+        ]
+        self._write_planning(workflow.planning_dir, "S084", sessions, source="eow")
+
+        assert workflow._check_next_week_already_planned() is False
+
 
 # =============================================================================
 # Tests: EndOfWeekWorkflow Integration

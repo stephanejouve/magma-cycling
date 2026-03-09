@@ -127,6 +127,7 @@ class OutputMixin:
             "version": 1,
             "athlete_id": intervals_config.athlete_id,
             "tss_target": sum(w.get("tss_planned", 0) for w in workouts_data),
+            "source": "planner",
             "planned_sessions": workouts_data,
         }
 
