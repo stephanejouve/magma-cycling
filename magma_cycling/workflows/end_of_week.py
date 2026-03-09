@@ -98,8 +98,10 @@ def calculate_weekly_transition(reference_date: date | None = None) -> tuple[str
     Calculate week IDs for weekly transition (completed → next).
 
     Logic:
-    - If Sunday (day 6) or Monday (day 0): transition from current week to next
-    - Otherwise: transition from current week to next (for manual runs)
+    - Determines the most recently completed week and the next week to plan
+    - On Monday (first day of new week), the previous week is completed
+    - On Sunday (last day of current week), the current week is completed
+    - Both Sunday evening and Monday morning yield the same transition
 
     Args:
         reference_date: Reference date for calculation (default: today)
@@ -111,6 +113,8 @@ def calculate_weekly_transition(reference_date: date | None = None) -> tuple[str
         >>> # Running on Sunday 2026-01-25 or Monday 2026-01-26
         >>> calculate_weekly_transition(date(2026, 1, 25))
         ('S077', 'S078', date(2026, 1, 19), date(2026, 1, 26))
+        >>> calculate_weekly_transition(date(2026, 1, 26))
+        ('S077', 'S078', date(2026, 1, 19), date(2026, 1, 26))
     """
     if reference_date is None:
         reference_date = date.today()
@@ -119,11 +123,15 @@ def calculate_weekly_transition(reference_date: date | None = None) -> tuple[str
     week_config = get_week_config()
     s001_date = week_config.get_s001_date_obj("S001")
 
-    # Calculate weeks offset from S001
-    delta = reference_date - s001_date
+    # Use yesterday to determine completed week: on Monday (first day of
+    # new week), yesterday=Sunday falls in the previous week, giving the
+    # correct "just completed" week. On Sunday, yesterday=Saturday stays
+    # in the same week. Both yield the same transition.
+    adjusted_date = reference_date - timedelta(days=1)
+    delta = adjusted_date - s001_date
     weeks_offset = delta.days // 7
 
-    # Current week is the week containing reference_date
+    # Completed week is the one containing yesterday
     current_week_num = weeks_offset + 1
     week_completed = f"S{current_week_num:03d}"
     week_next = f"S{current_week_num + 1:03d}"
