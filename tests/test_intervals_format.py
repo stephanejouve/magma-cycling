@@ -178,12 +178,12 @@ def test_generate_examples(validator):
 
 
 def test_empty_workout(validator):
-    """Test workout vide."""
+    """Test workout vide — rejeté (aucune ligne d'intervalle)."""
     workout = ""
 
     is_valid, errors, warnings = validator.validate_workout(workout)
-    # Workout vide techniquement valide (pas d'erreurs)
-    assert is_valid is True
+    assert is_valid is False
+    assert any("Aucune ligne d'intervalle" in e for e in errors)
 
 
 def test_workout_without_sections(validator):
@@ -351,6 +351,38 @@ def test_script_main_entry_point(monkeypatch, capsys):
     # Verify main() was called by checking output
     captured = capsys.readouterr()
     assert "TEST 1" in captured.out or "EXEMPLES" in captured.out
+
+
+def test_free_text_rejected(validator):
+    """Test texte libre narratif rejeté."""
+    workout = "Récupération active — Z1 strict"
+
+    is_valid, errors, warnings = validator.validate_workout(workout)
+
+    assert is_valid is False
+    assert any("Aucune ligne d'intervalle" in e for e in errors)
+
+
+def test_free_text_multiline_rejected(validator):
+    """Test plusieurs lignes narratives rejetées."""
+    workout = """Récupération active
+Zone 1 strict, pas de pic
+Objectif: récupérer du week-end"""
+
+    is_valid, errors, warnings = validator.validate_workout(workout)
+
+    assert is_valid is False
+    assert any("Aucune ligne d'intervalle" in e for e in errors)
+
+
+def test_minimal_single_interval_valid(validator):
+    """Test intervalle unique valide."""
+    workout = "- 10m 70% 85rpm"
+
+    is_valid, errors, warnings = validator.validate_workout(workout)
+
+    assert is_valid is True
+    assert len(errors) == 0
 
 
 if __name__ == "__main__":
