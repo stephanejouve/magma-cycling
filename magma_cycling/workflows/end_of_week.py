@@ -47,6 +47,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from magma_cycling.config import get_data_config, get_week_config
+from magma_cycling.planning.models import WeeklyPlan
 from magma_cycling.workflows.eow.ai_workouts import AIWorkoutsMixin
 from magma_cycling.workflows.eow.analysis import AnalysisMixin
 from magma_cycling.workflows.eow.archive import ArchiveMixin
@@ -202,6 +203,25 @@ class EndOfWeekWorkflow(
         self.workouts_file: Path | None = None
         self.validation_warnings: list[str] = []
 
+    def _check_next_week_already_planned(self) -> bool:
+        """Check if next week planning already exists and is non-trivial."""
+        planning_file = self.planning_dir / f"week_planning_{self.week_next}.json"
+        if not planning_file.exists():
+            return False
+
+        try:
+            plan = WeeklyPlan.from_json(planning_file)
+        except Exception:
+            return False
+
+        for session in plan.planned_sessions:
+            if session.intervals_id is not None:
+                return True
+            if session.status not in ("planned", "pending"):
+                return True
+
+        return False
+
     def run(self) -> bool:
         """
         Execute workflow complet.
@@ -213,6 +233,14 @@ class EndOfWeekWorkflow(
         marker = self.planning_dir / f".eow_done_{self.week_completed}"
         if marker.exists():
             print(f"⚠️  End-of-week déjà exécuté pour {self.week_completed} — skip")
+            return True
+
+        # Précondition: next week not already planned
+        if self._check_next_week_already_planned():
+            print(
+                f"⚠️  Planning {self.week_next} déjà existant avec sessions "
+                f"actives — skip end-of-week pour éviter écrasement"
+            )
             return True
 
         print("=" * 80)
