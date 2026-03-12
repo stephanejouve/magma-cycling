@@ -141,4 +141,42 @@ def get_tools() -> list[Tool]:
                 "required": ["week_id"],
             },
         ),
+        Tool(
+            name="get-coach-analysis",
+            description="Retrieve past coach AI analysis from workouts-history.md by activity ID, session ID, or date",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "activity_id": {
+                        "type": "string",
+                        "description": "Intervals.icu activity ID (e.g., i131572602)",
+                    },
+                    "session_id": {
+                        "type": "string",
+                        "description": "Planning session ID (e.g., S084-04). Uses word-boundary match to avoid partial hits.",
+                    },
+                    "date": {
+                        "type": "string",
+                        "description": "Date in YYYY-MM-DD format. Returns all analyses for that day.",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    },
+                    "section": {
+                        "type": "string",
+                        "description": "Filter to a specific section (default: full)",
+                        "enum": [
+                            "metrics_pre",
+                            "execution",
+                            "technique",
+                            "load",
+                            "validation",
+                            "attention",
+                            "recommendations",
+                            "metrics_post",
+                            "full",
+                        ],
+                        "default": "full",
+                    },
+                },
+            },
+        ),
     ]
