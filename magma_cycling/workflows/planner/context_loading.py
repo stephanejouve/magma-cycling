@@ -1,6 +1,7 @@
 """Context loading methods for WeeklyPlanner."""
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -263,15 +264,15 @@ class ContextLoadingMixin:
             prev_week = self._previous_week_number()
             prev_week_pattern = f"{prev_week}-"  # e.g., "S081-"
 
-            # Split by ### headers (each workout)
-            sections = content.split("###")
+            # Split by ### headers (not ####) using regex lookahead
+            entries = re.split(r"(?:^|\n)(?=### )", content)
 
             # Filter workouts from previous week
             prev_week_workouts = []
-            for section in sections:
-                if prev_week_pattern in section[:50]:  # Check in first 50 chars (title area)
-                    # Keep only up to next ### or end
-                    prev_week_workouts.append("###" + section)
+            for entry in entries:
+                entry = entry.strip()
+                if entry and prev_week_pattern in entry[:80]:
+                    prev_week_workouts.append(entry)
 
             if not prev_week_workouts:
                 print(f"  ℹ️  Aucune analyse trouvée pour {prev_week}", file=sys.stderr)
