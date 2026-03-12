@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -20,6 +21,7 @@ __all__ = [
     "handle_export_week_to_json",
     "handle_restore_week_from_backup",
     "handle_analyze_training_patterns",
+    "handle_get_coach_analysis",
 ]
 
 
@@ -596,3 +598,220 @@ async def handle_analyze_training_patterns(args: dict) -> list[TextContent]:
             "depth": depth,
         }
         return mcp_response(error)
+
+
+# ---------------------------------------------------------------------------
+# Coach analysis history lookup
+# ---------------------------------------------------------------------------
+
+SECTION_MAP = {
+    "metrics_pre": "Métriques Pré-séance",
+    "execution": "Exécution",
+    "technique": "Exécution Technique",
+    "load": "Charge d'Entraînement",
+    "validation": "Validation Objectifs",
+    "attention": "Points d'Attention",
+    "recommendations": "Recommandations Progression",
+    "metrics_post": "Métriques Post-séance",
+    "full": None,
+}
+
+
+def _parse_analysis_entry(entry_text: str) -> dict:
+    """Parse a single analysis entry into structured fields."""
+    lines = entry_text.strip().splitlines()
+    if not lines:
+        return {}
+
+    # Extract title from first line (### TITLE)
+    title_line = lines[0].lstrip("#").strip()
+    activity_name = title_line
+
+    # Extract ID, Date from header lines
+    activity_id = ""
+    date_str = ""
+    for line in lines[1:5]:
+        id_match = re.match(r"ID\s*:\s*(.+)", line.strip())
+        if id_match:
+            activity_id = id_match.group(1).strip()
+        date_match = re.match(r"Date\s*:\s*(.+)", line.strip())
+        if date_match:
+            date_str = date_match.group(1).strip()
+
+    # Extract week_id from activity_name (e.g. S084-04-END-... → S084)
+    week_id = ""
+    wid_match = re.match(r"(S\d{3})", activity_name)
+    if wid_match:
+        week_id = wid_match.group(1)
+
+    # Parse #### sections
+    sections: dict[str, str] = {}
+    current_section = None
+    current_lines: list[str] = []
+
+    for line in lines:
+        section_match = re.match(r"####\s+(.+)", line)
+        if section_match:
+            # Save previous section
+            if current_section:
+                sections[current_section] = "\n".join(current_lines).strip()
+            current_section = section_match.group(1).strip()
+            current_lines = []
+        elif current_section is not None:
+            current_lines.append(line)
+
+    # Save last section
+    if current_section:
+        sections[current_section] = "\n".join(current_lines).strip()
+
+    # Map French section titles to API keys
+    mapped_sections: dict[str, str] = {}
+    for key, french_title in SECTION_MAP.items():
+        if french_title and french_title in sections:
+            mapped_sections[key] = sections[french_title]
+
+    return {
+        "activity_name": activity_name,
+        "activity_id": activity_id,
+        "date": date_str,
+        "week_id": week_id,
+        "sections": mapped_sections,
+        "content": entry_text.strip(),
+    }
+
+
+def _search_analyses(
+    content: str,
+    activity_id: str | None = None,
+    session_id: str | None = None,
+    date: str | None = None,
+) -> list[str]:
+    """Search analysis entries matching the given criteria."""
+    # Split on ### headers — handle file starting with ### (no leading \n)
+    raw_entries = re.split(r"(?:^|\n)(?=### )", content)
+    entries = [e.strip() for e in raw_entries if e.strip()]
+
+    results = []
+    for entry in entries:
+        if activity_id:
+            pattern = rf"ID\s*:\s*{re.escape(activity_id)}\s*$"
+            if not re.search(pattern, entry, re.MULTILINE):
+                continue
+
+        if session_id:
+            # Word-boundary match to avoid S084-04 matching S084-040
+            pattern = rf"^###\s+{re.escape(session_id)}\b"
+            if not re.search(pattern, entry, re.MULTILINE):
+                continue
+
+        if date:
+            # Convert YYYY-MM-DD to DD/MM/YYYY for matching
+            try:
+                parts = date.split("-")
+                date_fr = f"{parts[2]}/{parts[1]}/{parts[0]}"
+                pattern = rf"Date\s*:\s*{re.escape(date_fr)}\s*$"
+                if not re.search(pattern, entry, re.MULTILINE):
+                    continue
+            except (IndexError, ValueError):
+                continue
+
+        results.append(entry)
+
+    return results
+
+
+async def handle_get_coach_analysis(args: dict) -> list[TextContent]:
+    """Retrieve coach AI analysis from workouts-history.md."""
+    activity_id = args.get("activity_id")
+    session_id = args.get("session_id")
+    date = args.get("date")
+    section = args.get("section", "full")
+
+    # Validate: at least one search parameter required
+    if not any([activity_id, session_id, date]):
+        return mcp_response(
+            {
+                "error": "At least one search parameter required: activity_id, session_id, or date",
+            }
+        )
+
+    # Validate section parameter
+    if section not in SECTION_MAP:
+        return mcp_response(
+            {
+                "error": f"Invalid section: {section}",
+                "valid_sections": list(SECTION_MAP.keys()),
+            }
+        )
+
+    try:
+        from magma_cycling.config import get_data_config
+
+        config = get_data_config()
+        history_path = config.workouts_history_path
+
+        if not history_path.exists():
+            return mcp_response(
+                {
+                    "status": "success",
+                    "analyses": [],
+                    "count": 0,
+                    "message": "workouts-history.md not found",
+                }
+            )
+
+        content = history_path.read_text(encoding="utf-8")
+        if not content.strip():
+            return mcp_response(
+                {
+                    "status": "success",
+                    "analyses": [],
+                    "count": 0,
+                    "message": "workouts-history.md is empty",
+                }
+            )
+
+        # Search matching entries
+        matched_entries = _search_analyses(
+            content,
+            activity_id=activity_id,
+            session_id=session_id,
+            date=date,
+        )
+
+        # Parse and format results
+        analyses = []
+        for entry_text in matched_entries:
+            parsed = _parse_analysis_entry(entry_text)
+            if not parsed:
+                continue
+
+            if section != "full":
+                # Return only the requested section
+                section_content = parsed["sections"].get(section, "")
+                analyses.append(
+                    {
+                        "activity_name": parsed["activity_name"],
+                        "activity_id": parsed["activity_id"],
+                        "date": parsed["date"],
+                        "week_id": parsed["week_id"],
+                        "sections": {section: section_content} if section_content else {},
+                    }
+                )
+            else:
+                analyses.append(parsed)
+
+        count = len(analyses)
+        message = f"{count} analysis found" if count == 1 else f"{count} analyses found"
+
+        return mcp_response(
+            {
+                "status": "success",
+                "analyses": analyses,
+                "count": count,
+                "message": message,
+            }
+        )
+
+    except Exception as e:
+        return mcp_response({"error": f"Failed to retrieve coach analysis: {str(e)}"})
