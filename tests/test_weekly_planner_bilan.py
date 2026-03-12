@@ -1,4 +1,4 @@
-"""Tests for stale bilan detection and live bilan enrichment in weekly planner."""
+"""Tests for stale bilan detection, live bilan enrichment, and workout analyses loading."""
 
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
@@ -394,3 +394,107 @@ class TestFetchActualTss:
             result = tmp_planner._fetch_actual_tss(plan)
 
         assert result is None
+
+
+# =============================================================================
+# Bug #3 tests: workout analyses split on #### subsections
+# =============================================================================
+
+HISTORY_WITH_SUBSECTIONS = """\
+### S084-04-END-EnduranceLongue-V001
+ID : i131572602
+Date : 12/03/2026
+
+#### Métriques Pré-séance
+- CTL : 45
+- ATL : 38
+- TSB : 7
+
+#### Exécution
+- Durée : 174min
+- TSS réel : 175
+- IF : 0.72
+
+#### Analyse Technique
+Bonne tenue de cadence à 85rpm.
+
+### S084-02-END-EnduranceModeree-V001
+ID : i131059208
+Date : 11/03/2026
+
+#### Métriques Pré-séance
+- CTL : 44
+- ATL : 35
+
+#### Exécution
+- Durée : 65min
+- TSS réel : 62
+
+### S083-07-REC-RecupActive-V001
+ID : i130000000
+Date : 08/03/2026
+
+#### Exécution
+- Durée : 40min
+"""
+
+PATCH_DATA_CONFIG = "magma_cycling.config.get_data_config"
+
+
+class TestWorkoutAnalysesSplit:
+    """Bug #3: .split('###') truncated analyses at #### subsections."""
+
+    def test_analyses_preserve_subsections(self, tmp_planner, tmp_path):
+        """Workout analyses include #### subsection content, not just headers."""
+        history_file = tmp_path / "workouts-history.md"
+        history_file.write_text(HISTORY_WITH_SUBSECTIONS, encoding="utf-8")
+
+        mock_config = MagicMock()
+        mock_config.data_repo_path = tmp_path
+
+        with patch(PATCH_DATA_CONFIG, return_value=mock_config):
+            result = tmp_planner.load_previous_week_workouts()
+
+        # Should find 2 S084 workouts
+        assert "2 séance(s) analysée(s)" in result
+
+        # Full content preserved (not truncated at ####)
+        assert "#### Métriques Pré-séance" in result
+        assert "#### Exécution" in result
+        assert "#### Analyse Technique" in result
+        assert "TSS réel : 175" in result
+        assert "Bonne tenue de cadence" in result
+
+        # S083 should NOT be included
+        assert "S083" not in result
+
+    def test_analyses_exclude_other_weeks(self, tmp_planner, tmp_path):
+        """Only previous week (S084) workouts are included."""
+        history_file = tmp_path / "workouts-history.md"
+        history_file.write_text(HISTORY_WITH_SUBSECTIONS, encoding="utf-8")
+
+        mock_config = MagicMock()
+        mock_config.data_repo_path = tmp_path
+
+        with patch(PATCH_DATA_CONFIG, return_value=mock_config):
+            result = tmp_planner.load_previous_week_workouts()
+
+        assert "S084-04" in result
+        assert "S084-02" in result
+        assert "S083-07" not in result
+
+    def test_no_analyses_returns_empty(self, tmp_planner, tmp_path):
+        """No matching analyses returns empty string."""
+        history_file = tmp_path / "workouts-history.md"
+        history_file.write_text(
+            "### S082-01-END-Test-V001\n#### Exécution\n- TSS : 50\n",
+            encoding="utf-8",
+        )
+
+        mock_config = MagicMock()
+        mock_config.data_repo_path = tmp_path
+
+        with patch(PATCH_DATA_CONFIG, return_value=mock_config):
+            result = tmp_planner.load_previous_week_workouts()
+
+        assert result == ""
