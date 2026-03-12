@@ -37,6 +37,7 @@ from magma_cycling._mcp.handlers.analysis import (  # noqa: F401
     handle_analyze_session_adherence,
     handle_analyze_training_patterns,
     handle_export_week_to_json,
+    handle_get_coach_analysis,
     handle_get_recommendations,
     handle_get_training_statistics,
     handle_restore_week_from_backup,
@@ -175,7 +176,7 @@ TOOL_HANDLERS = {
     # Athlete (2)
     "get-athlete-profile": handle_get_athlete_profile,
     "update-athlete-profile": handle_update_athlete_profile,
-    # Analysis (7)
+    # Analysis (8)
     "validate-week-consistency": handle_validate_week_consistency,
     "get-recommendations": handle_get_recommendations,
     "analyze-session-adherence": handle_analyze_session_adherence,
@@ -183,6 +184,7 @@ TOOL_HANDLERS = {
     "export-week-to-json": handle_export_week_to_json,
     "restore-week-from-backup": handle_restore_week_from_backup,
     "analyze-training-patterns": handle_analyze_training_patterns,
+    "get-coach-analysis": handle_get_coach_analysis,
     # Admin (1)
     "reload-server": handle_reload_server,
     # Withings (8)
