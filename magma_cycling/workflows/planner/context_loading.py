@@ -8,6 +8,112 @@ from pathlib import Path
 class ContextLoadingMixin:
     """File I/O for reference files, previous week bilan, and workout analyses."""
 
+    def _fetch_actual_tss(self, plan) -> dict[str, int] | None:
+        """Fetch actual TSS from Intervals.icu for completed sessions.
+
+        Returns a dict mapping session_id to actual TSS, or None if unavailable.
+        Uses 2 API calls: get_activities + get_events for the whole week.
+        """
+        try:
+            from magma_cycling.config import create_intervals_client
+
+            client = create_intervals_client()
+
+            start = str(plan.start_date)
+            end = str(plan.end_date)
+
+            activities = client.get_activities(oldest=start, newest=end)
+            events = client.get_events(oldest=start, newest=end)
+
+            # activity_id → icu_training_load
+            activity_tss = {}
+            for a in activities:
+                aid = a.get("id")
+                tss = a.get("icu_training_load")
+                if aid and tss is not None:
+                    activity_tss[aid] = round(tss)
+
+            # event_id → paired_activity_id
+            event_to_activity = {}
+            for e in events:
+                eid = e.get("id")
+                paid = e.get("paired_activity_id")
+                if eid and paid:
+                    event_to_activity[eid] = paid
+
+            # session_id → actual TSS
+            result = {}
+            for s in plan.planned_sessions:
+                if s.status == "completed" and s.intervals_id:
+                    activity_id = event_to_activity.get(s.intervals_id)
+                    if activity_id and activity_id in activity_tss:
+                        result[s.session_id] = activity_tss[activity_id]
+
+            return result if result else None
+        except Exception:
+            return None
+
+    def _compute_live_bilan(self, week_id: str) -> str | None:
+        """Compute bilan from Control Tower when bilan file is stale or missing."""
+        try:
+            from magma_cycling.planning.control_tower import planning_tower
+
+            plan = planning_tower.read_week(week_id)
+
+            completed = [s for s in plan.planned_sessions if s.status == "completed"]
+            active = [
+                s
+                for s in plan.planned_sessions
+                if s.status not in ("cancelled", "rest_day", "skipped")
+            ]
+
+            if not completed:
+                return None
+
+            # Try to enrich with actual TSS from Intervals.icu
+            actual_tss_map = self._fetch_actual_tss(plan)
+            has_actual = actual_tss_map is not None
+
+            if has_actual:
+                total_tss = sum(
+                    actual_tss_map.get(s.session_id, s.tss_planned or 0) for s in completed
+                )
+                tss_label = "TSS total réel"
+                tss_source = "live + Intervals.icu"
+            else:
+                total_tss = sum(s.tss_planned or 0 for s in completed)
+                tss_label = "TSS total planifié"
+                tss_source = "live"
+
+            compliance = (len(completed) / len(active) * 100) if active else 0
+
+            lines = [
+                f"# Bilan Final {week_id} (données planning {tss_source})\n",
+                "## Objectifs vs Réalisé\n",
+                f"- **Compliance :** {compliance:.1f}%",
+                f"- **Séances planifiées :** {len(active)}",
+                f"- **Séances exécutées :** {len(completed)}\n",
+                "## Métriques Clés\n",
+                f"- **{tss_label} :** {total_tss}",
+                f"- **TSS moyen :** {total_tss / len(completed):.1f}\n",
+                "## Séances Complétées\n",
+            ]
+
+            for s in completed:
+                if has_actual and s.session_id in actual_tss_map:
+                    tss_val = actual_tss_map[s.session_id]
+                    tss_display = f"TSS réel: {tss_val}"
+                else:
+                    tss_display = f"TSS planifié: {s.tss_planned or 0}"
+                lines.append(
+                    f"- {s.session_id} ({s.session_type}) — {s.name} — "
+                    f"{tss_display}, {s.duration_min or 0}min"
+                )
+
+            return "\n".join(lines)
+        except Exception:
+            return None
+
     def load_previous_week_bilan(self) -> str:
         """Load le bilan de la semaine précédente."""
         print("\n📄 Chargement bilan semaine précédente...", file=sys.stderr)
@@ -24,11 +130,31 @@ class ContextLoadingMixin:
         # Load bilan_final
         if bilan_file.exists():
             bilan_content = bilan_file.read_text(encoding="utf-8")
+
+            # Detect stale bilan: compliance 0% but completed sessions exist
+            if "Compliance : 0.0%" in bilan_content or "Séances exécutées : 0" in bilan_content:
+                live_bilan = self._compute_live_bilan(prev_week)
+                if live_bilan:
+                    print(
+                        f"  ⚠️  Bilan {prev_week} stale (0%), " "enrichi avec données planning live",
+                        file=sys.stderr,
+                    )
+                    bilan_content = live_bilan
+
             content_parts.append(f"## Bilan Final {prev_week}\n\n{bilan_content}")
             print(f"  ✅ Bilan {prev_week} chargé ({len(bilan_content)} chars)", file=sys.stderr)
         else:
-            print(f"  ⚠️ Bilan {prev_week} non trouvé : {bilan_file}", file=sys.stderr)
-            content_parts.append(f"[Bilan {prev_week} non disponible]")
+            # Fichier absent — tenter un bilan live
+            live_bilan = self._compute_live_bilan(prev_week)
+            if live_bilan:
+                print(
+                    f"  ℹ️  Bilan {prev_week} absent, généré depuis planning",
+                    file=sys.stderr,
+                )
+                content_parts.append(f"## Bilan Final {prev_week}\n\n{live_bilan}")
+            else:
+                print(f"  ⚠️ Bilan {prev_week} non trouvé : {bilan_file}", file=sys.stderr)
+                content_parts.append(f"[Bilan {prev_week} non disponible]")
 
         # Load transition (contains TSS, TSB, recommendations for next week)
         if transition_file.exists():
