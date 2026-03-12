@@ -96,7 +96,7 @@ class PromptMixin:
             prompt += mesocycle_context
             prompt += "\n---\n"
 
-        prompt += """
+        prompt += f"""
 ## MÉTHODOLOGIE PEAKS COACHING (HUNTER ALLEN) - PRINCIPES OBLIGATOIRES
 
 ### Distribution Intensité Hebdomadaire (Méthode Traditionnelle)
