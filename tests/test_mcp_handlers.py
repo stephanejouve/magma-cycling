@@ -1311,6 +1311,52 @@ async def test_get_activity_streams_stats_computation(mock_intervals_client):
 
 
 @pytest.mark.asyncio
+async def test_get_activity_streams_stats_with_none_values(mock_intervals_client):
+    """Stats correctly handle None values in stream data (sensor gaps)."""
+    mock_intervals_client.get_activity_streams = Mock(
+        return_value=[{"type": "watts", "data": [100, None, 200, None, 300]}]
+    )
+
+    with patch(
+        "magma_cycling.config.create_intervals_client",
+        return_value=mock_intervals_client,
+    ):
+        from magma_cycling.mcp_server import handle_get_activity_streams
+
+        result = await handle_get_activity_streams({"activity_id": "i123456"})
+        r = json.loads(result[0].text)
+
+        stats = r["streams"][0]["stats"]
+        assert stats["min"] == 100
+        assert stats["max"] == 300
+        assert stats["avg"] == 200.0  # (100+200+300)/3
+        assert stats["null_count"] == 2
+        assert stats["non_zero_count"] == 3
+
+
+@pytest.mark.asyncio
+async def test_get_activity_streams_all_none_values(mock_intervals_client):
+    """All-None stream data returns empty stats with null_count."""
+    mock_intervals_client.get_activity_streams = Mock(
+        return_value=[{"type": "watts", "data": [None, None, None]}]
+    )
+
+    with patch(
+        "magma_cycling.config.create_intervals_client",
+        return_value=mock_intervals_client,
+    ):
+        from magma_cycling.mcp_server import handle_get_activity_streams
+
+        result = await handle_get_activity_streams({"activity_id": "i123456"})
+        r = json.loads(result[0].text)
+
+        stats = r["streams"][0]["stats"]
+        assert "min" not in stats
+        assert "max" not in stats
+        assert stats["null_count"] == 3
+
+
+@pytest.mark.asyncio
 async def test_get_activity_streams_missing_type_reported(mock_intervals_client):
     """Requesting a nonexistent type reports it in missing_types."""
     mock_intervals_client.get_activity_streams = Mock(return_value=MOCK_STREAMS)
