@@ -1414,5 +1414,165 @@ async def test_get_activity_streams_api_error(mock_intervals_client):
         assert r["activity_id"] == "i123456"
 
 
+# ---------------------------------------------------------------------------
+# Tests: get-coach-analysis fallback to daily reports
+# ---------------------------------------------------------------------------
+
+SAMPLE_DAILY_REPORT = """\
+# Rapport Quotidien - 12/03/2026
+
+**Généré le**: 13/03/2026 à 06:46
+
+---
+
+## 📊 Activités Complétées
+
+**1 nouvelle(s) activité(s) détectée(s)**
+
+### S084-04-END-EnduranceLongue-V001
+
+- **ID**: i131572602
+- **Type**: Ride
+- **TSS**: 175 (réalisé)
+- **Durée**: 174 min
+- **Activité liée**: N/A
+
+#### 🤖 Analyse AI
+
+##### Métriques Pré-séance
+- CTL : 45
+- ATL : 57
+- TSB : -12
+
+##### Exécution
+- Durée : 174min
+- IF : 0.78
+- TSS : 175
+
+##### Exécution Technique
+La séance visait une endurance longue en zone 2.
+
+---
+
+## 📅 Modifications Planning
+
+*Aucune modification détectée dans le planning*
+"""
+
+
+@pytest.mark.asyncio
+async def test_get_coach_analysis_fallback_daily_report(tmp_path):
+    """When workouts-history.md has no match, fallback finds it in daily report."""
+    from magma_cycling._mcp.handlers.analysis import handle_get_coach_analysis
+
+    # Create empty workouts-history.md
+    history_path = tmp_path / "workouts-history.md"
+    history_path.write_text("")
+
+    # Create daily report with an analysis
+    reports_dir = tmp_path / "daily-reports"
+    reports_dir.mkdir()
+    report_file = reports_dir / "daily_report_2026-03-12.md"
+    report_file.write_text(SAMPLE_DAILY_REPORT)
+
+    mock_config = Mock()
+    mock_config.workouts_history_path = history_path
+    mock_config.data_repo_path = tmp_path
+
+    with patch("magma_cycling.config.get_data_config", return_value=mock_config):
+        result = await handle_get_coach_analysis({"activity_id": "i131572602", "section": "full"})
+
+    result_json = json.loads(result[0].text)
+
+    assert result_json["count"] == 1
+    assert result_json["source"] == "daily_report"
+    assert result_json["analyses"][0]["activity_id"] == "i131572602"
+    assert result_json["analyses"][0]["activity_name"] == "S084-04-END-EnduranceLongue-V001"
+    assert result_json["analyses"][0]["date"] == "12/03/2026"
+
+
+@pytest.mark.asyncio
+async def test_get_coach_analysis_no_fallback_when_found(tmp_path):
+    """When workouts-history.md has results, daily reports are NOT searched."""
+    from magma_cycling._mcp.handlers.analysis import handle_get_coach_analysis
+
+    # Create workouts-history.md with matching entry
+    history_content = (
+        "### S084-04-END-EnduranceLongue-V001\n"
+        "ID : i131572602\n"
+        "Date : 12/03/2026\n\n"
+        "#### Exécution\n"
+        "- Durée : 174min\n"
+        "- IF : 0.78\n"
+    )
+    history_path = tmp_path / "workouts-history.md"
+    history_path.write_text(history_content)
+
+    mock_config = Mock()
+    mock_config.workouts_history_path = history_path
+    mock_config.data_repo_path = tmp_path
+
+    with patch("magma_cycling.config.get_data_config", return_value=mock_config):
+        result = await handle_get_coach_analysis({"activity_id": "i131572602", "section": "full"})
+
+    result_json = json.loads(result[0].text)
+
+    assert result_json["count"] == 1
+    assert result_json["source"] == "workouts_history"
+    assert result_json["analyses"][0]["activity_id"] == "i131572602"
+
+
+@pytest.mark.asyncio
+async def test_get_coach_analysis_fallback_by_session_id(tmp_path):
+    """Fallback to daily report works with session_id filter."""
+    from magma_cycling._mcp.handlers.analysis import handle_get_coach_analysis
+
+    # Empty history
+    history_path = tmp_path / "workouts-history.md"
+    history_path.write_text("")
+
+    reports_dir = tmp_path / "daily-reports"
+    reports_dir.mkdir()
+    (reports_dir / "daily_report_2026-03-12.md").write_text(SAMPLE_DAILY_REPORT)
+
+    mock_config = Mock()
+    mock_config.workouts_history_path = history_path
+    mock_config.data_repo_path = tmp_path
+
+    with patch("magma_cycling.config.get_data_config", return_value=mock_config):
+        result = await handle_get_coach_analysis({"session_id": "S084-04", "section": "full"})
+
+    result_json = json.loads(result[0].text)
+
+    assert result_json["count"] == 1
+    assert result_json["source"] == "daily_report"
+    assert "S084-04" in result_json["analyses"][0]["activity_name"]
+
+
+@pytest.mark.asyncio
+async def test_get_coach_analysis_fallback_by_date(tmp_path):
+    """Fallback to daily report works with date filter."""
+    from magma_cycling._mcp.handlers.analysis import handle_get_coach_analysis
+
+    history_path = tmp_path / "workouts-history.md"
+    history_path.write_text("")
+
+    reports_dir = tmp_path / "daily-reports"
+    reports_dir.mkdir()
+    (reports_dir / "daily_report_2026-03-12.md").write_text(SAMPLE_DAILY_REPORT)
+
+    mock_config = Mock()
+    mock_config.workouts_history_path = history_path
+    mock_config.data_repo_path = tmp_path
+
+    with patch("magma_cycling.config.get_data_config", return_value=mock_config):
+        result = await handle_get_coach_analysis({"date": "2026-03-12", "section": "full"})
+
+    result_json = json.loads(result[0].text)
+
+    assert result_json["count"] == 1
+    assert result_json["source"] == "daily_report"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
