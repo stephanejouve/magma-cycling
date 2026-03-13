@@ -119,6 +119,7 @@ def mock_data_config(tmp_path):
 
     config = MagicMock()
     config.workouts_history_path = history_file
+    config.data_repo_path = tmp_path
 
     with patch(
         "magma_cycling.config.get_data_config",
@@ -135,6 +136,7 @@ def mock_data_config_empty(tmp_path):
 
     config = MagicMock()
     config.workouts_history_path = history_file
+    config.data_repo_path = tmp_path
 
     with patch(
         "magma_cycling.config.get_data_config",
@@ -148,6 +150,7 @@ def mock_data_config_missing(tmp_path):
     """Mock with non-existent history file."""
     config = MagicMock()
     config.workouts_history_path = tmp_path / "nonexistent.md"
+    config.data_repo_path = tmp_path
 
     with patch(
         "magma_cycling.config.get_data_config",
