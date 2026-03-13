@@ -720,6 +720,111 @@ def _search_analyses(
     return results
 
 
+def _search_daily_reports(
+    reports_dir: Path,
+    activity_id: str | None = None,
+    session_id: str | None = None,
+    date: str | None = None,
+) -> list[str]:
+    r"""Search daily report files for AI analyses as fallback.
+
+    Daily reports use a different format than workouts-history.md::
+
+        ### ACTIVITY_NAME
+        - **ID**: activity_id
+        ...
+        #### 🤖 Analyse AI
+        [analysis content]
+
+    Returns analysis entries reconstituted in the workouts-history.md
+    header format (``### NAME\nID : xxx\nDate : xxx``) so they can be
+    parsed by ``_parse_analysis_entry``.
+    """
+    if not reports_dir.exists():
+        return []
+
+    # Determine which files to scan
+    if date:
+        # Target specific file
+        target = reports_dir / f"daily_report_{date}.md"
+        report_files = [target] if target.exists() else []
+    else:
+        # Scan recent files (last 30 days)
+        from datetime import date as date_cls
+        from datetime import timedelta as td
+
+        today = date_cls.today()
+        report_files = []
+        for i in range(30):
+            d = today - td(days=i)
+            f = reports_dir / f"daily_report_{d.isoformat()}.md"
+            if f.exists():
+                report_files.append(f)
+
+    results = []
+    for report_file in report_files:
+        content = report_file.read_text(encoding="utf-8")
+
+        # Extract report date from filename (daily_report_YYYY-MM-DD.md)
+        file_date_match = re.search(r"daily_report_(\d{4}-\d{2}-\d{2})\.md", report_file.name)
+        if not file_date_match:
+            continue
+        file_date_iso = file_date_match.group(1)
+        parts = file_date_iso.split("-")
+        file_date_fr = f"{parts[2]}/{parts[1]}/{parts[0]}"
+
+        # Split on ### headers (activity entries in daily report)
+        raw_entries = re.split(r"(?:^|\n)(?=### )", content)
+
+        for entry in raw_entries:
+            entry = entry.strip()
+            if not entry.startswith("### "):
+                continue
+
+            # Skip non-activity headings (e.g. report title)
+            if entry.startswith("### ") and "Rapport" in entry.split("\n")[0]:
+                continue
+
+            # Extract activity name from ### line
+            name_line = entry.split("\n")[0]
+            act_name = name_line.lstrip("#").strip()
+
+            # Extract ID from - **ID**: value
+            id_match = re.search(r"-\s*\*\*ID\*\*\s*:\s*(\S+)", entry)
+            act_id = id_match.group(1) if id_match else ""
+
+            # Filter by activity_id
+            if activity_id and act_id != activity_id:
+                continue
+
+            # Filter by session_id (prefix match on activity name)
+            if session_id and not re.match(rf"{re.escape(session_id)}\b", act_name):
+                continue
+
+            # Extract AI analysis section
+            ai_match = re.search(r"####\s*🤖\s*Analyse AI\s*\n(.*)", entry, re.DOTALL)
+            if not ai_match:
+                continue
+
+            analysis_body = ai_match.group(1).strip()
+            if not analysis_body:
+                continue
+
+            # Upgrade ##### back to #### (reverse the normalization done for reports)
+            analysis_body = re.sub(r"^##### ", "#### ", analysis_body, flags=re.MULTILINE)
+
+            # Reconstitute in workouts-history.md format
+            reconstituted = (
+                f"### {act_name}\n"
+                f"ID : {act_id}\n"
+                f"Date : {file_date_fr}\n\n"
+                f"{analysis_body}"
+            )
+            results.append(reconstituted)
+
+    return results
+
+
 async def handle_get_coach_analysis(args: dict) -> list[TextContent]:
     """Retrieve coach AI analysis from workouts-history.md."""
     activity_id = args.get("activity_id")
@@ -750,34 +855,30 @@ async def handle_get_coach_analysis(args: dict) -> list[TextContent]:
         config = get_data_config()
         history_path = config.workouts_history_path
 
-        if not history_path.exists():
-            return mcp_response(
-                {
-                    "status": "success",
-                    "analyses": [],
-                    "count": 0,
-                    "message": "workouts-history.md not found",
-                }
-            )
+        # Search in workouts-history.md
+        matched_entries = []
+        if history_path.exists():
+            content = history_path.read_text(encoding="utf-8")
+            if content.strip():
+                matched_entries = _search_analyses(
+                    content,
+                    activity_id=activity_id,
+                    session_id=session_id,
+                    date=date,
+                )
 
-        content = history_path.read_text(encoding="utf-8")
-        if not content.strip():
-            return mcp_response(
-                {
-                    "status": "success",
-                    "analyses": [],
-                    "count": 0,
-                    "message": "workouts-history.md is empty",
-                }
+        # Fallback: search in daily reports if nothing found
+        source = "workouts_history"
+        if not matched_entries:
+            reports_dir = config.data_repo_path / "daily-reports"
+            matched_entries = _search_daily_reports(
+                reports_dir,
+                activity_id=activity_id,
+                session_id=session_id,
+                date=date,
             )
-
-        # Search matching entries
-        matched_entries = _search_analyses(
-            content,
-            activity_id=activity_id,
-            session_id=session_id,
-            date=date,
-        )
+            if matched_entries:
+                source = "daily_report"
 
         # Parse and format results
         analyses = []
@@ -809,6 +910,7 @@ async def handle_get_coach_analysis(args: dict) -> list[TextContent]:
                 "status": "success",
                 "analyses": analyses,
                 "count": count,
+                "source": source,
                 "message": message,
             }
         )
