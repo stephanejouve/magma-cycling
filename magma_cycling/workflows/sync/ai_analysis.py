@@ -92,11 +92,11 @@ class AIAnalysisMixin:
 
             # Extract date from activity
             activity_date = date.fromisoformat(activity["start_date_local"].split("T")[0])
-            activity_date_str = activity_date.strftime("%d/%m/%Y")
+            activity_date_fr = activity_date.strftime("%d/%m/%Y")
 
             # Check if analysis already exists
             existing_analysis = self._extract_existing_analysis(
-                activity_name, activity_id, activity_date_str
+                activity_name, activity_id, activity_date_fr
             )
 
             if existing_analysis:
@@ -230,9 +230,19 @@ class AIAnalysisMixin:
                         print(f"     ⚠️  Impossible de capturer adhérence : {e}")
 
                 # Insert analysis into workouts-history.md
+                # Ensure the standard header is present for insert_analysis()
+                if not analysis.strip().startswith("### "):
+                    formatted = (
+                        f"### {activity_name}\n"
+                        f"ID : {activity_id}\n"
+                        f"Date : {activity_date_fr}\n\n" + analysis
+                    )
+                else:
+                    formatted = analysis
+
                 print("     📝 Insertion dans workouts-history.md...")
                 try:
-                    if self.history_manager.insert_analysis(analysis):
+                    if self.history_manager.insert_analysis(formatted):
                         print("     ✅ Analyse insérée dans workouts-history.md")
                     else:
                         print("     ⚠️  Échec insertion (analyse utilisée quand même)")
