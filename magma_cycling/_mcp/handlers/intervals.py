@@ -733,12 +733,17 @@ async def handle_get_activity_streams(args: dict) -> list[TextContent]:
             data = stream["data"][start_index:end_index]
             stats = {}
             if data:
-                stats["min"] = min(data)
-                stats["max"] = max(data)
-                stats["avg"] = round(sum(data) / len(data), 2)
-                non_zero = [v for v in data if v != 0]
-                stats["non_zero_count"] = len(non_zero)
-                stats["non_zero_avg"] = round(sum(non_zero) / len(non_zero), 2) if non_zero else 0
+                valid = [v for v in data if v is not None]
+                if valid:
+                    stats["min"] = min(valid)
+                    stats["max"] = max(valid)
+                    stats["avg"] = round(sum(valid) / len(valid), 2)
+                    non_zero = [v for v in valid if v != 0]
+                    stats["non_zero_count"] = len(non_zero)
+                    stats["non_zero_avg"] = (
+                        round(sum(non_zero) / len(non_zero), 2) if non_zero else 0
+                    )
+                stats["null_count"] = len(data) - len(valid) if valid else len(data)
             result_streams.append(
                 {
                     "type": stream["type"],
