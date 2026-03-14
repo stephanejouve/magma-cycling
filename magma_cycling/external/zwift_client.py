@@ -107,6 +107,12 @@ class ZwiftWorkoutClient:
         """
         )
 
+        # Migrate: add pattern column if missing
+        cursor.execute("PRAGMA table_info(workouts)")
+        columns = {row[1] for row in cursor.fetchall()}
+        if "pattern" not in columns:
+            cursor.execute("ALTER TABLE workouts ADD COLUMN pattern TEXT")
+
         conn.commit()
         conn.close()
 
@@ -168,8 +174,8 @@ class ZwiftWorkoutClient:
             """
             INSERT OR REPLACE INTO workouts
             (name, category, duration_minutes, tss, url, description,
-             segments_json, cached_at, last_used_date, usage_count)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             segments_json, cached_at, last_used_date, usage_count, pattern)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
             (
                 workout.name,
@@ -182,6 +188,7 @@ class ZwiftWorkoutClient:
                 datetime.now().isoformat(),
                 workout.last_used_date,
                 workout.usage_count,
+                workout.pattern,
             ),
         )
 
@@ -434,6 +441,66 @@ class ZwiftWorkoutClient:
         conn.close()
 
         logger.info(f"Marked workout '{workout.name}' as used on {used_date}")
+
+    def search_catalog(
+        self,
+        session_type: str | None = None,
+        duration_target: int | None = None,
+        tss_target: int | None = None,
+        pattern: str | None = None,
+        limit: int = 5,
+    ) -> list[ZwiftWorkout]:
+        """Search the workout catalog with flexible filters.
+
+        Args:
+            session_type: 3-letter session type (END, INT, FTP, REC)
+            duration_target: Target duration in minutes (±15 tolerance)
+            tss_target: Target TSS (±10 tolerance)
+            pattern: Structural pattern filter
+            limit: Maximum results to return
+
+        Returns:
+            List of matching ZwiftWorkout objects
+        """
+        conn = sqlite3.connect(self.cache_db_path)
+        cursor = conn.cursor()
+
+        query = "SELECT segments_json FROM workouts WHERE 1=1"
+        params: list = []
+
+        if session_type:
+            categories = self._get_categories_for_session_type(session_type)
+            placeholders = ",".join("?" for _ in categories)
+            query += f" AND category IN ({placeholders})"
+            params.extend(c.value for c in categories)
+
+        if duration_target is not None:
+            query += " AND duration_minutes BETWEEN ? AND ?"
+            params.extend([duration_target - 15, duration_target + 15])
+
+        if tss_target is not None:
+            query += " AND tss BETWEEN ? AND ?"
+            params.extend([tss_target - 10, tss_target + 10])
+
+        if pattern:
+            query += " AND pattern = ?"
+            params.append(pattern)
+
+        query += " ORDER BY usage_count ASC, tss DESC LIMIT ?"
+        params.append(limit)
+
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+        conn.close()
+
+        workouts = []
+        for row in rows:
+            try:
+                workouts.append(ZwiftWorkout.model_validate_json(row[0]))
+            except Exception as e:
+                logger.warning(f"Failed to deserialize workout: {e}")
+
+        return workouts
 
     def get_cache_stats(self) -> dict:
         """Get statistics about the workout cache.

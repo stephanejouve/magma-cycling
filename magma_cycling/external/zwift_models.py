@@ -109,6 +109,7 @@ class ZwiftWorkout(BaseModel):
 
     # Metadata for matching and diversity tracking
     source: str = Field("whatsonzwift.com", description="Data source")
+    pattern: str | None = Field(None, description="Structural pattern detected")
     last_used_date: str | None = Field(None, description="ISO date when last used (YYYY-MM-DD)")
     usage_count: int = Field(0, ge=0, description="Number of times used in planning")
 
