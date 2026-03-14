@@ -1,38 +1,17 @@
 #!/usr/bin/env python3
-"""
-Seed Zwift Workouts - Load curated workouts into cache.
-
-This script loads manually curated Zwift workouts from seed data into the cache.
-Unlike the web scraper, this uses verified workout definitions.
+"""Seed Zwift Workouts - Load curated workouts into cache.
 
 Usage:
-    # Seed all collections
     poetry run seed-zwift-workouts
-
-    # Seed specific collection
     poetry run seed-zwift-workouts --collection zwift-camp-baseline-2025
-
-    # Show available collections without seeding
     poetry run seed-zwift-workouts --list
-
-Metadata:
-    Created: 2026-02-10
-    Author: Claude Code + Stéphane Jouve
-    Category: EXTERNAL DATA + CACHE
-    Status: Development (Sprint 2)
-    Priority: P1
-    Version: 1.0.0
-    Sprint: Zwift Integration S2
 """
 
 import argparse
 import sys
 from pathlib import Path
 
-from magma_cycling.external.zwift_client import ZwiftWorkoutClient
-from magma_cycling.external.zwift_seed_data import (
-    get_all_seed_workouts,
-)
+from magma_cycling.external.zwift_service import ZwiftService
 
 
 def main():
@@ -42,101 +21,57 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Seed all collections
   %(prog)s
-
-  # Seed specific collection
   %(prog)s --collection zwift-camp-baseline-2025
-
-  # List available collections
   %(prog)s --list
         """,
     )
 
     parser.add_argument(
-        "--collection",
-        dest="collection",
-        help="Collection name to seed (default: all)",
+        "--collection", dest="collection", help="Collection name to seed (default: all)"
     )
     parser.add_argument(
-        "--list",
-        dest="list_collections",
-        action="store_true",
-        help="List available seed collections",
+        "--list", dest="list_collections", action="store_true", help="List available collections"
     )
     parser.add_argument(
-        "--cache-path",
-        dest="cache_path",
-        type=Path,
-        help="Custom cache database path",
+        "--cache-path", dest="cache_path", type=Path, help="Custom cache database path"
     )
 
     args = parser.parse_args()
 
-    # Get all seed workouts
-    all_collections = get_all_seed_workouts()
+    service = ZwiftService(cache_db_path=args.cache_path)
 
-    # List collections if requested
+    # List mode
     if args.list_collections:
+        collections = service.list_seed_collections()
         print("\n📚 Available Seed Collections:\n")
-        for name, workouts in all_collections.items():
+        for name, workouts in collections.items():
             print(f"  {name}")
             print(f"    Workouts: {len(workouts)}")
-            for workout in workouts:
-                print(f"      - {workout.name} ({workout.duration_minutes}min, {workout.tss} TSS)")
+            for w in workouts:
+                print(f"      - {w.name} ({w.duration_minutes}min, {w.tss} TSS)")
         print()
         return
 
-    # Determine which collections to seed
-    if args.collection:
-        if args.collection not in all_collections:
-            print(f"❌ Error: Collection '{args.collection}' not found")
-            print(f"Available collections: {', '.join(all_collections.keys())}")
-            sys.exit(1)
-        collections_to_seed = {args.collection: all_collections[args.collection]}
-    else:
-        collections_to_seed = all_collections
-
-    # Initialize client
-    client = ZwiftWorkoutClient(cache_db_path=args.cache_path)
-
-    # Seed workouts
+    # Seed mode
     print("\n🌱 Seeding Zwift workout cache...\n")
-    total_seeded = 0
 
-    for collection_name, workouts in collections_to_seed.items():
-        print(f"📦 Collection: {collection_name}")
-        print(f"   Workouts: {len(workouts)}\n")
+    try:
+        count = service.seed_collection(args.collection)
+    except KeyError as exc:
+        print(f"❌ Error: {exc}")
+        sys.exit(1)
 
-        for i, workout in enumerate(workouts, start=1):
-            print(f"   [{i}/{len(workouts)}] {workout.name}")
-            print(
-                f"      Category: {workout.category.value} | TSS: {workout.tss} | Duration: {workout.duration_minutes}min"
-            )
-            print(f"      Segments: {len(workout.segments)}")
-
-            # Save to cache
-            client._save_workout_to_cache(workout)
-            print("      ✅ Cached")
-
-            total_seeded += 1
-
-        print()
-
-    print("=" * 80)
-    print(f"✅ Seeded {total_seeded} workouts from {len(collections_to_seed)} collection(s)")
+    print(f"\n{'=' * 80}")
+    print(f"✅ Seeded {count} workouts")
     print("=" * 80)
 
-    # Show cache stats
-    print("\n📊 Cache Statistics:")
-    stats = client.get_cache_stats()
-    print(f"Total workouts: {stats['total_workouts']}")
+    # Cache stats
+    stats = service.get_cache_stats()
+    print(f"\n📊 Cache: {stats['total_workouts']} workouts")
     if stats.get("by_category"):
-        print("\nBy category:")
-        for category, count in sorted(
-            stats["by_category"].items(), key=lambda x: x[1], reverse=True
-        ):
-            print(f"  {category:20s}: {count:3d} workouts")
+        for category, cnt in sorted(stats["by_category"].items(), key=lambda x: x[1], reverse=True):
+            print(f"  {category:20s}: {cnt:3d} workouts")
     print()
 
 
