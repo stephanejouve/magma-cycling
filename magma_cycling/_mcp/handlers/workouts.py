@@ -123,6 +123,7 @@ async def handle_validate_workout(args: dict) -> list[TextContent]:
             # Si auto_fix demandé et qu'il y a des warnings
             if auto_fix and (errors or warnings):
                 corrected_text = validator.fix_repetition_format(workout_text)
+                corrected_text = validator.fix_warmup_cooldown(corrected_text)
 
                 # Revalider le texte corrigé
                 is_valid_after, errors_after, warnings_after = validator.validate_workout(
