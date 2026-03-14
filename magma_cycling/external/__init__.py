@@ -5,6 +5,7 @@ This package provides integrations with external workout databases:
 """
 
 from magma_cycling.external.zwift_client import ZwiftWorkoutClient
+from magma_cycling.external.zwift_collections import KNOWN_COLLECTIONS
 from magma_cycling.external.zwift_converter import ZwiftWorkoutConverter
 from magma_cycling.external.zwift_models import (
     WorkoutSearchCriteria,
@@ -12,12 +13,16 @@ from magma_cycling.external.zwift_models import (
     ZwiftWorkoutSegment,
 )
 from magma_cycling.external.zwift_scraper import ZwiftWorkoutScraper
+from magma_cycling.external.zwift_service import PopulateResult, ZwiftService
 
 __all__ = [
-    "ZwiftWorkoutClient",
-    "ZwiftWorkout",
-    "ZwiftWorkoutSegment",
+    "KNOWN_COLLECTIONS",
+    "PopulateResult",
     "WorkoutSearchCriteria",
+    "ZwiftService",
+    "ZwiftWorkout",
+    "ZwiftWorkoutClient",
     "ZwiftWorkoutConverter",
+    "ZwiftWorkoutSegment",
     "ZwiftWorkoutScraper",
 ]
