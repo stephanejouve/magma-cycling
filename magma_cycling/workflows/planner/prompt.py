@@ -17,6 +17,7 @@ class PromptMixin:
 
         # Load periodization context and previous week workouts
         periodization_context = self.load_periodization_context()
+        self._periodization_context = periodization_context  # Pour recherche catalogue Zwift
         previous_week_workouts = self.load_previous_week_workouts()
 
         # Load mesocycle enriched context (every 6 weeks)
