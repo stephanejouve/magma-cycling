@@ -6,12 +6,39 @@ import re
 from bs4 import BeautifulSoup
 
 from magma_cycling.external.zwift_models import (
+    SegmentType,
     ZwiftCategory,
     ZwiftWorkout,
     ZwiftWorkoutSegment,
 )
 
 logger = logging.getLogger(__name__)
+
+# Mapping background color in .textbar style → power zone
+_COLOR_TO_ZONE = {
+    "#7f7f7f": 1,  # Z1 gray (recovery)
+    "#338cff": 2,  # Z2 blue (endurance)
+    "#4dff4d": 3,  # Z3 green (tempo)
+    "#ffcc3f": 4,  # Z4 yellow (threshold/sweet spot)
+    "#ff6639": 5,  # Z5 orange (VO2max)
+    "#ff330c": 6,  # Z6 red (anaerobic)
+}
+
+# Regex for parsing textbar content — handles all observed formats:
+#   "8min @ 85rpm, from 50 to 75% FTP"   (ramp)
+#   "2min @ 90rpm, 100% FTP"             (steady)
+#   "30sec @ 110rpm, 120% FTP"           (steady, seconds)
+#   "2min @ 85rpm, from 50 to 30% FTP"   (cooldown ramp)
+#   "5min free ride"                      (free ride)
+_SEGMENT_RE = re.compile(
+    r"(?P<dur_val>\d+)(?P<dur_unit>min|sec|m|s)"
+    r"(?:\s*@\s*(?P<cadence>\d+)rpm)?"
+    r"(?:,?\s*(?:"
+    r"from\s+(?P<pwr_from>\d+)\s+to\s+(?P<pwr_to>\d+)%\s*FTP"
+    r"|(?P<pwr_steady>\d+)%\s*FTP"
+    r"|free\s*ride"
+    r"))?"
+)
 
 
 class ZwiftWorkoutScraper:
@@ -77,6 +104,12 @@ class ZwiftWorkoutScraper:
     def parse_workout_detail(html: str, workout_url: str) -> ZwiftWorkout | None:
         """Parse complete workout details from an individual workout page.
 
+        Uses CSS selectors identified from whatsonzwift.com DOM analysis:
+        - ``article > header``  → workout name (h1)
+        - ``div.textbar``       → one per interval segment
+        - ``p > strong``        → "Duration" and "Stress points" labels
+        - ``.bg-zones-z1..z6``  → zone distribution (informational)
+
         Args:
             html: Raw HTML content from workout detail page
             workout_url: URL of the workout page
@@ -87,41 +120,69 @@ class ZwiftWorkoutScraper:
         soup = BeautifulSoup(html, "html.parser")
 
         try:
-            # Extract workout name
-            # Look for title or heading elements
-            name_elem = soup.find("h1") or soup.find("title")
+            # --- Name ---
+            article = soup.find("article")
+            if article:
+                header = article.find("header")
+                name_elem = header.find("h1") if header else article.find("h1")
+            else:
+                name_elem = soup.find("h1")
             name = name_elem.get_text(strip=True) if name_elem else "Unknown Workout"
 
-            # Clean up name (remove "Zwift", "workout", etc.)
-            name = re.sub(r"(?i)(zwift|workout|:|\|)", "", name).strip()
-
-            # Extract TSS (look for "stress points" or "TSS" labels)
+            # --- Duration & TSS from <p><strong>Duration</strong>: 30m</p> ---
             tss = None
-            tss_patterns = [r"(\d+)\s*(?:stress\s*points?|TSS)", r"TSS:\s*(\d+)"]
-            page_text = soup.get_text()
-            for pattern in tss_patterns:
-                match = re.search(pattern, page_text, re.IGNORECASE)
-                if match:
-                    tss = int(match.group(1))
-                    break
-
-            # Extract duration (look for "XXm" or "XXmYYs" patterns)
             duration_minutes = None
-            duration_match = re.search(r"(\d+)m(?:\s*(\d+)s)?", page_text)
-            if duration_match:
-                minutes = int(duration_match.group(1))
-                seconds = int(duration_match.group(2)) if duration_match.group(2) else 0
-                duration_minutes = minutes + (1 if seconds > 0 else 0)  # Round up
 
-            # Try to infer category from workout name or description
+            for strong in soup.find_all("strong"):
+                label = strong.get_text(strip=True).lower()
+                # The value is the text node right after the <strong> tag,
+                # inside the same <p> parent
+                parent_p = strong.parent
+                if not parent_p:
+                    continue
+                sibling_text = parent_p.get_text(strip=True)
+
+                if "duration" in label:
+                    dur_match = re.search(r"(\d+)m(?:\s*(\d+)s)?", sibling_text)
+                    if dur_match:
+                        mins = int(dur_match.group(1))
+                        secs = int(dur_match.group(2)) if dur_match.group(2) else 0
+                        duration_minutes = mins + (1 if secs > 0 else 0)
+                elif "stress" in label:
+                    tss_match = re.search(r"(\d+)", sibling_text.replace(label, ""))
+                    if tss_match:
+                        tss = int(tss_match.group(1))
+
+            # --- Description ---
+            description = None
+            # The description paragraph typically comes after the zone distribution
+            # and contains actual sentences (> 40 chars, no "%" which is zone data)
+            if article:
+                for p in article.find_all("p"):
+                    text = p.get_text(strip=True)
+                    if len(text) > 40 and "%" not in text and "FTP" not in text:
+                        description = text
+                        break
+
+            # --- Sport ---
+            sport_match = re.search(r"dimensionSport\s*=\s*'(\w+)'", html)
+            sport = sport_match.group(1) if sport_match else "bike"
+
+            # --- Category ---
+            page_text = soup.get_text()
             category = ZwiftWorkoutScraper._infer_category(name, page_text)
 
-            # Parse workout segments
-            segments = ZwiftWorkoutScraper._parse_segments_from_text(page_text)
+            # --- Segments (from DOM) ---
+            segments = ZwiftWorkoutScraper._parse_segments_from_soup(soup)
 
-            if not all([name, tss, duration_minutes]):
+            # Validate minimum required fields
+            if not name or name == "Unknown Workout":
+                logger.warning(f"Could not extract workout name from {workout_url}")
+                return None
+
+            if tss is None or duration_minutes is None:
                 logger.warning(
-                    f"Incomplete workout metadata: name={name}, tss={tss}, duration={duration_minutes}"
+                    f"Incomplete metadata for '{name}': tss={tss}, duration={duration_minutes}"
                 )
                 return None
 
@@ -131,11 +192,14 @@ class ZwiftWorkoutScraper:
                 duration_minutes=duration_minutes,
                 tss=tss,
                 url=workout_url,
-                description=f"Zwift - {name}",
+                description=description or f"Zwift workout - {name}",
                 segments=segments,
             )
 
-            logger.info(f"Successfully parsed workout: {name}")
+            logger.info(
+                f"Parsed workout: {name} ({duration_minutes}min, {tss} TSS, "
+                f"{len(segments)} segments, {sport})"
+            )
             return workout
 
         except Exception as e:
@@ -175,28 +239,103 @@ class ZwiftWorkoutScraper:
         return ZwiftCategory.MIXED
 
     @staticmethod
-    def _parse_segments_from_text(text: str) -> list[ZwiftWorkoutSegment]:
-        """Parse workout segments from text description.
+    def _parse_segments_from_soup(soup: BeautifulSoup) -> list[ZwiftWorkoutSegment]:
+        """Parse workout segments from the DOM using CSS selectors.
 
-        This is a simplified implementation that tries to extract basic segment info.
-        A full implementation would need more sophisticated parsing of workout structure.
+        Each interval is a ``<div class="textbar">`` with:
+        - Text content: ``"8min @ 85rpm, from 50 to 75% FTP"``
+        - Style attribute with background color indicating zone
 
         Args:
-            text: Full page text content
+            soup: BeautifulSoup object of the workout detail page
 
         Returns:
             List of ZwiftWorkoutSegment objects
         """
-        segments = []
+        segments: list[ZwiftWorkoutSegment] = []
+        article = soup.find("article")
+        if not article:
+            logger.warning("No <article> element found on page")
+            return segments
 
-        # This is a placeholder implementation
-        # Full implementation would require more detailed HTML/text parsing
-        # Would parse patterns like:
-        # - "7min from 50 to 75% FTP" (ramps)
-        # - "Xmin @ Y% FTP" (steady)
-        # - "Xmin free ride" (free ride)
-        logger.debug("Segment parsing from text is a simplified placeholder")
+        # Only take textbars from the first <section> inside article
+        # (the second section contains "similar workouts" with their own textbars)
+        first_section = article.find("section")
+        if not first_section:
+            logger.warning("No <section> found inside <article>")
+            return segments
 
+        textbars = first_section.find_all("div", class_="textbar")
+        if not textbars:
+            logger.warning("No div.textbar elements found")
+            return segments
+
+        total = len(textbars)
+        for idx, bar in enumerate(textbars):
+            text = bar.get_text(strip=True)
+            match = _SEGMENT_RE.search(text)
+            if not match:
+                logger.debug(f"Could not parse textbar: {text!r}")
+                continue
+
+            # Duration
+            dur_val = int(match.group("dur_val"))
+            dur_unit = match.group("dur_unit")
+            if dur_unit in ("min", "m"):
+                duration_seconds = dur_val * 60
+            else:
+                duration_seconds = dur_val
+
+            # Cadence
+            cadence = int(match.group("cadence")) if match.group("cadence") else None
+
+            # Power & segment type
+            pwr_from = match.group("pwr_from")
+            pwr_to = match.group("pwr_to")
+            pwr_steady = match.group("pwr_steady")
+
+            if pwr_from and pwr_to:
+                # Ramp segment
+                power_low = int(pwr_from)
+                power_high = int(pwr_to)
+                if idx == 0:
+                    seg_type = SegmentType.WARMUP
+                elif idx == total - 1:
+                    seg_type = SegmentType.COOLDOWN
+                else:
+                    seg_type = SegmentType.RAMP
+            elif pwr_steady:
+                power_val = int(pwr_steady)
+                power_low = power_val
+                power_high = None
+                # Classify by power zone
+                if power_val <= 55:
+                    seg_type = SegmentType.RECOVERY
+                elif power_val <= 75:
+                    seg_type = SegmentType.STEADY  # endurance
+                elif power_val <= 105:
+                    seg_type = SegmentType.STEADY  # tempo/threshold
+                else:
+                    seg_type = SegmentType.INTERVAL  # above threshold
+            elif "free ride" in text.lower():
+                power_low = None
+                power_high = None
+                seg_type = SegmentType.FREE_RIDE
+            else:
+                logger.debug(f"No power data in textbar: {text!r}")
+                continue
+
+            segments.append(
+                ZwiftWorkoutSegment(
+                    segment_type=seg_type,
+                    duration_seconds=duration_seconds,
+                    power_low=power_low,
+                    power_high=power_high,
+                    cadence=cadence,
+                )
+            )
+
+        logger.info(f"Parsed {len(segments)} segments from {total} textbar elements")
         return segments
 
     @staticmethod
