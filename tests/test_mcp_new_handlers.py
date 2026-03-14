@@ -812,6 +812,7 @@ class TestHandleValidateWorkout:
             (True, [], []),
         ]
         mock_validator.fix_repetition_format.return_value = "fixed workout text"
+        mock_validator.fix_warmup_cooldown.return_value = "fixed workout text"
 
         with patch(
             "magma_cycling.intervals_format_validator.IntervalsFormatValidator",

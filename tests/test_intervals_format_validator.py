@@ -65,3 +65,92 @@ class TestRampValidation:
         is_valid, errors, _warnings = validator.validate_workout(workout)
         assert not is_valid
         assert any("ramp" in e.lower() for e in errors)
+
+
+class TestWarmupCooldownMonoBloc:
+    """Tests for mono-bloc warmup/cooldown detection."""
+
+    def test_warmup_mono_bloc_warns(self):
+        """Single warmup block without justification triggers warning."""
+        v = IntervalsFormatValidator()
+        workout = "Warmup\n- 15m 65% 85rpm\n\nMain set\n- 20m 90% 92rpm\n\nCooldown\n- 5m 50% 85rpm\n- 5m 45% 80rpm"
+        is_valid, _errors, warnings = v.validate_workout(workout)
+        assert is_valid
+        assert any("Warmup mono-bloc" in w for w in warnings)
+
+    def test_cooldown_mono_bloc_warns(self):
+        """Single cooldown block without justification triggers warning."""
+        v = IntervalsFormatValidator()
+        workout = "Warmup\n- 5m 50% 85rpm\n- 5m 58% 85rpm\n- 5m 65% 85rpm\n\nMain set\n- 20m 90% 92rpm\n\nCooldown\n- 13m 55% 85rpm"
+        is_valid, _errors, warnings = v.validate_workout(workout)
+        assert is_valid
+        assert any("Cooldown mono-bloc" in w for w in warnings)
+
+    def test_warmup_ramp_no_warning(self):
+        """Multi-step warmup does not trigger warning."""
+        v = IntervalsFormatValidator()
+        workout = "Warmup\n- 5m 50% 85rpm\n- 5m 58% 85rpm\n- 5m 65% 85rpm\n\nMain set\n- 20m 90%\n\nCooldown\n- 5m 60%\n- 5m 50%"
+        _valid, _errors, warnings = v.validate_workout(workout)
+        assert not any("mono-bloc" in w for w in warnings)
+
+    def test_warmup_mono_bloc_with_justification_no_warning(self):
+        """Mono-bloc warmup with gear justification does not warn."""
+        v = IntervalsFormatValidator()
+        workout = (
+            "Warmup\n- 15m 65% 85rpm\n"
+            "\u2699\ufe0f Bloc plat intentionnel \u2014 pr\u00e9servation fra\u00eecheur\n"
+            "\nMain set\n- 20m 90%\n\nCooldown\n- 5m 60%\n- 5m 50%"
+        )
+        _valid, _errors, warnings = v.validate_workout(workout)
+        assert not any("Warmup mono-bloc" in w for w in warnings)
+
+    def test_cooldown_mono_bloc_with_justification_no_warning(self):
+        """Mono-bloc cooldown with gear justification does not warn."""
+        v = IntervalsFormatValidator()
+        workout = (
+            "Warmup\n- 5m 50%\n- 5m 60%\n\nMain set\n- 20m 90%\n"
+            "\nCooldown\n- 10m 55% 85rpm\n"
+            "\u2699\ufe0f Cooldown court intentionnel"
+        )
+        _valid, _errors, warnings = v.validate_workout(workout)
+        assert not any("Cooldown mono-bloc" in w for w in warnings)
+
+    def test_mono_bloc_is_warning_not_error(self):
+        """Mono-bloc detection is a warning, not an error (non-blocking)."""
+        v = IntervalsFormatValidator()
+        workout = "Warmup\n- 15m 65% 85rpm\n\nMain set\n- 20m 90%\n\nCooldown\n- 10m 55%"
+        is_valid, errors, warnings = v.validate_workout(workout)
+        assert is_valid
+        assert len(errors) == 0
+        assert len(warnings) == 2  # both warmup and cooldown
+
+    def test_auto_fix_warmup_mono_bloc(self):
+        """Auto-fix replaces mono-bloc warmup with 3-step ramp."""
+        v = IntervalsFormatValidator()
+        workout = "Warmup\n- 15m 65% 85rpm\n\nMain set\n- 20m 90%\n\nCooldown\n- 5m 60%\n- 5m 50%"
+        fixed = v.fix_warmup_cooldown(workout)
+        warmup_lines = []
+        in_warmup = False
+        for line in fixed.split("\n"):
+            s = line.strip()
+            if s.lower().startswith("warmup"):
+                in_warmup = True
+                continue
+            if in_warmup and s.lower().startswith(("main", "cooldown", "block")):
+                break
+            if in_warmup and s.startswith("- "):
+                warmup_lines.append(s)
+        assert len(warmup_lines) == 3
+        assert "50%" in warmup_lines[0]
+        assert "65%" in warmup_lines[2]
+
+    def test_auto_fix_no_change_with_justification(self):
+        """Auto-fix does not modify mono-bloc with justification."""
+        v = IntervalsFormatValidator()
+        workout = (
+            "Warmup\n- 15m 65% 85rpm\n"
+            "\u2699\ufe0f Intentionnel\n"
+            "\nMain set\n- 20m 90%\n\nCooldown\n- 5m 60%\n- 5m 50%"
+        )
+        fixed = v.fix_warmup_cooldown(workout)
+        assert "- 15m 65% 85rpm" in fixed
