@@ -196,8 +196,14 @@ class ZwiftWorkoutScraper:
             # --- Category (URL-based inference takes priority) ---
             category = ZwiftWorkoutScraper._infer_category(name, page_text, workout_url)
 
-            # --- Segments from textbar containers ---
-            textbars = soup.find_all("div", class_="textbar")
+            # --- Segments from textbar containers (first section only) ---
+            # The second <section> inside <article> contains "Similar Workouts"
+            search_scope = soup
+            if article:
+                first_section = article.find("section")
+                if first_section:
+                    search_scope = first_section
+            textbars = search_scope.find_all("div", class_="textbar")
             if textbars:
                 segment_lines = [tb.get_text(separator=" ").strip() for tb in textbars]
                 segment_text = "\n".join(segment_lines)
@@ -445,9 +451,9 @@ class ZwiftWorkoutScraper:
             re.IGNORECASE,
         )
 
-        # Steady pattern: "Xmin/Xsec @ [Yrpm,] Z% FTP"
+        # Steady pattern: "Xmin/Xsec [@ [Yrpm,]] Z% FTP" (@ is optional)
         steady_re = re.compile(
-            r"(\d+(?:min|sec))\s*@\s*(?:(\d+)\s*rpm\s*,\s*)?(\d+)\s*%\s*FTP",
+            r"(\d+(?:min|sec))\s*(?:@\s*)?(?:(\d+)\s*rpm\s*,\s*)?(\d+)\s*%\s*FTP",
             re.IGNORECASE,
         )
 
@@ -532,7 +538,7 @@ class ZwiftWorkoutScraper:
                     ZwiftWorkoutSegment(
                         segment_type=SegmentType.FREE_RIDE,
                         duration_seconds=int(m.group(1)) * 60,
-                        power_low=100,
+                        power_low=None,
                     )
                 )
                 continue
@@ -544,7 +550,12 @@ class ZwiftWorkoutScraper:
                 cadence = int(m.group(2)) if m.group(2) else None
                 power = int(m.group(3))
                 if dur:
-                    seg_type = SegmentType.RECOVERY if power <= 60 else SegmentType.STEADY
+                    if power <= 55:
+                        seg_type = SegmentType.RECOVERY
+                    elif power <= 105:
+                        seg_type = SegmentType.STEADY
+                    else:
+                        seg_type = SegmentType.INTERVAL
                     segments.append(
                         ZwiftWorkoutSegment(
                             segment_type=seg_type,
