@@ -47,6 +47,9 @@ from magma_cycling._mcp.handlers.athlete import (  # noqa: F401
     handle_get_athlete_profile,
     handle_update_athlete_profile,
 )
+from magma_cycling._mcp.handlers.catalog import (  # noqa: F401
+    handle_list_workout_catalog,
+)
 from magma_cycling._mcp.handlers.intervals import (  # noqa: F401
     handle_apply_workout_intervals,
     handle_backfill_activities,
@@ -102,6 +105,7 @@ from magma_cycling._mcp.handlers.workouts import (  # noqa: F401
 from magma_cycling._mcp.schemas import admin as _s_admin
 from magma_cycling._mcp.schemas import analysis as _s_analysis
 from magma_cycling._mcp.schemas import athlete as _s_athlete
+from magma_cycling._mcp.schemas import catalog as _s_catalog
 from magma_cycling._mcp.schemas import intervals as _s_intervals
 from magma_cycling._mcp.schemas import planning as _s_planning
 from magma_cycling._mcp.schemas import sessions as _s_sessions
@@ -133,6 +137,7 @@ async def list_tools() -> list[Tool]:
         *_s_athlete.get_tools(),
         *_s_analysis.get_tools(),
         *_s_admin.get_tools(),
+        *_s_catalog.get_tools(),
         *_s_withings.get_tools(),
     ]
 
@@ -187,6 +192,8 @@ TOOL_HANDLERS = {
     "get-coach-analysis": handle_get_coach_analysis,
     # Admin (1)
     "reload-server": handle_reload_server,
+    # Catalog (1)
+    "list-workout-catalog": handle_list_workout_catalog,
     # Withings (8)
     "withings-auth-status": handle_withings_auth_status,
     "withings-authorize": handle_withings_authorize,
