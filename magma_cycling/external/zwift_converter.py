@@ -62,29 +62,6 @@ class ZwiftWorkoutConverter:
         return workout.to_intervals_description()
 
     @staticmethod
-    def parse_zwift_html_workout(html_content: str) -> ZwiftWorkout | None:
-        """Parse Zwift workout from HTML page content.
-
-        NOTE: This is a placeholder implementation. Full implementation requires
-        analyzing the HTML structure of whatsonzwift.com workout pages.
-
-        Args:
-            html_content: Raw HTML content from workout page
-
-        Returns:
-            ZwiftWorkout object if parsing successful, None otherwise
-        """
-        # TODO: Implement HTML parsing logic
-        # This would involve:
-        # 1. Parse workout metadata (name, TSS, duration, category)
-        # 2. Parse workout structure table/segments
-        # 3. Convert to ZwiftWorkoutSegment objects
-        # 4. Return ZwiftWorkout object
-
-        logger.warning("HTML parsing not yet implemented")
-        return None
-
-    @staticmethod
     def validate_wahoo_compatibility(description: str) -> tuple[bool, list[str]]:
         """Validate that workout description is Wahoo ELEMNT compatible.
 
