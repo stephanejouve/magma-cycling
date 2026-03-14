@@ -13,6 +13,7 @@ from magma_cycling.external.zwift_models import (
     ZwiftCategory,
     ZwiftWorkout,
 )
+from magma_cycling.external.zwift_scraper import ZwiftWorkoutScraper
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +129,7 @@ class ZwiftWorkoutClient:
             logger.info(f"Cleaned up {deleted_count} expired workout(s) from cache")
 
     def _fetch_workout_from_web(self, url: str) -> ZwiftWorkout | None:
-        """Fetch a single workout from whatsonzwift.com.
+        """Fetch a single workout from whatsonzwift.com and parse it.
 
         Args:
             url: Full URL to workout page
@@ -137,18 +138,15 @@ class ZwiftWorkoutClient:
             ZwiftWorkout object if successful, None otherwise
         """
         try:
-            response = self.session.get(url, timeout=10)
+            response = self.session.get(url, timeout=15)
             response.raise_for_status()
 
-            # Parse HTML with BeautifulSoup
-            # soup = BeautifulSoup(response.text, "html.parser")
-
-            # Extract workout metadata from page
-            # NOTE: This is a simplified implementation. Real scraping logic
-            # would need to parse the specific HTML structure of whatsonzwift.com
-            # For now, return None to indicate parsing not yet implemented
-            logger.warning(f"Workout parsing not yet implemented for {url}")
-            return None
+            workout = ZwiftWorkoutScraper.parse_workout_detail(response.text, url)
+            if workout:
+                logger.info(f"Fetched workout from web: {workout.name}")
+            else:
+                logger.warning(f"Could not parse workout from {url}")
+            return workout
 
         except requests.RequestException as e:
             logger.error(f"Failed to fetch workout from {url}: {e}")
