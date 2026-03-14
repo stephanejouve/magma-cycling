@@ -30,6 +30,7 @@ Metadata:
 
 import argparse
 import sys
+import time
 from pathlib import Path
 
 import requests
@@ -37,16 +38,34 @@ import requests
 from magma_cycling.external.zwift_client import ZwiftWorkoutClient
 from magma_cycling.external.zwift_scraper import ZwiftWorkoutScraper
 
+# Rate limiting
+REQUEST_DELAY_SECONDS = 1.5  # Delay between HTTP requests
+
 # Known workout collections on whatsonzwift.com
 KNOWN_COLLECTIONS = {
-    "zwift-camp-baseline": "Zwift Camp: Baseline (test workouts)",
+    # Workout categories (direct listings)
+    "endurance": "Endurance (Z2 base building)",
+    "sweet-spot": "Sweet Spot (88-93% FTP)",
+    "threshold": "Threshold (FTP/seuil)",
+    "vo2-max": "VO2 Max (high-intensity intervals)",
+    "recovery": "Recovery (active recovery)",
+    "sprinting": "Sprinting (sprint-specific)",
+    "climbing": "Climbing (hill-specific training)",
+    "ftp-tests": "FTP Tests (testing protocols)",
+    # Duration-based collections
+    "30-minutes-to-burn": "30 minutes to burn (short workouts)",
+    "30-60-minutes-to-burn": "30-60 minutes to burn",
+    "60-90-minutes-to-burn": "60-90 minutes to burn",
+    "90plus-minutes-to-burn": "90+ minutes to burn (long workouts)",
+    # Training plans
+    "build-me-up": "Build Me Up (progressive loading)",
     "ftp-builder": "FTP Builder (structured training)",
     "active-offseason": "Active Offseason (recovery phase)",
-    "build-me-up": "Build Me Up (progressive loading)",
-    "climbing": "Climbing (hill-specific training)",
-    "criterium-crusher": "Criterium Crusher (race prep)",
     "gravel-grinder": "Gravel Grinder (endurance focus)",
-    "time-crunch": "Time Crunch (short workouts)",
+    "gran-fondo": "Gran Fondo (endurance/distance)",
+    "crit-crusher": "Crit Crusher (race prep)",
+    "back-to-fitness": "Back To Fitness (return to form)",
+    "zwift-camp-baseline": "Zwift Camp: Baseline (test workouts)",
 }
 
 
@@ -72,6 +91,8 @@ class ZwiftCachePopulator:
         self.client = ZwiftWorkoutClient(cache_db_path=cache_db_path)
         self.scraper = ZwiftWorkoutScraper()
         self.dry_run = dry_run
+        self.seen_names: set[str] = set()  # Deduplication
+        self._load_existing_names()
         self.session = requests.Session()
         self.session.headers.update(
             {
@@ -80,6 +101,20 @@ class ZwiftCachePopulator:
                 "Chrome/91.0.4472.124 Safari/537.36"
             }
         )
+
+    def _load_existing_names(self):
+        """Load existing workout names from cache for deduplication."""
+        try:
+            import sqlite3
+
+            conn = sqlite3.connect(self.client.cache_db_path)
+            cursor = conn.cursor()
+            cursor.execute("SELECT name FROM workouts")
+            for row in cursor.fetchall():
+                self.seen_names.add(row[0].lower())
+            conn.close()
+        except Exception:
+            pass
 
     def populate_from_collection(self, collection_slug: str) -> int:
         """Fetch and cache all workouts from a collection.
@@ -112,9 +147,20 @@ class ZwiftCachePopulator:
 
             # Fetch and cache each workout
             cached_count = 0
+            skipped_count = 0
+            failed_names = []
             for i, meta in enumerate(workout_metadata, start=1):
+                name_lower = meta["name"].lower()
+
+                # Deduplication check
+                if name_lower in self.seen_names:
+                    skipped_count += 1
+                    continue
+
                 print(f"\n   [{i}/{len(workout_metadata)}] {meta['name']}")
-                print(f"      URL: {meta['url']}")
+
+                # Rate limiting
+                time.sleep(REQUEST_DELAY_SECONDS)
 
                 # Fetch individual workout page
                 try:
@@ -127,18 +173,27 @@ class ZwiftCachePopulator:
                     if workout:
                         if not self.dry_run:
                             self.client._save_workout_to_cache(workout)
+                        self.seen_names.add(name_lower)
                         cached_count += 1
+                        pattern_str = f" [{workout.pattern}]" if workout.pattern else ""
+                        segs = len(workout.segments)
                         print(
-                            f"      ✅ Cached: {workout.tss} TSS | {workout.duration_minutes} min"
+                            f"      ✅ {workout.tss} TSS | "
+                            f"{workout.duration_minutes}min | "
+                            f"{segs} segments{pattern_str}"
                         )
                     else:
-                        print("      ⚠️  Failed to parse workout details")
+                        failed_names.append(meta["name"])
+                        print("      ⚠️  Failed to parse")
 
                 except requests.RequestException as e:
+                    failed_names.append(meta["name"])
                     print(f"      ❌ Failed to fetch: {e}")
                     continue
 
-            print(f"\n📊 Summary: {cached_count}/{len(workout_metadata)} workouts cached")
+            print(f"\n📊 Summary: {cached_count} cached, {skipped_count} duplicates skipped")
+            if failed_names:
+                print(f"   ⚠️  Failed ({len(failed_names)}): {', '.join(failed_names[:5])}")
             return cached_count
 
         except requests.RequestException as e:

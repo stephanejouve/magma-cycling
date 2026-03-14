@@ -129,14 +129,146 @@ class PeriodizationMixin:
             print(f"  ⚠️ Erreur chargement contexte méso-cycle : {e}", file=sys.stderr)
             return ""
 
-    def _load_available_zwift_workouts(self) -> str:
-        """Load available Zwift workouts from cache for diversity.
+    def _derive_session_type_targets(self, periodization_context: dict) -> list[dict]:
+        """Derive target session types from periodization intensity distribution.
+
+        Maps intensity zones to Zwift session types, merges zones that map
+        to the same type, and calculates TSS target per type.
+
+        Args:
+            periodization_context: Dict with intensity_distribution and weekly_tss_load
 
         Returns:
-            Formatted section describing available workouts
+            List of dicts with session_type, tss_target, zone_label
+        """
+        zone_to_type = {
+            "Endurance": "END",
+            "Tempo": "END",
+            "Sweet-Spot": "INT",
+            "VO2": "INT",
+            "FTP": "FTP",
+        }
+        # Recovery and AC_Neuro are skipped (not relevant for catalogue)
+
+        distribution = periodization_context.get("intensity_distribution", {})
+        weekly_tss = periodization_context.get("weekly_tss_load", 0)
+
+        if not distribution or weekly_tss == 0:
+            return []
+
+        # Merge zones that map to the same session type
+        merged: dict[str, dict] = {}
+        for zone, pct in distribution.items():
+            session_type = zone_to_type.get(zone)
+            if session_type is None:
+                continue
+            if session_type not in merged:
+                merged[session_type] = {"pct": 0.0, "zones": []}
+            merged[session_type]["pct"] += pct
+            merged[session_type]["zones"].append(zone)
+
+        # Build targets, filter < 5%
+        targets = []
+        for session_type, info in merged.items():
+            if info["pct"] < 0.05:
+                continue
+            tss_target = int(weekly_tss * info["pct"])
+            zone_label = "/".join(info["zones"])
+            targets.append(
+                {
+                    "session_type": session_type,
+                    "tss_target": tss_target,
+                    "zone_label": zone_label,
+                }
+            )
+
+        return targets
+
+    def _format_zwift_suggestions(
+        self,
+        suggestions: dict[str, list],
+        targets: list[dict],
+        stats: dict,
+    ) -> str:
+        """Format Zwift workout suggestions as prompt section.
+
+        Args:
+            suggestions: Dict mapping session_type to list of WorkoutMatch
+            targets: List of target dicts from _derive_session_type_targets
+            stats: Cache stats dict
+
+        Returns:
+            Formatted markdown section for prompt injection
+        """
+        section = "\n\n## Catalogue Workouts Zwift (Structures Recommandees)\n\n"
+        section += f"**Source:** Cache Zwift ({stats['total_workouts']} workouts)\n\n"
+        section += "**INSTRUCTIONS** :\n"
+        section += "- Pour les seances INT et END, UTILISER ces structures comme MODELE\n"
+        section += "- Adapter duree/intensite selon TSS cible de la semaine\n"
+        section += "- Conserver le nom Zwift comme reference (ex: S085-03-INT-Halvfems-V001)\n"
+        section += "- Si aucune suggestion ne convient, generer librement\n\n"
+
+        target_map = {t["session_type"]: t for t in targets}
+
+        for session_type in sorted(suggestions.keys()):
+            matches = suggestions[session_type]
+            target = target_map.get(session_type, {})
+            tss_target = target.get("tss_target", "?")
+
+            if not matches:
+                section += f"### Aucune suggestion pour {session_type} (cache insuffisant)\n\n"
+                continue
+
+            section += f"### Suggestions {session_type} (TSS cible ~{tss_target})\n\n"
+            for i, match in enumerate(matches, 1):
+                w = match.workout
+                section += (
+                    f"**{i}. {w.name}** "
+                    f"(Score: {match.score:.0f}, TSS: {w.tss}, {w.duration_minutes}min)\n"
+                )
+                section += w.to_intervals_description() + "\n\n"
+
+        return section
+
+    def _format_zwift_stats_only(self, stats: dict) -> str:
+        """Format Zwift cache stats without concrete suggestions (fallback).
+
+        Args:
+            stats: Cache stats dict from ZwiftWorkoutClient.get_cache_stats()
+
+        Returns:
+            Formatted markdown section with stats only
+        """
+        section = "\n\n## Workouts Externes Disponibles (Diversite)\n\n"
+        section += "**Source:** Cache Zwift (whatsonzwift.com)\n"
+        section += f"**Total disponible:** {stats['total_workouts']} workouts\n\n"
+
+        if stats.get("by_category"):
+            section += "**Par categorie:**\n"
+            for category, count in sorted(
+                stats["by_category"].items(), key=lambda x: x[1], reverse=True
+            ):
+                section += f"  - {category}: {count} workout(s)\n"
+
+        section += "\n**Instructions:**\n"
+        section += "- Ces workouts peuvent etre utilises pour introduire de la DIVERSITE\n"
+        section += "- Le systeme track automatiquement l'usage pour eviter repetitions\n\n"
+
+        return section
+
+    def _load_available_zwift_workouts(self) -> str:
+        """Load Zwift workouts from cache with targeted suggestions.
+
+        When periodization context is available, searches the cache for
+        concrete workout suggestions matching each target session type
+        and TSS budget. Falls back to stats-only display otherwise.
+
+        Returns:
+            Formatted section with workout suggestions or stats
         """
         try:
             from magma_cycling.external.zwift_client import ZwiftWorkoutClient
+            from magma_cycling.external.zwift_models import WorkoutSearchCriteria
 
             client = ZwiftWorkoutClient()
             stats = client.get_cache_stats()
@@ -144,26 +276,30 @@ class PeriodizationMixin:
             if stats["total_workouts"] == 0:
                 return ""
 
-            # Build section
-            section = "\n\n## 🎨 Workouts Externes Disponibles (Diversité)\n\n"
-            section += "**Source:** Cache Zwift (whatsonzwift.com)\n"
-            section += f"**Total disponible:** {stats['total_workouts']} workouts\n\n"
+            # Check for periodization context
+            periodization_context = getattr(self, "_periodization_context", None)
+            if not periodization_context:
+                return self._format_zwift_stats_only(stats)
 
-            if stats.get("by_category"):
-                section += "**Par catégorie:**\n"
-                for category, count in sorted(
-                    stats["by_category"].items(), key=lambda x: x[1], reverse=True
-                ):
-                    section += f"  - {category}: {count} workout(s)\n"
+            # Derive target session types from intensity distribution
+            targets = self._derive_session_type_targets(periodization_context)
+            if not targets:
+                return self._format_zwift_stats_only(stats)
 
-            section += "\n**Instructions:**\n"
-            section += "- Ces workouts peuvent être utilisés pour introduire de la DIVERSITÉ\n"
-            section += "- Utiliser la commande: `poetry run search-zwift-workouts --type [TYPE] --tss [TSS]`\n"
-            section += "- Le système track automatiquement l'usage pour éviter répétitions (fenêtre 21 jours)\n"
-            section += "- Privilégier ces workouts pour varier des structures habituelles\n"
-            section += "- Format Wahoo-compatible garanti (explicit power % on every line)\n\n"
+            # Search for matches per session type
+            suggestions: dict[str, list] = {}
+            for target in targets:
+                criteria = WorkoutSearchCriteria(
+                    session_type=target["session_type"],
+                    tss_target=target["tss_target"],
+                    tss_tolerance=10,
+                    exclude_recent=True,
+                    diversity_window_days=28,
+                )
+                matches = client.search_workouts(criteria)
+                suggestions[target["session_type"]] = matches[:3]  # Top 3
 
-            return section
+            return self._format_zwift_suggestions(suggestions, targets, stats)
 
         except Exception as e:
             logger.warning(f"Could not load Zwift workouts: {e}")
