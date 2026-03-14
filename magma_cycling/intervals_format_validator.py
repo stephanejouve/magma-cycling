@@ -74,6 +74,9 @@ class IntervalsFormatValidator:
 
     # Sections valides
     VALID_SECTIONS = ["Warmup", "Main set", "Cooldown", "Block"]
+    SECTION_TITLE_PATTERN = re.compile(
+        r"^(Warmup|Main\s+set|Cooldown|Block)(\s+\d+x)?\.?\s*$", re.IGNORECASE
+    )
 
     def __init__(self):
         """Initialize intervals format validator."""
@@ -109,6 +112,9 @@ class IntervalsFormatValidator:
 
         # Check 4: Structure minimale
         self._check_minimal_structure(lines)
+
+        # Check 5: Warmup/Cooldown mono-bloc sans justification
+        self._check_warmup_cooldown_ramp(lines)
 
         return (len(self.errors) == 0, self.errors, self.warnings)
 
@@ -201,6 +207,123 @@ class IntervalsFormatValidator:
                 "(format attendu: '- Xm Y% Zrpm'). "
                 "Le texte libre n'est pas un format workout valide."
             )
+
+    def _parse_sections(self, lines: list[str]) -> dict[str, list[str]]:
+        """Parse workout text into named sections."""
+        sections = {}
+        current = None
+        for line in lines:
+            stripped = line.strip()
+            match = self.SECTION_TITLE_PATTERN.match(stripped)
+            if match:
+                current = match.group(1).strip().lower().replace(" ", "_")
+                sections[current] = []
+            elif current is not None:
+                sections[current].append(stripped)
+        return sections
+
+    def _check_warmup_cooldown_ramp(self, lines: list[str]):
+        """Detect mono-bloc warmup/cooldown without justification."""
+        sections = self._parse_sections(lines)
+
+        for section_key, label in [("warmup", "Warmup"), ("cooldown", "Cooldown")]:
+            if section_key not in sections:
+                continue
+            section_lines = sections[section_key]
+
+            interval_lines = [ln for ln in section_lines if re.match(self.INTERVAL_PATTERN, ln)]
+            if len(interval_lines) != 1:
+                continue
+
+            has_justification = any(ln.startswith("\u2699\ufe0f") for ln in section_lines)
+            if has_justification:
+                continue
+
+            intensity = ""
+            pct_match = re.search(r"(\d+(?:-\d+)?%)", interval_lines[0])
+            if pct_match:
+                intensity = pct_match.group(1)
+
+            if label == "Warmup":
+                self.warnings.append(
+                    f"{label} mono-bloc d\u00e9tect\u00e9 (1 palier \u00e0 {intensity}). "
+                    f"Ramp progressive recommand\u00e9e (3 paliers min). "
+                    f"Si intentionnel, ajouter une ligne \u2699\ufe0f avec la justification."
+                )
+            else:
+                self.warnings.append(
+                    f"{label} mono-bloc d\u00e9tect\u00e9 (1 palier \u00e0 {intensity}). "
+                    f"Ramp descendante recommand\u00e9e. "
+                    f"Si intentionnel, ajouter une ligne \u2699\ufe0f avec la justification."
+                )
+
+    def fix_warmup_cooldown(self, workout_text: str) -> str:
+        """Replace mono-bloc warmup/cooldown with 3-step ramp."""
+        lines = workout_text.split("\n")
+        sections = self._parse_sections(lines)
+        result = []
+        i = 0
+        while i < len(lines):
+            stripped = lines[i].strip()
+            match = self.SECTION_TITLE_PATTERN.match(stripped)
+            if match:
+                section_key = match.group(1).strip().lower().replace(" ", "_")
+                if section_key in ("warmup", "cooldown") and section_key in sections:
+                    section_lines = sections[section_key]
+                    intervals = [ln for ln in section_lines if re.match(self.INTERVAL_PATTERN, ln)]
+                    has_just = any(ln.startswith("\u2699\ufe0f") for ln in section_lines)
+                    if len(intervals) == 1 and not has_just:
+                        result.append(lines[i])
+                        ramp = self._generate_ramp(intervals[0], section_key == "cooldown")
+                        # Skip original section content
+                        i += 1
+                        while i < len(lines):
+                            s = lines[i].strip()
+                            if self.SECTION_TITLE_PATTERN.match(s) or (
+                                not s
+                                and i + 1 < len(lines)
+                                and self.SECTION_TITLE_PATTERN.match(lines[i + 1].strip())
+                            ):
+                                break
+                            i += 1
+                        for rl in ramp:
+                            result.append(rl)
+                        result.append("")
+                        continue
+            result.append(lines[i])
+            i += 1
+        return "\n".join(result)
+
+    @staticmethod
+    def _generate_ramp(interval_line: str, descending: bool) -> list[str]:
+        """Generate a 3-step ramp from a mono-bloc interval line."""
+        dur_match = re.search(r"(\d+)([msh])", interval_line)
+        pct_match = re.search(r"(\d+)%", interval_line)
+        rpm_match = re.search(r"(\d+)rpm", interval_line)
+
+        total_dur = int(dur_match.group(1)) if dur_match else 15
+        dur_unit = dur_match.group(2) if dur_match else "m"
+        target_pct = int(pct_match.group(1)) if pct_match else 65
+        rpm_str = f" {rpm_match.group(0)}" if rpm_match else ""
+
+        d1 = total_dur // 3
+        d2 = total_dur // 3
+        d3 = total_dur - d1 - d2
+
+        base_pct = min(50, target_pct - 10)
+        mid_pct = (base_pct + target_pct) // 2
+
+        if descending:
+            return [
+                f"- {d1}{dur_unit} {target_pct}%{rpm_str}",
+                f"- {d2}{dur_unit} {mid_pct}%{rpm_str}",
+                f"- {d3}{dur_unit} {base_pct}%{rpm_str}",
+            ]
+        return [
+            f"- {d1}{dur_unit} {base_pct}%{rpm_str}",
+            f"- {d2}{dur_unit} {mid_pct}%{rpm_str}",
+            f"- {d3}{dur_unit} {target_pct}%{rpm_str}",
+        ]
 
     def fix_repetition_format(self, workout_text: str) -> str:
         """
