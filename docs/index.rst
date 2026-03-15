@@ -61,6 +61,24 @@ Documentation auto-générée depuis les docstrings Google Style du code source.
 
 .. toctree::
    :maxdepth: 2
+   :caption: Prompts:
+
+   modules/magma_cycling.prompts
+
+.. toctree::
+   :maxdepth: 2
+   :caption: MCP Handlers:
+
+   modules/magma_cycling._mcp
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Workflows:
+
+   modules/magma_cycling.workflows
+
+.. toctree::
+   :maxdepth: 2
    :caption: CLI Tools:
 
    modules/tools
