@@ -24,6 +24,40 @@ poetry install
 poetry run pre-commit install
 ```
 
+## Workflow Git — règles obligatoires
+
+### Après chaque rebase ou merge
+
+Toujours relancer l'environnement Poetry avant de lancer les tests :
+
+```bash
+# 1. Synchroniser l'environnement (évite les erreurs pydantic/pydantic-core)
+poetry install --sync
+
+# 2. Vérifier que tout passe
+poetry run pytest tests/ -x --ignore=tests/reports -q
+
+# 3. Vérifier pre-commit
+poetry run pre-commit run --all-files
+```
+
+> **Ne pas sauter le `poetry install --sync`** — les dépendances peuvent se
+> désynchroniser silencieusement après un rebase, notamment pydantic et pydantic-core.
+
+### Si pydantic-core casse après un rebase
+
+Cause : dossier corrompu `typing_extensions-4.15.0 2.dist-info`
+(espace dans le nom) dans le venv qui corrompt pip.
+
+Fix :
+
+```bash
+rm -rf ".venv/lib/python3.13/site-packages/typing_extensions-4.15.0 2.dist-info"
+poetry run pip install --force-reinstall --no-deps pydantic-core
+poetry run python -c "import pydantic_core; print(pydantic_core.__version__)"
+# doit afficher 2.42.0
+```
+
 ## 🔄 Development Workflow
 
 ### 1. Create a Branch
