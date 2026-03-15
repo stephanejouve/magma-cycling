@@ -5,7 +5,7 @@
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Poetry](https://img.shields.io/badge/poetry-managed-blue)](https://python-poetry.org/)
 [![Quality](https://img.shields.io/badge/Quality-Production%20Ready-brightgreen)](CODING_STANDARDS.md)
-[![MCP Tools](https://img.shields.io/badge/MCP_tools-45-8A2BE2)](magma_cycling/_mcp/)
+[![MCP Tools](https://img.shields.io/badge/MCP_tools-48-8A2BE2)](magma_cycling/_mcp/)
 
 A personal cycling training log system integrating Intervals.icu, AI coaching, and structured workout management.
 
