@@ -1,0 +1,3582 @@
+{
+  "zwift-camp-baseline-2025": [
+    {
+      "name": "Flat Out Fast",
+      "category": "FTP",
+      "duration_minutes": 41,
+      "tss": 56,
+      "url": "https://whatsonzwift.com/workouts/zwift-camp-baseline/2025-4-flat-out-fast",
+      "description": "Zwift - Flat Out Fast (Test FTP 20min)",
+      "segments": [
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 420,
+          "power_low": 50,
+          "power_high": 75,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 100,
+          "power_high": null,
+          "cadence": 95,
+          "description": null,
+          "repeat_count": 3
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 55,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 3
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 240,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": "sélection braquet",
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "free_ride",
+          "duration_seconds": 1200,
+          "power_low": 100,
+          "power_high": null,
+          "cadence": null,
+          "description": "FTP Test",
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 360,
+          "power_low": 65,
+          "power_high": 40,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        }
+      ],
+      "source": "whatsonzwift.com",
+      "pattern": null,
+      "last_used_date": null,
+      "usage_count": 0
+    },
+    {
+      "name": "Climb Control",
+      "category": "VO2 Max",
+      "duration_minutes": 43,
+      "tss": 54,
+      "url": "https://whatsonzwift.com/workouts/zwift-camp-baseline/2025-3-climb-control",
+      "description": "Zwift - Climb Control (Test VO2Max 5min)",
+      "segments": [
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 420,
+          "power_low": 50,
+          "power_high": 75,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 120,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 90,
+          "power_low": 90,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 2
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 90,
+          "power_low": 55,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 2
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 300,
+          "power_low": 55,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "free_ride",
+          "duration_seconds": 300,
+          "power_low": 110,
+          "power_high": null,
+          "cadence": null,
+          "description": "VO2Max Test #1",
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 300,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "free_ride",
+          "duration_seconds": 300,
+          "power_low": 110,
+          "power_high": null,
+          "cadence": null,
+          "description": "VO2Max Test #2",
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 300,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 300,
+          "power_low": 60,
+          "power_high": 40,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        }
+      ],
+      "source": "whatsonzwift.com",
+      "pattern": null,
+      "last_used_date": null,
+      "usage_count": 0
+    },
+    {
+      "name": "Red Zone Repeats",
+      "category": "Sprint",
+      "duration_minutes": 40,
+      "tss": 41,
+      "url": "https://whatsonzwift.com/workouts/zwift-camp-baseline/2025-1-red-zone-repeats",
+      "description": "Zwift - Red Zone Repeats (Test Sprint 5sec)",
+      "segments": [
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 600,
+          "power_low": 50,
+          "power_high": 75,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 10,
+          "power_low": 150,
+          "power_high": null,
+          "cadence": 110,
+          "description": null,
+          "repeat_count": 5
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 50,
+          "power_low": 55,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 5
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 180,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 3
+        },
+        {
+          "segment_type": "free_ride",
+          "duration_seconds": 10,
+          "power_low": 200,
+          "power_high": null,
+          "cadence": null,
+          "description": "Sprint Test",
+          "repeat_count": 3
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 420,
+          "power_low": 65,
+          "power_high": 40,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        }
+      ],
+      "source": "whatsonzwift.com",
+      "pattern": null,
+      "last_used_date": null,
+      "usage_count": 0
+    },
+    {
+      "name": "Power Punches",
+      "category": "Intervals",
+      "duration_minutes": 44,
+      "tss": 54,
+      "url": "https://whatsonzwift.com/workouts/zwift-camp-baseline/2025-2-power-punches",
+      "description": "Zwift - Power Punches (Test Capacité Anaérobique 1min)",
+      "segments": [
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 480,
+          "power_low": 50,
+          "power_high": 75,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 100,
+          "power_high": null,
+          "cadence": 95,
+          "description": null,
+          "repeat_count": 3
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 55,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 3
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 300,
+          "power_low": 95,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 300,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 3
+        },
+        {
+          "segment_type": "free_ride",
+          "duration_seconds": 60,
+          "power_low": 120,
+          "power_high": null,
+          "cadence": null,
+          "description": "Anaerobic Test",
+          "repeat_count": 3
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 300,
+          "power_low": 65,
+          "power_high": 40,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        }
+      ],
+      "source": "whatsonzwift.com",
+      "pattern": null,
+      "last_used_date": null,
+      "usage_count": 0
+    }
+  ],
+  "build-me-up": [
+    {
+      "name": "Halvfems",
+      "category": "FTP",
+      "duration_minutes": 62,
+      "tss": 68,
+      "url": "https://whatsonzwift.com/workouts/build-me-up/week-2-halvfems",
+      "description": "Sweet spot training centered around 90% FTP with cadence variations",
+      "segments": [
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 420,
+          "power_low": 25,
+          "power_high": 75,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 95,
+          "power_high": null,
+          "cadence": 95,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 105,
+          "power_high": null,
+          "cadence": 105,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 115,
+          "power_high": null,
+          "cadence": 115,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 120,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 720,
+          "power_low": 90,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 240,
+          "power_low": 55,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 60,
+          "power_low": 90,
+          "power_high": null,
+          "cadence": 60,
+          "description": null,
+          "repeat_count": 6
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 60,
+          "power_low": 90,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 6
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 240,
+          "power_low": 55,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 120,
+          "power_low": 90,
+          "power_high": null,
+          "cadence": 100,
+          "description": null,
+          "repeat_count": 4
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 60,
+          "power_low": 90,
+          "power_high": null,
+          "cadence": 65,
+          "description": null,
+          "repeat_count": 4
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 360,
+          "power_low": 55,
+          "power_high": 25,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        }
+      ],
+      "source": "whatsonzwift.com",
+      "pattern": null,
+      "last_used_date": null,
+      "usage_count": 0
+    },
+    {
+      "name": "Novanta",
+      "category": "FTP",
+      "duration_minutes": 60,
+      "tss": 70,
+      "url": "https://whatsonzwift.com/workouts/build-me-up/week-3-novanta",
+      "description": "Sweet spot training with 4x4min/1min alternations",
+      "segments": [
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 420,
+          "power_low": 25,
+          "power_high": 75,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 95,
+          "power_high": null,
+          "cadence": 95,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 105,
+          "power_high": null,
+          "cadence": 105,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 115,
+          "power_high": null,
+          "cadence": 115,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 120,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 240,
+          "power_low": 90,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 4
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 60,
+          "power_low": 90,
+          "power_high": null,
+          "cadence": 65,
+          "description": null,
+          "repeat_count": 4
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 180,
+          "power_low": 55,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 300,
+          "power_low": 90,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 60,
+          "power_low": 90,
+          "power_high": null,
+          "cadence": 100,
+          "description": null,
+          "repeat_count": 5
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 60,
+          "power_low": 90,
+          "power_high": null,
+          "cadence": 70,
+          "description": null,
+          "repeat_count": 5
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 300,
+          "power_low": 90,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 300,
+          "power_low": 55,
+          "power_high": 25,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        }
+      ],
+      "source": "whatsonzwift.com",
+      "pattern": null,
+      "last_used_date": null,
+      "usage_count": 0
+    },
+    {
+      "name": "#8",
+      "category": "VO2 Max",
+      "duration_minutes": 60,
+      "tss": 65,
+      "url": "https://whatsonzwift.com/workouts/build-me-up/week-5-8",
+      "description": "VO2 Max repeats: 3x2min @ 115% FTP",
+      "segments": [
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 600,
+          "power_low": 25,
+          "power_high": 75,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 95,
+          "power_high": null,
+          "cadence": 95,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 105,
+          "power_high": null,
+          "cadence": 105,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 115,
+          "power_high": null,
+          "cadence": 115,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 120,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 120,
+          "power_low": 115,
+          "power_high": null,
+          "cadence": 105,
+          "description": null,
+          "repeat_count": 3
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 180,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 3
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 600,
+          "power_low": 65,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 120,
+          "power_low": 115,
+          "power_high": null,
+          "cadence": 105,
+          "description": null,
+          "repeat_count": 3
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 180,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 3
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 300,
+          "power_low": 50,
+          "power_high": 25,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        }
+      ],
+      "source": "whatsonzwift.com",
+      "pattern": null,
+      "last_used_date": null,
+      "usage_count": 0
+    },
+    {
+      "name": "Pedaling Drills",
+      "category": "Recovery",
+      "duration_minutes": 30,
+      "tss": 24,
+      "url": "https://whatsonzwift.com/workouts/build-me-up/week-1-pedaling-drills",
+      "description": "Cadence drills and skills work for recovery",
+      "segments": [
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 600,
+          "power_low": 40,
+          "power_high": 75,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 85,
+          "power_high": null,
+          "cadence": 95,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 95,
+          "power_high": null,
+          "cadence": 105,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 105,
+          "power_high": null,
+          "cadence": 110,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 150,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "free_ride",
+          "duration_seconds": 600,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": null,
+          "description": "Free ride / recovery",
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 300,
+          "power_low": 50,
+          "power_high": 25,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        }
+      ],
+      "source": "whatsonzwift.com",
+      "pattern": null,
+      "last_used_date": null,
+      "usage_count": 0
+    },
+    {
+      "name": "Renewal",
+      "category": "Recovery",
+      "duration_minutes": 30,
+      "tss": 13,
+      "url": "https://whatsonzwift.com/workouts/build-me-up/week-12-renewal",
+      "description": "Active recovery with easy cadence work",
+      "segments": [
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 300,
+          "power_low": 25,
+          "power_high": 50,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 300,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 95,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 60,
+          "power_low": 60,
+          "power_high": null,
+          "cadence": 100,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 30,
+          "power_low": 60,
+          "power_high": 70,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 300,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 95,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 60,
+          "power_low": 60,
+          "power_high": null,
+          "cadence": 100,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 30,
+          "power_low": 60,
+          "power_high": 70,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 240,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 95,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 60,
+          "power_low": 60,
+          "power_high": null,
+          "cadence": 100,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 30,
+          "power_low": 60,
+          "power_high": 70,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 180,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 95,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 60,
+          "power_low": 60,
+          "power_high": null,
+          "cadence": 100,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 30,
+          "power_low": 60,
+          "power_high": 70,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 120,
+          "power_low": 50,
+          "power_high": 25,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        }
+      ],
+      "source": "whatsonzwift.com",
+      "pattern": null,
+      "last_used_date": null,
+      "usage_count": 0
+    },
+    {
+      "name": "Attack!",
+      "category": "Sprint",
+      "duration_minutes": 60,
+      "tss": 61,
+      "url": "https://whatsonzwift.com/workouts/build-me-up/week-6-attack",
+      "description": "30sec sprint attacks with tempo recovery blocks",
+      "segments": [
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 600,
+          "power_low": 25,
+          "power_high": 75,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 95,
+          "power_high": null,
+          "cadence": 95,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 105,
+          "power_high": null,
+          "cadence": 105,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 115,
+          "power_high": null,
+          "cadence": 115,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 120,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 150,
+          "power_high": null,
+          "cadence": 110,
+          "description": "SPRINT!",
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 570,
+          "power_low": 80,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 180,
+          "power_low": 55,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 150,
+          "power_high": null,
+          "cadence": 110,
+          "description": "SPRINT!",
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 630,
+          "power_low": 80,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 180,
+          "power_low": 55,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 150,
+          "power_high": null,
+          "cadence": 110,
+          "description": "SPRINT!",
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 750,
+          "power_low": 80,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 300,
+          "power_low": 80,
+          "power_high": 25,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        }
+      ],
+      "source": "whatsonzwift.com",
+      "pattern": null,
+      "last_used_date": null,
+      "usage_count": 0
+    },
+    {
+      "name": "Exemplar",
+      "category": "FTP",
+      "duration_minutes": 60,
+      "tss": 72,
+      "url": "https://whatsonzwift.com/workouts/build-me-up/week-10-exemplar",
+      "description": "Over-unders: 2x8min/2min + 5x2min/2min at 93/88% FTP",
+      "segments": [
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 600,
+          "power_low": 40,
+          "power_high": 75,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 480,
+          "power_low": 93,
+          "power_high": null,
+          "cadence": 75,
+          "description": null,
+          "repeat_count": 2
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 120,
+          "power_low": 88,
+          "power_high": null,
+          "cadence": 100,
+          "description": null,
+          "repeat_count": 2
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 180,
+          "power_low": 65,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 120,
+          "power_low": 93,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 5
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 120,
+          "power_low": 88,
+          "power_high": null,
+          "cadence": 70,
+          "description": null,
+          "repeat_count": 5
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 120,
+          "power_low": 45,
+          "power_high": 25,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        }
+      ],
+      "source": "whatsonzwift.com",
+      "pattern": null,
+      "last_used_date": null,
+      "usage_count": 0
+    },
+    {
+      "name": "Devedeset",
+      "category": "FTP",
+      "duration_minutes": 60,
+      "tss": 62,
+      "url": "https://whatsonzwift.com/workouts/build-me-up/week-1-devedeset",
+      "description": "Sweet spot: 2x10min at 90% FTP with cadence work",
+      "segments": [
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 600,
+          "power_low": 25,
+          "power_high": 75,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 95,
+          "power_high": null,
+          "cadence": 95,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 105,
+          "power_high": null,
+          "cadence": 105,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 115,
+          "power_high": null,
+          "cadence": 115,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 150,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 600,
+          "power_low": 90,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 240,
+          "power_low": 55,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 600,
+          "power_low": 90,
+          "power_high": null,
+          "cadence": 80,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 240,
+          "power_low": 55,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 120,
+          "power_low": 90,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 2
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 60,
+          "power_low": 90,
+          "power_high": null,
+          "cadence": 70,
+          "description": null,
+          "repeat_count": 2
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 240,
+          "power_low": 90,
+          "power_high": null,
+          "cadence": 100,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 420,
+          "power_low": 55,
+          "power_high": 25,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        }
+      ],
+      "source": "whatsonzwift.com",
+      "pattern": null,
+      "last_used_date": null,
+      "usage_count": 0
+    },
+    {
+      "name": "Giza",
+      "category": "Intervals",
+      "duration_minutes": 60,
+      "tss": 56,
+      "url": "https://whatsonzwift.com/workouts/build-me-up/week-7-giza",
+      "description": "Pyramid intervals: 8min blocks at 75-80-85-80-75% with cadence changes",
+      "segments": [
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 420,
+          "power_low": 25,
+          "power_high": 75,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 95,
+          "power_high": null,
+          "cadence": 95,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 105,
+          "power_high": null,
+          "cadence": 105,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 115,
+          "power_high": null,
+          "cadence": 115,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 150,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 480,
+          "power_low": 75,
+          "power_high": null,
+          "cadence": 75,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 60,
+          "power_low": 55,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 480,
+          "power_low": 80,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 60,
+          "power_low": 55,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 480,
+          "power_low": 85,
+          "power_high": null,
+          "cadence": 100,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 60,
+          "power_low": 55,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 480,
+          "power_low": 80,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 60,
+          "power_low": 55,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 480,
+          "power_low": 75,
+          "power_high": null,
+          "cadence": 75,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 240,
+          "power_low": 75,
+          "power_high": 25,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        }
+      ],
+      "source": "whatsonzwift.com",
+      "pattern": null,
+      "last_used_date": null,
+      "usage_count": 0
+    },
+    {
+      "name": "Hang Ten",
+      "category": "Intervals",
+      "duration_minutes": 60,
+      "tss": 65,
+      "url": "https://whatsonzwift.com/workouts/build-me-up/week-8-hang-ten",
+      "description": "Wave intervals: 1/2/1min pattern at 95-80-110% with cadence variations",
+      "segments": [
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 300,
+          "power_low": 25,
+          "power_high": 60,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 300,
+          "power_low": 60,
+          "power_high": null,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 60,
+          "power_low": 95,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 10
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 120,
+          "power_low": 80,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 5
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 60,
+          "power_low": 110,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 5
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 120,
+          "power_low": 60,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 5
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 300,
+          "power_low": 60,
+          "power_high": 25,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        }
+      ],
+      "source": "whatsonzwift.com",
+      "pattern": null,
+      "last_used_date": null,
+      "usage_count": 0
+    },
+    {
+      "name": "Tine",
+      "category": "FTP",
+      "duration_minutes": 60,
+      "tss": 56,
+      "url": "https://whatsonzwift.com/workouts/build-me-up/week-5-tine",
+      "description": "Ramp intervals: 3x (3min@80% + ramps 90-100%) with varying cadence",
+      "segments": [
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 600,
+          "power_low": 40,
+          "power_high": 75,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 95,
+          "power_high": null,
+          "cadence": 95,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 105,
+          "power_high": null,
+          "cadence": 105,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 115,
+          "power_high": null,
+          "cadence": 115,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 150,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 180,
+          "power_low": 80,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 3
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 90,
+          "power_low": 90,
+          "power_high": 100,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 3
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 90,
+          "power_low": 100,
+          "power_high": 90,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 3
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 180,
+          "power_low": 80,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 3
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 240,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 3
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 360,
+          "power_low": 50,
+          "power_high": 25,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        }
+      ],
+      "source": "whatsonzwift.com",
+      "pattern": null,
+      "last_used_date": null,
+      "usage_count": 0
+    },
+    {
+      "name": "Ham Sandwich",
+      "category": "FTP",
+      "duration_minutes": 62,
+      "tss": 76,
+      "url": "https://whatsonzwift.com/workouts/build-me-up/week-3-ham-sandwich",
+      "description": "Over-unders + microbursts: 4x(2min@88%+30sec@110%) + 5x30sec@130%",
+      "segments": [
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 600,
+          "power_low": 40,
+          "power_high": 75,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 80,
+          "power_high": null,
+          "cadence": 95,
+          "description": null,
+          "repeat_count": 3
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 95,
+          "power_high": null,
+          "cadence": 95,
+          "description": null,
+          "repeat_count": 2
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 105,
+          "power_high": null,
+          "cadence": 105,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 110,
+          "power_high": null,
+          "cadence": 110,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 120,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 120,
+          "power_low": 88,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 4
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 110,
+          "power_high": null,
+          "cadence": 110,
+          "description": null,
+          "repeat_count": 4
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 150,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 130,
+          "power_high": null,
+          "cadence": 110,
+          "description": null,
+          "repeat_count": 15
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 15
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 150,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 120,
+          "power_low": 88,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 4
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 110,
+          "power_high": null,
+          "cadence": 110,
+          "description": null,
+          "repeat_count": 4
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 120,
+          "power_low": 50,
+          "power_high": 25,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        }
+      ],
+      "source": "whatsonzwift.com",
+      "pattern": null,
+      "last_used_date": null,
+      "usage_count": 0
+    },
+    {
+      "name": "Potpourri",
+      "category": "FTP",
+      "duration_minutes": 60,
+      "tss": 64,
+      "url": "https://whatsonzwift.com/workouts/build-me-up/week-10-potpourri",
+      "description": "Mixed work: 5x1min@88% + 3x(2min@94%+3min@86%)",
+      "segments": [
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 600,
+          "power_low": 25,
+          "power_high": 75,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 95,
+          "power_high": null,
+          "cadence": 95,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 105,
+          "power_high": null,
+          "cadence": 105,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 115,
+          "power_high": null,
+          "cadence": 115,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 150,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 60,
+          "power_low": 88,
+          "power_high": null,
+          "cadence": 100,
+          "description": null,
+          "repeat_count": 5
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 60,
+          "power_low": 88,
+          "power_high": null,
+          "cadence": 60,
+          "description": null,
+          "repeat_count": 5
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 180,
+          "power_low": 55,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 120,
+          "power_low": 94,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 3
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 180,
+          "power_low": 86,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 3
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 180,
+          "power_low": 55,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 720,
+          "power_low": 75,
+          "power_high": 25,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        }
+      ],
+      "source": "whatsonzwift.com",
+      "pattern": null,
+      "last_used_date": null,
+      "usage_count": 0
+    },
+    {
+      "name": "Uphill Battle",
+      "category": "FTP",
+      "duration_minutes": 60,
+      "tss": 71,
+      "url": "https://whatsonzwift.com/workouts/build-me-up/week-6-uphill-battle",
+      "description": "Climbing: 3x(5min@95%+30sec ramp) + microbursts",
+      "segments": [
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 600,
+          "power_low": 25,
+          "power_high": 75,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 80,
+          "power_high": null,
+          "cadence": 95,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 60,
+          "power_low": 65,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 90,
+          "power_high": null,
+          "cadence": 105,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 60,
+          "power_low": 65,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 105,
+          "power_high": null,
+          "cadence": 115,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 120,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 300,
+          "power_low": 95,
+          "power_high": null,
+          "cadence": 95,
+          "description": null,
+          "repeat_count": 3
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 30,
+          "power_low": 100,
+          "power_high": 150,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 3
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 150,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 3
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 180,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 130,
+          "power_high": null,
+          "cadence": 100,
+          "description": null,
+          "repeat_count": 5
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 70,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 5
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 180,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 140,
+          "power_high": null,
+          "cadence": 100,
+          "description": null,
+          "repeat_count": 5
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 60,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 5
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 420,
+          "power_low": 50,
+          "power_high": 25,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        }
+      ],
+      "source": "whatsonzwift.com",
+      "pattern": null,
+      "last_used_date": null,
+      "usage_count": 0
+    },
+    {
+      "name": "Ruckus",
+      "category": "FTP",
+      "duration_minutes": 60,
+      "tss": 74,
+      "url": "https://whatsonzwift.com/workouts/build-me-up/week-11-ruckus",
+      "description": "Standing/sitting intervals: 7x(2min@100%+1min@75%)",
+      "segments": [
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 300,
+          "power_low": 40,
+          "power_high": 65,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 300,
+          "power_low": 65,
+          "power_high": null,
+          "cadence": 95,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 180,
+          "power_low": 80,
+          "power_high": null,
+          "cadence": 100,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 120,
+          "power_low": 55,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 120,
+          "power_low": 100,
+          "power_high": null,
+          "cadence": 90,
+          "description": "Standing",
+          "repeat_count": 7
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 60,
+          "power_low": 75,
+          "power_high": null,
+          "cadence": 70,
+          "description": "Sitting",
+          "repeat_count": 7
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 180,
+          "power_low": 55,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 120,
+          "power_low": 100,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 6
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 60,
+          "power_low": 75,
+          "power_high": null,
+          "cadence": 70,
+          "description": null,
+          "repeat_count": 6
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 180,
+          "power_low": 74,
+          "power_high": 25,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        }
+      ],
+      "source": "whatsonzwift.com",
+      "pattern": null,
+      "last_used_date": null,
+      "usage_count": 0
+    },
+    {
+      "name": "Mishmash",
+      "category": "Tempo",
+      "duration_minutes": 90,
+      "tss": 90,
+      "url": "https://whatsonzwift.com/workouts/build-me-up/week-2-mishmash",
+      "description": "Mixed cadence intervals: 4x(3min+1min) with varied RPM",
+      "segments": [
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 600,
+          "power_low": 40,
+          "power_high": 70,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 180,
+          "power_low": 80,
+          "power_high": null,
+          "cadence": 95,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 60,
+          "power_low": 105,
+          "power_high": null,
+          "cadence": 65,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 60,
+          "power_low": 65,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 180,
+          "power_low": 80,
+          "power_high": null,
+          "cadence": 100,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 60,
+          "power_low": 105,
+          "power_high": null,
+          "cadence": 65,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 60,
+          "power_low": 65,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 180,
+          "power_low": 80,
+          "power_high": null,
+          "cadence": 70,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 60,
+          "power_low": 105,
+          "power_high": null,
+          "cadence": 100,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 60,
+          "power_low": 65,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 180,
+          "power_low": 80,
+          "power_high": null,
+          "cadence": 95,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 60,
+          "power_low": 105,
+          "power_high": null,
+          "cadence": 65,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 120,
+          "power_low": 65,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 240,
+          "power_low": 90,
+          "power_high": null,
+          "cadence": 95,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 240,
+          "power_low": 80,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 240,
+          "power_low": 70,
+          "power_high": null,
+          "cadence": 75,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 240,
+          "power_low": 90,
+          "power_high": null,
+          "cadence": 75,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 240,
+          "power_low": 80,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 240,
+          "power_low": 70,
+          "power_high": null,
+          "cadence": 95,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 720,
+          "power_low": 90,
+          "power_high": 60,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 180,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        }
+      ],
+      "source": "whatsonzwift.com",
+      "pattern": null,
+      "last_used_date": null,
+      "usage_count": 0
+    },
+    {
+      "name": "Circus",
+      "category": "Sprint",
+      "duration_minutes": 60,
+      "tss": 78,
+      "url": "https://whatsonzwift.com/workouts/build-me-up/week-9-circus",
+      "description": "Sprint circus: 18x15sec @ 150% + descending intensity patterns",
+      "segments": [
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 600,
+          "power_low": 25,
+          "power_high": 75,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 95,
+          "power_high": null,
+          "cadence": 95,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 105,
+          "power_high": null,
+          "cadence": 105,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 115,
+          "power_high": null,
+          "cadence": 115,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 150,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 15,
+          "power_low": 200,
+          "power_high": null,
+          "cadence": 100,
+          "description": "MAX SPRINT",
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 15,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 15,
+          "power_low": 150,
+          "power_high": null,
+          "cadence": 100,
+          "description": null,
+          "repeat_count": 18
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 15,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 18
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 15,
+          "power_low": 200,
+          "power_high": null,
+          "cadence": 100,
+          "description": "MAX SPRINT",
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 300,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 15,
+          "power_low": 180,
+          "power_high": null,
+          "cadence": 100,
+          "description": null,
+          "repeat_count": 4
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 15,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 4
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 15,
+          "power_low": 160,
+          "power_high": null,
+          "cadence": 100,
+          "description": null,
+          "repeat_count": 6
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 15,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 6
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 15,
+          "power_low": 140,
+          "power_high": null,
+          "cadence": 100,
+          "description": null,
+          "repeat_count": 6
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 15,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 6
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 15,
+          "power_low": 120,
+          "power_high": null,
+          "cadence": 100,
+          "description": null,
+          "repeat_count": 4
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 15,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 4
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 300,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 15,
+          "power_low": 200,
+          "power_high": null,
+          "cadence": 100,
+          "description": null,
+          "repeat_count": 2
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 15,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 2
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 15,
+          "power_low": 120,
+          "power_high": null,
+          "cadence": 100,
+          "description": null,
+          "repeat_count": 2
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 15,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 2
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 15,
+          "power_low": 150,
+          "power_high": null,
+          "cadence": 100,
+          "description": null,
+          "repeat_count": 12
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 15,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 12
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 300,
+          "power_low": 50,
+          "power_high": 25,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        }
+      ],
+      "source": "whatsonzwift.com",
+      "pattern": null,
+      "last_used_date": null,
+      "usage_count": 0
+    },
+    {
+      "name": "Baffling Beau",
+      "category": "Sprint",
+      "duration_minutes": 60,
+      "tss": 73,
+      "url": "https://whatsonzwift.com/workouts/build-me-up/week-10-baffling-beau",
+      "description": "Sprint progressions: 10x40/20 + 10x30/30 + 10x20/40",
+      "segments": [
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 600,
+          "power_low": 25,
+          "power_high": 75,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 95,
+          "power_high": null,
+          "cadence": 95,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 105,
+          "power_high": null,
+          "cadence": 105,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 115,
+          "power_high": null,
+          "cadence": 115,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 150,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 40,
+          "power_low": 120,
+          "power_high": null,
+          "cadence": 110,
+          "description": null,
+          "repeat_count": 10
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 20,
+          "power_low": 55,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 10
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 300,
+          "power_low": 65,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 130,
+          "power_high": null,
+          "cadence": 110,
+          "description": null,
+          "repeat_count": 10
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 55,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 10
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 300,
+          "power_low": 65,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 20,
+          "power_low": 140,
+          "power_high": null,
+          "cadence": 110,
+          "description": null,
+          "repeat_count": 10
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 40,
+          "power_low": 55,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 10
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 300,
+          "power_low": 55,
+          "power_high": 25,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        }
+      ],
+      "source": "whatsonzwift.com",
+      "pattern": null,
+      "last_used_date": null,
+      "usage_count": 0
+    },
+    {
+      "name": "Amalgam",
+      "category": "Mixed",
+      "duration_minutes": 85,
+      "tss": 99,
+      "url": "https://whatsonzwift.com/workouts/build-me-up/week-3-amalgam",
+      "description": "Complete package: FTP blocks + sprints + force work + shark teeth",
+      "segments": [
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 600,
+          "power_low": 40,
+          "power_high": 75,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 95,
+          "power_high": null,
+          "cadence": 95,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 105,
+          "power_high": null,
+          "cadence": 105,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 115,
+          "power_high": null,
+          "cadence": 115,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 150,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 120,
+          "power_low": 85,
+          "power_high": null,
+          "cadence": 75,
+          "description": null,
+          "repeat_count": 2
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 60,
+          "power_low": 85,
+          "power_high": null,
+          "cadence": 60,
+          "description": null,
+          "repeat_count": 2
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 60,
+          "power_low": 85,
+          "power_high": null,
+          "cadence": 55,
+          "description": null,
+          "repeat_count": 2
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 300,
+          "power_low": 65,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 600,
+          "power_low": 100,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 150,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 180,
+          "power_low": 65,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 15,
+          "power_low": 110,
+          "power_high": null,
+          "cadence": 110,
+          "description": null,
+          "repeat_count": 6
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 45,
+          "power_low": 45,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 6
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 300,
+          "power_low": 65,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 60,
+          "power_low": 105,
+          "power_high": 115,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 3
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 60,
+          "power_low": 115,
+          "power_high": 105,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 3
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 60,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 3
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 150,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 180,
+          "power_low": 65,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 600,
+          "power_low": 100,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 300,
+          "power_low": 65,
+          "power_high": 40,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        }
+      ],
+      "source": "whatsonzwift.com",
+      "pattern": null,
+      "last_used_date": null,
+      "usage_count": 0
+    },
+    {
+      "name": "Escalation",
+      "category": "Mixed",
+      "duration_minutes": 95,
+      "tss": 114,
+      "url": "https://whatsonzwift.com/workouts/build-me-up/week-5-escalation",
+      "description": "Progressive build: 4min@95% + VO2 surges + threshold + 10x30sec@150%",
+      "segments": [
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 600,
+          "power_low": 40,
+          "power_high": 75,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 95,
+          "power_high": null,
+          "cadence": 95,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 105,
+          "power_high": null,
+          "cadence": 105,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 115,
+          "power_high": null,
+          "cadence": 115,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 150,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 240,
+          "power_low": 95,
+          "power_high": null,
+          "cadence": 100,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 480,
+          "power_low": 80,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 180,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 240,
+          "power_low": 95,
+          "power_high": null,
+          "cadence": 70,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 120,
+          "power_low": 80,
+          "power_high": null,
+          "cadence": 70,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 60,
+          "power_low": 80,
+          "power_high": null,
+          "cadence": 100,
+          "description": null,
+          "repeat_count": 2
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 120,
+          "power_low": 80,
+          "power_high": null,
+          "cadence": 70,
+          "description": null,
+          "repeat_count": 2
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 180,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 30,
+          "power_low": 80,
+          "power_high": 105,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 105,
+          "power_high": null,
+          "cadence": 100,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 30,
+          "power_low": 105,
+          "power_high": 80,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 60,
+          "power_low": 80,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 30,
+          "power_low": 80,
+          "power_high": 105,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 105,
+          "power_high": null,
+          "cadence": 100,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 30,
+          "power_low": 105,
+          "power_high": 80,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 120,
+          "power_low": 80,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 30,
+          "power_low": 80,
+          "power_high": 105,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 105,
+          "power_high": null,
+          "cadence": 100,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 30,
+          "power_low": 105,
+          "power_high": 80,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 180,
+          "power_low": 80,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 180,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 120,
+          "power_low": 95,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 60,
+          "power_low": 80,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 4
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 60,
+          "power_low": 80,
+          "power_high": null,
+          "cadence": 65,
+          "description": null,
+          "repeat_count": 4
+        },
+        {
+          "segment_type": "steady",
+          "duration_seconds": 120,
+          "power_low": 95,
+          "power_high": null,
+          "cadence": 90,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 300,
+          "power_low": 50,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 1
+        },
+        {
+          "segment_type": "interval",
+          "duration_seconds": 30,
+          "power_low": 150,
+          "power_high": null,
+          "cadence": 100,
+          "description": null,
+          "repeat_count": 10
+        },
+        {
+          "segment_type": "recovery",
+          "duration_seconds": 30,
+          "power_low": 65,
+          "power_high": null,
+          "cadence": 85,
+          "description": null,
+          "repeat_count": 10
+        },
+        {
+          "segment_type": "ramp",
+          "duration_seconds": 180,
+          "power_low": 50,
+          "power_high": 25,
+          "cadence": null,
+          "description": null,
+          "repeat_count": 1
+        }
+      ],
+      "source": "whatsonzwift.com",
+      "pattern": null,
+      "last_used_date": null,
+      "usage_count": 0
+    }
+  ]
+}
