@@ -13,8 +13,11 @@ Author: Claude Code
 Created: 2026-03-01
 """
 
+import os
+import shutil
 import subprocess
 from datetime import date, datetime
+from pathlib import Path
 
 from magma_cycling.config import create_intervals_client
 from magma_cycling.daily_sync import calculate_current_week_info
@@ -22,8 +25,11 @@ from magma_cycling.planning.control_tower import planning_tower
 from magma_cycling.utils.cli import cli_main
 
 PREFIX = "[session-monitor]"
-POETRY = "/Users/stephanejouve/.local/bin/poetry"
-PROJECT_DIR = "/Users/stephanejouve/magma-cycling"
+POETRY = os.environ.get("POETRY_BIN", shutil.which("poetry") or "poetry")
+PROJECT_DIR = os.environ.get(
+    "MAGMA_PROJECT_DIR",
+    str(Path(__file__).resolve().parent.parent),
+)
 
 
 def log(msg: str) -> None:
