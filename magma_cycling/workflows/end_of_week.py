@@ -48,6 +48,7 @@ from pathlib import Path
 
 from magma_cycling.config import get_data_config, get_week_config
 from magma_cycling.planning.models import WeeklyPlan
+from magma_cycling.utils.cli import cli_main
 from magma_cycling.workflows.eow.ai_workouts import AIWorkoutsMixin
 from magma_cycling.workflows.eow.analysis import AnalysisMixin
 from magma_cycling.workflows.eow.archive import ArchiveMixin
@@ -412,6 +413,7 @@ Workflow complet:
     return parser.parse_args(args)
 
 
+@cli_main
 def main():
     """Point d'entrée du script."""
     args = parse_args()
@@ -474,4 +476,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()  # @cli_main handles exit codes

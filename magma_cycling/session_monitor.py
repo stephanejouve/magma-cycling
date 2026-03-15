@@ -14,12 +14,12 @@ Created: 2026-03-01
 """
 
 import subprocess
-import sys
 from datetime import date, datetime
 
 from magma_cycling.config import create_intervals_client
 from magma_cycling.daily_sync import calculate_current_week_info
 from magma_cycling.planning.control_tower import planning_tower
+from magma_cycling.utils.cli import cli_main
 
 PREFIX = "[session-monitor]"
 POETRY = "/Users/stephanejouve/.local/bin/poetry"
@@ -84,6 +84,7 @@ def _fallback_cutoff(day_of_week: int) -> int:
     return 21
 
 
+@cli_main
 def main() -> int:
     """Entry point."""
     now = datetime.now()
@@ -218,4 +219,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()  # @cli_main handles exit codes
