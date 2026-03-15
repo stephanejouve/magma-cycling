@@ -63,6 +63,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+from magma_cycling.utils.cli import cli_main
 from magma_cycling.utils.event_sync import calculate_description_hash  # noqa: F401 — re-export
 from magma_cycling.workflows.uploader.parsing import ParsingMixin
 from magma_cycling.workflows.uploader.upload import UploadMixin
@@ -139,6 +140,7 @@ class WorkoutUploader(
             sys.exit(1)
 
 
+@cli_main
 def main():
     """Point d'entrée du script."""
     parser = argparse.ArgumentParser(description="Uploader des workouts sur Intervals.icu")

@@ -14,13 +14,13 @@ Usage:
 """
 
 import argparse
-import sys
 from datetime import date, timedelta
 from pathlib import Path
 
 from magma_cycling.config import get_logger, set_log_level
 from magma_cycling.reports import ReportGenerator
 from magma_cycling.reports.generator import ReportGenerationError
+from magma_cycling.utils.cli import cli_main
 
 logger = get_logger(__name__)
 
@@ -139,6 +139,7 @@ def calculate_week_start_date(week: str) -> date:
     return start_date
 
 
+@cli_main
 def main():
     """Main CLI entry point for report generation.
 
@@ -216,4 +217,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()  # @cli_main handles exit codes
