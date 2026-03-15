@@ -37,6 +37,7 @@ from typing import Any
 from magma_cycling.ai_providers.factory import AIProviderFactory
 from magma_cycling.config import get_ai_config, get_data_config
 from magma_cycling.prompts import build_prompt
+from magma_cycling.utils.cli import cli_main
 
 logger = logging.getLogger(__name__)
 
@@ -452,6 +453,7 @@ Sois concret, direct et orienté action. Utilise des emojis pour la lisibilité.
         return report
 
 
+@cli_main
 def main():
     """CLI entry point."""
     parser = argparse.ArgumentParser(
@@ -477,27 +479,22 @@ def main():
 
     args = parser.parse_args()
 
-    try:
-        analyzer = MonthlyAnalyzer(month=args.month, provider=args.provider, no_ai=args.no_ai)
+    analyzer = MonthlyAnalyzer(month=args.month, provider=args.provider, no_ai=args.no_ai)
 
-        report = analyzer.run()
+    report = analyzer.run()
 
-        if not report:
-            sys.exit(1)
-
-        # Output
-        if args.output:
-            args.output.parent.mkdir(parents=True, exist_ok=True)
-            args.output.write_text(report, encoding="utf-8")
-            print(f"\n✅ Rapport sauvegardé : {args.output}")
-        else:
-            print(f"\n{'=' * 70}")
-            print(report)
-            print(f"{'=' * 70}")
-
-    except Exception as e:
-        print(f"\n❌ Erreur : {e}")
+    if not report:
         sys.exit(1)
+
+    # Output
+    if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(report, encoding="utf-8")
+        print(f"\n✅ Rapport sauvegardé : {args.output}")
+    else:
+        print(f"\n{'=' * 70}")
+        print(report)
+        print(f"{'=' * 70}")
 
 
 if __name__ == "__main__":
