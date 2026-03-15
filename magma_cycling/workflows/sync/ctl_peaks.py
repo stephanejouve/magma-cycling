@@ -116,8 +116,8 @@ class CTLPeaksMixin:
                 alerts.append(f"TSB élevé: {tsb_current:+.1f} (déconditionnement possible)")
                 recommendations.append("Augmenter volume progressivement: +2-3 CTL points/semaine")
 
-            # NEW: Initialize PID controller with calibrated gains (Sprint R10)
-            print("\n🎛️  Initialisation PID Controller (Sprint R10 calibration)...")
+            # Initialize PID controller with calibrated gains (Masters 50+)
+            print("\n🎛️  Initialisation PID Controller...")
             pid_controller = DiscretePIDController(
                 kp=0.008,  # Proportional gain (Masters 50+ adjusted)
                 ki=0.001,  # Integral gain (Masters 50+ adjusted)
@@ -136,7 +136,6 @@ class CTLPeaksMixin:
                         state_data = json.load(f)
                         pid_state = state_data.get("pid_state", {})
 
-                        # Restore PID internal state
                         pid_controller.integral = pid_state.get("integral", 0.0)
                         pid_controller.prev_error = pid_state.get("prev_error", 0.0)
                         pid_controller.prev_ftp = pid_state.get("prev_ftp", 0)
@@ -149,21 +148,20 @@ class CTLPeaksMixin:
                 except Exception as e:
                     print(f"  ⚠️  Erreur restauration état PID: {e}")
 
-            # NEW: Compute integrated PID + Peaks recommendation
+            # Compute integrated PID + Peaks recommendation
+            # PID output = delta TSS, added to Peaks base for absolute recommendation
             print("🔄 Calcul recommandation intégrée PID + Peaks...")
 
-            # Calculate recent adherence and quality metrics
-            # TODO: Extract from recent week data (for now use defaults)
-            adherence_rate = 0.85  # Target adherence
-            avg_coupling = 0.065  # Target quality (découplage)
-            tss_completion = 0.90  # Target completion
+            adherence_rate = 0.85
+            avg_coupling = 0.065
+            tss_completion = 0.90
 
             try:
                 pid_peaks_rec = compute_integrated_correction(
                     ctl_current=ctl_current,
                     ftp_current=ftp_current,
                     ftp_target=ftp_target,
-                    athlete_age=54,  # Masters 50+
+                    athlete_age=54,
                     pid_controller=pid_controller,
                     adherence_rate=adherence_rate,
                     avg_cardiovascular_coupling=avg_coupling,
@@ -172,11 +170,18 @@ class CTLPeaksMixin:
 
                 print(
                     f"  ✅ Recommandation: {pid_peaks_rec.tss_per_week} TSS/semaine "
-                    f"(mode: {pid_peaks_rec.mode.value})"
+                    f"(mode: {pid_peaks_rec.mode.value}, "
+                    f"confiance: {pid_peaks_rec.confidence})"
                 )
 
                 if pid_peaks_rec.override_active:
                     print(f"  🚨 OVERRIDE ACTIF: {pid_peaks_rec.mode.value}")
+                elif pid_peaks_rec.pid_delta is not None:
+                    print(
+                        f"  🎛️ PID actif: Peaks {pid_peaks_rec.peaks_suggestion} "
+                        f"+ delta {pid_peaks_rec.pid_delta:+d} "
+                        f"= {pid_peaks_rec.tss_per_week} TSS/semaine"
+                    )
 
             except Exception as e:
                 print(f"  ⚠️  Erreur calcul PID+Peaks: {e}")
