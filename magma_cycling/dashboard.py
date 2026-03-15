@@ -23,11 +23,11 @@ Examples:
     poetry run dashboard --intelligence ~/magma-cycling-data/intelligence/backfilled_2024-2025.json.
 """
 import argparse
-import sys
 from datetime import datetime
 from pathlib import Path
 
 from magma_cycling.config import get_logger
+from magma_cycling.utils.cli import cli_main
 
 logger = get_logger(__name__)
 
@@ -216,7 +216,8 @@ def print_dashboard_footer() -> None:
     print()
 
 
-def main() -> int:
+@cli_main
+def main():
     """Run entry point."""
     parser = argparse.ArgumentParser(description="Dashboard - Vue d'ensemble rapide entraînement")
 
@@ -236,20 +237,13 @@ def main() -> int:
     # Get week
     week = args.week or get_current_week()
 
-    # Print dashboard
-    try:
-        print_dashboard_header(week)
-        print_current_week_stats(week)
-        print_ftp_progression(args.intelligence)
-        print_recent_learnings(args.intelligence)
-        print_next_week_plan()
-        print_dashboard_footer()
-        return 0
-    except Exception as e:
-        logger.error(f"Dashboard error: {e}")
-        print(f"\n❌ Error: {e}", file=sys.stderr)
-        return 1
+    print_dashboard_header(week)
+    print_current_week_stats(week)
+    print_ftp_progression(args.intelligence)
+    print_recent_learnings(args.intelligence)
+    print_next_week_plan()
+    print_dashboard_footer()
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()  # pragma: no cover
