@@ -1,85 +1,51 @@
-#!/usr/bin/env python3
-"""
-Script de test pour la méthode create_event().
-"""
-import json
-import sys
-from pathlib import Path
+"""Tests for create_event API method (mocked, no live calls)."""
+
+from unittest.mock import patch
 
 from magma_cycling.api.intervals_client import IntervalsClient
 
 
-def test_create_event():
-    """Tester create_event avec différents formats."""
-    print("🧪 Test de la méthode create_event()")
+class TestCreateEventDateOnly:
+    """Test create_event with date-only format."""
 
-    print("=" * 70)
-    print()
+    @patch.object(IntervalsClient, "__init__", lambda self, **kw: None)
+    @patch.object(IntervalsClient, "create_event")
+    def test_create_event_date_only(self, mock_create):
+        """Date-only start_date_local is passed correctly to create_event."""
+        mock_create.return_value = {"id": "evt_001", "name": "Test Simple"}
 
-    # Charger credentials
-    config_path = Path.home() / ".intervals_config.json"
-    if not config_path.exists():
-        print("❌ Config non trouvée : ~/.intervals_config.json")
-        return 1
+        api = IntervalsClient()
+        event_data = {
+            "category": "WORKOUT",
+            "name": "Test Simple",
+            "description": "Warmup 10min\nMain set 20min\nCooldown 10min",
+            "start_date_local": "2025-12-01",
+        }
+        result = api.create_event(event_data)
 
-    with open(config_path) as f:
-        config = json.load(f)
-
-    api = IntervalsClient(athlete_id=config.get("athlete_id"), api_key=config.get("api_key"))
-
-    print("✅ API connectée")
-    print()
-
-    # Test 1 : Format minimal
-    print("📋 Test 1 : Format minimal")
-    print("-" * 70)
-
-    test_workout_1 = {
-        "category": "WORKOUT",
-        "name": "Test Simple",
-        "description": "Warmup 10min\nMain set 20min\nCooldown 10min",
-        "start_date_local": "2025-12-01",
-    }
-
-    print(f"Données : {json.dumps(test_workout_1, indent=2)}")
-    print()
-
-    result = api.create_event(test_workout_1)
-
-    if result:
-        print(f"✅ Test 1 RÉUSSI : ID={result.get('id')}")
-    else:
-        print("❌ Test 1 ÉCHOUÉ")
-
-    print()
-    print("=" * 70)
-
-    # Test 2 : Format avec heure
-    print("📋 Test 2 : Format avec heure")
-    print("-" * 70)
-
-    test_workout_2 = {
-        "category": "WORKOUT",
-        "name": "Test Avec Heure",
-        "description": "Warmup 10min\nMain set 20min\nCooldown 10min",
-        "start_date_local": "2025-12-02T08:00:00",
-    }
-
-    print(f"Données : {json.dumps(test_workout_2, indent=2)}")
-    print()
-
-    result = api.create_event(test_workout_2)
-
-    if result:
-        print(f"✅ Test 2 RÉUSSI : ID={result.get('id')}")
-    else:
-        print("❌ Test 2 ÉCHOUÉ")
-
-    print()
-    print("=" * 70)
-
-    return 0
+        mock_create.assert_called_once_with(event_data)
+        assert result["id"] == "evt_001"
+        assert result["name"] == "Test Simple"
 
 
-if __name__ == "__main__":
-    sys.exit(test_create_event())
+class TestCreateEventDatetime:
+    """Test create_event with datetime format."""
+
+    @patch.object(IntervalsClient, "__init__", lambda self, **kw: None)
+    @patch.object(IntervalsClient, "create_event")
+    def test_create_event_datetime(self, mock_create):
+        """Datetime start_date_local (with time) is passed correctly."""
+        mock_create.return_value = {"id": "evt_002", "name": "Test Avec Heure"}
+
+        api = IntervalsClient()
+        event_data = {
+            "category": "WORKOUT",
+            "name": "Test Avec Heure",
+            "description": "Warmup 10min\nMain set 20min\nCooldown 10min",
+            "start_date_local": "2025-12-02T08:00:00",
+        }
+        result = api.create_event(event_data)
+
+        mock_create.assert_called_once_with(event_data)
+        assert result["id"] == "evt_002"
+        assert "T08:00:00" in event_data["start_date_local"]

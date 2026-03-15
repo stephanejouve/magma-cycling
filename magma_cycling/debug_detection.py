@@ -3,9 +3,11 @@
 from datetime import datetime, timedelta
 
 from magma_cycling.config import create_intervals_client
+from magma_cycling.utils.cli import cli_main
 from magma_cycling.workflow_state import WorkflowState
 
 
+@cli_main
 def main():
     """Command-line entry point for debugging gap detection."""
     # Init API via centralized config
@@ -105,4 +107,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main()  # pragma: no cover

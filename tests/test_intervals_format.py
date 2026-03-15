@@ -291,15 +291,11 @@ def test_main_function_runs():
     """
     from magma_cycling.intervals_format_validator import main
 
-    # Should run without exceptions
-    try:
+    # @cli_main wraps with sys.exit(0) on success
+    with pytest.raises(SystemExit) as exc_info:
         main()
-        success = True
-    except Exception as e:
-        success = False
-        error = e
 
-    assert success, f"main() should run without errors, got: {error if not success else None}"
+    assert exc_info.value.code == 0
 
 
 def test_main_function_outputs(capsys):
@@ -309,7 +305,8 @@ def test_main_function_outputs(capsys):
     """
     from magma_cycling.intervals_format_validator import main
 
-    main()
+    with pytest.raises(SystemExit):
+        main()
 
     captured = capsys.readouterr()
     output = captured.out
@@ -346,7 +343,8 @@ def test_script_main_entry_point(monkeypatch, capsys):
     with patch.object(validator_module, "__name__", "__main__"):
         # Manually trigger what would happen at line 353-354
         if validator_module.__name__ == "__main__":
-            validator_module.main()
+            with pytest.raises(SystemExit):
+                validator_module.main()
 
     # Verify main() was called by checking output
     captured = capsys.readouterr()
