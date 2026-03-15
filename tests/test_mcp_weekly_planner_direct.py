@@ -412,6 +412,7 @@ class TestHandleWeeklyPlannerPromptOnly:
 
         planner = _make_mock_planner()
         planner.generate_planning_prompt.return_value = "Full planning prompt content"
+        planner.save_planning_json.return_value = "/tmp/week_planning_S083.json"
         mock_planner_cls.return_value = planner
 
         result = _run_async(
@@ -433,6 +434,37 @@ class TestHandleWeeklyPlannerPromptOnly:
         assert "next_steps" in data
         assert any("modify-session-details" in step for step in data["next_steps"])
 
+    @patch("magma_cycling.weekly_planner.WeeklyPlanner")
+    def test_prompt_only_creates_skeleton(self, mock_planner_cls):
+        """prompt_only creates skeleton planning JSON with 7 sessions."""
+        from magma_cycling._mcp.handlers.planning import handle_weekly_planner
+
+        planner = _make_mock_planner()
+        planner.generate_planning_prompt.return_value = "prompt"
+        planner.save_planning_json.return_value = "/tmp/week_planning_S083.json"
+        mock_planner_cls.return_value = planner
+
+        result = _run_async(
+            handle_weekly_planner(
+                {
+                    "week_id": "S083",
+                    "start_date": "2026-03-16",
+                    "provider": "prompt_only",
+                }
+            )
+        )
+
+        # Verify save_planning_json called with None (skeleton template)
+        planner.save_planning_json.assert_called_once_with(None)
+
+        import json
+
+        data = json.loads(result[0].text)
+        assert len(data["sessions"]) == 7
+        assert data["sessions"][0]["session_id"] == "S083-01"
+        assert data["sessions"][6]["session_id"] == "S083-07"
+        assert "planning_file" in data
+
     @patch("magma_cycling._mcp.handlers.planning._call_ai_provider")
     @patch("magma_cycling.weekly_planner.WeeklyPlanner")
     def test_prompt_only_does_not_call_ai(self, mock_planner_cls, mock_call_ai):
@@ -441,6 +473,7 @@ class TestHandleWeeklyPlannerPromptOnly:
 
         planner = _make_mock_planner()
         planner.generate_planning_prompt.return_value = "prompt"
+        planner.save_planning_json.return_value = "/tmp/week_planning_S083.json"
         mock_planner_cls.return_value = planner
 
         _run_async(

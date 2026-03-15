@@ -208,12 +208,21 @@ async def handle_weekly_planner(args: dict) -> list[TextContent]:
         # Return full prompt for direct consumption by the MCP client (e.g., Claude).
         # No external API call — the AI client reads the prompt from the tool result,
         # generates 7 workouts, and writes them via modify-session-details.
+
+        # Create skeleton planning JSON with 7 empty sessions so that
+        # modify-session-details can find the file and update sessions.
+        with suppress_stdout_stderr():
+            planning_file = planner.save_planning_json(None)
+
         result["status"] = "prompt_ready"
         result["prompt"] = prompt
+        result["planning_file"] = str(planning_file)
+        result["sessions"] = [
+            {"session_id": f"{week_id}-{d + 1:02d}", "status": "planned"} for d in range(7)
+        ]
         result["next_steps"] = [
             "Read the prompt above and generate 7 structured workouts",
-            "Use === WORKOUT {session_id}-{type}-{name}-{version} === delimiters",
-            "Call modify-session-details for each session with the workout details",
+            f"Call modify-session-details for each session ({week_id}-01 to {week_id}-07)",
             "Call sync-week-to-intervals to upload to Intervals.icu",
         ]
 
