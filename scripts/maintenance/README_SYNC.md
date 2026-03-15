@@ -37,7 +37,7 @@ Si le LaunchAgent n'est pas encore installé:
 
 ```bash
 # Copier le plist dans LaunchAgents
-cp scripts/maintenance/com.cyclisme.sync-docs-icloud.plist ~/Library/LaunchAgents/
+cp examples/launchagents/com.cyclisme.sync-docs-icloud.plist ~/Library/LaunchAgents/
 
 # Charger le LaunchAgent
 launchctl load ~/Library/LaunchAgents/com.cyclisme.sync-docs-icloud.plist
@@ -206,7 +206,7 @@ scripts/maintenance/sync_docs_icloud.sh
 **Installation:**
 ```bash
 # Copier le plist
-cp scripts/maintenance/com.cyclisme.project-cleaner.plist ~/Library/LaunchAgents/
+cp examples/launchagents/com.cyclisme.project-cleaner.plist ~/Library/LaunchAgents/
 
 # Charger le LaunchAgent
 launchctl load ~/Library/LaunchAgents/com.cyclisme.project-cleaner.plist

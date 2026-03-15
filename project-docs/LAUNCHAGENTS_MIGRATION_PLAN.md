@@ -178,7 +178,7 @@ Script génère:
 ### Étape 2: Copier vers ~/Library/LaunchAgents
 
 ```bash
-cp scripts/launchagents/*.plist ~/Library/LaunchAgents/
+cp examples/launchagents/*.plist ~/Library/LaunchAgents/
 ```
 
 ### Étape 3: Charger Nouveaux (Sans Décharger Anciens)

@@ -8,7 +8,7 @@
 
 ### 1. Install LaunchAgent
 ```bash
-cp scripts/maintenance/com.cyclisme.end-of-week-oneshot.plist ~/Library/LaunchAgents/
+cp examples/launchagents/com.cyclisme.end-of-week-oneshot.plist ~/Library/LaunchAgents/
 ```
 
 ### 2. Load (starts immediately)
