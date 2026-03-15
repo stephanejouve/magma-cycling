@@ -43,6 +43,8 @@ class AIProvider(Enum):
     OPENAI = "openai"
     MISTRAL = "mistral_api"
     OLLAMA = "ollama"
+    MCP_DIRECT = "mcp_direct"
+    PROMPT_ONLY = "prompt_only"
 
 
 class AIAnalyzer(ABC):

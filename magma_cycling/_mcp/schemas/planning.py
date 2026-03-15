@@ -25,7 +25,13 @@ def get_tools() -> list[Tool]:
                     "provider": {
                         "type": "string",
                         "description": "AI provider for workout generation",
-                        "enum": ["clipboard", "claude_api", "mistral_api"],
+                        "enum": [
+                            "clipboard",
+                            "claude_api",
+                            "mistral_api",
+                            "mcp_direct",
+                            "prompt_only",
+                        ],
                         "default": "clipboard",
                     },
                 },
