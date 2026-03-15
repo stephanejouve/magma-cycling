@@ -47,6 +47,7 @@ from pathlib import Path
 
 from magma_cycling.ai_providers import AIProviderFactory
 from magma_cycling.config import get_ai_config, get_data_config
+from magma_cycling.utils.cli import cli_main
 from magma_cycling.workflows.coach._ui import UIHelpersMixin
 from magma_cycling.workflows.coach.ai_analysis import AIAnalysisMixin
 from magma_cycling.workflows.coach.feedback import FeedbackMixin
@@ -382,6 +383,7 @@ class WorkflowCoach(
             sys.exit(1)
 
 
+@cli_main
 def main():
     """Command-line entry point for workout analysis workflow coach."""
     parser = argparse.ArgumentParser(
