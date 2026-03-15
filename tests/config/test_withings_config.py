@@ -28,7 +28,7 @@ class TestWithingsConfigInitialization:
         monkeypatch.setenv("WITHINGS_REDIRECT_URI", "http://custom:9000/callback")
 
         # Mock data config to use temp path
-        with patch("magma_cycling.config.config_base.get_data_config") as mock_data:
+        with patch("magma_cycling.config.data_repo.get_data_config") as mock_data:
             mock_data.return_value.data_repo_path = tmp_path
             reset_withings_config()  # Clear singleton
             config = get_withings_config()
@@ -43,7 +43,7 @@ class TestWithingsConfigInitialization:
         monkeypatch.setenv("WITHINGS_CLIENT_SECRET", "test_secret")
         monkeypatch.delenv("WITHINGS_REDIRECT_URI", raising=False)
 
-        with patch("magma_cycling.config.config_base.get_data_config") as mock_data:
+        with patch("magma_cycling.config.data_repo.get_data_config") as mock_data:
             mock_data.return_value.data_repo_path = tmp_path
             reset_withings_config()
             config = get_withings_config()
@@ -55,7 +55,7 @@ class TestWithingsConfigInitialization:
         monkeypatch.delenv("WITHINGS_CLIENT_ID", raising=False)
         monkeypatch.delenv("WITHINGS_CLIENT_SECRET", raising=False)
 
-        with patch("magma_cycling.config.config_base.get_data_config") as mock_data:
+        with patch("magma_cycling.config.data_repo.get_data_config") as mock_data:
             mock_data.return_value.data_repo_path = tmp_path
             reset_withings_config()
             config = get_withings_config()
@@ -68,7 +68,7 @@ class TestWithingsConfigInitialization:
         monkeypatch.setenv("WITHINGS_CLIENT_ID", "test_client_id")
         monkeypatch.setenv("WITHINGS_CLIENT_SECRET", "test_secret")
 
-        with patch("magma_cycling.config.config_base.get_data_config") as mock_data:
+        with patch("magma_cycling.config.data_repo.get_data_config") as mock_data:
             mock_data.return_value.data_repo_path = tmp_path
             reset_withings_config()
             config = get_withings_config()
@@ -85,7 +85,7 @@ class TestWithingsConfigValidation:
         monkeypatch.setenv("WITHINGS_CLIENT_ID", "test_client_id")
         monkeypatch.setenv("WITHINGS_CLIENT_SECRET", "test_secret")
 
-        with patch("magma_cycling.config.config_base.get_data_config") as mock_data:
+        with patch("magma_cycling.config.data_repo.get_data_config") as mock_data:
             mock_data.return_value.data_repo_path = tmp_path
             reset_withings_config()
             config = get_withings_config()
@@ -97,7 +97,7 @@ class TestWithingsConfigValidation:
         monkeypatch.delenv("WITHINGS_CLIENT_ID", raising=False)
         monkeypatch.setenv("WITHINGS_CLIENT_SECRET", "test_secret")
 
-        with patch("magma_cycling.config.config_base.get_data_config") as mock_data:
+        with patch("magma_cycling.config.data_repo.get_data_config") as mock_data:
             mock_data.return_value.data_repo_path = tmp_path
             reset_withings_config()
             config = get_withings_config()
@@ -109,7 +109,7 @@ class TestWithingsConfigValidation:
         monkeypatch.setenv("WITHINGS_CLIENT_ID", "test_client_id")
         monkeypatch.delenv("WITHINGS_CLIENT_SECRET", raising=False)
 
-        with patch("magma_cycling.config.config_base.get_data_config") as mock_data:
+        with patch("magma_cycling.config.data_repo.get_data_config") as mock_data:
             mock_data.return_value.data_repo_path = tmp_path
             reset_withings_config()
             config = get_withings_config()
@@ -121,7 +121,7 @@ class TestWithingsConfigValidation:
         monkeypatch.setenv("WITHINGS_CLIENT_ID", "test_client_id")
         monkeypatch.setenv("WITHINGS_CLIENT_SECRET", "test_secret")
 
-        with patch("magma_cycling.config.config_base.get_data_config") as mock_data:
+        with patch("magma_cycling.config.data_repo.get_data_config") as mock_data:
             mock_data.return_value.data_repo_path = tmp_path
             reset_withings_config()
             config = get_withings_config()
@@ -144,7 +144,7 @@ class TestWithingsConfigValidation:
         with open(creds_file, "w") as f:
             json.dump(creds_data, f)
 
-        with patch("magma_cycling.config.config_base.get_data_config") as mock_data:
+        with patch("magma_cycling.config.data_repo.get_data_config") as mock_data:
             mock_data.return_value.data_repo_path = tmp_path
             reset_withings_config()
             config = get_withings_config()
@@ -167,7 +167,7 @@ class TestWithingsConfigValidation:
         with open(creds_file, "w") as f:
             json.dump(creds_data, f)
 
-        with patch("magma_cycling.config.config_base.get_data_config") as mock_data:
+        with patch("magma_cycling.config.data_repo.get_data_config") as mock_data:
             mock_data.return_value.data_repo_path = tmp_path
             reset_withings_config()
             config = get_withings_config()
@@ -188,7 +188,7 @@ class TestWithingsConfigValidation:
         with open(creds_file, "w") as f:
             json.dump(creds_data, f)
 
-        with patch("magma_cycling.config.config_base.get_data_config") as mock_data:
+        with patch("magma_cycling.config.data_repo.get_data_config") as mock_data:
             mock_data.return_value.data_repo_path = tmp_path
             reset_withings_config()
             config = get_withings_config()
@@ -205,7 +205,7 @@ class TestWithingsConfigValidation:
         with open(creds_file, "w") as f:
             f.write("invalid json content {")
 
-        with patch("magma_cycling.config.config_base.get_data_config") as mock_data:
+        with patch("magma_cycling.config.data_repo.get_data_config") as mock_data:
             mock_data.return_value.data_repo_path = tmp_path
             reset_withings_config()
             config = get_withings_config()
@@ -221,7 +221,7 @@ class TestWithingsClientFactory:
         monkeypatch.setenv("WITHINGS_CLIENT_ID", "test_client_id")
         monkeypatch.setenv("WITHINGS_CLIENT_SECRET", "test_secret")
 
-        with patch("magma_cycling.config.config_base.get_data_config") as mock_data:
+        with patch("magma_cycling.config.data_repo.get_data_config") as mock_data:
             mock_data.return_value.data_repo_path = tmp_path
             reset_withings_config()
 
@@ -236,7 +236,7 @@ class TestWithingsClientFactory:
         monkeypatch.delenv("WITHINGS_CLIENT_ID", raising=False)
         monkeypatch.delenv("WITHINGS_CLIENT_SECRET", raising=False)
 
-        with patch("magma_cycling.config.config_base.get_data_config") as mock_data:
+        with patch("magma_cycling.config.data_repo.get_data_config") as mock_data:
             mock_data.return_value.data_repo_path = tmp_path
             reset_withings_config()
 
@@ -249,7 +249,7 @@ class TestWithingsClientFactory:
         monkeypatch.setenv("WITHINGS_CLIENT_SECRET", "test_secret")
         monkeypatch.setenv("WITHINGS_REDIRECT_URI", "http://custom:8000/auth")
 
-        with patch("magma_cycling.config.config_base.get_data_config") as mock_data:
+        with patch("magma_cycling.config.data_repo.get_data_config") as mock_data:
             mock_data.return_value.data_repo_path = tmp_path
             reset_withings_config()
 
@@ -266,7 +266,7 @@ class TestConfigSingleton:
         monkeypatch.setenv("WITHINGS_CLIENT_ID", "test_client_id")
         monkeypatch.setenv("WITHINGS_CLIENT_SECRET", "test_secret")
 
-        with patch("magma_cycling.config.config_base.get_data_config") as mock_data:
+        with patch("magma_cycling.config.data_repo.get_data_config") as mock_data:
             mock_data.return_value.data_repo_path = tmp_path
             reset_withings_config()
 
@@ -280,7 +280,7 @@ class TestConfigSingleton:
         monkeypatch.setenv("WITHINGS_CLIENT_ID", "test_client_id")
         monkeypatch.setenv("WITHINGS_CLIENT_SECRET", "test_secret")
 
-        with patch("magma_cycling.config.config_base.get_data_config") as mock_data:
+        with patch("magma_cycling.config.data_repo.get_data_config") as mock_data:
             mock_data.return_value.data_repo_path = tmp_path
             reset_withings_config()
 
