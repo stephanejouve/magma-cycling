@@ -164,7 +164,7 @@ class TestHandleUpdateSession:
 # =======================
 
 
-LOAD_WORKOUTS_PATCH = "magma_cycling._mcp.handlers.intervals.load_workout_descriptions"
+LOAD_WORKOUTS_PATCH = "magma_cycling._mcp.handlers.intervals_sync.load_workout_descriptions"
 
 
 class TestHandleSyncWeekToIntervals:
