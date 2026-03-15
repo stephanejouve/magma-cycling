@@ -110,6 +110,10 @@ def validate_week_planning(planning: dict | WeeklyPlan) -> bool:
         logger.debug(f"Planning {planning.week_id} déjà validé par Pydantic")
         return True
 
+    # Fallback: duck-typing check for WeeklyPlan-like objects
+    if hasattr(type(planning), "model_fields") and hasattr(planning, "planned_sessions"):
+        return True
+
     # ❌ Legacy: validation manuelle pour dict
     logger.warning("Validation manuelle d'un dict (legacy). Recommandé: utiliser WeeklyPlan")
 

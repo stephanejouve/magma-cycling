@@ -150,7 +150,7 @@ class Session(BaseModel):
             >>> copy.status = "cancelled"
             >>> assert session.status != copy.status  # ✅ No aliasing
         """
-        return Session(**self.model_dump(mode="python"))
+        return self.model_copy(deep=True)
 
     model_config = ConfigDict(
         validate_assignment=True,  # Validate on attribute assignment
