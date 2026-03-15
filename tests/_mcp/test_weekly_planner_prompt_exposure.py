@@ -52,16 +52,32 @@ BASE_ARGS = {
 class TestWeeklyPlannerPromptExposure:
     """Test prompt exposure in weekly planner MCP handler."""
 
-    def test_clipboard_provider_truncates_prompt(self):
-        """Clipboard provider returns prompt truncated to 500 chars."""
+    @patch("magma_cycling._mcp.handlers.planning.subprocess")
+    def test_clipboard_provider_copies_to_clipboard(self, mock_subprocess):
+        """Clipboard provider copies full prompt via pbcopy."""
+        mock_subprocess.run.return_value = None
         args = {**BASE_ARGS, "provider": "clipboard"}
         result = _run(handle_weekly_planner(args))
 
         import json
 
         data = json.loads(result[0].text)
-        assert data["prompt"].endswith("...")
-        assert len(data["prompt"]) == 503  # 500 chars + "..."
+        assert data["status"] == "copied_to_clipboard"
+        assert "prompt" not in data  # Full prompt NOT in response
+        mock_subprocess.run.assert_called_once()
+
+    @patch("magma_cycling._mcp.handlers.planning.subprocess")
+    def test_clipboard_fallback_on_error(self, mock_subprocess):
+        """Clipboard fallback returns full prompt when pbcopy fails."""
+        mock_subprocess.run.side_effect = OSError("pbcopy not found")
+        args = {**BASE_ARGS, "provider": "clipboard"}
+        result = _run(handle_weekly_planner(args))
+
+        import json
+
+        data = json.loads(result[0].text)
+        assert data["status"] == "clipboard_error"
+        assert data["prompt"] == FAKE_PROMPT
 
     def test_claude_api_returns_full_prompt(self):
         """claude_api provider returns the complete prompt."""
