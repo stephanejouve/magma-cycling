@@ -14,9 +14,10 @@ Usage:
 """
 import argparse
 import shutil
-import sys
 from datetime import datetime
 from pathlib import Path
+
+from magma_cycling.utils.cli import cli_main
 
 
 class CasingNormalizer:
@@ -294,6 +295,7 @@ class CasingNormalizer:
         return len(self.errors) == 0
 
 
+@cli_main
 def main():
     """Command-line entry point for normalizing weekly reports directory casing."""
     parser = argparse.ArgumentParser(
@@ -321,10 +323,8 @@ def main():
 
     # Exécuter
     success = normalizer.run()
-
-    # Code de sortie
-    sys.exit(0 if success else 1)
+    return 0 if success else 1
 
 
 if __name__ == "__main__":
-    main()
+    main()  # pragma: no cover
