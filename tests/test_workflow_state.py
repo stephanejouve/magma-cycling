@@ -26,7 +26,9 @@ class TestWorkflowStateInit:
             "last_analyzed_activity_id": "i999",
             "last_analyzed_date": "2026-01-01T00:00:00",
             "total_analyses": 5,
-            "history": [{"activity_id": "i999", "activity_date": None, "analyzed_at": "2026-01-01"}],
+            "history": [
+                {"activity_id": "i999", "activity_date": None, "analyzed_at": "2026-01-01"}
+            ],
         }
         (tmp_path / ".workflow_state.json").write_text(json.dumps(state_data))
         state = WorkflowState(project_root=tmp_path)

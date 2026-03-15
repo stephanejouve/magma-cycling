@@ -119,11 +119,15 @@ class TestCalculateMesocycleStats:
     def test_stats_with_data(self, tmp_path):
         storage = AdherenceStorage(storage_file=tmp_path / "adherence.json")
         storage.save_session_adherence(
-            "i001", "S077", "2026-01-06",
+            "i001",
+            "S077",
+            "2026-01-06",
             {"tss_adherence": 0.90, "if_adherence": 0.95, "has_plan": True},
         )
         storage.save_session_adherence(
-            "i002", "S078", "2026-01-13",
+            "i002",
+            "S078",
+            "2026-01-13",
             {"tss_adherence": 0.80, "if_adherence": 0.90, "has_plan": True},
         )
 
@@ -142,7 +146,9 @@ class TestCalculateMesocycleStats:
     def test_stats_sessions_without_plan(self, tmp_path):
         storage = AdherenceStorage(storage_file=tmp_path / "adherence.json")
         storage.save_session_adherence(
-            "i001", "S077", "2026-01-06",
+            "i001",
+            "S077",
+            "2026-01-06",
             {"tss_adherence": None, "has_plan": False},
         )
 
@@ -159,7 +165,9 @@ class TestGetAdherenceTrend:
         # Increasing TSS adherence over time
         for i, tss in enumerate([0.70, 0.75, 0.80, 0.85, 0.90]):
             storage.save_session_adherence(
-                f"i{i:03d}", "S077", f"2026-01-{6 + i:02d}",
+                f"i{i:03d}",
+                "S077",
+                f"2026-01-{6 + i:02d}",
                 {"tss_adherence": tss, "has_plan": True},
             )
 
@@ -170,7 +178,9 @@ class TestGetAdherenceTrend:
         storage = AdherenceStorage(storage_file=tmp_path / "adherence.json")
         for i, tss in enumerate([0.95, 0.90, 0.85, 0.80, 0.70]):
             storage.save_session_adherence(
-                f"i{i:03d}", "S077", f"2026-01-{6 + i:02d}",
+                f"i{i:03d}",
+                "S077",
+                f"2026-01-{6 + i:02d}",
                 {"tss_adherence": tss, "has_plan": True},
             )
 
@@ -180,7 +190,9 @@ class TestGetAdherenceTrend:
     def test_insufficient_data(self, tmp_path):
         storage = AdherenceStorage(storage_file=tmp_path / "adherence.json")
         storage.save_session_adherence(
-            "i001", "S077", "2026-01-06",
+            "i001",
+            "S077",
+            "2026-01-06",
             {"tss_adherence": 0.90, "has_plan": True},
         )
 
@@ -191,7 +203,9 @@ class TestGetAdherenceTrend:
         storage = AdherenceStorage(storage_file=tmp_path / "adherence.json")
         for i in range(5):
             storage.save_session_adherence(
-                f"i{i:03d}", "S077", f"2026-01-{6 + i:02d}",
+                f"i{i:03d}",
+                "S077",
+                f"2026-01-{6 + i:02d}",
                 {"tss_adherence": 0.90, "has_plan": True},
             )
 
