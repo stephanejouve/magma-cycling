@@ -18,7 +18,7 @@
 ✅ Phase 1    Déc 2025        Workflow, AI Providers, Weekly Analysis
 ✅ Sprints    R1→R9  Jan 2026 API, Metrics, Quality, PID, Monitoring, Baseline
 ✅ Phase 2.5  Fév 2026        Workout Diversity, Tests S080
-🔧 Phase 3    Fév-Mars 2026   Refactoring God Scripts ✅ + Enrichissement IA (EN COURS)
+✅ Phase 3    Fév-Mars 2026   Refactoring God Scripts ✅ + Enrichissement IA ✅ + Stabilisation ✅
 📋 Phase 4    Q2-Q3 2026      Déploiement : API REST + BDD + UX Client (PLANIFIÉE)
 💡 Phase 5    Q3-Q4 2026      Intelligence avancée + Intégrations (BACKLOG)
 ```
@@ -96,7 +96,7 @@
 
 ---
 
-## 🔧 Phase 3 — Refactoring & Intelligence (Fév-Mars 2026) — EN COURS
+## ✅ Phase 3 — Refactoring & Intelligence (Fév-Mars 2026) — TERMINÉE
 
 ### 3.1 — Refactoring God Scripts ✅ TERMINÉ
 
@@ -114,7 +114,7 @@
 | `weekly_planner.py` | 720L | ~200L façade + 4 mixins (`planner/`) | Mixin decomposition |
 | `upload_workouts.py` | 717L | ~240L façade + 3 mixins (`uploader/`) | Mixin decomposition |
 
-**Résultats finaux :** 1 879 tests passing, 15/15 pre-commit hooks, rétrocompatibilité préservée.
+**Résultats finaux :** 2 302 tests passing, 15/15 pre-commit hooks, rétrocompatibilité préservée.
 9 god scripts décomposés — **tous les candidats identifiés sont traités.**
 
 #### Fichiers volumineux hors scope (pas des god scripts)
@@ -134,13 +134,11 @@
 
 ---
 
-### 3.2 — Enrichissement Prompts IA Coach ⭐ PLANIFIÉ
+### 3.2 — Enrichissement Prompts IA Coach ✅ TERMINÉ
 
 **Objectif :** Contextualiser les analyses IA avec le profil athlète et des missions spécifiques par moment du cycle d'entraînement.
 
-**Problème :** Les providers IA reçoivent uniquement des statistiques brutes, produisant des recommandations génériques et déconnectées (outils externes recommandés, phase d'entraînement ignorée, contraintes inconnues).
-
-**Architecture :**
+**Architecture déployée :**
 
 ```
 config/
@@ -154,21 +152,17 @@ prompts/
   └── weekly_review.txt           → Mission intermédiaire : bilan hebdo
 ```
 
-**Assemblage :** `base_system + athlete_context (dynamique) + mission_spécifique + données workflow`
+**Assemblage :** `build_prompt()` dans `prompts/prompt_builder.py` — `base_system + athlete_context (dynamique) + mission_spécifique + données workflow`
 
-**Principes :**
-- 1 contexte athlète partagé, N consommateurs
-- Provider-agnostic (aucune référence à un provider ou service spécifique)
-- Dégradation gracieuse si contexte absent
-- Fichiers .txt éditables sans toucher au code Python
+**Implémentation (4 phases complétées) :**
+1. ✅ Phase 1 : `athlete_context.yaml` + `load_athlete_context()` + tests
+2. ✅ Phase 2 : `prompts/base_system.txt` + 4 missions + `prompt_builder.py` + tests
+3. ✅ Phase 3 : Migration `monthly-analysis` + `servo_control` sur nouveau système (PR #85-86)
+4. ✅ Phase 4 : Migration `daily-sync`, `workflow-coach`, `end_of_week` (PR #85)
+
+**Helpers partagés :** `load_current_metrics()` dans `prompt_builder.py` (FTP, weight, CTL, ATL, ramp_rate)
 
 **Spec complète :** `PROMPT_ENRICH_AI_COACH_CONTEXT.md`
-
-**Implémentation :**
-1. Phase 1 : `athlete_context.yaml` + `load_athlete_context()` + tests
-2. Phase 2 : `prompts/base_system.txt` + 4 missions + `prompt_builder.py` + tests
-3. Phase 3 : Migration `monthly-analysis` sur nouveau système
-4. Phase 4 : Migration `weekly-planner`, `daily-sync`, `end_of_week`
 
 ---
 
@@ -177,11 +171,24 @@ prompts/
 | Item | Priorité | Effort | Status |
 |------|----------|--------|--------|
 | PID Calibration post-S080 (R10) | P1 | 5-7j | 📋 Planifié |
-| DRY violation Intervals.icu scales | P2 | 2-3h | ✅ Résolu |
+| DRY violation Intervals.icu scales | P2 | 2-3h | ✅ Résolu (PR #83-84, #94) |
 | Workflow Diversity Integration (S4) | P1 | 2-3h | 📋 Planifié |
 | Test History Tracking | P2 | 2-4h | 📋 Backlog |
 | Indoor/Outdoor Adaptive Analysis | P1 | 3-4h | ✅ Résolu |
 | Auto-rest: directives récup → statut planning | P2 | 4-6h | ✅ Résolu |
+
+### 3.4 — Stabilisation & Documentation (Mars 2026) ✅ TERMINÉ
+
+| Item | PR | Status |
+|------|-----|--------|
+| Fix 6 tests CI flaky (Python 3.11/3.12) | PR #130 | ✅ |
+| 82 fichiers .rst Sphinx (modules sprints 1-6) | PR #130 | ✅ |
+| Zwift: dédupliquer session HTTP service/client | PR #131 | ✅ |
+| Zwift: fix pydocstyle D107 `ZwiftService.__init__` | PR #131 | ✅ |
+| Mop-up tests modules non couverts (sprint 6) | PR #129 | ✅ |
+| CLI main façades refactoring (sprint 6) | PR #128 | ✅ |
+
+**Résultat :** 2 302 tests, 13/13 CI checks verts, 0 pydocstyle violations, documentation Sphinx complète.
 
 ---
 
@@ -349,14 +356,17 @@ Items long-terme, priorisés après déploiement Phase 4.
 
 | Métrique | Valeur | Status |
 |----------|--------|--------|
-| **Tests passing** | 1 879+ | ✅ |
+| **Tests passing** | 2 302+ | ✅ |
 | **Pre-commit hooks** | 15 actifs | ✅ |
 | **PEP 8/257 violations** | 0 | ✅ |
 | **MyPy errors** | 0 | ✅ |
 | **MCP tools** | 28+ opérationnels | ✅ |
 | **AI providers** | 4 (Claude, Mistral, OpenAI, Ollama) | ✅ |
 | **Health providers** | 1 + NullProvider (agnostique) | ✅ |
-| **God scripts refactorés** | 9/9 — TOUS COMPLÉTÉS (mcp_server, workflow_coach, daily_sync, end_of_week, baseline_preliminary, prepare_analysis, rest_and_cancellations, weekly_planner, upload_workouts) | ✅ |
+| **God scripts refactorés** | 9/9 — TOUS COMPLÉTÉS | ✅ |
+| **Sphinx .rst docs** | 82 fichiers modules (sprints 1-6) | ✅ |
+| **CI checks** | 13/13 verts (incl. Python 3.11/3.12 non-requis) | ✅ |
+| **Enrichissement prompts IA** | 4 missions + prompt_builder (PR #85-86) | ✅ |
 
 ### Progression athlète
 
@@ -418,7 +428,7 @@ Le handler MCP et `UploadMixin` délèguent tous deux aux mêmes helpers.
 
 ---
 
-**Dernière mise à jour :** 3 mars 2026
-**Prochaine revue :** Post-refactoring Phase 3.1 (god scripts)
+**Dernière mise à jour :** 15 mars 2026
+**Prochaine revue :** Préparation Phase 4 (BDD + API REST)
 
 🤖 *Maintained with Claude Code & Claude.ai*
