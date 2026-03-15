@@ -1,44 +1,166 @@
 # MCP Integration - Claude Desktop
 
-## 🎯 Vue d'Ensemble
+## Vue d'Ensemble
 
-Le **MCP Server** (Model Context Protocol) expose tous les outils de training logs directement à Claude Desktop et autres clients MCP compatibles.
+Le **MCP Server** (Model Context Protocol) expose 48 tools de gestion d'entrainement directement a Claude Desktop et autres clients MCP compatibles.
 
-**Date de déploiement:** 2026-02-21
-**Status:** ✅ Production Ready
+**Date de deploiement :** 2026-02-21
+**Status :** Production Ready
+**Tools exposes :** 48
 
-## 🏗️ Architecture
+## Architecture
 
 ```
-┌─────────────────────────────────────────┐
-│        Claude Desktop                   │
-│  (ou autre client MCP)                  │
-└─────────────┬───────────────────────────┘
-              │ JSON-RPC 2.0 over stdio
-              ▼
-┌─────────────────────────────────────────┐
-│     MCP Server                          │
-│  magma_cycling.mcp_server      │
-│                                         │
-│  Tools:                                 │
-│  ├── weekly-planner                     │
-│  ├── monthly-analysis                   │
-│  ├── daily-sync                         │
-│  ├── update-session                     │
-│  ├── list-weeks                         │
-│  └── get-metrics                        │
-└─────────────┬───────────────────────────┘
-              │
-              ▼
-┌─────────────────────────────────────────┐
-│    Control Tower + Audit Log            │
-│    + All existing tools                 │
-└─────────────────────────────────────────┘
+                  Claude Desktop
+               (ou autre client MCP)
+                        |
+                        | JSON-RPC 2.0 over stdio
+                        v
+          +-----------------------------+
+          |        MCP Server           |
+          |  magma_cycling.mcp_server   |
+          |                             |
+          |  48 tools / 13 handlers     |
+          +-----------------------------+
+                   |         |
+          +--------+    +--------+
+          |             |
+    Control Tower    IntervalsClient
+    + Audit Log      + Withings API
 ```
 
-## 🚀 Installation
+### Structure handlers
 
-### 1. Vérifier l'Installation
+```
+magma_cycling/_mcp/handlers/
+  planning.py           # 11 tools
+  analysis.py           #  8 tools
+  withings.py           #  8 tools
+  intervals_sync.py     #  3 tools
+  intervals_events.py   #  4 tools
+  intervals_activities.py # 3 tools
+  intervals_analysis.py #  2 tools
+  sessions.py           #  3 tools
+  workouts.py           #  2 tools
+  athlete.py            #  2 tools
+  catalog.py            #  1 tool
+  admin.py              #  1 tool
+  intervals.py          #  (re-export shim)
+```
+
+## Tools par categorie
+
+### Planning (11 tools) — `planning.py`
+
+| Tool | Description |
+|------|-------------|
+| `weekly-planner` | Genere planning hebdomadaire avec recommandations AI |
+| `monthly-analysis` | Analyse mensuelle complete avec stats + insights AI |
+| `daily-sync` | Synchronise activites depuis Intervals.icu |
+| `update-session` | Met a jour statut d'une session |
+| `list-weeks` | Liste les plannings hebdomadaires disponibles |
+| `get-metrics` | Recupere metriques d'entrainement actuelles |
+| `get-week-details` | Details complets d'une semaine (sessions, statuts, TSS) |
+| `modify-session-details` | Modifie les details d'une session (type, nom, description) |
+| `rename-session` | Renomme une session selon la convention de nommage |
+| `create-session` | Cree une nouvelle session dans le planning |
+| `delete-session` | Supprime une session du planning |
+
+### Analysis (8 tools) — `analysis.py`
+
+| Tool | Description |
+|------|-------------|
+| `validate-week-consistency` | Valide la coherence d'un planning hebdomadaire |
+| `get-recommendations` | Recommandations d'entrainement basees sur les metriques |
+| `analyze-session-adherence` | Analyse l'adherence seance planifiee vs realisee |
+| `get-training-statistics` | Statistiques d'entrainement sur une periode |
+| `export-week-to-json` | Exporte un planning en JSON |
+| `restore-week-from-backup` | Restaure un planning depuis un backup |
+| `analyze-training-patterns` | Analyse les patterns d'entrainement |
+| `get-coach-analysis` | Analyse coach AI d'une activite |
+
+### Withings (8 tools) — `withings.py`
+
+| Tool | Description |
+|------|-------------|
+| `withings-auth-status` | Statut d'authentification Withings |
+| `withings-authorize` | Lancer le flow OAuth Withings |
+| `withings-get-sleep` | Donnees de sommeil |
+| `withings-get-weight` | Donnees de poids et composition corporelle |
+| `withings-get-readiness` | Score de readiness |
+| `withings-sync-to-intervals` | Synchronise donnees Withings vers Intervals.icu |
+| `withings-analyze-trends` | Analyse des tendances sante |
+| `withings-enrich-session` | Enrichit une session avec donnees sante |
+
+### Intervals.icu — Sync (3 tools) — `intervals_sync.py`
+
+| Tool | Description |
+|------|-------------|
+| `sync-week-to-intervals` | Synchronise le planning local vers Intervals.icu |
+| `sync-remote-to-local` | Synchronise les events Intervals.icu vers le planning local |
+| `backfill-activities` | Backfill des activites historiques |
+
+### Intervals.icu — Events (4 tools) — `intervals_events.py`
+
+| Tool | Description |
+|------|-------------|
+| `delete-remote-session` | Supprime un event sur Intervals.icu |
+| `list-remote-events` | Liste les events Intervals.icu pour une periode |
+| `update-remote-session` | Met a jour un event sur Intervals.icu |
+| `create-remote-note` | Cree une NOTE sur Intervals.icu |
+
+### Intervals.icu — Activities (3 tools) — `intervals_activities.py`
+
+| Tool | Description |
+|------|-------------|
+| `get-activity-details` | Details complets d'une activite |
+| `get-activity-intervals` | Intervalles d'une activite (laps, segments) |
+| `get-activity-streams` | Streams d'une activite (power, HR, cadence) |
+
+### Intervals.icu — Analysis (2 tools) — `intervals_analysis.py`
+
+| Tool | Description |
+|------|-------------|
+| `compare-intervals` | Compare intervalles planifies vs realises |
+| `apply-workout-intervals` | Applique un workout Intervals.icu format a un event |
+
+### Sessions (3 tools) — `sessions.py`
+
+| Tool | Description |
+|------|-------------|
+| `duplicate-session` | Duplique une session dans le planning |
+| `swap-sessions` | Echange deux sessions dans le planning |
+| `attach-workout` | Attache un fichier workout a une session |
+
+### Workouts (2 tools) — `workouts.py`
+
+| Tool | Description |
+|------|-------------|
+| `get-workout` | Recupere le contenu d'un workout (fichier ou planning) |
+| `validate-workout` | Valide le format d'un workout |
+
+### Athlete (2 tools) — `athlete.py`
+
+| Tool | Description |
+|------|-------------|
+| `get-athlete-profile` | Profil athlete (FTP, poids, zones, objectifs) |
+| `update-athlete-profile` | Met a jour le profil athlete |
+
+### Catalog (1 tool) — `catalog.py`
+
+| Tool | Description |
+|------|-------------|
+| `list-workout-catalog` | Liste le catalogue de workouts Zwift disponibles |
+
+### Admin (1 tool) — `admin.py`
+
+| Tool | Description |
+|------|-------------|
+| `reload-server` | Rechargement a chaud du serveur MCP |
+
+## Installation
+
+### 1. Verifier l'installation
 
 ```bash
 # Tester que le serveur MCP se lance
@@ -46,12 +168,12 @@ poetry run mcp-server
 # Devrait attendre stdin (Ctrl+C pour quitter)
 
 # Tester les imports
-poetry run python -c "from magma_cycling.mcp_server import server; print('✅ OK')"
+poetry run python -c "from magma_cycling.mcp_server import server; print('OK')"
 ```
 
 ### 2. Configuration Claude Desktop
 
-**Localisation:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+**Localisation :** `~/Library/Application Support/Claude/claude_desktop_config.json`
 
 ```json
 {
@@ -59,369 +181,102 @@ poetry run python -c "from magma_cycling.mcp_server import server; print('✅ OK
     "cyclisme-training": {
       "command": "poetry",
       "args": ["run", "mcp-server"],
-      "cwd": "/Users/stephanejouve/magma-cycling",
+      "cwd": "/chemin/vers/magma-cycling",
       "env": {}
     }
   }
 }
 ```
 
-**Remplacer `/Users/stephanejouve/magma-cycling` par votre chemin absolu au projet.**
+### 3. Redemarrer Claude Desktop
 
-### 3. Redémarrer Claude Desktop
+Quitter completement et relancer. Verifier dans Settings > MCP Servers que "cyclisme-training" est connecte.
 
-```bash
-# Quitter complètement Claude Desktop
-# Relancer l'application
-
-# Vérifier dans les settings que le serveur est connecté
-# Section "MCP Servers" devrait montrer "cyclisme-training" ✅
-```
-
-## 🛠️ Tools Disponibles
-
-### 1. weekly-planner
-
-**Description:** Génère le planning hebdomadaire avec recommandations AI
-
-**Paramètres:**
-```json
-{
-  "week_id": "S082",           // Required: Week ID
-  "start_date": "2026-02-23",  // Required: Monday start date (YYYY-MM-DD)
-  "provider": "clipboard"      // Optional: AI provider (clipboard/claude_api/mistral_api)
-}
-```
-
-**Exemple Claude Desktop:**
-```
-User: "Claude, génère le planning pour la semaine S082 qui commence le 23 février 2026"
-
-Claude: [Calls MCP tool "weekly-planner"]
-{
-  "week_id": "S082",
-  "start_date": "2026-02-23",
-  "status": "prompt_generated",
-  "prompt_length": 15234,
-  "message": "Planning prompt generated for S082"
-}
-```
-
-### 2. monthly-analysis
-
-**Description:** Analyse mensuelle complète avec stats + insights AI
-
-**Paramètres:**
-```json
-{
-  "month": "2026-01",          // Required: Month (YYYY-MM)
-  "provider": "mistral_api",   // Optional: AI provider
-  "no_ai": false               // Optional: Skip AI analysis
-}
-```
-
-**Exemple Claude Desktop:**
-```
-User: "Génère l'analyse mensuelle de janvier 2026"
-
-Claude: [Calls MCP tool "monthly-analysis"]
-{
-  "month": "2026-01",
-  "report_length": 2845,
-  "report": "# 📊 Analyse Mensuelle - January 2026..."
-}
-```
-
-### 3. daily-sync
-
-**Description:** Synchronise les activités depuis Intervals.icu
-
-**Paramètres:**
-```json
-{
-  "date": "2026-02-21",        // Optional: Date to check (default: today)
-  "week_id": "S082"            // Optional: Week ID for planning check
-}
-```
-
-**Exemple Claude Desktop:**
-```
-User: "Synchronise les activités d'aujourd'hui"
-
-Claude: [Calls MCP tool "daily-sync"]
-{
-  "date": "2026-02-21",
-  "activities_found": 1,
-  "status": "completed",
-  "message": "Sync completed for 2026-02-21"
-}
-```
-
-### 4. update-session
-
-**Description:** Met à jour le statut d'une session
-
-**Paramètres:**
-```json
-{
-  "week_id": "S082",           // Required: Week ID
-  "session_id": "S082-03",     // Required: Session ID
-  "status": "completed",       // Required: New status
-  "reason": "...",             // Optional: Reason (required for skipped/cancelled)
-  "sync": false                // Optional: Sync to Intervals.icu
-}
-```
-
-**Statuts valides:**
-- `pending` - En attente
-- `planned` - Planifiée
-- `uploaded` - Uploadée sur Intervals.icu
-- `completed` - Complétée
-- `skipped` - Sautée (reason required)
-- `cancelled` - Annulée (reason required)
-- `rest_day` - Repos
-- `replaced` - Remplacée (reason required)
-- `modified` - Modifiée
-
-**Exemple Claude Desktop:**
-```
-User: "Marque la session S082-03 comme complétée"
-
-Claude: [Calls MCP tool "update-session"]
-{
-  "week_id": "S082",
-  "session_id": "S082-03",
-  "status": "completed",
-  "message": "Session S082-03 updated to completed"
-}
-```
-
-### 5. list-weeks
-
-**Description:** Liste les plannings hebdomadaires disponibles
-
-**Paramètres:**
-```json
-{
-  "limit": 10,                 // Optional: Max weeks to return (1-52)
-  "recent": true               // Optional: Most recent first
-}
-```
-
-**Exemple Claude Desktop:**
-```
-User: "Quelles sont les 5 dernières semaines planifiées?"
-
-Claude: [Calls MCP tool "list-weeks" with limit=5]
-{
-  "total_found": 5,
-  "showing": 5,
-  "weeks": [
-    {
-      "week_id": "S082",
-      "start_date": "2026-02-23",
-      "end_date": "2026-03-01",
-      "tss_target": 385,
-      "sessions": 7
-    },
-    ...
-  ]
-}
-```
-
-### 6. get-metrics
-
-**Description:** Récupère les métriques d'entraînement actuelles
-
-**Paramètres:** Aucun
-
-**Exemple Claude Desktop:**
-```
-User: "Quelles sont mes métriques actuelles?"
-
-Claude: [Calls MCP tool "get-metrics"]
-{
-  "date": "2026-02-21",
-  "ctl": 42,
-  "atl": 46,
-  "tsb": -3,
-  "rampRate": 0.8,
-  "ctlLoad": 245,
-  "atlLoad": 267
-}
-
-Claude: "Tes métriques actuelles:
-- CTL (Chronic Training Load): 42
-- ATL (Acute Training Load): 46
-- TSB (Training Stress Balance): -3 (légère fatigue)
-- Ramp Rate: 0.8
-"
-```
-
-## 📝 Exemples d'Utilisation
-
-### Workflow Complet via Claude Desktop
-
-```
-User: "Claude, je veux planifier ma semaine S082 qui commence lundi 23 février"
-
-Claude: [Calls list-weeks to check existing]
-       [Calls get-metrics to get current state]
-       [Calls weekly-planner with S082, 2026-02-23]
-
-       "Planning généré pour S082! Basé sur tes métriques:
-       - CTL: 42 (bonne forme)
-       - TSB: -3 (légère fatigue)
-
-       Je recommande:
-       - 7 séances
-       - 385 TSS total
-       - Focus endurance avec 1 séance intensité
-
-       Le prompt est prêt dans ton clipboard."
-
-User: "Super! Maintenant marque S081-07 comme repos car j'étais malade"
-
-Claude: [Calls update-session]
-       "✅ Session S081-07 marquée comme repos.
-       Raison: Maladie
-       Backup créé automatiquement par Control Tower."
-
-User: "Montre-moi l'analyse de janvier"
-
-Claude: [Calls monthly-analysis with month=2026-01]
-
-       "📊 Analyse Janvier 2026:
-       - 245 TSS réalisés / 739 cible (33%)
-       - 6 sessions complétées
-       - 50% adhérence
-       - Meilleure semaine: S077 (63.6%)
-
-       💡 Insights:
-       - Tendance: Démarrage progressif post-coupure
-       - Points forts: Régularité S077-S078
-       - À améliorer: Taux de réalisation
-       "
-```
-
-### Monitoring Quotidien
-
-```
-User: "Synchronise mes activités"
-
-Claude: [Calls daily-sync]
-       "✅ Sync terminé:
-       - 1 activité trouvée aujourd'hui
-       - S082-03 marquée 'completed' automatiquement
-       - TSS: 72 enregistré"
-```
-
-## 🔒 Sécurité
+## Securite
 
 ### Permissions
 
-Le MCP server utilise la **Control Tower** pour toutes les modifications:
-- ✅ Backup automatique avant chaque modification
-- ✅ Audit log complet (WHO/WHY/WHEN/WHAT)
-- ✅ Permission system (anti-modifications concurrentes)
-- ✅ Validation Pydantic sur toutes les données
+Le MCP server utilise la **Control Tower** pour toutes les modifications :
+- Backup automatique avant chaque modification
+- Audit log complet (WHO/WHY/WHEN/WHAT)
+- Permission system (anti-modifications concurrentes)
+- Validation Pydantic sur toutes les donnees
 
-### Traçabilité
+### Tracabilite
 
-Toutes les opérations via MCP sont loggées:
+Toutes les operations via MCP sont loguees :
 
 ```json
 {
-  "timestamp": "2026-02-21T15:30:45Z",
+  "timestamp": "2026-03-15T15:30:45Z",
   "operation": "MODIFY",
-  "week_id": "S082",
+  "week_id": "S085",
   "tool": "mcp-server",
-  "username": "stephanejouve",
-  "reason": "MCP: Update S082-03 to completed",
+  "username": "user",
+  "reason": "MCP: Update S085-03 to completed",
   "status": "SUCCESS"
 }
 ```
 
-Audit log: `~/data/.planning_audit.jsonl`
+Audit log : `~/data/.planning_audit.jsonl`
 
-## 🆘 Troubleshooting
+## Troubleshooting
 
-### Serveur MCP ne démarre pas
+### Serveur MCP ne demarre pas
 
 ```bash
-# Vérifier les imports
+# Verifier les imports
 poetry run python -c "from magma_cycling.mcp_server import server"
 
-# Vérifier les dépendances
+# Verifier les dependances
 poetry show mcp
 
-# Réinstaller si besoin
+# Reinstaller si besoin
 poetry install
 ```
 
 ### Claude Desktop ne voit pas le serveur
 
-1. Vérifier le chemin `cwd` dans `claude_desktop_config.json`
-2. Vérifier que `poetry run mcp-server` fonctionne en CLI
-3. Redémarrer complètement Claude Desktop
-4. Checker les logs Claude Desktop: `~/Library/Logs/Claude/`
+1. Verifier le chemin `cwd` dans `claude_desktop_config.json`
+2. Verifier que `poetry run mcp-server` fonctionne en CLI
+3. Redemarrer completement Claude Desktop
+4. Checker les logs Claude Desktop : `~/Library/Logs/Claude/`
 
-### Tool call échoue
+### Tool call echoue
 
-Les erreurs sont retournées en JSON:
+Les erreurs sont retournees en JSON :
 
 ```json
 {
-  "error": "Session S082-03 not found in S082",
+  "error": "Session S085-03 not found in S085",
   "tool": "update-session",
-  "arguments": {...}
+  "arguments": {}
 }
 ```
 
-Vérifier:
-- Format des arguments (week_id, dates, etc.)
-- Que les fichiers existent
-- Permissions filesystem
+Verifier : format des arguments, existence des fichiers, permissions filesystem.
 
-## 📊 Statistiques
+## Statistiques
 
-**Tools exposés:** 6
-**Protocole:** JSON-RPC 2.0 over stdio
-**Transport:** MCP SDK Python
-**Sécurité:** Control Tower + Audit Log
-**Status:** ✅ Production Ready
+| Metrique | Valeur |
+|----------|--------|
+| **Tools exposes** | 48 |
+| **Handlers** | 13 fichiers |
+| **Protocole** | JSON-RPC 2.0 over stdio |
+| **Transport** | MCP SDK Python |
+| **Securite** | Control Tower + Audit Log |
+| **Status** | Production Ready |
 
-## 🔮 Évolutions Futures
+## References
 
-### Phase 2 - Tools Supplémentaires
-
-- `end-of-week` - Workflow complet fin de semaine
-- `backup-rollback` - Gestion backups/rollback
-- `workout-coach` - Coach interactif
-- `intelligence-query` - Interroger training intelligence
-
-### Phase 3 - Notifications
-
-- Push notifications sur activités complétées
-- Alertes sur métriques (TSB critique, etc.)
-- Rappels planification hebdo
-
-### Phase 4 - Intégrations
-
-- Strava sync
-- Garmin Connect sync
-- Wahoo sync
-
-## 📚 Références
-
-- **MCP Spec:** https://modelcontextprotocol.io/
-- **Code Server:** `magma_cycling/mcp_server.py`
-- **Control Tower:** `project-docs/CONTROL_TOWER.md`
-- **Features Feb 2026:** `project-docs/FEATURES_FEB_2026.md`
+- **MCP Spec :** https://modelcontextprotocol.io/
+- **Code Server :** `magma_cycling/mcp_server.py`
+- **Handlers :** `magma_cycling/_mcp/handlers/`
+- **Schemas :** `magma_cycling/_mcp/schemas/`
+- **Control Tower :** `project-docs/CONTROL_TOWER.md`
 
 ---
 
-**Auteur:** Claude Code
-**Date:** 2026-02-21
-**Version:** 1.0.0
-**Status:** ✅ Production Ready
+**Date :** Mars 2026
+**Version :** 2.0.0
+**Status :** Production Ready
