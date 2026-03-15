@@ -13,12 +13,20 @@ class TestAIProviderEnum:
     """Tests for AIProvider enum."""
 
     def test_enum_has_all_providers(self):
-        """Test that enum contains all 5 expected providers."""
-        expected_providers = ["clipboard", "claude_api", "mistral_api", "openai", "ollama"]
+        """Test that enum contains all 7 expected providers."""
+        expected_providers = [
+            "clipboard",
+            "claude_api",
+            "mistral_api",
+            "openai",
+            "ollama",
+            "mcp_direct",
+            "prompt_only",
+        ]
 
         actual_providers = [p.value for p in AIProvider]
 
-        assert len(actual_providers) == 5, f"Expected 5 providers, got {len(actual_providers)}"
+        assert len(actual_providers) == 7, f"Expected 7 providers, got {len(actual_providers)}"
         for provider in expected_providers:
             assert provider in actual_providers, f"Provider {provider} not in enum"
 

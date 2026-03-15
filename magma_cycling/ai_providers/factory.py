@@ -198,6 +198,31 @@ class AIProviderFactory:
             logger.info(f"Creating OllamaAnalyzer (model: {model}, host: {host})")
             return OllamaAnalyzer(host=host, model=model)
 
+        # === MCP_DIRECT (auto-select best configured API provider) ===
+        elif provider_enum == AIProvider.MCP_DIRECT:
+            from magma_cycling.config import get_ai_config
+
+            ai_config = get_ai_config()
+            api_providers = [
+                p
+                for p in ai_config.get_available_providers()
+                if p not in ("clipboard", "mcp_direct")
+            ]
+            if not api_providers:
+                raise ConfigError(
+                    "mcp_direct requires at least one API provider configured "
+                    "(claude_api, mistral_api, openai, ollama)"
+                )
+            best = api_providers[0]
+            provider_config = ai_config.get_provider_config(best)
+            # Override max_tokens for planning (7 workouts ≈ 16K tokens)
+            if best == "claude_api":
+                provider_config["claude_max_tokens"] = 16000
+            elif best == "mistral_api":
+                provider_config["mistral_max_tokens"] = 16000
+            logger.info(f"mcp_direct: delegating to {best}")
+            return AIProviderFactory.create(best, provider_config)
+
         else:
             # Should never reach here due to enum validation above
             raise ConfigError(f"Provider not implemented: {provider}")
