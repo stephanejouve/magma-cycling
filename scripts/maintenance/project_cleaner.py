@@ -61,6 +61,9 @@ class ProjectCleaner:
             "README.md",
             "CHANGELOG.md",
             "CODING_STANDARDS.md",
+            "CONTRIBUTING.md",
+            "CODE_OF_CONDUCT.md",
+            "SECURITY.md",
             "LICENSE",
             # Python package configuration
             "pyproject.toml",

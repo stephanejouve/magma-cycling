@@ -24,7 +24,7 @@ Ce LaunchAgent optionnel exécute l'évaluation PID quotidienne automatiquement 
 ### 1. Copier le fichier plist
 
 ```bash
-cp scripts/monitoring/com.cyclisme.pid_evaluation.plist ~/Library/LaunchAgents/
+cp examples/launchagents/com.cyclisme.pid_evaluation.plist ~/Library/LaunchAgents/
 ```
 
 ### 2. Charger le LaunchAgent
