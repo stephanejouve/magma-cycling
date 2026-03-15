@@ -40,6 +40,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import parse_qs, urlparse
 
 from magma_cycling.config import create_withings_client, get_withings_config
+from magma_cycling.utils.cli import cli_main
 
 # Global variable to store authorization code
 authorization_code = None
@@ -232,6 +233,7 @@ def start_callback_server(port: int = 8080) -> str | None:
     return authorization_code
 
 
+@cli_main
 def main():
     """Main setup flow for Withings OAuth authentication."""
     print("\n" + "=" * 50)
@@ -371,14 +373,4 @@ def main():
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        print("\n\nSetup cancelled by user.")
-        sys.exit(1)
-    except Exception as e:
-        print(f"\n❌ Unexpected error: {e}")
-        import traceback
-
-        traceback.print_exc()
-        sys.exit(1)
+    main()

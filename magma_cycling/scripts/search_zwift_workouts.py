@@ -14,6 +14,7 @@ from pathlib import Path
 
 from magma_cycling.external.zwift_models import WorkoutSearchCriteria
 from magma_cycling.external.zwift_service import ZwiftService
+from magma_cycling.utils.cli import cli_main
 
 # ---------------------------------------------------------------------------
 # Display helpers (pure formatting, no business logic)
@@ -119,6 +120,7 @@ def _print_sample_workout(service):
 # ---------------------------------------------------------------------------
 
 
+@cli_main
 def main():
     """Main CLI entrypoint."""
     parser = argparse.ArgumentParser(
