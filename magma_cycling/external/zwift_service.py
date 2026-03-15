@@ -64,22 +64,20 @@ class ZwiftService:
         cache_db_path: Path | None = None,
         cache_ttl_days: int = 60,
     ):
+        """Initialize Zwift service facade.
+
+        Args:
+            cache_db_path: Path to SQLite cache database.
+            cache_ttl_days: Number of days to cache workout data.
+        """
         self._client = ZwiftWorkoutClient(
             cache_db_path=cache_db_path,
             cache_ttl_days=cache_ttl_days,
         )
         self._scraper = ZwiftWorkoutScraper()
         self._converter = ZwiftWorkoutConverter()
-        self._session = requests.Session()
-        self._session.headers.update(
-            {
-                "User-Agent": (
-                    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                    "AppleWebKit/537.36 (KHTML, like Gecko) "
-                    "Chrome/91.0.4472.124 Safari/537.36"
-                )
-            }
-        )
+        # Reuse client's HTTP session (same User-Agent, shared connection pool)
+        self._session = self._client.session
         self._seen_names: set[str] = set()
         self._load_existing_names()
 
