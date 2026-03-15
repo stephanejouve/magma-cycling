@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import logging
+import re
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -17,6 +19,8 @@ from magma_cycling._mcp._utils import (
 if TYPE_CHECKING:
     from mcp.types import TextContent
 
+logger = logging.getLogger(__name__)
+
 __all__ = [
     "handle_weekly_planner",
     "handle_monthly_analysis",
@@ -30,6 +34,95 @@ __all__ = [
     "handle_create_session",
     "handle_delete_session",
 ]
+
+
+def _parse_ai_workouts(raw_text: str, start_date: date) -> list[dict]:
+    """Parse AI response into structured workout dicts.
+
+    Args:
+        raw_text: Raw AI response containing delimited workouts.
+        start_date: Week start date (Monday) for computing session dates.
+
+    Returns:
+        List of dicts compatible with save_planning_json() format.
+    """
+    from magma_cycling.planning.models import WORKOUT_NAME_REGEX
+
+    pattern = r"=== WORKOUT (.*?) ===\n(.*?)\n=== FIN WORKOUT ==="
+    matches = re.findall(pattern, raw_text, re.DOTALL)
+
+    workouts = []
+    for workout_name, workout_content in matches:
+        workout_name = workout_name.strip()
+
+        # Parse structured name: S083-01-END-EnduranceDouce-V001
+        name_match = WORKOUT_NAME_REGEX.match(workout_name)
+        if not name_match:
+            logger.warning(f"_parse_ai_workouts: skipping malformed name: {workout_name}")
+            continue
+
+        session_id = name_match.group(1)
+        session_type = name_match.group(2)
+        name = name_match.group(3)
+        version = name_match.group(4)
+
+        # Extract day number from session_id (e.g., S083-01 → 1)
+        day_match = re.search(r"-(\d{2})", session_id)
+        day_num = int(day_match.group(1)) if day_match else 1
+        session_date = start_date + timedelta(days=day_num - 1)
+
+        # Parse TSS and duration from content
+        tss = 0
+        duration = 0
+        content_stripped = workout_content.strip()
+        first_line = content_stripped.split("\n")[0] if content_stripped else ""
+
+        # Pattern: "Endurance Base (60min, 45 TSS)" or "60 min" or "45 TSS"
+        tss_match = re.search(r"(\d+)\s*TSS", first_line, re.IGNORECASE)
+        if tss_match:
+            tss = int(tss_match.group(1))
+        dur_match = re.search(r"(\d+)\s*min", first_line, re.IGNORECASE)
+        if dur_match:
+            duration = int(dur_match.group(1))
+
+        workouts.append(
+            {
+                "session_id": session_id,
+                "date": session_date.strftime("%Y-%m-%d"),
+                "name": name,
+                "type": session_type,
+                "version": version,
+                "tss_planned": tss,
+                "duration_min": duration,
+                "description": content_stripped,
+                "status": "planned",
+            }
+        )
+
+    return workouts
+
+
+def _call_ai_provider(prompt: str, current_metrics: dict) -> str:
+    """Call AI provider for weekly planning.
+
+    Args:
+        prompt: Full planning prompt to send.
+        current_metrics: Current athlete metrics for system prompt.
+
+    Returns:
+        Raw AI response text.
+    """
+    from magma_cycling.ai_providers.factory import AIProviderFactory
+    from magma_cycling.prompts.prompt_builder import build_prompt
+
+    system_prompt, _ = build_prompt(
+        mission="weekly_planning",
+        current_metrics=current_metrics,
+        workflow_data="",
+    )
+
+    analyzer = AIProviderFactory.create("mcp_direct", {})
+    return analyzer.analyze_session(prompt, system_prompt=system_prompt)
 
 
 async def handle_weekly_planner(args: dict) -> list[TextContent]:
@@ -63,7 +156,77 @@ async def handle_weekly_planner(args: dict) -> list[TextContent]:
         "message": f"Planning prompt generated for {week_id}",
     }
 
-    if provider == "clipboard":
+    if provider == "mcp_direct":
+        try:
+            # 1. Call AI provider
+            with suppress_stdout_stderr():
+                raw_response = _call_ai_provider(prompt, planner.current_metrics)
+
+            # 2. Save raw text to {week_id}_workouts.txt
+            workouts_file = planner.planning_dir / f"{week_id}_workouts.txt"
+            workouts_file.write_text(raw_response, encoding="utf-8")
+
+            # 3. Parse workouts
+            workouts_data = _parse_ai_workouts(raw_response, start_date)
+
+            if not workouts_data:
+                # Fallback: return prompt for manual consumption
+                result["status"] = "ai_parse_failed"
+                result["prompt"] = prompt
+                result["raw_response"] = raw_response[:2000]
+                result["message"] = "AI responded but no workouts could be parsed"
+            else:
+                # 4. Save planning JSON via Control Tower
+                with suppress_stdout_stderr():
+                    planner.save_planning_json(workouts_data)
+
+                result["status"] = "plan_generated"
+                result["sessions_count"] = len(workouts_data)
+                result["sessions"] = [
+                    {
+                        "session_id": w["session_id"],
+                        "name": w["name"],
+                        "type": w["type"],
+                        "tss": w["tss_planned"],
+                    }
+                    for w in workouts_data
+                ]
+                result["workouts_file"] = str(workouts_file)
+                result["message"] = f"Generated {len(workouts_data)}/7 sessions for {week_id}"
+                if len(workouts_data) < 7:
+                    result["warnings"] = [f"Only {len(workouts_data)}/7 workouts parsed"]
+
+        except Exception as exc:
+            logger.exception("mcp_direct: AI call failed")
+            # Graceful fallback: return raw prompt
+            result["status"] = "ai_error"
+            result["error"] = str(exc)
+            result["prompt"] = prompt
+            result["message"] = f"AI call failed, prompt returned for manual use: {exc}"
+
+    elif provider == "prompt_only":
+        # Return full prompt for direct consumption by the MCP client (e.g., Claude).
+        # No external API call — the AI client reads the prompt from the tool result,
+        # generates 7 workouts, and writes them via modify-session-details.
+
+        # Create skeleton planning JSON with 7 empty sessions so that
+        # modify-session-details can find the file and update sessions.
+        with suppress_stdout_stderr():
+            planning_file = planner.save_planning_json(None)
+
+        result["status"] = "prompt_ready"
+        result["prompt"] = prompt
+        result["planning_file"] = str(planning_file)
+        result["sessions"] = [
+            {"session_id": f"{week_id}-{d + 1:02d}", "status": "planned"} for d in range(7)
+        ]
+        result["next_steps"] = [
+            "Read the prompt above and generate 7 structured workouts",
+            f"Call modify-session-details for each session ({week_id}-01 to {week_id}-07)",
+            "Call sync-week-to-intervals to upload to Intervals.icu",
+        ]
+
+    elif provider == "clipboard":
         result["prompt"] = prompt[:500] + "..." if len(prompt) > 500 else prompt
         result["next_steps"] = [
             f"Copy prompt and paste to {provider}",
