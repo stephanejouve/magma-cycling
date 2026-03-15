@@ -69,6 +69,7 @@ from magma_cycling.core.duplicate_detector import (
     check_and_handle_duplicates,
 )
 from magma_cycling.core.timeline_injector import TimelineInjector
+from magma_cycling.utils.cli import cli_main
 
 logger = logging.getLogger(__name__)
 
@@ -424,6 +425,7 @@ class WorkoutHistoryManager:
             return False
 
 
+@cli_main
 def main():
     """Command-line entry point for inserting analysis into weekly reports."""
     parser = argparse.ArgumentParser(

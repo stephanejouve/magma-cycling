@@ -8,8 +8,10 @@ import json
 from pathlib import Path
 
 from magma_cycling.intervals_format_validator import IntervalsFormatValidator
+from magma_cycling.utils.cli import cli_main
 
 
+@cli_main
 def main():
     """Command-line entry point for validating workout templates."""
     templates_dir = Path("data/workout_templates")

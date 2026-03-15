@@ -17,6 +17,7 @@ import requests
 
 from magma_cycling.api.intervals_client import IntervalsClient
 from magma_cycling.config import create_intervals_client
+from magma_cycling.utils.cli import cli_main
 
 
 def format_source_icon(source):
@@ -30,6 +31,7 @@ def format_source_icon(source):
     return icons.get(source, "❓ ")
 
 
+@cli_main
 def main():
     """Command-line entry point for checking activity sources."""
     parser = argparse.ArgumentParser(description="Vérifier les sources des activités récentes")
@@ -140,12 +142,6 @@ def main():
         print(f"❌ Erreur API: {e}")
         if e.response.status_code == 401:
             print("   → Vérifier l'API key et l'athlete_id")
-        sys.exit(1)
-    except Exception as e:
-        print(f"❌ Erreur: {e}")
-        import traceback
-
-        traceback.print_exc()
         sys.exit(1)
 
 

@@ -41,6 +41,7 @@ import sys
 from magma_cycling.api.intervals_client import IntervalsClient
 from magma_cycling.config import create_intervals_client
 from magma_cycling.planning.control_tower import planning_tower
+from magma_cycling.utils.cli import cli_main
 
 # Statuses that should remove the event from Intervals.icu
 STATUSES_TO_DELETE = ["cancelled", "skipped", "replaced", "rest_day"]
@@ -252,6 +253,7 @@ def sync_with_intervals(
         return True
 
 
+@cli_main
 def main():
     """Run entry point."""
     parser = argparse.ArgumentParser(
@@ -316,112 +318,103 @@ Valid statuses:
     if args.status in ["cancelled", "skipped", "replaced"] and not args.reason:
         parser.error(f"Status '{args.status}' requires --reason")
 
+    print(f"\n📝 Updating session {args.session}")
+    print(f"   Week: {args.week_id}")
+    print(f"   Status: {args.status}")
+    if args.reason:
+        print(f"   Reason: {args.reason}")
+
+    # 🚦 UPDATE VIA CONTROL TOWER (automatic backup + audit)
     try:
-        print(f"\n📝 Updating session {args.session}")
-        print(f"   Week: {args.week_id}")
-        print(f"   Status: {args.status}")
-        if args.reason:
-            print(f"   Reason: {args.reason}")
-
-        # 🚦 UPDATE VIA CONTROL TOWER (automatic backup + audit)
-        try:
-            with planning_tower.modify_week(
-                args.week_id,
-                requesting_script="update-session-status",
-                reason=f"Update {args.session} to {args.status}: {args.reason or 'N/A'}",
-            ) as plan:
-                # Find and update session
-                session_found = False
-                for session in plan.planned_sessions:
-                    if session.session_id == args.session:
-                        # Set skip_reason BEFORE status (Pydantic validator requirement)
-                        if args.reason and args.status in ("skipped", "cancelled", "replaced"):
-                            session.skip_reason = args.reason
-
-                        session.status = args.status
-                        session_found = True
-                        break
-
-                if not session_found:
-                    print(f"\n❌ Session {args.session} not found in planning")
-                    sys.exit(1)
-
-                print(f"\n✅ Session {args.session} updated to: {args.status}")
-                if args.reason:
-                    print(f"   Reason: {args.reason}")
-                # Auto-saved by Control Tower with backup + audit log
-
-        except Exception as e:
-            print(f"\n❌ Failed to update via Control Tower: {e}")
-            sys.exit(1)
-
-        # Sync with Intervals.icu if requested (Sprint R9.B Phase 2 - centralized)
-        if args.sync:
-            # Create Intervals.icu client
-            try:
-                client = create_intervals_client()
-            except ValueError:
-                print("\n⚠️  Warning: Intervals.icu credentials not configured")
-                print(
-                    "   Set VITE_INTERVALS_ATHLETE_ID and VITE_INTERVALS_API_KEY environment variables"
-                )
-                print("   Skipping sync with Intervals.icu")
-                sys.exit(0)
-
-            # Get session date from planning (read-only via Control Tower)
-            try:
-                plan = planning_tower.read_week(args.week_id)
-            except FileNotFoundError:
-                print("\n⚠️  Warning: Could not find planning file to get session date")
-                print(f"   Week: {args.week_id}")
-                print("   Skipping sync with Intervals.icu")
-                sys.exit(0)
-
-            session_date = None
-            session_info = None
+        with planning_tower.modify_week(
+            args.week_id,
+            requesting_script="update-session-status",
+            reason=f"Update {args.session} to {args.status}: {args.reason or 'N/A'}",
+        ) as plan:
+            # Find and update session
+            session_found = False
             for session in plan.planned_sessions:
                 if session.session_id == args.session:
-                    session_date = str(session.session_date)
-                    # Convert Session model to dict for compatibility with sync function
-                    session_info = {
-                        "name": session.name,
-                        "type": session.session_type,
-                        "version": session.version,
-                        "description": session.description,
-                        "tss_planned": session.tss_planned,
-                        "duration_min": session.duration_min,
-                    }
+                    # Set skip_reason BEFORE status (Pydantic validator requirement)
+                    if args.reason and args.status in ("skipped", "cancelled", "replaced"):
+                        session.skip_reason = args.reason
+
+                    session.status = args.status
+                    session_found = True
                     break
 
-            if not session_date:
-                print("\n⚠️  Warning: Could not find session date in planning")
-                print("   Skipping sync with Intervals.icu")
-                sys.exit(0)
+            if not session_found:
+                print(f"\n❌ Session {args.session} not found in planning")
+                sys.exit(1)
 
-            # Sync
-            sync_success = sync_with_intervals(
-                client=client,
-                session_id=args.session,
-                session_date=session_date,
-                new_status=args.status,
-                reason=args.reason,
-                session_info=session_info,
-            )
-
-            if sync_success:
-                print("\n✅ Successfully synchronized with Intervals.icu")
-            else:
-                print("\n⚠️  Warning: Sync with Intervals.icu failed (local changes preserved)")
-
-        print("\n✨ Done!")
-        sys.exit(0)
+            print(f"\n✅ Session {args.session} updated to: {args.status}")
+            if args.reason:
+                print(f"   Reason: {args.reason}")
+            # Auto-saved by Control Tower with backup + audit log
 
     except Exception as e:
-        print(f"\n❌ Error: {e}", file=sys.stderr)
-        import traceback
-
-        traceback.print_exc()
+        print(f"\n❌ Failed to update via Control Tower: {e}")
         sys.exit(1)
+
+    # Sync with Intervals.icu if requested (Sprint R9.B Phase 2 - centralized)
+    if args.sync:
+        # Create Intervals.icu client
+        try:
+            client = create_intervals_client()
+        except ValueError:
+            print("\n⚠️  Warning: Intervals.icu credentials not configured")
+            print(
+                "   Set VITE_INTERVALS_ATHLETE_ID and VITE_INTERVALS_API_KEY environment variables"
+            )
+            print("   Skipping sync with Intervals.icu")
+            sys.exit(0)
+
+        # Get session date from planning (read-only via Control Tower)
+        try:
+            plan = planning_tower.read_week(args.week_id)
+        except FileNotFoundError:
+            print("\n⚠️  Warning: Could not find planning file to get session date")
+            print(f"   Week: {args.week_id}")
+            print("   Skipping sync with Intervals.icu")
+            sys.exit(0)
+
+        session_date = None
+        session_info = None
+        for session in plan.planned_sessions:
+            if session.session_id == args.session:
+                session_date = str(session.session_date)
+                # Convert Session model to dict for compatibility with sync function
+                session_info = {
+                    "name": session.name,
+                    "type": session.session_type,
+                    "version": session.version,
+                    "description": session.description,
+                    "tss_planned": session.tss_planned,
+                    "duration_min": session.duration_min,
+                }
+                break
+
+        if not session_date:
+            print("\n⚠️  Warning: Could not find session date in planning")
+            print("   Skipping sync with Intervals.icu")
+            sys.exit(0)
+
+        # Sync
+        sync_success = sync_with_intervals(
+            client=client,
+            session_id=args.session,
+            session_date=session_date,
+            new_status=args.status,
+            reason=args.reason,
+            session_info=session_info,
+        )
+
+        if sync_success:
+            print("\n✅ Successfully synchronized with Intervals.icu")
+        else:
+            print("\n⚠️  Warning: Sync with Intervals.icu failed (local changes preserved)")
+
+    print("\n✨ Done!")
 
 
 if __name__ == "__main__":

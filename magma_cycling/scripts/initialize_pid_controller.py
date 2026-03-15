@@ -17,6 +17,7 @@ from datetime import datetime
 from pathlib import Path
 
 from magma_cycling.intelligence.discrete_pid_controller import DiscretePIDController
+from magma_cycling.utils.cli import cli_main
 
 
 def load_historical_data():
@@ -265,6 +266,7 @@ def compute_s081_s086_correction(controller: DiscretePIDController):
     }
 
 
+@cli_main
 def main():
     """Main execution."""
     print()

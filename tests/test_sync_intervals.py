@@ -348,8 +348,10 @@ class TestMainFunction:
         mock_logger = MagicMock()
         mock_logger_class.return_value = mock_logger
 
-        # Run main
-        main()
+        # Run main (@cli_main wraps with sys.exit)
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == 0
 
         # Verify API was initialized with CLI args
         mock_client_class.assert_called_once_with(athlete_id="iXXXXXX", api_key="test_key")
@@ -382,8 +384,10 @@ class TestMainFunction:
         mock_logger = MagicMock()
         mock_logger_class.return_value = mock_logger
 
-        # Run main
-        main()
+        # Run main (@cli_main wraps with sys.exit)
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == 0
 
         # Verify factory was used
         mock_create_client.assert_called_once()

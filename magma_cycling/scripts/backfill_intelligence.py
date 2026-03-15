@@ -38,6 +38,7 @@ from magma_cycling.intelligence.training_intelligence import (
     ConfidenceLevel,
     TrainingIntelligence,
 )
+from magma_cycling.utils.cli import cli_main
 
 # Load environment
 env_file = Path(__file__).parent.parent.parent / ".env"
@@ -605,6 +606,7 @@ class IntervalsICUBackfiller:
         print(f"   Saved to: {output_path}")
 
 
+@cli_main
 def main():
     """Run entry point."""
     parser = argparse.ArgumentParser(
@@ -648,16 +650,8 @@ def main():
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Run backfill
-    try:
-        backfiller = IntervalsICUBackfiller(athlete_id=athlete_id, api_key=api_key)
-        backfiller.run(args.start_date, args.end_date, output_path)
-        sys.exit(0)
-    except Exception as e:
-        print(f"\n❌ Error: {e}")
-        import traceback
-
-        traceback.print_exc()
-        sys.exit(1)
+    backfiller = IntervalsICUBackfiller(athlete_id=athlete_id, api_key=api_key)
+    backfiller.run(args.start_date, args.end_date, output_path)
 
 
 if __name__ == "__main__":
