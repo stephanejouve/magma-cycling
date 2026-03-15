@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import subprocess
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -227,11 +228,19 @@ async def handle_weekly_planner(args: dict) -> list[TextContent]:
         ]
 
     elif provider == "clipboard":
-        result["prompt"] = prompt[:500] + "..." if len(prompt) > 500 else prompt
+        try:
+            subprocess.run(["pbcopy"], input=prompt.encode("utf-8"), check=True)
+            result["status"] = "copied_to_clipboard"
+            result["message"] = f"Prompt ({len(prompt):,} chars) copied to clipboard for {week_id}"
+        except Exception as e:
+            result["status"] = "clipboard_error"
+            result["message"] = f"Failed to copy to clipboard: {e}"
+            result["prompt"] = prompt  # Fallback: return full prompt
+
         result["next_steps"] = [
-            f"Copy prompt and paste to {provider}",
-            "Generate 7 workouts",
-            "Save workouts to file",
+            "Paste prompt into your AI provider (Cmd+V)",
+            "Generate 7 workouts with === WORKOUT ... === delimiters",
+            f"Save to {week_id}_workouts.txt",
             "Run upload-workouts to sync to Intervals.icu",
         ]
     else:
