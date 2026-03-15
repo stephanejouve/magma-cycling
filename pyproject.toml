@@ -5,6 +5,10 @@ description = "Système automatisé d'analyse entraînements cyclisme"
 authors = ["Stéphane"]
 readme = "README.md"
 packages = [{include = "magma_cycling"}]
+include = [
+    "magma_cycling/external/seed_data/*.json",
+    "magma_cycling/workflows/planner/templates/*.md",
+]
 
 [tool.poetry.dependencies]
 python = "^3.11"
