@@ -900,8 +900,9 @@ class TestMain:
         mock_workflow.run.return_value = True
         mock_workflow_class.return_value = mock_workflow
 
-        exit_code = main()
-        assert exit_code == 0
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == 0
 
     @patch("magma_cycling.workflows.end_of_week.parse_args")
     @patch("magma_cycling.workflows.end_of_week.calculate_weekly_transition")
@@ -930,8 +931,9 @@ class TestMain:
         mock_workflow.run.return_value = True
         mock_workflow_class.return_value = mock_workflow
 
-        exit_code = main()
-        assert exit_code == 0
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == 0
         mock_workflow_class.assert_called_once()
 
     @patch("magma_cycling.workflows.end_of_week.parse_args")
@@ -952,8 +954,9 @@ class TestMain:
         mock_workflow.run.return_value = False
         mock_workflow_class.return_value = mock_workflow
 
-        exit_code = main()
-        assert exit_code == 1
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == 1
 
 
 # =============================================================================

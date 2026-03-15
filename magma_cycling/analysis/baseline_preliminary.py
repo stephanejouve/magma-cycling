@@ -30,6 +30,7 @@ from magma_cycling.analysis.baseline.metrics import MetricsMixin
 from magma_cycling.analysis.baseline.pattern_analysis import PatternAnalysisMixin
 from magma_cycling.analysis.baseline.reporting import ReportingMixin
 from magma_cycling.config import create_intervals_client
+from magma_cycling.utils.cli import cli_main
 
 
 class BaselineAnalyzer(
@@ -158,6 +159,7 @@ class BaselineAnalyzer(
         return results
 
 
+@cli_main
 def main():
     """CLI entry point."""
     parser = argparse.ArgumentParser(description="Baseline Preliminary Analysis")
@@ -187,4 +189,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main()  # @cli_main handles exit codes
