@@ -25,6 +25,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from magma_cycling.utils.cli import cli_main
+
 
 class WeeklyReportOrganizer:
     """Organisateur des fichiers de bilan hebdomadaire."""
@@ -205,6 +207,7 @@ class WeeklyReportOrganizer:
             return False
 
 
+@cli_main
 def main():
     """Command-line entry point for organizing weekly report files."""
     parser = argparse.ArgumentParser(description="Organiser les fichiers du bilan hebdomadaire")

@@ -62,6 +62,7 @@ from datetime import datetime
 from requests.exceptions import HTTPError
 
 from magma_cycling.config import create_intervals_client, get_data_config
+from magma_cycling.utils.cli import cli_main
 from magma_cycling.workflow_state import WorkflowState
 
 
@@ -561,6 +562,7 @@ class HistoryBackfiller:
         print("\n" + "=" * 70)
 
 
+@cli_main
 def main():
     """Run entry point."""
     parser = argparse.ArgumentParser(
@@ -669,12 +671,6 @@ Examples:
         print(f"   Analysées: {backfiller.analyzed_success}")
         print(f"   Échecs: {backfiller.analyzed_failed}")
         sys.exit(130)
-    except Exception as e:
-        print(f"\n❌ ERREUR FATALE: {e}")
-        import traceback
-
-        traceback.print_exc()
-        sys.exit(1)
 
 
 if __name__ == "__main__":

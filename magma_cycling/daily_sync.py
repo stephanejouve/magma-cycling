@@ -47,6 +47,7 @@ from magma_cycling.config import (
 )
 from magma_cycling.insert_analysis import WorkoutHistoryManager
 from magma_cycling.prepare_analysis import PromptGenerator
+from magma_cycling.utils.cli import cli_main
 from magma_cycling.utils.hot_reload import (
     hot_reload_if_needed,
     mark_modules_loaded,
@@ -345,6 +346,7 @@ class DailySync(
         print("=" * 80)
 
 
+@cli_main
 def main():
     """CLI entry point."""
     # Establish baseline for hot-reload detection (first run only)

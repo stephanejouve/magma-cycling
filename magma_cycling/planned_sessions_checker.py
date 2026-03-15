@@ -58,6 +58,7 @@ from datetime import datetime, timedelta
 
 from magma_cycling.api.intervals_client import IntervalsClient
 from magma_cycling.config import get_data_config, get_logger
+from magma_cycling.utils.cli import cli_main
 
 logger = get_logger(__name__)
 
@@ -332,6 +333,7 @@ Séance planifiée non exécutée. Raison à documenter.
         return markdown
 
 
+@cli_main
 def main():
     """Mode interactif : détection des séances sautées + réconciliation avec planning JSON local."""
     from magma_cycling.config import create_intervals_client

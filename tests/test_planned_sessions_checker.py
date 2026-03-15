@@ -475,9 +475,7 @@ class TestMainFunction:
         mock_config.week_planning_dir = MagicMock()
         mock_get_config.return_value = mock_config
 
-        # Run main (should not raise exception)
-        try:
+        # Run main (@cli_main wraps with sys.exit)
+        with pytest.raises(SystemExit) as exc_info:
             main()
-        except FileNotFoundError:
-            # Expected when config file doesn't actually exist in test environment
-            pass
+        assert exc_info.value.code == 0

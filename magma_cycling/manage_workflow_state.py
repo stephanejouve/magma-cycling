@@ -59,6 +59,7 @@ import argparse
 import sys
 from datetime import datetime
 
+from magma_cycling.utils.cli import cli_main
 from magma_cycling.workflow_state import WorkflowState
 
 
@@ -199,6 +200,7 @@ def reset_state(state: WorkflowState):
     return True
 
 
+@cli_main
 def main():
     """Command-line entry point for managing workflow state."""
     parser = argparse.ArgumentParser(

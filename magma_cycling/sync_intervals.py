@@ -59,6 +59,7 @@ import requests
 
 from magma_cycling.api.intervals_client import IntervalsClient
 from magma_cycling.config import create_intervals_client
+from magma_cycling.utils.cli import cli_main
 
 # Alias for backwards compatibility
 IntervalsAPI = IntervalsClient
@@ -273,6 +274,7 @@ _Pour une mise à jour complète des tableaux, voir le fichier original._.
         print(f"   CTL/ATL/TSB: {ctl:.0f}/{atl:.0f}/{tsb:+.0f}")
 
 
+@cli_main
 def main():
     """Command-line entry point for syncing with Intervals.icu."""
     parser = argparse.ArgumentParser(

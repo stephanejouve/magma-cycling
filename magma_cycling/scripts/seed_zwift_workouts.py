@@ -12,8 +12,10 @@ import sys
 from pathlib import Path
 
 from magma_cycling.external.zwift_service import ZwiftService
+from magma_cycling.utils.cli import cli_main
 
 
+@cli_main
 def main():
     """Main CLI entrypoint."""
     parser = argparse.ArgumentParser(

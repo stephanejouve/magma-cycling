@@ -19,6 +19,8 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+from magma_cycling.utils.cli import cli_main
+
 
 class AthleteFeedbackCollector:
     """Collecteur de feedback athlète."""
@@ -296,6 +298,7 @@ class AthleteFeedbackCollector:
         print("\n" + "=" * 60)
 
 
+@cli_main
 def main():
     """Command-line entry point for collecting athlete feedback."""
     parser = argparse.ArgumentParser(description="Collecter le retour athlète après séance")
