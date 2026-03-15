@@ -109,7 +109,7 @@ poetry run daily-sync --send-email --ai-analysis --auto-servo
 
 ### 3. PID Evaluation - Intelligence AI (23h00)
 
-**Fichier**: `scripts/monitoring/com.cyclisme.pid_evaluation.plist` (repo)
+**Fichier**: `examples/launchagents/com.cyclisme.pid_evaluation.plist` (repo)
 
 **Identité**:
 - Label: `com.cyclisme.pid_evaluation`

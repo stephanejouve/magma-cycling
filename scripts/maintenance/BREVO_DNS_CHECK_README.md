@@ -8,7 +8,7 @@
 
 ### 1. Install LaunchAgent
 ```bash
-cp scripts/maintenance/com.cyclisme.brevo-dns-check-oneshot.plist ~/Library/LaunchAgents/
+cp examples/launchagents/com.cyclisme.brevo-dns-check-oneshot.plist ~/Library/LaunchAgents/
 ```
 
 ### 2. Load (starts 30 min countdown)
