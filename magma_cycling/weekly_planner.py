@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from magma_cycling.config import create_intervals_client
+from magma_cycling.utils.cli import cli_main
 from magma_cycling.workflows.planner.context_loading import ContextLoadingMixin
 from magma_cycling.workflows.planner.output import OutputMixin
 from magma_cycling.workflows.planner.periodization import PeriodizationMixin
@@ -221,6 +222,7 @@ class WeeklyPlanner(
         print("=" * 70, file=sys.stderr)
 
 
+@cli_main
 def main():
     """Point d'entrée du script."""
     parser = argparse.ArgumentParser(

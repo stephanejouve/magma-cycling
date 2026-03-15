@@ -52,13 +52,13 @@ Metadata:
 """
 
 import argparse
-import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from magma_cycling.analyzers.weekly_aggregator import WeeklyAggregator
 from magma_cycling.analyzers.weekly_analyzer import WeeklyAnalyzer
 from magma_cycling.config import get_logger, setup_logging
+from magma_cycling.utils.cli import cli_main
 
 logger = get_logger(__name__)
 
@@ -207,6 +207,7 @@ def get_current_week_info() -> tuple:
     return week, monday
 
 
+@cli_main
 def main():
     """Entry point CLI."""
     parser = argparse.ArgumentParser(
@@ -265,43 +266,31 @@ Examples:
             return 1
 
     # Exécuter workflow (always auto-detect data_dir, no AI analysis from CLI)
+    print(f"\n🏃 Starting weekly analysis for {week}...\n")
+
+    reports = run_weekly_analysis(
+        week=week,
+        start_date=start_date,
+        data_dir=None,  # Always auto-detect
+        ai_analysis=False,  # Internal feature only
+    )
+
+    print(f"\n✅ Weekly analysis completed for {week}")
+    print(f"📊 Generated {len(reports)} reports:")
+    for name in reports.keys():
+        print(f"   - {name}")
+
+    # Show output location (always auto-detect)
     try:
-        print(f"\n🏃 Starting weekly analysis for {week}...\n")
+        from magma_cycling.config import get_data_config
 
-        reports = run_weekly_analysis(
-            week=week,
-            start_date=start_date,
-            data_dir=None,  # Always auto-detect
-            ai_analysis=False,  # Internal feature only
-        )
+        config = get_data_config()
+        output_dir = config.data_repo_path / "weekly-reports" / week
+    except Exception:
+        output_dir = Path.home() / "training-logs" / "weekly-reports" / week
 
-        print(f"\n✅ Weekly analysis completed for {week}")
-        print(f"📊 Generated {len(reports)} reports:")
-        for name in reports.keys():
-            print(f"   - {name}")
-
-        # Show output location (always auto-detect)
-        try:
-            from magma_cycling.config import get_data_config
-
-            config = get_data_config()
-            output_dir = config.data_repo_path / "weekly-reports" / week
-        except Exception:
-            output_dir = Path.home() / "training-logs" / "weekly-reports" / week
-
-        print(f"\n📁 Reports saved to: {output_dir}")
-
-        return 0
-
-    except Exception as e:
-        logger.error(f"Weekly analysis failed: {e}")
-        if args.verbose:
-            import traceback
-
-            traceback.print_exc()
-        print(f"\n❌ Error: {e}")
-        return 1
+    print(f"\n📁 Reports saved to: {output_dir}")
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()  # @cli_main handles exit codes

@@ -59,10 +59,9 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
-import requests
-
 from magma_cycling.api.intervals_client import IntervalsClient
 from magma_cycling.config import create_intervals_client, get_ai_config
+from magma_cycling.utils.cli import cli_main
 from magma_cycling.workflow_state import WorkflowState
 from magma_cycling.workflows.prompt.context_loading import ContextLoadingMixin
 from magma_cycling.workflows.prompt.data_formatting import DataFormattingMixin
@@ -427,6 +426,7 @@ def display_activity_menu(unanalyzed_activities):
             return ("cancel", None)
 
 
+@cli_main
 def main():
     """Command-line entry point for preparing workout analysis."""
     parser = argparse.ArgumentParser(description="Préparer le prompt d'analyse pour IA")
@@ -459,222 +459,208 @@ def main():
     print("🔄 Préparation du prompt d'analyse...")
     print()
 
-    try:
+    # Mode --activity-id : comportement existant préservé (bypass détection gaps)
+    if args.activity_id:
+        print(f"📥 Récupération de l'activité {args.activity_id}...")
+        activity = api.get_activity(args.activity_id)
+        activities = [activity]
 
-        # Mode --activity-id : comportement existant préservé (bypass détection gaps)
-        if args.activity_id:
-            print(f"📥 Récupération de l'activité {args.activity_id}...")
-            activity = api.get_activity(args.activity_id)
-            activities = [activity]
+    else:
+        # Détection des activités non analysées
+        print("🔍 Détection des séances non analysées...")
 
+        # Récupérer les activités récentes depuis la dernière analyse (ou 7 jours si première fois)
+        last_analyzed_id = state.get_last_analyzed_id()
+
+        if last_analyzed_id:
+            # Il y a eu des analyses précédentes : chercher depuis 30 jours max
+            newest_date = datetime.now()
+            oldest_date = newest_date - timedelta(days=30)
+            print(f"   Dernière analyse : {last_analyzed_id}")
         else:
-            # Détection des activités non analysées
-            print("🔍 Détection des séances non analysées...")
+            # Première utilisation : chercher dans les 7 derniers jours
+            newest_date = datetime.now()
+            oldest_date = newest_date - timedelta(days=7)
+            print("   Première utilisation (dernières 7 jours)")
 
-            # Récupérer les activités récentes depuis la dernière analyse (ou 7 jours si première fois)
-            last_analyzed_id = state.get_last_analyzed_id()
-
-            if last_analyzed_id:
-                # Il y a eu des analyses précédentes : chercher depuis 30 jours max
-                newest_date = datetime.now()
-                oldest_date = newest_date - timedelta(days=30)
-                print(f"   Dernière analyse : {last_analyzed_id}")
-            else:
-                # Première utilisation : chercher dans les 7 derniers jours
-                newest_date = datetime.now()
-                oldest_date = newest_date - timedelta(days=7)
-                print("   Première utilisation (dernières 7 jours)")
-
-            activities = api.get_activities(
-                oldest=oldest_date.strftime("%Y-%m-%d"), newest=newest_date.strftime("%Y-%m-%d")
-            )
-
-            if not activities:
-                print("❌ Aucune activité trouvée")
-                sys.exit(1)
-
-            # Trier par date décroissante (plus récente en premier)
-            activities.sort(key=lambda x: x["start_date_local"], reverse=True)
-
-            # Filtrer les activités non analysées
-            unanalyzed = state.get_unanalyzed_activities(activities)
-
-            # Mode --list : afficher et sortir
-            if args.list:
-                if not unanalyzed:
-                    print("✅ Aucune activité non analysée !")
-                else:
-                    print()
-                    print(f"📋 {len(unanalyzed)} activité(s) non analysée(s) :")
-                    print()
-                    for i, act in enumerate(unanalyzed, 1):
-                        date = act["start_date_local"][:10]
-                        name = act.get("name", "Séance")
-                        activity_id = act["id"]
-                        tss = act.get("icu_training_load", 0)
-                        duration_min = act.get("moving_time", 0) // 60
-                        print(f"{i}. [{date}] {name}")
-                        print(f"   ID: {activity_id} | Durée: {duration_min}min | TSS: {tss:.0f}")
-                        print()
-                sys.exit(0)
-
-            # Afficher le menu interactif
-            mode, selected_id = display_activity_menu(unanalyzed)
-
-            if mode == "cancel":
-                sys.exit(0)
-
-            elif mode == "batch":
-                # Mode batch : analyser toutes les séances
-                generator = PromptGenerator(args.project_root)
-                analyze_batch(api, unanalyzed, generator, state, args.project_root)
-                sys.exit(0)
-
-            elif mode == "single":
-                # Analyser une seule activité
-                print()
-                print(f"📥 Récupération de l'activité {selected_id}...")
-                activity = api.get_activity(selected_id)
-                activities = [activity]
-
-        # Date de l'activité
-        date = activity["start_date_local"][:10]
-        activity_date = datetime.fromisoformat(activity["start_date_local"].replace("Z", "+00:00"))
-
-        # Récupérer wellness
-        wellness_data = api.get_wellness(oldest=date, newest=date)
-        wellness = wellness_data[0] if wellness_data else None
-
-        # Récupérer le workout planifié si disponible
-        print(f"   ✅ Activité : {activity.get('name', 'Séance')}")
-        print(f"   📅 Date : {date}")
-
-        print("🔍 Recherche du workout planifié...")
-        planned_workout = api.get_planned_workout(activity["id"], activity_date)
-        if planned_workout:
-            print(f"   ✅ Workout planifié trouvé : {planned_workout.get('name', 'N/A')}")
-        else:
-            print("   ℹ️  Pas de workout planifié associé (séance libre)")
-
-        # Vérifier si l'activité vient de Strava
-        if activity.get("source") == "STRAVA":
-            print()
-            print("   ⚠️  ATTENTION : Cette activité vient de Strava")
-            print("   Les données API sont limitées (restriction Strava)")
-            print("   Certaines métriques peuvent être manquantes")
-            print("   → Vérifier sur Intervals.icu web si besoin")
-
-        print()
-
-        # Générer le prompt
-        generator = PromptGenerator(args.project_root)
-
-        print("📖 Chargement du contexte...")
-        athlete_context = generator.load_athlete_context()
-        recent_workouts = generator.load_recent_workouts(limit=3)
-        cycling_concepts = generator.load_cycling_concepts()
-        periodization_context = generator.load_periodization_context(wellness)
-
-        # Charger feedback athlète si disponible
-        athlete_feedback = generator.load_athlete_feedback()
-        if athlete_feedback:
-            print("   ✅ Feedback athlète trouvé !")
-            if athlete_feedback.get("rpe"):
-                print(f"      RPE : {athlete_feedback['rpe']}/10")
-            if athlete_feedback.get("ressenti_general"):
-                print(f"      Ressenti : {athlete_feedback['ressenti_general'][:50]}...")
-        else:
-            print("   ℹ️  Pas de feedback athlète (optionnel)")
-            print("      → Utiliser collect_athlete_feedback.py pour enrichir l'analyse")
-
-        if periodization_context:
-            print(f"   ✅ Contexte périodisation : Phase {periodization_context['phase']}")
-            print(
-                f"      CTL {periodization_context['ctl_current']:.1f} → {periodization_context['ctl_target']:.0f}"
-            )
-
-        print("✍️  Génération du prompt...")
-        prompt = generator.generate_prompt(
-            activity_data=generator.format_activity_data(activity),
-            wellness_pre=wellness,
-            wellness_post=wellness,  # Simplifié pour l'instant
-            athlete_context=athlete_context,
-            recent_workouts=recent_workouts,
-            athlete_feedback=athlete_feedback,
-            planned_workout=planned_workout,
-            cycling_concepts=cycling_concepts,
-            periodization_context=periodization_context,
+        activities = api.get_activities(
+            oldest=oldest_date.strftime("%Y-%m-%d"), newest=newest_date.strftime("%Y-%m-%d")
         )
 
-        # Copier dans le presse-papier
-        print("📋 Copie dans le presse-papier...")
-        if generator.copy_to_clipboard(prompt):
-            print("   ✅ Prompt copié !")
+        if not activities:
+            print("❌ Aucune activité trouvée")
+            sys.exit(1)
 
-            # NOTE: Activity will be marked as analyzed AFTER successful insertion
-            # by insert_analysis.py or workflow_coach.py, not here!
+        # Trier par date décroissante (plus récente en premier)
+        activities.sort(key=lambda x: x["start_date_local"], reverse=True)
 
-            # Effacer le feedback après utilisation
-            if athlete_feedback and generator.feedback_file.exists():
-                generator.feedback_file.unlink()
-                print("   ✅ Feedback athlète consommé et effacé")
-        else:
-            print("   ⚠️  Échec de la copie, affichage du prompt :")
+        # Filtrer les activités non analysées
+        unanalyzed = state.get_unanalyzed_activities(activities)
+
+        # Mode --list : afficher et sortir
+        if args.list:
+            if not unanalyzed:
+                print("✅ Aucune activité non analysée !")
+            else:
+                print()
+                print(f"📋 {len(unanalyzed)} activité(s) non analysée(s) :")
+                print()
+                for i, act in enumerate(unanalyzed, 1):
+                    date = act["start_date_local"][:10]
+                    name = act.get("name", "Séance")
+                    activity_id = act["id"]
+                    tss = act.get("icu_training_load", 0)
+                    duration_min = act.get("moving_time", 0) // 60
+                    print(f"{i}. [{date}] {name}")
+                    print(f"   ID: {activity_id} | Durée: {duration_min}min | TSS: {tss:.0f}")
+                    print()
+            sys.exit(0)
+
+        # Afficher le menu interactif
+        mode, selected_id = display_activity_menu(unanalyzed)
+
+        if mode == "cancel":
+            sys.exit(0)
+
+        elif mode == "batch":
+            # Mode batch : analyser toutes les séances
+            generator = PromptGenerator(args.project_root)
+            analyze_batch(api, unanalyzed, generator, state, args.project_root)
+            sys.exit(0)
+
+        elif mode == "single":
+            # Analyser une seule activité
             print()
-            print(prompt)
+            print(f"📥 Récupération de l'activité {selected_id}...")
+            activity = api.get_activity(selected_id)
+            activities = [activity]
 
+    # Date de l'activité
+    date = activity["start_date_local"][:10]
+    activity_date = datetime.fromisoformat(activity["start_date_local"].replace("Z", "+00:00"))
+
+    # Récupérer wellness
+    wellness_data = api.get_wellness(oldest=date, newest=date)
+    wellness = wellness_data[0] if wellness_data else None
+
+    # Récupérer le workout planifié si disponible
+    print(f"   ✅ Activité : {activity.get('name', 'Séance')}")
+    print(f"   📅 Date : {date}")
+
+    print("🔍 Recherche du workout planifié...")
+    planned_workout = api.get_planned_workout(activity["id"], activity_date)
+    if planned_workout:
+        print(f"   ✅ Workout planifié trouvé : {planned_workout.get('name', 'N/A')}")
+    else:
+        print("   ℹ️  Pas de workout planifié associé (séance libre)")
+
+    # Vérifier si l'activité vient de Strava
+    if activity.get("source") == "STRAVA":
         print()
+        print("   ⚠️  ATTENTION : Cette activité vient de Strava")
+        print("   Les données API sont limitées (restriction Strava)")
+        print("   Certaines métriques peuvent être manquantes")
+        print("   → Vérifier sur Intervals.icu web si besoin")
+
+    print()
+
+    # Générer le prompt
+    generator = PromptGenerator(args.project_root)
+
+    print("📖 Chargement du contexte...")
+    athlete_context = generator.load_athlete_context()
+    recent_workouts = generator.load_recent_workouts(limit=3)
+    cycling_concepts = generator.load_cycling_concepts()
+    periodization_context = generator.load_periodization_context(wellness)
+
+    # Charger feedback athlète si disponible
+    athlete_feedback = generator.load_athlete_feedback()
+    if athlete_feedback:
+        print("   ✅ Feedback athlète trouvé !")
+        if athlete_feedback.get("rpe"):
+            print(f"      RPE : {athlete_feedback['rpe']}/10")
+        if athlete_feedback.get("ressenti_general"):
+            print(f"      Ressenti : {athlete_feedback['ressenti_general'][:50]}...")
+    else:
+        print("   ℹ️  Pas de feedback athlète (optionnel)")
+        print("      → Utiliser collect_athlete_feedback.py pour enrichir l'analyse")
+
+    if periodization_context:
+        print(f"   ✅ Contexte périodisation : Phase {periodization_context['phase']}")
+        print(
+            f"      CTL {periodization_context['ctl_current']:.1f} → {periodization_context['ctl_target']:.0f}"
+        )
+
+    print("✍️  Génération du prompt...")
+    prompt = generator.generate_prompt(
+        activity_data=generator.format_activity_data(activity),
+        wellness_pre=wellness,
+        wellness_post=wellness,  # Simplifié pour l'instant
+        athlete_context=athlete_context,
+        recent_workouts=recent_workouts,
+        athlete_feedback=athlete_feedback,
+        planned_workout=planned_workout,
+        cycling_concepts=cycling_concepts,
+        periodization_context=periodization_context,
+    )
+
+    # Copier dans le presse-papier
+    print("📋 Copie dans le presse-papier...")
+    if generator.copy_to_clipboard(prompt):
+        print("   ✅ Prompt copié !")
+
+        # NOTE: Activity will be marked as analyzed AFTER successful insertion
+        # by insert_analysis.py or workflow_coach.py, not here!
+
+        # Effacer le feedback après utilisation
+        if athlete_feedback and generator.feedback_file.exists():
+            generator.feedback_file.unlink()
+            print("   ✅ Feedback athlète consommé et effacé")
+    else:
+        print("   ⚠️  Échec de la copie, affichage du prompt :")
+        print()
+        print(prompt)
+
+    print()
+    print("=" * 60)
+
+    # Get active provider to show appropriate instructions
+    ai_config = get_ai_config()
+    provider = ai_config.default_provider
+
+    # API providers list (automated workflow)
+    API_PROVIDERS = ["claude_api", "mistral_api", "openai", "ollama"]
+
+    if provider in API_PROVIDERS:
+        # API providers - automated workflow
+        print("✅ PROMPT GÉNÉRÉ ET ENVOYÉ À L'IA")
         print("=" * 60)
-
-        # Get active provider to show appropriate instructions
-        ai_config = get_ai_config()
-        provider = ai_config.default_provider
-
-        # API providers list (automated workflow)
-        API_PROVIDERS = ["claude_api", "mistral_api", "openai", "ollama"]
-
-        if provider in API_PROVIDERS:
-            # API providers - automated workflow
-            print("✅ PROMPT GÉNÉRÉ ET ENVOYÉ À L'IA")
-            print("=" * 60)
-            print()
-            print("⏳ Analyse en cours via API...")
-            print("   Le résultat sera automatiquement disponible.")
-            print()
-        else:
-            # Clipboard - manual workflow (generic)
-            print("✅ PROMPT PRÊT POUR ANALYSE")
-            print("=" * 60)
-            print()
-            print("📝 ÉTAPES SUIVANTES :")
-            print()
-            print("1. Ouvrir votre IA préférée dans votre navigateur")
-            print("   Exemples : Claude.ai, ChatGPT, etc.")
-            print("   → https://claude.ai (si vous utilisez Claude)")
-            print()
-            print("2. Coller le prompt (Cmd+V)")
-            print()
-            print("3. Attendre l'analyse de votre IA")
-            print()
-            print("4. Copier la réponse (UNIQUEMENT le bloc markdown)")
-            print()
-            print("5. Exécuter le script d'insertion :")
-            print("   python3 magma_cycling/insert_analysis.py")
-            print()
-
+        print()
+        print("⏳ Analyse en cours via API...")
+        print("   Le résultat sera automatiquement disponible.")
+        print()
+    else:
+        # Clipboard - manual workflow (generic)
+        print("✅ PROMPT PRÊT POUR ANALYSE")
         print("=" * 60)
+        print()
+        print("📝 ÉTAPES SUIVANTES :")
+        print()
+        print("1. Ouvrir votre IA préférée dans votre navigateur")
+        print("   Exemples : Claude.ai, ChatGPT, etc.")
+        print("   → https://claude.ai (si vous utilisez Claude)")
+        print()
+        print("2. Coller le prompt (Cmd+V)")
+        print()
+        print("3. Attendre l'analyse de votre IA")
+        print()
+        print("4. Copier la réponse (UNIQUEMENT le bloc markdown)")
+        print()
+        print("5. Exécuter le script d'insertion :")
+        print("   python3 magma_cycling/insert_analysis.py")
+        print()
 
-    except requests.exceptions.HTTPError as e:
-        print(f"❌ Erreur API: {e}")
-        if e.response.status_code == 401:
-            print("   → Vérifier l'API key et l'athlete_id")
-        sys.exit(1)
-    except Exception as e:
-        print(f"❌ Erreur: {e}")
-        import traceback
-
-        traceback.print_exc()
-        sys.exit(1)
+    print("=" * 60)
 
 
 if __name__ == "__main__":
