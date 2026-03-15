@@ -274,17 +274,16 @@ class ReportingMixin:
                     f.write("---\n\n")
                     f.write(format_phase_recommendation(phase_rec))
 
-                # PID + Peaks integrated recommendation (NEW)
+                # PID + Peaks integrated recommendation
                 pid_peaks_rec = ctl_analysis.get("pid_peaks_recommendation")
                 if pid_peaks_rec:
-                    f.write("---\n\n")
-                    f.write("## 🎛️ Recommandation Intégrée PID + Peaks (Sprint R10)\n\n")
-                    f.write(
-                        "*Architecture hiérarchique multi-niveaux: Peaks Coaching (stratégique) → "
-                        "PID Discret (tactique) → Daily execution (opérationnel)*\n\n"
-                    )
-                    formatted_rec = format_integrated_recommendation(pid_peaks_rec)
-                    f.write(formatted_rec)
+                    # Only show in report if confidence >= medium
+                    # Low confidence (aberrant PID values) → debug logs only
+                    if getattr(pid_peaks_rec, "confidence", "low") != "low":
+                        f.write("---\n\n")
+                        f.write("## 🎛️ Recommandation Intégrée PID + Peaks\n\n")
+                        formatted_rec = format_integrated_recommendation(pid_peaks_rec)
+                        f.write(formatted_rec)
 
             f.write("---\n\n")
             f.write(
