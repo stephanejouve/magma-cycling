@@ -61,6 +61,8 @@ Metadata:
 """
 import re
 
+from magma_cycling.utils.cli import cli_main
+
 
 class IntervalsFormatValidator:
     """Validateur format Intervals.icu."""
@@ -419,6 +421,7 @@ Cooldown
         }
 
 
+@cli_main
 def main():
     """Test du validateur."""
     validator = IntervalsFormatValidator()
@@ -504,4 +507,4 @@ Cooldown
 
 
 if __name__ == "__main__":
-    main()
+    main()  # pragma: no cover

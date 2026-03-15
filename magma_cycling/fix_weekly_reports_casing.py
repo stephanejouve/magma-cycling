@@ -22,9 +22,10 @@ Usage:
 """
 import argparse
 import shutil
-import sys
 from datetime import datetime
 from pathlib import Path
+
+from magma_cycling.utils.cli import cli_main
 
 
 class WeeklyReportsFixing:
@@ -303,6 +304,7 @@ class WeeklyReportsFixing:
             return False
 
 
+@cli_main
 def main():
     """Command-line entry point for fixing weekly reports casing."""
     parser = argparse.ArgumentParser(
@@ -327,20 +329,20 @@ def main():
     # Mode rollback
     if args.rollback:
         fixer.rollback()
-        sys.exit(0)
+        return 0
 
     # Audit initial
     problems = fixer.audit_structure()
 
     if not problems or (not problems["lowercase"] and not problems["duplicates"]):
         print("\n✅ Aucun problème détecté")
-        sys.exit(0)
+        return 0
 
     # Dry-run
     if args.dry_run:
         fixer.run_fixes(dry_run=True)
         print("\n🧪 DRY-RUN terminé (aucune modification effectuée)")
-        sys.exit(0)
+        return 0
 
     # Confirmation utilisateur
     if not args.force:
@@ -358,12 +360,12 @@ def main():
 
         if confirm != "yes":
             print("\n❌ Corrections annulées")
-            sys.exit(0)
+            return 0
 
     # Backup
     if not fixer.backup_weekly_reports():
         print("\n❌ Backup échoué → Abandon")
-        sys.exit(1)
+        return 1
 
     # Corrections
     success = fixer.run_fixes(dry_run=False)
@@ -380,16 +382,16 @@ def main():
             print()
             print(f"Backup disponible : {fixer.backup_dir}")
             print(f"Log détaillé : {fixer.log_file}")
-            sys.exit(0)
+            return 0
         else:
             print("\n❌ Validation finale échouée")
             print(f"⚠️  Utilisez --rollback pour restaurer : {fixer.backup_dir}")
-            sys.exit(1)
+            return 1
     else:
         print("\n❌ Corrections incomplètes")
         print(f"⚠️  Backup disponible : {fixer.backup_dir}")
-        sys.exit(1)
+        return 1
 
 
 if __name__ == "__main__":
-    main()
+    main()  # pragma: no cover
