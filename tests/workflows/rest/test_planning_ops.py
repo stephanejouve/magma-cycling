@@ -62,19 +62,21 @@ class TestValidateWeekPlanning:
 
     def test_validate_weekly_plan_object(self):
         """WeeklyPlan instance is always valid (Pydantic validated)."""
-        mock_plan = MagicMock(spec_set=["week_id", "planned_sessions"])
-        mock_plan.week_id = "S090"
-        # Make isinstance check pass
+        from datetime import datetime
+
         from magma_cycling.planning.models import WeeklyPlan
 
-        with patch(
-            "magma_cycling.workflows.rest.planning_ops.isinstance",
-            side_effect=lambda obj, cls: cls is WeeklyPlan or type(obj) is cls,
-        ):
-            pass
-        # Direct test: pass a WeeklyPlan-typed mock
-        plan = MagicMock(spec=WeeklyPlan)
-        plan.week_id = "S090"
+        plan = WeeklyPlan(
+            week_id="S090",
+            start_date="2026-03-09",
+            end_date="2026-03-15",
+            created_at=datetime.now(),
+            last_updated=datetime.now(),
+            version=1,
+            athlete_id="i000000",
+            tss_target=400,
+            planned_sessions=[],
+        )
         assert validate_week_planning(plan) is True
 
     def test_validate_valid_dict(self):
