@@ -30,6 +30,8 @@ import sys
 from pathlib import Path
 from typing import Any, cast
 
+from magma_cycling.utils.cli import cli_main
+
 
 class NamingValidator:
     """Validateur de conventions de nommage weekly_reports."""
@@ -215,6 +217,7 @@ class NamingValidator:
         return json.dumps(report, indent=2, ensure_ascii=False)
 
 
+@cli_main
 def main():
     """Command-line entry point for validating naming conventions."""
     parser = argparse.ArgumentParser(

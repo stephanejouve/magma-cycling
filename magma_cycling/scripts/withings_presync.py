@@ -6,8 +6,9 @@ Also called by session_monitor before triggering daily-sync.
 Exit 0 in all cases — LaunchAgent should not retry on its own.
 """
 
-import sys
 from datetime import date, datetime, timedelta
+
+from magma_cycling.utils.cli import cli_main
 
 PREFIX = "[withings-presync]"
 
@@ -18,6 +19,7 @@ def log(msg: str) -> None:
     print(f"{PREFIX} {ts} - {msg}")
 
 
+@cli_main
 def main() -> int:
     """Entry point."""
     try:
@@ -60,4 +62,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

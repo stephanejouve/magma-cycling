@@ -23,7 +23,6 @@ Created: 2026-02-19
 """
 
 import argparse
-import sys
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
@@ -31,6 +30,7 @@ from magma_cycling.api.intervals_client import IntervalsClient
 from magma_cycling.config import create_intervals_client, get_data_config
 from magma_cycling.planning.control_tower import planning_tower
 from magma_cycling.planning.models import Session, WeeklyPlan
+from magma_cycling.utils.cli import cli_main
 
 
 class SessionShifter:
@@ -493,6 +493,7 @@ class SessionShifter:
                 print(f"   S{self.week_id[1:]}-{i:02d}: {day_name:10} ({day_date}) - VIDE")
 
 
+@cli_main
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
@@ -574,97 +575,89 @@ Examples:
 
     args = parser.parse_args()
 
-    try:
-        # Build operation description for audit log
-        operation_parts = []
-        if args.insert_rest_day:
-            operation_parts.append(f"insert rest day {args.insert_rest_day}")
-        elif args.swap:
-            operation_parts.append(f"swap {args.swap[0]} ↔ {args.swap[1]}")
-        elif args.swap_days:
-            operation_parts.append(f"swap days {args.swap_days[0]} ↔ {args.swap_days[1]}")
-        elif args.remove_session:
-            operation_parts.append(f"remove {args.remove_session}")
-        elif args.from_session:
-            operation_parts.append(
-                f"shift from {args.from_session} by {args.shift_days} days"
-                + (" (renumber)" if args.renumber else "")
-            )
-        elif args.from_day:
-            operation_parts.append(
-                f"shift from day {args.from_day} by {args.shift_days} days"
-                + (" (renumber)" if args.renumber else "")
-            )
-        else:
-            print(
-                "\n❌ Must specify --insert-rest-day, --swap, --swap-days, "
-                "--remove-session, or shift options"
-            )
-            return 1
-
-        operation_description = ", ".join(operation_parts)
-
-        print(f"\n{'🔍 DRY RUN MODE' if args.dry_run else '🔧 SHIFT SESSIONS'}")
-        print("=" * 70)
-
-        # 🚦 USE CONTROL TOWER for permission + backup + audit
-        with planning_tower.modify_week(
-            args.week_id,
-            requesting_script="shift-sessions",
-            reason=operation_description,
-            auto_save=not args.dry_run,  # Only save if not dry-run
-        ) as plan:
-            # Create shifter in Control Tower mode
-            shifter = SessionShifter(week_id=args.week_id, plan=plan)
-
-            # Display current state
-            shifter.display_summary()
-
-            # Perform operation
-            if args.insert_rest_day:
-                shifter.insert_rest_day(args.insert_rest_day)
-
-            elif args.swap:
-                shifter.swap_sessions(session1_id=args.swap[0], session2_id=args.swap[1])
-
-            elif args.swap_days:
-                shifter.swap_sessions(day1=args.swap_days[0], day2=args.swap_days[1])
-
-            elif args.remove_session:
-                shifter.remove_session(args.remove_session)
-
-            elif args.from_session or args.from_day:
-                shifter.shift_sessions(
-                    from_session_id=args.from_session,
-                    from_day=args.from_day,
-                    shift_days=args.shift_days,
-                    renumber=args.renumber,
-                )
-
-            # Display final state
-            shifter.display_summary()
-
-            # Handle sync (save will be automatic via Control Tower)
-            if not args.dry_run and args.sync:
-                shifter.save(dry_run=False, sync=True)
-
-        # Success messages
-        if args.dry_run:
-            print("\n💡 Run without --dry-run to apply changes")
-        elif args.sync:
-            print("\n✅ Changes saved and synced with Intervals.icu")
-        else:
-            print("\n✅ Changes saved")
-
-        return 0
-
-    except Exception as e:
-        print(f"\n❌ Error: {e}")
-        import traceback
-
-        traceback.print_exc()
+    # Build operation description for audit log
+    operation_parts = []
+    if args.insert_rest_day:
+        operation_parts.append(f"insert rest day {args.insert_rest_day}")
+    elif args.swap:
+        operation_parts.append(f"swap {args.swap[0]} ↔ {args.swap[1]}")
+    elif args.swap_days:
+        operation_parts.append(f"swap days {args.swap_days[0]} ↔ {args.swap_days[1]}")
+    elif args.remove_session:
+        operation_parts.append(f"remove {args.remove_session}")
+    elif args.from_session:
+        operation_parts.append(
+            f"shift from {args.from_session} by {args.shift_days} days"
+            + (" (renumber)" if args.renumber else "")
+        )
+    elif args.from_day:
+        operation_parts.append(
+            f"shift from day {args.from_day} by {args.shift_days} days"
+            + (" (renumber)" if args.renumber else "")
+        )
+    else:
+        print(
+            "\n❌ Must specify --insert-rest-day, --swap, --swap-days, "
+            "--remove-session, or shift options"
+        )
         return 1
+
+    operation_description = ", ".join(operation_parts)
+
+    print(f"\n{'🔍 DRY RUN MODE' if args.dry_run else '🔧 SHIFT SESSIONS'}")
+    print("=" * 70)
+
+    # 🚦 USE CONTROL TOWER for permission + backup + audit
+    with planning_tower.modify_week(
+        args.week_id,
+        requesting_script="shift-sessions",
+        reason=operation_description,
+        auto_save=not args.dry_run,  # Only save if not dry-run
+    ) as plan:
+        # Create shifter in Control Tower mode
+        shifter = SessionShifter(week_id=args.week_id, plan=plan)
+
+        # Display current state
+        shifter.display_summary()
+
+        # Perform operation
+        if args.insert_rest_day:
+            shifter.insert_rest_day(args.insert_rest_day)
+
+        elif args.swap:
+            shifter.swap_sessions(session1_id=args.swap[0], session2_id=args.swap[1])
+
+        elif args.swap_days:
+            shifter.swap_sessions(day1=args.swap_days[0], day2=args.swap_days[1])
+
+        elif args.remove_session:
+            shifter.remove_session(args.remove_session)
+
+        elif args.from_session or args.from_day:
+            shifter.shift_sessions(
+                from_session_id=args.from_session,
+                from_day=args.from_day,
+                shift_days=args.shift_days,
+                renumber=args.renumber,
+            )
+
+        # Display final state
+        shifter.display_summary()
+
+        # Handle sync (save will be automatic via Control Tower)
+        if not args.dry_run and args.sync:
+            shifter.save(dry_run=False, sync=True)
+
+    # Success messages
+    if args.dry_run:
+        print("\n💡 Run without --dry-run to apply changes")
+    elif args.sync:
+        print("\n✅ Changes saved and synced with Intervals.icu")
+    else:
+        print("\n✅ Changes saved")
+
+    return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
