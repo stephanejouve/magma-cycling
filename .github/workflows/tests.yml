@@ -103,15 +103,9 @@ jobs:
         DATA_REPO_PATH: ${{ github.workspace }}/test-data
         CI: "true"
       run: |
-        # Run unit tests only (exclude integration tests and tests requiring external data)
-        poetry run pytest \
-          tests/config/ \
-          tests/intelligence/ \
-          tests/planning/ \
-          tests/reports/ \
-          tests/test_ai_providers/ \
-          tests/utils/ \
-          tests/workflows/test_insert_analysis.py \
+        # Run all unit tests (exclude integration tests only)
+        poetry run pytest tests/ \
+          --ignore=tests/integration \
           -v --cov=magma_cycling --cov-report=xml --cov-report=term --junitxml=junit.xml
       continue-on-error: false
 
