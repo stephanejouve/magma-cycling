@@ -140,6 +140,35 @@ target-version = "py311"
 select = ["E", "W", "F", "I", "C", "B", "UP"]
 ignore = ["E501", "B008", "C901"]
 
+[tool.coverage.run]
+source = ["magma_cycling"]
+omit = [
+    "magma_cycling/fix_weekly_reports_casing.py",
+    "magma_cycling/normalize_weekly_reports_casing.py",
+    "magma_cycling/organize_weekly_report.py",
+    "magma_cycling/debug_detection.py",
+    "magma_cycling/diagnose-matching.py",
+    "magma_cycling/check_activity_sources.py",
+    "magma_cycling/dashboard.py",
+    "magma_cycling/session_monitor.py",
+    "magma_cycling/collect_athlete_feedback.py",
+    "magma_cycling/scripts/populate_zwift_cache.py",
+    "magma_cycling/scripts/search_zwift_workouts.py",
+    "magma_cycling/scripts/seed_zwift_workouts.py",
+    "magma_cycling/scripts/backfill_history.py",
+    "magma_cycling/scripts/initialize_pid_controller.py",
+    "magma_cycling/scripts/setup_withings.py",
+    "magma_cycling/scripts/withings_presync.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = ["-v"]
