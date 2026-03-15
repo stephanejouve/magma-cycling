@@ -21,26 +21,30 @@ class TestWeeklyPlannerMigration:
     """Test migration de weekly_planner.py vers Pydantic."""
 
     @pytest.fixture
-    def mock_config(self, tmp_path):
-        """Mock Control Tower to use tmp_path for planning."""
-        from magma_cycling.planning.control_tower import planning_tower
+    def mock_config(self, tmp_path, monkeypatch):
+        """Mock Control Tower to use tmp_path for planning.
+
+        Patches the planning_tower instance that output.py actually references,
+        which may differ from control_tower module's after a module reload
+        (e.g. test_admin.py calls handle_reload_server).
+        """
+        import magma_cycling.workflows.planner.output as output_mod
+
+        # Get the planning_tower that update_session_status actually uses
+        tower = output_mod.planning_tower
 
         # Create required files for DataRepoConfig validation
         workouts_history = tmp_path / "workouts-history.md"
         workouts_history.touch()
 
-        # Save original path
-        original_planning_dir = planning_tower.planning_dir
+        backup_dir = tmp_path / "backups"
+        backup_dir.mkdir(exist_ok=True)
 
-        # Override with tmp_path
-        planning_tower.planning_dir = tmp_path
-        planning_tower.backup_system.planning_dir = tmp_path
+        monkeypatch.setattr(tower, "planning_dir", tmp_path)
+        monkeypatch.setattr(tower.backup_system, "planning_dir", tmp_path)
+        monkeypatch.setattr(tower.backup_system, "backup_dir", backup_dir)
 
         yield tmp_path
-
-        # Restore original path
-        planning_tower.planning_dir = original_planning_dir
-        planning_tower.backup_system.planning_dir = original_planning_dir
 
     @pytest.fixture
     def temp_planning_file(self, tmp_path, mock_config):
@@ -171,10 +175,12 @@ class TestWeeklyPlannerMigration:
 
     def test_last_updated_is_modified(self, planner, temp_planning_file):
         """Vérifie que last_updated est mis à jour."""
+        from datetime import UTC
+
         # Charger et modifier le timestamp initial pour être dans le passé
         plan_before = WeeklyPlan.from_json(temp_planning_file)
-        old_timestamp_str = "2026-02-01T12:00:00Z"
-        plan_before.last_updated = old_timestamp_str
+        old_timestamp = datetime(2026, 2, 1, 12, 0, 0, tzinfo=UTC)
+        plan_before.last_updated = old_timestamp
         plan_before.to_json(temp_planning_file)
 
         # Attendre un peu pour avoir un timestamp différent
@@ -185,9 +191,9 @@ class TestWeeklyPlannerMigration:
         # Mettre à jour
         planner.update_session_status("S080-01", "completed")
 
-        # Vérifier nouveau timestamp (string comparison)
+        # Vérifier nouveau timestamp (datetime comparison)
         plan_after = WeeklyPlan.from_json(temp_planning_file)
-        assert str(plan_after.last_updated) > old_timestamp_str
+        assert plan_after.last_updated > old_timestamp
 
     def test_pydantic_protection_prevents_corruption(self, temp_planning_file):
         """
