@@ -322,6 +322,282 @@ class TestSyncWithIntervals:
         # Should return True even if no event found
         assert result is True
 
+    def test_sync_replaced_event_converts_to_note(self):
+        """Test that replaced status converts event to NOTE with [REMPLACÉE] tag."""
+        mock_client = MagicMock()
+        mock_client.get_events.return_value = [
+            {
+                "id": 789,
+                "name": "S999-03 Tempo",
+                "category": "WORKOUT",
+                "description": "Tempo ride",
+            }
+        ]
+        mock_client.update_event.return_value = {"id": 789}
+
+        result = sync_with_intervals(
+            mock_client, "S999-03", "2026-03-04", "replaced", reason="Changed to intervals"
+        )
+
+        assert result is True
+        call_args = mock_client.update_event.call_args
+        update_data = call_args[0][1]
+        assert "[REMPLACÉE]" in update_data["name"]
+        assert update_data["category"] == "NOTE"
+
+    def test_sync_rest_day_event_converts_to_note(self):
+        """Test that rest_day status converts event to NOTE with [REPOS] tag."""
+        mock_client = MagicMock()
+        mock_client.get_events.return_value = [
+            {
+                "id": 321,
+                "name": "S999-04 Recovery",
+                "category": "WORKOUT",
+                "description": "Easy ride",
+            }
+        ]
+        mock_client.update_event.return_value = {"id": 321}
+
+        result = sync_with_intervals(
+            mock_client, "S999-04", "2026-03-05", "rest_day", reason="Fatigue accumulée"
+        )
+
+        assert result is True
+        call_args = mock_client.update_event.call_args
+        update_data = call_args[0][1]
+        assert "[REPOS]" in update_data["name"]
+        assert update_data["category"] == "NOTE"
+
+    def test_sync_modified_updates_description(self):
+        """Test that modified status appends modification note to event."""
+        mock_client = MagicMock()
+        mock_client.get_events.return_value = [
+            {
+                "id": 555,
+                "name": "S999-02 Intervals",
+                "category": "WORKOUT",
+                "description": "Original intervals",
+            }
+        ]
+        mock_client.update_event.return_value = {"id": 555}
+
+        result = sync_with_intervals(
+            mock_client, "S999-02", "2026-03-03", "modified", reason="Reduced intensity"
+        )
+
+        assert result is True
+        call_args = mock_client.update_event.call_args
+        update_data = call_args[0][1]
+        assert "MODIFIED" in update_data["description"]
+        assert "Reduced intensity" in update_data["description"]
+        assert "Original intervals" in update_data["description"]
+
+    def test_sync_modified_no_event_returns_true(self):
+        """Test that modified with no event found returns True gracefully."""
+        mock_client = MagicMock()
+        mock_client.get_events.return_value = []
+
+        result = sync_with_intervals(
+            mock_client, "S999-99", "2026-03-02", "modified", reason="Test"
+        )
+
+        assert result is True
+        mock_client.update_event.assert_not_called()
+
+    def test_sync_completed_no_action(self):
+        """Test that completed status takes no action."""
+        mock_client = MagicMock()
+
+        result = sync_with_intervals(mock_client, "S999-01", "2026-03-02", "completed")
+
+        assert result is True
+        mock_client.update_event.assert_not_called()
+        mock_client.create_event.assert_not_called()
+
+    def test_sync_unknown_status_returns_true(self):
+        """Test that unknown status returns True with no action."""
+        mock_client = MagicMock()
+
+        result = sync_with_intervals(mock_client, "S999-01", "2026-03-02", "planned")
+
+        assert result is True
+        mock_client.update_event.assert_not_called()
+
+    def test_sync_cancelled_no_event_creates_note(self):
+        """Test that cancelled with no event creates a new NOTE."""
+        mock_client = MagicMock()
+        mock_client.get_events.return_value = []
+        mock_client.create_event.return_value = {"id": 999}
+
+        session_info = {
+            "name": "EnduranceDouce",
+            "type": "END",
+            "version": "V001",
+            "description": "Easy endurance ride",
+            "tss_planned": 50,
+            "duration_min": 60,
+        }
+
+        result = sync_with_intervals(
+            mock_client,
+            "S999-01",
+            "2026-03-02",
+            "cancelled",
+            reason="Maladie",
+            session_info=session_info,
+        )
+
+        assert result is True
+        mock_client.create_event.assert_called_once()
+        call_args = mock_client.create_event.call_args
+        event_data = call_args[0][0]
+        assert event_data["category"] == "NOTE"
+        assert "[ANNULÉE]" in event_data["name"]
+        assert "Maladie" in event_data["description"]
+
+    def test_sync_cancelled_no_event_no_session_info(self):
+        """Test that cancelled with no event and no session_info returns True."""
+        mock_client = MagicMock()
+        mock_client.get_events.return_value = []
+
+        result = sync_with_intervals(
+            mock_client, "S999-01", "2026-03-02", "cancelled", reason="Fatigue"
+        )
+
+        assert result is True
+        mock_client.create_event.assert_not_called()
+
+    def test_sync_cancelled_create_event_fails(self):
+        """Test that failed create_event returns False."""
+        mock_client = MagicMock()
+        mock_client.get_events.return_value = []
+        mock_client.create_event.return_value = None
+
+        session_info = {
+            "name": "Test",
+            "type": "END",
+            "version": "V001",
+            "description": "Test",
+            "tss_planned": 50,
+            "duration_min": 60,
+        }
+
+        result = sync_with_intervals(
+            mock_client,
+            "S999-01",
+            "2026-03-02",
+            "cancelled",
+            reason="Test",
+            session_info=session_info,
+        )
+
+        assert result is False
+
+    def test_sync_event_with_none_id_returns_false(self):
+        """Test that event with None id returns False."""
+        mock_client = MagicMock()
+        mock_client.get_events.return_value = [
+            {
+                "id": None,
+                "name": "S999-01 Test",
+                "category": "WORKOUT",
+                "description": "Test",
+            }
+        ]
+
+        result = sync_with_intervals(mock_client, "S999-01", "2026-03-02", "cancelled")
+
+        assert result is False
+        mock_client.update_event.assert_not_called()
+
+    def test_sync_modified_event_with_none_id_returns_false(self):
+        """Test that modified with None event id returns False."""
+        mock_client = MagicMock()
+        mock_client.get_events.return_value = [
+            {
+                "id": None,
+                "name": "S999-01 Test",
+                "category": "WORKOUT",
+                "description": "Test",
+            }
+        ]
+
+        result = sync_with_intervals(
+            mock_client, "S999-01", "2026-03-02", "modified", reason="Test"
+        )
+
+        assert result is False
+
+    def test_sync_modified_update_fails(self):
+        """Test that failed update for modified returns False."""
+        mock_client = MagicMock()
+        mock_client.get_events.return_value = [
+            {
+                "id": 123,
+                "name": "S999-01 Test",
+                "category": "WORKOUT",
+                "description": "Test",
+            }
+        ]
+        mock_client.update_event.return_value = None
+
+        result = sync_with_intervals(
+            mock_client, "S999-01", "2026-03-02", "modified", reason="Test"
+        )
+
+        assert result is False
+
+    def test_sync_already_marked_sautee(self):
+        """Test that already marked [SAUTÉE] is not updated again."""
+        mock_client = MagicMock()
+        mock_client.get_events.return_value = [
+            {
+                "id": 123,
+                "name": "[SAUTÉE] S999-01 Test",
+                "category": "NOTE",
+                "description": "Already skipped",
+            }
+        ]
+
+        result = sync_with_intervals(mock_client, "S999-01", "2026-03-02", "skipped")
+
+        assert result is True
+        mock_client.update_event.assert_not_called()
+
+    def test_sync_already_marked_remplacee(self):
+        """Test that already marked [REMPLACÉE] is not updated again."""
+        mock_client = MagicMock()
+        mock_client.get_events.return_value = [
+            {
+                "id": 123,
+                "name": "[REMPLACÉE] S999-01 Test",
+                "category": "NOTE",
+                "description": "Already replaced",
+            }
+        ]
+
+        result = sync_with_intervals(mock_client, "S999-01", "2026-03-02", "replaced")
+
+        assert result is True
+        mock_client.update_event.assert_not_called()
+
+    def test_sync_already_marked_repos(self):
+        """Test that already marked [REPOS] is not updated again."""
+        mock_client = MagicMock()
+        mock_client.get_events.return_value = [
+            {
+                "id": 123,
+                "name": "[REPOS] S999-01 Test",
+                "category": "NOTE",
+                "description": "Already rest",
+            }
+        ]
+
+        result = sync_with_intervals(mock_client, "S999-01", "2026-03-02", "rest_day")
+
+        assert result is True
+        mock_client.update_event.assert_not_called()
+
 
 class TestStatusConstants:
     """Test status constants."""
@@ -332,6 +608,64 @@ class TestStatusConstants:
         assert "skipped" in STATUSES_TO_DELETE
         assert "replaced" in STATUSES_TO_DELETE
         assert "completed" not in STATUSES_TO_DELETE
+
+    def test_rest_day_in_statuses_to_delete(self):
+        """Test rest_day is also in STATUSES_TO_DELETE."""
+        assert "rest_day" in STATUSES_TO_DELETE
+
+    def test_statuses_to_delete_count(self):
+        """Test exact count of STATUSES_TO_DELETE."""
+        assert len(STATUSES_TO_DELETE) == 4
+
+
+class TestFindEventBySessionEdgeCases:
+    """Additional edge case tests for find_event_by_session."""
+
+    def test_find_event_empty_events_list(self):
+        """Test with empty events list."""
+        mock_client = MagicMock()
+        mock_client.get_events.return_value = []
+
+        event = find_event_by_session(mock_client, "S999-01", "2026-03-02")
+        assert event is None
+
+    def test_find_event_passes_correct_dates(self):
+        """Test that correct dates are passed to get_events."""
+        mock_client = MagicMock()
+        mock_client.get_events.return_value = []
+
+        find_event_by_session(mock_client, "S999-01", "2026-03-15")
+
+        mock_client.get_events.assert_called_once_with(oldest="2026-03-15", newest="2026-03-15")
+
+    def test_find_event_returns_first_match(self):
+        """Test that first matching event is returned when multiple match."""
+        mock_client = MagicMock()
+        mock_client.get_events.return_value = [
+            {"id": 100, "name": "S999-01-END-Test-V001", "category": "WORKOUT"},
+            {"id": 200, "name": "S999-01-END-Test-V002", "category": "WORKOUT"},
+        ]
+
+        event = find_event_by_session(mock_client, "S999-01", "2026-03-02")
+        assert event["id"] == 100
+
+    def test_find_event_partial_match(self):
+        """Test that partial session_id in name still matches."""
+        mock_client = MagicMock()
+        mock_client.get_events.return_value = [
+            {"id": 100, "name": "S999-01-END-EnduranceDouce-V001"},
+        ]
+
+        event = find_event_by_session(mock_client, "S999-01", "2026-03-02")
+        assert event is not None
+
+    def test_find_event_missing_name_key(self):
+        """Test event with missing name key uses empty string."""
+        mock_client = MagicMock()
+        mock_client.get_events.return_value = [{"id": 100}]
+
+        event = find_event_by_session(mock_client, "S999-01", "2026-03-02")
+        assert event is None
 
 
 class TestErrorHandling:
