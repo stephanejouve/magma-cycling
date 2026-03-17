@@ -10,6 +10,16 @@
         "icu_training_load": 69,
         "analyzed": true,
         "analyzed_at": "2026-02-22T13:15:12.377414"
+      },
+      {
+        "id": "i126850020",
+        "activity_id": "i126850020",
+        "paired_event_id": null,
+        "name": "S081-06-END-EnduranceLongue-V001",
+        "type": "VirtualRide",
+        "icu_training_load": 69,
+        "analyzed": true,
+        "analyzed_at": "2026-03-18T00:39:49.212836"
       }
     ]
   }

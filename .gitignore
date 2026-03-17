@@ -74,8 +74,19 @@ scripts/*_raw.json
 
 # État workflow (local, ne pas commiter)
 .workflow_state.json
+.workflow_state.json.backup
 .athlete_feedback/
 .archive_needed
+.sprint_*_complete
+
+# Ruff cache
+.ruff_cache/
+
+# MagicMock artifacts (pytest side-effect)
+MagicMock/
+
+# Personal shell config
+.zsh_aliases_*
 
 # ============================================================================
 # DATA FILES - Managed in external training-logs repository
