@@ -210,9 +210,7 @@ def merge_pr(pr_number, wait=False):
     print(f"Merged: {merge_data['sha'][:8]}")
 
     # 3. Delete remote branch
-    resp = requests.delete(
-        f"{API_BASE}/git/refs/heads/{branch_name}", headers=hdrs, timeout=15
-    )
+    resp = requests.delete(f"{API_BASE}/git/refs/heads/{branch_name}", headers=hdrs, timeout=15)
     if resp.status_code == 204:
         print(f"Deleted remote branch: {branch_name}")
     else:
@@ -225,9 +223,7 @@ def merge_pr(pr_number, wait=False):
         text=True,
     ).stdout.strip()
     if current_branch == branch_name:
-        subprocess.run(
-            ["git", "checkout", "main"], capture_output=True, text=True, check=True
-        )
+        subprocess.run(["git", "checkout", "main"], capture_output=True, text=True, check=True)
 
     # 5. Delete local branch (ignore errors if absent)
     try:
@@ -243,9 +239,7 @@ def merge_pr(pr_number, wait=False):
 
     # 6. Pull main
     try:
-        subprocess.run(
-            ["git", "checkout", "main"], capture_output=True, text=True, check=True
-        )
+        subprocess.run(["git", "checkout", "main"], capture_output=True, text=True, check=True)
         subprocess.run(
             ["git", "pull", "origin", "main"],
             capture_output=True,
@@ -270,18 +264,14 @@ def wait_main():
     hdrs = _headers(token)
 
     # Get latest commit on main
-    resp = requests.get(
-        f"{API_BASE}/commits/main", headers=hdrs, timeout=15
-    )
+    resp = requests.get(f"{API_BASE}/commits/main", headers=hdrs, timeout=15)
     resp.raise_for_status()
     sha = resp.json()["sha"]
     message = resp.json()["commit"]["message"].split("\n")[0][:60]
     print(f"main — {sha[:8]} — {message}")
 
     while True:
-        resp = requests.get(
-            f"{API_BASE}/commits/{sha}/check-runs", headers=hdrs, timeout=15
-        )
+        resp = requests.get(f"{API_BASE}/commits/{sha}/check-runs", headers=hdrs, timeout=15)
         resp.raise_for_status()
         runs = resp.json().get("check_runs", [])
 
@@ -359,9 +349,9 @@ def codecov_status(compare=False):
 
     # Compare with parent commit
     if compare:
-        parent_sha = requests.get(
-            f"{API_BASE}/commits/main", headers=hdrs, timeout=15
-        ).json()["parents"][0]["sha"]
+        parent_sha = requests.get(f"{API_BASE}/commits/main", headers=hdrs, timeout=15).json()[
+            "parents"
+        ][0]["sha"]
 
         resp = requests.get(f"{CODECOV_API}/commits/{parent_sha}", timeout=15)
         if resp.status_code == 200:
