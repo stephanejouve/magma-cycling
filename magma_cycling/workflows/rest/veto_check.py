@@ -26,6 +26,8 @@ def check_pre_session_veto(
             - atl: Acute Training Load (fatigue)
             - tsb: Training Stress Balance (form)
             - sleep_hours: Hours of sleep (optional)
+            - systolic: Systolic blood pressure in mmHg (optional)
+            - diastolic: Diastolic blood pressure in mmHg (optional)
         athlete_profile: Athlete characteristics:
             - age: Athlete age
             - category: 'junior', 'senior', or 'master'
@@ -98,6 +100,33 @@ def check_pre_session_veto(
     risk_result = detect_overtraining_risk(
         ctl=ctl, atl=atl, tsb=tsb, sleep_hours=sleep_hours, profile=athlete_profile
     )
+
+    # Blood pressure checks (optional — skip if data absent)
+    systolic = wellness_data.get("systolic")
+    diastolic = wellness_data.get("diastolic")
+
+    if systolic is not None and isinstance(systolic, (int, float)):
+        if systolic > 150:
+            risk_result["factors"].append(f"Systolic BP critical ({systolic} mmHg > 150)")
+            risk_result["risk_level"] = "critical"
+            risk_result["veto"] = True
+        elif systolic >= 140:
+            risk_result["factors"].append(f"Systolic BP elevated ({systolic} mmHg >= 140)")
+            if risk_result["risk_level"] == "low":
+                risk_result["risk_level"] = "high"
+
+    if diastolic is not None and isinstance(diastolic, (int, float)):
+        if diastolic > 95:
+            risk_result["factors"].append(f"Diastolic BP elevated ({diastolic} mmHg > 95)")
+            if risk_result["risk_level"] in ("low", "medium"):
+                risk_result["risk_level"] = "high"
+
+    # Update recommendation if BP triggered escalation
+    if risk_result["veto"] and not risk_result.get("_recommendation_set"):
+        if systolic is not None and systolic > 150:
+            risk_result["recommendation"] = (
+                "VETO: Tension arterielle critique. " "Repos complet, consulter si persistant."
+            )
 
     # Build result with additional context
     result = {
