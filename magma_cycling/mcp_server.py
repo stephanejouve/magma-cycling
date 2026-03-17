@@ -64,10 +64,6 @@ from magma_cycling._mcp.handlers.intervals import (  # noqa: F401
     handle_sync_week_to_intervals,
     handle_update_remote_session,
 )
-
-# ---------------------------------------------------------------------------
-# Re-exports — backward compat: all 43 handlers importable from mcp_server
-# ---------------------------------------------------------------------------
 from magma_cycling._mcp.handlers.planning import (  # noqa: F401
     handle_create_session,
     handle_daily_sync,
@@ -80,6 +76,13 @@ from magma_cycling._mcp.handlers.planning import (  # noqa: F401
     handle_rename_session,
     handle_update_session,
     handle_weekly_planner,
+)
+
+# ---------------------------------------------------------------------------
+# Re-exports — backward compat: all 43 handlers importable from mcp_server
+# ---------------------------------------------------------------------------
+from magma_cycling._mcp.handlers.rest import (  # noqa: F401
+    handle_pre_session_check,
 )
 from magma_cycling._mcp.handlers.sessions import (  # noqa: F401
     handle_attach_workout,
@@ -108,6 +111,7 @@ from magma_cycling._mcp.schemas import athlete as _s_athlete
 from magma_cycling._mcp.schemas import catalog as _s_catalog
 from magma_cycling._mcp.schemas import intervals as _s_intervals
 from magma_cycling._mcp.schemas import planning as _s_planning
+from magma_cycling._mcp.schemas import rest as _s_rest
 from magma_cycling._mcp.schemas import sessions as _s_sessions
 from magma_cycling._mcp.schemas import withings as _s_withings
 from magma_cycling._mcp.schemas import workouts as _s_workouts
@@ -139,6 +143,7 @@ async def list_tools() -> list[Tool]:
         *_s_admin.get_tools(),
         *_s_catalog.get_tools(),
         *_s_withings.get_tools(),
+        *_s_rest.get_tools(),
     ]
 
 
@@ -203,6 +208,8 @@ TOOL_HANDLERS = {
     "withings-sync-to-intervals": handle_withings_sync_to_intervals,
     "withings-analyze-trends": handle_withings_analyze_trends,
     "withings-enrich-session": handle_withings_enrich_session,
+    # Rest / Recovery (1)
+    "pre-session-check": handle_pre_session_check,
 }
 
 
