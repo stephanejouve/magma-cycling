@@ -49,6 +49,10 @@ def load_current_metrics() -> dict:
             metrics["ctl"] = day.get("ctl")
             metrics["atl"] = day.get("atl")
             metrics["ramp_rate"] = day.get("rampRate")
+            if day.get("systolic"):
+                metrics["systolic"] = day["systolic"]
+            if day.get("diastolic"):
+                metrics["diastolic"] = day["diastolic"]
     except Exception:
         logger.debug("Could not load Intervals.icu metrics, skipping CTL/ATL")
 
@@ -287,6 +291,26 @@ def format_athlete_profile(context: dict, metrics: dict) -> str:
         consec = metrics.get("consecutive_training_days")
         if consec and consec >= 2:
             lines.append(f"  - Jours consecutifs: {consec}")
+
+    # Blood pressure (cardiovascular recovery marker)
+    sys_bp = metrics.get("systolic")
+    dia_bp = metrics.get("diastolic")
+    if sys_bp or dia_bp:
+        bp_str = f"{sys_bp or '?'}/{dia_bp or '?'} mmHg"
+        if sys_bp and sys_bp >= 140:
+            bp_label = "ELEVEE - surveillance"
+        elif sys_bp and sys_bp >= 130:
+            bp_label = "limite haute"
+        else:
+            bp_label = "normale"
+        lines.append(f"  - Tension: {bp_str} ({bp_label})")
+        if sys_bp and sys_bp >= 140 and metrics.get("tsb") is not None:
+            tsb_val = metrics["tsb"]
+            if tsb_val < -10:
+                lines.append(
+                    "  - ATTENTION: tension elevee + fatigue (TSB < -10)"
+                    " → risque cardiovasculaire accru"
+                )
 
     # Constraints
     constraints = context.get("constraints", [])
