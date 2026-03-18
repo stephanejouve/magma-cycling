@@ -1,0 +1,30 @@
+codecov:
+  require_ci_to_pass: true
+
+coverage:
+  status:
+    project:
+      default:
+        target: 75%
+        threshold: 1%
+    patch:
+      default:
+        target: 70%
+
+comment:
+  layout: "reach,diff,flags,components"
+  behavior: default
+  require_changes: false
+
+flags:
+  unittests:
+    paths:
+      - magma_cycling/
+    carryforward: true
+
+ignore:
+  - "scripts/"
+  - "docs/"
+  - "test-data/"
+  - "project-docs/"
+  - "magma_cycling/scripts/"
