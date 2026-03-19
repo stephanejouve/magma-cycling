@@ -124,6 +124,18 @@ async def handle_pre_session_check(args: dict) -> list[TextContent]:
             wellness["sleep_hours"] = round(wellness["sleep_hours"] + extra_sleep_hours, 2)
             wellness["sleep_hours_source"] = "withings+manual_override"
 
+            # Persist corrected sleep to Intervals.icu so daily reports use it
+            try:
+                corrected_secs = int(wellness["sleep_hours"] * 3600)
+                client.update_wellness(date_str, {"sleepSecs": corrected_secs})
+                logger.info(
+                    "Persisted corrected sleepSecs=%d to Intervals.icu for %s",
+                    corrected_secs,
+                    date_str,
+                )
+            except Exception as exc:
+                logger.warning("Failed to persist sleep override: %s", exc)
+
         # 5. Planned session from planning
         week_id = args.get("week_id") or _find_week_id_for_date(target)
         session_info = None
