@@ -26,6 +26,16 @@ def get_tools() -> list[Tool]:
                         "description": "Week ID (default: auto-detect from date)",
                         "pattern": "^S\\d{3}$",
                     },
+                    "extra_sleep_hours": {
+                        "type": "number",
+                        "description": (
+                            "Additional sleep hours not detected by Sleep Analyser "
+                            "(e.g. nap or couch sleep). "
+                            "Added to wellness sleep_hours before veto evaluation."
+                        ),
+                        "minimum": 0,
+                        "maximum": 6,
+                    },
                 },
             },
         ),
