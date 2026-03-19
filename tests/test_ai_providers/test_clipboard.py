@@ -4,10 +4,16 @@ Tests for Clipboard AI Provider.
 
 Tests ClipboardAnalyzer for manual copy/paste workflow with realistic mocks.
 """
-from unittest.mock import patch
+import subprocess
+from unittest.mock import MagicMock, patch
 
 from magma_cycling.ai_providers.base import AIProvider
-from magma_cycling.ai_providers.clipboard import ClipboardAnalyzer
+from magma_cycling.ai_providers.clipboard import (
+    ClipboardAnalyzer,
+    _copy_to_clipboard_native,
+    _copy_to_clipboard_pyperclip,
+    copy_to_clipboard,
+)
 
 
 class TestClipboardAnalyzer:
@@ -315,3 +321,153 @@ Line 3"""
         assert "sk-" not in copied_text
         assert "api_key" not in copied_text
         assert "Bearer" not in copied_text
+
+
+# =====================================================================
+# Internal functions — _copy_to_clipboard_native / pyperclip / orchestration
+# =====================================================================
+
+
+class TestCopyToClipboardNativeDarwin:
+    """Tests for _copy_to_clipboard_native on macOS (Darwin)."""
+
+    @patch("magma_cycling.ai_providers.clipboard.platform.system", return_value="Darwin")
+    @patch("magma_cycling.ai_providers.clipboard.subprocess.Popen")
+    def test_darwin_pbcopy_success(self, mock_popen, _mock_sys):
+        """pbcopy success returns True."""
+        proc = MagicMock()
+        proc.returncode = 0
+        mock_popen.return_value = proc
+
+        assert _copy_to_clipboard_native("hello") is True
+        mock_popen.assert_called_once_with(["pbcopy"], stdin=subprocess.PIPE, close_fds=True)
+        proc.communicate.assert_called_once_with(b"hello")
+
+    @patch("magma_cycling.ai_providers.clipboard.platform.system", return_value="Darwin")
+    @patch("magma_cycling.ai_providers.clipboard.subprocess.Popen")
+    def test_darwin_pbcopy_failure(self, mock_popen, _mock_sys):
+        """pbcopy returncode != 0 returns False."""
+        proc = MagicMock()
+        proc.returncode = 1
+        mock_popen.return_value = proc
+
+        assert _copy_to_clipboard_native("hello") is False
+
+
+class TestCopyToClipboardNativeLinux:
+    """Tests for _copy_to_clipboard_native on Linux."""
+
+    @patch("magma_cycling.ai_providers.clipboard.platform.system", return_value="Linux")
+    @patch("magma_cycling.ai_providers.clipboard.subprocess.Popen")
+    def test_linux_xclip_success(self, mock_popen, _mock_sys):
+        """xclip success returns True without trying xsel."""
+        proc = MagicMock()
+        proc.returncode = 0
+        mock_popen.return_value = proc
+
+        assert _copy_to_clipboard_native("data") is True
+        # Only one call — xclip succeeded, xsel not attempted
+        assert mock_popen.call_count == 1
+
+    @patch("magma_cycling.ai_providers.clipboard.platform.system", return_value="Linux")
+    @patch("magma_cycling.ai_providers.clipboard.subprocess.Popen")
+    def test_linux_xclip_missing_xsel_fallback(self, mock_popen, _mock_sys):
+        """xclip FileNotFoundError → falls back to xsel."""
+        proc_xsel = MagicMock()
+        proc_xsel.returncode = 0
+
+        def side_effect(cmd, **kwargs):
+            if cmd[0] == "xclip":
+                raise FileNotFoundError("xclip not found")
+            return proc_xsel
+
+        mock_popen.side_effect = side_effect
+
+        assert _copy_to_clipboard_native("data") is True
+        assert mock_popen.call_count == 2
+
+    @patch("magma_cycling.ai_providers.clipboard.platform.system", return_value="Linux")
+    @patch("magma_cycling.ai_providers.clipboard.subprocess.Popen")
+    def test_linux_both_missing(self, mock_popen, _mock_sys):
+        """Neither xclip nor xsel → returns False."""
+        mock_popen.side_effect = FileNotFoundError("not found")
+
+        assert _copy_to_clipboard_native("data") is False
+
+
+class TestCopyToClipboardNativeWindows:
+    """Tests for _copy_to_clipboard_native on Windows."""
+
+    @patch("magma_cycling.ai_providers.clipboard.platform.system", return_value="Windows")
+    @patch("magma_cycling.ai_providers.clipboard.subprocess.Popen")
+    def test_windows_clip_success(self, mock_popen, _mock_sys):
+        """clip success with utf-16 encoding."""
+        proc = MagicMock()
+        proc.returncode = 0
+        mock_popen.return_value = proc
+
+        assert _copy_to_clipboard_native("data") is True
+        proc.communicate.assert_called_once_with("data".encode("utf-16"))
+
+
+class TestCopyToClipboardNativeEdgeCases:
+    """Edge cases for _copy_to_clipboard_native."""
+
+    @patch("magma_cycling.ai_providers.clipboard.platform.system", return_value="FreeBSD")
+    def test_unknown_os_returns_false(self, _mock_sys):
+        """Unknown OS falls through to return False."""
+        assert _copy_to_clipboard_native("data") is False
+
+    @patch("magma_cycling.ai_providers.clipboard.platform.system", return_value="Darwin")
+    @patch("magma_cycling.ai_providers.clipboard.subprocess.Popen", side_effect=OSError("boom"))
+    def test_exception_returns_false(self, _mock_popen, _mock_sys):
+        """Exception in subprocess returns False."""
+        assert _copy_to_clipboard_native("data") is False
+
+
+class TestCopyToClipboardPyperclip:
+    """Tests for _copy_to_clipboard_pyperclip."""
+
+    def test_pyperclip_success(self):
+        """pyperclip.copy() works → returns True."""
+        mock_pyperclip = MagicMock()
+        with patch.dict("sys.modules", {"pyperclip": mock_pyperclip}):
+            assert _copy_to_clipboard_pyperclip("hello") is True
+            mock_pyperclip.copy.assert_called_once_with("hello")
+
+    def test_pyperclip_import_fails(self):
+        """pyperclip not installed → returns False."""
+        with patch.dict("sys.modules", {"pyperclip": None}):
+            assert _copy_to_clipboard_pyperclip("hello") is False
+
+
+class TestCopyToClipboardOrchestration:
+    """Tests for copy_to_clipboard orchestration."""
+
+    @patch("magma_cycling.ai_providers.clipboard._copy_to_clipboard_native", return_value=True)
+    @patch("magma_cycling.ai_providers.clipboard._copy_to_clipboard_pyperclip")
+    def test_native_success_skips_pyperclip(self, mock_pyp, mock_native):
+        """Native success → pyperclip not called."""
+        assert copy_to_clipboard("data") is True
+        mock_native.assert_called_once_with("data")
+        mock_pyp.assert_not_called()
+
+    @patch("magma_cycling.ai_providers.clipboard._copy_to_clipboard_native", return_value=False)
+    @patch(
+        "magma_cycling.ai_providers.clipboard._copy_to_clipboard_pyperclip",
+        return_value=True,
+    )
+    def test_native_fails_pyperclip_fallback(self, mock_pyp, mock_native):
+        """Native fails → falls back to pyperclip."""
+        assert copy_to_clipboard("data") is True
+        mock_native.assert_called_once_with("data")
+        mock_pyp.assert_called_once_with("data")
+
+    @patch("magma_cycling.ai_providers.clipboard._copy_to_clipboard_native", return_value=False)
+    @patch(
+        "magma_cycling.ai_providers.clipboard._copy_to_clipboard_pyperclip",
+        return_value=False,
+    )
+    def test_all_methods_fail(self, mock_pyp, mock_native):
+        """Both methods fail → returns False."""
+        assert copy_to_clipboard("data") is False
