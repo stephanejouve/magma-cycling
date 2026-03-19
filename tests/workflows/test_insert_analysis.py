@@ -16,6 +16,7 @@ from magma_cycling.insert_analysis import (
     AnalysisParser,
     ClipboardReader,
     WorkoutHistoryManager,
+    main,
 )
 
 
@@ -416,3 +417,385 @@ class TestEdgeCases:
         assert result == unicode_content
         assert "✅" in result
         assert "🚴" in result
+
+
+class TestValidateAnalysis:
+    """Tests for AnalysisParser.validate_analysis() branches."""
+
+    def test_validate_executed_session_complete(self, capsys):
+        """Valid executed session with all required sections."""
+        text = """### S076-04-END-Endurance-V001
+Date : 15/01/2026
+
+#### Métriques Pré-séance
+- CTL : 43
+
+#### Exécution
+- Durée : 49min
+
+#### Exécution Technique
+- Cadence moyenne
+
+#### Charge d'Entraînement
+- TSS : 31
+
+#### Validation Objectifs
+- OK
+
+#### Points d'Attention
+- RAS
+
+#### Recommandations Progression
+- Maintenir
+
+#### Métriques Post-séance
+- Fatigue : basse
+"""
+        assert AnalysisParser.validate_analysis(text) is True
+
+    def test_validate_executed_session_missing_sections(self, capsys):
+        """Executed session missing required sections returns False."""
+        text = """### S076-04-END-Endurance-V001
+Date : 15/01/2026
+
+#### Exécution
+- Durée : 49min
+
+#### Charge d'Entraînement
+- TSS : 31
+"""
+        assert AnalysisParser.validate_analysis(text) is False
+        output = capsys.readouterr().out
+        assert "Sections manquantes" in output
+
+    def test_validate_rest_session(self, capsys):
+        """Rest session passes with minimal validation."""
+        text = """### S076-07-REPOS
+Date : 21/01/2026
+
+Repos planifié hebdomadaire
+"""
+        assert AnalysisParser.validate_analysis(text) is True
+
+    def test_validate_rest_session_missing_date(self, capsys):
+        """Rest session without Date: fails."""
+        text = """### S076-07-REPOS
+
+Repos planifié hebdomadaire
+"""
+        assert AnalysisParser.validate_analysis(text) is False
+
+    def test_validate_cancelled_session(self, capsys):
+        """Cancelled session passes with Date: present."""
+        text = """### S076-03-INT-SweetSpot
+Date : 14/01/2026
+
+Séance annulée en raison de fatigue.
+"""
+        assert AnalysisParser.validate_analysis(text) is True
+
+    def test_validate_unknown_type_with_date(self, capsys):
+        """Unknown session type passes if Date: present."""
+        text = """### S076-XX-Custom
+Date : 14/01/2026
+
+Some custom content
+"""
+        assert AnalysisParser.validate_analysis(text) is True
+        output = capsys.readouterr().out
+        assert "Type de session inconnu" in output
+
+    def test_validate_unknown_type_without_date(self, capsys):
+        """Unknown session type without Date: fails."""
+        text = """### S076-XX-Custom
+
+Some custom content without date
+"""
+        assert AnalysisParser.validate_analysis(text) is False
+
+    def test_validate_no_sessions_detected(self, capsys):
+        """Text without ### headers returns False."""
+        text = "Plain text without session headers"
+        assert AnalysisParser.validate_analysis(text) is False
+        output = capsys.readouterr().out
+        assert "Aucune session détectée" in output
+
+
+class TestCountSessions:
+    """Tests for AnalysisParser.count_sessions()."""
+
+    def test_count_zero_sessions(self):
+        assert AnalysisParser.count_sessions("No headers here") == 0
+
+    def test_count_single_session(self):
+        assert AnalysisParser.count_sessions("### Session 1\nContent") == 1
+
+    def test_count_multiple_sessions(self):
+        text = "### Session 1\nContent\n### Session 2\nContent\n### Session 3\n"
+        assert AnalysisParser.count_sessions(text) == 3
+
+
+class TestExtractDate:
+    """Tests for AnalysisParser.extract_date_from_analysis()."""
+
+    def test_extract_date_found(self):
+        text = "### Session\nDate : 15/01/2026\n"
+        assert AnalysisParser.extract_date_from_analysis(text) == "15/01/2026"
+
+    def test_extract_date_not_found(self):
+        text = "### Session\nNo date here\n"
+        assert AnalysisParser.extract_date_from_analysis(text) is None
+
+
+class TestCheckDuplicateWithID:
+    """Tests for check_duplicate with activity ID format."""
+
+    def test_duplicate_with_activity_id(self, tmp_path):
+        """Detect duplicate using new format with activity ID."""
+        content = """### S076-04-END-Endurance-V001
+ID : i123456
+Date : 15/01/2026
+
+Content
+"""
+        analysis = """### S076-04-END-Endurance-V001
+ID : i123456
+Date : 15/01/2026
+
+New content
+"""
+        manager = WorkoutHistoryManager(logs_dir=tmp_path)
+        (tmp_path / "workouts-history.md").write_text(content)
+        assert manager.check_duplicate(content, analysis) is True
+
+    def test_no_duplicate_different_id(self, tmp_path):
+        """Different activity ID is not a duplicate."""
+        content = """### S076-04-END-Endurance-V001
+ID : i123456
+Date : 15/01/2026
+"""
+        analysis = """### S076-04-END-Endurance-V001
+ID : i789012
+Date : 15/01/2026
+"""
+        manager = WorkoutHistoryManager(logs_dir=tmp_path)
+        (tmp_path / "workouts-history.md").write_text(content)
+        assert manager.check_duplicate(content, analysis) is False
+
+    def test_no_header_returns_false(self, tmp_path):
+        """No ### header in analysis returns False."""
+        content = "Some content"
+        analysis = "No header here"
+        manager = WorkoutHistoryManager(logs_dir=tmp_path)
+        (tmp_path / "workouts-history.md").write_text(content)
+        assert manager.check_duplicate(content, analysis) is False
+
+    def test_no_date_returns_false(self, tmp_path):
+        """No date in analysis returns False."""
+        content = "### Session\nContent"
+        analysis = "### Session\nNo date"
+        manager = WorkoutHistoryManager(logs_dir=tmp_path)
+        (tmp_path / "workouts-history.md").write_text(content)
+        assert manager.check_duplicate(content, analysis) is False
+
+
+class TestInsertAnalysisEdgeCases:
+    """Tests for WorkoutHistoryManager.insert_analysis() edge cases."""
+
+    def test_insert_analysis_history_not_found(self, tmp_path, capsys):
+        """Return False when history file does not exist."""
+        nonexistent = tmp_path / "no_such_dir"
+        manager = WorkoutHistoryManager(logs_dir=nonexistent)
+        result = manager.insert_analysis("### Test\nDate : 15/01/2026\n")
+        assert result is False
+
+    def test_insert_analysis_duplicate_auto_overwrite(self, tmp_path, monkeypatch):
+        """Duplicate with yes_confirm=True overwrites without prompt."""
+        history = tmp_path / "workouts-history.md"
+        history.write_text("### S076-04-Test\nDate : 15/01/2026\n\n---\n")
+
+        mock_config = Mock()
+        mock_config.paranoid_duplicate_check = False
+        monkeypatch.setattr("magma_cycling.insert_analysis.get_data_config", lambda: mock_config)
+
+        manager = WorkoutHistoryManager(logs_dir=tmp_path, yes_confirm=True)
+        result = manager.insert_analysis("### S076-04-Test\nDate : 15/01/2026\n\n---\n")
+        assert result is True
+
+    def test_insert_analysis_duplicate_user_declines(self, tmp_path, monkeypatch):
+        """Duplicate with user declining returns False."""
+        history = tmp_path / "workouts-history.md"
+        history.write_text("### S076-04-Test\nDate : 15/01/2026\n\n---\n")
+
+        monkeypatch.setattr("builtins.input", lambda _: "n")
+        manager = WorkoutHistoryManager(logs_dir=tmp_path, yes_confirm=False)
+        result = manager.insert_analysis("### S076-04-Test\nDate : 15/01/2026\n\n---\n")
+        assert result is False
+
+    def test_insert_analysis_no_date_uses_today(self, tmp_path, capsys):
+        """Fallback to today's date when no date found in analysis."""
+        history = tmp_path / "workouts-history.md"
+        history.write_text("### Existing\nDate : 01/01/2026\n\n---\n")
+
+        manager = WorkoutHistoryManager(logs_dir=tmp_path, yes_confirm=True)
+        result = manager.insert_analysis("### NoDated Session\nContent\n")
+        # Should succeed (fallback date)
+        assert result is True
+        output = capsys.readouterr().out
+        assert "Date non détectée" in output
+
+
+class TestShowDiff:
+    """Tests for WorkoutHistoryManager.show_diff()."""
+
+    def test_show_diff_success(self, tmp_path, monkeypatch):
+        """Show diff returns True on success."""
+        mock_result = Mock(stdout="diff output here", returncode=0)
+        monkeypatch.setattr("subprocess.run", lambda *a, **kw: mock_result)
+
+        manager = WorkoutHistoryManager(logs_dir=tmp_path)
+        (tmp_path / "workouts-history.md").touch()
+        assert manager.show_diff() is True
+
+    def test_show_diff_no_changes(self, tmp_path, monkeypatch):
+        """Show diff with no changes returns True."""
+        mock_result = Mock(stdout="", returncode=0)
+        monkeypatch.setattr("subprocess.run", lambda *a, **kw: mock_result)
+
+        manager = WorkoutHistoryManager(logs_dir=tmp_path)
+        (tmp_path / "workouts-history.md").touch()
+        assert manager.show_diff() is True
+
+    def test_show_diff_error(self, tmp_path, monkeypatch):
+        """Show diff handles error gracefully."""
+        monkeypatch.setattr("subprocess.run", Mock(side_effect=Exception("git not found")))
+
+        manager = WorkoutHistoryManager(logs_dir=tmp_path)
+        (tmp_path / "workouts-history.md").touch()
+        assert manager.show_diff() is False
+
+
+class TestMainCLIBranches:
+    """Tests for main() CLI branches."""
+
+    def test_main_empty_clipboard_exits_1(self, monkeypatch):
+        """Exit 1 when clipboard is empty."""
+        monkeypatch.setattr("sys.argv", ["prog"])
+        monkeypatch.setattr(
+            "magma_cycling.insert_analysis.ClipboardReader.read_clipboard",
+            lambda: None,
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == 1
+
+    def test_main_file_not_found_exits_1(self, tmp_path, monkeypatch):
+        """Exit 1 when --file points to nonexistent file."""
+        monkeypatch.setattr("sys.argv", ["prog", "--file", str(tmp_path / "nonexistent.md")])
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == 1
+
+    def test_main_file_yes_insert_success(self, tmp_path, monkeypatch, capsys):
+        """Full flow: --file + --yes inserts successfully."""
+        history = tmp_path / "workouts-history.md"
+        history.write_text("### Existing\nDate : 01/01/2026\n\n---\n")
+
+        analysis_file = tmp_path / "analysis.md"
+        analysis_file.write_text("### S076-04-END-Test-V001\nDate : 15/01/2026\n\n---\n")
+
+        mock_config = Mock()
+        mock_config.workouts_history_path = history
+        mock_config.data_repo_path = tmp_path
+        mock_config.paranoid_duplicate_check = False
+        monkeypatch.setattr("magma_cycling.config.get_data_config", lambda: mock_config)
+        monkeypatch.setattr(
+            "sys.argv",
+            ["prog", "--file", str(analysis_file), "--yes"],
+        )
+        # Mock show_diff to avoid git dependency
+        monkeypatch.setattr(
+            "magma_cycling.insert_analysis.WorkoutHistoryManager.show_diff",
+            lambda self: True,
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == 0
+
+        output = capsys.readouterr().out
+        assert "INSERTION TERMINÉE" in output
+
+    def test_main_validation_warning_user_declines(self, tmp_path, monkeypatch):
+        """User declines after validation warning exits 1."""
+        analysis_file = tmp_path / "analysis.md"
+        # Missing required sections for executed type
+        analysis_file.write_text(
+            "### Test\n#### Exécution\n- stuff\n#### Charge d'Entraînement\n- tss\n"
+        )
+
+        history = tmp_path / "workouts-history.md"
+        history.write_text("")
+
+        mock_config = Mock()
+        mock_config.workouts_history_path = history
+        mock_config.data_repo_path = tmp_path
+        monkeypatch.setattr("magma_cycling.config.get_data_config", lambda: mock_config)
+        monkeypatch.setattr("sys.argv", ["prog", "--file", str(analysis_file)])
+        monkeypatch.setattr("builtins.input", lambda _: "n")
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == 1
+
+    def test_main_user_declines_insert(self, tmp_path, monkeypatch):
+        """User declines insertion exits 0."""
+        analysis_file = tmp_path / "analysis.md"
+        analysis_file.write_text("### Test\nDate : 15/01/2026\n")
+
+        history = tmp_path / "workouts-history.md"
+        history.write_text("")
+
+        mock_config = Mock()
+        mock_config.workouts_history_path = history
+        mock_config.data_repo_path = tmp_path
+        monkeypatch.setattr("magma_cycling.config.get_data_config", lambda: mock_config)
+        monkeypatch.setattr("sys.argv", ["prog", "--file", str(analysis_file)])
+        monkeypatch.setattr("builtins.input", lambda _: "n")
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == 0
+
+    def test_main_batch_sessions_message(self, tmp_path, monkeypatch, capsys):
+        """Multiple sessions in analysis shows batch message."""
+        analysis_file = tmp_path / "analysis.md"
+        analysis_file.write_text(
+            "### Session1\nDate : 15/01/2026\n\n### Session2\nDate : 16/01/2026\n"
+        )
+
+        history = tmp_path / "workouts-history.md"
+        history.write_text("")
+
+        mock_config = Mock()
+        mock_config.workouts_history_path = history
+        mock_config.data_repo_path = tmp_path
+        mock_config.paranoid_duplicate_check = False
+        monkeypatch.setattr("magma_cycling.config.get_data_config", lambda: mock_config)
+        monkeypatch.setattr(
+            "sys.argv",
+            ["prog", "--file", str(analysis_file), "--yes"],
+        )
+        monkeypatch.setattr(
+            "magma_cycling.insert_analysis.WorkoutHistoryManager.show_diff",
+            lambda self: True,
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == 0
+
+        output = capsys.readouterr().out
+        assert "BATCH" in output or "2 sessions" in output
