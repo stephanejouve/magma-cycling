@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from datetime import date
 from typing import TYPE_CHECKING
 
@@ -11,7 +12,7 @@ from magma_cycling._mcp._utils import mcp_response, suppress_stdout_stderr
 if TYPE_CHECKING:
     from mcp.types import TextContent
 
-__all__ = ["handle_pre_session_check"]
+__all__ = ["handle_pre_session_check", "handle_patch_coach_analysis"]
 
 logger = logging.getLogger(__name__)
 
@@ -199,3 +200,157 @@ async def handle_pre_session_check(args: dict) -> list[TextContent]:
             result["readiness"] = readiness_data
 
     return mcp_response(result)
+
+
+def _locate_entry(
+    content: str, activity_id: str | None, session_id: str | None
+) -> tuple[int, int] | None:
+    """Locate a coach analysis entry in workouts-history.md.
+
+    Returns (start, end) character offsets or None if not found.
+    """
+    anchor_pos = None
+
+    # Priority: activity_id
+    if activity_id:
+        m = re.search(rf"^ID\s*:\s*{re.escape(activity_id)}\s*$", content, re.MULTILINE)
+        if m:
+            anchor_pos = m.start()
+
+    # Fallback: session_id
+    if anchor_pos is None and session_id:
+        m = re.search(rf"^### {re.escape(session_id)}-", content, re.MULTILINE)
+        if m:
+            anchor_pos = m.start()
+
+    if anchor_pos is None:
+        return None
+
+    # Walk back to the ### header containing this anchor
+    header_start = content.rfind("\n### ", 0, anchor_pos)
+    if header_start == -1:
+        # Entry is at the very start of the file
+        header_start = 0
+    else:
+        header_start += 1  # skip the leading newline
+
+    # Find the next ### header (end of this entry)
+    next_header = content.find("\n### ", anchor_pos)
+    if next_header == -1:
+        entry_end = len(content)
+    else:
+        entry_end = next_header
+
+    return header_start, entry_end
+
+
+async def handle_patch_coach_analysis(args: dict) -> list[TextContent]:
+    """Patch a coach analysis entry in workouts-history.md."""
+    with suppress_stdout_stderr():
+        from magma_cycling.config import get_data_config
+
+        activity_id = args.get("activity_id")
+        session_id = args.get("session_id")
+        sleep_hours = args.get("sleep_hours")
+        note = args.get("note")
+
+        if not activity_id and not session_id:
+            raise ValueError("activity_id or session_id is required")
+
+        if sleep_hours is None and not note:
+            raise ValueError("At least one patch field (sleep_hours or note) is required")
+
+        # Load file
+        config = get_data_config()
+        history_path = config.workouts_history_path
+        content = history_path.read_text(encoding="utf-8")
+
+        # Locate entry
+        bounds = _locate_entry(content, activity_id, session_id)
+        if bounds is None:
+            lookup = activity_id or session_id
+            return mcp_response(
+                {
+                    "status": "error",
+                    "message": f"Entry not found for {lookup} in workouts-history.md",
+                }
+            )
+
+        start, end = bounds
+        block = content[start:end]
+        patches_applied = []
+
+        # Extract identifiers from the entry
+        found_activity_id = activity_id
+        found_session_id = session_id
+        id_match = re.search(r"^ID\s*:\s*(\S+)", block, re.MULTILINE)
+        if id_match:
+            found_activity_id = id_match.group(1)
+        header_match = re.match(r"^### (\S+)", block)
+        if header_match:
+            found_session_id = header_match.group(1)
+
+        # Patch sleep_hours
+        if sleep_hours is not None:
+            sleep_re = re.compile(r"^(- Sommeil\s*:\s*)([\d.]+)(h.*)$", re.MULTILINE)
+            m = sleep_re.search(block)
+            if m:
+                old_value = m.group(2)
+                new_value = str(sleep_hours)
+                marker = " [CORRIGÉ : sommeil canapé non détecté par Sleep Analyser]"
+
+                # Replace in Métriques Pré-séance line
+                block = sleep_re.sub(
+                    rf"\g<1>{new_value}h{marker}",
+                    block,
+                    count=1,
+                )
+
+                # Replace old_value occurrences in Points d'Attention section
+                attention_re = re.compile(
+                    r"(#### Points d'Attention.*?)(?=####|\Z)",
+                    re.DOTALL,
+                )
+                att_match = attention_re.search(block)
+                if att_match:
+                    att_section = att_match.group(0)
+                    patched_att = att_section.replace(f"{old_value}h", f"{new_value}h")
+                    block = block[: att_match.start()] + patched_att + block[att_match.end() :]
+
+                patches_applied.append(
+                    {
+                        "field": "sleep_hours",
+                        "old_value": float(old_value),
+                        "new_value": sleep_hours,
+                    }
+                )
+            else:
+                patches_applied.append(
+                    {
+                        "field": "sleep_hours",
+                        "warning": "Ligne 'Sommeil' non trouvée dans l'entrée",
+                    }
+                )
+
+        # Patch note
+        if note:
+            correction_section = (
+                f"\n#### Note de correction\n"
+                f"{note}\n"
+                f"*Patch appliqué le {date.today().isoformat()}*\n"
+            )
+            block = block.rstrip("\n") + "\n" + correction_section
+            patches_applied.append({"field": "note", "added": True})
+
+        # Rewrite file
+        new_content = content[:start] + block + content[end:]
+        history_path.write_text(new_content, encoding="utf-8")
+
+    return mcp_response(
+        {
+            "status": "success",
+            "activity_id": found_activity_id,
+            "session_id": found_session_id,
+            "patches_applied": patches_applied,
+        }
+    )
