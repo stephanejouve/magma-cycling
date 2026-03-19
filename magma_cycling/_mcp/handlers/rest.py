@@ -65,10 +65,11 @@ async def handle_pre_session_check(args: dict) -> list[TextContent]:
         from magma_cycling.health import create_health_provider
         from magma_cycling.workflows.rest.veto_check import check_pre_session_veto
 
-        # 1. Parse date
+        # 1. Parse date + extra_sleep_hours
         date_str = args.get("date")
         target = date.fromisoformat(date_str) if date_str else date.today()
         date_str = target.isoformat()
+        extra_sleep_hours = float(args.get("extra_sleep_hours", 0.0))
 
         # 2. Withings sync (best-effort — fallback to cached data)
         wellness_source = "fresh"
@@ -118,6 +119,11 @@ async def handle_pre_session_check(args: dict) -> list[TextContent]:
         except Exception:
             pass
 
+        # 4b. Apply extra_sleep_hours override (couch sleep, nap, etc.)
+        if extra_sleep_hours > 0 and wellness.get("sleep_hours") is not None:
+            wellness["sleep_hours"] = round(wellness["sleep_hours"] + extra_sleep_hours, 2)
+            wellness["sleep_hours_source"] = "withings+manual_override"
+
         # 5. Planned session from planning
         week_id = args.get("week_id") or _find_week_id_for_date(target)
         session_info = None
@@ -161,6 +167,10 @@ async def handle_pre_session_check(args: dict) -> list[TextContent]:
             "recommendation": veto_result["recommendation"],
             "wellness": wellness,
             "wellness_source": wellness_source,
+            "override": {
+                "extra_sleep_hours": extra_sleep_hours,
+                "applied": extra_sleep_hours > 0,
+            },
         }
 
         if session_info:
