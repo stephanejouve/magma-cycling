@@ -1,8 +1,12 @@
-"""Tests for _mcp/handlers/rest.py — extra_sleep_hours parameter.
+"""Tests for _mcp/handlers/rest.py and patch-coach-analysis.
 
-Tests the new extra_sleep_hours override in handle_pre_session_check:
+Part 1 — extra_sleep_hours override in handle_pre_session_check:
 sleep augmentation before veto evaluation, boundary validation,
 null-safety, and verdict impact.
+
+Part 2 — patch-coach-analysis (TDD: tests written before handler):
+sleep_hours correction in workouts-history.md analyses, [CORRIGÉ] marker,
+note de correction, error handling.
 """
 
 import json
@@ -231,3 +235,259 @@ class TestVerdictChangesWithExtraSleep:
         result = await handle_pre_session_check({"date": "2026-03-19", "extra_sleep_hours": 2.37})
         data = json.loads(result[0].text)
         assert data["verdict"] == "GO"
+
+
+# =====================================================================
+# Part 2 — patch-coach-analysis (TDD: handler not yet implemented)
+# =====================================================================
+
+PATCH_HANDLER = HANDLER  # patch-coach-analysis lives in rest.py alongside pre-session-check
+
+# --- Sample analysis content for tests ---
+
+_ANALYSIS_SLEEP_IN_ATTENTION = """\
+### S084-04-END-RecupActive-V001
+ID : i131572602
+Date : 15/03/2026
+
+#### Métriques Pré-séance
+- CTL : 46
+- ATL : 42
+- TSB : +5
+- Sommeil : 5.5h
+
+#### Exécution
+- Durée : 56min
+- IF : 0.74
+- TSS : 51
+
+#### Exécution Technique
+Séance correctement exécutée.
+
+#### Charge d'Entraînement
+TSS conforme aux prévisions.
+
+#### Validation Objectifs
+- ✅ Zone respectée
+
+#### Points d'Attention
+- Sommeil insuffisant (5.5h), risque de récupération altérée
+- Cadence légèrement basse (86rpm vs 92rpm)
+
+#### Recommandations Progression
+1. Améliorer le sommeil
+
+#### Métriques Post-séance
+- CTL : 47
+- ATL : 43
+- TSB : +4
+"""
+
+_ANALYSIS_NO_SLEEP_IN_ATTENTION = """\
+### S084-04-END-RecupActive-V001
+ID : i131572602
+Date : 15/03/2026
+
+#### Métriques Pré-séance
+- CTL : 46
+- ATL : 42
+- TSB : +5
+- Sommeil : 5.5h
+
+#### Exécution
+- Durée : 56min
+- IF : 0.74
+- TSS : 51
+
+#### Points d'Attention
+- Cadence légèrement basse (86rpm vs 92rpm)
+
+#### Métriques Post-séance
+- CTL : 47
+- ATL : 43
+- TSB : +4
+"""
+
+_ANALYSIS_NO_SLEEP_FIELD = """\
+### S084-04-END-RecupActive-V001
+ID : i131572602
+Date : 15/03/2026
+
+#### Métriques Pré-séance
+- CTL : 46
+- ATL : 42
+- TSB : +5
+
+#### Exécution
+- Durée : 56min
+
+#### Métriques Post-séance
+- CTL : 47
+"""
+
+
+@pytest.fixture
+def _patch_history():
+    """Mock file I/O for workouts-history.md (no disk files)."""
+    mock_path = MagicMock()
+    mock_path.exists.return_value = True
+
+    mock_config = MagicMock()
+    mock_config.workouts_history_path = mock_path
+
+    written = {}
+    mock_path.write_text.side_effect = lambda content, **kw: written.update(text=content)
+
+    with (
+        patch(f"{PATCH_HANDLER}.suppress_stdout_stderr"),
+        patch(f"{CFG}.get_data_config", return_value=mock_config),
+    ):
+        yield {
+            "path": mock_path,
+            "written": written,
+        }
+
+
+class TestPatchSleepHoursValid:
+    """1. Patch sleep_hours valide → metrics_pre mis à jour, [CORRIGÉ], patches_applied."""
+
+    @pytest.mark.asyncio
+    async def test_patch_sleep_updates_metrics_pre(self, _patch_history):
+        from magma_cycling._mcp.handlers.rest import handle_patch_coach_analysis
+
+        _patch_history["path"].read_text.return_value = _ANALYSIS_SLEEP_IN_ATTENTION
+
+        result = await handle_patch_coach_analysis(
+            {"activity_id": "i131572602", "sleep_hours": 7.8}
+        )
+        data = json.loads(result[0].text)
+
+        written = _patch_history["written"]["text"]
+        # metrics_pre updated with new value
+        assert "- Sommeil : 7.8h" in written
+        # [CORRIGÉ marker present (handler appends details after tag)
+        assert "[CORRIGÉ" in written
+        # patches_applied in response
+        assert "patches_applied" in data
+        assert len(data["patches_applied"]) >= 1
+
+
+class TestPatchSleepHoursWithNote:
+    """2. Patch sleep_hours + note → Note de correction présent."""
+
+    @pytest.mark.asyncio
+    async def test_patch_sleep_with_note(self, _patch_history):
+        from magma_cycling._mcp.handlers.rest import handle_patch_coach_analysis
+
+        _patch_history["path"].read_text.return_value = _ANALYSIS_SLEEP_IN_ATTENTION
+
+        result = await handle_patch_coach_analysis(
+            {
+                "activity_id": "i131572602",
+                "sleep_hours": 7.8,
+                "note": "Sieste de 2h non comptabilisée par Withings",
+            }
+        )
+        data = json.loads(result[0].text)
+
+        written = _patch_history["written"]["text"]
+        # metrics_pre updated
+        assert "- Sommeil : 7.8h" in written
+        # Note de correction block present
+        assert "Note de correction" in written or "note" in data
+        assert "Sieste" in written
+
+
+class TestPatchMissingIdentifier:
+    """3. activity_id absent + session_id absent → erreur explicite."""
+
+    @pytest.mark.asyncio
+    async def test_no_identifier_returns_error(self, _patch_history):
+        from magma_cycling._mcp.handlers.rest import handle_patch_coach_analysis
+
+        with pytest.raises(ValueError, match="activity_id|session_id"):
+            await handle_patch_coach_analysis({"sleep_hours": 7.8})
+
+
+class TestPatchAnalysisNotFound:
+    """4. activity_id fourni mais analyse introuvable → erreur explicite."""
+
+    @pytest.mark.asyncio
+    async def test_analysis_not_found(self, _patch_history):
+        from magma_cycling._mcp.handlers.rest import handle_patch_coach_analysis
+
+        _patch_history["path"].read_text.return_value = _ANALYSIS_SLEEP_IN_ATTENTION
+
+        result = await handle_patch_coach_analysis(
+            {"activity_id": "i999999999", "sleep_hours": 7.8}
+        )
+        data = json.loads(result[0].text)
+
+        assert data.get("status") == "error"
+
+
+class TestPatchNoSleepField:
+    """5. Champ sleep_hours absent dans l'analyse → warning non bloquant, success."""
+
+    @pytest.mark.asyncio
+    async def test_no_sleep_field_warning_success(self, _patch_history):
+        from magma_cycling._mcp.handlers.rest import handle_patch_coach_analysis
+
+        _patch_history["path"].read_text.return_value = _ANALYSIS_NO_SLEEP_FIELD
+
+        result = await handle_patch_coach_analysis(
+            {"activity_id": "i131572602", "sleep_hours": 7.8}
+        )
+        data = json.loads(result[0].text)
+
+        # Status success despite missing field
+        assert data.get("status") == "success"
+        # Warning present inside patches_applied
+        patches = data.get("patches_applied", [])
+        assert any(p.get("warning") for p in patches)
+
+
+class TestPatchSleepInAttention:
+    """6. sleep_hours dans attention section → valeur remplacée."""
+
+    @pytest.mark.asyncio
+    async def test_attention_sleep_patched(self, _patch_history):
+        from magma_cycling._mcp.handlers.rest import handle_patch_coach_analysis
+
+        _patch_history["path"].read_text.return_value = _ANALYSIS_SLEEP_IN_ATTENTION
+
+        await handle_patch_coach_analysis({"activity_id": "i131572602", "sleep_hours": 7.8})
+
+        written = _patch_history["written"]["text"]
+        # Extract attention section
+        attention_start = written.find("#### Points d'Attention")
+        assert attention_start != -1, "Points d'Attention section missing"
+        attention_section = written[attention_start:]
+        next_section = attention_section.find("\n####", 4)
+        if next_section != -1:
+            attention_section = attention_section[:next_section]
+
+        # Old sleep value replaced in attention section
+        assert "5.5h" not in attention_section
+        assert "7.8h" in attention_section
+
+
+class TestPatchNoSleepInAttention:
+    """7. sleep_hours absent dans attention → pas d'erreur, metrics_pre patché."""
+
+    @pytest.mark.asyncio
+    async def test_no_attention_sleep_no_error(self, _patch_history):
+        from magma_cycling._mcp.handlers.rest import handle_patch_coach_analysis
+
+        _patch_history["path"].read_text.return_value = _ANALYSIS_NO_SLEEP_IN_ATTENTION
+
+        result = await handle_patch_coach_analysis(
+            {"activity_id": "i131572602", "sleep_hours": 7.8}
+        )
+        data = json.loads(result[0].text)
+
+        written = _patch_history["written"]["text"]
+        # metrics_pre patched
+        assert "- Sommeil : 7.8h" in written
+        # No error
+        assert "error" not in data
