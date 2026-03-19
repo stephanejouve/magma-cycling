@@ -82,6 +82,7 @@ from magma_cycling._mcp.handlers.planning import (  # noqa: F401
 # Re-exports — backward compat: all 43 handlers importable from mcp_server
 # ---------------------------------------------------------------------------
 from magma_cycling._mcp.handlers.rest import (  # noqa: F401
+    handle_patch_coach_analysis,
     handle_pre_session_check,
 )
 from magma_cycling._mcp.handlers.sessions import (  # noqa: F401
@@ -208,8 +209,9 @@ TOOL_HANDLERS = {
     "withings-sync-to-intervals": handle_withings_sync_to_intervals,
     "withings-analyze-trends": handle_withings_analyze_trends,
     "withings-enrich-session": handle_withings_enrich_session,
-    # Rest / Recovery (1)
+    # Rest / Recovery (2)
     "pre-session-check": handle_pre_session_check,
+    "patch-coach-analysis": handle_patch_coach_analysis,
 }
 
 
