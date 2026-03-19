@@ -13,7 +13,7 @@ Created: 2026-02-19
 
 import json
 from datetime import date
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -21,6 +21,7 @@ from magma_cycling.planning.models import WeeklyPlan
 from magma_cycling.update_session_status import (
     STATUSES_TO_DELETE,
     find_event_by_session,
+    main,
     sync_with_intervals,
 )
 
@@ -694,3 +695,298 @@ class TestErrorHandling:
         # Should handle exception gracefully
         with pytest.raises(Exception):
             sync_with_intervals(mock_client, "S999-01", "2026-03-02", "cancelled")
+
+
+class TestSyncCreateNote:
+    """Tests for sync_with_intervals creating NOTE when no event found."""
+
+    def test_sync_create_note_cancelled(self):
+        """Test cancelled status creates NOTE with [ANNULÉE] tag when no event."""
+        mock_client = MagicMock()
+        mock_client.get_events.return_value = []
+        mock_client.create_event.return_value = {"id": 777}
+
+        session_info = {
+            "name": "TempoRide",
+            "type": "TMP",
+            "version": "V001",
+            "description": "Tempo 45min",
+            "tss_planned": 65,
+            "duration_min": 60,
+        }
+
+        result = sync_with_intervals(
+            mock_client,
+            "S074-05",
+            "2026-03-05",
+            "cancelled",
+            reason="Blessure genou",
+            session_info=session_info,
+        )
+
+        assert result is True
+        call_args = mock_client.create_event.call_args[0][0]
+        assert call_args["category"] == "NOTE"
+        assert "[ANNULÉE]" in call_args["name"]
+        assert "Blessure genou" in call_args["description"]
+        assert "Tempo 45min" in call_args["description"]
+
+    def test_sync_create_note_skipped(self):
+        """Test skipped status creates NOTE with [SAUTÉE] tag when no event."""
+        mock_client = MagicMock()
+        mock_client.get_events.return_value = []
+        mock_client.create_event.return_value = {"id": 888}
+
+        session_info = {
+            "name": "Intervals",
+            "type": "INT",
+            "version": "V002",
+            "description": "VO2max intervals",
+            "tss_planned": 80,
+            "duration_min": 75,
+        }
+
+        result = sync_with_intervals(
+            mock_client,
+            "S074-03",
+            "2026-03-03",
+            "skipped",
+            reason="Voyage pro",
+            session_info=session_info,
+        )
+
+        assert result is True
+        call_args = mock_client.create_event.call_args[0][0]
+        assert "[SAUTÉE]" in call_args["name"]
+        assert "Voyage pro" in call_args["description"]
+
+    def test_sync_create_note_replaced(self):
+        """Test replaced status creates NOTE with [REMPLACÉE] tag when no event."""
+        mock_client = MagicMock()
+        mock_client.get_events.return_value = []
+        mock_client.create_event.return_value = {"id": 444}
+
+        session_info = {
+            "name": "SweetSpot",
+            "type": "SST",
+            "version": "V001",
+            "description": "Sweet spot 2x20",
+            "tss_planned": 70,
+            "duration_min": 65,
+        }
+
+        result = sync_with_intervals(
+            mock_client,
+            "S074-04",
+            "2026-03-04",
+            "replaced",
+            reason="Changement programme",
+            session_info=session_info,
+        )
+
+        assert result is True
+        call_args = mock_client.create_event.call_args[0][0]
+        assert "[REMPLACÉE]" in call_args["name"]
+
+    def test_sync_create_note_rest_day(self):
+        """Test rest_day status creates NOTE with [REPOS] tag when no event."""
+        mock_client = MagicMock()
+        mock_client.get_events.return_value = []
+        mock_client.create_event.return_value = {"id": 555}
+
+        session_info = {
+            "name": "Recovery",
+            "type": "REC",
+            "version": "V001",
+            "description": "Easy spin",
+            "tss_planned": 30,
+            "duration_min": 40,
+        }
+
+        result = sync_with_intervals(
+            mock_client,
+            "S074-06",
+            "2026-03-06",
+            "rest_day",
+            reason="Fatigue accumulée",
+            session_info=session_info,
+        )
+
+        assert result is True
+        call_args = mock_client.create_event.call_args[0][0]
+        assert "[REPOS]" in call_args["name"]
+
+
+class TestMainCLI:
+    """Tests for main() CLI entry point."""
+
+    @pytest.fixture
+    def mock_planning_tower(self, tmp_path):
+        """Mock Control Tower with tmp_path planning."""
+        from magma_cycling.planning.control_tower import planning_tower
+
+        original_dir = planning_tower.planning_dir
+        planning_tower.planning_dir = tmp_path
+        planning_tower.backup_system.planning_dir = tmp_path
+
+        # Create planning file
+        planning_data = {
+            "week_id": "S999",
+            "start_date": "2026-03-02",
+            "end_date": "2026-03-08",
+            "created_at": "2026-02-01T20:00:00Z",
+            "last_updated": "2026-02-01T20:00:00Z",
+            "version": 1,
+            "athlete_id": "iXXXXXX",
+            "tss_target": 350,
+            "planned_sessions": [
+                {
+                    "session_id": "S999-01",
+                    "date": "2026-03-02",
+                    "name": "Session1",
+                    "type": "END",
+                    "version": "V001",
+                    "tss_planned": 50,
+                    "duration_min": 60,
+                    "description": "Test session",
+                    "status": "planned",
+                    "intervals_id": None,
+                    "description_hash": None,
+                },
+            ],
+        }
+        planning_file = tmp_path / "week_planning_S999.json"
+        with open(planning_file, "w", encoding="utf-8") as f:
+            json.dump(planning_data, f, indent=2)
+
+        yield tmp_path
+
+        planning_tower.planning_dir = original_dir
+        planning_tower.backup_system.planning_dir = original_dir
+
+    def test_main_local_only(self, mock_planning_tower):
+        """Test main with local update only (no --sync)."""
+        with patch(
+            "sys.argv",
+            [
+                "prog",
+                "--week-id",
+                "S999",
+                "--session",
+                "S999-01",
+                "--status",
+                "completed",
+            ],
+        ):
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+            assert exc_info.value.code == 0
+
+    def test_main_cancelled_requires_reason(self, mock_planning_tower):
+        """Test main exits with error when cancelled without --reason."""
+        with patch(
+            "sys.argv",
+            [
+                "prog",
+                "--week-id",
+                "S999",
+                "--session",
+                "S999-01",
+                "--status",
+                "cancelled",
+            ],
+        ):
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+            assert exc_info.value.code != 0
+
+    def test_main_cancelled_with_reason(self, mock_planning_tower):
+        """Test main with cancelled + reason succeeds locally."""
+        with patch(
+            "sys.argv",
+            [
+                "prog",
+                "--week-id",
+                "S999",
+                "--session",
+                "S999-01",
+                "--status",
+                "cancelled",
+                "--reason",
+                "Fatigue",
+            ],
+        ):
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+            assert exc_info.value.code == 0
+
+    def test_main_session_not_found(self, mock_planning_tower):
+        """Test main exits 1 when session ID does not exist."""
+        with patch(
+            "sys.argv",
+            [
+                "prog",
+                "--week-id",
+                "S999",
+                "--session",
+                "S999-99",
+                "--status",
+                "completed",
+            ],
+        ):
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+            assert exc_info.value.code == 1
+
+    def test_main_sync_no_credentials(self, mock_planning_tower):
+        """Test main with --sync but no credentials exits 0."""
+        with (
+            patch(
+                "sys.argv",
+                [
+                    "prog",
+                    "--week-id",
+                    "S999",
+                    "--session",
+                    "S999-01",
+                    "--status",
+                    "completed",
+                    "--sync",
+                ],
+            ),
+            patch(
+                "magma_cycling.update_session_status.create_intervals_client",
+                side_effect=ValueError("No credentials"),
+            ),
+        ):
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+            assert exc_info.value.code == 0
+
+    def test_main_sync_success(self, mock_planning_tower):
+        """Test main with --sync and successful sync."""
+        mock_client = MagicMock()
+        mock_client.get_events.return_value = []
+
+        with (
+            patch(
+                "sys.argv",
+                [
+                    "prog",
+                    "--week-id",
+                    "S999",
+                    "--session",
+                    "S999-01",
+                    "--status",
+                    "completed",
+                    "--sync",
+                ],
+            ),
+            patch(
+                "magma_cycling.update_session_status.create_intervals_client",
+                return_value=mock_client,
+            ),
+        ):
+            with pytest.raises(SystemExit) as exc_info:
+                main()
+            assert exc_info.value.code == 0
