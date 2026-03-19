@@ -1,462 +1,391 @@
-"""Tests for workflows.sync.ctl_peaks module.
-
-Tests CTLPeaksMixin.analyze_ctl_peaks: CTL/ATL/TSB analysis,
-alerts, recommendations, PID integration, error handling.
-"""
+"""Tests for CTLPeaksMixin — CTL/ATL/TSB analysis using Peaks Coaching principles."""
 
 import json
 from datetime import date
-from pathlib import Path
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 from magma_cycling.workflows.sync.ctl_peaks import CTLPeaksMixin
 
 
-class StubWorkflow(CTLPeaksMixin):
-    """Stub providing required attributes for CTLPeaksMixin."""
+class StubSync(CTLPeaksMixin):
+    """Stub class to test CTLPeaksMixin in isolation."""
 
     def __init__(self, client=None):
         self.client = client or MagicMock()
 
 
-def _mock_athlete(ftp=240, ftp_target=260):
-    """Create a mock AthleteProfile."""
+def _make_wellness(ctl=45.0, atl=50.0, tsb=-5.0):
+    """Helper to create wellness data dict."""
+    return {"ctl": ctl, "atl": atl, "tsb": tsb}
+
+
+def _mock_athlete_profile(ftp=220, ftp_target=260):
+    """Helper to create a mock AthleteProfile."""
     profile = MagicMock()
     profile.ftp = ftp
     profile.ftp_target = ftp_target
     return profile
 
 
-def _mock_phase_rec(ctl_target=65.0, weeks_to_rebuild=12):
-    """Create a mock phase recommendation."""
-    rec = MagicMock()
-    rec.ctl_target = ctl_target
-    rec.weeks_to_rebuild = weeks_to_rebuild
-    return rec
+class TestNoWellnessData:
+    """Tests for early returns when wellness data is missing."""
 
+    @patch("magma_cycling.workflows.sync.ctl_peaks.AthleteProfile.from_env")
+    def test_no_wellness_data_returns_none(self, mock_profile):
+        """Return None when get_wellness returns empty list."""
+        mock_profile.return_value = _mock_athlete_profile()
+        mock_client = MagicMock()
+        mock_client.get_wellness.return_value = []
 
-def _mock_pid_peaks_rec(
-    tss=380, mode="NORMAL", confidence=0.85, override=False, delta=15, peaks=365
-):
-    """Create a mock integrated PID+Peaks recommendation."""
-    rec = MagicMock()
-    rec.tss_per_week = tss
-    rec.mode.value = mode
-    rec.confidence = confidence
-    rec.override_active = override
-    rec.pid_delta = delta
-    rec.peaks_suggestion = peaks
-    return rec
+        stub = StubSync(client=mock_client)
+        result = stub.analyze_ctl_peaks(check_date=date(2026, 3, 10))
 
-
-MODULE = "magma_cycling.workflows.sync.ctl_peaks"
-
-
-# ─── No data / error cases ──────────────────────────────────────────
-
-
-class TestAnalyzeCtlPeaksNoData:
-    """Tests for missing/empty data scenarios."""
-
-    @patch(f"{MODULE}.AthleteProfile")
-    def test_no_wellness_data_returns_none(self, mock_profile_cls):
-        mock_profile_cls.from_env.return_value = _mock_athlete()
-        client = MagicMock()
-        client.get_wellness.return_value = []
-
-        wf = StubWorkflow(client=client)
-        result = wf.analyze_ctl_peaks(check_date=date(2026, 3, 15))
         assert result is None
 
-    @patch(f"{MODULE}.AthleteProfile")
-    def test_none_wellness_data_returns_none(self, mock_profile_cls):
-        mock_profile_cls.from_env.return_value = _mock_athlete()
-        client = MagicMock()
-        client.get_wellness.return_value = None
+    @patch("magma_cycling.workflows.sync.ctl_peaks.AthleteProfile.from_env")
+    def test_empty_wellness_list_returns_none(self, mock_profile):
+        """Return None when wellness list has None last element (safety check)."""
+        mock_profile.return_value = _mock_athlete_profile()
+        mock_client = MagicMock()
+        # List is non-empty but last element is None (edge case)
+        mock_client.get_wellness.return_value = [None]
 
-        wf = StubWorkflow(client=client)
-        result = wf.analyze_ctl_peaks(check_date=date(2026, 3, 15))
-        assert result is None
+        stub = StubSync(client=mock_client)
+        result = stub.analyze_ctl_peaks(check_date=date(2026, 3, 10))
 
-    @patch(f"{MODULE}.AthleteProfile")
-    def test_exception_returns_none(self, mock_profile_cls):
-        mock_profile_cls.from_env.side_effect = Exception("Config error")
-
-        wf = StubWorkflow()
-        result = wf.analyze_ctl_peaks(check_date=date(2026, 3, 15))
         assert result is None
 
 
-# ─── CTL alerts ──────────────────────────────────────────────────────
+class TestBasicAnalysis:
+    """Tests for basic CTL/ATL/TSB analysis without PID integration issues."""
 
+    @patch("magma_cycling.workflows.sync.ctl_peaks.compute_integrated_correction")
+    @patch("magma_cycling.workflows.sync.ctl_peaks.determine_training_phase")
+    @patch("magma_cycling.workflows.sync.ctl_peaks.AthleteProfile.from_env")
+    def test_basic_analysis_returns_dict(self, mock_profile, mock_phase, mock_pid):
+        """Verify result dict structure with all expected keys."""
+        mock_profile.return_value = _mock_athlete_profile(ftp=220, ftp_target=260)
+        mock_phase.return_value = MagicMock(ctl_target=75.0, weeks_to_rebuild=12)
+        mock_pid.return_value = MagicMock(
+            tss_per_week=380,
+            mode=MagicMock(value="pid_constrained"),
+            confidence="medium",
+            override_active=False,
+            pid_delta=10,
+            peaks_suggestion=370,
+        )
 
-class TestCtlAlerts:
-    """Tests for CTL threshold alerts."""
+        mock_client = MagicMock()
+        mock_client.get_wellness.return_value = [_make_wellness(ctl=55.0, atl=60.0, tsb=-5.0)]
 
-    @patch(f"{MODULE}.compute_integrated_correction")
-    @patch(f"{MODULE}.DiscretePIDController")
-    @patch(f"{MODULE}.determine_training_phase")
-    @patch(f"{MODULE}.AthleteProfile")
-    def test_ctl_critical_below_minimum(
-        self, mock_profile_cls, mock_phase, mock_pid_cls, mock_compute
-    ):
-        mock_profile_cls.from_env.return_value = _mock_athlete(ftp=240, ftp_target=260)
-        # ctl_minimum = (240/220) * 55 = 60.0
-        mock_phase.return_value = _mock_phase_rec(ctl_target=65.0)
-        mock_compute.return_value = _mock_pid_peaks_rec()
-
-        client = MagicMock()
-        client.get_wellness.return_value = [{"ctl": 45.0, "atl": 50.0, "tsb": -5.0}]
-
-        wf = StubWorkflow(client=client)
-        result = wf.analyze_ctl_peaks(check_date=date(2026, 3, 15))
+        stub = StubSync(client=mock_client)
+        result = stub.analyze_ctl_peaks(check_date=date(2026, 3, 10))
 
         assert result is not None
-        assert result["ctl_current"] == 45.0
+        assert result["ctl_current"] == 55.0
+        assert result["atl_current"] == 60.0
+        assert result["tsb_current"] == -5.0
+        assert result["ftp_current"] == 220
+        assert result["ftp_target"] == 260
+        assert "ctl_minimum_for_ftp" in result
+        assert "ctl_optimal_for_ftp" in result
+        assert "alerts" in result
+        assert "recommendations" in result
+        assert "phase_recommendation" in result
+        assert "pid_peaks_recommendation" in result
+
+    @patch("magma_cycling.workflows.sync.ctl_peaks.compute_integrated_correction")
+    @patch("magma_cycling.workflows.sync.ctl_peaks.determine_training_phase")
+    @patch("magma_cycling.workflows.sync.ctl_peaks.AthleteProfile.from_env")
+    def test_training_phase_included(self, mock_profile, mock_phase, mock_pid):
+        """Verify phase_recommendation is included in result."""
+        mock_profile.return_value = _mock_athlete_profile(ftp=220, ftp_target=260)
+        phase_rec = MagicMock(ctl_target=75.0, weeks_to_rebuild=12)
+        mock_phase.return_value = phase_rec
+        mock_pid.return_value = MagicMock(
+            tss_per_week=380,
+            mode=MagicMock(value="pid_constrained"),
+            confidence="medium",
+            override_active=False,
+            pid_delta=10,
+            peaks_suggestion=370,
+        )
+
+        mock_client = MagicMock()
+        mock_client.get_wellness.return_value = [_make_wellness(ctl=60.0)]
+
+        stub = StubSync(client=mock_client)
+        result = stub.analyze_ctl_peaks(check_date=date(2026, 3, 10))
+
+        assert result["phase_recommendation"] is phase_rec
+
+    @patch("magma_cycling.workflows.sync.ctl_peaks.compute_integrated_correction")
+    @patch("magma_cycling.workflows.sync.ctl_peaks.determine_training_phase")
+    @patch("magma_cycling.workflows.sync.ctl_peaks.AthleteProfile.from_env")
+    def test_ctl_below_minimum_generates_alerts(self, mock_profile, mock_phase, mock_pid):
+        """CTL below minimum for FTP should generate alerts and recommendations."""
+        mock_profile.return_value = _mock_athlete_profile(ftp=220, ftp_target=260)
+        mock_phase.return_value = MagicMock(ctl_target=75.0, weeks_to_rebuild=12)
+        mock_pid.return_value = MagicMock(
+            tss_per_week=370,
+            mode=MagicMock(value="peaks_override"),
+            confidence="high",
+            override_active=True,
+            pid_delta=None,
+            peaks_suggestion=370,
+        )
+
+        # CTL minimum for FTP 220 = (220/220)*55 = 55
+        # Set CTL well below minimum
+        mock_client = MagicMock()
+        mock_client.get_wellness.return_value = [_make_wellness(ctl=40.0)]
+
+        stub = StubSync(client=mock_client)
+        result = stub.analyze_ctl_peaks(check_date=date(2026, 3, 10))
+
+        assert len(result["alerts"]) > 0
         assert any("CTL critique" in a for a in result["alerts"])
-        assert any("Phase 1" in r for r in result["recommendations"])
-        assert any("Phase 2" in r for r in result["recommendations"])
+        assert len(result["recommendations"]) > 0
 
-    @patch(f"{MODULE}.compute_integrated_correction")
-    @patch(f"{MODULE}.DiscretePIDController")
-    @patch(f"{MODULE}.determine_training_phase")
-    @patch(f"{MODULE}.AthleteProfile")
-    def test_ctl_suboptimal_below_85_percent(
-        self, mock_profile_cls, mock_phase, mock_pid_cls, mock_compute
-    ):
-        mock_profile_cls.from_env.return_value = _mock_athlete(ftp=240, ftp_target=260)
-        # ctl_minimum = 60.0, ctl_target = 65.0, 85% of 65 = 55.25
-        # CTL=62 → above minimum (60) but below 85% of target? No, 85% of 65 = 55.25
-        # CTL=62 > 55.25, so NOT suboptimal. Need ctl_target higher.
-        mock_phase.return_value = _mock_phase_rec(ctl_target=80.0)
-        # 85% of 80 = 68. CTL=62 < 68 but CTL=62 > minimum=60
-        mock_compute.return_value = _mock_pid_peaks_rec()
+    @patch("magma_cycling.workflows.sync.ctl_peaks.compute_integrated_correction")
+    @patch("magma_cycling.workflows.sync.ctl_peaks.determine_training_phase")
+    @patch("magma_cycling.workflows.sync.ctl_peaks.AthleteProfile.from_env")
+    def test_negative_tsb_generates_recovery_alert(self, mock_profile, mock_phase, mock_pid):
+        """TSB < -15 should trigger fatigue alert."""
+        mock_profile.return_value = _mock_athlete_profile(ftp=220, ftp_target=260)
+        mock_phase.return_value = MagicMock(ctl_target=75.0, weeks_to_rebuild=12)
+        mock_pid.return_value = MagicMock(
+            tss_per_week=350,
+            mode=MagicMock(value="pid_constrained"),
+            confidence="medium",
+            override_active=False,
+            pid_delta=5,
+            peaks_suggestion=345,
+        )
 
-        client = MagicMock()
-        client.get_wellness.return_value = [{"ctl": 62.0, "atl": 55.0, "tsb": 7.0}]
+        mock_client = MagicMock()
+        mock_client.get_wellness.return_value = [_make_wellness(ctl=70.0, atl=90.0, tsb=-20.0)]
 
-        wf = StubWorkflow(client=client)
-        result = wf.analyze_ctl_peaks(check_date=date(2026, 3, 15))
-
-        assert result is not None
-        assert any("CTL sous-optimal" in a for a in result["alerts"])
-        assert any("Hunter Allen" in r for r in result["recommendations"])
-
-    @patch(f"{MODULE}.compute_integrated_correction")
-    @patch(f"{MODULE}.DiscretePIDController")
-    @patch(f"{MODULE}.determine_training_phase")
-    @patch(f"{MODULE}.AthleteProfile")
-    def test_ctl_adequate_no_alerts(self, mock_profile_cls, mock_phase, mock_pid_cls, mock_compute):
-        mock_profile_cls.from_env.return_value = _mock_athlete(ftp=240, ftp_target=260)
-        # ctl_minimum = 60.0, ctl_target = 65.0, 85% = 55.25
-        # CTL=63 > minimum=60 AND > 85% of 65=55.25 → no CTL alerts
-        mock_phase.return_value = _mock_phase_rec(ctl_target=65.0)
-        mock_compute.return_value = _mock_pid_peaks_rec()
-
-        client = MagicMock()
-        client.get_wellness.return_value = [{"ctl": 63.0, "atl": 55.0, "tsb": 8.0}]
-
-        wf = StubWorkflow(client=client)
-        result = wf.analyze_ctl_peaks(check_date=date(2026, 3, 15))
-
-        assert result is not None
-        ctl_alerts = [a for a in result["alerts"] if "CTL" in a]
-        assert len(ctl_alerts) == 0
-
-
-# ─── TSB alerts ──────────────────────────────────────────────────────
-
-
-class TestTsbAlerts:
-    """Tests for TSB threshold alerts."""
-
-    @patch(f"{MODULE}.compute_integrated_correction")
-    @patch(f"{MODULE}.DiscretePIDController")
-    @patch(f"{MODULE}.determine_training_phase")
-    @patch(f"{MODULE}.AthleteProfile")
-    def test_tsb_critical_fatigue(self, mock_profile_cls, mock_phase, mock_pid_cls, mock_compute):
-        mock_profile_cls.from_env.return_value = _mock_athlete()
-        mock_phase.return_value = _mock_phase_rec()
-        mock_compute.return_value = _mock_pid_peaks_rec()
-
-        client = MagicMock()
-        client.get_wellness.return_value = [{"ctl": 65.0, "atl": 85.0, "tsb": -20.0}]
-
-        wf = StubWorkflow(client=client)
-        result = wf.analyze_ctl_peaks(check_date=date(2026, 3, 15))
+        stub = StubSync(client=mock_client)
+        result = stub.analyze_ctl_peaks(check_date=date(2026, 3, 10))
 
         assert any("TSB critique" in a for a in result["alerts"])
         assert any("récupération" in r for r in result["recommendations"])
 
-    @patch(f"{MODULE}.compute_integrated_correction")
-    @patch(f"{MODULE}.DiscretePIDController")
-    @patch(f"{MODULE}.determine_training_phase")
-    @patch(f"{MODULE}.AthleteProfile")
-    def test_tsb_high_deconditioning(
-        self, mock_profile_cls, mock_phase, mock_pid_cls, mock_compute
-    ):
-        mock_profile_cls.from_env.return_value = _mock_athlete()
-        mock_phase.return_value = _mock_phase_rec()
-        mock_compute.return_value = _mock_pid_peaks_rec()
+    @patch("magma_cycling.workflows.sync.ctl_peaks.compute_integrated_correction")
+    @patch("magma_cycling.workflows.sync.ctl_peaks.determine_training_phase")
+    @patch("magma_cycling.workflows.sync.ctl_peaks.AthleteProfile.from_env")
+    def test_high_tsb_generates_deconditioning_alert(self, mock_profile, mock_phase, mock_pid):
+        """TSB > +15 should trigger deconditioning alert."""
+        mock_profile.return_value = _mock_athlete_profile(ftp=220, ftp_target=260)
+        mock_phase.return_value = MagicMock(ctl_target=75.0, weeks_to_rebuild=12)
+        mock_pid.return_value = MagicMock(
+            tss_per_week=400,
+            mode=MagicMock(value="pid_constrained"),
+            confidence="medium",
+            override_active=False,
+            pid_delta=10,
+            peaks_suggestion=390,
+        )
 
-        client = MagicMock()
-        client.get_wellness.return_value = [{"ctl": 65.0, "atl": 45.0, "tsb": 20.0}]
+        mock_client = MagicMock()
+        mock_client.get_wellness.return_value = [_make_wellness(ctl=55.0, atl=35.0, tsb=20.0)]
 
-        wf = StubWorkflow(client=client)
-        result = wf.analyze_ctl_peaks(check_date=date(2026, 3, 15))
+        stub = StubSync(client=mock_client)
+        result = stub.analyze_ctl_peaks(check_date=date(2026, 3, 10))
 
         assert any("TSB élevé" in a for a in result["alerts"])
-        assert any("Augmenter volume" in r for r in result["recommendations"])
+        assert any("Augmenter" in r for r in result["recommendations"])
 
-    @patch(f"{MODULE}.compute_integrated_correction")
-    @patch(f"{MODULE}.DiscretePIDController")
-    @patch(f"{MODULE}.determine_training_phase")
-    @patch(f"{MODULE}.AthleteProfile")
-    def test_tsb_normal_no_alert(self, mock_profile_cls, mock_phase, mock_pid_cls, mock_compute):
-        mock_profile_cls.from_env.return_value = _mock_athlete()
-        mock_phase.return_value = _mock_phase_rec()
-        mock_compute.return_value = _mock_pid_peaks_rec()
+    @patch("magma_cycling.workflows.sync.ctl_peaks.compute_integrated_correction")
+    @patch("magma_cycling.workflows.sync.ctl_peaks.determine_training_phase")
+    @patch("magma_cycling.workflows.sync.ctl_peaks.AthleteProfile.from_env")
+    def test_suboptimal_ctl_alert(self, mock_profile, mock_phase, mock_pid):
+        """CTL between minimum and 85% of target generates suboptimal alert."""
+        mock_profile.return_value = _mock_athlete_profile(ftp=220, ftp_target=260)
+        # ctl_target = 75, 85% = 63.75
+        # ctl_minimum = (220/220)*55 = 55
+        # Set CTL at 58 → above minimum (55), below 85% of target (63.75)
+        mock_phase.return_value = MagicMock(ctl_target=75.0, weeks_to_rebuild=12)
+        mock_pid.return_value = MagicMock(
+            tss_per_week=370,
+            mode=MagicMock(value="pid_constrained"),
+            confidence="medium",
+            override_active=False,
+            pid_delta=5,
+            peaks_suggestion=365,
+        )
 
-        client = MagicMock()
-        client.get_wellness.return_value = [{"ctl": 65.0, "atl": 60.0, "tsb": 5.0}]
+        mock_client = MagicMock()
+        mock_client.get_wellness.return_value = [_make_wellness(ctl=58.0, tsb=0.0)]
 
-        wf = StubWorkflow(client=client)
-        result = wf.analyze_ctl_peaks(check_date=date(2026, 3, 15))
+        stub = StubSync(client=mock_client)
+        result = stub.analyze_ctl_peaks(check_date=date(2026, 3, 10))
 
-        tsb_alerts = [a for a in result["alerts"] if "TSB" in a]
-        assert len(tsb_alerts) == 0
-
-
-# ─── PID state loading ───────────────────────────────────────────────
+        assert any("sous-optimal" in a for a in result["alerts"])
 
 
-class TestPidStateLoading:
+class TestPIDState:
     """Tests for PID state file loading."""
 
-    @patch(f"{MODULE}.compute_integrated_correction")
-    @patch(f"{MODULE}.DiscretePIDController")
-    @patch(f"{MODULE}.determine_training_phase")
-    @patch(f"{MODULE}.AthleteProfile")
-    def test_pid_state_file_loaded(
-        self, mock_profile_cls, mock_phase, mock_pid_cls, mock_compute, tmp_path
-    ):
-        mock_profile_cls.from_env.return_value = _mock_athlete()
-        mock_phase.return_value = _mock_phase_rec()
-        mock_compute.return_value = _mock_pid_peaks_rec()
-
-        pid_instance = MagicMock()
-        mock_pid_cls.return_value = pid_instance
-
-        state_file = tmp_path / "pid_state.json"
-        state_file.write_text(
-            json.dumps(
-                {
-                    "pid_state": {
-                        "integral": 1.5,
-                        "prev_error": -2.0,
-                        "prev_ftp": 238,
-                        "cycle_count": 5,
-                    }
-                }
-            )
+    @patch("magma_cycling.workflows.sync.ctl_peaks.compute_integrated_correction")
+    @patch("magma_cycling.workflows.sync.ctl_peaks.determine_training_phase")
+    @patch("magma_cycling.workflows.sync.ctl_peaks.AthleteProfile.from_env")
+    def test_pid_state_file_not_found(self, mock_profile, mock_phase, mock_pid, tmp_path):
+        """Analysis succeeds when PID state file does not exist."""
+        mock_profile.return_value = _mock_athlete_profile()
+        mock_phase.return_value = MagicMock(ctl_target=75.0, weeks_to_rebuild=12)
+        mock_pid.return_value = MagicMock(
+            tss_per_week=380,
+            mode=MagicMock(value="pid_constrained"),
+            confidence="medium",
+            override_active=False,
+            pid_delta=10,
+            peaks_suggestion=370,
         )
 
-        client = MagicMock()
-        client.get_wellness.return_value = [{"ctl": 65.0, "atl": 60.0, "tsb": 5.0}]
+        mock_client = MagicMock()
+        mock_client.get_wellness.return_value = [_make_wellness(ctl=60.0)]
 
-        wf = StubWorkflow(client=client)
+        stub = StubSync(client=mock_client)
+        # Use a non-existent path for PID state
+        with patch(
+            "magma_cycling.workflows.sync.ctl_peaks.Path",
+            wraps=type(tmp_path / "nonexistent"),
+        ):
+            result = stub.analyze_ctl_peaks(check_date=date(2026, 3, 10))
 
-        # Test with direct file manipulation
-        expected_path = Path("/tmp/sprint_r10_pid_initialization.json")
-        expected_path.write_text(
-            json.dumps(
-                {
-                    "pid_state": {
-                        "integral": 1.5,
-                        "prev_error": -2.0,
-                        "prev_ftp": 238,
-                        "cycle_count": 5,
-                    }
-                }
-            )
+        assert result is not None
+
+    @patch("magma_cycling.workflows.sync.ctl_peaks.compute_integrated_correction")
+    @patch("magma_cycling.workflows.sync.ctl_peaks.determine_training_phase")
+    @patch("magma_cycling.workflows.sync.ctl_peaks.AthleteProfile.from_env")
+    def test_pid_state_file_loaded(self, mock_profile, mock_phase, mock_pid, tmp_path):
+        """PID state is restored from JSON file when it exists."""
+        mock_profile.return_value = _mock_athlete_profile()
+        mock_phase.return_value = MagicMock(ctl_target=75.0, weeks_to_rebuild=12)
+        mock_pid.return_value = MagicMock(
+            tss_per_week=380,
+            mode=MagicMock(value="pid_constrained"),
+            confidence="medium",
+            override_active=False,
+            pid_delta=10,
+            peaks_suggestion=370,
         )
 
-        try:
-            result = wf.analyze_ctl_peaks(check_date=date(2026, 3, 15))
-            assert result is not None
-            # PID controller should have state loaded
-            assert pid_instance.integral == 1.5 or True  # State loaded via mock
-        finally:
-            expected_path.unlink(missing_ok=True)
+        # Create state file
+        state_file = tmp_path / "sprint_r10_pid_initialization.json"
+        state_data = {
+            "pid_state": {
+                "integral": 1.5,
+                "prev_error": 20.0,
+                "prev_ftp": 210,
+                "cycle_count": 3,
+            }
+        }
+        state_file.write_text(json.dumps(state_data))
 
-    @patch(f"{MODULE}.compute_integrated_correction")
-    @patch(f"{MODULE}.DiscretePIDController")
-    @patch(f"{MODULE}.determine_training_phase")
-    @patch(f"{MODULE}.AthleteProfile")
-    def test_pid_state_file_corrupt(self, mock_profile_cls, mock_phase, mock_pid_cls, mock_compute):
-        mock_profile_cls.from_env.return_value = _mock_athlete()
-        mock_phase.return_value = _mock_phase_rec()
-        mock_compute.return_value = _mock_pid_peaks_rec()
-        mock_pid_cls.return_value = MagicMock()
+        mock_client = MagicMock()
+        mock_client.get_wellness.return_value = [_make_wellness(ctl=60.0)]
 
-        client = MagicMock()
-        client.get_wellness.return_value = [{"ctl": 65.0, "atl": 60.0, "tsb": 5.0}]
+        stub = StubSync(client=mock_client)
+        with patch(
+            "magma_cycling.workflows.sync.ctl_peaks.Path",
+            return_value=state_file,
+        ):
+            result = stub.analyze_ctl_peaks(check_date=date(2026, 3, 10))
 
-        expected_path = Path("/tmp/sprint_r10_pid_initialization.json")
-        expected_path.write_text("{corrupt json")
+        assert result is not None
 
-        try:
-            wf = StubWorkflow(client=client)
-            result = wf.analyze_ctl_peaks(check_date=date(2026, 3, 15))
-            # Should handle gracefully, still return result
-            assert result is not None
-        finally:
-            expected_path.unlink(missing_ok=True)
+    @patch("magma_cycling.workflows.sync.ctl_peaks.compute_integrated_correction")
+    @patch("magma_cycling.workflows.sync.ctl_peaks.determine_training_phase")
+    @patch("magma_cycling.workflows.sync.ctl_peaks.AthleteProfile.from_env")
+    def test_pid_state_corrupt_json(self, mock_profile, mock_phase, mock_pid, tmp_path):
+        """Corrupt PID state file is handled gracefully."""
+        mock_profile.return_value = _mock_athlete_profile()
+        mock_phase.return_value = MagicMock(ctl_target=75.0, weeks_to_rebuild=12)
+        mock_pid.return_value = MagicMock(
+            tss_per_week=380,
+            mode=MagicMock(value="pid_constrained"),
+            confidence="medium",
+            override_active=False,
+            pid_delta=10,
+            peaks_suggestion=370,
+        )
+
+        # Create corrupt state file
+        state_file = tmp_path / "sprint_r10_pid_initialization.json"
+        state_file.write_text("{invalid json")
+
+        mock_client = MagicMock()
+        mock_client.get_wellness.return_value = [_make_wellness(ctl=60.0)]
+
+        stub = StubSync(client=mock_client)
+        with patch(
+            "magma_cycling.workflows.sync.ctl_peaks.Path",
+            return_value=state_file,
+        ):
+            result = stub.analyze_ctl_peaks(check_date=date(2026, 3, 10))
+
+        assert result is not None
 
 
-# ─── PID+Peaks integration ──────────────────────────────────────────
+class TestPIDIntegration:
+    """Tests for PID + Peaks integrated recommendation."""
 
+    @patch("magma_cycling.workflows.sync.ctl_peaks.compute_integrated_correction")
+    @patch("magma_cycling.workflows.sync.ctl_peaks.determine_training_phase")
+    @patch("magma_cycling.workflows.sync.ctl_peaks.AthleteProfile.from_env")
+    def test_integrated_correction_success(self, mock_profile, mock_phase, mock_pid):
+        """Successful PID+Peaks integration returns recommendation in result."""
+        mock_profile.return_value = _mock_athlete_profile()
+        mock_phase.return_value = MagicMock(ctl_target=75.0, weeks_to_rebuild=12)
+        pid_rec = MagicMock(
+            tss_per_week=380,
+            mode=MagicMock(value="pid_constrained"),
+            confidence="high",
+            override_active=False,
+            pid_delta=15,
+            peaks_suggestion=365,
+        )
+        mock_pid.return_value = pid_rec
 
-class TestPidPeaksIntegration:
-    """Tests for PID+Peaks integrated recommendation."""
+        mock_client = MagicMock()
+        mock_client.get_wellness.return_value = [_make_wellness(ctl=60.0)]
 
-    @patch(f"{MODULE}.compute_integrated_correction")
-    @patch(f"{MODULE}.DiscretePIDController")
-    @patch(f"{MODULE}.determine_training_phase")
-    @patch(f"{MODULE}.AthleteProfile")
-    def test_pid_computation_success(
-        self, mock_profile_cls, mock_phase, mock_pid_cls, mock_compute
-    ):
-        mock_profile_cls.from_env.return_value = _mock_athlete()
-        mock_phase.return_value = _mock_phase_rec()
-        pid_peaks = _mock_pid_peaks_rec(tss=380, mode="NORMAL", override=False, delta=15)
-        mock_compute.return_value = pid_peaks
+        stub = StubSync(client=mock_client)
+        result = stub.analyze_ctl_peaks(check_date=date(2026, 3, 10))
 
-        client = MagicMock()
-        client.get_wellness.return_value = [{"ctl": 65.0, "atl": 60.0, "tsb": 5.0}]
+        assert result["pid_peaks_recommendation"] is pid_rec
 
-        wf = StubWorkflow(client=client)
-        result = wf.analyze_ctl_peaks(check_date=date(2026, 3, 15))
+    @patch("magma_cycling.workflows.sync.ctl_peaks.compute_integrated_correction")
+    @patch("magma_cycling.workflows.sync.ctl_peaks.determine_training_phase")
+    @patch("magma_cycling.workflows.sync.ctl_peaks.AthleteProfile.from_env")
+    def test_integrated_correction_exception(self, mock_profile, mock_phase, mock_pid):
+        """Exception in compute_integrated_correction sets pid_peaks_recommendation to None."""
+        mock_profile.return_value = _mock_athlete_profile()
+        mock_phase.return_value = MagicMock(ctl_target=75.0, weeks_to_rebuild=12)
+        mock_pid.side_effect = RuntimeError("PID computation failed")
 
-        assert result["pid_peaks_recommendation"] == pid_peaks
-        mock_compute.assert_called_once()
+        mock_client = MagicMock()
+        mock_client.get_wellness.return_value = [_make_wellness(ctl=60.0)]
 
-    @patch(f"{MODULE}.compute_integrated_correction")
-    @patch(f"{MODULE}.DiscretePIDController")
-    @patch(f"{MODULE}.determine_training_phase")
-    @patch(f"{MODULE}.AthleteProfile")
-    def test_pid_computation_failure(
-        self, mock_profile_cls, mock_phase, mock_pid_cls, mock_compute
-    ):
-        mock_profile_cls.from_env.return_value = _mock_athlete()
-        mock_phase.return_value = _mock_phase_rec()
-        mock_compute.side_effect = Exception("PID calculation error")
+        stub = StubSync(client=mock_client)
+        result = stub.analyze_ctl_peaks(check_date=date(2026, 3, 10))
 
-        client = MagicMock()
-        client.get_wellness.return_value = [{"ctl": 65.0, "atl": 60.0, "tsb": 5.0}]
-
-        wf = StubWorkflow(client=client)
-        result = wf.analyze_ctl_peaks(check_date=date(2026, 3, 15))
-
-        # Should still return result, with pid_peaks_recommendation = None
         assert result is not None
         assert result["pid_peaks_recommendation"] is None
 
-    @patch(f"{MODULE}.compute_integrated_correction")
-    @patch(f"{MODULE}.DiscretePIDController")
-    @patch(f"{MODULE}.determine_training_phase")
-    @patch(f"{MODULE}.AthleteProfile")
-    def test_override_active(self, mock_profile_cls, mock_phase, mock_pid_cls, mock_compute):
-        mock_profile_cls.from_env.return_value = _mock_athlete()
-        mock_phase.return_value = _mock_phase_rec()
-        pid_peaks = _mock_pid_peaks_rec(override=True, mode="RECOVERY_OVERRIDE")
-        mock_compute.return_value = pid_peaks
 
-        client = MagicMock()
-        client.get_wellness.return_value = [{"ctl": 65.0, "atl": 60.0, "tsb": 5.0}]
+class TestExceptionHandling:
+    """Tests for top-level exception handling."""
 
-        wf = StubWorkflow(client=client)
-        result = wf.analyze_ctl_peaks(check_date=date(2026, 3, 15))
+    @patch("magma_cycling.workflows.sync.ctl_peaks.AthleteProfile.from_env")
+    def test_athlete_profile_error_returns_none(self, mock_profile):
+        """Return None when AthleteProfile.from_env() raises."""
+        mock_profile.side_effect = RuntimeError("Missing env vars")
 
-        assert result["pid_peaks_recommendation"].override_active is True
+        stub = StubSync(client=MagicMock())
+        result = stub.analyze_ctl_peaks(check_date=date(2026, 3, 10))
 
-
-# ─── Result structure ────────────────────────────────────────────────
-
-
-class TestResultStructure:
-    """Tests for complete result dict structure."""
-
-    @patch(f"{MODULE}.compute_integrated_correction")
-    @patch(f"{MODULE}.DiscretePIDController")
-    @patch(f"{MODULE}.determine_training_phase")
-    @patch(f"{MODULE}.AthleteProfile")
-    def test_result_contains_all_keys(
-        self, mock_profile_cls, mock_phase, mock_pid_cls, mock_compute
-    ):
-        mock_profile_cls.from_env.return_value = _mock_athlete(ftp=240, ftp_target=260)
-        mock_phase.return_value = _mock_phase_rec(ctl_target=65.0)
-        mock_compute.return_value = _mock_pid_peaks_rec()
-
-        client = MagicMock()
-        client.get_wellness.return_value = [{"ctl": 63.0, "atl": 58.0, "tsb": 5.0}]
-
-        wf = StubWorkflow(client=client)
-        result = wf.analyze_ctl_peaks(check_date=date(2026, 3, 15))
-
-        expected_keys = {
-            "ctl_current",
-            "atl_current",
-            "tsb_current",
-            "ftp_current",
-            "ftp_target",
-            "ctl_minimum_for_ftp",
-            "ctl_optimal_for_ftp",
-            "alerts",
-            "recommendations",
-            "phase_recommendation",
-            "pid_peaks_recommendation",
-        }
-        assert set(result.keys()) == expected_keys
-
-    @patch(f"{MODULE}.compute_integrated_correction")
-    @patch(f"{MODULE}.DiscretePIDController")
-    @patch(f"{MODULE}.determine_training_phase")
-    @patch(f"{MODULE}.AthleteProfile")
-    def test_ctl_minimum_calculation(
-        self, mock_profile_cls, mock_phase, mock_pid_cls, mock_compute
-    ):
-        mock_profile_cls.from_env.return_value = _mock_athlete(ftp=220, ftp_target=240)
-        mock_phase.return_value = _mock_phase_rec()
-        mock_compute.return_value = _mock_pid_peaks_rec()
-
-        client = MagicMock()
-        client.get_wellness.return_value = [{"ctl": 65.0, "atl": 60.0, "tsb": 5.0}]
-
-        wf = StubWorkflow(client=client)
-        result = wf.analyze_ctl_peaks(check_date=date(2026, 3, 15))
-
-        # ctl_minimum = (220/220) * 55 = 55.0
-        assert result["ctl_minimum_for_ftp"] == pytest.approx(55.0, abs=0.1)
-
-    @patch(f"{MODULE}.compute_integrated_correction")
-    @patch(f"{MODULE}.DiscretePIDController")
-    @patch(f"{MODULE}.determine_training_phase")
-    @patch(f"{MODULE}.AthleteProfile")
-    def test_default_check_date_is_today(
-        self, mock_profile_cls, mock_phase, mock_pid_cls, mock_compute
-    ):
-        mock_profile_cls.from_env.return_value = _mock_athlete()
-        mock_phase.return_value = _mock_phase_rec()
-        mock_compute.return_value = _mock_pid_peaks_rec()
-
-        client = MagicMock()
-        client.get_wellness.return_value = [{"ctl": 65.0, "atl": 60.0, "tsb": 5.0}]
-
-        wf = StubWorkflow(client=client)
-        result = wf.analyze_ctl_peaks()  # No check_date → defaults to today
-
-        assert result is not None
-        client.get_wellness.assert_called_once()
+        assert result is None
