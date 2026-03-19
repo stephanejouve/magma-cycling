@@ -18,6 +18,7 @@ from magma_cycling.prepare_analysis import (
     PromptGenerator,
     analyze_batch,
     display_activity_menu,
+    main,
 )
 
 
@@ -1207,3 +1208,251 @@ class TestAnalyzeBatch:
 
         # Verify API was called
         api.get_activity.assert_called_once_with(123)
+
+
+class TestMainCLI:
+    """Tests for main() CLI entry point."""
+
+    ACTIVITY = {
+        "id": "i999",
+        "name": "S082-01-END-Test",
+        "start_date_local": "2026-02-23T18:00:00",
+        "moving_time": 3600,
+        "icu_training_load": 50,
+        "icu_intensity": 70,
+        "source": "ZWIFT",
+    }
+
+    @pytest.fixture
+    def mock_env(self, tmp_path, monkeypatch):
+        """Set up common mocks for main() tests."""
+        # Mock API client
+        mock_client = MagicMock()
+        monkeypatch.setattr(
+            "magma_cycling.prepare_analysis.create_intervals_client",
+            lambda: mock_client,
+        )
+
+        # Mock AI config
+        mock_ai_config = MagicMock()
+        mock_ai_config.default_provider = "clipboard"
+        monkeypatch.setattr(
+            "magma_cycling.prepare_analysis.get_ai_config",
+            lambda: mock_ai_config,
+        )
+
+        # Mock data config for PromptGenerator
+        mock_data_config = MagicMock()
+        mock_data_config.data_repo_path = tmp_path
+        monkeypatch.setattr(
+            "magma_cycling.config.get_data_config",
+            lambda: mock_data_config,
+        )
+
+        # Mock WorkflowState
+        mock_state_cls = MagicMock()
+        mock_state = MagicMock()
+        mock_state.get_last_analyzed_id.return_value = None
+        mock_state.get_unanalyzed_activities.side_effect = lambda acts: acts
+        mock_state_cls.return_value = mock_state
+        monkeypatch.setattr(
+            "magma_cycling.prepare_analysis.WorkflowState",
+            mock_state_cls,
+        )
+
+        # Create required directories
+        (tmp_path / "references").mkdir(exist_ok=True)
+        (tmp_path / "logs").mkdir(exist_ok=True)
+
+        return mock_client, mock_state
+
+    def test_main_with_activity_id(self, tmp_path, monkeypatch, mock_env):
+        """--activity-id bypasses menu and analyzes directly."""
+        mock_client, _ = mock_env
+        mock_client.get_activity.return_value = self.ACTIVITY.copy()
+        mock_client.get_wellness.return_value = []
+        mock_client.get_planned_workout.return_value = None
+
+        monkeypatch.setattr(
+            "sys.argv",
+            ["prog", "--activity-id", "i999", "--project-root", str(tmp_path)],
+        )
+        # Mock clipboard copy
+        monkeypatch.setattr(
+            "magma_cycling.workflows.prompt.prompt_assembly.subprocess.run",
+            MagicMock(return_value=MagicMock(returncode=0)),
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == 0
+
+    def test_main_no_activities_exits_1(self, tmp_path, monkeypatch, mock_env):
+        """Exit 1 when API returns no activities."""
+        mock_client, _ = mock_env
+        mock_client.get_activities.return_value = []
+
+        monkeypatch.setattr(
+            "sys.argv",
+            ["prog", "--project-root", str(tmp_path)],
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == 1
+
+    def test_main_list_mode(self, tmp_path, monkeypatch, mock_env, capsys):
+        """--list shows unanalyzed activities and exits 0."""
+        mock_client, _ = mock_env
+        mock_client.get_activities.return_value = [self.ACTIVITY.copy()]
+
+        monkeypatch.setattr(
+            "sys.argv",
+            ["prog", "--list", "--project-root", str(tmp_path)],
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == 0
+
+        output = capsys.readouterr().out
+        assert "non analysée" in output
+
+    def test_main_list_empty(self, tmp_path, monkeypatch, mock_env, capsys):
+        """--list with no unanalyzed activities shows success."""
+        mock_client, mock_state = mock_env
+        mock_client.get_activities.return_value = [self.ACTIVITY.copy()]
+        mock_state.get_unanalyzed_activities.side_effect = lambda acts: []
+
+        monkeypatch.setattr(
+            "sys.argv",
+            ["prog", "--list", "--project-root", str(tmp_path)],
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == 0
+
+        output = capsys.readouterr().out
+        assert "Aucune activité non analysée" in output
+
+    def test_main_menu_cancel(self, tmp_path, monkeypatch, mock_env):
+        """User cancels from activity menu exits 0."""
+        mock_client, _ = mock_env
+        mock_client.get_activities.return_value = [self.ACTIVITY.copy()]
+
+        monkeypatch.setattr(
+            "sys.argv",
+            ["prog", "--project-root", str(tmp_path)],
+        )
+        monkeypatch.setattr(
+            "magma_cycling.prepare_analysis.display_activity_menu",
+            lambda acts: ("cancel", None),
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == 0
+
+    def test_main_menu_single(self, tmp_path, monkeypatch, mock_env):
+        """User selects single activity from menu."""
+        mock_client, _ = mock_env
+        activity = self.ACTIVITY.copy()
+        mock_client.get_activities.return_value = [activity]
+        mock_client.get_activity.return_value = activity
+        mock_client.get_wellness.return_value = []
+        mock_client.get_planned_workout.return_value = None
+
+        monkeypatch.setattr(
+            "sys.argv",
+            ["prog", "--project-root", str(tmp_path)],
+        )
+        monkeypatch.setattr(
+            "magma_cycling.prepare_analysis.display_activity_menu",
+            lambda acts: ("single", "i999"),
+        )
+        monkeypatch.setattr(
+            "magma_cycling.workflows.prompt.prompt_assembly.subprocess.run",
+            MagicMock(return_value=MagicMock(returncode=0)),
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == 0
+
+    def test_main_strava_source_warning(self, tmp_path, monkeypatch, mock_env, capsys):
+        """STRAVA source activity shows warning."""
+        mock_client, _ = mock_env
+        activity = self.ACTIVITY.copy()
+        activity["source"] = "STRAVA"
+        mock_client.get_activity.return_value = activity
+        mock_client.get_wellness.return_value = []
+        mock_client.get_planned_workout.return_value = None
+
+        monkeypatch.setattr(
+            "sys.argv",
+            ["prog", "--activity-id", "i999", "--project-root", str(tmp_path)],
+        )
+        monkeypatch.setattr(
+            "magma_cycling.workflows.prompt.prompt_assembly.subprocess.run",
+            MagicMock(return_value=MagicMock(returncode=0)),
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == 0
+
+        output = capsys.readouterr().out
+        assert "Strava" in output
+
+    def test_main_api_provider(self, tmp_path, monkeypatch, mock_env, capsys):
+        """API provider shows automated workflow message."""
+        mock_client, _ = mock_env
+        mock_client.get_activity.return_value = self.ACTIVITY.copy()
+        mock_client.get_wellness.return_value = []
+        mock_client.get_planned_workout.return_value = None
+
+        # Override AI config to use API provider
+        mock_ai_config = MagicMock()
+        mock_ai_config.default_provider = "claude_api"
+        monkeypatch.setattr(
+            "magma_cycling.prepare_analysis.get_ai_config",
+            lambda: mock_ai_config,
+        )
+
+        monkeypatch.setattr(
+            "sys.argv",
+            ["prog", "--activity-id", "i999", "--project-root", str(tmp_path)],
+        )
+        monkeypatch.setattr(
+            "magma_cycling.workflows.prompt.prompt_assembly.subprocess.run",
+            MagicMock(return_value=MagicMock(returncode=0)),
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == 0
+
+        output = capsys.readouterr().out
+        assert "API" in output
+
+    def test_main_clipboard_copy_fails(self, tmp_path, monkeypatch, mock_env, capsys):
+        """Clipboard copy failure prints prompt to stdout."""
+        mock_client, _ = mock_env
+        mock_client.get_activity.return_value = self.ACTIVITY.copy()
+        mock_client.get_wellness.return_value = []
+        mock_client.get_planned_workout.return_value = None
+
+        monkeypatch.setattr(
+            "sys.argv",
+            ["prog", "--activity-id", "i999", "--project-root", str(tmp_path)],
+        )
+        # Make clipboard copy fail
+        monkeypatch.setattr(
+            "magma_cycling.workflows.prompt.prompt_assembly.subprocess.run",
+            MagicMock(side_effect=FileNotFoundError("pbcopy not found")),
+        )
+
+        with pytest.raises(SystemExit) as exc_info:
+            main()
+        assert exc_info.value.code == 0
