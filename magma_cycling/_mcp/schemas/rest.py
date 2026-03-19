@@ -39,4 +39,47 @@ def get_tools() -> list[Tool]:
                 },
             },
         ),
+        Tool(
+            name="patch-coach-analysis",
+            description=(
+                "Patch a coach analysis entry in workouts-history.md without "
+                "re-running the AI prompt. Useful for correcting metrics "
+                "(e.g. sleep hours) that were wrong at generation time."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "activity_id": {
+                        "type": "string",
+                        "description": (
+                            "Intervals.icu activity ID (e.g. i133337326). "
+                            "Takes priority over session_id if both provided."
+                        ),
+                    },
+                    "session_id": {
+                        "type": "string",
+                        "description": (
+                            "Session ID prefix (e.g. S085-04). "
+                            "Used to locate the entry by ### header."
+                        ),
+                    },
+                    "sleep_hours": {
+                        "type": "number",
+                        "description": (
+                            "Corrected sleep hours value. Replaces the existing "
+                            "value in 'Métriques Pré-séance' and 'Points d'Attention'."
+                        ),
+                        "minimum": 0,
+                        "maximum": 24,
+                    },
+                    "note": {
+                        "type": "string",
+                        "description": (
+                            "Free-text correction note appended as "
+                            "'#### Note de correction' section."
+                        ),
+                    },
+                },
+            },
+        ),
     ]
