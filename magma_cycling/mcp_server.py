@@ -32,6 +32,7 @@ from mcp_http_transport import MCPTransportManager
 
 from magma_cycling._mcp.handlers.admin import (  # noqa: F401
     handle_reload_server,
+    handle_system_info,
 )
 from magma_cycling._mcp.handlers.analysis import (  # noqa: F401
     handle_analyze_session_adherence,
@@ -196,8 +197,9 @@ TOOL_HANDLERS = {
     "restore-week-from-backup": handle_restore_week_from_backup,
     "analyze-training-patterns": handle_analyze_training_patterns,
     "get-coach-analysis": handle_get_coach_analysis,
-    # Admin (1)
+    # Admin (2)
     "reload-server": handle_reload_server,
+    "system-info": handle_system_info,
     # Catalog (1)
     "list-workout-catalog": handle_list_workout_catalog,
     # Health (8)

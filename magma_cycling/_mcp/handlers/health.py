@@ -32,12 +32,17 @@ async def handle_health_auth_status(args: dict) -> list[TextContent]:
     """Check health provider OAuth authentication status."""
     with suppress_stdout_stderr():
         from magma_cycling.config import get_withings_config
+        from magma_cycling.health import create_health_provider
 
         config = get_withings_config()
+        provider = create_health_provider()
+        provider_info = provider.get_provider_info()
 
         status = {
             "configured": config.is_configured(),
             "has_credentials": config.has_valid_credentials(),
+            "provider_name": provider_info["provider"],
+            "provider_class": type(provider).__name__,
         }
 
         if not config.is_configured():
@@ -68,15 +73,18 @@ async def handle_health_auth_status(args: dict) -> list[TextContent]:
             except Exception:
                 pass
 
-    return mcp_response(status)
+    return mcp_response(status, provider_info=provider_info)
 
 
 async def handle_health_authorize(args: dict) -> list[TextContent]:
     """Handle health provider OAuth authorization flow."""
     with suppress_stdout_stderr():
         from magma_cycling.config import create_withings_client
+        from magma_cycling.health import create_health_provider
 
         client = create_withings_client()
+        provider = create_health_provider()
+        provider_info = provider.get_provider_info()
         authorization_code = args.get("authorization_code")
 
         if not authorization_code:
@@ -112,7 +120,7 @@ async def handle_health_authorize(args: dict) -> list[TextContent]:
             except Exception as e:
                 result = {"step": "authorization_failed", "status": "error", "error": str(e)}
 
-    return mcp_response(result)
+    return mcp_response(result, provider_info=provider_info)
 
 
 async def handle_get_sleep(args: dict) -> list[TextContent]:
@@ -121,6 +129,7 @@ async def handle_get_sleep(args: dict) -> list[TextContent]:
         from magma_cycling.health import create_health_provider
 
         provider = create_health_provider()
+        provider_info = provider.get_provider_info()
 
         last_night_only = args.get("last_night_only", False)
 
@@ -150,7 +159,7 @@ async def handle_get_sleep(args: dict) -> list[TextContent]:
                 "count": len(sessions),
             }
 
-    return mcp_response(result, default=str)
+    return mcp_response(result, provider_info=provider_info, default=str)
 
 
 async def handle_get_body_composition(args: dict) -> list[TextContent]:
@@ -159,6 +168,7 @@ async def handle_get_body_composition(args: dict) -> list[TextContent]:
         from magma_cycling.health import create_health_provider
 
         provider = create_health_provider()
+        provider_info = provider.get_provider_info()
 
         latest_only = args.get("latest_only", False)
 
@@ -188,7 +198,7 @@ async def handle_get_body_composition(args: dict) -> list[TextContent]:
                 "count": len(measurements),
             }
 
-    return mcp_response(result, default=str)
+    return mcp_response(result, provider_info=provider_info, default=str)
 
 
 async def handle_get_readiness(args: dict) -> list[TextContent]:
@@ -197,6 +207,7 @@ async def handle_get_readiness(args: dict) -> list[TextContent]:
         from magma_cycling.health import create_health_provider
 
         provider = create_health_provider()
+        provider_info = provider.get_provider_info()
 
         eval_date_str = args.get("date")
         eval_date = date.fromisoformat(eval_date_str) if eval_date_str else date.today()
@@ -232,7 +243,7 @@ async def handle_get_readiness(args: dict) -> list[TextContent]:
                     f"\u2014 les donn\u00e9es Magma sont correctes ({detail})."
                 )
 
-    return mcp_response(result, default=str)
+    return mcp_response(result, provider_info=provider_info, default=str)
 
 
 def _extract_422_detail(http_err: requests.exceptions.HTTPError) -> str:
@@ -417,14 +428,24 @@ def sync_health_to_calendar(
 async def handle_sync_health_to_calendar(args: dict) -> list[TextContent]:
     """Synchronize health data to training calendar wellness via HealthProvider."""
     with suppress_stdout_stderr():
+        from magma_cycling.config import create_intervals_client
+        from magma_cycling.health import create_health_provider
+
         start_date_val = date.fromisoformat(args["start_date"])
         end_date_str = args.get("end_date")
         end_date_val = date.fromisoformat(end_date_str) if end_date_str else None
         data_types = args.get("data_types", ["all"])
 
-        result = sync_health_to_calendar(start_date_val, end_date_val, data_types)
+        provider = create_health_provider()
+        client = create_intervals_client()
 
-    return mcp_response(result)
+        result = sync_health_to_calendar(start_date_val, end_date_val, data_types)
+        result["providers"] = {
+            "health": provider.get_provider_info(),
+            "calendar": client.get_provider_info(),
+        }
+
+    return mcp_response(result, provider_info=provider.get_provider_info())
 
 
 async def handle_analyze_health_trends(args: dict) -> list[TextContent]:
@@ -433,6 +454,7 @@ async def handle_analyze_health_trends(args: dict) -> list[TextContent]:
         from magma_cycling.health import create_health_provider
 
         provider = create_health_provider()
+        provider_info = provider.get_provider_info()
 
         period = args.get("period", "week")
 
@@ -451,7 +473,7 @@ async def handle_analyze_health_trends(args: dict) -> list[TextContent]:
                     "error": "start_date and end_date required for custom period",
                     "status": "error",
                 }
-                return mcp_response(result)
+                return mcp_response(result, provider_info=provider_info)
 
             start_date_val = date.fromisoformat(start_date_str)
             end_date_val = date.fromisoformat(end_date_str)
@@ -534,7 +556,7 @@ async def handle_analyze_health_trends(args: dict) -> list[TextContent]:
             "alerts": alerts,
         }
 
-    return mcp_response(result)
+    return mcp_response(result, provider_info=provider_info)
 
 
 async def handle_enrich_session_health(args: dict) -> list[TextContent]:
@@ -548,6 +570,7 @@ async def handle_enrich_session_health(args: dict) -> list[TextContent]:
         auto_readiness_check = args.get("auto_readiness_check", True)
 
         provider = create_health_provider()
+        provider_info = provider.get_provider_info()
 
         # Load session
         with planning_tower.modify_week(
@@ -565,7 +588,7 @@ async def handle_enrich_session_health(args: dict) -> list[TextContent]:
                     "error": f"Session {session_id} not found in week {week_id}",
                     "status": "error",
                 }
-                return mcp_response(result)
+                return mcp_response(result, provider_info=provider_info)
 
             # Get session date
             session_date = session.session_date
@@ -609,4 +632,4 @@ async def handle_enrich_session_health(args: dict) -> list[TextContent]:
                 "status": "success",
             }
 
-    return mcp_response(result)
+    return mcp_response(result, provider_info=provider_info)

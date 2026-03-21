@@ -522,6 +522,14 @@ class IntervalsClient:
             logger.error(f"Error updating event {event_id}: {e}")
             return None
 
+    def get_provider_info(self) -> dict[str, str]:
+        """Return provider metadata for MCP response enrichment."""
+        return {
+            "provider": "intervals_icu",
+            "athlete_id": self.athlete_id,
+            "status": "ready",
+        }
+
     def create_activity_note(self, activity_id: str, note: str) -> bool:
         """Post a note to an activity on Intervals.icu.
 

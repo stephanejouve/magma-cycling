@@ -40,12 +40,17 @@ def load_workout_descriptions(week_id: str) -> dict[str, str]:
     return _load(week_id)
 
 
-def mcp_response(result: dict, **json_kwargs) -> list[TextContent]:
+def mcp_response(
+    result: dict, *, provider_info: dict | None = None, **json_kwargs
+) -> list[TextContent]:
     """Wrap a result dict with _metadata and return as MCP TextContent."""
     now = datetime.now()
-    result["_metadata"] = {
+    metadata: dict = {
         "response_date": date.today().isoformat(),
         "response_timestamp": now.isoformat(),
     }
+    if provider_info:
+        metadata["provider"] = provider_info
+    result["_metadata"] = metadata
     json_kwargs.setdefault("indent", 2)
     return [TextContent(type="text", text=json.dumps(result, **json_kwargs))]
