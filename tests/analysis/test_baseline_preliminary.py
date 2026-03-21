@@ -83,13 +83,17 @@ def mock_events_data():
 @pytest.fixture
 def analyzer(tmp_path):
     """Create BaselineAnalyzer with temp paths."""
-    return BaselineAnalyzer(
-        start_date="2026-01-04",
-        end_date="2026-01-06",
-        adherence_file=tmp_path / "adherence.jsonl",
-        workout_history_dir=tmp_path / "workout_history",
-        output_dir=tmp_path / "output",
-    )
+    with patch(
+        "magma_cycling.analysis.baseline_preliminary.create_intervals_client"
+    ) as mock_factory:
+        mock_factory.return_value = MagicMock()
+        yield BaselineAnalyzer(
+            start_date="2026-01-04",
+            end_date="2026-01-06",
+            adherence_file=tmp_path / "adherence.jsonl",
+            workout_history_dir=tmp_path / "workout_history",
+            output_dir=tmp_path / "output",
+        )
 
 
 def test_analyzer_initialization(analyzer):
