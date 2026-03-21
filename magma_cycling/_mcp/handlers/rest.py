@@ -60,7 +60,7 @@ def _find_session_for_date(week_id: str, target: date) -> dict | None:
 
 
 async def handle_pre_session_check(args: dict) -> list[TextContent]:
-    """Pre-session safety gate: Withings sync + veto protocol."""
+    """Pre-session safety gate: health sync + veto protocol."""
     with suppress_stdout_stderr():
         from magma_cycling.config import AthleteProfile, create_intervals_client
         from magma_cycling.health import create_health_provider
@@ -72,20 +72,20 @@ async def handle_pre_session_check(args: dict) -> list[TextContent]:
         date_str = target.isoformat()
         extra_sleep_hours = float(args.get("extra_sleep_hours", 0.0))
 
-        # 2. Withings sync (best-effort — fallback to cached data)
+        # 2. Health sync (best-effort — fallback to cached data)
         wellness_source = "fresh"
         try:
-            from magma_cycling._mcp.handlers.withings import (
-                sync_withings_to_intervals,
+            from magma_cycling._mcp.handlers.health import (
+                sync_health_to_calendar,
             )
 
-            sync_withings_to_intervals(
+            sync_health_to_calendar(
                 start_date=target,
                 end_date=target,
                 data_types=["sleep"],
             )
         except Exception as exc:
-            logger.warning("Withings sync failed, using cached data: %s", exc)
+            logger.warning("Health sync failed, using cached data: %s", exc)
             wellness_source = "cached"
 
         # 3. Wellness from Intervals.icu

@@ -11,7 +11,7 @@ def get_tools() -> list[Tool]:
             description=(
                 "Pre-session safety check: evaluates sleep, fatigue (TSB), "
                 "and overtraining risk before a planned session. "
-                "Forces a Withings sync then runs the veto protocol."
+                "Forces a health sync then runs the veto protocol."
             ),
             inputSchema={
                 "type": "object",
@@ -52,7 +52,7 @@ def get_tools() -> list[Tool]:
                     "activity_id": {
                         "type": "string",
                         "description": (
-                            "Intervals.icu activity ID (e.g. i133337326). "
+                            "Activity ID (e.g. i133337326). "
                             "Takes priority over session_id if both provided."
                         ),
                     },

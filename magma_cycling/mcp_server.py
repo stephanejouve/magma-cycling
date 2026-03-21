@@ -50,19 +50,15 @@ from magma_cycling._mcp.handlers.athlete import (  # noqa: F401
 from magma_cycling._mcp.handlers.catalog import (  # noqa: F401
     handle_list_workout_catalog,
 )
-from magma_cycling._mcp.handlers.intervals import (  # noqa: F401
-    handle_apply_workout_intervals,
-    handle_backfill_activities,
-    handle_compare_intervals,
-    handle_create_remote_note,
-    handle_delete_remote_session,
-    handle_get_activity_details,
-    handle_get_activity_intervals,
-    handle_get_activity_streams,
-    handle_list_remote_events,
-    handle_sync_remote_to_local,
-    handle_sync_week_to_intervals,
-    handle_update_remote_session,
+from magma_cycling._mcp.handlers.health import (  # noqa: F401
+    handle_analyze_health_trends,
+    handle_enrich_session_health,
+    handle_get_body_composition,
+    handle_get_readiness,
+    handle_get_sleep,
+    handle_health_auth_status,
+    handle_health_authorize,
+    handle_sync_health_to_calendar,
 )
 from magma_cycling._mcp.handlers.planning import (  # noqa: F401
     handle_create_session,
@@ -77,9 +73,23 @@ from magma_cycling._mcp.handlers.planning import (  # noqa: F401
     handle_update_session,
     handle_weekly_planner,
 )
+from magma_cycling._mcp.handlers.remote import (  # noqa: F401
+    handle_apply_workout_intervals,
+    handle_backfill_activities,
+    handle_compare_activity_intervals,
+    handle_create_remote_note,
+    handle_delete_remote_event,
+    handle_get_activity_details,
+    handle_get_activity_intervals,
+    handle_get_activity_streams,
+    handle_list_remote_events,
+    handle_sync_remote_to_local,
+    handle_sync_week_to_calendar,
+    handle_update_remote_event,
+)
 
 # ---------------------------------------------------------------------------
-# Re-exports — backward compat: all 43 handlers importable from mcp_server
+# Re-exports — all handlers importable from mcp_server
 # ---------------------------------------------------------------------------
 from magma_cycling._mcp.handlers.rest import (  # noqa: F401
     handle_patch_coach_analysis,
@@ -89,16 +99,6 @@ from magma_cycling._mcp.handlers.sessions import (  # noqa: F401
     handle_attach_workout,
     handle_duplicate_session,
     handle_swap_sessions,
-)
-from magma_cycling._mcp.handlers.withings import (  # noqa: F401
-    handle_withings_analyze_trends,
-    handle_withings_auth_status,
-    handle_withings_authorize,
-    handle_withings_enrich_session,
-    handle_withings_get_readiness,
-    handle_withings_get_sleep,
-    handle_withings_get_weight,
-    handle_withings_sync_to_intervals,
 )
 from magma_cycling._mcp.handlers.workouts import (  # noqa: F401
     handle_get_workout,
@@ -110,11 +110,11 @@ from magma_cycling._mcp.schemas import admin as _s_admin
 from magma_cycling._mcp.schemas import analysis as _s_analysis
 from magma_cycling._mcp.schemas import athlete as _s_athlete
 from magma_cycling._mcp.schemas import catalog as _s_catalog
-from magma_cycling._mcp.schemas import intervals as _s_intervals
+from magma_cycling._mcp.schemas import health as _s_health
 from magma_cycling._mcp.schemas import planning as _s_planning
+from magma_cycling._mcp.schemas import remote as _s_remote
 from magma_cycling._mcp.schemas import rest as _s_rest
 from magma_cycling._mcp.schemas import sessions as _s_sessions
-from magma_cycling._mcp.schemas import withings as _s_withings
 from magma_cycling._mcp.schemas import workouts as _s_workouts
 
 # ---------------------------------------------------------------------------
@@ -138,12 +138,12 @@ async def list_tools() -> list[Tool]:
         *_s_planning.get_tools(),
         *_s_sessions.get_tools(),
         *_s_workouts.get_tools(),
-        *_s_intervals.get_tools(),
+        *_s_remote.get_tools(),
         *_s_athlete.get_tools(),
         *_s_analysis.get_tools(),
         *_s_admin.get_tools(),
         *_s_catalog.get_tools(),
-        *_s_withings.get_tools(),
+        *_s_health.get_tools(),
         *_s_rest.get_tools(),
     ]
 
@@ -171,16 +171,16 @@ TOOL_HANDLERS = {
     # Workouts (2)
     "get-workout": handle_get_workout,
     "validate-workout": handle_validate_workout,
-    # Intervals.icu (12)
-    "sync-week-to-intervals": handle_sync_week_to_intervals,
-    "delete-remote-session": handle_delete_remote_session,
+    # Remote / Calendar (12)
+    "sync-week-to-calendar": handle_sync_week_to_calendar,
+    "delete-remote-event": handle_delete_remote_event,
     "list-remote-events": handle_list_remote_events,
     "get-activity-details": handle_get_activity_details,
     "get-activity-intervals": handle_get_activity_intervals,
     "get-activity-streams": handle_get_activity_streams,
-    "compare-intervals": handle_compare_intervals,
+    "compare-activity-intervals": handle_compare_activity_intervals,
     "apply-workout-intervals": handle_apply_workout_intervals,
-    "update-remote-session": handle_update_remote_session,
+    "update-remote-event": handle_update_remote_event,
     "create-remote-note": handle_create_remote_note,
     "sync-remote-to-local": handle_sync_remote_to_local,
     "backfill-activities": handle_backfill_activities,
@@ -200,15 +200,15 @@ TOOL_HANDLERS = {
     "reload-server": handle_reload_server,
     # Catalog (1)
     "list-workout-catalog": handle_list_workout_catalog,
-    # Withings (8)
-    "withings-auth-status": handle_withings_auth_status,
-    "withings-authorize": handle_withings_authorize,
-    "withings-get-sleep": handle_withings_get_sleep,
-    "withings-get-weight": handle_withings_get_weight,
-    "withings-get-readiness": handle_withings_get_readiness,
-    "withings-sync-to-intervals": handle_withings_sync_to_intervals,
-    "withings-analyze-trends": handle_withings_analyze_trends,
-    "withings-enrich-session": handle_withings_enrich_session,
+    # Health (8)
+    "health-auth-status": handle_health_auth_status,
+    "health-authorize": handle_health_authorize,
+    "get-sleep": handle_get_sleep,
+    "get-body-composition": handle_get_body_composition,
+    "get-readiness": handle_get_readiness,
+    "sync-health-to-calendar": handle_sync_health_to_calendar,
+    "analyze-health-trends": handle_analyze_health_trends,
+    "enrich-session-health": handle_enrich_session_health,
     # Rest / Recovery (2)
     "pre-session-check": handle_pre_session_check,
     "patch-coach-analysis": handle_patch_coach_analysis,

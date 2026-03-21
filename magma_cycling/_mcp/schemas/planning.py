@@ -66,7 +66,7 @@ def get_tools() -> list[Tool]:
         ),
         Tool(
             name="daily-sync",
-            description="Sync training activities from Intervals.icu and update session statuses",
+            description="Sync training activities and update session statuses",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -126,7 +126,7 @@ def get_tools() -> list[Tool]:
                     },
                     "sync": {
                         "type": "boolean",
-                        "description": "Sync to Intervals.icu",
+                        "description": "Sync to training calendar",
                         "default": False,
                     },
                 },
@@ -242,7 +242,7 @@ def get_tools() -> list[Tool]:
                     },
                     "sync_remote": {
                         "type": "boolean",
-                        "description": "Update remote event in Intervals.icu if synced (default: true)",
+                        "description": "Update remote event on training calendar if synced (default: true)",
                         "default": True,
                     },
                 },

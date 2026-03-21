@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from magma_cycling._mcp.handlers.withings import handle_withings_get_readiness
+from magma_cycling._mcp.handlers.health import handle_get_readiness
 from magma_cycling.models.withings_models import SleepData, TrainingReadiness
 
 
@@ -53,7 +53,7 @@ class TestReadinessFragmentationWarning:
             ],
         )
 
-        result = await handle_withings_get_readiness({"date": "2026-03-07"})
+        result = await handle_get_readiness({"date": "2026-03-07"})
 
         import json
 
@@ -69,7 +69,7 @@ class TestReadinessFragmentationWarning:
         provider.get_readiness.return_value = _make_readiness()
         provider.get_sleep_summary.return_value = _make_sleep_data(segments_count=1)
 
-        result = await handle_withings_get_readiness({"date": "2026-03-07"})
+        result = await handle_get_readiness({"date": "2026-03-07"})
 
         import json
 

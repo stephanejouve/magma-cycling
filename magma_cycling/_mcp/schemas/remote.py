@@ -1,14 +1,14 @@
-"""Intervals.icu integration tool schemas."""
+"""Remote training platform integration tool schemas."""
 
 from mcp.types import Tool
 
 
 def get_tools() -> list[Tool]:
-    """Return Intervals.icu integration tool schemas."""
+    """Return remote training platform integration tool schemas."""
     return [
         Tool(
-            name="sync-week-to-intervals",
-            description="Synchronize a week's planning to Intervals.icu (PROTECTION: never modifies completed sessions)",
+            name="sync-week-to-calendar",
+            description="Synchronize a week's planning to the training calendar (PROTECTION: never modifies completed sessions)",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -37,14 +37,14 @@ def get_tools() -> list[Tool]:
             },
         ),
         Tool(
-            name="delete-remote-session",
-            description="Delete a workout event directly on Intervals.icu (WARNING: permanent deletion)",
+            name="delete-remote-event",
+            description="Delete a workout event from the training calendar (WARNING: permanent deletion)",
             inputSchema={
                 "type": "object",
                 "properties": {
                     "event_id": {
                         "type": "integer",
-                        "description": "Intervals.icu event ID to delete (e.g., 94494673)",
+                        "description": "Remote event ID to delete (e.g., 94494673)",
                     },
                     "confirm": {
                         "type": "boolean",
@@ -57,7 +57,7 @@ def get_tools() -> list[Tool]:
         ),
         Tool(
             name="list-remote-events",
-            description="List all events from Intervals.icu for a date range (workouts, notes, etc.)",
+            description="List all remote events for a date range (workouts, notes, etc.)",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -79,7 +79,7 @@ def get_tools() -> list[Tool]:
         ),
         Tool(
             name="get-activity-details",
-            description="Get complete details for a completed activity from Intervals.icu (TSS, IF, power curves, streams)",
+            description="Get complete details for a completed activity (TSS, IF, power curves, streams)",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -98,7 +98,7 @@ def get_tools() -> list[Tool]:
         ),
         Tool(
             name="get-activity-intervals",
-            description="Get aggregated interval/lap data for a completed activity from Intervals.icu (avg power, HR, cadence per interval — ideal for block-by-block analysis)",
+            description="Get aggregated interval/lap data for a completed activity (avg power, HR, cadence per interval — ideal for block-by-block analysis)",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -139,7 +139,7 @@ def get_tools() -> list[Tool]:
             },
         ),
         Tool(
-            name="compare-intervals",
+            name="compare-activity-intervals",
             description="Compare interval data across multiple activities to track progression over time. Aligns intervals by label, calculates deltas and trends for metrics like power, HR, cadence, torque, decoupling.",
             inputSchema={
                 "type": "object",
@@ -177,7 +177,7 @@ def get_tools() -> list[Tool]:
         ),
         Tool(
             name="apply-workout-intervals",
-            description="Apply custom interval boundaries to an Intervals.icu activity. Auto mode: parses workout prescription to compute intervals. Manual mode: accepts explicit interval list. Always dry_run=true by default (preview only).",
+            description="Apply custom interval boundaries to a remote activity. Auto mode: parses workout prescription to compute intervals. Manual mode: accepts explicit interval list. Always dry_run=true by default (preview only).",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -212,14 +212,14 @@ def get_tools() -> list[Tool]:
             },
         ),
         Tool(
-            name="update-remote-session",
-            description="Update an existing workout event on Intervals.icu (PROTECTION: cannot update completed sessions)",
+            name="update-remote-event",
+            description="Update an existing remote workout event (PROTECTION: cannot update completed sessions)",
             inputSchema={
                 "type": "object",
                 "properties": {
                     "event_id": {
                         "type": "integer",
-                        "description": "Intervals.icu event ID to update",
+                        "description": "Remote event ID to update",
                     },
                     "updates": {
                         "type": "object",
@@ -231,7 +231,7 @@ def get_tools() -> list[Tool]:
         ),
         Tool(
             name="create-remote-note",
-            description="Create a NOTE (calendar note) directly on Intervals.icu (category=NOTE, type=null). NOTE: Name MUST start with one of the allowed prefixes: [ANNULÉE], [SAUTÉE], or [REMPLACÉE]",
+            description="Create a NOTE (calendar note) on the training calendar (category=NOTE, type=null). NOTE: Name MUST start with one of the allowed prefixes: [ANNULÉE], [SAUTÉE], or [REMPLACÉE]",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -255,7 +255,7 @@ def get_tools() -> list[Tool]:
         ),
         Tool(
             name="sync-remote-to-local",
-            description="Sync local planning from Intervals.icu remote events (fixes desync from pre-write-back operations)",
+            description="Sync local planning from remote events (fixes desync from pre-write-back operations)",
             inputSchema={
                 "type": "object",
                 "properties": {

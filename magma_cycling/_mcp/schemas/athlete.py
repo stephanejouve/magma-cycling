@@ -8,7 +8,7 @@ def get_tools() -> list[Tool]:
     return [
         Tool(
             name="get-athlete-profile",
-            description="Get current athlete profile from Intervals.icu (FTP, weight, CTL, ATL, TSB, zones)",
+            description="Get current athlete profile (FTP, weight, CTL, ATL, TSB, zones)",
             inputSchema={
                 "type": "object",
                 "properties": {},
@@ -16,7 +16,7 @@ def get_tools() -> list[Tool]:
         ),
         Tool(
             name="update-athlete-profile",
-            description="Update athlete profile on Intervals.icu (FTP, weight, max_hr, resting_hr, etc.)",
+            description="Update athlete profile (FTP, weight, max_hr, resting_hr, etc.)",
             inputSchema={
                 "type": "object",
                 "properties": {

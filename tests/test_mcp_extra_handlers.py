@@ -1,10 +1,10 @@
 """
 Additional MCP handler tests — push mcp_server.py from 50% to 60%.
 
-Focuses on: handle_update_session, handle_sync_week_to_intervals,
-handle_get_metrics, handle_withings_get_sleep, handle_withings_get_weight,
-handle_withings_get_readiness, handle_apply_workout_intervals,
-handle_compare_intervals.
+Focuses on: handle_update_session, handle_sync_week_to_calendar,
+handle_get_metrics, handle_get_sleep, handle_get_body_composition,
+handle_get_readiness, handle_apply_workout_intervals,
+handle_compare_activity_intervals.
 """
 
 import json
@@ -164,14 +164,14 @@ class TestHandleUpdateSession:
 # =======================
 
 
-LOAD_WORKOUTS_PATCH = "magma_cycling._mcp.handlers.intervals_sync.load_workout_descriptions"
+LOAD_WORKOUTS_PATCH = "magma_cycling._mcp.handlers.remote_sync.load_workout_descriptions"
 
 
 class TestHandleSyncWeekToIntervals:
     @pytest.mark.asyncio
     async def test_dry_run_no_api_calls(self, mock_plan, mock_session):
         """dry_run=True: computes plan but skips API create/update calls."""
-        from magma_cycling.mcp_server import handle_sync_week_to_intervals
+        from magma_cycling.mcp_server import handle_sync_week_to_calendar
 
         mock_session.intervals_id = None
         mock_plan.planned_sessions = [mock_session]
@@ -183,7 +183,7 @@ class TestHandleSyncWeekToIntervals:
         with patch(TOWER_PATCH, tower):
             with patch(INTERVALS_PATCH, return_value=mock_client):
                 with patch(LOAD_WORKOUTS_PATCH, return_value={}):
-                    result = await handle_sync_week_to_intervals(args)
+                    result = await handle_sync_week_to_calendar(args)
         data = json.loads(result[0].text)
         assert data["dry_run"] is True
         assert data["summary"]["to_create"] == 1
@@ -193,7 +193,7 @@ class TestHandleSyncWeekToIntervals:
     @pytest.mark.asyncio
     async def test_completed_session_skipped(self, mock_plan, mock_session):
         """Completed sessions are protected — skipped from sync."""
-        from magma_cycling.mcp_server import handle_sync_week_to_intervals
+        from magma_cycling.mcp_server import handle_sync_week_to_calendar
 
         mock_session.status = "completed"
         mock_session.intervals_id = 12345
@@ -206,7 +206,7 @@ class TestHandleSyncWeekToIntervals:
         with patch(TOWER_PATCH, tower):
             with patch(INTERVALS_PATCH, return_value=mock_client):
                 with patch(LOAD_WORKOUTS_PATCH, return_value={}):
-                    result = await handle_sync_week_to_intervals(args)
+                    result = await handle_sync_week_to_calendar(args)
         data = json.loads(result[0].text)
         assert data["summary"]["skipped_protected"] == 1
         assert data["summary"]["to_create"] == 0
@@ -214,21 +214,21 @@ class TestHandleSyncWeekToIntervals:
     @pytest.mark.asyncio
     async def test_file_not_found_returns_error(self, mock_tower):
         """FileNotFoundError from planning_tower returns error."""
-        from magma_cycling.mcp_server import handle_sync_week_to_intervals
+        from magma_cycling.mcp_server import handle_sync_week_to_calendar
 
         mock_tower.read_week.side_effect = FileNotFoundError("not found")
         mock_client = Mock()
         args = {"week_id": "S099"}
         with patch(TOWER_PATCH, mock_tower):
             with patch(INTERVALS_PATCH, return_value=mock_client):
-                result = await handle_sync_week_to_intervals(args)
+                result = await handle_sync_week_to_calendar(args)
         data = json.loads(result[0].text)
         assert "error" in data
 
     @pytest.mark.asyncio
     async def test_intervals_id_conflict_with_force_update(self, mock_plan, mock_session):
         """Session with intervals_id that exists remotely — force_update flag."""
-        from magma_cycling.mcp_server import handle_sync_week_to_intervals
+        from magma_cycling.mcp_server import handle_sync_week_to_calendar
 
         mock_session.intervals_id = "evt123"
         mock_session.status = "pending"
@@ -254,7 +254,7 @@ class TestHandleSyncWeekToIntervals:
         with patch(TOWER_PATCH, tower):
             with patch(INTERVALS_PATCH, return_value=mock_client):
                 with patch(LOAD_WORKOUTS_PATCH, return_value={}):
-                    result = await handle_sync_week_to_intervals(args)
+                    result = await handle_sync_week_to_calendar(args)
         data = json.loads(result[0].text)
         # No changes needed (same name and date)
         assert data["summary"]["to_update"] == 0
@@ -262,7 +262,7 @@ class TestHandleSyncWeekToIntervals:
     @pytest.mark.asyncio
     async def test_remote_conflict_detected(self, mock_plan, mock_session):
         """Session with intervals_id but remote was manually modified → warning."""
-        from magma_cycling.mcp_server import handle_sync_week_to_intervals
+        from magma_cycling.mcp_server import handle_sync_week_to_calendar
 
         mock_session.intervals_id = "evt123"
         mock_session.status = "pending"
@@ -285,7 +285,7 @@ class TestHandleSyncWeekToIntervals:
         with patch(TOWER_PATCH, tower):
             with patch(INTERVALS_PATCH, return_value=mock_client):
                 with patch(LOAD_WORKOUTS_PATCH, return_value={}):
-                    result = await handle_sync_week_to_intervals(args)
+                    result = await handle_sync_week_to_calendar(args)
         data = json.loads(result[0].text)
         assert data["summary"]["warnings"] == 1
         assert data["status"] == "success_with_warnings"
@@ -293,7 +293,7 @@ class TestHandleSyncWeekToIntervals:
     @pytest.mark.asyncio
     async def test_skipped_session_not_synced(self, mock_plan, mock_session):
         """Skipped sessions are protected — not synced to Intervals.icu."""
-        from magma_cycling.mcp_server import handle_sync_week_to_intervals
+        from magma_cycling.mcp_server import handle_sync_week_to_calendar
 
         mock_session.status = "skipped"
         mock_session.intervals_id = None
@@ -306,7 +306,7 @@ class TestHandleSyncWeekToIntervals:
         with patch(TOWER_PATCH, tower):
             with patch(INTERVALS_PATCH, return_value=mock_client):
                 with patch(LOAD_WORKOUTS_PATCH, return_value={}):
-                    result = await handle_sync_week_to_intervals(args)
+                    result = await handle_sync_week_to_calendar(args)
         data = json.loads(result[0].text)
         assert data["summary"]["skipped_protected"] == 1
         assert data["summary"]["to_create"] == 0
@@ -315,7 +315,7 @@ class TestHandleSyncWeekToIntervals:
     @pytest.mark.asyncio
     async def test_rest_day_session_not_synced(self, mock_plan, mock_session):
         """Rest day sessions are protected — not synced to Intervals.icu."""
-        from magma_cycling.mcp_server import handle_sync_week_to_intervals
+        from magma_cycling.mcp_server import handle_sync_week_to_calendar
 
         mock_session.status = "rest_day"
         mock_session.intervals_id = None
@@ -328,7 +328,7 @@ class TestHandleSyncWeekToIntervals:
         with patch(TOWER_PATCH, tower):
             with patch(INTERVALS_PATCH, return_value=mock_client):
                 with patch(LOAD_WORKOUTS_PATCH, return_value={}):
-                    result = await handle_sync_week_to_intervals(args)
+                    result = await handle_sync_week_to_calendar(args)
         data = json.loads(result[0].text)
         assert data["summary"]["skipped_protected"] == 1
         assert data["summary"]["to_create"] == 0
@@ -337,7 +337,7 @@ class TestHandleSyncWeekToIntervals:
     @pytest.mark.asyncio
     async def test_name_comparison_uses_full_intervals_name(self, mock_plan, mock_session):
         """Bug 2: Comparison uses full intervals_name, not short session.name."""
-        from magma_cycling.mcp_server import handle_sync_week_to_intervals
+        from magma_cycling.mcp_server import handle_sync_week_to_calendar
 
         mock_session.intervals_id = "evt123"
         mock_session.status = "pending"
@@ -361,7 +361,7 @@ class TestHandleSyncWeekToIntervals:
         with patch(TOWER_PATCH, tower):
             with patch(INTERVALS_PATCH, return_value=mock_client):
                 with patch(LOAD_WORKOUTS_PATCH, return_value={}):
-                    result = await handle_sync_week_to_intervals(args)
+                    result = await handle_sync_week_to_calendar(args)
         data = json.loads(result[0].text)
         # Short name != full intervals_name → conflict detected
         assert data["summary"]["warnings"] == 1
@@ -369,7 +369,7 @@ class TestHandleSyncWeekToIntervals:
     @pytest.mark.asyncio
     async def test_update_payload_includes_description(self, mock_plan, mock_session):
         """Update payload sends name + description + start_date_local."""
-        from magma_cycling.mcp_server import handle_sync_week_to_intervals
+        from magma_cycling.mcp_server import handle_sync_week_to_calendar
 
         mock_session.intervals_id = "evt123"
         mock_session.status = "pending"
@@ -396,7 +396,7 @@ class TestHandleSyncWeekToIntervals:
         with patch(TOWER_PATCH, tower):
             with patch(INTERVALS_PATCH, return_value=mock_client):
                 with patch(LOAD_WORKOUTS_PATCH, return_value={}):
-                    result = await handle_sync_week_to_intervals(args)
+                    result = await handle_sync_week_to_calendar(args)
         data = json.loads(result[0].text)
         assert data["summary"]["updated"] == 1
         # Verify the update_event was called with description
@@ -410,7 +410,7 @@ class TestHandleSyncWeekToIntervals:
     @pytest.mark.asyncio
     async def test_session_ids_filter(self, mock_plan, mock_session):
         """Bug 4: session_ids parameter filters which sessions are synced."""
-        from magma_cycling.mcp_server import handle_sync_week_to_intervals
+        from magma_cycling.mcp_server import handle_sync_week_to_calendar
 
         # Add a second session
         session2 = Mock()
@@ -436,7 +436,7 @@ class TestHandleSyncWeekToIntervals:
         with patch(TOWER_PATCH, tower):
             with patch(INTERVALS_PATCH, return_value=mock_client):
                 with patch(LOAD_WORKOUTS_PATCH, return_value={}):
-                    result = await handle_sync_week_to_intervals(args)
+                    result = await handle_sync_week_to_calendar(args)
         data = json.loads(result[0].text)
         assert data["summary"]["to_create"] == 1
         assert data["details"]["to_create"][0]["session_id"] == "S081-06"
@@ -458,7 +458,7 @@ class TestSyncValidationGate:
     @pytest.mark.asyncio
     async def test_sync_rejects_invalid_workout(self, mock_plan, mock_session):
         """Session with '5min' duration → validation error, no API create."""
-        from magma_cycling.mcp_server import handle_sync_week_to_intervals
+        from magma_cycling.mcp_server import handle_sync_week_to_calendar
 
         mock_session.intervals_id = None
         mock_session.status = "pending"
@@ -477,7 +477,7 @@ class TestSyncValidationGate:
         with patch(TOWER_PATCH, tower):
             with patch(INTERVALS_PATCH, return_value=mock_client):
                 with patch(LOAD_WORKOUTS_PATCH, return_value=workout_descriptions):
-                    result = await handle_sync_week_to_intervals(args)
+                    result = await handle_sync_week_to_calendar(args)
         data = json.loads(result[0].text)
         # Session should be rejected — no creation
         assert data["summary"]["to_create"] == 0
@@ -489,7 +489,7 @@ class TestSyncValidationGate:
     @pytest.mark.asyncio
     async def test_sync_accepts_valid_workout(self, mock_plan, mock_session):
         """Session with valid '5m' duration → create API called normally."""
-        from magma_cycling.mcp_server import handle_sync_week_to_intervals
+        from magma_cycling.mcp_server import handle_sync_week_to_calendar
 
         mock_session.intervals_id = None
         mock_session.status = "pending"
@@ -509,7 +509,7 @@ class TestSyncValidationGate:
         with patch(TOWER_PATCH, tower):
             with patch(INTERVALS_PATCH, return_value=mock_client):
                 with patch(LOAD_WORKOUTS_PATCH, return_value=workout_descriptions):
-                    result = await handle_sync_week_to_intervals(args)
+                    result = await handle_sync_week_to_calendar(args)
         data = json.loads(result[0].text)
         assert data["summary"]["to_create"] == 1
         assert data["summary"]["created"] == 1
@@ -580,7 +580,7 @@ class TestHandleGetMetrics:
 class TestHandleWithingsGetSleep:
     @pytest.mark.asyncio
     async def test_last_night_only_with_data(self):
-        from magma_cycling.mcp_server import handle_withings_get_sleep
+        from magma_cycling.mcp_server import handle_get_sleep
         from magma_cycling.models.withings_models import SleepData
 
         mock_provider = Mock()
@@ -593,26 +593,26 @@ class TestHandleWithingsGetSleep:
             wakeup_count=1,
         )
         with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
-            result = await handle_withings_get_sleep({"last_night_only": True})
+            result = await handle_get_sleep({"last_night_only": True})
         data = json.loads(result[0].text)
         assert "last_night_sleep" in data
         assert data["last_night_sleep"]["total_sleep_hours"] == 7.5
 
     @pytest.mark.asyncio
     async def test_last_night_only_no_data(self):
-        from magma_cycling.mcp_server import handle_withings_get_sleep
+        from magma_cycling.mcp_server import handle_get_sleep
 
         mock_provider = Mock()
         mock_provider.get_sleep_summary.return_value = None
         with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
-            result = await handle_withings_get_sleep({"last_night_only": True})
+            result = await handle_get_sleep({"last_night_only": True})
         data = json.loads(result[0].text)
         assert data["last_night_sleep"] is None
         assert "message" in data
 
     @pytest.mark.asyncio
     async def test_date_range_returns_sessions(self):
-        from magma_cycling.mcp_server import handle_withings_get_sleep
+        from magma_cycling.mcp_server import handle_get_sleep
         from magma_cycling.models.withings_models import SleepData
 
         mock_provider = Mock()
@@ -626,7 +626,7 @@ class TestHandleWithingsGetSleep:
             ),
         ]
         with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
-            result = await handle_withings_get_sleep(
+            result = await handle_get_sleep(
                 {
                     "start_date": "2026-02-17",
                     "end_date": "2026-02-23",
@@ -638,12 +638,12 @@ class TestHandleWithingsGetSleep:
 
     @pytest.mark.asyncio
     async def test_default_7_days_range(self):
-        from magma_cycling.mcp_server import handle_withings_get_sleep
+        from magma_cycling.mcp_server import handle_get_sleep
 
         mock_provider = Mock()
         mock_provider.get_sleep_range.return_value = []
         with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
-            result = await handle_withings_get_sleep({})
+            result = await handle_get_sleep({})
         data = json.loads(result[0].text)
         assert "start_date" in data
         assert data["count"] == 0
@@ -657,7 +657,7 @@ class TestHandleWithingsGetSleep:
 class TestHandleWithingsGetWeight:
     @pytest.mark.asyncio
     async def test_latest_only_with_data(self):
-        from magma_cycling.mcp_server import handle_withings_get_weight
+        from magma_cycling.mcp_server import handle_get_body_composition
         from magma_cycling.models.withings_models import WeightMeasurement
 
         mock_provider = Mock()
@@ -667,25 +667,25 @@ class TestHandleWithingsGetWeight:
             weight_kg=72.3,
         )
         with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
-            result = await handle_withings_get_weight({"latest_only": True})
+            result = await handle_get_body_composition({"latest_only": True})
         data = json.loads(result[0].text)
         assert data["latest_weight"]["weight_kg"] == 72.3
 
     @pytest.mark.asyncio
     async def test_latest_only_no_data(self):
-        from magma_cycling.mcp_server import handle_withings_get_weight
+        from magma_cycling.mcp_server import handle_get_body_composition
 
         mock_provider = Mock()
         mock_provider.get_body_composition.return_value = None
         with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
-            result = await handle_withings_get_weight({"latest_only": True})
+            result = await handle_get_body_composition({"latest_only": True})
         data = json.loads(result[0].text)
         assert data["latest_weight"] is None
         assert "message" in data
 
     @pytest.mark.asyncio
     async def test_date_range_returns_measurements(self):
-        from magma_cycling.mcp_server import handle_withings_get_weight
+        from magma_cycling.mcp_server import handle_get_body_composition
         from magma_cycling.models.withings_models import WeightMeasurement
 
         mock_provider = Mock()
@@ -697,7 +697,7 @@ class TestHandleWithingsGetWeight:
             ),
         ]
         with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
-            result = await handle_withings_get_weight(
+            result = await handle_get_body_composition(
                 {
                     "start_date": "2026-02-17",
                     "end_date": "2026-02-23",
@@ -708,12 +708,12 @@ class TestHandleWithingsGetWeight:
 
     @pytest.mark.asyncio
     async def test_default_30_days_range(self):
-        from magma_cycling.mcp_server import handle_withings_get_weight
+        from magma_cycling.mcp_server import handle_get_body_composition
 
         mock_provider = Mock()
         mock_provider.get_body_composition_range.return_value = []
         with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
-            result = await handle_withings_get_weight({})
+            result = await handle_get_body_composition({})
         data = json.loads(result[0].text)
         assert "start_date" in data
         assert data["count"] == 0
@@ -727,18 +727,18 @@ class TestHandleWithingsGetWeight:
 class TestHandleWithingsGetReadiness:
     @pytest.mark.asyncio
     async def test_no_sleep_data_returns_no_data_status(self):
-        from magma_cycling.mcp_server import handle_withings_get_readiness
+        from magma_cycling.mcp_server import handle_get_readiness
 
         mock_provider = Mock()
         mock_provider.get_readiness.return_value = None
         with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
-            result = await handle_withings_get_readiness({})
+            result = await handle_get_readiness({})
         data = json.loads(result[0].text)
         assert data["status"] == "no_data"
 
     @pytest.mark.asyncio
     async def test_with_sleep_data_evaluates_readiness(self):
-        from magma_cycling.mcp_server import handle_withings_get_readiness
+        from magma_cycling.mcp_server import handle_get_readiness
         from magma_cycling.models.withings_models import TrainingReadiness
 
         mock_provider = Mock()
@@ -751,19 +751,19 @@ class TestHandleWithingsGetReadiness:
             weight_kg=72.0,
         )
         with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
-            result = await handle_withings_get_readiness({"date": "2026-02-24"})
+            result = await handle_get_readiness({"date": "2026-02-24"})
         data = json.loads(result[0].text)
         assert data["status"] == "evaluated"
         assert "readiness" in data
 
     @pytest.mark.asyncio
     async def test_with_date_parameter(self):
-        from magma_cycling.mcp_server import handle_withings_get_readiness
+        from magma_cycling.mcp_server import handle_get_readiness
 
         mock_provider = Mock()
         mock_provider.get_readiness.return_value = None
         with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
-            result = await handle_withings_get_readiness({"date": "2026-02-20"})
+            result = await handle_get_readiness({"date": "2026-02-20"})
         data = json.loads(result[0].text)
         assert data["date"] == "2026-02-20"
 
@@ -1375,7 +1375,7 @@ Cooldown
 
 
 class TestHandleCompareIntervals:
-    """Tests for handle_compare_intervals."""
+    """Tests for handle_compare_activity_intervals."""
 
     def _make_interval(self, label, type_="WORK", elapsed_time=300, **kwargs):
         """Helper to build a mock interval dict."""
@@ -1396,7 +1396,7 @@ class TestHandleCompareIntervals:
     @pytest.mark.asyncio
     async def test_explicit_ids_success(self):
         """3 explicit IDs with common labels → comparison + trends."""
-        from magma_cycling.mcp_server import handle_compare_intervals
+        from magma_cycling.mcp_server import handle_compare_activity_intervals
 
         mock_client = Mock()
         mock_client.get_activity.side_effect = [
@@ -1412,7 +1412,7 @@ class TestHandleCompareIntervals:
 
         args = {"activity_ids": ["i100", "i200", "i300"]}
         with patch(INTERVALS_PATCH, return_value=mock_client):
-            result = await handle_compare_intervals(args)
+            result = await handle_compare_activity_intervals(args)
 
         data = json.loads(result[0].text)
         assert data["mode"] == "explicit"
@@ -1428,7 +1428,7 @@ class TestHandleCompareIntervals:
     @pytest.mark.asyncio
     async def test_search_mode_success(self):
         """name_pattern + weeks_back → filters matching activities, mode='search'."""
-        from magma_cycling.mcp_server import handle_compare_intervals
+        from magma_cycling.mcp_server import handle_compare_activity_intervals
 
         mock_client = Mock()
         mock_client.get_activities.return_value = [
@@ -1451,7 +1451,7 @@ class TestHandleCompareIntervals:
 
         args = {"name_pattern": "CadenceVariations", "weeks_back": 4}
         with patch(INTERVALS_PATCH, return_value=mock_client):
-            result = await handle_compare_intervals(args)
+            result = await handle_compare_activity_intervals(args)
 
         data = json.loads(result[0].text)
         assert data["mode"] == "search"
@@ -1463,7 +1463,7 @@ class TestHandleCompareIntervals:
     @pytest.mark.asyncio
     async def test_no_matching_activities_search(self):
         """Pattern that matches nothing → error."""
-        from magma_cycling.mcp_server import handle_compare_intervals
+        from magma_cycling.mcp_server import handle_compare_activity_intervals
 
         mock_client = Mock()
         mock_client.get_activities.return_value = [
@@ -1472,7 +1472,7 @@ class TestHandleCompareIntervals:
 
         args = {"name_pattern": "NonExistentWorkout"}
         with patch(INTERVALS_PATCH, return_value=mock_client):
-            result = await handle_compare_intervals(args)
+            result = await handle_compare_activity_intervals(args)
 
         data = json.loads(result[0].text)
         assert "error" in data
@@ -1481,10 +1481,10 @@ class TestHandleCompareIntervals:
     @pytest.mark.asyncio
     async def test_missing_both_params(self):
         """Neither activity_ids nor name_pattern → error."""
-        from magma_cycling.mcp_server import handle_compare_intervals
+        from magma_cycling.mcp_server import handle_compare_activity_intervals
 
         args = {}
-        result = await handle_compare_intervals(args)
+        result = await handle_compare_activity_intervals(args)
 
         data = json.loads(result[0].text)
         assert "error" in data
@@ -1494,7 +1494,7 @@ class TestHandleCompareIntervals:
     @pytest.mark.asyncio
     async def test_gap_intervals_filtered(self):
         """Intervals with elapsed_time <= 2 are excluded."""
-        from magma_cycling.mcp_server import handle_compare_intervals
+        from magma_cycling.mcp_server import handle_compare_activity_intervals
 
         mock_client = Mock()
         mock_client.get_activity.side_effect = [
@@ -1508,7 +1508,7 @@ class TestHandleCompareIntervals:
 
         args = {"activity_ids": ["i100"]}
         with patch(INTERVALS_PATCH, return_value=mock_client):
-            result = await handle_compare_intervals(args)
+            result = await handle_compare_activity_intervals(args)
 
         data = json.loads(result[0].text)
         labels = [c["label"] for c in data["comparison"]]
@@ -1519,7 +1519,7 @@ class TestHandleCompareIntervals:
     @pytest.mark.asyncio
     async def test_label_filter(self):
         """label_filter='95rpm' → only 95rpm intervals kept."""
-        from magma_cycling.mcp_server import handle_compare_intervals
+        from magma_cycling.mcp_server import handle_compare_activity_intervals
 
         mock_client = Mock()
         mock_client.get_activity.side_effect = [
@@ -1533,7 +1533,7 @@ class TestHandleCompareIntervals:
 
         args = {"activity_ids": ["i100"], "label_filter": "95rpm"}
         with patch(INTERVALS_PATCH, return_value=mock_client):
-            result = await handle_compare_intervals(args)
+            result = await handle_compare_activity_intervals(args)
 
         data = json.loads(result[0].text)
         labels = [c["label"] for c in data["comparison"]]
@@ -1543,7 +1543,7 @@ class TestHandleCompareIntervals:
     @pytest.mark.asyncio
     async def test_type_filter_work_only(self):
         """type_filter='WORK' → only WORK intervals kept."""
-        from magma_cycling.mcp_server import handle_compare_intervals
+        from magma_cycling.mcp_server import handle_compare_activity_intervals
 
         mock_client = Mock()
         mock_client.get_activity.side_effect = [
@@ -1556,7 +1556,7 @@ class TestHandleCompareIntervals:
 
         args = {"activity_ids": ["i100"], "type_filter": "WORK"}
         with patch(INTERVALS_PATCH, return_value=mock_client):
-            result = await handle_compare_intervals(args)
+            result = await handle_compare_activity_intervals(args)
 
         data = json.loads(result[0].text)
         labels = [c["label"] for c in data["comparison"]]
@@ -1566,7 +1566,7 @@ class TestHandleCompareIntervals:
     @pytest.mark.asyncio
     async def test_metrics_selection(self):
         """metrics=['average_watts','average_heartrate'] → only those 2 in data."""
-        from magma_cycling.mcp_server import handle_compare_intervals
+        from magma_cycling.mcp_server import handle_compare_activity_intervals
 
         mock_client = Mock()
         mock_client.get_activity.side_effect = [
@@ -1583,7 +1583,7 @@ class TestHandleCompareIntervals:
             "metrics": ["average_watts", "average_heartrate"],
         }
         with patch(INTERVALS_PATCH, return_value=mock_client):
-            result = await handle_compare_intervals(args)
+            result = await handle_compare_activity_intervals(args)
 
         data = json.loads(result[0].text)
         interval_data = data["comparison"][0]["activities"][0]["data"]
@@ -1594,10 +1594,10 @@ class TestHandleCompareIntervals:
     @pytest.mark.asyncio
     async def test_invalid_metrics(self):
         """metrics=['bogus'] → error with available_metrics list."""
-        from magma_cycling.mcp_server import handle_compare_intervals
+        from magma_cycling.mcp_server import handle_compare_activity_intervals
 
         args = {"activity_ids": ["i100"], "metrics": ["bogus"]}
-        result = await handle_compare_intervals(args)
+        result = await handle_compare_activity_intervals(args)
 
         data = json.loads(result[0].text)
         assert "error" in data
@@ -1607,7 +1607,7 @@ class TestHandleCompareIntervals:
     @pytest.mark.asyncio
     async def test_label_mismatch_across_activities(self):
         """A has Set1+Set2, B has Set1 only → Set2 data=null for B."""
-        from magma_cycling.mcp_server import handle_compare_intervals
+        from magma_cycling.mcp_server import handle_compare_activity_intervals
 
         mock_client = Mock()
         mock_client.get_activity.side_effect = [
@@ -1626,7 +1626,7 @@ class TestHandleCompareIntervals:
 
         args = {"activity_ids": ["i100", "i200"]}
         with patch(INTERVALS_PATCH, return_value=mock_client):
-            result = await handle_compare_intervals(args)
+            result = await handle_compare_activity_intervals(args)
 
         data = json.loads(result[0].text)
         set2_entry = [c for c in data["comparison"] if c["label"] == "Set2"][0]
