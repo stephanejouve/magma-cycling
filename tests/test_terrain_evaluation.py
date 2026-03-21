@@ -605,3 +605,218 @@ class TestEvaluateOutdoorExecution:
 
         recs_text = " ".join(result.recommendations)
         assert "braquet" in recs_text.lower()
+
+    def test_descent_segments_excluded_from_compliance(self):
+        """Descent segments are evaluated but excluded from compliance %."""
+        n_km = 5
+        points_per_km = 100
+        n_points = n_km * points_per_km
+        step_m = 1000.0 / points_per_km
+
+        distance = [i * step_m for i in range(n_points)]
+        watts_data = [200.0] * n_points
+        # All 5 km at cadence 90 (in range for flat, but we make descent
+        # segments have cadence 50 — far from target — to prove they
+        # don't affect compliance)
+        cadence_data = [90.0] * (3 * points_per_km) + [50.0] * (  # km 0-2: flat, in range
+            2 * points_per_km
+        )  # km 3-4: descent, way off
+
+        streams = [
+            {"type": "distance", "data": distance},
+            {"type": "watts", "data": watts_data},
+            {"type": "cadence", "data": cadence_data},
+        ]
+
+        segments = [
+            # 3 flat segments — cadence 90 in [85,95] → compliant
+            *[
+                _make_adapted_segment(
+                    km_index=i,
+                    grade_pct=0.0,
+                    category=GradeCategory.plat,
+                    target_cadence=90,
+                    cadence_min=85,
+                    cadence_max=95,
+                )
+                for i in range(3)
+            ],
+            # 2 descent segments — cadence 50 far from target but excluded
+            *[
+                _make_adapted_segment(
+                    km_index=i,
+                    grade_pct=-6.0,
+                    category=GradeCategory.descente_raide,
+                    target_cadence=90,
+                    cadence_min=85,
+                    cadence_max=95,
+                )
+                for i in range(3, 5)
+            ],
+        ]
+        workout = _make_adapted_workout(segments=segments)
+
+        result = evaluate_outdoor_execution(streams, workout)
+
+        # All 5 segments are evaluated and present in detail
+        assert result.segments_evaluated == 5
+        assert len(result.segment_evaluations) == 5
+        # But only 3 flat segments count for compliance
+        assert result.segments_excluded == 2
+        # 3/3 flat segments have cadence in range → 100%
+        assert result.cadence_compliance_pct == 100.0
+        assert result.overall_compliance == "excellent"
+        # Summary mentions excluded segments
+        assert "descente exclus" in result.summary
+
+    def test_descent_hors_cible_does_not_lower_verdict(self):
+        """A ride with perfect flat + bad descent stays excellent."""
+        n_km = 4
+        points_per_km = 100
+        n_points = n_km * points_per_km
+        step_m = 1000.0 / points_per_km
+
+        distance = [i * step_m for i in range(n_points)]
+        watts_data = [200.0] * n_points
+        # km 0-1: flat at 90 rpm (good), km 2-3: descent at 110 rpm (hors_cible)
+        cadence_data = [90.0] * (2 * points_per_km) + [110.0] * (2 * points_per_km)
+
+        streams = [
+            {"type": "distance", "data": distance},
+            {"type": "watts", "data": watts_data},
+            {"type": "cadence", "data": cadence_data},
+        ]
+
+        segments = [
+            _make_adapted_segment(
+                km_index=0,
+                grade_pct=0.0,
+                category=GradeCategory.plat,
+                target_cadence=90,
+                cadence_min=85,
+                cadence_max=95,
+            ),
+            _make_adapted_segment(
+                km_index=1,
+                grade_pct=0.0,
+                category=GradeCategory.plat,
+                target_cadence=90,
+                cadence_min=85,
+                cadence_max=95,
+            ),
+            _make_adapted_segment(
+                km_index=2,
+                grade_pct=-5.0,
+                category=GradeCategory.descente_raide,
+                target_cadence=75,
+                cadence_min=70,
+                cadence_max=80,
+            ),
+            _make_adapted_segment(
+                km_index=3,
+                grade_pct=-2.0,
+                category=GradeCategory.descente,
+                target_cadence=80,
+                cadence_min=75,
+                cadence_max=85,
+            ),
+        ]
+        workout = _make_adapted_workout(segments=segments)
+
+        result = evaluate_outdoor_execution(streams, workout)
+
+        assert result.segments_evaluated == 4
+        assert result.segments_excluded == 2
+        # Only flat segments count: 2/2 compliant → excellent
+        assert result.cadence_compliance_pct == 100.0
+        assert result.overall_compliance == "excellent"
+
+    def test_descent_recommendations_not_generated(self):
+        """No cadence recommendation generated for descent failures."""
+        n_km = 3
+        points_per_km = 100
+        n_points = n_km * points_per_km
+        step_m = 1000.0 / points_per_km
+
+        distance = [i * step_m for i in range(n_points)]
+        watts_data = [200.0] * n_points
+        # km 0: flat OK, km 1-2: descent with bad cadence
+        cadence_data = [90.0] * points_per_km + [50.0] * (2 * points_per_km)
+
+        streams = [
+            {"type": "distance", "data": distance},
+            {"type": "watts", "data": watts_data},
+            {"type": "cadence", "data": cadence_data},
+        ]
+
+        segments = [
+            _make_adapted_segment(
+                km_index=0,
+                grade_pct=0.0,
+                category=GradeCategory.plat,
+                target_cadence=90,
+                cadence_min=85,
+                cadence_max=95,
+            ),
+            _make_adapted_segment(
+                km_index=1,
+                grade_pct=-5.0,
+                category=GradeCategory.descente_raide,
+                target_cadence=80,
+                cadence_min=75,
+                cadence_max=85,
+            ),
+            _make_adapted_segment(
+                km_index=2,
+                grade_pct=-2.0,
+                category=GradeCategory.descente,
+                target_cadence=80,
+                cadence_min=75,
+                cadence_max=85,
+            ),
+        ]
+        workout = _make_adapted_workout(segments=segments)
+
+        result = evaluate_outdoor_execution(streams, workout)
+
+        # No recommendations — the flat segment is compliant,
+        # and descent failures are not counted
+        assert len(result.recommendations) == 0
+
+    def test_all_descent_segments_100pct(self):
+        """A ride with only descent segments gives 100% compliance."""
+        n_km = 3
+        points_per_km = 100
+        n_points = n_km * points_per_km
+        step_m = 1000.0 / points_per_km
+
+        distance = [i * step_m for i in range(n_points)]
+        watts_data = [100.0] * n_points
+        cadence_data = [50.0] * n_points  # Low cadence, doesn't matter
+
+        streams = [
+            {"type": "distance", "data": distance},
+            {"type": "watts", "data": watts_data},
+            {"type": "cadence", "data": cadence_data},
+        ]
+
+        segments = [
+            _make_adapted_segment(
+                km_index=i,
+                grade_pct=-6.0,
+                category=GradeCategory.descente_raide,
+                target_cadence=80,
+                cadence_min=75,
+                cadence_max=85,
+            )
+            for i in range(3)
+        ]
+        workout = _make_adapted_workout(segments=segments)
+
+        result = evaluate_outdoor_execution(streams, workout)
+
+        assert result.segments_evaluated == 3
+        assert result.segments_excluded == 3
+        # No counted segments → defaults to 100%
+        assert result.cadence_compliance_pct == 100.0
+        assert result.overall_compliance == "excellent"
