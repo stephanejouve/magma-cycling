@@ -25,6 +25,10 @@ def get_tools() -> list[Tool]:
                         "description": ("Sauvegarder le circuit en YAML (defaut: true)"),
                         "default": True,
                     },
+                    "name": {
+                        "type": "string",
+                        "description": "Nom du circuit (optionnel, ecrase le nom auto-genere)",
+                    },
                 },
                 "required": ["activity_id"],
             },
