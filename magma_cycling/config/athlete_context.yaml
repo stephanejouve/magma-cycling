@@ -9,6 +9,12 @@ athlete:
     - "Travail terrain (technicien telecom), fatigue physique variable selon chantiers"
     - "Horaires irreguliers impactant regularite entrainement"
     - "Recuperation plus lente (54 ans) - adapter progressivite"
+  bike_setup:
+    groupe: "Shimano Ultegra Di2 R8100 12v"
+    plateaux: [50, 34]
+    cassette: "CS-R8100-12 11-30T"
+    pignons: [11, 12, 13, 14, 15, 17, 19, 21, 24, 27, 30]
+    grand_pignon_limite: 30  # confirme par streams RearGearIndex, usage soutenu sur raidillons ~12%
   system_context: >
     L'athlete utilise un systeme integre avec planification hebdomadaire
     automatisee, suivi sante (sommeil, poids, readiness) et coaching IA

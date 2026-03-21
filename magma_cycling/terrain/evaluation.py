@@ -13,6 +13,13 @@ from magma_cycling.terrain.models import (
     SegmentExecution,
 )
 
+# Descent categories excluded from compliance calculations.
+# Rationale: terrain forces coasting or free-spinning on descents;
+# cadence/gear discipline is not meaningful there.
+_DESCENT_CATEGORIES: frozenset[GradeCategory] = frozenset(
+    {GradeCategory.descente_raide, GradeCategory.descente}
+)
+
 # Grade category labels for French recommendations
 _CATEGORY_LABELS: dict[GradeCategory, str] = {
     GradeCategory.descente_raide: "descente raide",
@@ -225,22 +232,27 @@ def evaluate_outdoor_execution(
             )
             evaluations.append(evaluation)
 
-    # Step 3: Compute summary metrics
+    # Step 3: Compute summary metrics — exclude descent segments
     total = len(evaluations)
-    cadence_ok = sum(1 for e in evaluations if e.cadence_in_range) if total else 0
-    cadence_compliance_pct = round(cadence_ok / total * 100, 1) if total else 100.0
+    counted = [e for e in evaluations if e.terrain_category not in _DESCENT_CATEGORIES]
+    excluded = total - len(counted)
 
-    gear_evaluated = [e for e in evaluations if e.gear_match is not None]
+    cadence_ok = sum(1 for e in counted if e.cadence_in_range) if counted else 0
+    cadence_compliance_pct = round(cadence_ok / len(counted) * 100, 1) if counted else 100.0
+
+    gear_evaluated = [e for e in counted if e.gear_match is not None]
     gear_ok = sum(1 for e in gear_evaluated if e.gear_match)
     gear_compliance_pct = round(gear_ok / len(gear_evaluated) * 100, 1) if gear_evaluated else 100.0
 
     overall_compliance = _compute_overall_compliance(cadence_compliance_pct, gear_compliance_pct)
 
     # Step 4: Generate summary
-    summary = _generate_summary(total, cadence_ok, len(gear_evaluated), gear_ok, overall_compliance)
+    summary = _generate_summary(
+        len(counted), cadence_ok, len(gear_evaluated), gear_ok, overall_compliance, excluded
+    )
 
-    # Step 5: Generate recommendations
-    recommendations = _generate_recommendations(evaluations)
+    # Step 5: Generate recommendations (only from counted segments)
+    recommendations = _generate_recommendations(counted)
 
     return ExecutionEvaluation(
         activity_id=activity_id or adapted_workout.workout_name,
@@ -249,6 +261,7 @@ def evaluate_outdoor_execution(
         ftp_watts=ftp_watts,
         segment_evaluations=evaluations,
         segments_evaluated=total,
+        segments_excluded=excluded,
         cadence_compliance_pct=cadence_compliance_pct,
         gear_compliance_pct=gear_compliance_pct,
         overall_compliance=overall_compliance,
@@ -437,15 +450,17 @@ def _generate_summary(
     gear_evaluated: int,
     gear_ok: int,
     overall: str,
+    excluded: int = 0,
 ) -> str:
     """Generate a French summary of the evaluation.
 
     Args:
-        total: Total segments evaluated.
+        total: Total counted segments (excluding descents).
         cadence_ok: Segments with cadence in range.
         gear_evaluated: Segments where gear was evaluated.
         gear_ok: Segments with correct gear.
         overall: Overall compliance level.
+        excluded: Number of descent segments excluded from compliance.
 
     Returns:
         Human-readable summary in French.
@@ -461,6 +476,8 @@ def _generate_summary(
     parts = [
         f"Evaluation terrain: {cadence_ok}/{total} segments conformes en cadence",
     ]
+    if excluded > 0:
+        parts.append(f"{excluded} segment(s) de descente exclus")
     if gear_evaluated > 0:
         parts.append(f"{gear_ok}/{gear_evaluated} conformes en braquet")
     else:
