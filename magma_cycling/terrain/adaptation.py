@@ -284,7 +284,6 @@ def adapt_workout_to_terrain(
     # Map phases onto terrain segments
     adapted_segments = []
     warnings = []
-    total_work_kj = 0.0
     phase_idx = 0
 
     for seg in circuit.segments:
@@ -340,10 +339,6 @@ def adapt_workout_to_terrain(
             recommended_gear,
         )
 
-        # Track work for TSS
-        adapted_watts = adapted_power_pct / 100.0 * ftp_watts
-        total_work_kj += adapted_watts * time_s / 1000.0
-
         adapted_segments.append(
             AdaptedSegment(
                 km_index=seg.km_index,
@@ -360,31 +355,15 @@ def adapt_workout_to_terrain(
             )
         )
 
-    # Estimate TSS: TSS = (duration_s * NP * IF) / (FTP * 3600) * 100
-    # Simplified: TSS = sum(work_kj) / (FTP * 3600 / 1000) * 100
-    total_duration_s = sum(
-        (s.distance_m / 1000.0)
-        / max(
-            5.0,
-            _estimate_speed_kmh(
-                s.grade_pct,  # Not used as power here, but consistent
-                s.grade_pct,
-                athlete_weight_kg,
-            ),
-        )
-        * 3600
-        for s in circuit.segments[: len(adapted_segments)]
-    )
-    if ftp_watts > 0 and total_duration_s > 0:
-        avg_power_pct = (
-            sum(s.adapted_power_pct for s in adapted_segments) / len(adapted_segments)
-            if adapted_segments
-            else 75
-        )
-        avg_if = avg_power_pct / 100.0
-        estimated_tss = (total_duration_s * avg_if**2) / 3600 * 100
-    else:
-        estimated_tss = 0
+    # TSS from workout phase durations — terrain changes power distribution,
+    # not total effort volume. TSS = sum(duration_h * IF^2 * 100) per phase.
+    estimated_tss = 0.0
+    if phases:
+        for phase in phases:
+            duration_h = phase["duration_min"] / 60.0
+            intensity_factor = phase["power_pct"] / 100.0
+            estimated_tss += duration_h * intensity_factor**2 * 100
+        estimated_tss = round(estimated_tss, 1)
 
     delta_tss = estimated_tss - original_tss if original_tss > 0 else 0
 
