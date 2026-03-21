@@ -103,7 +103,7 @@ def extract_terrain_from_streams(
 
     km_index = 0
     seg_start_idx = 0
-    seg_start_dist = distance_data[0] if distance_data[0] is not None else 0.0
+    seg_start_dist = _nearest_valid(distance_data, 0, direction=1)
 
     for i in range(1, len(distance_data)):
         if distance_data[i] is None or altitude_data[i] is None:
@@ -145,8 +145,8 @@ def extract_terrain_from_streams(
 
     # Handle last partial segment (if > 200m remaining)
     if seg_start_idx < len(distance_data) - 1:
-        last_dist = distance_data[-1]
-        if last_dist is not None:
+        last_dist = _nearest_valid(distance_data, len(distance_data) - 1, direction=-1)
+        if last_dist > 0:
             remaining = last_dist - seg_start_dist
             if remaining > 200:
                 seg = _build_segment(
@@ -176,9 +176,9 @@ def extract_terrain_from_streams(
     # Build gear profiles
     gear_profiles = _build_gear_profiles(gear_by_category)
 
-    total_distance = 0.0
-    if distance_data[-1] is not None and distance_data[0] is not None:
-        total_distance = (distance_data[-1] - distance_data[0]) / 1000.0
+    first_dist = _nearest_valid(distance_data, 0, direction=1)
+    last_dist = _nearest_valid(distance_data, len(distance_data) - 1, direction=-1)
+    total_distance = (last_dist - first_dist) / 1000.0 if last_dist > first_dist else 0.0
 
     return TerrainCircuit(
         circuit_id=f"TC_{activity_id}",
@@ -193,6 +193,31 @@ def extract_terrain_from_streams(
     )
 
 
+def _nearest_valid(data: list, idx: int, direction: int = 1) -> float:
+    """Find the nearest non-None value starting from idx in given direction.
+
+    Args:
+        data: List with possible None values.
+        idx: Starting index.
+        direction: 1 for forward, -1 for backward.
+
+    Returns:
+        First non-None value found, or 0.0 if none exists.
+    """
+    i = idx
+    while 0 <= i < len(data):
+        if data[i] is not None:
+            return data[i]
+        i += direction
+    # Try opposite direction as fallback
+    i = idx - direction
+    while 0 <= i < len(data):
+        if data[i] is not None:
+            return data[i]
+        i -= direction
+    return 0.0
+
+
 def _build_segment(
     km_index: int,
     altitude_data: list,
@@ -202,8 +227,8 @@ def _build_segment(
     seg_start_dist: float,
 ) -> TerrainSegment:
     """Build a TerrainSegment from stream slice."""
-    elev_start = altitude_data[start_idx]
-    elev_end = altitude_data[end_idx]
+    elev_start = _nearest_valid(altitude_data, start_idx, direction=1)
+    elev_end = _nearest_valid(altitude_data, end_idx, direction=-1)
     dist = distance_data[end_idx] - seg_start_dist
 
     # Calculate gain/loss by walking through each point
