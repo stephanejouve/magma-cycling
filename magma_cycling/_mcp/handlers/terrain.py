@@ -23,6 +23,9 @@ async def handle_extract_terrain_circuit(args: dict) -> list[TextContent]:
 
             circuit = extract_terrain_from_activity(client, activity_id)
 
+            if name := args.get("name"):
+                circuit.name = name
+
             saved_path = None
             if should_save:
                 saved_path = save_circuit(circuit)
