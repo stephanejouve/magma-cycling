@@ -76,6 +76,11 @@ class DataRepoConfig:
         return self.data_dir / "workout_templates"
 
     @property
+    def terrain_circuits_dir(self) -> Path:
+        """Path to data/terrain_circuits/ directory in data repo."""
+        return self.data_dir / "terrain_circuits"
+
+    @property
     def workflow_state_path(self) -> Path:
         """Path to .workflow_state.json in data repo."""
         return self.data_repo_path / ".workflow_state.json"
@@ -85,6 +90,7 @@ class DataRepoConfig:
         self.bilans_dir.mkdir(parents=True, exist_ok=True)
         self.week_planning_dir.mkdir(parents=True, exist_ok=True)
         self.workout_templates_dir.mkdir(parents=True, exist_ok=True)
+        self.terrain_circuits_dir.mkdir(parents=True, exist_ok=True)
 
     def validate(self) -> bool:
         """Validate data repository structure.
