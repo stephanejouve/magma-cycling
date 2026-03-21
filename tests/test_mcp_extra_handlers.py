@@ -17,6 +17,14 @@ pytest_plugins = ("pytest_asyncio",)
 
 TOWER_PATCH = "magma_cycling.planning.control_tower.planning_tower"
 INTERVALS_PATCH = "magma_cycling.config.create_intervals_client"
+_PROVIDER_INFO = {"provider": "intervals_icu", "athlete_id": "i12345", "status": "ready"}
+
+
+def _mock_intervals_client(**kwargs):
+    """Create a Mock IntervalsClient with get_provider_info pre-configured."""
+    client = Mock(**kwargs)
+    client.get_provider_info.return_value = _PROVIDER_INFO
+    return client
 
 
 # =======================
@@ -143,7 +151,7 @@ class TestHandleUpdateSession:
         mock_session.intervals_id = 12345
         mock_session.status = "pending"
         tower = make_tower(mock_plan)
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
         mock_client.update_event.return_value = {"id": 12345}
 
         args = {
@@ -176,7 +184,7 @@ class TestHandleSyncWeekToIntervals:
         mock_session.intervals_id = None
         mock_plan.planned_sessions = [mock_session]
         tower = make_tower(mock_plan)
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
         mock_client.get_events.return_value = []
 
         args = {"week_id": "S081", "dry_run": True}
@@ -199,7 +207,7 @@ class TestHandleSyncWeekToIntervals:
         mock_session.intervals_id = 12345
         mock_plan.planned_sessions = [mock_session]
         tower = make_tower(mock_plan)
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
         mock_client.get_events.return_value = []
 
         args = {"week_id": "S081", "dry_run": True}
@@ -217,7 +225,7 @@ class TestHandleSyncWeekToIntervals:
         from magma_cycling.mcp_server import handle_sync_week_to_calendar
 
         mock_tower.read_week.side_effect = FileNotFoundError("not found")
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
         args = {"week_id": "S099"}
         with patch(TOWER_PATCH, mock_tower):
             with patch(INTERVALS_PATCH, return_value=mock_client):
@@ -237,7 +245,7 @@ class TestHandleSyncWeekToIntervals:
         mock_session.description = valid_desc
         mock_plan.planned_sessions = [mock_session]
         tower = make_tower(mock_plan)
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
         # Remote event with full intervals_name, matching start_date and description (no conflict)
         mock_client.get_events.return_value = [
             {
@@ -270,7 +278,7 @@ class TestHandleSyncWeekToIntervals:
         mock_session.description = "Warmup\n- 10m ramp 50-75% 85rpm\n\nMain set 3x\n- 10m 88% 90rpm\n- 3m 60% 85rpm\n\nCooldown\n- 10m ramp 70-50% 85rpm"
         mock_plan.planned_sessions = [mock_session]
         tower = make_tower(mock_plan)
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
         # Remote event has different name (manually modified in Intervals.icu)
         mock_client.get_events.return_value = [
             {
@@ -299,7 +307,7 @@ class TestHandleSyncWeekToIntervals:
         mock_session.intervals_id = None
         mock_plan.planned_sessions = [mock_session]
         tower = make_tower(mock_plan)
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
         mock_client.get_events.return_value = []
 
         args = {"week_id": "S081", "dry_run": True}
@@ -321,7 +329,7 @@ class TestHandleSyncWeekToIntervals:
         mock_session.intervals_id = None
         mock_plan.planned_sessions = [mock_session]
         tower = make_tower(mock_plan)
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
         mock_client.get_events.return_value = []
 
         args = {"week_id": "S081", "dry_run": True}
@@ -346,7 +354,7 @@ class TestHandleSyncWeekToIntervals:
         mock_session.version = "V001"
         mock_plan.planned_sessions = [mock_session]
         tower = make_tower(mock_plan)
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
         # Remote has short name (old bug would match wrongly)
         mock_client.get_events.return_value = [
             {
@@ -380,7 +388,7 @@ class TestHandleSyncWeekToIntervals:
         mock_session.description = valid_desc
         mock_plan.planned_sessions = [mock_session]
         tower = make_tower(mock_plan)
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
         # Remote has different date (triggers update)
         mock_client.get_events.return_value = [
             {
@@ -428,7 +436,7 @@ class TestHandleSyncWeekToIntervals:
         mock_session.intervals_id = None
         mock_plan.planned_sessions = [mock_session, session2]
         tower = make_tower(mock_plan)
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
         mock_client.get_events.return_value = []
 
         # Only sync session2
@@ -464,7 +472,7 @@ class TestSyncValidationGate:
         mock_session.status = "pending"
         mock_plan.planned_sessions = [mock_session]
         tower = make_tower(mock_plan)
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
         mock_client.get_events.return_value = []
 
         # Workout with invalid duration (5min instead of 5m)
@@ -495,7 +503,7 @@ class TestSyncValidationGate:
         mock_session.status = "pending"
         mock_plan.planned_sessions = [mock_session]
         tower = make_tower(mock_plan)
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
         mock_client.get_events.return_value = []
         mock_client.create_event.return_value = {"id": "evt999"}
 
@@ -529,7 +537,7 @@ class TestHandleGetMetrics:
         mock_config = Mock()
         mock_config.athlete_id = "iXXXXXX"
         mock_config.api_key = "apikey123"
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
         mock_client.get_wellness.return_value = [
             {
                 "id": "2026-02-24",
@@ -559,7 +567,7 @@ class TestHandleGetMetrics:
         mock_config = Mock()
         mock_config.athlete_id = "iXXXXXX"
         mock_config.api_key = "apikey123"
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
         mock_client.get_wellness.return_value = []
 
         with patch("magma_cycling.config.get_intervals_config", return_value=mock_config):
@@ -1082,7 +1090,7 @@ class TestHandleGetActivityIntervals:
         """Success path: 3 intervals returned with filtered fields."""
         from magma_cycling.mcp_server import handle_get_activity_intervals
 
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
         mock_client.get_activity_intervals.return_value = [
             {
                 "type": "RECOVERY",
@@ -1177,7 +1185,7 @@ class TestHandleGetActivityIntervals:
         """API error returns error JSON."""
         from magma_cycling.mcp_server import handle_get_activity_intervals
 
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
         mock_client.get_activity_intervals.side_effect = RuntimeError("API timeout")
 
         with patch(INTERVALS_PATCH, return_value=mock_client):
@@ -1192,7 +1200,7 @@ class TestHandleGetActivityIntervals:
         """Empty intervals list returns total_intervals == 0."""
         from magma_cycling.mcp_server import handle_get_activity_intervals
 
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
         mock_client.get_activity_intervals.return_value = []
 
         with patch(INTERVALS_PATCH, return_value=mock_client):
@@ -1214,7 +1222,7 @@ class TestHandleApplyWorkoutIntervals:
         """Manual mode with dry_run=true returns preview without PUT."""
         from magma_cycling.mcp_server import handle_apply_workout_intervals
 
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
 
         intervals = [
             {"type": "RECOVERY", "label": "Warmup", "start_index": 0, "end_index": 499},
@@ -1242,7 +1250,7 @@ class TestHandleApplyWorkoutIntervals:
         """Manual mode with dry_run=false calls PUT."""
         from magma_cycling.mcp_server import handle_apply_workout_intervals
 
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
         mock_client.put_activity_intervals.return_value = {"status": "ok"}
 
         intervals = [
@@ -1268,7 +1276,7 @@ class TestHandleApplyWorkoutIntervals:
         """Auto mode parses workout and returns preview."""
         from magma_cycling.mcp_server import handle_apply_workout_intervals
 
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
         mock_client.get_activity_streams.return_value = [{"type": "watts", "data": [0] * 3000}]
 
         workout_text = """\
@@ -1315,7 +1323,7 @@ Cooldown
         """Activity name without session pattern → error with hint."""
         from magma_cycling.mcp_server import handle_apply_workout_intervals
 
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
         mock_client.get_activity.return_value = {"name": "Morning Ride"}
 
         args = {"activity_id": "i127869034"}
@@ -1333,7 +1341,7 @@ Cooldown
         """dry_run defaults to true when not specified (safety)."""
         from magma_cycling.mcp_server import handle_apply_workout_intervals
 
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
 
         intervals = [
             {"type": "WORK", "label": "Set1", "start_index": 0, "end_index": 999},
@@ -1356,7 +1364,7 @@ Cooldown
         """API exception → JSON error response."""
         from magma_cycling.mcp_server import handle_apply_workout_intervals
 
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
         mock_client.put_activity_intervals.side_effect = RuntimeError("API timeout")
 
         args = {
@@ -1398,7 +1406,7 @@ class TestHandleCompareIntervals:
         """3 explicit IDs with common labels → comparison + trends."""
         from magma_cycling.mcp_server import handle_compare_activity_intervals
 
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
         mock_client.get_activity.side_effect = [
             {"name": "S079-03-CAD", "start_date_local": "2026-02-04T10:00:00"},
             {"name": "S080-03-CAD", "start_date_local": "2026-02-11T10:00:00"},
@@ -1430,7 +1438,7 @@ class TestHandleCompareIntervals:
         """name_pattern + weeks_back → filters matching activities, mode='search'."""
         from magma_cycling.mcp_server import handle_compare_activity_intervals
 
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
         mock_client.get_activities.return_value = [
             {
                 "id": "i100",
@@ -1465,7 +1473,7 @@ class TestHandleCompareIntervals:
         """Pattern that matches nothing → error."""
         from magma_cycling.mcp_server import handle_compare_activity_intervals
 
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
         mock_client.get_activities.return_value = [
             {"id": "i100", "name": "S079-01-Endurance", "start_date_local": "2026-02-04T10:00:00"},
         ]
@@ -1496,7 +1504,7 @@ class TestHandleCompareIntervals:
         """Intervals with elapsed_time <= 2 are excluded."""
         from magma_cycling.mcp_server import handle_compare_activity_intervals
 
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
         mock_client.get_activity.side_effect = [
             {"name": "A1", "start_date_local": "2026-02-04T10:00:00"},
         ]
@@ -1521,7 +1529,7 @@ class TestHandleCompareIntervals:
         """label_filter='95rpm' → only 95rpm intervals kept."""
         from magma_cycling.mcp_server import handle_compare_activity_intervals
 
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
         mock_client.get_activity.side_effect = [
             {"name": "A1", "start_date_local": "2026-02-04T10:00:00"},
         ]
@@ -1545,7 +1553,7 @@ class TestHandleCompareIntervals:
         """type_filter='WORK' → only WORK intervals kept."""
         from magma_cycling.mcp_server import handle_compare_activity_intervals
 
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
         mock_client.get_activity.side_effect = [
             {"name": "A1", "start_date_local": "2026-02-04T10:00:00"},
         ]
@@ -1568,7 +1576,7 @@ class TestHandleCompareIntervals:
         """metrics=['average_watts','average_heartrate'] → only those 2 in data."""
         from magma_cycling.mcp_server import handle_compare_activity_intervals
 
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
         mock_client.get_activity.side_effect = [
             {"name": "A1", "start_date_local": "2026-02-04T10:00:00"},
         ]
@@ -1609,7 +1617,7 @@ class TestHandleCompareIntervals:
         """A has Set1+Set2, B has Set1 only → Set2 data=null for B."""
         from magma_cycling.mcp_server import handle_compare_activity_intervals
 
-        mock_client = Mock()
+        mock_client = _mock_intervals_client()
         mock_client.get_activity.side_effect = [
             {"name": "A1", "start_date_local": "2026-02-04T10:00:00"},
             {"name": "A2", "start_date_local": "2026-02-11T10:00:00"},

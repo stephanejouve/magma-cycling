@@ -89,6 +89,9 @@ def mock_intervals_client():
     )
     client.get_events = Mock(return_value=[])
     client.update_athlete = Mock(return_value={"ftp": 223, "weight": 75})
+    client.get_provider_info = Mock(
+        return_value={"provider": "intervals_icu", "athlete_id": "i12345", "status": "ready"}
+    )
     return client
 
 

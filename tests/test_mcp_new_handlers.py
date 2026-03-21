@@ -18,6 +18,15 @@ pytest_plugins = ("pytest_asyncio",)
 TOWER_PATCH = "magma_cycling.planning.control_tower.planning_tower"
 INTERVALS_PATCH = "magma_cycling.config.create_intervals_client"
 DATA_CONFIG_PATCH = "magma_cycling.config.get_data_config"
+HEALTH_PROVIDER_PATCH = "magma_cycling.health.create_health_provider"
+_HEALTH_PROVIDER_INFO = {"provider": "WithingsProvider", "status": "ready"}
+
+
+def _mock_health_provider(**kwargs):
+    """Create a Mock HealthProvider with get_provider_info pre-configured."""
+    provider = Mock(**kwargs)
+    provider.get_provider_info.return_value = _HEALTH_PROVIDER_INFO
+    return provider
 
 
 # =======================
@@ -138,6 +147,11 @@ def mock_intervals():
     client.create_event.return_value = {"id": "evt123"}
     client.update_event.return_value = True
     client.delete_event.return_value = True
+    client.get_provider_info.return_value = {
+        "provider": "intervals_icu",
+        "athlete_id": "i12345",
+        "status": "ready",
+    }
     return client
 
 
@@ -1367,7 +1381,7 @@ class TestHandleAnalyzeHealthTrends:
     async def test_week_period_no_data(self):
         from magma_cycling.mcp_server import handle_analyze_health_trends
 
-        mock_provider = Mock()
+        mock_provider = _mock_health_provider()
         mock_provider.get_sleep_range.return_value = []
         mock_provider.get_body_composition_range.return_value = []
         with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
@@ -1381,7 +1395,7 @@ class TestHandleAnalyzeHealthTrends:
         from magma_cycling.mcp_server import handle_analyze_health_trends
         from magma_cycling.models.withings_models import SleepData, WeightMeasurement
 
-        mock_provider = Mock()
+        mock_provider = _mock_health_provider()
         mock_provider.get_sleep_range.return_value = [
             SleepData(
                 date=date(2026, 2, 1),
@@ -1418,7 +1432,7 @@ class TestHandleAnalyzeHealthTrends:
     async def test_custom_period_missing_dates_returns_error(self):
         from magma_cycling.mcp_server import handle_analyze_health_trends
 
-        mock_provider = Mock()
+        mock_provider = _mock_health_provider()
         with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
             result = await handle_analyze_health_trends({"period": "custom"})
         data = json.loads(result[0].text)
@@ -1428,7 +1442,7 @@ class TestHandleAnalyzeHealthTrends:
     async def test_custom_period_with_dates(self):
         from magma_cycling.mcp_server import handle_analyze_health_trends
 
-        mock_provider = Mock()
+        mock_provider = _mock_health_provider()
         mock_provider.get_sleep_range.return_value = []
         mock_provider.get_body_composition_range.return_value = []
         with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
@@ -1614,7 +1628,7 @@ class TestHandleEnrichSessionHealth:
             WeightMeasurement,
         )
 
-        mock_provider = Mock()
+        mock_provider = _mock_health_provider()
         mock_provider.get_sleep_range.return_value = [
             SleepData(
                 date=date(2026, 2, 25),
@@ -1666,7 +1680,7 @@ class TestHandleEnrichSessionHealth:
         """Returns error when session not found."""
         from magma_cycling.mcp_server import handle_enrich_session_health
 
-        mock_provider = Mock()
+        mock_provider = _mock_health_provider()
 
         with (
             patch(TOWER_PATCH, mock_tower),

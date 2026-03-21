@@ -17,6 +17,9 @@ from magma_cycling._mcp.handlers.remote_events import (
 # ---------------------------------------------------------------------------
 
 
+MOCK_PROVIDER_INFO = {"provider": "intervals_icu", "athlete_id": "iXXXXXX", "status": "ready"}
+
+
 @pytest.fixture
 def mock_client():
     """Mock IntervalsClient returned by create_intervals_client."""
@@ -25,6 +28,7 @@ def mock_client():
     client.get_events.return_value = []
     client.update_event.return_value = {"id": 42, "name": "updated"}
     client.create_event.return_value = {"id": 99}
+    client.get_provider_info.return_value = MOCK_PROVIDER_INFO
     return client
 
 
@@ -152,7 +156,9 @@ class TestHandleDeleteRemoteEvent:
     @patch("magma_cycling.config.create_intervals_client")
     async def test_blocks_delete_of_completed_session(self, mock_factory, patch_tower):
         """Cannot delete a completed session (protection)."""
-        mock_factory.return_value = MagicMock()
+        client = MagicMock()
+        client.get_provider_info.return_value = MOCK_PROVIDER_INFO
+        mock_factory.return_value = client
 
         result = await handle_delete_remote_event({"event_id": 55, "confirm": True})
 
@@ -187,6 +193,7 @@ class TestHandleListRemoteEvents:
     async def test_list_events_with_results(self, mock_factory):
         """Returns formatted events."""
         client = MagicMock()
+        client.get_provider_info.return_value = MOCK_PROVIDER_INFO
         client.get_events.return_value = [
             {
                 "id": 1,
@@ -211,6 +218,7 @@ class TestHandleListRemoteEvents:
     async def test_list_events_with_category_filter(self, mock_factory):
         """Filters events by category."""
         client = MagicMock()
+        client.get_provider_info.return_value = MOCK_PROVIDER_INFO
         client.get_events.return_value = [
             {"id": 1, "category": "WORKOUT", "name": "W1"},
             {"id": 2, "category": "NOTE", "name": "N1"},
@@ -250,6 +258,7 @@ class TestHandleUpdateRemoteEvent:
     async def test_update_success_no_local_match(self, mock_factory):
         """Updates event on API when no local planning match."""
         client = MagicMock()
+        client.get_provider_info.return_value = MOCK_PROVIDER_INFO
         client.update_event.return_value = {"id": 42, "name": "Updated"}
         mock_factory.return_value = client
 
@@ -269,6 +278,7 @@ class TestHandleUpdateRemoteEvent:
     async def test_update_failure(self, mock_factory):
         """Returns error when API update fails."""
         client = MagicMock()
+        client.get_provider_info.return_value = MOCK_PROVIDER_INFO
         client.update_event.return_value = None
         mock_factory.return_value = client
 
@@ -284,7 +294,9 @@ class TestHandleUpdateRemoteEvent:
     @patch("magma_cycling.config.create_intervals_client")
     async def test_blocks_update_of_completed_session(self, mock_factory, patch_tower):
         """Cannot update a completed session."""
-        mock_factory.return_value = MagicMock()
+        client = MagicMock()
+        client.get_provider_info.return_value = MOCK_PROVIDER_INFO
+        mock_factory.return_value = client
 
         result = await handle_update_remote_event({"event_id": 55, "updates": {"name": "X"}})
         data = json.loads(result[0].text)
@@ -336,6 +348,7 @@ class TestHandleCreateRemoteNote:
     async def test_create_note_api_failure(self, mock_factory):
         """Returns error when API create fails."""
         client = MagicMock()
+        client.get_provider_info.return_value = MOCK_PROVIDER_INFO
         client.create_event.return_value = {}  # no 'id' key
         mock_factory.return_value = client
 
@@ -358,6 +371,7 @@ class TestHandleCreateRemoteNote:
     async def test_create_note_with_local_planning_update(self, mock_factory, patch_tower):
         """Creates note and updates local planning when session_id found."""
         client = MagicMock()
+        client.get_provider_info.return_value = MOCK_PROVIDER_INFO
         client.create_event.return_value = {"id": 99}
         mock_factory.return_value = client
 
