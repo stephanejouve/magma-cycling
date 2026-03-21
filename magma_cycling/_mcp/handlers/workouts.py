@@ -102,7 +102,7 @@ async def handle_get_workout(args: dict) -> list[TextContent]:
 
 
 async def handle_validate_workout(args: dict) -> list[TextContent]:
-    """Validate Intervals.icu workout format."""
+    """Validate structured workout format."""
     from magma_cycling.intervals_format_validator import IntervalsFormatValidator
 
     workout_text = args["workout_text"]

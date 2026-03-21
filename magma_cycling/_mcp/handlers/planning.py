@@ -224,7 +224,7 @@ async def handle_weekly_planner(args: dict) -> list[TextContent]:
         result["next_steps"] = [
             "Read the prompt above and generate 7 structured workouts",
             f"Call modify-session-details for each session ({week_id}-01 to {week_id}-07)",
-            "Call sync-week-to-intervals to upload to Intervals.icu",
+            "Call sync-week-to-calendar to upload to training calendar",
         ]
 
     elif provider == "clipboard":
@@ -241,7 +241,7 @@ async def handle_weekly_planner(args: dict) -> list[TextContent]:
             "Paste prompt into your AI provider (Cmd+V)",
             "Generate 7 workouts with === WORKOUT ... === delimiters",
             f"Save to {week_id}_workouts.txt",
-            "Run upload-workouts to sync to Intervals.icu",
+            "Run upload-workouts to sync to training calendar",
         ]
     else:
         # Full prompt for AI providers — any MCP client can consume it
@@ -249,7 +249,7 @@ async def handle_weekly_planner(args: dict) -> list[TextContent]:
         result["next_steps"] = [
             "Use the prompt field to generate 7 structured workouts",
             "Call modify-session-details for each session with the workout description",
-            "Call sync-week-to-intervals to upload to Intervals.icu",
+            "Call sync-week-to-calendar to upload to training calendar",
         ]
 
     return mcp_response(result)
@@ -283,7 +283,7 @@ async def handle_monthly_analysis(args: dict) -> list[TextContent]:
 
 
 async def handle_daily_sync(args: dict) -> list[TextContent]:
-    """Sync with Intervals.icu (full pipeline: check, AI analysis, report)."""
+    """Sync with training platform (full pipeline: check, AI analysis, report)."""
     from magma_cycling.daily_sync import DailySync, calculate_current_week_info
 
     check_date_str = args.get("date")

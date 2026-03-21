@@ -16,7 +16,7 @@ __all__ = [
 
 
 async def handle_get_athlete_profile(args: dict) -> list[TextContent]:
-    """Get current athlete profile from Intervals.icu."""
+    """Get current athlete profile from training platform."""
     from magma_cycling.config import create_intervals_client
 
     try:
@@ -69,7 +69,7 @@ async def handle_get_athlete_profile(args: dict) -> list[TextContent]:
 
 
 async def handle_update_athlete_profile(args: dict) -> list[TextContent]:
-    """Update athlete profile on Intervals.icu."""
+    """Update athlete profile on training platform."""
     from magma_cycling.config import create_intervals_client
 
     updates = args["updates"]

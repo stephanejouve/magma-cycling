@@ -20,7 +20,7 @@ CFG = "magma_cycling.config"
 HEALTH = "magma_cycling.health"
 VETO = "magma_cycling.workflows.rest.veto_check"
 HANDLER = "magma_cycling._mcp.handlers.rest"
-WITHINGS = "magma_cycling._mcp.handlers.withings"
+HEALTH_HANDLER = "magma_cycling._mcp.handlers.health"
 
 
 def _base_wellness_raw(sleep_seconds=None, ctl=50, atl=45):
@@ -90,7 +90,7 @@ def _patches():
         patch(f"{HEALTH}.create_health_provider", return_value=mock_health),
         patch(f"{VETO}.check_pre_session_veto", mock_veto_fn),
         patch(f"{HANDLER}._find_week_id_for_date", return_value=None),
-        patch(f"{WITHINGS}.sync_withings_to_intervals"),
+        patch(f"{HEALTH_HANDLER}.sync_health_to_calendar"),
     ):
         mock_profile_cls.from_env.return_value = mock_profile
 

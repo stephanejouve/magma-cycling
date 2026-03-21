@@ -1,35 +1,35 @@
-"""Withings health data tool schemas."""
+"""Health data tool schemas."""
 
 from mcp.types import Tool
 
 
 def get_tools() -> list[Tool]:
-    """Return Withings health data tool schemas."""
+    """Return health data tool schemas."""
     return [
         Tool(
-            name="withings-auth-status",
-            description="Check Withings OAuth authentication status and credentials validity",
+            name="health-auth-status",
+            description="Check health provider OAuth authentication status and credentials validity",
             inputSchema={
                 "type": "object",
                 "properties": {},
             },
         ),
         Tool(
-            name="withings-authorize",
-            description="Start Withings OAuth authorization flow or complete with authorization code",
+            name="health-authorize",
+            description="Start health provider OAuth authorization flow or complete with authorization code",
             inputSchema={
                 "type": "object",
                 "properties": {
                     "authorization_code": {
                         "type": "string",
-                        "description": "Authorization code from Withings OAuth callback (optional - if not provided, returns authorization URL)",
+                        "description": "Authorization code from OAuth callback (optional - if not provided, returns authorization URL)",
                     },
                 },
             },
         ),
         Tool(
-            name="withings-get-sleep",
-            description="Get sleep data from Withings for training planning and analysis",
+            name="get-sleep",
+            description="Get sleep data for training planning and analysis",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -52,8 +52,8 @@ def get_tools() -> list[Tool]:
             },
         ),
         Tool(
-            name="withings-get-weight",
-            description="Get weight and body composition measurements from Withings",
+            name="get-body-composition",
+            description="Get weight and body composition measurements (weight, muscle mass, body water, bone mass)",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -76,7 +76,7 @@ def get_tools() -> list[Tool]:
             },
         ),
         Tool(
-            name="withings-get-readiness",
+            name="get-readiness",
             description="Evaluate training readiness based on sleep quality and health metrics",
             inputSchema={
                 "type": "object",
@@ -90,8 +90,8 @@ def get_tools() -> list[Tool]:
             },
         ),
         Tool(
-            name="withings-sync-to-intervals",
-            description="Synchronize Withings health data (sleep, weight, blood pressure) to Intervals.icu wellness fields",
+            name="sync-health-to-calendar",
+            description="Synchronize health data (sleep, weight, blood pressure) to training calendar wellness fields",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -118,7 +118,7 @@ def get_tools() -> list[Tool]:
             },
         ),
         Tool(
-            name="withings-analyze-trends",
+            name="analyze-health-trends",
             description="Analyze health trends (sleep patterns, weight changes) over a time period",
             inputSchema={
                 "type": "object",
@@ -143,8 +143,8 @@ def get_tools() -> list[Tool]:
             },
         ),
         Tool(
-            name="withings-enrich-session",
-            description="Add Withings health metrics to a training session for comprehensive analysis",
+            name="enrich-session-health",
+            description="Add health metrics to a training session for comprehensive analysis",
             inputSchema={
                 "type": "object",
                 "properties": {
