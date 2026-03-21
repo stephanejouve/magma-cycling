@@ -176,6 +176,11 @@ class ExecutionEvaluation(BaseModel):
     segment_evaluations: list[SegmentEvaluation] = Field(default_factory=list)
     # Summary metrics
     segments_evaluated: int = Field(..., ge=0)
+    segments_excluded: int = Field(
+        default=0,
+        ge=0,
+        description="Segments excluded from compliance (descent segments)",
+    )
     cadence_compliance_pct: float = Field(
         ..., ge=0, le=100, description="Pct of segments with cadence in range"
     )
