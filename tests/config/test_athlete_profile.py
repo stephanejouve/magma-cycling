@@ -16,6 +16,7 @@ class TestAthleteProfileFromEnv:
         monkeypatch.setenv("ATHLETE_RECOVERY_CAPACITY", "exceptional")
         monkeypatch.setenv("ATHLETE_SLEEP_DEPENDENT", "true")
         monkeypatch.setenv("ATHLETE_FTP", "240")
+        monkeypatch.setenv("ATHLETE_FTP_TARGET", "260")
         monkeypatch.setenv("ATHLETE_WEIGHT", "72.5")
 
         profile = AthleteProfile.from_env()
@@ -25,6 +26,7 @@ class TestAthleteProfileFromEnv:
         assert profile.recovery_capacity == "exceptional"
         assert profile.sleep_dependent is True
         assert profile.ftp == 240
+        assert profile.ftp_target == 260
         assert profile.weight == 72.5
 
     def test_from_env_sleep_dependent_variations(self, monkeypatch):
@@ -34,6 +36,7 @@ class TestAthleteProfileFromEnv:
             "ATHLETE_CATEGORY": "master",
             "ATHLETE_RECOVERY_CAPACITY": "exceptional",
             "ATHLETE_FTP": "240",
+            "ATHLETE_FTP_TARGET": "260",
             "ATHLETE_WEIGHT": "72.5",
         }
 
@@ -328,6 +331,7 @@ class TestAthleteProfileBiomechanics:
         monkeypatch.setenv("ATHLETE_RECOVERY_CAPACITY", "normal")
         monkeypatch.setenv("ATHLETE_SLEEP_DEPENDENT", "false")
         monkeypatch.setenv("ATHLETE_FTP", "280")
+        monkeypatch.setenv("ATHLETE_FTP_TARGET", "300")
         monkeypatch.setenv("ATHLETE_WEIGHT", "70.0")
         monkeypatch.setenv("ATHLETE_PROFIL_FIBRES", "explosif")
         monkeypatch.setenv("ATHLETE_CADENCE_OFFSET", "5")
@@ -344,6 +348,7 @@ class TestAthleteProfileBiomechanics:
         monkeypatch.setenv("ATHLETE_RECOVERY_CAPACITY", "normal")
         monkeypatch.setenv("ATHLETE_SLEEP_DEPENDENT", "false")
         monkeypatch.setenv("ATHLETE_FTP", "280")
+        monkeypatch.setenv("ATHLETE_FTP_TARGET", "300")
         monkeypatch.setenv("ATHLETE_WEIGHT", "70.0")
         # Biomechanics fields not set
 

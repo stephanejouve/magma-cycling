@@ -6,10 +6,11 @@ from unittest.mock import Mock, patch
 from magma_cycling.upload_workouts import WorkoutUploader
 
 
+@patch("magma_cycling.config.create_intervals_client", return_value=Mock())
 class TestValidationTiretsManquants:
     """Test bug: tirets manquants non détectés (S076)."""
 
-    def test_detect_missing_dashes_in_warmup(self):
+    def test_detect_missing_dashes_in_warmup(self, _mock_client):
         """Test détection tirets manquants dans Warmup."""
         uploader = WorkoutUploader("S076", datetime.now())
 
@@ -28,7 +29,7 @@ class TestValidationTiretsManquants:
         assert len(critical_warnings) >= 1
         assert "12m ramp" in critical_warnings[0]
 
-    def test_detect_missing_dashes_in_main_set(self):
+    def test_detect_missing_dashes_in_main_set(self, _mock_client):
         """Test détection tirets manquants dans Main set."""
         uploader = WorkoutUploader("S076", datetime.now())
 
@@ -50,7 +51,7 @@ Main set
         assert len(critical_warnings) >= 1
         assert "35m" in critical_warnings[0]
 
-    def test_detect_missing_dashes_in_cooldown(self):
+    def test_detect_missing_dashes_in_cooldown(self, _mock_client):
         """Test détection tirets manquants dans Cooldown."""
         uploader = WorkoutUploader("S076", datetime.now())
 
@@ -76,7 +77,7 @@ Cooldown
         assert len(critical_warnings) >= 1
         assert "10m ramp 65-50%" in critical_warnings[0]
 
-    def test_accept_correct_format_with_dashes(self):
+    def test_accept_correct_format_with_dashes(self, _mock_client):
         """Test acceptance format correct avec tirets (S075)."""
         uploader = WorkoutUploader("S075", datetime.now())
 
@@ -160,7 +161,8 @@ class TestReposDaysUpload:
         assert stats["success"] == 1
         assert stats["failed"] == 0
 
-    def test_validation_allows_repos_without_warmup_cooldown(self):
+    @patch("magma_cycling.config.create_intervals_client", return_value=Mock())
+    def test_validation_allows_repos_without_warmup_cooldown(self, _mock_client):
         """Test que validation n'exige pas warmup/cooldown pour REPOS."""
         uploader = WorkoutUploader("S076", datetime.now())
 
@@ -179,7 +181,8 @@ class TestReposDaysUpload:
 class TestIntegrationS076:
     """Test intégration complète pour S076."""
 
-    def test_s076_planning_validation_would_block(self):
+    @patch("magma_cycling.config.create_intervals_client", return_value=Mock())
+    def test_s076_planning_validation_would_block(self, _mock_client):
         """Test que S076 (tirets manquants) serait maintenant bloqué."""
         uploader = WorkoutUploader("S076", datetime.now())
 

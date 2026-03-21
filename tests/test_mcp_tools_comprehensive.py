@@ -100,7 +100,7 @@ class TestDailySyncComprehensive:
             mock_intervals_client.get_activities.return_value = []
 
             with patch(
-                "magma_cycling.config.create_intervals_client",
+                "magma_cycling.daily_sync.create_intervals_client",
                 return_value=mock_intervals_client,
             ):
                 sync = DailySync(tracking_file=tracking_file, reports_dir=reports_dir)
@@ -138,7 +138,7 @@ class TestDailySyncComprehensive:
             mock_intervals_client.get_events.return_value = []
 
             with patch(
-                "magma_cycling.config.create_intervals_client",
+                "magma_cycling.daily_sync.create_intervals_client",
                 return_value=mock_intervals_client,
             ):
                 sync = DailySync(tracking_file=tracking_file, reports_dir=reports_dir)
@@ -182,7 +182,7 @@ class TestDailySyncComprehensive:
             reports_dir.mkdir()
 
             with patch(
-                "magma_cycling.config.create_intervals_client",
+                "magma_cycling.daily_sync.create_intervals_client",
                 return_value=mock_intervals_client,
             ):
                 sync = DailySync(tracking_file=tracking_file, reports_dir=reports_dir)
@@ -213,7 +213,7 @@ class TestDailySyncComprehensive:
             mock_intervals_client.get_events.return_value = []
 
             with patch(
-                "magma_cycling.config.create_intervals_client",
+                "magma_cycling.daily_sync.create_intervals_client",
                 return_value=mock_intervals_client,
             ):
                 sync = DailySync(tracking_file=tracking_file, reports_dir=reports_dir)
@@ -240,7 +240,7 @@ class TestDailySyncComprehensive:
             mock_intervals_client.get_events.return_value = []
 
             with patch(
-                "magma_cycling.config.create_intervals_client",
+                "magma_cycling.daily_sync.create_intervals_client",
                 return_value=mock_intervals_client,
             ):
                 sync = DailySync(tracking_file=tracking_file, reports_dir=reports_dir)

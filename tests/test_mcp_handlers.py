@@ -138,7 +138,7 @@ async def test_daily_sync_empty_activities_returns_dict(mock_intervals_client, t
     reports_dir.mkdir()
 
     with patch(
-        "magma_cycling.config.create_intervals_client",
+        "magma_cycling.daily_sync.create_intervals_client",
         return_value=mock_intervals_client,
     ):
         from magma_cycling.daily_sync import DailySync
@@ -173,7 +173,7 @@ async def test_daily_sync_api_error_returns_dict(tmp_path):
     mock_client.get_events.side_effect = Exception("API error")
 
     with patch(
-        "magma_cycling.config.create_intervals_client",
+        "magma_cycling.daily_sync.create_intervals_client",
         return_value=mock_client,
     ):
         from magma_cycling.daily_sync import DailySync
@@ -627,6 +627,10 @@ async def test_backfill_activities_handler_returns_json(mock_intervals_client, t
     with (
         patch(
             "magma_cycling.config.create_intervals_client",
+            return_value=mock_intervals_client,
+        ),
+        patch(
+            "magma_cycling.daily_sync.create_intervals_client",
             return_value=mock_intervals_client,
         ),
         patch("magma_cycling.config.get_data_config") as mock_get_config,
