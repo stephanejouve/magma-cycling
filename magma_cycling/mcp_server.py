@@ -104,6 +104,7 @@ from magma_cycling._mcp.handlers.sessions import (  # noqa: F401
 from magma_cycling._mcp.handlers.terrain import (  # noqa: F401
     handle_adapt_workout_to_terrain,
     handle_extract_terrain_circuit,
+    handle_list_terrain_circuits,
 )
 from magma_cycling._mcp.handlers.workouts import (  # noqa: F401
     handle_get_workout,
@@ -220,8 +221,9 @@ TOOL_HANDLERS = {
     # Rest / Recovery (2)
     "pre-session-check": handle_pre_session_check,
     "patch-coach-analysis": handle_patch_coach_analysis,
-    # Terrain (2)
+    # Terrain (3)
     "extract-terrain-circuit": handle_extract_terrain_circuit,
+    "list-terrain-circuits": handle_list_terrain_circuits,
     "adapt-workout-to-terrain": handle_adapt_workout_to_terrain,
 }
 
