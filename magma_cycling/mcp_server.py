@@ -101,6 +101,10 @@ from magma_cycling._mcp.handlers.sessions import (  # noqa: F401
     handle_duplicate_session,
     handle_swap_sessions,
 )
+from magma_cycling._mcp.handlers.terrain import (  # noqa: F401
+    handle_adapt_workout_to_terrain,
+    handle_extract_terrain_circuit,
+)
 from magma_cycling._mcp.handlers.workouts import (  # noqa: F401
     handle_get_workout,
     handle_validate_workout,
@@ -116,6 +120,7 @@ from magma_cycling._mcp.schemas import planning as _s_planning
 from magma_cycling._mcp.schemas import remote as _s_remote
 from magma_cycling._mcp.schemas import rest as _s_rest
 from magma_cycling._mcp.schemas import sessions as _s_sessions
+from magma_cycling._mcp.schemas import terrain as _s_terrain
 from magma_cycling._mcp.schemas import workouts as _s_workouts
 
 # ---------------------------------------------------------------------------
@@ -146,6 +151,7 @@ async def list_tools() -> list[Tool]:
         *_s_catalog.get_tools(),
         *_s_health.get_tools(),
         *_s_rest.get_tools(),
+        *_s_terrain.get_tools(),
     ]
 
 
@@ -214,6 +220,9 @@ TOOL_HANDLERS = {
     # Rest / Recovery (2)
     "pre-session-check": handle_pre_session_check,
     "patch-coach-analysis": handle_patch_coach_analysis,
+    # Terrain (2)
+    "extract-terrain-circuit": handle_extract_terrain_circuit,
+    "adapt-workout-to-terrain": handle_adapt_workout_to_terrain,
 }
 
 
