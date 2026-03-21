@@ -149,7 +149,7 @@ def get_tools() -> list[Tool]:
                 "properties": {
                     "activity_id": {
                         "type": "string",
-                        "description": "Intervals.icu activity ID (e.g., i131572602)",
+                        "description": "Activity ID (e.g., i131572602)",
                     },
                     "session_id": {
                         "type": "string",

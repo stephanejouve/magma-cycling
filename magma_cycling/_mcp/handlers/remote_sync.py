@@ -1,4 +1,4 @@
-"""Intervals.icu sync handlers (sync-week, sync-remote, backfill)."""
+"""Remote platform sync handlers (sync-week, sync-remote, backfill)."""
 
 from __future__ import annotations
 
@@ -17,14 +17,14 @@ if TYPE_CHECKING:
     from mcp.types import TextContent
 
 __all__ = [
-    "handle_sync_week_to_intervals",
+    "handle_sync_week_to_calendar",
     "handle_sync_remote_to_local",
     "handle_backfill_activities",
 ]
 
 
-async def handle_sync_week_to_intervals(args: dict) -> list[TextContent]:
-    """Synchronize week planning to Intervals.icu."""
+async def handle_sync_week_to_calendar(args: dict) -> list[TextContent]:
+    """Synchronize week planning to training calendar."""
     from magma_cycling.config import create_intervals_client
     from magma_cycling.planning.control_tower import planning_tower
 
@@ -263,7 +263,7 @@ async def handle_sync_week_to_intervals(args: dict) -> list[TextContent]:
 
 
 async def handle_sync_remote_to_local(args: dict) -> list[TextContent]:
-    """Sync local planning from Intervals.icu remote events."""
+    """Sync local planning from remote events."""
     try:
         with suppress_stdout_stderr():
             from magma_cycling.config import create_intervals_client

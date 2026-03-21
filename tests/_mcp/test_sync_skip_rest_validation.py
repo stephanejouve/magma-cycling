@@ -16,7 +16,7 @@ def test_sync_skips_validation_for_rest_day():
     duration_min = 0
     full_description = "Repos complet"
 
-    # The guard condition from intervals.py:117
+    # The guard condition from remote_sync.py
     should_validate = (
         duration_min and duration_min > 0 and full_description and full_description.strip()
     )

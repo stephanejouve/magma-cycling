@@ -39,9 +39,9 @@ def main() -> int:
     log(f"Syncing {yesterday} → {today} (sleep, weight)")
 
     try:
-        from magma_cycling._mcp.handlers.withings import sync_withings_to_intervals
+        from magma_cycling._mcp.handlers.health import sync_health_to_calendar
 
-        result = sync_withings_to_intervals(
+        result = sync_health_to_calendar(
             start_date=yesterday,
             end_date=today,
             data_types=["sleep", "weight"],

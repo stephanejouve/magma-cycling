@@ -111,4 +111,4 @@ class TestWeeklyPlannerPromptExposure:
         data = json.loads(result[0].text)
         steps_text = " ".join(data["next_steps"])
         assert "modify-session-details" in steps_text
-        assert "sync-week-to-intervals" in steps_text
+        assert "sync-week-to-calendar" in steps_text

@@ -23,13 +23,13 @@ def get_tools() -> list[Tool]:
         ),
         Tool(
             name="validate-workout",
-            description="Validate Intervals.icu workout format syntax and optionally fix common errors",
+            description="Validate structured workout format syntax and optionally fix common errors",
             inputSchema={
                 "type": "object",
                 "properties": {
                     "workout_text": {
                         "type": "string",
-                        "description": "Workout description in Intervals.icu format",
+                        "description": "Workout description in structured format",
                     },
                     "auto_fix": {
                         "type": "boolean",
