@@ -846,25 +846,25 @@ class TestHandleValidateWorkout:
 
 
 # =======================
-# TestHandleDeleteRemoteSession
+# TestHandleDeleteRemoteEvent
 # =======================
 
 
-class TestHandleDeleteRemoteSession:
+class TestHandleDeleteRemoteEvent:
     @pytest.mark.asyncio
     async def test_no_confirm_returns_error(self):
-        from magma_cycling.mcp_server import handle_delete_remote_session
+        from magma_cycling.mcp_server import handle_delete_remote_event
 
-        result = await handle_delete_remote_session({"event_id": "evt123"})
+        result = await handle_delete_remote_event({"event_id": "evt123"})
         data = json.loads(result[0].text)
         assert "error" in data
         assert "confirmation" in data["error"].lower()
 
     @pytest.mark.asyncio
     async def test_no_confirm_explicit_false(self):
-        from magma_cycling.mcp_server import handle_delete_remote_session
+        from magma_cycling.mcp_server import handle_delete_remote_event
 
-        result = await handle_delete_remote_session({"event_id": "evt123", "confirm": False})
+        result = await handle_delete_remote_event({"event_id": "evt123", "confirm": False})
         data = json.loads(result[0].text)
         assert "error" in data
 
@@ -1264,47 +1264,47 @@ class TestHandleReloadServer:
 
 
 # =======================
-# TestHandleWithingsAuthStatus
+# TestHandleHealthAuthStatus
 # =======================
 
 
-class TestHandleWithingsAuthStatus:
+class TestHandleHealthAuthStatus:
     @pytest.mark.asyncio
     async def test_not_configured(self):
-        from magma_cycling.mcp_server import handle_withings_auth_status
+        from magma_cycling.mcp_server import handle_health_auth_status
 
         mock_config = Mock()
         mock_config.is_configured.return_value = False
         mock_config.has_valid_credentials.return_value = False
         with patch("magma_cycling.config.get_withings_config", return_value=mock_config):
-            result = await handle_withings_auth_status({})
+            result = await handle_health_auth_status({})
         data = json.loads(result[0].text)
         assert data["configured"] is False
         assert "message" in data
 
     @pytest.mark.asyncio
     async def test_configured_but_no_credentials(self):
-        from magma_cycling.mcp_server import handle_withings_auth_status
+        from magma_cycling.mcp_server import handle_health_auth_status
 
         mock_config = Mock()
         mock_config.is_configured.return_value = True
         mock_config.has_valid_credentials.return_value = False
         with patch("magma_cycling.config.get_withings_config", return_value=mock_config):
-            result = await handle_withings_auth_status({})
+            result = await handle_health_auth_status({})
         data = json.loads(result[0].text)
         assert data["configured"] is True
         assert data["has_credentials"] is False
 
     @pytest.mark.asyncio
     async def test_fully_authenticated(self):
-        from magma_cycling.mcp_server import handle_withings_auth_status
+        from magma_cycling.mcp_server import handle_health_auth_status
 
         mock_config = Mock()
         mock_config.is_configured.return_value = True
         mock_config.has_valid_credentials.return_value = True
         mock_config.credentials_path = Path("/tmp/withings.json")
         with patch("magma_cycling.config.get_withings_config", return_value=mock_config):
-            result = await handle_withings_auth_status({})
+            result = await handle_health_auth_status({})
         data = json.loads(result[0].text)
         assert data["configured"] is True
         assert data["has_credentials"] is True
@@ -1312,21 +1312,21 @@ class TestHandleWithingsAuthStatus:
 
 
 # =======================
-# TestHandleWithingsAuthorize
+# TestHandleHealthAuthorize
 # =======================
 
 
-class TestHandleWithingsAuthorize:
+class TestHandleHealthAuthorize:
     @pytest.mark.asyncio
     async def test_no_code_returns_auth_url(self):
-        from magma_cycling.mcp_server import handle_withings_authorize
+        from magma_cycling.mcp_server import handle_health_authorize
 
         mock_client = Mock()
         mock_client.get_authorization_url.return_value = (
             "https://account.withings.com/oauth2_user/authorize2?..."
         )
         with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
-            result = await handle_withings_authorize({})
+            result = await handle_health_authorize({})
         data = json.loads(result[0].text)
         assert data["step"] == "authorization_required"
         assert "authorization_url" in data
@@ -1334,51 +1334,51 @@ class TestHandleWithingsAuthorize:
 
     @pytest.mark.asyncio
     async def test_with_code_exchanges_successfully(self):
-        from magma_cycling.mcp_server import handle_withings_authorize
+        from magma_cycling.mcp_server import handle_health_authorize
 
         mock_client = Mock()
         mock_client.exchange_code.return_value = {"user_id": "12345", "access_token": "tok"}
         with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
-            result = await handle_withings_authorize({"authorization_code": "authcode123"})
+            result = await handle_health_authorize({"authorization_code": "authcode123"})
         data = json.loads(result[0].text)
         assert data["step"] == "authorization_complete"
         assert data["status"] == "success"
 
     @pytest.mark.asyncio
     async def test_with_code_exchange_failure(self):
-        from magma_cycling.mcp_server import handle_withings_authorize
+        from magma_cycling.mcp_server import handle_health_authorize
 
         mock_client = Mock()
         mock_client.exchange_code.side_effect = RuntimeError("invalid code")
         with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
-            result = await handle_withings_authorize({"authorization_code": "badcode"})
+            result = await handle_health_authorize({"authorization_code": "badcode"})
         data = json.loads(result[0].text)
         assert data["step"] == "authorization_failed"
         assert data["status"] == "error"
 
 
 # =======================
-# TestHandleWithingsAnalyzeTrends
+# TestHandleAnalyzeHealthTrends
 # =======================
 
 
-class TestHandleWithingsAnalyzeTrends:
+class TestHandleAnalyzeHealthTrends:
     @pytest.mark.asyncio
     async def test_week_period_no_data(self):
-        from magma_cycling.mcp_server import handle_withings_analyze_trends
+        from magma_cycling.mcp_server import handle_analyze_health_trends
 
         mock_provider = Mock()
         mock_provider.get_sleep_range.return_value = []
         mock_provider.get_body_composition_range.return_value = []
         with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
-            result = await handle_withings_analyze_trends({"period": "week"})
+            result = await handle_analyze_health_trends({"period": "week"})
         data = json.loads(result[0].text)
         assert data["period"] == "week"
         assert data["sleep_analysis"]["total_nights"] == 0
 
     @pytest.mark.asyncio
     async def test_month_period(self):
-        from magma_cycling.mcp_server import handle_withings_analyze_trends
+        from magma_cycling.mcp_server import handle_analyze_health_trends
         from magma_cycling.models.withings_models import SleepData, WeightMeasurement
 
         mock_provider = Mock()
@@ -1409,30 +1409,30 @@ class TestHandleWithingsAnalyzeTrends:
             ),
         ]
         with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
-            result = await handle_withings_analyze_trends({"period": "month"})
+            result = await handle_analyze_health_trends({"period": "month"})
         data = json.loads(result[0].text)
         assert data["period"] == "month"
         assert data["sleep_analysis"]["total_nights"] == 2
 
     @pytest.mark.asyncio
     async def test_custom_period_missing_dates_returns_error(self):
-        from magma_cycling.mcp_server import handle_withings_analyze_trends
+        from magma_cycling.mcp_server import handle_analyze_health_trends
 
         mock_provider = Mock()
         with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
-            result = await handle_withings_analyze_trends({"period": "custom"})
+            result = await handle_analyze_health_trends({"period": "custom"})
         data = json.loads(result[0].text)
         assert "error" in data
 
     @pytest.mark.asyncio
     async def test_custom_period_with_dates(self):
-        from magma_cycling.mcp_server import handle_withings_analyze_trends
+        from magma_cycling.mcp_server import handle_analyze_health_trends
 
         mock_provider = Mock()
         mock_provider.get_sleep_range.return_value = []
         mock_provider.get_body_composition_range.return_value = []
         with patch("magma_cycling.health.create_health_provider", return_value=mock_provider):
-            result = await handle_withings_analyze_trends(
+            result = await handle_analyze_health_trends(
                 {
                     "period": "custom",
                     "start_date": "2026-02-01",
@@ -1575,12 +1575,12 @@ class TestHandleRenameSession:
 
 
 # =======================
-# TestHandleWithingsEnrichSession
+# TestHandleEnrichSessionHealth
 # =======================
 
 
-class TestHandleWithingsEnrichSession:
-    """Tests for withings-enrich-session handler (session.date → session.session_date fix)."""
+class TestHandleEnrichSessionHealth:
+    """Tests for enrich-session-health handler (session.date → session.session_date fix)."""
 
     @pytest.fixture
     def mock_tower(self):
@@ -1607,7 +1607,7 @@ class TestHandleWithingsEnrichSession:
     @pytest.mark.asyncio
     async def test_enrich_session_success(self, mock_tower):
         """Enrich session accesses session.session_date without AttributeError."""
-        from magma_cycling.mcp_server import handle_withings_enrich_session
+        from magma_cycling.mcp_server import handle_enrich_session_health
         from magma_cycling.models.withings_models import (
             SleepData,
             TrainingReadiness,
@@ -1647,7 +1647,7 @@ class TestHandleWithingsEnrichSession:
                 return_value=mock_provider,
             ),
         ):
-            result = await handle_withings_enrich_session(
+            result = await handle_enrich_session_health(
                 {
                     "week_id": "S082",
                     "session_id": "S082-03",
@@ -1664,7 +1664,7 @@ class TestHandleWithingsEnrichSession:
     @pytest.mark.asyncio
     async def test_enrich_session_not_found(self, mock_tower):
         """Returns error when session not found."""
-        from magma_cycling.mcp_server import handle_withings_enrich_session
+        from magma_cycling.mcp_server import handle_enrich_session_health
 
         mock_provider = Mock()
 
@@ -1675,7 +1675,7 @@ class TestHandleWithingsEnrichSession:
                 return_value=mock_provider,
             ),
         ):
-            result = await handle_withings_enrich_session(
+            result = await handle_enrich_session_health(
                 {"week_id": "S082", "session_id": "S082-99"}
             )
 

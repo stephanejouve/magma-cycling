@@ -1,4 +1,4 @@
-"""Intervals.icu analysis handlers (compare intervals, apply workout intervals)."""
+"""Remote analysis handlers (compare activity intervals, apply workout intervals)."""
 
 from __future__ import annotations
 
@@ -12,12 +12,12 @@ if TYPE_CHECKING:
     from mcp.types import TextContent
 
 __all__ = [
-    "handle_compare_intervals",
+    "handle_compare_activity_intervals",
     "handle_apply_workout_intervals",
 ]
 
 
-async def handle_compare_intervals(args: dict) -> list[TextContent]:
+async def handle_compare_activity_intervals(args: dict) -> list[TextContent]:
     """Compare interval data across multiple activities to track progression."""
     from magma_cycling.config import create_intervals_client
 
@@ -228,7 +228,7 @@ async def handle_compare_intervals(args: dict) -> list[TextContent]:
 
 
 async def handle_apply_workout_intervals(args: dict) -> list[TextContent]:
-    """Apply custom interval boundaries to an Intervals.icu activity."""
+    """Apply custom interval boundaries to a remote activity."""
     import re
 
     from magma_cycling.config import create_intervals_client

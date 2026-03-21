@@ -1,4 +1,4 @@
-"""Intervals.icu event management handlers (delete, list, update, create-note)."""
+"""Remote event management handlers (delete, list, update, create-note)."""
 
 from __future__ import annotations
 
@@ -10,15 +10,15 @@ if TYPE_CHECKING:
     from mcp.types import TextContent
 
 __all__ = [
-    "handle_delete_remote_session",
+    "handle_delete_remote_event",
     "handle_list_remote_events",
-    "handle_update_remote_session",
+    "handle_update_remote_event",
     "handle_create_remote_note",
 ]
 
 
-async def handle_delete_remote_session(args: dict) -> list[TextContent]:
-    """Delete a workout event from Intervals.icu and update local planning via Control Tower."""
+async def handle_delete_remote_event(args: dict) -> list[TextContent]:
+    """Delete a remote workout event and update local planning via Control Tower."""
     from magma_cycling.config import create_intervals_client
     from magma_cycling.planning.control_tower import planning_tower
 
@@ -132,7 +132,7 @@ async def handle_delete_remote_session(args: dict) -> list[TextContent]:
 
 
 async def handle_list_remote_events(args: dict) -> list[TextContent]:
-    """List all events from Intervals.icu for a date range."""
+    """List all remote events for a date range."""
     from magma_cycling.config import create_intervals_client
 
     start_date_str = args["start_date"]
@@ -180,8 +180,8 @@ async def handle_list_remote_events(args: dict) -> list[TextContent]:
         return mcp_response(error)
 
 
-async def handle_update_remote_session(args: dict) -> list[TextContent]:
-    """Update an existing workout event on Intervals.icu with write-back to local planning."""
+async def handle_update_remote_event(args: dict) -> list[TextContent]:
+    """Update an existing remote workout event with write-back to local planning."""
     from datetime import datetime
 
     from magma_cycling.config import create_intervals_client
@@ -279,7 +279,7 @@ async def handle_update_remote_session(args: dict) -> list[TextContent]:
 
 
 async def handle_create_remote_note(args: dict) -> list[TextContent]:
-    """Create a NOTE (calendar note) directly on Intervals.icu with write-back to local planning."""
+    """Create a NOTE (calendar note) on remote platform with write-back to local planning."""
     import re
 
     from magma_cycling.config import create_intervals_client

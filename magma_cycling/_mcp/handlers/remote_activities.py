@@ -1,4 +1,4 @@
-"""Intervals.icu activity data handlers (details, intervals, streams)."""
+"""Remote activity data handlers (details, intervals, streams)."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ __all__ = [
 
 
 async def handle_get_activity_details(args: dict) -> list[TextContent]:
-    """Get complete details for a completed activity from Intervals.icu."""
+    """Get complete details for a completed activity from the training platform."""
     from magma_cycling.config import create_intervals_client
 
     activity_id = args["activity_id"]
@@ -171,7 +171,7 @@ async def handle_get_activity_details(args: dict) -> list[TextContent]:
 
 
 async def handle_get_activity_intervals(args: dict) -> list[TextContent]:
-    """Get aggregated interval/lap data for a completed activity from Intervals.icu."""
+    """Get aggregated interval/lap data for a completed activity."""
     from magma_cycling.config import create_intervals_client
 
     activity_id = args["activity_id"]

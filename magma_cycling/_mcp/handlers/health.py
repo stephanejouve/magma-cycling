@@ -1,4 +1,4 @@
-"""Withings health data handlers."""
+"""Health data handlers."""
 
 from __future__ import annotations
 
@@ -16,20 +16,20 @@ if TYPE_CHECKING:
     from mcp.types import TextContent
 
 __all__ = [
-    "handle_withings_auth_status",
-    "handle_withings_authorize",
-    "handle_withings_get_sleep",
-    "handle_withings_get_weight",
-    "handle_withings_get_readiness",
-    "handle_withings_sync_to_intervals",
-    "handle_withings_analyze_trends",
-    "handle_withings_enrich_session",
-    "sync_withings_to_intervals",
+    "handle_health_auth_status",
+    "handle_health_authorize",
+    "handle_get_sleep",
+    "handle_get_body_composition",
+    "handle_get_readiness",
+    "handle_sync_health_to_calendar",
+    "handle_analyze_health_trends",
+    "handle_enrich_session_health",
+    "sync_health_to_calendar",
 ]
 
 
-async def handle_withings_auth_status(args: dict) -> list[TextContent]:
-    """Check Withings OAuth authentication status."""
+async def handle_health_auth_status(args: dict) -> list[TextContent]:
+    """Check health provider OAuth authentication status."""
     with suppress_stdout_stderr():
         from magma_cycling.config import get_withings_config
 
@@ -71,8 +71,8 @@ async def handle_withings_auth_status(args: dict) -> list[TextContent]:
     return mcp_response(status)
 
 
-async def handle_withings_authorize(args: dict) -> list[TextContent]:
-    """Handle Withings OAuth authorization flow."""
+async def handle_health_authorize(args: dict) -> list[TextContent]:
+    """Handle health provider OAuth authorization flow."""
     with suppress_stdout_stderr():
         from magma_cycling.config import create_withings_client
 
@@ -115,7 +115,7 @@ async def handle_withings_authorize(args: dict) -> list[TextContent]:
     return mcp_response(result)
 
 
-async def handle_withings_get_sleep(args: dict) -> list[TextContent]:
+async def handle_get_sleep(args: dict) -> list[TextContent]:
     """Get sleep data via HealthProvider."""
     with suppress_stdout_stderr():
         from magma_cycling.health import create_health_provider
@@ -153,8 +153,8 @@ async def handle_withings_get_sleep(args: dict) -> list[TextContent]:
     return mcp_response(result, default=str)
 
 
-async def handle_withings_get_weight(args: dict) -> list[TextContent]:
-    """Get weight measurements via HealthProvider."""
+async def handle_get_body_composition(args: dict) -> list[TextContent]:
+    """Get body composition measurements via HealthProvider."""
     with suppress_stdout_stderr():
         from magma_cycling.health import create_health_provider
 
@@ -191,7 +191,7 @@ async def handle_withings_get_weight(args: dict) -> list[TextContent]:
     return mcp_response(result, default=str)
 
 
-async def handle_withings_get_readiness(args: dict) -> list[TextContent]:
+async def handle_get_readiness(args: dict) -> list[TextContent]:
     """Evaluate training readiness via HealthProvider."""
     with suppress_stdout_stderr():
         from magma_cycling.health import create_health_provider
@@ -295,15 +295,15 @@ def _put_wellness_defensive(
     return None
 
 
-def sync_withings_to_intervals(
+def sync_health_to_calendar(
     start_date: date,
     end_date: date | None = None,
     data_types: list[str] | None = None,
 ) -> dict:
-    """Synchronize Withings health data to Intervals.icu wellness fields.
+    """Synchronize health data to training calendar wellness fields.
 
     Reusable synchronous function. Fetches data via HealthProvider, transforms,
-    and PUTs to Intervals.icu with defensive 422/429 handling.
+    and PUTs to calendar with defensive 422/429 handling.
 
     Returns a result dict with synced_dates, errors, and status.
     """
@@ -414,20 +414,20 @@ def sync_withings_to_intervals(
     }
 
 
-async def handle_withings_sync_to_intervals(args: dict) -> list[TextContent]:
-    """Synchronize health data to Intervals.icu wellness via HealthProvider."""
+async def handle_sync_health_to_calendar(args: dict) -> list[TextContent]:
+    """Synchronize health data to training calendar wellness via HealthProvider."""
     with suppress_stdout_stderr():
         start_date_val = date.fromisoformat(args["start_date"])
         end_date_str = args.get("end_date")
         end_date_val = date.fromisoformat(end_date_str) if end_date_str else None
         data_types = args.get("data_types", ["all"])
 
-        result = sync_withings_to_intervals(start_date_val, end_date_val, data_types)
+        result = sync_health_to_calendar(start_date_val, end_date_val, data_types)
 
     return mcp_response(result)
 
 
-async def handle_withings_analyze_trends(args: dict) -> list[TextContent]:
+async def handle_analyze_health_trends(args: dict) -> list[TextContent]:
     """Analyze health trends over time via HealthProvider."""
     with suppress_stdout_stderr():
         from magma_cycling.health import create_health_provider
@@ -537,7 +537,7 @@ async def handle_withings_analyze_trends(args: dict) -> list[TextContent]:
     return mcp_response(result)
 
 
-async def handle_withings_enrich_session(args: dict) -> list[TextContent]:
+async def handle_enrich_session_health(args: dict) -> list[TextContent]:
     """Enrich training session with health metrics via HealthProvider."""
     with suppress_stdout_stderr():
         from magma_cycling.health import create_health_provider

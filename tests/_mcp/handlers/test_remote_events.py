@@ -1,15 +1,15 @@
-"""Tests for _mcp/handlers/intervals_events.py — event management handlers."""
+"""Tests for _mcp/handlers/remote_events.py — event management handlers."""
 
 import json
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from magma_cycling._mcp.handlers.intervals_events import (
+from magma_cycling._mcp.handlers.remote_events import (
     handle_create_remote_note,
-    handle_delete_remote_session,
+    handle_delete_remote_event,
     handle_list_remote_events,
-    handle_update_remote_session,
+    handle_update_remote_event,
 )
 
 # ---------------------------------------------------------------------------
@@ -95,17 +95,17 @@ def patch_tower(mock_planning_dir):
 
 
 # ---------------------------------------------------------------------------
-# handle_delete_remote_session
+# handle_delete_remote_event
 # ---------------------------------------------------------------------------
 
 
-class TestHandleDeleteRemoteSession:
-    """Tests for handle_delete_remote_session."""
+class TestHandleDeleteRemoteEvent:
+    """Tests for handle_delete_remote_event."""
 
     @pytest.mark.asyncio
     async def test_requires_confirmation(self):
         """Returns error when confirm is not set."""
-        result = await handle_delete_remote_session({"event_id": 42})
+        result = await handle_delete_remote_event({"event_id": 42})
         data = json.loads(result[0].text)
         assert "error" in data
         assert "confirm" in data["message"].lower()
@@ -113,7 +113,7 @@ class TestHandleDeleteRemoteSession:
     @pytest.mark.asyncio
     async def test_requires_confirmation_false(self):
         """Returns error when confirm=False."""
-        result = await handle_delete_remote_session({"event_id": 42, "confirm": False})
+        result = await handle_delete_remote_event({"event_id": 42, "confirm": False})
         data = json.loads(result[0].text)
         assert "error" in data
 
@@ -126,7 +126,7 @@ class TestHandleDeleteRemoteSession:
         with patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower:
             mock_tower.planning_dir.exists.return_value = False
 
-            result = await handle_delete_remote_session({"event_id": 42, "confirm": True})
+            result = await handle_delete_remote_event({"event_id": 42, "confirm": True})
 
         data = json.loads(result[0].text)
         assert data["success"] is True
@@ -143,7 +143,7 @@ class TestHandleDeleteRemoteSession:
         with patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower:
             mock_tower.planning_dir.exists.return_value = False
 
-            result = await handle_delete_remote_session({"event_id": 42, "confirm": True})
+            result = await handle_delete_remote_event({"event_id": 42, "confirm": True})
 
         data = json.loads(result[0].text)
         assert data["success"] is False
@@ -154,7 +154,7 @@ class TestHandleDeleteRemoteSession:
         """Cannot delete a completed session (protection)."""
         mock_factory.return_value = MagicMock()
 
-        result = await handle_delete_remote_session({"event_id": 55, "confirm": True})
+        result = await handle_delete_remote_event({"event_id": 55, "confirm": True})
 
         data = json.loads(result[0].text)
         assert "error" in data
@@ -238,12 +238,12 @@ class TestHandleListRemoteEvents:
 
 
 # ---------------------------------------------------------------------------
-# handle_update_remote_session
+# handle_update_remote_event
 # ---------------------------------------------------------------------------
 
 
-class TestHandleUpdateRemoteSession:
-    """Tests for handle_update_remote_session."""
+class TestHandleUpdateRemoteEvent:
+    """Tests for handle_update_remote_event."""
 
     @pytest.mark.asyncio
     @patch("magma_cycling.config.create_intervals_client")
@@ -256,7 +256,7 @@ class TestHandleUpdateRemoteSession:
         with patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower:
             mock_tower.planning_dir.exists.return_value = False
 
-            result = await handle_update_remote_session(
+            result = await handle_update_remote_event(
                 {"event_id": 42, "updates": {"name": "New Name"}}
             )
 
@@ -275,7 +275,7 @@ class TestHandleUpdateRemoteSession:
         with patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower:
             mock_tower.planning_dir.exists.return_value = False
 
-            result = await handle_update_remote_session({"event_id": 42, "updates": {"name": "X"}})
+            result = await handle_update_remote_event({"event_id": 42, "updates": {"name": "X"}})
 
         data = json.loads(result[0].text)
         assert data["success"] is False
@@ -286,7 +286,7 @@ class TestHandleUpdateRemoteSession:
         """Cannot update a completed session."""
         mock_factory.return_value = MagicMock()
 
-        result = await handle_update_remote_session({"event_id": 55, "updates": {"name": "X"}})
+        result = await handle_update_remote_event({"event_id": 55, "updates": {"name": "X"}})
         data = json.loads(result[0].text)
         assert "error" in data
         assert "completed" in data["error"].lower() or "COMPLETED" in data.get("message", "")
