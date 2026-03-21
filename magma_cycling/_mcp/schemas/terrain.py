@@ -92,4 +92,16 @@ def get_tools() -> list[Tool]:
                 "required": ["workout", "ftp_watts"],
             },
         ),
+        Tool(
+            name="list-terrain-circuits",
+            description=(
+                "Liste les circuits terrain sauvegardes. "
+                "Retourne id, nom, distance et denivele de chaque circuit."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+        ),
     ]

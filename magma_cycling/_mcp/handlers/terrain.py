@@ -105,3 +105,23 @@ async def handle_adapt_workout_to_terrain(args: dict) -> list[TextContent]:
 
     except Exception as e:
         return mcp_response({"error": f"Adaptation failed: {e}"})
+
+
+async def handle_list_terrain_circuits(args: dict) -> list[TextContent]:
+    """List all saved terrain circuits."""
+    try:
+        with suppress_stdout_stderr():
+            from magma_cycling.terrain.storage import list_circuits
+
+            circuits = list_circuits()
+
+        return mcp_response(
+            {
+                "status": "success",
+                "count": len(circuits),
+                "circuits": circuits,
+            }
+        )
+
+    except Exception as e:
+        return mcp_response({"error": f"List circuits failed: {e}"})

@@ -8,6 +8,7 @@ import pytest
 from magma_cycling._mcp.handlers.terrain import (
     handle_adapt_workout_to_terrain,
     handle_extract_terrain_circuit,
+    handle_list_terrain_circuits,
 )
 
 
@@ -189,3 +190,49 @@ class TestHandleAdaptWorkoutToTerrain:
         data = _parse_response(result)
         assert "error" in data
         assert "non trouve" in data["error"]
+
+
+@pytest.mark.asyncio
+class TestHandleListTerrainCircuits:
+    """handle_list_terrain_circuits tests."""
+
+    async def test_list_empty(self):
+        """Empty list when no circuits saved."""
+        with patch(
+            "magma_cycling.terrain.storage.list_circuits",
+            return_value=[],
+        ):
+            result = await handle_list_terrain_circuits({})
+
+        data = _parse_response(result)
+        assert data["status"] == "success"
+        assert data["count"] == 0
+        assert data["circuits"] == []
+
+    async def test_list_with_circuits(self):
+        """List returns saved circuits."""
+        mock_circuits = [
+            {
+                "id": "TC_i131572602",
+                "name": "Boucle Sud",
+                "distance_km": 77.4,
+                "elevation_gain_m": 486,
+            },
+            {
+                "id": "TC_i999",
+                "name": "Col Test",
+                "distance_km": 12.0,
+                "elevation_gain_m": 650,
+            },
+        ]
+        with patch(
+            "magma_cycling.terrain.storage.list_circuits",
+            return_value=mock_circuits,
+        ):
+            result = await handle_list_terrain_circuits({})
+
+        data = _parse_response(result)
+        assert data["status"] == "success"
+        assert data["count"] == 2
+        assert data["circuits"][0]["id"] == "TC_i131572602"
+        assert data["circuits"][1]["distance_km"] == 12.0
