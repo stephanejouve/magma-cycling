@@ -108,4 +108,51 @@ def get_tools() -> list[Tool]:
                 "required": [],
             },
         ),
+        Tool(
+            name="evaluate-outdoor-execution",
+            description=(
+                "Evalue l'execution d'une sortie outdoor vs la prescription "
+                "terrain-adaptee. Compare segment par segment cadence et braquet "
+                "(pas puissance — le terrain la force mecaniquement). "
+                "Produit un score de conformite et des recommandations."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "activity_id": {
+                        "type": "string",
+                        "description": "ID de l'activite realisee a evaluer",
+                    },
+                    "adapted_workout": {
+                        "type": "object",
+                        "description": (
+                            "Prescription AdaptedWorkout (resultat de adapt-workout-to-terrain). "
+                            "Si omis, fournir circuit_id + workout + ftp_watts pour generer."
+                        ),
+                    },
+                    "circuit_id": {
+                        "type": "string",
+                        "description": (
+                            "ID du circuit (ex: TC_i131572602). "
+                            "Utilise pour generer la prescription si adapted_workout omis."
+                        ),
+                    },
+                    "workout": {
+                        "type": ["object", "string"],
+                        "description": (
+                            "Workout a adapter (si adapted_workout omis). "
+                            "Meme format que adapt-workout-to-terrain."
+                        ),
+                    },
+                    "ftp_watts": {
+                        "type": "integer",
+                        "description": (
+                            "FTP de l'athlete en watts (requis si adapted_workout omis)"
+                        ),
+                        "minimum": 50,
+                    },
+                },
+                "required": ["activity_id"],
+            },
+        ),
     ]
