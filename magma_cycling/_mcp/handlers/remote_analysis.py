@@ -69,6 +69,7 @@ async def handle_compare_activity_intervals(args: dict) -> list[TextContent]:
     try:
         with suppress_stdout_stderr():
             client = create_intervals_client()
+            _provider_info = client.get_provider_info()
 
         if activity_ids:
             mode = "explicit"
@@ -220,7 +221,7 @@ async def handle_compare_activity_intervals(args: dict) -> list[TextContent]:
             "comparison": comparison,
         }
 
-        return mcp_response(result)
+        return mcp_response(result, provider_info=_provider_info)
 
     except Exception as e:
         error = {"error": f"Failed to compare intervals: {str(e)}"}
@@ -246,6 +247,7 @@ async def handle_apply_workout_intervals(args: dict) -> list[TextContent]:
     try:
         with suppress_stdout_stderr():
             client = create_intervals_client()
+            _provider_info = client.get_provider_info()
 
         if manual_intervals is not None:
             if dry_run:
@@ -257,7 +259,7 @@ async def handle_apply_workout_intervals(args: dict) -> list[TextContent]:
                     "intervals": manual_intervals,
                     "message": "Preview only. Set dry_run=false to apply.",
                 }
-                return mcp_response(preview)
+                return mcp_response(preview, provider_info=_provider_info)
             with suppress_stdout_stderr():
                 result = client.put_activity_intervals(activity_id, manual_intervals)
             applied = {
@@ -267,7 +269,7 @@ async def handle_apply_workout_intervals(args: dict) -> list[TextContent]:
                 "applied": True,
                 "result": result,
             }
-            return mcp_response(applied)
+            return mcp_response(applied, provider_info=_provider_info)
 
         session_id = args.get("session_id")
         if not session_id:
@@ -280,7 +282,7 @@ async def handle_apply_workout_intervals(args: dict) -> list[TextContent]:
                     "error": f"Cannot extract session_id from activity name: '{activity_name}'",
                     "hint": "Provide session_id parameter explicitly (e.g. S082-02)",
                 }
-                return mcp_response(error)
+                return mcp_response(error, provider_info=_provider_info)
             session_id = m.group()
 
         week_id = session_id.split("-")[0]
@@ -297,14 +299,14 @@ async def handle_apply_workout_intervals(args: dict) -> list[TextContent]:
                 "error": f"No workout found for session {session_id} in {week_id}_workouts.txt",
                 "available_workouts": list(descriptions.keys()),
             }
-            return mcp_response(error)
+            return mcp_response(error, provider_info=_provider_info)
 
         blocks = parse_workout_text(workout_text)
         if not blocks:
             error = {
                 "error": f"Workout {session_id} is a rest day (no blocks to apply)",
             }
-            return mcp_response(error)
+            return mcp_response(error, provider_info=_provider_info)
 
         with suppress_stdout_stderr():
             streams = client.get_activity_streams(activity_id)
@@ -313,7 +315,7 @@ async def handle_apply_workout_intervals(args: dict) -> list[TextContent]:
             error = {
                 "error": f"No stream data found for activity {activity_id}",
             }
-            return mcp_response(error)
+            return mcp_response(error, provider_info=_provider_info)
         total_points = len(streams[0]["data"])
 
         computed = compute_intervals(blocks, total_points)
@@ -349,13 +351,13 @@ async def handle_apply_workout_intervals(args: dict) -> list[TextContent]:
 
         if dry_run:
             summary["message"] = "Preview only. Set dry_run=false to apply."
-            return mcp_response(summary)
+            return mcp_response(summary, provider_info=_provider_info)
 
         with suppress_stdout_stderr():
             result = client.put_activity_intervals(activity_id, interval_dicts)
         summary["applied"] = True
         summary["result"] = result
-        return mcp_response(summary)
+        return mcp_response(summary, provider_info=_provider_info)
 
     except Exception as e:
         error = {

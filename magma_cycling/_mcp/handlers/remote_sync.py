@@ -37,6 +37,7 @@ async def handle_sync_week_to_calendar(args: dict) -> list[TextContent]:
         with suppress_stdout_stderr():
             plan = planning_tower.read_week(week_id)
             client = create_intervals_client()
+            _provider_info = client.get_provider_info()
 
             start_date = str(plan.start_date)
             end_date = str(plan.end_date)
@@ -252,7 +253,7 @@ async def handle_sync_week_to_calendar(args: dict) -> list[TextContent]:
             "message": f"Sync {'preview' if dry_run else 'completed'} for {week_id}",
         }
 
-        return mcp_response(result)
+        return mcp_response(result, provider_info=_provider_info)
 
     except FileNotFoundError:
         error = {"error": f"Planning file not found for week {week_id}"}
@@ -273,6 +274,7 @@ async def handle_sync_remote_to_local(args: dict) -> list[TextContent]:
             strategy = args.get("strategy", "merge")
 
             client = create_intervals_client()
+            _provider_info = client.get_provider_info()
 
             stats = planning_tower.sync_from_remote(
                 week_id=week_id,
@@ -313,7 +315,7 @@ async def handle_sync_remote_to_local(args: dict) -> list[TextContent]:
 
             result["changes"] = changes
 
-            return mcp_response(result)
+            return mcp_response(result, provider_info=_provider_info)
     except Exception as e:
         error = {
             "error": str(e),
@@ -353,6 +355,7 @@ async def handle_backfill_activities(args: dict) -> list[TextContent]:
             date_source = f"{start_date_val} to {end_date_val}"
 
         client = create_intervals_client()
+        _provider_info = client.get_provider_info()
         activities = client.get_activities(oldest=start_date_val, newest=end_date_val)
 
         if not activities:
@@ -362,7 +365,7 @@ async def handle_backfill_activities(args: dict) -> list[TextContent]:
                 "end_date": str(end_date_val),
                 "activities_count": 0,
             }
-            return mcp_response(info)
+            return mcp_response(info, provider_info=_provider_info)
 
         data_config = get_data_config()
         tracking_file = data_config.data_repo_path / ".backfill_tracking.json"
@@ -473,4 +476,4 @@ async def handle_backfill_activities(args: dict) -> list[TextContent]:
                     }
                 )
 
-        return mcp_response(result)
+        return mcp_response(result, provider_info=_provider_info)

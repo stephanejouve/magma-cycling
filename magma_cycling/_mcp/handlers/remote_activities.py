@@ -26,6 +26,7 @@ async def handle_get_activity_details(args: dict) -> list[TextContent]:
     try:
         with suppress_stdout_stderr():
             client = create_intervals_client()
+            _provider_info = client.get_provider_info()
             activity = client.get_activity(activity_id)
 
             average_watts = activity.get("average_watts")
@@ -160,7 +161,7 @@ async def handle_get_activity_details(args: dict) -> list[TextContent]:
                     {"type": s["type"], "data_points": len(s["data"])} for s in streams
                 ]
 
-        return mcp_response(result)
+        return mcp_response(result, provider_info=_provider_info)
 
     except Exception as e:
         error = {
@@ -179,6 +180,7 @@ async def handle_get_activity_intervals(args: dict) -> list[TextContent]:
     try:
         with suppress_stdout_stderr():
             client = create_intervals_client()
+            _provider_info = client.get_provider_info()
             raw_intervals = client.get_activity_intervals(activity_id)
 
         keep_fields = {
@@ -222,7 +224,7 @@ async def handle_get_activity_intervals(args: dict) -> list[TextContent]:
             "intervals": intervals,
         }
 
-        return mcp_response(result)
+        return mcp_response(result, provider_info=_provider_info)
 
     except Exception as e:
         error = {
@@ -244,6 +246,7 @@ async def handle_get_activity_streams(args: dict) -> list[TextContent]:
     try:
         with suppress_stdout_stderr():
             client = create_intervals_client()
+            _provider_info = client.get_provider_info()
             streams = client.get_activity_streams(activity_id)
 
         if not streams:
@@ -308,7 +311,7 @@ async def handle_get_activity_streams(args: dict) -> list[TextContent]:
         if missing_types:
             result["missing_types"] = missing_types
 
-        return mcp_response(result)
+        return mcp_response(result, provider_info=_provider_info)
 
     except Exception as e:
         error = {

@@ -67,6 +67,7 @@ async def handle_delete_remote_event(args: dict) -> list[TextContent]:
                         break
 
             client = create_intervals_client()
+            _provider_info = client.get_provider_info()
             success = client.delete_event(event_id)
 
             if not success:
@@ -121,7 +122,7 @@ async def handle_delete_remote_event(args: dict) -> list[TextContent]:
                 "local_planning_update": local_update_status,
             }
 
-        return mcp_response(result)
+        return mcp_response(result, provider_info=_provider_info)
 
     except Exception as e:
         error = {
@@ -142,6 +143,7 @@ async def handle_list_remote_events(args: dict) -> list[TextContent]:
     try:
         with suppress_stdout_stderr():
             client = create_intervals_client()
+            _provider_info = client.get_provider_info()
             events = client.get_events(oldest=start_date_str, newest=end_date_str)
 
             if category_filter:
@@ -169,7 +171,7 @@ async def handle_list_remote_events(args: dict) -> list[TextContent]:
             if category_filter:
                 result["filtered_by"] = category_filter
 
-        return mcp_response(result)
+        return mcp_response(result, provider_info=_provider_info)
 
     except Exception as e:
         error = {
@@ -220,6 +222,7 @@ async def handle_update_remote_event(args: dict) -> list[TextContent]:
                         continue
 
             client = create_intervals_client()
+            _provider_info = client.get_provider_info()
             updated_event = client.update_event(event_id, updates)
 
             if updated_event:
@@ -271,7 +274,7 @@ async def handle_update_remote_event(args: dict) -> list[TextContent]:
                     "message": f"❌ Failed to update event {event_id}",
                 }
 
-        return mcp_response(result)
+        return mcp_response(result, provider_info=_provider_info)
 
     except Exception as e:
         error = {"error": f"Update error: {str(e)}", "event_id": event_id}
@@ -303,6 +306,7 @@ async def handle_create_remote_note(args: dict) -> list[TextContent]:
     try:
         with suppress_stdout_stderr():
             client = create_intervals_client()
+            _provider_info = client.get_provider_info()
 
             event_data = {
                 "category": "NOTE",
@@ -373,7 +377,7 @@ async def handle_create_remote_note(args: dict) -> list[TextContent]:
                     "message": "❌ Failed to create NOTE - no ID returned from Intervals.icu",
                 }
 
-        return mcp_response(result)
+        return mcp_response(result, provider_info=_provider_info)
 
     except Exception as e:
         error = {
