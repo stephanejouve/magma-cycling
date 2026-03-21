@@ -61,6 +61,35 @@ class TestHandleExtractTerrainCircuit:
         assert "_metadata" in data
         assert data["_metadata"]["provider"]["provider"] == "intervals_icu"
 
+    async def test_extract_with_custom_name(self, tmp_path):
+        """Extract circuit with custom name overriding auto-generated one."""
+        mock_client = MagicMock()
+        mock_client.get_activity.return_value = {"name": "S084-04-END-EnduranceLongue-V001"}
+        mock_client.get_activity_streams.return_value = _make_flat_streams(5)
+        mock_client.get_provider_info.return_value = {
+            "provider": "intervals_icu",
+            "athlete_id": "i42",
+            "status": "ready",
+        }
+
+        with (
+            patch(
+                "magma_cycling.config.create_intervals_client",
+                return_value=mock_client,
+            ),
+            patch(
+                "magma_cycling.terrain.storage.save_circuit",
+                return_value=tmp_path / "TC_i131572602.yaml",
+            ),
+        ):
+            result = await handle_extract_terrain_circuit(
+                {"activity_id": "i131572602", "name": "Boucle Sud Chas-Billom"}
+            )
+
+        data = _parse_response(result)
+        assert data["status"] == "success"
+        assert data["circuit"]["name"] == "Boucle Sud Chas-Billom"
+
     async def test_extract_no_save(self):
         """Extract without saving."""
         mock_client = MagicMock()
