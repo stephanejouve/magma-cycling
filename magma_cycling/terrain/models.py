@@ -123,3 +123,68 @@ class AdaptedWorkout(BaseModel):
     original_tss: float = Field(default=0, ge=0)
     delta_tss: float = Field(default=0, description="TSS difference (estimated - original)")
     warnings: list[str] = Field(default_factory=list)
+
+
+class SegmentExecution(BaseModel):
+    """Actual performance data for a terrain segment (per km)."""
+
+    km_index: int = Field(..., ge=0)
+    avg_power_watts: float = Field(..., ge=0)
+    avg_cadence_rpm: float = Field(..., ge=0)
+    actual_gear: GearObservation | None = Field(
+        default=None, description="Most used gear in this segment"
+    )
+    time_seconds: float = Field(..., gt=0, description="Time to traverse segment")
+    speed_kmh: float = Field(..., gt=0, description="Average speed in segment")
+
+
+class SegmentEvaluation(BaseModel):
+    """Comparison of execution vs prescription for one terrain segment."""
+
+    km_index: int = Field(..., ge=0)
+    terrain_category: GradeCategory
+    terrain_grade_pct: float
+    # Cadence evaluation (primary criterion for outdoor)
+    target_cadence_rpm: int = Field(..., ge=0)
+    cadence_min_rpm: int = Field(..., ge=0)
+    cadence_max_rpm: int = Field(..., ge=0)
+    actual_cadence_rpm: float = Field(..., ge=0)
+    cadence_delta_rpm: float = Field(..., description="Actual - target")
+    cadence_in_range: bool = Field(..., description="Within min/max range")
+    # Gear evaluation
+    recommended_gear: GearObservation | None = None
+    actual_gear: GearObservation | None = None
+    gear_match: bool | None = Field(
+        default=None,
+        description="True if actual matches recommended, None if no recommendation",
+    )
+    # Power (informational, terrain forces it -- not a discipline criterion)
+    target_power_pct: float = Field(..., description="Adapted target as %FTP")
+    actual_power_pct: float = Field(..., ge=0, description="Actual as %FTP")
+    power_delta_pct: float = Field(..., description="Actual - target")
+    # Overall segment verdict
+    segment_compliance: str = Field(..., description="excellent / bon / acceptable / hors_cible")
+
+
+class ExecutionEvaluation(BaseModel):
+    """Complete evaluation of an outdoor execution vs terrain-adapted prescription."""
+
+    activity_id: str
+    workout_name: str
+    circuit_id: str
+    ftp_watts: int = Field(..., gt=0)
+    segment_evaluations: list[SegmentEvaluation] = Field(default_factory=list)
+    # Summary metrics
+    segments_evaluated: int = Field(..., ge=0)
+    cadence_compliance_pct: float = Field(
+        ..., ge=0, le=100, description="Pct of segments with cadence in range"
+    )
+    gear_compliance_pct: float = Field(
+        ...,
+        ge=0,
+        le=100,
+        description="Pct of segments with correct gear (where applicable)",
+    )
+    overall_compliance: str = Field(..., description="excellent / bon / acceptable / a_ameliorer")
+    summary: str = Field(default="", description="Human-readable summary in French")
+    recommendations: list[str] = Field(default_factory=list, description="Improvement suggestions")

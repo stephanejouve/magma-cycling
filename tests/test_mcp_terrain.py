@@ -7,6 +7,7 @@ import pytest
 
 from magma_cycling._mcp.handlers.terrain import (
     handle_adapt_workout_to_terrain,
+    handle_evaluate_outdoor_execution,
     handle_extract_terrain_circuit,
     handle_list_terrain_circuits,
 )
@@ -265,3 +266,166 @@ class TestHandleListTerrainCircuits:
         assert data["count"] == 2
         assert data["circuits"][0]["id"] == "TC_i131572602"
         assert data["circuits"][1]["distance_km"] == 12.0
+
+
+@pytest.mark.asyncio
+class TestHandleEvaluateOutdoorExecution:
+    """handle_evaluate_outdoor_execution tests."""
+
+    async def test_evaluate_with_adapted_workout(self):
+        """Evaluate with explicit AdaptedWorkout prescription."""
+        from magma_cycling.terrain.models import (
+            AdaptedSegment,
+            AdaptedWorkout,
+            GradeCategory,
+        )
+
+        adapted = AdaptedWorkout(
+            workout_name="Test Workout",
+            circuit_id="TC_test",
+            circuit_name="Test Circuit",
+            ftp_watts=250,
+            segments=[
+                AdaptedSegment(
+                    km_index=i,
+                    terrain_grade_pct=0.0,
+                    terrain_category=GradeCategory.plat,
+                    original_power_pct=75.0,
+                    adapted_power_pct=75.0,
+                    power_adjustment_pct=0.0,
+                    target_cadence_rpm=85,
+                    cadence_min_rpm=80,
+                    cadence_max_rpm=95,
+                    recommended_gear=None,
+                    instruction="",
+                )
+                for i in range(3)
+            ],
+        )
+
+        n_points = 300
+        mock_streams = [
+            {"type": "distance", "data": [i * 10.0 for i in range(n_points)]},
+            {"type": "altitude", "data": [100.0] * n_points},
+            {"type": "watts", "data": [190.0] * n_points},
+            {"type": "cadence", "data": [85.0] * n_points},
+        ]
+
+        mock_client = MagicMock()
+        mock_client.get_activity_streams.return_value = mock_streams
+        mock_client.get_provider_info.return_value = {
+            "provider": "intervals_icu",
+            "athlete_id": "i42",
+            "status": "ready",
+        }
+
+        with patch(
+            "magma_cycling.config.create_intervals_client",
+            return_value=mock_client,
+        ):
+            result = await handle_evaluate_outdoor_execution(
+                {
+                    "activity_id": "i300",
+                    "adapted_workout": adapted.model_dump(mode="json"),
+                }
+            )
+
+        data = _parse_response(result)
+        assert data["status"] == "success"
+        assert "evaluation" in data
+        eval_data = data["evaluation"]
+        assert eval_data["activity_id"] == "i300"
+        assert eval_data["cadence_compliance_pct"] > 0
+        assert "_metadata" in data
+        assert data["_metadata"]["provider"]["provider"] == "intervals_icu"
+
+    async def test_evaluate_generates_prescription(self):
+        """Evaluate by generating prescription from circuit + workout."""
+        from magma_cycling.terrain.models import (
+            GradeCategory,
+            TerrainCircuit,
+            TerrainSegment,
+        )
+
+        circuit = TerrainCircuit(
+            circuit_id="TC_eval",
+            name="Eval Circuit",
+            total_distance_km=3.0,
+            total_elevation_gain_m=0,
+            total_elevation_loss_m=0,
+            segments=[
+                TerrainSegment(
+                    km_index=i,
+                    distance_m=1000.0,
+                    elevation_start_m=100,
+                    elevation_end_m=100,
+                    elevation_gain_m=0,
+                    elevation_loss_m=0,
+                    grade_pct=0.0,
+                    grade_category=GradeCategory.plat,
+                )
+                for i in range(3)
+            ],
+        )
+
+        n_points = 300
+        mock_streams = [
+            {"type": "distance", "data": [i * 10.0 for i in range(n_points)]},
+            {"type": "altitude", "data": [100.0] * n_points},
+            {"type": "watts", "data": [200.0] * n_points},
+            {"type": "cadence", "data": [88.0] * n_points},
+        ]
+
+        mock_client = MagicMock()
+        mock_client.get_activity_streams.return_value = mock_streams
+        mock_client.get_provider_info.return_value = {
+            "provider": "intervals_icu",
+            "athlete_id": "i42",
+            "status": "ready",
+        }
+
+        with (
+            patch(
+                "magma_cycling.config.create_intervals_client",
+                return_value=mock_client,
+            ),
+            patch(
+                "magma_cycling.terrain.storage.load_circuit",
+                return_value=circuit,
+            ),
+        ):
+            result = await handle_evaluate_outdoor_execution(
+                {
+                    "activity_id": "i400",
+                    "circuit_id": "TC_eval",
+                    "workout": "30min@75%",
+                    "ftp_watts": 260,
+                }
+            )
+
+        data = _parse_response(result)
+        assert data["status"] == "success"
+        assert "evaluation" in data
+
+    async def test_evaluate_error_missing_params(self):
+        """Error when no adapted_workout and missing circuit/workout/ftp."""
+        mock_client = MagicMock()
+        mock_client.get_activity_streams.return_value = []
+        mock_client.get_provider_info.return_value = {
+            "provider": "intervals_icu",
+            "athlete_id": "i42",
+            "status": "ready",
+        }
+
+        with patch(
+            "magma_cycling.config.create_intervals_client",
+            return_value=mock_client,
+        ):
+            result = await handle_evaluate_outdoor_execution(
+                {
+                    "activity_id": "i500",
+                }
+            )
+
+        data = _parse_response(result)
+        assert "error" in data
