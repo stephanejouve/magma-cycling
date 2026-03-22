@@ -4,6 +4,7 @@ import json
 import re
 import sys
 from pathlib import Path
+from typing import Any
 
 
 class ContextLoadingMixin:
@@ -215,11 +216,8 @@ class ContextLoadingMixin:
         try:
             if intelligence_file.exists():
                 intelligence_data = json.loads(intelligence_file.read_text(encoding="utf-8"))
-                # Format as readable text for AI
-                context["intelligence"] = json.dumps(
-                    intelligence_data, indent=2, ensure_ascii=False
-                )
-                print("  ✅ intelligence.json", file=sys.stderr)
+                context["intelligence"] = _summarize_intelligence(intelligence_data)
+                print("  ✅ intelligence.json (résumé)", file=sys.stderr)
             else:
                 print("  ⚠️ Non trouvé : intelligence.json", file=sys.stderr)
                 context["intelligence"] = "[Aucune recommandation d'adaptation disponible]"
@@ -296,3 +294,83 @@ class ContextLoadingMixin:
         except Exception as e:
             print(f"  ⚠️ Erreur chargement analyses : {e}", file=sys.stderr)
             return ""
+
+
+def _summarize_intelligence(data: dict[str, Any]) -> str:
+    """Summarize intelligence data for prompt injection.
+
+    Filters and compresses intelligence to reduce prompt size:
+    - Learnings: keep confidence >= medium, deduplicate evidence, max 5 items
+    - Adaptations: keep only PROPOSED, 1 per protocol_name (most recent)
+    - Patterns: pass through as-is
+    """
+    sections = []
+
+    # --- Learnings: confidence >= medium, max 5 evidence ---
+    learnings = data.get("learnings", {})
+    kept_learnings = []
+    for lid, learning in learnings.items():
+        conf = learning.get("confidence", "low")
+        if conf in ("medium", "high", "validated"):
+            evidence = learning.get("evidence", [])
+            unique_evidence = list(dict.fromkeys(evidence))  # deduplicate, preserve order
+            total = len(unique_evidence)
+            summary = {
+                "id": lid,
+                "category": learning.get("category"),
+                "description": learning.get("description"),
+                "confidence": conf,
+                "impact": learning.get("impact"),
+                "evidence": unique_evidence[:5],
+            }
+            if total > 5:
+                summary["evidence_total"] = total
+            kept_learnings.append(summary)
+
+    if kept_learnings:
+        sections.append(f"## Learnings ({len(kept_learnings)} sur {len(learnings)})\n")
+        sections.append(json.dumps(kept_learnings, indent=2, ensure_ascii=False))
+
+    # --- Adaptations: PROPOSED only, 1 per protocol_name (most recent) ---
+    adaptations = data.get("adaptations", {})
+    best_by_protocol: dict[str, tuple[int, str, dict]] = {}
+    for aid, adapt in adaptations.items():
+        if adapt.get("status") != "PROPOSED":
+            continue
+        protocol = adapt.get("protocol_name", "")
+        # Extract timestamp from ID (last segment)
+        try:
+            ts = int(aid.rsplit("_", 1)[-1])
+        except (ValueError, IndexError):
+            ts = 0
+        if protocol not in best_by_protocol or ts > best_by_protocol[protocol][0]:
+            best_by_protocol[protocol] = (ts, aid, adapt)
+
+    if best_by_protocol:
+        kept_adaptations = []
+        for _ts, aid, adapt in best_by_protocol.values():
+            kept_adaptations.append(
+                {
+                    "id": aid,
+                    "protocol_name": adapt.get("protocol_name"),
+                    "adaptation_type": adapt.get("adaptation_type"),
+                    "proposed_rule": adapt.get("proposed_rule"),
+                    "justification": adapt.get("justification"),
+                    "confidence": adapt.get("confidence"),
+                }
+            )
+        sections.append(
+            f"\n## Adaptations PROPOSED ({len(kept_adaptations)} sur {len(adaptations)})\n"
+        )
+        sections.append(json.dumps(kept_adaptations, indent=2, ensure_ascii=False))
+
+    # --- Patterns: pass through ---
+    patterns = data.get("patterns", {})
+    if patterns:
+        sections.append(f"\n## Patterns ({len(patterns)})\n")
+        sections.append(json.dumps(list(patterns.values()), indent=2, ensure_ascii=False))
+
+    if not sections:
+        return "[Aucune recommandation d'adaptation disponible]"
+
+    return "\n".join(sections)
