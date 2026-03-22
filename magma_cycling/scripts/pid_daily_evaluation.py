@@ -204,6 +204,12 @@ class PIDDailyEvaluator(
         # Save
         self.save_intelligence()
 
+        # Expire stale adaptations
+        expired = self.intelligence.expire_stale_adaptations()
+        if expired > 0:
+            print(f"   🗑️  {expired} adaptation(s) expirée(s)")
+            self.save_intelligence()
+
         print(f"\n{'=' * 70}")
         print("✨ Daily Evaluation Complete")
         print(f"{'=' * 70}")

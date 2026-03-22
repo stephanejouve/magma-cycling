@@ -351,9 +351,10 @@ class TrainingIntelligence:
                 break
 
         if existing_id:
-            # Update existing learning
+            # Update existing learning (deduplicate evidence)
             learning = self.learnings[existing_id]
-            learning.evidence.extend(evidence)
+            existing_evidence = set(learning.evidence)
+            learning.evidence.extend(e for e in evidence if e not in existing_evidence)
 
             # Auto-promote confidence based on evidence count
             evidence_count = len(learning.evidence)
@@ -495,9 +496,16 @@ class TrainingIntelligence:
             ...     evidence=["S024-05: 6.2h sleep, VO2 RPE 9"]
             ... )
         """
-        timestamp = int(datetime.now().timestamp())
-
-        adaptation_id = f"{protocol_name}_{adaptation_type}_{timestamp}"
+        # Upsert: find existing PROPOSED adaptation with same key
+        existing_id = None
+        for aid, adapt in self.adaptations.items():
+            if (
+                adapt.protocol_name == protocol_name
+                and adapt.adaptation_type == adaptation_type
+                and adapt.status == "PROPOSED"
+            ):
+                existing_id = aid
+                break
 
         # Determine confidence from evidence count
         evidence_count = len(evidence)
@@ -509,6 +517,22 @@ class TrainingIntelligence:
             confidence = ConfidenceLevel.MEDIUM
         else:
             confidence = ConfidenceLevel.LOW
+
+        if existing_id:
+            # Update existing adaptation in place
+            adaptation = self.adaptations[existing_id]
+            adaptation.current_rule = current_rule
+            adaptation.proposed_rule = proposed_rule
+            adaptation.justification = justification
+            adaptation.evidence = evidence
+            adaptation.confidence = confidence
+            return adaptation
+
+        # Create new adaptation (ensure unique ID)
+        timestamp = int(datetime.now().timestamp())
+        adaptation_id = f"{protocol_name}_{adaptation_type}_{timestamp}"
+        if adaptation_id in self.adaptations:
+            adaptation_id = f"{protocol_name}_{adaptation_type}_{timestamp}_1"
 
         adaptation = ProtocolAdaptation(
             id=adaptation_id,
@@ -524,6 +548,38 @@ class TrainingIntelligence:
 
         self.adaptations[adaptation_id] = adaptation
         return adaptation
+
+    def expire_stale_adaptations(self, max_age_days: int = 14) -> int:
+        """Expire PROPOSED adaptations older than max_age_days.
+
+        Extracts timestamp from adaptation ID (format: protocol_type_TIMESTAMP)
+        and marks as EXPIRED if older than max_age_days.
+
+        Args:
+            max_age_days: Maximum age in days before expiration (default: 14)
+
+        Returns:
+            Number of adaptations expired
+        """
+        now = datetime.now()
+        expired_count = 0
+
+        for adaptation in self.adaptations.values():
+            if adaptation.status != "PROPOSED":
+                continue
+
+            # Extract timestamp from ID (last segment after last '_')
+            try:
+                ts_str = adaptation.id.rsplit("_", 1)[-1]
+                ts = datetime.fromtimestamp(int(ts_str))
+                age_days = (now - ts).total_seconds() / 86400
+                if age_days > max_age_days:
+                    adaptation.status = "EXPIRED"
+                    expired_count += 1
+            except (ValueError, IndexError, OSError):
+                continue
+
+        return expired_count
 
     def get_daily_insights(self, context: dict[str, Any]) -> dict[str, Any]:
         """Get daily insights based on current context and accumulated intelligence.
