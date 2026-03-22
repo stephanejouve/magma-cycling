@@ -600,3 +600,227 @@ def test_load_empty_intelligence(tmp_path):
     assert len(loaded.learnings) == 0
     assert len(loaded.patterns) == 0
     assert len(loaded.adaptations) == 0
+
+
+# ============================================================================
+# TESTS EVIDENCE DEDUPLICATION (2)
+# ============================================================================
+
+
+def test_add_learning_deduplicates_evidence():
+    """Test that duplicate evidence is not added when reinforcing a learning."""
+    intelligence = TrainingIntelligence()
+
+    intelligence.add_learning(
+        category="sweet-spot",
+        description="88% FTP sustainable",
+        evidence=["S024-04: Success", "S024-06: Success"],
+        level=AnalysisLevel.DAILY,
+    )
+
+    # Re-add with one duplicate and one new
+    learning = intelligence.add_learning(
+        category="sweet-spot",
+        description="88% FTP sustainable",
+        evidence=["S024-04: Success", "S024-08: New"],
+        level=AnalysisLevel.DAILY,
+    )
+
+    assert len(learning.evidence) == 3
+    assert learning.evidence == ["S024-04: Success", "S024-06: Success", "S024-08: New"]
+
+
+def test_add_learning_all_duplicates_no_growth():
+    """Test that all-duplicate evidence does not grow the list."""
+    intelligence = TrainingIntelligence()
+
+    intelligence.add_learning(
+        category="test",
+        description="test desc",
+        evidence=["E1", "E2"],
+        level=AnalysisLevel.DAILY,
+    )
+
+    learning = intelligence.add_learning(
+        category="test",
+        description="test desc",
+        evidence=["E1", "E2"],
+        level=AnalysisLevel.DAILY,
+    )
+
+    assert len(learning.evidence) == 2
+
+
+# ============================================================================
+# TESTS ADAPTATION UPSERT (3)
+# ============================================================================
+
+
+def test_propose_adaptation_upsert_existing():
+    """Test that proposing same protocol+type updates existing adaptation."""
+    intelligence = TrainingIntelligence()
+
+    adapt1 = intelligence.propose_adaptation(
+        protocol_name="ftp_test_cycle",
+        adaptation_type="ADD",
+        current_rule="Old rule v1",
+        proposed_rule="Proposed v1",
+        justification="Justification v1",
+        evidence=["E1"],
+    )
+
+    adapt2 = intelligence.propose_adaptation(
+        protocol_name="ftp_test_cycle",
+        adaptation_type="ADD",
+        current_rule="Old rule v2",
+        proposed_rule="Proposed v2",
+        justification="Justification v2",
+        evidence=["E2", "E3"],
+    )
+
+    # Should be same adaptation, updated in place
+    assert adapt1.id == adapt2.id
+    assert len(intelligence.adaptations) == 1
+    assert adapt2.proposed_rule == "Proposed v2"
+    assert adapt2.justification == "Justification v2"
+    assert adapt2.evidence == ["E2", "E3"]
+
+
+def test_propose_adaptation_different_type_creates_new():
+    """Test that different adaptation_type creates a new adaptation."""
+    intelligence = TrainingIntelligence()
+
+    intelligence.propose_adaptation(
+        protocol_name="ftp_test_cycle",
+        adaptation_type="ADD",
+        current_rule="Rule",
+        proposed_rule="New",
+        justification="Just",
+        evidence=["E1"],
+    )
+
+    intelligence.propose_adaptation(
+        protocol_name="ftp_test_cycle",
+        adaptation_type="MODIFY",
+        current_rule="Rule",
+        proposed_rule="Modified",
+        justification="Just",
+        evidence=["E1"],
+    )
+
+    assert len(intelligence.adaptations) == 2
+
+
+def test_propose_adaptation_no_upsert_non_proposed():
+    """Test that non-PROPOSED adaptations are not upserted."""
+    intelligence = TrainingIntelligence()
+
+    adapt1 = intelligence.propose_adaptation(
+        protocol_name="test",
+        adaptation_type="ADD",
+        current_rule="Rule",
+        proposed_rule="New",
+        justification="Just",
+        evidence=["E1"],
+    )
+
+    # Manually change status to VALIDATED
+    adapt1.status = "VALIDATED"
+
+    # Should create a new one since the existing is VALIDATED
+    adapt2 = intelligence.propose_adaptation(
+        protocol_name="test",
+        adaptation_type="ADD",
+        current_rule="Rule v2",
+        proposed_rule="New v2",
+        justification="Just v2",
+        evidence=["E2"],
+    )
+
+    assert adapt1.id != adapt2.id
+    assert len(intelligence.adaptations) == 2
+
+
+# ============================================================================
+# TESTS EXPIRE STALE ADAPTATIONS (3)
+# ============================================================================
+
+
+def test_expire_stale_adaptations_old():
+    """Test that old PROPOSED adaptations get expired."""
+    intelligence = TrainingIntelligence()
+
+    # Create adaptation with old timestamp (30 days ago)
+    import time
+
+    old_ts = int(time.time()) - (30 * 86400)
+    adaptation = ProtocolAdaptation(
+        id=f"test_ADD_{old_ts}",
+        protocol_name="test",
+        adaptation_type="ADD",
+        current_rule="Old",
+        proposed_rule="New",
+        justification="Just",
+        evidence=["E1"],
+        confidence=ConfidenceLevel.LOW,
+        status="PROPOSED",
+    )
+    intelligence.adaptations[adaptation.id] = adaptation
+
+    expired = intelligence.expire_stale_adaptations(max_age_days=14)
+
+    assert expired == 1
+    assert adaptation.status == "EXPIRED"
+
+
+def test_expire_stale_adaptations_recent_kept():
+    """Test that recent PROPOSED adaptations are not expired."""
+    intelligence = TrainingIntelligence()
+
+    # Create adaptation with current timestamp
+    import time
+
+    recent_ts = int(time.time())
+    adaptation = ProtocolAdaptation(
+        id=f"test_ADD_{recent_ts}",
+        protocol_name="test",
+        adaptation_type="ADD",
+        current_rule="Old",
+        proposed_rule="New",
+        justification="Just",
+        evidence=["E1"],
+        confidence=ConfidenceLevel.LOW,
+        status="PROPOSED",
+    )
+    intelligence.adaptations[adaptation.id] = adaptation
+
+    expired = intelligence.expire_stale_adaptations(max_age_days=14)
+
+    assert expired == 0
+    assert adaptation.status == "PROPOSED"
+
+
+def test_expire_stale_adaptations_skips_non_proposed():
+    """Test that non-PROPOSED adaptations are not expired."""
+    intelligence = TrainingIntelligence()
+
+    import time
+
+    old_ts = int(time.time()) - (30 * 86400)
+    adaptation = ProtocolAdaptation(
+        id=f"test_ADD_{old_ts}",
+        protocol_name="test",
+        adaptation_type="ADD",
+        current_rule="Old",
+        proposed_rule="New",
+        justification="Just",
+        evidence=["E1"],
+        confidence=ConfidenceLevel.LOW,
+        status="VALIDATED",
+    )
+    intelligence.adaptations[adaptation.id] = adaptation
+
+    expired = intelligence.expire_stale_adaptations(max_age_days=14)
+
+    assert expired == 0
+    assert adaptation.status == "VALIDATED"
