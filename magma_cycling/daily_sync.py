@@ -229,9 +229,9 @@ class DailySync(
             except Exception:
                 wellness_pre = None
 
-            # Extract metrics
+            # Extract metrics (pass week_id for overtime decoupling correction)
             metrics = self.extract_metrics_from_activity(
-                latest_activity, latest_analysis, wellness_pre
+                latest_activity, latest_analysis, wellness_pre, week_id=week_id
             )
 
             # Check if servo should trigger

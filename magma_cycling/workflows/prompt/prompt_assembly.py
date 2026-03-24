@@ -25,8 +25,14 @@ class PromptAssemblyMixin:
         cycling_concepts=None,
         periodization_context=None,
         session_prescription=None,
+        overtime_analysis=None,
     ):
-        """Generate le prompt complet pour analyse IA."""
+        """Generate le prompt complet pour analyse IA.
+
+        Args:
+            overtime_analysis: Optional dict with overtime metrics from
+                decoupling recalculation (decoupling_prescribed, overtime_analysis).
+        """
         # Formater les données
 
         act = activity_data
@@ -35,6 +41,18 @@ class PromptAssemblyMixin:
         planned = self.format_planned_workout(planned_workout) if planned_workout else None
 
         decoupling_str = f"{act['decoupling']:.1f}%" if act["decoupling"] else "N/A"
+        overtime_str = ""
+        if overtime_analysis:
+            prescribed_dec = overtime_analysis.get("decoupling_prescribed")
+            ot = overtime_analysis.get("overtime_analysis")
+            if prescribed_dec is not None:
+                planned_min = overtime_analysis.get("duration_planned_min", "?")
+                decoupling_str = f"{prescribed_dec:.1f}% (sur {planned_min}min prescrits)"
+            if ot:
+                overtime_str = (
+                    f"\n- Extension post-séance : {ot['duration_extra_min']:.0f}min "
+                    f"à {ot['avg_power_watts']:.0f}W moy, FC {ot['avg_hr_bpm']:.0f}bpm"
+                )
 
         # Format temperature data
         temperature_str = self._format_temperature_data(
@@ -119,7 +137,7 @@ Certaines métriques (puissance, découplage) peuvent être manquantes ou incomp
 - Cadence moyenne : {self.safe_format_metric(avg_cadence, '.0f', 'rpm')}
 - FC moyenne : {self.safe_format_metric(avg_hr, '.0f', 'bpm')}
 - FC max : {self.safe_format_metric(max_hr, '.0f', 'bpm')}
-- Découplage cardiovasculaire : {decoupling_str}
+- Découplage cardiovasculaire : {decoupling_str}{overtime_str}
 - Température : {temperature_str}
 
 ### Métriques Post-séance
