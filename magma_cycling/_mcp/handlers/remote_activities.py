@@ -73,6 +73,8 @@ async def handle_get_activity_details(args: dict) -> list[TextContent]:
             cardiovascular_decoupling = None
             if streams:
                 try:
+                    from magma_cycling.utils.decoupling import calculate_decoupling
+
                     watts_stream = next((s for s in streams if s["type"] == "watts"), None)
                     hr_stream = next((s for s in streams if s["type"] == "heartrate"), None)
 
@@ -81,58 +83,11 @@ async def handle_get_activity_details(args: dict) -> list[TextContent]:
                         and hr_stream
                         and watts_stream["data"]
                         and hr_stream["data"]
-                        and len(watts_stream["data"]) > 60
                         and weighted_average_watts is not None
                     ):
-                        watts_data = watts_stream["data"]
-                        hr_data = hr_stream["data"]
-
-                        min_len = min(len(watts_data), len(hr_data))
-                        watts_data = watts_data[:min_len]
-                        hr_data = hr_data[:min_len]
-
-                        midpoint = min_len // 2
-
-                        watts_half1 = watts_data[:midpoint]
-                        hr_half1 = hr_data[:midpoint]
-                        watts_half2 = watts_data[midpoint:]
-                        hr_half2 = hr_data[midpoint:]
-
-                        def calc_np(watts):
-                            rolling_avgs = []
-                            for i in range(len(watts) - 29):
-                                window = watts[i : i + 30]
-                                rolling_avgs.append(sum(window) / 30)
-                            fourth_powers = [p**4 for p in rolling_avgs]
-                            avg_fourth = sum(fourth_powers) / len(fourth_powers)
-                            return avg_fourth ** (1 / 4)
-
-                        np_half1 = calc_np(watts_half1)
-                        np_half2 = calc_np(watts_half2)
-
-                        hr_half1_valid = [hr for hr in hr_half1 if hr > 0]
-                        hr_half2_valid = [hr for hr in hr_half2 if hr > 0]
-
-                        avg_hr_half1 = (
-                            sum(hr_half1_valid) / len(hr_half1_valid) if hr_half1_valid else None
+                        cardiovascular_decoupling = calculate_decoupling(
+                            watts_stream["data"], hr_stream["data"]
                         )
-                        avg_hr_half2 = (
-                            sum(hr_half2_valid) / len(hr_half2_valid) if hr_half2_valid else None
-                        )
-
-                        if (
-                            np_half1
-                            and np_half2
-                            and avg_hr_half1
-                            and avg_hr_half2
-                            and avg_hr_half1 > 0
-                        ):
-                            ratio_half1 = np_half1 / avg_hr_half1
-                            ratio_half2 = np_half2 / avg_hr_half2
-
-                            cardiovascular_decoupling = round(
-                                ((ratio_half2 - ratio_half1) / ratio_half1) * 100, 1
-                            )
                 except Exception:
                     pass
 

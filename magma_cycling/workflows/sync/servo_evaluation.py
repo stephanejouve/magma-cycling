@@ -9,15 +9,24 @@ class ServoEvaluationMixin:
     """Mixin for servo evaluation: metrics extraction, social ride detection, and servo mode."""
 
     def extract_metrics_from_activity(
-        self, activity: dict, analysis: str | None, wellness_pre: dict | None
+        self,
+        activity: dict,
+        analysis: str | None,
+        wellness_pre: dict | None,
+        week_id: str | None = None,
     ) -> dict:
         """
         Extract key metrics from activity data and analysis.
+
+        When week_id is provided and actual duration exceeds prescribed duration
+        by more than 15%, recalculates decoupling on the prescribed window only
+        and analyzes the overtime extension separately.
 
         Args:
             activity: Activity dict from Intervals.icu
             analysis: AI analysis text (if available)
             wellness_pre: Pre-workout wellness data
+            week_id: Week identifier for planning lookup (optional)
 
         Returns:
             Dict with extracted metrics for servo evaluation
@@ -26,11 +35,13 @@ class ServoEvaluationMixin:
             "tsb": None,
             "sleep_hours": None,
             "decoupling": None,
+            "decoupling_prescribed": None,
             "feel": None,
             "tss_planned": None,
             "tss_actual": None,
             "duration_planned_min": None,
             "duration_actual_min": None,
+            "overtime_analysis": None,
         }
 
         # Extract from wellness
@@ -58,11 +69,118 @@ class ServoEvaluationMixin:
         metrics["duration_actual_min"] = activity.get("moving_time", 0) // 60
         metrics["decoupling"] = activity.get("decoupling")
 
-        # Try to get planned values from session name (if it follows naming convention)
-        # This would require looking up the planning JSON, but for now we'll skip
-        # The servo will work without TSS comparison if not available
+        # Lookup planned duration from planning if week_id provided
+        if week_id:
+            self._lookup_planned_duration(activity, metrics, week_id)
 
         return metrics
+
+    def _lookup_planned_duration(self, activity: dict, metrics: dict, week_id: str) -> None:
+        """Lookup planned session duration and recalculate decoupling if overtime.
+
+        Args:
+            activity: Activity dict from Intervals.icu
+            metrics: Metrics dict to populate (modified in place)
+            week_id: Week identifier for planning lookup
+        """
+        try:
+            from magma_cycling.planning.control_tower import planning_tower
+
+            plan = planning_tower.read_week(week_id)
+        except Exception:
+            return
+
+        # Match activity to planned session by date
+        activity_date_str = activity.get("start_date_local", "")[:10]
+        if not activity_date_str:
+            return
+
+        matched_session = None
+        for session in plan.planned_sessions:
+            if str(session.session_date) == activity_date_str:
+                matched_session = session
+                break
+
+        if not matched_session:
+            return
+
+        planned_min = matched_session.duration_min
+        metrics["duration_planned_min"] = planned_min
+        metrics["tss_planned"] = matched_session.tss_planned
+
+        # Check for overtime: actual > planned * 1.15 (15% margin)
+        actual_min = metrics.get("duration_actual_min", 0) or 0
+        if planned_min <= 0 or actual_min <= planned_min * 1.15:
+            return
+
+        # Overtime detected — recalculate decoupling on prescribed window
+        self._recalculate_decoupling_for_overtime(activity, metrics, planned_min)
+
+    def _recalculate_decoupling_for_overtime(
+        self, activity: dict, metrics: dict, planned_min: int
+    ) -> None:
+        """Fetch streams and recalculate decoupling on prescribed window.
+
+        Uses simple temporal truncation (0 → prescribed_seconds).
+        TODO(v2): Use interval bounds from apply-workout-intervals (dry_run)
+        to handle both extended warmup and overtime cases. See decoupling.py.
+
+        Args:
+            activity: Activity dict (needs 'id' field)
+            metrics: Metrics dict to populate (modified in place)
+            planned_min: Prescribed duration in minutes
+        """
+        from magma_cycling.utils.decoupling import (
+            analyze_overtime,
+            calculate_decoupling,
+        )
+
+        activity_id = activity.get("id")
+        if not activity_id:
+            return
+
+        # Fetch streams via client (available on DailySync via mixin)
+        try:
+            streams = self.client.get_activity_streams(activity_id)
+        except Exception:
+            return
+
+        if not streams:
+            return
+
+        watts_stream = next((s for s in streams if s["type"] == "watts"), None)
+        hr_stream = next((s for s in streams if s["type"] == "heartrate"), None)
+
+        if (
+            not watts_stream
+            or not hr_stream
+            or not watts_stream.get("data")
+            or not hr_stream.get("data")
+        ):
+            return
+
+        watts_data = watts_stream["data"]
+        hr_data = hr_stream["data"]
+        prescribed_seconds = planned_min * 60
+
+        # Recalculate decoupling on prescribed window
+        prescribed_decoupling = calculate_decoupling(
+            watts_data, hr_data, max_seconds=prescribed_seconds
+        )
+
+        if prescribed_decoupling is not None:
+            metrics["decoupling_prescribed"] = prescribed_decoupling
+            actual_min = metrics.get("duration_actual_min", 0) or 0
+            extra_min = actual_min - planned_min
+            print(
+                f"     ℹ️  Découplage recalculé sur {planned_min}min prescrits "
+                f"({prescribed_decoupling:.1f}%), extension {extra_min}min analysée"
+            )
+
+        # Analyze overtime portion
+        overtime = analyze_overtime(watts_data, hr_data, prescribed_seconds)
+        if overtime:
+            metrics["overtime_analysis"] = overtime
 
     def _is_low_effort_social_ride(self, activity: dict, metrics: dict) -> bool:
         """
@@ -142,17 +260,24 @@ class ServoEvaluationMixin:
         reasons = []
 
         # Criterion 1: Decoupling (with false positive detection)
-        if metrics.get("decoupling") is not None:
-            if metrics["decoupling"] > self.servo_criteria["decoupling_threshold"]:
+        # Use prescribed decoupling if available (overtime-corrected), else raw API value
+        decoupling_value = metrics.get("decoupling_prescribed") or metrics.get("decoupling")
+        if decoupling_value is not None:
+            if decoupling_value > self.servo_criteria["decoupling_threshold"]:
                 # Check for false positive scenarios
                 if activity and self._is_low_effort_social_ride(activity, metrics):
                     print(
-                        f"     ℹ️  Découplage élevé ({metrics['decoupling']:.1f}%) ignoré "
+                        f"     ℹ️  Découplage élevé ({decoupling_value:.1f}%) ignoré "
                         "(sortie sociale/accompagnement avec arrêts détectée)"
                     )
                 else:
+                    suffix = ""
+                    if metrics.get("decoupling_prescribed") is not None:
+                        planned = metrics.get("duration_planned_min", "?")
+                        suffix = f" sur {planned}min prescrits"
                     reasons.append(
-                        f"Découplage élevé ({metrics['decoupling']:.1f}% > {self.servo_criteria['decoupling_threshold']}%)"
+                        f"Découplage élevé ({decoupling_value:.1f}% "
+                        f"> {self.servo_criteria['decoupling_threshold']}%{suffix})"
                     )
 
         # Criterion 2: Sleep
@@ -177,6 +302,15 @@ class ServoEvaluationMixin:
 
         # Trigger if at least one strong signal
         should_trigger = len(reasons) > 0
+
+        # Overtime TSS warning (informational, appended only if servo already triggered)
+        if should_trigger:
+            overtime = metrics.get("overtime_analysis")
+            if overtime and overtime.get("estimated_tss", 0) > 10:
+                reasons.append(
+                    f"Extension post-séance : {overtime['duration_extra_min']:.0f}min, "
+                    f"~{overtime['estimated_tss']:.0f} TSS supplémentaires"
+                )
 
         return should_trigger, reasons
 
@@ -291,11 +425,14 @@ class ServoEvaluationMixin:
                 if metrics.get("sleep_hours") is not None
                 else "Non disponible"
             )
+            # Use prescribed decoupling if available (overtime-corrected)
+            decoupling_val = metrics.get("decoupling_prescribed") or metrics.get("decoupling")
             decoupling_str = (
-                f"{metrics['decoupling']:.1f}%"
-                if metrics.get("decoupling") is not None
-                else "Non disponible"
+                f"{decoupling_val:.1f}%" if decoupling_val is not None else "Non disponible"
             )
+            if metrics.get("decoupling_prescribed") is not None:
+                planned = metrics.get("duration_planned_min", "?")
+                decoupling_str += f" (sur {planned}min prescrits)"
             feel_str = f"{metrics['feel']}/4" if metrics.get("feel") is not None else "Non fourni"
 
             # Generate servo prompt (same as workflow_coach)
