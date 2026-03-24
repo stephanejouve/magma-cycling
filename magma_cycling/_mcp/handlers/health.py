@@ -632,4 +632,21 @@ async def handle_enrich_session_health(args: dict) -> list[TextContent]:
                 "status": "success",
             }
 
+        # Push health data to calendar wellness (outside Control Tower lock)
+        sync_to_calendar = args.get("sync_to_calendar", True)
+        if sync_to_calendar and health_metrics:
+            try:
+                sync_result = sync_health_to_calendar(
+                    start_date=session_date,
+                    end_date=session_date,
+                    data_types=["sleep", "weight"],
+                )
+                result["calendar_sync"] = {
+                    "synced": bool(sync_result.get("synced_dates")),
+                    "synced_dates": sync_result.get("synced_dates", []),
+                    "errors": sync_result.get("errors", []),
+                }
+            except Exception as e:
+                result["calendar_sync"] = {"synced": False, "error": str(e)}
+
     return mcp_response(result, provider_info=provider_info)
