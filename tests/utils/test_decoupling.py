@@ -208,6 +208,4 @@ class TestAnalyzeOvertime:
         result = analyze_overtime(watts, hr, prescribed)
 
         assert result is not None
-        assert result["duration_extra_min"] == pytest.approx(
-            (700 - 600) / 60, abs=0.1
-        )
+        assert result["duration_extra_min"] == pytest.approx((700 - 600) / 60, abs=0.1)
