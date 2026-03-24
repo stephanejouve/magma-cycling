@@ -1696,3 +1696,144 @@ class TestHandleEnrichSessionHealth:
         data = json.loads(result[0].text)
         assert data["status"] == "error"
         assert "not found" in data["error"]
+
+    @pytest.mark.asyncio
+    async def test_enrich_session_syncs_to_calendar(self, mock_tower):
+        """Default sync_to_calendar=True triggers sync_health_to_calendar."""
+        from magma_cycling.mcp_server import handle_enrich_session_health
+        from magma_cycling.models.withings_models import SleepData, WeightMeasurement
+
+        mock_provider = _mock_health_provider()
+        mock_provider.get_sleep_range.return_value = [
+            SleepData(
+                date=date(2026, 2, 25),
+                start_datetime=datetime(2026, 2, 24, 23, 0),
+                end_datetime=datetime(2026, 2, 25, 6, 30),
+                total_sleep_hours=7.5,
+                sleep_score=82,
+                deep_sleep_minutes=90,
+                wakeup_count=1,
+            ),
+        ]
+        mock_provider.get_body_composition.return_value = WeightMeasurement(
+            date=date(2026, 2, 25),
+            datetime=datetime(2026, 2, 25, 8, 0),
+            weight_kg=84.2,
+        )
+        mock_provider.get_readiness.return_value = None
+
+        mock_sync = Mock(return_value={"synced_dates": ["2026-02-25"], "errors": []})
+
+        with (
+            patch(TOWER_PATCH, mock_tower),
+            patch(HEALTH_PROVIDER_PATCH, return_value=mock_provider),
+            patch(
+                "magma_cycling._mcp.handlers.health.sync_health_to_calendar",
+                mock_sync,
+            ),
+        ):
+            result = await handle_enrich_session_health(
+                {"week_id": "S082", "session_id": "S082-03"}
+            )
+
+        data = json.loads(result[0].text)
+        assert data["status"] == "success"
+        assert data["calendar_sync"]["synced"] is True
+        assert "2026-02-25" in data["calendar_sync"]["synced_dates"]
+        mock_sync.assert_called_once_with(
+            start_date=date(2026, 2, 25),
+            end_date=date(2026, 2, 25),
+            data_types=["sleep", "weight"],
+        )
+
+    @pytest.mark.asyncio
+    async def test_enrich_session_skip_calendar_sync(self, mock_tower):
+        """sync_to_calendar=False skips calendar push."""
+        from magma_cycling.mcp_server import handle_enrich_session_health
+        from magma_cycling.models.withings_models import SleepData, WeightMeasurement
+
+        mock_provider = _mock_health_provider()
+        mock_provider.get_sleep_range.return_value = [
+            SleepData(
+                date=date(2026, 2, 25),
+                start_datetime=datetime(2026, 2, 24, 23, 0),
+                end_datetime=datetime(2026, 2, 25, 6, 30),
+                total_sleep_hours=7.5,
+                sleep_score=82,
+                deep_sleep_minutes=90,
+                wakeup_count=1,
+            ),
+        ]
+        mock_provider.get_body_composition.return_value = WeightMeasurement(
+            date=date(2026, 2, 25),
+            datetime=datetime(2026, 2, 25, 8, 0),
+            weight_kg=84.2,
+        )
+        mock_provider.get_readiness.return_value = None
+
+        mock_sync = Mock()
+
+        with (
+            patch(TOWER_PATCH, mock_tower),
+            patch(HEALTH_PROVIDER_PATCH, return_value=mock_provider),
+            patch(
+                "magma_cycling._mcp.handlers.health.sync_health_to_calendar",
+                mock_sync,
+            ),
+        ):
+            result = await handle_enrich_session_health(
+                {
+                    "week_id": "S082",
+                    "session_id": "S082-03",
+                    "sync_to_calendar": False,
+                }
+            )
+
+        data = json.loads(result[0].text)
+        assert data["status"] == "success"
+        assert "calendar_sync" not in data
+        mock_sync.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_enrich_session_calendar_sync_error_non_blocking(self, mock_tower):
+        """Calendar sync failure does not block enrichment success."""
+        from magma_cycling.mcp_server import handle_enrich_session_health
+        from magma_cycling.models.withings_models import SleepData, WeightMeasurement
+
+        mock_provider = _mock_health_provider()
+        mock_provider.get_sleep_range.return_value = [
+            SleepData(
+                date=date(2026, 2, 25),
+                start_datetime=datetime(2026, 2, 24, 23, 0),
+                end_datetime=datetime(2026, 2, 25, 6, 30),
+                total_sleep_hours=7.5,
+                sleep_score=82,
+                deep_sleep_minutes=90,
+                wakeup_count=1,
+            ),
+        ]
+        mock_provider.get_body_composition.return_value = WeightMeasurement(
+            date=date(2026, 2, 25),
+            datetime=datetime(2026, 2, 25, 8, 0),
+            weight_kg=84.2,
+        )
+        mock_provider.get_readiness.return_value = None
+
+        mock_sync = Mock(side_effect=ConnectionError("API unreachable"))
+
+        with (
+            patch(TOWER_PATCH, mock_tower),
+            patch(HEALTH_PROVIDER_PATCH, return_value=mock_provider),
+            patch(
+                "magma_cycling._mcp.handlers.health.sync_health_to_calendar",
+                mock_sync,
+            ),
+        ):
+            result = await handle_enrich_session_health(
+                {"week_id": "S082", "session_id": "S082-03"}
+            )
+
+        data = json.loads(result[0].text)
+        assert data["status"] == "success"
+        assert data["calendar_sync"]["synced"] is False
+        assert "API unreachable" in data["calendar_sync"]["error"]
