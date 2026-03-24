@@ -163,6 +163,11 @@ def get_tools() -> list[Tool]:
                         "description": "Add training readiness evaluation (default: true)",
                         "default": True,
                     },
+                    "sync_to_calendar": {
+                        "type": "boolean",
+                        "description": "Push health data to training calendar wellness (default: true)",
+                        "default": True,
+                    },
                 },
                 "required": ["week_id", "session_id"],
             },
