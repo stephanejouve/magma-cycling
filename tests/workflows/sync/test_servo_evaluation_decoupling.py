@@ -70,9 +70,7 @@ class TestDecouplingRecalculatedWhenOvertime:
         session = _make_session(date(2026, 3, 24), duration_min=60)
         plan = _make_plan([session])
 
-        with patch(
-            "magma_cycling.planning.control_tower.planning_tower"
-        ) as mock_tower:
+        with patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower:
             mock_tower.read_week.return_value = plan
 
             metrics = sync.extract_metrics_from_activity(
@@ -109,9 +107,7 @@ class TestDecouplingKeptWhenNormalDuration:
         session = _make_session(date(2026, 3, 24), duration_min=60)
         plan = _make_plan([session])
 
-        with patch(
-            "magma_cycling.planning.control_tower.planning_tower"
-        ) as mock_tower:
+        with patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower:
             mock_tower.read_week.return_value = plan
 
             metrics = sync.extract_metrics_from_activity(
@@ -150,9 +146,7 @@ class TestOvertimeAnalysisPassedToMetrics:
         session = _make_session(date(2026, 3, 24), duration_min=60)
         plan = _make_plan([session])
 
-        with patch(
-            "magma_cycling.planning.control_tower.planning_tower"
-        ) as mock_tower:
+        with patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower:
             mock_tower.read_week.return_value = plan
 
             metrics = sync.extract_metrics_from_activity(
@@ -250,9 +244,7 @@ class TestDecouplingFallbackWhenNoStreams:
         session = _make_session(date(2026, 3, 24), duration_min=60)
         plan = _make_plan([session])
 
-        with patch(
-            "magma_cycling.planning.control_tower.planning_tower"
-        ) as mock_tower:
+        with patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower:
             mock_tower.read_week.return_value = plan
 
             metrics = sync.extract_metrics_from_activity(
@@ -276,9 +268,7 @@ class TestDecouplingFallbackWhenNoStreams:
             "decoupling": 10.5,
         }
 
-        with patch(
-            "magma_cycling.planning.control_tower.planning_tower"
-        ) as mock_tower:
+        with patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower:
             mock_tower.read_week.side_effect = FileNotFoundError("Not found")
 
             metrics = sync.extract_metrics_from_activity(
@@ -306,9 +296,7 @@ class TestDecouplingFallbackWhenNoStreams:
         session = _make_session(date(2026, 3, 24), duration_min=60)
         plan = _make_plan([session])
 
-        with patch(
-            "magma_cycling.planning.control_tower.planning_tower"
-        ) as mock_tower:
+        with patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower:
             mock_tower.read_week.return_value = plan
 
             metrics = sync.extract_metrics_from_activity(
