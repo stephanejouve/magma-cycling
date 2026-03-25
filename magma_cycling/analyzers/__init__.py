@@ -17,5 +17,6 @@ Metadata:
 """
 
 from .daily_aggregator import DailyAggregator
+from .weekly_aggregator import WeeklyAggregator
 
-__all__ = ["DailyAggregator"]
+__all__ = ["DailyAggregator", "WeeklyAggregator"]
