@@ -17,7 +17,7 @@ A personal cycling training log system integrating Intervals.icu, AI coaching, a
 git clone https://github.com/stephanejouve/magma-cycling.git
 cd magma-cycling
 poetry install
-cp .env.example .env  # edit with your API key and athlete ID
+poetry run setup          # interactive wizard — creates .env, athlete profile, data repo
 poetry run workflow-coach
 ```
 
@@ -58,6 +58,39 @@ poetry run workflow-coach
 
 ---
 
+## Providers & compatibilité
+
+Magma-cycling s'intègre à des services externes pour la planification, le suivi santé et le coaching IA. Le système est conçu pour être agnostique — les noms de marque n'apparaissent que dans les implémentations concrètes.
+
+### Services intégrés
+
+| Fonction | Provider | Statut |
+|---|---|---|
+| Plateforme d'entraînement | [Intervals.icu](https://intervals.icu) | Testé en prod |
+| Suivi santé / sommeil | [Withings](https://www.withings.com) | Testé en prod |
+| Workouts indoor | [Zwift](https://www.zwift.com) (scraping catalogue) | Testé en prod |
+| Coach IA | Claude — Anthropic | Testé en prod |
+| Coach IA | Mode manuel (clipboard) | Testé en prod |
+| Coach IA | Mistral AI | Intégré, non testé en prod |
+| Coach IA | OpenAI | Intégré, non testé en prod |
+| Coach IA | Ollama (local) | Intégré, non testé en prod |
+
+### Matériel testé
+
+Matériel validé par l'auteur — les données transitent correctement du capteur vers Intervals.icu puis vers magma-cycling.
+
+| Type | Modèle |
+|---|---|
+| Capteur sommeil | Withings Sleep Analyser (sous-matelas) |
+| Ordinateur vélo | Wahoo ROAM V3, ROAM V2 |
+| Capteur puissance | Wahoo POWRLINK ZERO |
+| Radar | Garmin Varia RTL515 |
+| Indoor | Apple TV + Zwift Companion |
+
+> Ce tableau reflète uniquement ce qui a été testé en conditions réelles. Tout appareil compatible Intervals.icu devrait fonctionner — les contributions pour élargir cette liste sont bienvenues via issues GitHub.
+
+---
+
 ## Installation
 
 **Requirements:** Python 3.11+, [Poetry](https://python-poetry.org/)
@@ -74,29 +107,41 @@ poetry install
 
 ### Configuration
 
-Create a `.env` file at the project root:
+Le wizard interactif configure tout automatiquement :
 
 ```bash
-# Intervals.icu API
+poetry run setup
+```
+
+Il crée le `.env`, le profil athlète (`athlete_context.yaml`), l'espace de données (`~/training-logs/`), et valide la connexion à Intervals.icu en direct.
+
+<details>
+<summary>Configuration manuelle (alternative)</summary>
+
+Créer un fichier `.env` à la racine du projet (voir `.env.example`) :
+
+```bash
+# Intervals.icu API (obligatoire)
 VITE_INTERVALS_ATHLETE_ID=your_athlete_id
 VITE_INTERVALS_API_KEY=your_api_key_here
 
-# Email reports (optional — used by daily-sync --send-email)
-BREVO_API_KEY=your_brevo_api_key_here
-EMAIL_TO=your.email@example.com
-EMAIL_FROM=noreply@yourdomain.com
-EMAIL_FROM_NAME=Training Logs
+# Profil athlète
+ATHLETE_AGE=40
+ATHLETE_FTP=200
+ATHLETE_WEIGHT=75
+ATHLETE_CATEGORY=master
+ATHLETE_RECOVERY_CAPACITY=normal
+ATHLETE_SLEEP_DEPENDENT=true
 
-# AI providers (at least one recommended)
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
-MISTRAL_API_KEY=...
-OLLAMA_URL=http://localhost:11434
+# Coach IA (optionnel — défaut : clipboard)
+DEFAULT_AI_PROVIDER=clipboard
+# CLAUDE_API_KEY=sk-ant-api03-xxxxx
+# MISTRAL_API_KEY=xxxxx
 ```
 
-**Get Intervals.icu credentials:** Settings → Developer Settings → Generate API key. Your athlete ID appears in the URL: `https://intervals.icu/athlete/your_athlete_id/...`
+**Credentials Intervals.icu :** Settings → Developer Settings → Generate API key. L'athlete ID apparaît dans l'URL : `https://intervals.icu/athlete/your_athlete_id/...`
 
-**Get Brevo credentials (optional):** Free account at [brevo.com](https://www.brevo.com) → Settings → SMTP & API → API Keys.
+</details>
 
 > All `.env` variables must be accessed through `magma_cycling/config.py`. Direct env reading in individual modules is prohibited.
 
