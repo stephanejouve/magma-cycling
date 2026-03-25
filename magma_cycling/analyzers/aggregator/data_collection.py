@@ -6,8 +6,7 @@ Aucune dépendance cross-mixin.
 
 import json
 import logging
-from datetime import date, timedelta
-from pathlib import Path
+from datetime import timedelta
 from typing import Any
 
 logger = logging.getLogger(__name__)
