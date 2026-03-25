@@ -111,6 +111,9 @@ pid-daily-evaluation = "magma_cycling.scripts.pid_daily_evaluation:main"
 # === Health ===
 withings-presync = "magma_cycling.scripts.withings_presync:main"
 
+# === Setup ===
+setup = "magma_cycling.scripts.setup_wizard:main"
+
 # === Analysis ===
 analyze-baseline = "magma_cycling.analysis.baseline_preliminary:main"
 
@@ -159,6 +162,7 @@ omit = [
     "magma_cycling/scripts/backfill_history.py",
     "magma_cycling/scripts/initialize_pid_controller.py",
     "magma_cycling/scripts/setup_withings.py",
+    "magma_cycling/scripts/setup_wizard.py",
     "magma_cycling/scripts/withings_presync.py",
 ]
 
