@@ -121,8 +121,7 @@ def detect_pattern(segments: list[ZwiftWorkoutSegment]) -> str:
     all_main = [
         s
         for s in segments
-        if s.segment_type
-        not in (SegmentType.WARMUP, SegmentType.COOLDOWN, SegmentType.FREE_RIDE)
+        if s.segment_type not in (SegmentType.WARMUP, SegmentType.COOLDOWN, SegmentType.FREE_RIDE)
     ]
 
     # Also strip leading/trailing ramps used as warmup/cooldown

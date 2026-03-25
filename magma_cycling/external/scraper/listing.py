@@ -61,9 +61,7 @@ def parse_workout_metadata_from_listing(html: str, base_url: str) -> list[dict]:
     return workouts
 
 
-def parse_collection_url(
-    collection_url: str, base_url: str = "https://whatsonzwift.com"
-) -> str:
+def parse_collection_url(collection_url: str, base_url: str = "https://whatsonzwift.com") -> str:
     """Ensure collection URL is fully qualified.
 
     Args:
