@@ -26,23 +26,20 @@ Author: Claude Code
 Created: 2026-01-01.
 """
 import argparse
-import json
-import logging
 import sys
-from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 from magma_cycling.ai_providers.factory import AIProviderFactory
+from magma_cycling.analyzers.monthly.data import DataMixin
+from magma_cycling.analyzers.monthly.reporting import ReportingMixin
+from magma_cycling.analyzers.monthly.stats import StatsMixin
 from magma_cycling.config import get_ai_config, get_data_config
 from magma_cycling.prompts import build_prompt
 from magma_cycling.utils.cli import cli_main
 
-logger = logging.getLogger(__name__)
 
-
-class MonthlyAnalyzer:
+class MonthlyAnalyzer(DataMixin, StatsMixin, ReportingMixin):
     """Analyze training data at monthly granularity."""
 
     def __init__(self, month: str, provider: str = "mistral_api", no_ai: bool = False):
@@ -76,348 +73,43 @@ class MonthlyAnalyzer:
             provider_config = ai_config.get_provider_config(provider)
             self.ai_analyzer = AIProviderFactory.create(provider, provider_config)
 
-    def find_weeks_in_month(self) -> list[Path]:
-        """
-        Find all weekly planning files that overlap with the target month.
-
-        Returns:
-            List of paths to weekly planning JSON files.
-        """
-        if not self.planning_dir.exists():
-            return []
-
-        # Get month boundaries
-        month_start = self.month_date
-        # Last day of month
-        if month_start.month == 12:
-            month_end = datetime(month_start.year + 1, 1, 1) - timedelta(days=1)
-        else:
-            month_end = datetime(month_start.year, month_start.month + 1, 1) - timedelta(days=1)
-
-        matching_weeks = []
-
-        for planning_file in sorted(self.planning_dir.glob("week_planning_S*.json")):
-            try:
-                with open(planning_file, encoding="utf-8") as f:
-                    planning = json.load(f)
-
-                week_start = datetime.strptime(planning["start_date"], "%Y-%m-%d")
-                week_end = datetime.strptime(planning["end_date"], "%Y-%m-%d")
-
-                # Check if week overlaps with month
-                if week_start <= month_end and week_end >= month_start.replace(day=1):
-                    matching_weeks.append(planning_file)
-
-            except (json.JSONDecodeError, KeyError, ValueError) as e:
-                print(f"⚠️  Skip {planning_file.name}: {e}")
-                continue
-
-        return matching_weeks
-
-    def load_weekly_data(self, week_files: list[Path]) -> list[dict]:
-        """Load and parse weekly planning data."""
-        weekly_data = []
-
-        for week_file in week_files:
-            try:
-                with open(week_file, encoding="utf-8") as f:
-                    data = json.load(f)
-                    weekly_data.append(data)
-            except Exception as e:
-                print(f"❌ Error loading {week_file.name}: {e}")
-
-        return weekly_data
-
-    def aggregate_statistics(
-        self, weekly_data: list[dict], actual_tss_map: dict | None = None
-    ) -> dict:
-        """Aggregate monthly statistics from weekly data.
-
-        Args:
-            weekly_data: List of weekly planning dicts.
-            actual_tss_map: Optional mapping {intervals_id: actual_tss} from
-                Intervals.icu. When provided, completed/modified sessions with
-                an intervals_id use real TSS instead of tss_planned.
-
-        Returns:
-            Dictionary with monthly metrics.
-        """
-        stats: dict[str, Any] = {
-            "total_weeks": len(weekly_data),
-            "total_sessions": 0,
-            "completed": 0,
-            "skipped": 0,
-            "cancelled": 0,
-            "modified": 0,
-            "rest_days": 0,
-            "tss_realized": 0,
-            "tss_target_total": 0,
-            "sessions_by_type": defaultdict(int),
-            "sessions_by_status": defaultdict(int),
-            "tss_by_week": [],
-            "weekly_details": [],
-        }
-
-        for week in sorted(weekly_data, key=lambda w: w["start_date"]):
-            week_stats = {
-                "week_id": week["week_id"],
-                "start_date": week["start_date"],
-                "end_date": week["end_date"],
-                "tss_target": week.get("tss_target", 0),
-                "tss_actual": 0,
-                "sessions": len(week.get("planned_sessions", [])),
-            }
-
-            stats["tss_target_total"] += week.get("tss_target", 0)
-
-            for session in week.get("planned_sessions", []):
-                stats["total_sessions"] += 1
-                status = session.get("status", "unknown")
-                session_type = session.get("type", "unknown")
-
-                tss_planned = session.get("tss_planned", 0)
-                intervals_id = session.get("intervals_id")
-                # Use actual TSS for completed/modified sessions when available
-                if intervals_id and actual_tss_map and f"i{intervals_id}" in actual_tss_map:
-                    tss = actual_tss_map[f"i{intervals_id}"]
-                else:
-                    tss = tss_planned
-
-                # Count by status
-                stats["sessions_by_status"][status] += 1
-
-                if status == "completed":
-                    stats["completed"] += 1
-                    stats["tss_realized"] += tss
-                    week_stats["tss_actual"] += tss
-                elif status == "skipped":
-                    stats["skipped"] += 1
-                elif status == "cancelled":
-                    stats["cancelled"] += 1
-                elif status == "modified":
-                    stats["modified"] += 1
-                    stats["tss_realized"] += tss
-                    week_stats["tss_actual"] += tss
-                elif status == "rest_day":
-                    stats["rest_days"] += 1
-
-                # Count by type (exclude rest days)
-                if status != "rest_day":
-                    stats["sessions_by_type"][session_type] += 1
-
-            stats["tss_by_week"].append(week_stats)
-            stats["weekly_details"].append(week_stats)
-
-        # Calculate adherence rate
-        total_planned = (
-            stats["completed"] + stats["skipped"] + stats["cancelled"] + stats["modified"]
-        )
-        if total_planned > 0:
-            stats["adherence_rate"] = (stats["completed"] + stats["modified"]) / total_planned * 100
-        else:
-            stats["adherence_rate"] = 0
-
-        # Calculate TSS achievement rate
-        if stats["tss_target_total"] > 0:
-            stats["tss_achievement_rate"] = stats["tss_realized"] / stats["tss_target_total"] * 100
-        else:
-            stats["tss_achievement_rate"] = 0
-
-        return stats
-
-    def generate_report(self, stats: dict, ai_analysis: str | None = None) -> str:
-        """Generate markdown report."""
-        month_name = self.month_date.strftime("%B %Y")
-
-        report = f"""# 📊 Analyse Mensuelle - {month_name}.
-
-## Résumé Exécutif
-
-**Période :** {stats['tss_by_week'][0]['start_date']} → {stats['tss_by_week'][-1]['end_date']}
-**Semaines analysées :** {stats['total_weeks']}
-
-### Charge d'Entraînement (TSS)
-- **TSS Cible :** {stats['tss_target_total']}
-- **TSS Réalisé :** {stats['tss_realized']}
-- **Taux de réalisation :** {stats['tss_achievement_rate']:.1f}%
-
-### Sessions
-- **Total planifié :** {stats['total_sessions']} sessions
-- **Complétées :** {stats['completed']} ({stats['completed'] / stats['total_sessions'] * 100:.1f}%)
-- **Modifiées :** {stats['modified']}
-- **Sautées :** {stats['skipped']}
-- **Annulées :** {stats['cancelled']}
-- **Repos :** {stats['rest_days']}
-- **Taux d'adhérence :** {stats['adherence_rate']:.1f}%
-
-## 📈 Progression Hebdomadaire
-
-| Semaine | Dates | TSS Cible | TSS Réalisé | % Réalisation |
-|---------|-------|-----------|-------------|---------------|.
-"""
-        for week in stats["tss_by_week"]:
-            achievement = (
-                (week["tss_actual"] / week["tss_target"] * 100) if week["tss_target"] > 0 else 0
-            )
-            report += f"| {week['week_id']} | {week['start_date']} → {week['end_date']} | {week['tss_target']} | {week['tss_actual']} | {achievement:.1f}% |\n"
-
-        report += "\n## 🎯 Répartition par Type de Séance\n\n"
-
-        type_labels = {
-            "END": "Endurance",
-            "INT": "Intensité",
-            "REC": "Récupération",
-            "TEC": "Technique",
-            "FOR": "Force",
-            "CAD": "Cadence",
-            "MIX": "Mixte",
-        }
-
-        for session_type, count in sorted(
-            stats["sessions_by_type"].items(), key=lambda x: x[1], reverse=True
-        ):
-            percentage = (
-                count / (stats["total_sessions"] - stats["rest_days"]) * 100
-                if stats["total_sessions"] > stats["rest_days"]
-                else 0
-            )
-            type_name = type_labels.get(session_type, session_type)
-            report += f"- **{type_name} ({session_type})** : {count} sessions ({percentage:.1f}%)\n"
-
-        report += "\n## 📊 Statut des Sessions\n\n"
-        for status, count in sorted(
-            stats["sessions_by_status"].items(), key=lambda x: x[1], reverse=True
-        ):
-            percentage = count / stats["total_sessions"] * 100
-            report += f"- **{status.title()}** : {count} ({percentage:.1f}%)\n"
-
-        # Add AI analysis if available
-        if ai_analysis:
-            report += f"\n## 🤖 Analyse IA - Insights & Recommandations\n\n{ai_analysis}\n"
-
-        report += f"\n---\n*Généré le {datetime.now().strftime('%Y-%m-%d %H:%M')}*\n"
-
-        return report
-
-    def generate_ai_prompt(self, stats: dict) -> str:
-        """Generate prompt for AI analysis."""
-        month_name = self.month_date.strftime("%B %Y")
-
-        prompt = f"""Analyse ce mois d'entraînement cyclisme ({month_name}) et fournis des insights :
-
-📊 DONNÉES MENSUELLES :
-- {stats['total_weeks']} semaines analysées
-- TSS Cible : {stats['tss_target_total']}
-- TSS Réalisé : {stats['tss_realized']} ({stats['tss_achievement_rate']:.1f}%)
-- Taux d'adhérence : {stats['adherence_rate']:.1f}%
-- Sessions complétées : {stats['completed']}/{stats['total_sessions']}
-- Sessions sautées : {stats['skipped']}
-- Repos : {stats['rest_days']}
-
-📈 PROGRESSION HEBDOMADAIRE :
-"""
-        for week in stats["tss_by_week"]:
-            prompt += f"\n- {week['week_id']} : {week['tss_actual']}/{week['tss_target']} TSS"
-
-        prompt += "\n\n🎯 RÉPARTITION TYPES :\n"
-        for session_type, count in sorted(
-            stats["sessions_by_type"].items(), key=lambda x: x[1], reverse=True
-        ):
-            percentage = (
-                count / (stats["total_sessions"] - stats["rest_days"]) * 100
-                if stats["total_sessions"] > stats["rest_days"]
-                else 0
-            )
-            prompt += f"- {session_type} : {count} sessions ({percentage:.0f}%)\n"
-
-        prompt += """
-ANALYSE DEMANDÉE (format markdown) :
-
-1. **Évaluation Globale** (2-3 phrases)
-   - Qualité du mois (excellent/bon/moyen/insuffisant)
-   - Respect de la planification
-
-2. **Points Forts** (3-4 bullets)
-   - Ce qui a bien fonctionné
-
-3. **Points d'Amélioration** (3-4 bullets)
-   - Ce qui pourrait être optimisé
-
-4. **Analyse de Périodisation** (2-3 phrases)
-   - Cohérence de la charge (progression/plateau/taper)
-   - Équilibre intensité/volume/récupération
-
-5. **Recommandations pour le Mois Suivant** (3-5 bullets)
-   - Ajustements suggérés
-   - Focus prioritaires
-
-Sois concret, direct et orienté action. Utilise des emojis pour la lisibilité.
-"""
-        return prompt
-
-    def _fetch_actual_tss(self, weekly_data: list[dict]) -> dict[str, int]:
-        """Fetch actual TSS from Intervals.icu for completed activities.
-
-        Returns:
-            Mapping {intervals_id: actual_tss} for all activities in the month.
-            Empty dict on failure (graceful degradation → fallback to tss_planned).
-        """
-        try:
-            from magma_cycling.config import create_intervals_client
-
-            start = min(w["start_date"] for w in weekly_data)
-            end = max(w["end_date"] for w in weekly_data)
-            client = create_intervals_client()
-            activities = client.get_activities(oldest=start, newest=end)
-
-            return {a["id"]: a.get("icu_training_load", 0) or 0 for a in activities}
-        except Exception:
-            logger.warning("Could not fetch activities from Intervals.icu, using planned TSS")
-            return {}
-
-    def _load_current_metrics(self) -> dict:
-        """Load current athlete metrics for prompt enrichment."""
-        from magma_cycling.prompts.prompt_builder import load_current_metrics
-
-        return load_current_metrics()
-
     def run(self) -> str:
         """Execute monthly analysis and return report."""
         print(f"\n{'=' * 70}")
 
-        print(f"  📊 ANALYSE MENSUELLE - {self.month_date.strftime('%B %Y')}")
+        print(f"  \U0001f4ca ANALYSE MENSUELLE - {self.month_date.strftime('%B %Y')}")
         print(f"{'=' * 70}\n")
 
         # Find weeks
-        print(f"🔍 Recherche des semaines pour {self.month}...")
+        print(f"\U0001f50d Recherche des semaines pour {self.month}...")
         week_files = self.find_weeks_in_month()
 
         if not week_files:
-            print(f"❌ Aucun planning trouvé pour {self.month}")
-            print(f"   Vérifier : {self.planning_dir}")
+            print(f"\u274c Aucun planning trouv\u00e9 pour {self.month}")
+            print(f"   V\u00e9rifier : {self.planning_dir}")
             return ""
 
-        print(f"✅ {len(week_files)} semaine(s) trouvée(s)")
+        print(f"\u2705 {len(week_files)} semaine(s) trouv\u00e9e(s)")
         for wf in week_files:
             print(f"   - {wf.name}")
 
         # Load data
-        print("\n📥 Chargement des données...")
+        print("\n\U0001f4e5 Chargement des donn\u00e9es...")
         weekly_data = self.load_weekly_data(week_files)
-        print(f"✅ {len(weekly_data)} semaine(s) chargée(s)")
+        print(f"\u2705 {len(weekly_data)} semaine(s) charg\u00e9e(s)")
 
         # Fetch actual TSS from Intervals.icu
-        print("\n📡 Récupération TSS réels (Intervals.icu)...")
+        print("\n\U0001f4e1 R\u00e9cup\u00e9ration TSS r\u00e9els (Intervals.icu)...")
         actual_tss_map = self._fetch_actual_tss(weekly_data)
         if actual_tss_map:
-            print(f"✅ {len(actual_tss_map)} activités trouvées")
+            print(f"\u2705 {len(actual_tss_map)} activit\u00e9s trouv\u00e9es")
         else:
-            print("⚠️  Fallback sur TSS planifiés")
+            print("\u26a0\ufe0f  Fallback sur TSS planifi\u00e9s")
 
         # Aggregate statistics
-        print("\n📊 Calcul des statistiques...")
+        print("\n\U0001f4ca Calcul des statistiques...")
         stats = self.aggregate_statistics(weekly_data, actual_tss_map)
-        print("✅ Statistiques calculées")
+        print("\u2705 Statistiques calcul\u00e9es")
         print(
             f"   - TSS : {stats['tss_realized']}/{stats['tss_target_total']} ({stats['tss_achievement_rate']:.1f}%)"
         )
@@ -428,7 +120,7 @@ Sois concret, direct et orienté action. Utilise des emojis pour la lisibilité.
         # AI Analysis
         ai_analysis = None
         if not self.no_ai and self.ai_analyzer:
-            print(f"\n🤖 Génération analyse IA ({self.provider})...")
+            print(f"\n\U0001f916 G\u00e9n\u00e9ration analyse IA ({self.provider})...")
             try:
                 workflow_data = self.generate_ai_prompt(stats)
                 current_metrics = self._load_current_metrics()
@@ -440,15 +132,15 @@ Sois concret, direct et orienté action. Utilise des emojis pour la lisibilité.
                 ai_analysis = self.ai_analyzer.analyze_session(
                     user_prompt, system_prompt=system_prompt
                 )
-                print("✅ Analyse IA générée")
+                print("\u2705 Analyse IA g\u00e9n\u00e9r\u00e9e")
             except Exception as e:
-                print(f"⚠️  Erreur analyse IA : {e}")
-                print("   Rapport généré sans analyse IA")
+                print(f"\u26a0\ufe0f  Erreur analyse IA : {e}")
+                print("   Rapport g\u00e9n\u00e9r\u00e9 sans analyse IA")
 
         # Generate report
-        print("\n📝 Génération du rapport...")
+        print("\n\U0001f4dd G\u00e9n\u00e9ration du rapport...")
         report = self.generate_report(stats, ai_analysis)
-        print(f"✅ Rapport généré ({len(report)} caractères)")
+        print(f"\u2705 Rapport g\u00e9n\u00e9r\u00e9 ({len(report)} caract\u00e8res)")
 
         return report
 
@@ -490,7 +182,7 @@ def main():
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(report, encoding="utf-8")
-        print(f"\n✅ Rapport sauvegardé : {args.output}")
+        print(f"\n\u2705 Rapport sauvegard\u00e9 : {args.output}")
     else:
         print(f"\n{'=' * 70}")
         print(report)
