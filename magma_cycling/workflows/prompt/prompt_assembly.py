@@ -26,12 +26,26 @@ class PromptAssemblyMixin:
         periodization_context=None,
         session_prescription=None,
         overtime_analysis=None,
+        activity_intervals=None,
+        tss_planned_local=None,
     ):
         """Generate le prompt complet pour analyse IA.
 
         Args:
+            activity_data: Formatted activity dict from format_activity_data().
+            wellness_pre: Pre-workout wellness dict or None.
+            wellness_post: Post-workout wellness dict or None.
+            athlete_context: Athlete context string or None.
+            recent_workouts: Recent workouts string or None.
+            athlete_feedback: Athlete feedback dict or None.
+            planned_workout: Planned workout event dict or None.
+            cycling_concepts: Cycling concepts string or None.
+            periodization_context: Periodization context dict or None.
+            session_prescription: Session prescription text or None.
             overtime_analysis: Optional dict with overtime metrics from
                 decoupling recalculation (decoupling_prescribed, overtime_analysis).
+            activity_intervals: Raw intervals from get_activity_intervals() or None.
+            tss_planned_local: TSS from local planning JSON or None.
         """
         # Formater les données
 
@@ -139,7 +153,16 @@ Certaines métriques (puissance, découplage) peuvent être manquantes ou incomp
 - FC max : {self.safe_format_metric(max_hr, '.0f', 'bpm')}
 - Découplage cardiovasculaire : {decoupling_str}{overtime_str}
 - Température : {temperature_str}
+"""
+        # Build intervals table if available
+        intervals_section = ""
+        if activity_intervals:
+            formatted_intervals = self.format_intervals_data(activity_intervals)
+            if formatted_intervals:
+                intervals_section = self._build_intervals_section(formatted_intervals)
 
+        prompt += intervals_section
+        prompt += f"""
 ### Métriques Post-séance
 - CTL : {w_post['ctl']:.0f}
 - ATL : {w_post['atl']:.0f}
@@ -201,6 +224,16 @@ ci-dessus. Identifier les écarts entre intention et réalisation.
 - IF : {planned['intensity_planned']:.2f} prévue → {act['intensity']:.2f} réalisée ({act['intensity'] - planned['intensity_planned']:+.2f})
 - Puissance moy. : {planned['avg_watts_planned']:.0f}W prévue → {act['avg_power']:.0f}W réalisée ({act['avg_power'] - planned['avg_watts_planned']:+.0f}W)
 - NP : {planned['np_planned']:.0f}W prévue → {act['np']:.0f}W réalisée ({act['np'] - planned['np_planned']:+.0f}W)
+"""
+            # Add local TSS planned if available and different from Intervals.icu
+            tss_source_note = ""
+            if tss_planned_local is not None:
+                tss_source_note = (
+                    f"\n- **TSS planifié (planning local)** : {tss_planned_local}"
+                    " (source de vérité pour la comparaison)"
+                )
+
+            prompt += f"""{tss_source_note}
 
 **Consigne d'analyse** : Évaluer l'adhérence au plan et identifier les écarts significatifs (>10% en durée/TSS, >5% en IF).
 
@@ -275,6 +308,8 @@ En tant qu'assistant coach, analyse cette séance avec un regard factuel et tech
 4. Identifier patterns (Sweet-Spot, Endurance, VO2, etc.)
 5. **Intégrer le feedback athlète** (section "Feedback Athlète") s'il est présent - ressenti général (1-5, 1=Excellent 5=Mauvais) et notes textuelles (avec système de fallback: description activité en priorité, wellness comments si vide)
 6. Recommandations concrètes basées sur les données ET le ressenti
+7. Comparer TSS réalisé au TSS planifié **local** (pas au TSS Intervals.icu qui peut être mis à jour post-sync) si disponible
+8. **Découplage** : utiliser UNIQUEMENT la valeur fournie dans "Exécution". Valeur négative = bonne efficacité. Ne jamais recalculer ou estimer
 
 **Gestion des données manquantes (activités Strava) :**
 - Si puissance = 0W : Indiquer "_Données non disponibles (source Strava)_"
@@ -344,6 +379,36 @@ Date : {act['date']}
 Génère maintenant l'entrée d'analyse.
 """
         return prompt
+
+    def _build_intervals_section(self, intervals: list[dict]) -> str:
+        """Construit la section intervalles pour le prompt."""
+        lines = [
+            "\n### Données par Intervalles\n",
+            "| # | Type | Durée | Avg W | NP | Cadence | Avg HR | Max HR "
+            "| Découplage | Balance G/D |",
+            "|---|------|-------|-------|----|---------|--------|--------"
+            "|------------|-------------|",
+        ]
+        for i, iv in enumerate(intervals, 1):
+            dur_min = iv["duration_secs"] // 60 if iv["duration_secs"] else 0
+            dur_sec = iv["duration_secs"] % 60 if iv["duration_secs"] else 0
+            dur_str = f"{dur_min}m{dur_sec:02d}s" if dur_sec else f"{dur_min}min"
+
+            def fmt(val, suffix=""):
+                return f"{val}{suffix}" if val is not None else "-"
+
+            lr = iv.get("avg_lr_balance")
+            lr_str = f"{lr:.1f}/{100 - lr:.1f}" if lr is not None else "-"
+
+            lines.append(
+                f"| {i} | {iv['type']} | {dur_str} | "
+                f"{fmt(iv['avg_watts'], 'W')} | {fmt(iv['np'], 'W')} | "
+                f"{fmt(iv['avg_cadence'], 'rpm')} | {fmt(iv['avg_hr'], 'bpm')} | "
+                f"{fmt(iv['max_hr'], 'bpm')} | {fmt(iv['decoupling'], '%')} | "
+                f"{lr_str} |"
+            )
+        lines.append("")
+        return "\n".join(lines)
 
     def _build_environment_section(self, act, planned):
         """Construit la section environnement indoor/outdoor pour le prompt."""

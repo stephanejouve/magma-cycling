@@ -146,6 +146,34 @@ class DataFormattingMixin:
 
         return formatted
 
+    def format_intervals_data(self, intervals: list[dict]) -> list[dict] | None:
+        """Formate les intervalles d'activité pour le prompt."""
+        if not intervals:
+            return None
+
+        def _round(val, decimals=0):
+            if val is None:
+                return None
+            return round(val, decimals)
+
+        formatted = []
+        for iv in intervals:
+            formatted.append(
+                {
+                    "type": iv.get("type", "UNKNOWN"),
+                    "label": iv.get("label", ""),
+                    "duration_secs": iv.get("elapsed_time", 0),
+                    "avg_watts": _round(iv.get("average_watts")),
+                    "np": _round(iv.get("weighted_average_watts")),
+                    "avg_cadence": _round(iv.get("average_cadence")),
+                    "avg_hr": _round(iv.get("average_heartrate")),
+                    "max_hr": _round(iv.get("max_heartrate")),
+                    "decoupling": _round(iv.get("decoupling"), 1),
+                    "avg_lr_balance": _round(iv.get("avg_lr_balance"), 1),
+                }
+            )
+        return formatted
+
     def format_athlete_feedback(self, feedback):
         """Format le feedback pour inclusion dans le prompt."""
         if not feedback:
