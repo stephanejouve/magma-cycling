@@ -91,6 +91,11 @@ async def handle_get_activity_details(args: dict) -> list[TextContent]:
                 except Exception:
                     pass
 
+            # decoupling_api: Intervals.icu server-side (portion active only)
+            # cardiovascular_decoupling: local split-half NP/HR (biased if warmup >15min)
+            # Prefer decoupling_api for sessions with significant warmup/cooldown
+            decoupling_api = activity.get("decoupling")
+
             result = {
                 "id": activity.get("id"),
                 "name": activity.get("name"),
@@ -106,6 +111,7 @@ async def handle_get_activity_details(args: dict) -> list[TextContent]:
                 "average_heartrate": activity.get("average_heartrate"),
                 "average_cadence": activity.get("average_cadence"),
                 "cardiovascular_decoupling": cardiovascular_decoupling,
+                "decoupling_api": decoupling_api,
                 "description": activity.get("description", ""),
                 "paired_event_id": activity.get("paired_event_id"),
             }
