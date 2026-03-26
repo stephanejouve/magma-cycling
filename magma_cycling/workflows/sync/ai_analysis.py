@@ -148,8 +148,9 @@ class AIAnalysisMixin:
             except Exception:
                 pass  # No planned workout available
 
-            # Get session prescription from local planning JSON
+            # Get session prescription and tss_planned from local planning JSON
             session_prescription = None
+            tss_planned_local = None
             if "-" in activity_name:
                 parts = activity_name.split("-")
                 if len(parts) >= 2 and parts[0].startswith("S") and len(parts[0]) == 4:
@@ -160,9 +161,17 @@ class AIAnalysisMixin:
                         for s in plan.planned_sessions:
                             if s.session_id == _session_id:
                                 session_prescription = s.description
+                                tss_planned_local = s.tss_planned
                                 break
                     except Exception:
                         pass  # Planning not found — skip
+
+            # Fetch activity intervals (WORK/RECOVERY blocks)
+            activity_intervals = None
+            try:
+                activity_intervals = self.client.get_activity_intervals(activity_id)
+            except Exception:
+                pass  # Activité sans intervalles — analyse dégradée
 
             # Generate complete prompt
             prompt = self.prompt_generator.generate_prompt(
@@ -176,6 +185,8 @@ class AIAnalysisMixin:
                 cycling_concepts=None,
                 periodization_context=periodization_context,
                 session_prescription=session_prescription,
+                activity_intervals=activity_intervals,
+                tss_planned_local=tss_planned_local,
             )
 
             # Build system_prompt for AI framing
