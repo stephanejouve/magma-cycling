@@ -380,6 +380,11 @@ async def handle_backfill_activities(args: dict) -> list[TextContent]:
 
         activity_to_session_map = sync.update_completed_sessions(activities)
 
+        # Auto-complete rest sessions (TSS=0, duration=0, date passée)
+        from datetime import date
+
+        sync.auto_complete_rest_sessions(date.today())
+
         updated = {}
         already_completed = {}
         unmatched = []
