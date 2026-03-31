@@ -22,6 +22,7 @@ __all__ = [
     "handle_restore_week_from_backup",
     "handle_analyze_training_patterns",
     "handle_get_coach_analysis",
+    "handle_validate_local_remote_sync",
 ]
 
 
@@ -917,3 +918,217 @@ async def handle_get_coach_analysis(args: dict) -> list[TextContent]:
 
     except Exception as e:
         return mcp_response({"error": f"Failed to retrieve coach analysis: {str(e)}"})
+
+
+# ---------------------------------------------------------------------------
+# Local ↔ Remote sync validator
+# ---------------------------------------------------------------------------
+
+
+def _parse_event_name(name: str) -> dict | None:
+    """Parse an Intervals.icu event name using WORKOUT_NAME_REGEX.
+
+    Returns dict with session_id, session_type, workout_name, version
+    or None if the name doesn't match.
+    """
+    from magma_cycling.planning.models import WORKOUT_NAME_REGEX
+
+    match = WORKOUT_NAME_REGEX.search(name)
+    if not match:
+        return None
+    return {
+        "session_id": match.group(1),
+        "session_type": match.group(2),
+        "workout_name": match.group(3),
+        "version": match.group(4),
+    }
+
+
+async def handle_validate_local_remote_sync(args: dict) -> list[TextContent]:
+    """Compare local planning vs remote Intervals.icu events to detect drift."""
+    from magma_cycling._mcp._utils import SYNCABLE_STATUSES
+    from magma_cycling.config import create_intervals_client
+    from magma_cycling.planning.control_tower import planning_tower
+    from magma_cycling.utils.event_sync import calculate_description_hash
+
+    week_id = args["week_id"]
+    include_description_check = args.get("include_description_check", False)
+
+    try:
+        with suppress_stdout_stderr():
+            plan = planning_tower.read_week(week_id)
+
+            client = create_intervals_client()
+            remote_events = client.get_events(
+                oldest=str(plan.start_date),
+                newest=str(plan.end_date),
+            )
+
+            # Index remote WORKOUT events by id
+            remote_by_id: dict[int, dict] = {}
+            remote_workouts: list[dict] = []
+            for event in remote_events:
+                if event.get("category") == "WORKOUT":
+                    eid = event.get("id")
+                    if eid is not None:
+                        remote_by_id[eid] = event
+                        remote_workouts.append(event)
+
+            discrepancies: list[dict] = []
+            linked_remote_ids: set[int] = set()
+
+            # Check each session that has an intervals_id
+            for session in plan.planned_sessions:
+                if session.intervals_id is None:
+                    continue
+
+                linked_remote_ids.add(session.intervals_id)
+                remote_event = remote_by_id.get(session.intervals_id)
+
+                if remote_event is None:
+                    discrepancies.append(
+                        {
+                            "session_id": session.session_id,
+                            "intervals_id": session.intervals_id,
+                            "type": "REMOTE_MISSING",
+                            "local": session.session_id,
+                            "remote": None,
+                            "severity": "HIGH",
+                        }
+                    )
+                    continue
+
+                # Parse the remote event name
+                parsed = _parse_event_name(remote_event.get("name", ""))
+                if parsed is None:
+                    # Unparseable remote name — skip structured checks
+                    continue
+
+                # 1. SESSION_ID_MISMATCH (detects swaps)
+                if parsed["session_id"] != session.session_id:
+                    discrepancies.append(
+                        {
+                            "session_id": session.session_id,
+                            "intervals_id": session.intervals_id,
+                            "type": "SESSION_ID_MISMATCH",
+                            "local": session.session_id,
+                            "remote": parsed["session_id"],
+                            "severity": "HIGH",
+                        }
+                    )
+
+                # 2. NAME_MISMATCH
+                if parsed["workout_name"] != session.name:
+                    discrepancies.append(
+                        {
+                            "session_id": session.session_id,
+                            "intervals_id": session.intervals_id,
+                            "type": "NAME_MISMATCH",
+                            "local": session.name,
+                            "remote": parsed["workout_name"],
+                            "severity": "HIGH",
+                        }
+                    )
+
+                # 3. TYPE_MISMATCH
+                if parsed["session_type"] != session.session_type:
+                    discrepancies.append(
+                        {
+                            "session_id": session.session_id,
+                            "intervals_id": session.intervals_id,
+                            "type": "TYPE_MISMATCH",
+                            "local": session.session_type,
+                            "remote": parsed["session_type"],
+                            "severity": "HIGH",
+                        }
+                    )
+
+                # 4. DATE_MISMATCH
+                remote_date_str = remote_event.get("start_date_local", "")[:10]
+                if remote_date_str and remote_date_str != str(session.session_date):
+                    discrepancies.append(
+                        {
+                            "session_id": session.session_id,
+                            "intervals_id": session.intervals_id,
+                            "type": "DATE_MISMATCH",
+                            "local": str(session.session_date),
+                            "remote": remote_date_str,
+                            "severity": "HIGH",
+                        }
+                    )
+
+                # 5. DESCRIPTION_MISMATCH (opt-in, off by default)
+                if include_description_check:
+                    remote_desc = remote_event.get("description", "") or ""
+                    local_desc = session.description or ""
+                    if local_desc and remote_desc:
+                        local_hash = calculate_description_hash(local_desc)
+                        remote_hash = calculate_description_hash(remote_desc)
+                        if local_hash != remote_hash:
+                            discrepancies.append(
+                                {
+                                    "session_id": session.session_id,
+                                    "intervals_id": session.intervals_id,
+                                    "type": "DESCRIPTION_MISMATCH",
+                                    "local": local_hash,
+                                    "remote": remote_hash,
+                                    "severity": "LOW",
+                                }
+                            )
+
+            # Orphaned remote: WORKOUT events not linked to any local session
+            orphaned_remote = []
+            for event in remote_workouts:
+                eid = event.get("id")
+                if eid not in linked_remote_ids:
+                    parsed = _parse_event_name(event.get("name", ""))
+                    orphaned_remote.append(
+                        {
+                            "intervals_id": eid,
+                            "name": event.get("name", ""),
+                            "date": event.get("start_date_local", "")[:10],
+                            "parsed": parsed,
+                        }
+                    )
+
+            # Unlinked local: sessions that should be synced but have no intervals_id
+            unlinked_local = []
+            for session in plan.planned_sessions:
+                if session.intervals_id is None and session.status in SYNCABLE_STATUSES:
+                    unlinked_local.append(
+                        {
+                            "session_id": session.session_id,
+                            "name": session.name,
+                            "status": session.status,
+                            "date": str(session.session_date),
+                        }
+                    )
+
+            sessions_checked = sum(1 for s in plan.planned_sessions if s.intervals_id is not None)
+            status = "DRIFT_DETECTED" if discrepancies or orphaned_remote else "IN_SYNC"
+
+            result = {
+                "week_id": week_id,
+                "status": status,
+                "sessions_checked": sessions_checked,
+                "discrepancies": discrepancies,
+                "orphaned_remote": orphaned_remote,
+                "unlinked_local": unlinked_local,
+            }
+
+        return mcp_response(result)
+
+    except FileNotFoundError:
+        return mcp_response(
+            {
+                "error": f"Planning not found for {week_id}",
+                "week_id": week_id,
+            }
+        )
+    except Exception as e:
+        return mcp_response(
+            {
+                "error": f"Sync validation error: {str(e)}",
+                "week_id": week_id,
+            }
+        )

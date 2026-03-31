@@ -42,6 +42,7 @@ from magma_cycling._mcp.handlers.analysis import (  # noqa: F401
     handle_get_recommendations,
     handle_get_training_statistics,
     handle_restore_week_from_backup,
+    handle_validate_local_remote_sync,
     handle_validate_week_consistency,
 )
 from magma_cycling._mcp.handlers.athlete import (  # noqa: F401
@@ -205,6 +206,7 @@ TOOL_HANDLERS = {
     "restore-week-from-backup": handle_restore_week_from_backup,
     "analyze-training-patterns": handle_analyze_training_patterns,
     "get-coach-analysis": handle_get_coach_analysis,
+    "validate-local-remote-sync": handle_validate_local_remote_sync,
     # Admin (2)
     "reload-server": handle_reload_server,
     "system-info": handle_system_info,
