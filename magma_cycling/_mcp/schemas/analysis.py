@@ -142,6 +142,26 @@ def get_tools() -> list[Tool]:
             },
         ),
         Tool(
+            name="validate-local-remote-sync",
+            description="Compare local planning sessions vs Intervals.icu remote events to detect sync drift (name/type/date mismatches, swaps, orphans). Description check off by default (structural noise).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "week_id": {
+                        "type": "string",
+                        "description": "Week ID (e.g., S087)",
+                        "pattern": "^S\\d{3}$",
+                    },
+                    "include_description_check": {
+                        "type": "boolean",
+                        "description": "Include DESCRIPTION_MISMATCH checks (default: false, opt-in for debug)",
+                        "default": False,
+                    },
+                },
+                "required": ["week_id"],
+            },
+        ),
+        Tool(
             name="get-coach-analysis",
             description="Retrieve past coach AI analysis from workouts-history.md by activity ID, session ID, or date",
             inputSchema={
