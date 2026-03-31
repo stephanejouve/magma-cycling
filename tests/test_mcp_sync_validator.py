@@ -478,6 +478,44 @@ class TestValidateLocalRemoteSync:
         assert result["unlinked_local"] == []
 
     @pytest.mark.asyncio
+    async def test_rest_day_note_not_remote_missing(self):
+        """A rest day synced as NOTE should not trigger REMOTE_MISSING."""
+        session = _make_session(
+            session_id="S087-07",
+            name="ReposComplet",
+            session_type="REC",
+            intervals_id=500,
+            status="uploaded",
+        )
+        # The remote event is a NOTE (not a WORKOUT)
+        note_event = _make_event(
+            eid=500,
+            name="S087-07-REC-ReposComplet-V001",
+            category="NOTE",
+        )
+
+        plan = MagicMock()
+        plan.start_date = date(2026, 3, 30)
+        plan.end_date = date(2026, 4, 5)
+        plan.planned_sessions = [session]
+
+        with (
+            patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower,
+            patch("magma_cycling.config.create_intervals_client") as mock_client_factory,
+        ):
+            mock_tower.read_week.return_value = plan
+            mock_client = MagicMock()
+            mock_client.get_events.return_value = [note_event]
+            mock_client_factory.return_value = mock_client
+
+            result = _extract_result(await handle_validate_local_remote_sync({"week_id": "S087"}))
+
+        # No REMOTE_MISSING — the NOTE event is found in remote_by_id
+        missing = [d for d in result["discrepancies"] if d["type"] == "REMOTE_MISSING"]
+        assert len(missing) == 0
+        assert result["status"] == "IN_SYNC"
+
+    @pytest.mark.asyncio
     async def test_metadata_present(self):
         """Response includes _metadata."""
         plan = MagicMock()

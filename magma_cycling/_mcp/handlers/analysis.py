@@ -964,15 +964,16 @@ async def handle_validate_local_remote_sync(args: dict) -> list[TextContent]:
                 newest=str(plan.end_date),
             )
 
-            # Index remote WORKOUT events by id
+            # Index all remote events by id (for intervals_id lookup)
             remote_by_id: dict[int, dict] = {}
+            # Keep WORKOUT-only list for orphan detection
             remote_workouts: list[dict] = []
             for event in remote_events:
+                eid = event.get("id")
+                if eid is not None:
+                    remote_by_id[eid] = event
                 if event.get("category") == "WORKOUT":
-                    eid = event.get("id")
-                    if eid is not None:
-                        remote_by_id[eid] = event
-                        remote_workouts.append(event)
+                    remote_workouts.append(event)
 
             discrepancies: list[dict] = []
             linked_remote_ids: set[int] = set()
