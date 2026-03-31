@@ -1,7 +1,7 @@
 """SessionUpdatesMixin — session matching and status updates via Control Tower."""
 
 import re
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from magma_cycling.config.athlete_profile import AthleteProfile
 from magma_cycling.planning.calendar import TrainingCalendar, WorkoutType
@@ -93,7 +93,7 @@ class SessionUpdatesMixin:
             Example: ("S079", "S079-02")
         """
         # Pattern: S079-02-INT-SweetSpotModere-V001
-        pattern = r"^(S\d{3})-(\d{2})"
+        pattern = r"^(S\d{3})-(\d{2}[a-z]?)"
         match = re.match(pattern, activity_name)
 
         if match:
@@ -281,3 +281,57 @@ class SessionUpdatesMixin:
         print("  ✅ Mise à jour automatique terminée")
 
         return activity_to_session_map
+
+    def auto_complete_rest_sessions(self, check_date: date) -> list[str]:
+        """Auto-complete rest sessions (TSS=0, duration=0) whose date has passed.
+
+        Rest days are accomplished by definition — no activity needed.
+
+        Args:
+            check_date: Current date. Sessions before this date are eligible.
+
+        Returns:
+            List of session IDs that were auto-completed.
+        """
+        from magma_cycling.daily_sync import calculate_current_week_info
+
+        completed_ids: list[str] = []
+
+        # Determine current and previous week
+        current_week_id, _ = calculate_current_week_info(check_date)
+        current_num = int(current_week_id[1:])
+        week_ids = [current_week_id]
+        if current_num > 1:
+            week_ids.append(f"S{current_num - 1:03d}")
+
+        for week_id in week_ids:
+            try:
+                plan = planning_tower.read_week(week_id)
+            except FileNotFoundError:
+                continue
+
+            sessions_to_complete = [
+                s
+                for s in plan.planned_sessions
+                if s.tss_planned == 0
+                and s.duration_min == 0
+                and s.session_date < check_date
+                and s.status == "planned"
+            ]
+
+            if not sessions_to_complete:
+                continue
+
+            session_ids = [s.session_id for s in sessions_to_complete]
+            with planning_tower.modify_week(
+                week_id,
+                requesting_script="daily-sync",
+                reason=f"Auto-complete rest sessions: {', '.join(session_ids)}",
+            ) as mutable_plan:
+                for session in mutable_plan.planned_sessions:
+                    if session.session_id in session_ids:
+                        session.status = "completed"
+                        completed_ids.append(session.session_id)
+                        print(f"  ✅ {session.session_id} (repos) → completed")
+
+        return completed_ids
