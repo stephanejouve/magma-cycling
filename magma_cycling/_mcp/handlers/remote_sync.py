@@ -77,34 +77,48 @@ async def handle_sync_week_to_calendar(args: dict) -> list[TextContent]:
                 )
                 full_description = workout_descriptions.get(intervals_name, session.description)
 
-                event_data = {
-                    "category": "WORKOUT",
-                    "type": "VirtualRide",
-                    "name": intervals_name,
-                    "description": full_description,
-                    "start_date_local": f"{session.session_date}T{start_time}",
-                }
+                is_rest_day = (
+                    session.session_type == "REC"
+                    and session.tss_planned == 0
+                    and session.duration_min == 0
+                )
 
-                if (
-                    session.duration_min
-                    and session.duration_min > 0
-                    and full_description
-                    and full_description.strip()
-                ):
-                    from magma_cycling.intervals_format_validator import (
-                        IntervalsFormatValidator,
-                    )
+                if is_rest_day:
+                    event_data = {
+                        "category": "NOTE",
+                        "name": intervals_name,
+                        "description": session.description or "Jour de repos complet",
+                        "start_date_local": f"{session.session_date}T06:00:00",
+                    }
+                else:
+                    event_data = {
+                        "category": "WORKOUT",
+                        "type": "VirtualRide",
+                        "name": intervals_name,
+                        "description": full_description,
+                        "start_date_local": f"{session.session_date}T{start_time}",
+                    }
 
-                    validator = IntervalsFormatValidator()
-                    is_valid, val_errors, _val_warnings = validator.validate_workout(
-                        full_description
-                    )
-                    if not is_valid:
-                        errors.append(
-                            f"Session {session.session_id}: workout validation failed — {val_errors}. "
-                            f"Fix with validate-workout tool, then retry sync."
+                    if (
+                        session.duration_min
+                        and session.duration_min > 0
+                        and full_description
+                        and full_description.strip()
+                    ):
+                        from magma_cycling.intervals_format_validator import (
+                            IntervalsFormatValidator,
                         )
-                        continue
+
+                        validator = IntervalsFormatValidator()
+                        is_valid, val_errors, _val_warnings = validator.validate_workout(
+                            full_description
+                        )
+                        if not is_valid:
+                            errors.append(
+                                f"Session {session.session_id}: workout validation failed — {val_errors}. "
+                                f"Fix with validate-workout tool, then retry sync."
+                            )
+                            continue
 
                 existing_event = None
                 if session.intervals_id and session.intervals_id in remote_workouts:
