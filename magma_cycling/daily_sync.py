@@ -201,6 +201,9 @@ class DailySync(
         if completed_activities:
             self.update_completed_sessions(completed_activities)
 
+        # 1c. Auto-complete rest sessions (TSS=0, duration=0, date passée)
+        self.auto_complete_rest_sessions(check_date)
+
         # 2. Generate AI analyses (if enabled)
         analyses = {}
         if self.enable_ai_analysis and new_activities:
