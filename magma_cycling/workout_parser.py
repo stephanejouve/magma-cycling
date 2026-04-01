@@ -168,6 +168,18 @@ def parse_workout_text(text: str) -> list[WorkoutBlock]:
     return blocks
 
 
+def calculate_workout_duration(description: str) -> int | None:
+    """Calculate total workout duration from structured blocks.
+
+    Returns total minutes if blocks were parsed, None otherwise (rest day, unparseable).
+    """
+    blocks = parse_workout_text(description)
+    if not blocks:
+        return None
+    total_seconds = sum(b.duration_seconds for b in blocks)
+    return total_seconds // 60
+
+
 def classify_interval_type(block: WorkoutBlock, main_blocks: list[WorkoutBlock]) -> str:
     """Classify a block as WORK or RECOVERY.
 

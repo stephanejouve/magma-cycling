@@ -163,6 +163,17 @@ class UploadMixin:
                     "tss_planned": tss,
                 }
 
+            # Recalculate durations from blocks (source of truth)
+            from magma_cycling.workout_parser import calculate_workout_duration
+
+            body_pattern = r"=== WORKOUT (S\d+-\d+-\w+-\w+-V\d+) ===\n(.*?)\n=== FIN WORKOUT ==="
+            for body_match in re.finditer(body_pattern, workouts_text, re.DOTALL):
+                wid = body_match.group(1)
+                if wid in workout_metadata:
+                    calculated = calculate_workout_duration(body_match.group(2).strip())
+                    if calculated is not None:
+                        workout_metadata[wid]["duration_min"] = calculated
+
             print(f"     ✓ {len(workout_metadata)} workouts parsés")
 
             # Get uploaded events from Intervals.icu

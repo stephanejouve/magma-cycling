@@ -86,6 +86,13 @@ def _parse_ai_workouts(raw_text: str, start_date: date) -> list[dict]:
         if dur_match:
             duration = int(dur_match.group(1))
 
+        # Recalculate from blocks (source of truth)
+        from magma_cycling.workout_parser import calculate_workout_duration
+
+        calculated = calculate_workout_duration(content_stripped)
+        if calculated is not None:
+            duration = calculated
+
         workouts.append(
             {
                 "session_id": session_id,
@@ -733,6 +740,16 @@ async def handle_modify_session_details(args: dict) -> list[TextContent]:
                             session.session_type = session_type
                         if description:
                             session.description = description
+                            # Auto-recalculate duration from blocks if not explicitly provided
+                            if duration_min is None:
+                                from magma_cycling.workout_parser import (
+                                    calculate_workout_duration,
+                                )
+
+                                calculated = calculate_workout_duration(description)
+                                if calculated is not None:
+                                    session.duration_min = calculated
+                                    modifications.append(f"duration={calculated}min (auto)")
                         if tss_planned is not None:
                             session.tss_planned = tss_planned
                         if duration_min is not None:
