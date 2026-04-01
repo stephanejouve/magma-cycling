@@ -5,6 +5,7 @@ import pytest
 from magma_cycling.workout_parser import (
     Phase,
     WorkoutBlock,
+    calculate_workout_duration,
     classify_interval_type,
     compute_intervals,
     parse_workout_text,
@@ -254,3 +255,74 @@ class TestComputeIntervals:
         assert intervals[1].type == "WORK"
         assert intervals[2].type == "RECOVERY"
         assert intervals[3].type == "WORK"
+
+
+class TestCalculateWorkoutDuration:
+    """Tests for calculate_workout_duration()."""
+
+    def test_simple_workout(self):
+        """Blocs 10+3+45+10=68 → retourne 68."""
+        text = """\
+Endurance Base (68min, 48 TSS)
+
+Warmup
+- 10m ramp 50-65% 85rpm
+- 3m 65% 90rpm
+
+Main set
+- 45m 68-72% 88rpm
+
+Cooldown
+- 10m ramp 65-50% 85rpm
+"""
+        assert calculate_workout_duration(text) == 68
+
+    def test_repeated_blocks(self):
+        """Main set 3x → expansion correcte."""
+        text = """\
+Variations Cadence (40min, 32 TSS)
+
+Warmup
+- 5m ramp 50-65% 85rpm
+
+Main set 3x
+- 3m 70% 95rpm
+- 2m 70% 80rpm
+- 3m 70% 105rpm
+- 2m 65% 85rpm
+
+Cooldown
+- 5m ramp 65-50% 85rpm
+"""
+        # 5 + 3*(3+2+3+2) + 5 = 5 + 30 + 5 = 40
+        assert calculate_workout_duration(text) == 40
+
+    def test_rest_day_returns_none(self):
+        """Texte REPOS → None."""
+        text = "REPOS\n\nSéance reportée à samedi."
+        assert calculate_workout_duration(text) is None
+
+    def test_unparseable_returns_none(self):
+        """Texte libre sans blocs structurés → None."""
+        text = "Sortie libre en endurance, rouler au feeling."
+        assert calculate_workout_duration(text) is None
+
+    def test_header_ignored_blocks_used(self):
+        """Header dit 90min, blocs totalisent 75min → retourne 75."""
+        text = """\
+SweetSpot Progressif (90min, 72 TSS)
+
+Warmup
+- 10m ramp 50-65% 85rpm
+- 5m 65% 90rpm
+
+Main set
+- 40m 88-92% 90rpm
+- 5m 62% 85rpm
+
+Cooldown
+- 10m ramp 65-50% 85rpm
+- 5m 50% 80rpm
+"""
+        # 10+5+40+5+10+5 = 75 (header says 90)
+        assert calculate_workout_duration(text) == 75
