@@ -39,7 +39,7 @@ COPY magma_cycling/ magma_cycling/
 COPY scripts/ scripts/
 
 # Installer le package (entry points CLI)
-COPY pyproject.toml .
+COPY pyproject.toml README.md ./
 RUN pip install --no-cache-dir -e .
 
 # Crontab + entrypoint
