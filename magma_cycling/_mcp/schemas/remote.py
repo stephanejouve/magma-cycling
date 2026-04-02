@@ -8,7 +8,7 @@ def get_tools() -> list[Tool]:
     return [
         Tool(
             name="sync-week-to-calendar",
-            description="Synchronize a week's planning to the training calendar (PROTECTION: never modifies completed sessions)",
+            description="Synchronize a week's planning to the training calendar (PROTECTION: never modifies completed sessions; GUARD: rejects sessions without a structured workout in workouts.txt — escalate via modify-session-details)",
             inputSchema={
                 "type": "object",
                 "properties": {
