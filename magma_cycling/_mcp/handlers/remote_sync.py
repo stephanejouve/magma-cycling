@@ -83,6 +83,17 @@ async def handle_sync_week_to_calendar(args: dict) -> list[TextContent]:
                     and session.duration_min == 0
                 )
 
+                # Guard: non-rest sessions MUST have a structured workout
+                # from the workouts file — escalate if missing (never sync placeholders)
+                if not is_rest_day and intervals_name not in workout_descriptions:
+                    errors.append(
+                        f"Session {session.session_id}: workout description not found in "
+                        f"{week_id}_workouts.txt for '{intervals_name}'. "
+                        f"Provide a structured workout via modify-session-details "
+                        f"or regenerate workouts before syncing."
+                    )
+                    continue
+
                 if is_rest_day:
                     event_data = {
                         "category": "NOTE",

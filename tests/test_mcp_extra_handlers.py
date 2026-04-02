@@ -17,7 +17,16 @@ pytest_plugins = ("pytest_asyncio",)
 
 TOWER_PATCH = "magma_cycling.planning.control_tower.planning_tower"
 INTERVALS_PATCH = "magma_cycling.config.create_intervals_client"
+LOAD_WORKOUTS_PATCH = "magma_cycling._mcp.handlers.remote_sync.load_workout_descriptions"
 _PROVIDER_INFO = {"provider": "intervals_icu", "athlete_id": "i12345", "status": "ready"}
+
+# Default workout descriptions matching mock_session (S081-03-INT-TempoCourt-V001)
+_MOCK_DESC = (
+    "Warmup\n- 10m ramp 50-75% 85rpm\n\n"
+    "Main set 3x\n- 10m 88% 90rpm\n- 3m 60% 85rpm\n\n"
+    "Cooldown\n- 10m ramp 70-50% 85rpm"
+)
+MOCK_WORKOUT_DESCS = {"S081-03-INT-TempoCourt-V001": _MOCK_DESC}
 
 
 def _mock_intervals_client(**kwargs):
@@ -172,9 +181,6 @@ class TestHandleUpdateSession:
 # =======================
 
 
-LOAD_WORKOUTS_PATCH = "magma_cycling._mcp.handlers.remote_sync.load_workout_descriptions"
-
-
 class TestHandleSyncWeekToIntervals:
     @pytest.mark.asyncio
     async def test_dry_run_no_api_calls(self, mock_plan, mock_session):
@@ -190,7 +196,7 @@ class TestHandleSyncWeekToIntervals:
         args = {"week_id": "S081", "dry_run": True}
         with patch(TOWER_PATCH, tower):
             with patch(INTERVALS_PATCH, return_value=mock_client):
-                with patch(LOAD_WORKOUTS_PATCH, return_value={}):
+                with patch(LOAD_WORKOUTS_PATCH, return_value=MOCK_WORKOUT_DESCS):
                     result = await handle_sync_week_to_calendar(args)
         data = json.loads(result[0].text)
         assert data["dry_run"] is True
@@ -213,7 +219,7 @@ class TestHandleSyncWeekToIntervals:
         args = {"week_id": "S081", "dry_run": True}
         with patch(TOWER_PATCH, tower):
             with patch(INTERVALS_PATCH, return_value=mock_client):
-                with patch(LOAD_WORKOUTS_PATCH, return_value={}):
+                with patch(LOAD_WORKOUTS_PATCH, return_value=MOCK_WORKOUT_DESCS):
                     result = await handle_sync_week_to_calendar(args)
         data = json.loads(result[0].text)
         assert data["summary"]["skipped_protected"] == 1
@@ -261,7 +267,7 @@ class TestHandleSyncWeekToIntervals:
         args = {"week_id": "S081", "dry_run": True, "force_update": False}
         with patch(TOWER_PATCH, tower):
             with patch(INTERVALS_PATCH, return_value=mock_client):
-                with patch(LOAD_WORKOUTS_PATCH, return_value={}):
+                with patch(LOAD_WORKOUTS_PATCH, return_value=MOCK_WORKOUT_DESCS):
                     result = await handle_sync_week_to_calendar(args)
         data = json.loads(result[0].text)
         # No changes needed (same name and date)
@@ -292,7 +298,7 @@ class TestHandleSyncWeekToIntervals:
         args = {"week_id": "S081", "dry_run": True, "force_update": False}
         with patch(TOWER_PATCH, tower):
             with patch(INTERVALS_PATCH, return_value=mock_client):
-                with patch(LOAD_WORKOUTS_PATCH, return_value={}):
+                with patch(LOAD_WORKOUTS_PATCH, return_value=MOCK_WORKOUT_DESCS):
                     result = await handle_sync_week_to_calendar(args)
         data = json.loads(result[0].text)
         assert data["summary"]["warnings"] == 1
@@ -313,7 +319,7 @@ class TestHandleSyncWeekToIntervals:
         args = {"week_id": "S081", "dry_run": True}
         with patch(TOWER_PATCH, tower):
             with patch(INTERVALS_PATCH, return_value=mock_client):
-                with patch(LOAD_WORKOUTS_PATCH, return_value={}):
+                with patch(LOAD_WORKOUTS_PATCH, return_value=MOCK_WORKOUT_DESCS):
                     result = await handle_sync_week_to_calendar(args)
         data = json.loads(result[0].text)
         assert data["summary"]["skipped_protected"] == 1
@@ -335,7 +341,7 @@ class TestHandleSyncWeekToIntervals:
         args = {"week_id": "S081", "dry_run": True}
         with patch(TOWER_PATCH, tower):
             with patch(INTERVALS_PATCH, return_value=mock_client):
-                with patch(LOAD_WORKOUTS_PATCH, return_value={}):
+                with patch(LOAD_WORKOUTS_PATCH, return_value=MOCK_WORKOUT_DESCS):
                     result = await handle_sync_week_to_calendar(args)
         data = json.loads(result[0].text)
         assert data["summary"]["skipped_protected"] == 1
@@ -368,7 +374,7 @@ class TestHandleSyncWeekToIntervals:
         args = {"week_id": "S081", "dry_run": True, "force_update": False}
         with patch(TOWER_PATCH, tower):
             with patch(INTERVALS_PATCH, return_value=mock_client):
-                with patch(LOAD_WORKOUTS_PATCH, return_value={}):
+                with patch(LOAD_WORKOUTS_PATCH, return_value=MOCK_WORKOUT_DESCS):
                     result = await handle_sync_week_to_calendar(args)
         data = json.loads(result[0].text)
         # Short name != full intervals_name → conflict detected
@@ -403,7 +409,7 @@ class TestHandleSyncWeekToIntervals:
         args = {"week_id": "S081", "dry_run": False, "force_update": True}
         with patch(TOWER_PATCH, tower):
             with patch(INTERVALS_PATCH, return_value=mock_client):
-                with patch(LOAD_WORKOUTS_PATCH, return_value={}):
+                with patch(LOAD_WORKOUTS_PATCH, return_value=MOCK_WORKOUT_DESCS):
                     result = await handle_sync_week_to_calendar(args)
         data = json.loads(result[0].text)
         assert data["summary"]["updated"] == 1
@@ -440,10 +446,14 @@ class TestHandleSyncWeekToIntervals:
         mock_client.get_events.return_value = []
 
         # Only sync session2
+        descs = {
+            **MOCK_WORKOUT_DESCS,
+            "S081-06-END-EnduranceLongue-V001": session2.description,
+        }
         args = {"week_id": "S081", "dry_run": True, "session_ids": ["S081-06"]}
         with patch(TOWER_PATCH, tower):
             with patch(INTERVALS_PATCH, return_value=mock_client):
-                with patch(LOAD_WORKOUTS_PATCH, return_value={}):
+                with patch(LOAD_WORKOUTS_PATCH, return_value=descs):
                     result = await handle_sync_week_to_calendar(args)
         data = json.loads(result[0].text)
         assert data["summary"]["to_create"] == 1
