@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import asyncio
+import tempfile
 from datetime import date
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -193,8 +195,7 @@ def _make_mock_planner():
     """Create a mock WeeklyPlanner with required attributes."""
     planner = MagicMock()
     planner.current_metrics = {"ftp": 250, "weight": 75}
-    planner.planning_dir = MagicMock()
-    planner.planning_dir.__truediv__ = MagicMock(return_value=MagicMock())
+    planner.planning_dir = Path(tempfile.mkdtemp())
     return planner
 
 
@@ -211,11 +212,6 @@ class TestHandleWeeklyPlannerDirect:
         planner.generate_planning_prompt.return_value = "fake prompt"
         mock_planner_cls.return_value = planner
         mock_call_ai.return_value = fake_ai_response
-
-        # Mock workouts_file path
-        mock_file = MagicMock()
-        planner.planning_dir.__truediv__.return_value = mock_file
-        mock_file.__str__ = MagicMock(return_value="/tmp/S083_workouts.txt")
 
         result = _run_async(
             handle_weekly_planner(
@@ -275,9 +271,6 @@ class TestHandleWeeklyPlannerDirect:
         mock_planner_cls.return_value = planner
         mock_call_ai.return_value = "Just some text without workout delimiters"
 
-        mock_file = MagicMock()
-        planner.planning_dir.__truediv__.return_value = mock_file
-
         result = _run_async(
             handle_weekly_planner(
                 {
@@ -315,10 +308,6 @@ class TestHandleWeeklyPlannerDirect:
         mock_planner_cls.return_value = planner
         mock_call_ai.return_value = partial_response
 
-        mock_file = MagicMock()
-        planner.planning_dir.__truediv__.return_value = mock_file
-        mock_file.__str__ = MagicMock(return_value="/tmp/S083_workouts.txt")
-
         result = _run_async(
             handle_weekly_planner(
                 {
@@ -348,10 +337,6 @@ class TestHandleWeeklyPlannerDirect:
         mock_planner_cls.return_value = planner
         mock_call_ai.return_value = fake_ai_response
 
-        mock_file = MagicMock()
-        planner.planning_dir.__truediv__.return_value = mock_file
-        mock_file.__str__ = MagicMock(return_value="/tmp/S083_workouts.txt")
-
         _run_async(
             handle_weekly_planner(
                 {
@@ -363,7 +348,9 @@ class TestHandleWeeklyPlannerDirect:
         )
 
         # Verify file was written with raw AI response
-        mock_file.write_text.assert_called_once_with(fake_ai_response, encoding="utf-8")
+        workouts_file = planner.planning_dir / "S083_workouts.txt"
+        assert workouts_file.exists()
+        assert workouts_file.read_text(encoding="utf-8") == fake_ai_response
 
     @patch("magma_cycling._mcp.handlers.planning._call_ai_provider")
     @patch("magma_cycling.weekly_planner.WeeklyPlanner")
@@ -375,10 +362,6 @@ class TestHandleWeeklyPlannerDirect:
         planner.generate_planning_prompt.return_value = "fake prompt"
         mock_planner_cls.return_value = planner
         mock_call_ai.return_value = fake_ai_response
-
-        mock_file = MagicMock()
-        planner.planning_dir.__truediv__.return_value = mock_file
-        mock_file.__str__ = MagicMock(return_value="/tmp/S083_workouts.txt")
 
         _run_async(
             handle_weekly_planner(
