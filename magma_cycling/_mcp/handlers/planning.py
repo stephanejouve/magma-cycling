@@ -140,6 +140,7 @@ async def handle_weekly_planner(args: dict) -> list[TextContent]:
     week_id = args["week_id"]
     start_date_str = args["start_date"]
     provider = args.get("provider", "clipboard")
+    force = args.get("force", False)
 
     start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
 
@@ -147,7 +148,30 @@ async def handle_weekly_planner(args: dict) -> list[TextContent]:
     with suppress_stdout_stderr():
         planner = WeeklyPlanner(week_number=week_id, start_date=start_date, project_root=Path.cwd())
 
-        # Collect metrics
+    # --- Guard: reject overwrite unless force=True ---
+    existing_file = planner.planning_dir / f"week_planning_{week_id}.json"
+    if existing_file.exists():
+        if not force:
+            return mcp_response(
+                {
+                    "error": "planning_exists",
+                    "week_id": week_id,
+                    "existing_file": str(existing_file),
+                    "message": (
+                        f"Planning {week_id} already exists. "
+                        "Use force=true to overwrite (a backup will be created first)."
+                    ),
+                }
+            )
+        # force=True → backup before overwrite
+        from magma_cycling.planning.control_tower import planning_tower
+
+        with suppress_stdout_stderr():
+            planning_tower.backup_system.backup_week_files(week_id)
+        logger.info("Backup created for %s before forced overwrite", week_id)
+
+    # Collect metrics
+    with suppress_stdout_stderr():
         planner.current_metrics = planner.collect_current_metrics()
         planner.previous_week_bilan = planner.load_previous_week_bilan()
         planner.context_files = planner.load_context_files()

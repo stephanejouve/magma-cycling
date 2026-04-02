@@ -110,6 +110,15 @@ class Session(BaseModel):
         alias="type", description="Session type (END, INT, REC, CAD, VO2, etc.)"
     )  # Use alias to avoid 'type' keyword conflict
     version: str = Field(default="V001", pattern=r"^V\d{3}$", description="Session version")
+
+    @field_validator("version", mode="before")
+    @classmethod
+    def normalize_version(cls, v: str) -> str:
+        """Strip duplicate V prefix (VV001 → V001)."""
+        if isinstance(v, str) and v.startswith("VV"):
+            return v[1:]
+        return v
+
     tss_planned: int = Field(ge=0, le=500, description="Planned Training Stress Score")
     duration_min: int = Field(ge=0, le=600, description="Planned duration in minutes")
     description: str = Field(default="", description="Workout description")

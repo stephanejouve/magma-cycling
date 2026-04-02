@@ -440,7 +440,7 @@ class PlanningControlTower:
                 "session_date": event_date,
                 "name": session_name,
                 "session_type": session_type,
-                "version": f"V{version}",
+                "version": version,
                 "intervals_id": intervals_id,
                 "status": status,
                 "description": description,
