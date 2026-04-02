@@ -338,9 +338,14 @@ def _patch_history():
     written = {}
     mock_path.write_text.side_effect = lambda content, **kw: written.update(text=content)
 
+    def _fake_safe_write(path, content, backup_dir=None):
+        path.write_text(content, encoding="utf-8")
+        return None
+
     with (
         patch(f"{PATCH_HANDLER}.suppress_stdout_stderr"),
         patch(f"{CFG}.get_data_config", return_value=mock_config),
+        patch("magma_cycling.planning.backup.safe_write", side_effect=_fake_safe_write),
     ):
         yield {
             "path": mock_path,

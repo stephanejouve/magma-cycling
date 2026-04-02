@@ -194,9 +194,11 @@ async def handle_weekly_planner(args: dict) -> list[TextContent]:
             with suppress_stdout_stderr():
                 raw_response = _call_ai_provider(prompt, planner.current_metrics)
 
-            # 2. Save raw text to {week_id}_workouts.txt
+            # 2. Save raw text to {week_id}_workouts.txt (with backup)
+            from magma_cycling.planning.backup import safe_write
+
             workouts_file = planner.planning_dir / f"{week_id}_workouts.txt"
-            workouts_file.write_text(raw_response, encoding="utf-8")
+            safe_write(workouts_file, raw_response)
 
             # 3. Parse workouts
             workouts_data = _parse_ai_workouts(raw_response, start_date)

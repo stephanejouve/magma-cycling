@@ -259,8 +259,10 @@ async def handle_attach_workout(args: dict) -> list[TextContent]:
             filename = f"{session_id}-{workout_type}-{workout_name}-{version}.{extension}"
             file_path = workouts_dir / filename
 
-            # Write workout file
-            file_path.write_text(content, encoding="utf-8")
+            # Write workout file (with backup)
+            from magma_cycling.planning.backup import safe_write
+
+            safe_write(file_path, content)
 
         result = {
             "status": "success",

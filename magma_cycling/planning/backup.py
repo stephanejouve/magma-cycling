@@ -214,6 +214,24 @@ class PlanningBackup:
         return deleted
 
 
+def safe_write(file_path: Path, content: str, backup_dir: Path | None = None) -> Path | None:
+    """Backup-then-write: create a backup before overwriting a file.
+
+    Args:
+        file_path: Path to write to
+        content: Content to write
+        backup_dir: Directory for backups (default: file's parent / "backups")
+
+    Returns:
+        Path to backup file, or None if file didn't exist before write
+    """
+    file_path = Path(file_path)
+    backup = PlanningBackup(backup_dir or file_path.parent)
+    backup_path = backup.backup_file(file_path)
+    file_path.write_text(content, encoding="utf-8")
+    return backup_path
+
+
 def auto_backup(week_id: str) -> dict[str, Path]:
     """Convenience function for automatic backup before modifications.
 

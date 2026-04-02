@@ -201,6 +201,9 @@ class PlanningControlTower:
                     backup_path=backups.get("json") if backups else None,
                 )
 
+                # Cleanup old backups (keep 10 most recent per file)
+                self.backup_system.cleanup_old_backups(keep_count=10, week_id=week_id)
+
         except Exception as e:
             # On error, log failure and offer rollback
             print(f"❌ Control Tower: Error modifying {week_id}: {e}", file=sys.stderr)
