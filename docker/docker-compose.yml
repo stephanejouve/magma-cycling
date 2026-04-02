@@ -1,0 +1,33 @@
+services:
+  mcp-server:
+    image: stephanejouve/magma-cycling:latest
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    command: ["mcp-server"]
+    ports:
+      - "${MCP_HTTP_PORT:-3000}:3000"
+    env_file: ../.env
+    environment:
+      - MCP_TRANSPORT=http
+      - MCP_HTTP_HOST=0.0.0.0
+      - TRAINING_LOGS_PATH=/data/training-logs
+    volumes:
+      - ${TRAINING_DATA_REPO:-../training-logs}:/data/training-logs
+    restart: unless-stopped
+
+  cron-jobs:
+    image: stephanejouve/magma-cycling:latest
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    command: ["supercronic", "/app/crontab"]
+    env_file: ../.env
+    environment:
+      - TRAINING_LOGS_PATH=/data/training-logs
+    volumes:
+      - ${TRAINING_DATA_REPO:-../training-logs}:/data/training-logs
+    restart: unless-stopped
+
+volumes:
+  training-logs:
