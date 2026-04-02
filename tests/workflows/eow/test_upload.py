@@ -501,3 +501,118 @@ class TestStep5bSavePlanningJson:
 
         plan = WeeklyPlan.from_json(planning_dir / "week_planning_S081.json")
         assert len(plan.planned_sessions) == 0
+
+
+class TestStep5bTssReconciliation:
+    """Tests for TSS reconciliation integration in _step5b_save_planning_json."""
+
+    @patch("magma_cycling.workflows.eow.upload.audit_log")
+    @patch("magma_cycling.config.get_intervals_config")
+    @patch("magma_cycling.api.intervals_client.IntervalsClient")
+    def test_eow_applies_reconciled_tss(self, mock_client_cls, mock_config, mock_audit, tmp_path):
+        """Verify that divergent icu_training_load causes TSS reconciliation."""
+        f = tmp_path / "S081_workouts.txt"
+        f.write_text(VALID_WORKOUTS_CONTENT)
+
+        config = MagicMock()
+        config.athlete_id = "iXXXXXX"
+        config.api_key = "fake_key"
+        mock_config.return_value = config
+
+        # Remote has different icu_training_load values
+        mock_client = MagicMock()
+        mock_client.get_events.return_value = [
+            {
+                "id": 100,
+                "name": "S081-01-END-RepriseLundi-V001",
+                "category": "WORKOUT",
+                "start_date_local": "2026-03-16T08:00:00",
+                "icu_training_load": 60,  # local=45, delta=15 → updated
+            },
+            {
+                "id": 200,
+                "name": "S081-03-INT-Intervalles-V001",
+                "category": "WORKOUT",
+                "start_date_local": "2026-03-18T08:00:00",
+                "icu_training_load": 82,  # local=80, delta=2 → skipped
+            },
+        ]
+        mock_client_cls.return_value = mock_client
+
+        planning_dir = tmp_path / "planning"
+        planning_dir.mkdir()
+
+        wf = StubEowWorkflow(
+            workouts_file=f,
+            week_next="S081",
+            next_start_date=date(2026, 3, 16),
+            next_end_date=date(2026, 3, 22),
+            planning_dir=planning_dir,
+        )
+        wf._step5b_save_planning_json()
+
+        from magma_cycling.planning.models import WeeklyPlan
+
+        plan = WeeklyPlan.from_json(planning_dir / "week_planning_S081.json")
+
+        # S081-01: local=45, remote=60, delta=15 > max(5, 4.5)=5 → reconciled to 60
+        s1 = next(s for s in plan.planned_sessions if s.session_id == "S081-01")
+        assert s1.tss_planned == 60
+
+        # S081-03: local=80, remote=82, delta=2 < max(5, 8)=8 → kept at 80
+        s3 = next(s for s in plan.planned_sessions if s.session_id == "S081-03")
+        assert s3.tss_planned == 80
+
+        # Total: 60 + 80 = 140
+        assert plan.tss_target == 140
+
+    @patch("magma_cycling.workflows.eow.upload.audit_log")
+    @patch("magma_cycling.config.get_intervals_config")
+    @patch("magma_cycling.api.intervals_client.IntervalsClient")
+    def test_eow_no_reconciliation_when_no_remote_tss(
+        self, mock_client_cls, mock_config, mock_audit, tmp_path
+    ):
+        """No reconciliation when events lack icu_training_load."""
+        f = tmp_path / "S081_workouts.txt"
+        f.write_text(VALID_WORKOUTS_CONTENT)
+
+        config = MagicMock()
+        config.athlete_id = "iXXXXXX"
+        config.api_key = "fake_key"
+        mock_config.return_value = config
+
+        # No icu_training_load in events
+        mock_client = MagicMock()
+        mock_client.get_events.return_value = [
+            {
+                "id": 100,
+                "name": "S081-01-END-RepriseLundi-V001",
+                "category": "WORKOUT",
+                "start_date_local": "2026-03-16T08:00:00",
+            },
+            {
+                "id": 200,
+                "name": "S081-03-INT-Intervalles-V001",
+                "category": "WORKOUT",
+                "start_date_local": "2026-03-18T08:00:00",
+            },
+        ]
+        mock_client_cls.return_value = mock_client
+
+        planning_dir = tmp_path / "planning"
+        planning_dir.mkdir()
+
+        wf = StubEowWorkflow(
+            workouts_file=f,
+            week_next="S081",
+            next_start_date=date(2026, 3, 16),
+            next_end_date=date(2026, 3, 22),
+            planning_dir=planning_dir,
+        )
+        wf._step5b_save_planning_json()
+
+        from magma_cycling.planning.models import WeeklyPlan
+
+        plan = WeeklyPlan.from_json(planning_dir / "week_planning_S081.json")
+        # Original values kept: 45 + 80 = 125
+        assert plan.tss_target == 125
