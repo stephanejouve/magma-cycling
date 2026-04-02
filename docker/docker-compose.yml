@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  mcp-server:
+    image: ghcr.io/stephanejouve/magma-cycling:latest
+    command: ["mcp-server"]
+    ports:
+      - "3000:3000"
+    volumes:
+      - training-logs:/data/training-logs
+    env_file: .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+
+  cron-jobs:
+    image: ghcr.io/stephanejouve/magma-cycling:latest
+    command: ["supercronic", "/app/crontab"]
+    volumes:
+      - training-logs:/data/training-logs
+    env_file: .env
+    restart: unless-stopped
+
+volumes:
+  training-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /volume1/docker/magma/training-logs

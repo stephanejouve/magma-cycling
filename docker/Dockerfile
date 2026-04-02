@@ -1,0 +1,63 @@
+# =============================================================================
+# Stage 1 : builder — export requirements via Poetry
+# =============================================================================
+FROM python:3.12-slim AS builder
+
+WORKDIR /app
+
+COPY pyproject.toml poetry.lock ./
+
+RUN pip install --no-cache-dir poetry \
+    && poetry export -f requirements.txt -o requirements.txt --without-hashes
+
+# =============================================================================
+# Stage 2 : runtime — image legere sans Poetry
+# =============================================================================
+FROM python:3.12-slim
+
+# Deps systeme : git (push data repo) + curl (healthcheck)
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Supercronic (cron leger pour Docker) — multi-arch via TARGETARCH
+ARG SUPERCRONIC_VERSION=v0.2.33
+ARG TARGETARCH
+RUN ARCH=$(case ${TARGETARCH} in arm64) echo "linux-arm64" ;; *) echo "linux-amd64" ;; esac) \
+    && curl -fsSL "https://github.com/aptible/supercronic/releases/download/${SUPERCRONIC_VERSION}/supercronic-${ARCH}" \
+       -o /usr/local/bin/supercronic \
+    && chmod +x /usr/local/bin/supercronic
+
+WORKDIR /app
+
+# Deps Python
+COPY --from=builder /app/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Code source
+COPY magma_cycling/ magma_cycling/
+COPY scripts/ scripts/
+
+# Installer le package (entry points CLI)
+COPY pyproject.toml .
+RUN pip install --no-cache-dir -e .
+
+# Crontab + entrypoint
+COPY docker/crontab /app/crontab
+COPY docker/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
+# User non-root
+RUN useradd -m magma \
+    && chown -R magma:magma /app
+USER magma
+
+# Env par defaut
+ENV MCP_TRANSPORT=http \
+    MCP_HTTP_HOST=0.0.0.0 \
+    MCP_HTTP_PORT=3000
+
+EXPOSE 3000
+
+ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["mcp-server"]

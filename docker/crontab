@@ -1,0 +1,20 @@
+# magma-cycling — taches periodiques (supercronic)
+# Format : minute heure jour-du-mois mois jour-de-la-semaine commande
+
+# session-monitor : toutes les 20min, 6h-23h
+*/20 6-23 * * * session-monitor
+
+# daily-sync : 21h30
+30 21 * * * daily-sync --send-email --ai-analysis --auto-servo
+
+# check-workout-adherence : 22h00
+0 22 * * * check-workout-adherence --weekly-alert
+
+# pid-daily-evaluation : 23h00
+0 23 * * * pid-daily-evaluation --days-back 7
+
+# end-of-week : dimanche 20h00
+0 20 * * 0 end-of-week --auto-calculate --provider mistral_api --auto
+
+# project-clean : quotidien 03h00
+0 3 * * * project-clean
