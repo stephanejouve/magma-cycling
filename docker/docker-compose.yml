@@ -1,33 +1,33 @@
+version: "3.8"
+
 services:
   mcp-server:
-    image: stephanejouve/magma-cycling:latest
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
+    image: ghcr.io/stephanejouve/magma-cycling:latest
     command: ["mcp-server"]
     ports:
-      - "${MCP_HTTP_PORT:-3000}:3000"
-    env_file: ../.env
-    environment:
-      - MCP_TRANSPORT=http
-      - MCP_HTTP_HOST=0.0.0.0
-      - TRAINING_LOGS_PATH=/data/training-logs
+      - "3000:3000"
     volumes:
-      - ${TRAINING_DATA_REPO:-../training-logs}:/data/training-logs
+      - training-logs:/data/training-logs
+    env_file: .env
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
 
   cron-jobs:
-    image: stephanejouve/magma-cycling:latest
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
+    image: ghcr.io/stephanejouve/magma-cycling:latest
     command: ["supercronic", "/app/crontab"]
-    env_file: ../.env
-    environment:
-      - TRAINING_LOGS_PATH=/data/training-logs
     volumes:
-      - ${TRAINING_DATA_REPO:-../training-logs}:/data/training-logs
+      - training-logs:/data/training-logs
+    env_file: .env
     restart: unless-stopped
 
 volumes:
   training-logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /volume1/docker/magma/training-logs
