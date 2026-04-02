@@ -27,9 +27,10 @@ class ActivityTracker:
 
     def _save(self):
         """Save tracking data to file."""
+        from magma_cycling.planning.backup import safe_write
+
         self.tracking_file.parent.mkdir(parents=True, exist_ok=True)
-        with open(self.tracking_file, "w", encoding="utf-8") as f:
-            json.dump(self.data, f, indent=2)
+        safe_write(self.tracking_file, json.dumps(self.data, indent=2))
 
     def is_analyzed(self, activity_id: int, activity_date: date) -> bool:
         """

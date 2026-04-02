@@ -342,9 +342,11 @@ async def handle_patch_coach_analysis(args: dict) -> list[TextContent]:
             block = block.rstrip("\n") + "\n" + correction_section
             patches_applied.append({"field": "note", "added": True})
 
-        # Rewrite file
+        # Rewrite file (with backup)
+        from magma_cycling.planning.backup import safe_write
+
         new_content = content[:start] + block + content[end:]
-        history_path.write_text(new_content, encoding="utf-8")
+        safe_write(history_path, new_content)
 
     return mcp_response(
         {
