@@ -147,13 +147,38 @@ class TestRestDayCreatesNote:
         plan = _make_plan([session])
         client = _make_client()
 
-        with _patch_sync(plan, client):
+        descs = {"S099-01-REC-RecoveryActive-V001": "- 45m 55% 85rpm"}
+        with _patch_sync(plan, client, workout_descriptions=descs):
             result = _extract(await handle_sync_week_to_calendar({"week_id": "S099"}))
 
         assert result["summary"]["to_create"] == 1
         call_args = client.create_event.call_args[0][0]
         assert call_args["category"] == "WORKOUT"
         assert call_args["type"] == "VirtualRide"
+
+    @pytest.mark.asyncio
+    async def test_missing_workout_description_escalates(self):
+        """A non-rest session without workout in workouts.txt should error, not sync."""
+        session = _make_session(
+            session_id="S099-02",
+            name="TempoIntervals",
+            session_type="INT",
+            tss_planned=68,
+            duration_min=65,
+            description="Tempo Intervals",
+            status="pending",
+        )
+        plan = _make_plan([session])
+        client = _make_client()
+
+        # No workout_descriptions provided → guard should reject
+        with _patch_sync(plan, client):
+            result = _extract(await handle_sync_week_to_calendar({"week_id": "S099"}))
+
+        assert result["summary"]["errors"] == 1
+        assert result["summary"]["to_create"] == 0
+        assert "workout description not found" in result["errors"][0]
+        client.create_event.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_rest_day_skips_validation(self):
