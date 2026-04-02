@@ -34,6 +34,11 @@ def get_tools() -> list[Tool]:
                         ],
                         "default": "clipboard",
                     },
+                    "force": {
+                        "type": "boolean",
+                        "description": "Force overwrite if a planning already exists for this week (creates backup first). Default false — will reject if planning exists.",
+                        "default": False,
+                    },
                 },
                 "required": ["week_id", "start_date"],
             },

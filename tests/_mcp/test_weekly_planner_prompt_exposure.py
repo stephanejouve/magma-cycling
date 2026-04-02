@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import asyncio
+import tempfile
 from contextlib import nullcontext
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -24,6 +26,7 @@ def _patch_planner():
     """Patch WeeklyPlanner to avoid real API/filesystem calls."""
     mock_cls = MagicMock()
     instance = mock_cls.return_value
+    instance.planning_dir = Path(tempfile.mkdtemp())
     instance.collect_current_metrics.return_value = {}
     instance.load_previous_week_bilan.return_value = ""
     instance.load_context_files.return_value = {}
