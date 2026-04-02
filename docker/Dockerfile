@@ -7,7 +7,7 @@ WORKDIR /app
 
 COPY pyproject.toml poetry.lock ./
 
-RUN pip install --no-cache-dir poetry \
+RUN pip install --no-cache-dir poetry poetry-plugin-export \
     && poetry export -f requirements.txt -o requirements.txt --without-hashes
 
 # =============================================================================
