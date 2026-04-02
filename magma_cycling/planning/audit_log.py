@@ -174,7 +174,34 @@ class PlanningAuditLog:
         with self.log_file.open("a") as f:
             f.write(entry.model_dump_json() + "\n")
 
+        # Trim if needed
+        self.trim_log()
+
         return entry
+
+    def trim_log(self, max_lines: int = 2000) -> int:
+        """Trim audit log to keep only the most recent lines.
+
+        Args:
+            max_lines: Maximum number of lines to keep
+
+        Returns:
+            Number of lines removed
+        """
+        if not self.log_file.exists():
+            return 0
+
+        with self.log_file.open("r") as f:
+            lines = f.readlines()
+
+        if len(lines) <= max_lines:
+            return 0
+
+        removed = len(lines) - max_lines
+        with self.log_file.open("w") as f:
+            f.writelines(lines[removed:])
+
+        return removed
 
     def get_recent_operations(
         self, count: int = 20, week_id: str | None = None

@@ -166,9 +166,11 @@ class AIWorkoutsMixin:
             print(f"  ✅ Workouts générés ({len(workouts_response)} caractères)")
             print()
 
-            # Step 3: Save to file
+            # Step 3: Save to file (with backup)
+            from magma_cycling.planning.backup import safe_write
+
             workouts_file = self.planning_dir / f"{self.week_next}_workouts.txt"
-            workouts_file.write_text(workouts_response, encoding="utf-8")
+            safe_write(workouts_file, workouts_response)
 
             self.workouts_content = workouts_response
             self.workouts_file = workouts_file
