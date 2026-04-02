@@ -8,6 +8,7 @@ Provides CLI sub-commands:
   create-pr                  — create PR from current branch to main
   wait-main                  — poll CI checks on latest main commit
   codecov-status [--compare] — show current Codecov coverage and delta
+  list-prs [--state open]    — list pull requests
 
 Full PR lifecycle in 2 commands:
   python scripts/maintenance/github_utils.py create-pr --title "feat: ..."
@@ -369,6 +370,39 @@ def codecov_status(compare=False):
 
 
 # ---------------------------------------------------------------------------
+# list-prs
+# ---------------------------------------------------------------------------
+
+
+def list_prs(state="open"):
+    """List pull requests for the repository."""
+    token = _get_token()
+    hdrs = _headers(token)
+
+    resp = requests.get(
+        f"{API_BASE}/pulls",
+        headers=hdrs,
+        params={"state": state, "per_page": 20},
+        timeout=15,
+    )
+    resp.raise_for_status()
+    prs = resp.json()
+
+    if not prs:
+        print(f"No {state} pull requests")
+        return
+
+    for pr in prs:
+        number = pr["number"]
+        title = pr["title"]
+        branch = pr["head"]["ref"]
+        author = pr["user"]["login"]
+        print(f"  #{number}  {title}  ({branch}) — {author}")
+
+    print(f"\n{len(prs)} {state} PR(s)")
+
+
+# ---------------------------------------------------------------------------
 # create-pr
 # ---------------------------------------------------------------------------
 
@@ -477,6 +511,10 @@ def main():
     cs = sub.add_parser("codecov-status", help="Show Codecov coverage for main")
     cs.add_argument("--compare", action="store_true", help="Compare with parent commit")
 
+    # list-prs
+    lp = sub.add_parser("list-prs", help="List pull requests")
+    lp.add_argument("--state", default="open", choices=["open", "closed", "all"])
+
     # create-pr
     cp = sub.add_parser("create-pr", help="Create PR from current branch to main")
     cp.add_argument("--title", help="PR title (default: last commit subject)")
@@ -501,6 +539,8 @@ def main():
         wait_main()
     elif args.command == "codecov-status":
         codecov_status(compare=args.compare)
+    elif args.command == "list-prs":
+        list_prs(state=args.state)
     elif args.command == "create-pr":
         create_pr(title=args.title, body=args.body)
 
