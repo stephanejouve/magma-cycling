@@ -20,7 +20,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends git curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Supercronic (cron leger pour Docker) — latest release multi-arch
+# Supercronic (cron leger pour Docker) — multi-arch via TARGETARCH
 ARG SUPERCRONIC_VERSION=v0.2.33
 ARG TARGETARCH
 RUN ARCH=$(case ${TARGETARCH} in arm64) echo "linux-arm64" ;; *) echo "linux-amd64" ;; esac) \
@@ -39,7 +39,7 @@ COPY magma_cycling/ magma_cycling/
 COPY scripts/ scripts/
 
 # Installer le package (entry points CLI)
-COPY pyproject.toml poetry.lock ./
+COPY pyproject.toml .
 RUN pip install --no-cache-dir -e .
 
 # Crontab + entrypoint
@@ -52,19 +52,12 @@ RUN useradd -m magma \
     && chown -R magma:magma /app
 USER magma
 
-# Config git pour le data repo
-RUN git config --global user.name "magma-cycling" \
-    && git config --global user.email "stephanejouve@users.noreply.github.com"
-
 # Env par defaut
 ENV MCP_TRANSPORT=http \
     MCP_HTTP_HOST=0.0.0.0 \
     MCP_HTTP_PORT=3000
 
 EXPOSE 3000
-
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD curl -fs http://localhost:3000/sse || exit 1
 
 ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["mcp-server"]

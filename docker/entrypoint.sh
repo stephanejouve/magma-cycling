@@ -19,10 +19,19 @@ if [ -n "$MISSING" ]; then
 fi
 
 # -----------------------------------------------------------------------
-# Config git si data repo present
+# Config git pour le data repo (push planning, reports, etc.)
 # -----------------------------------------------------------------------
-if [ -d "$TRAINING_LOGS_PATH/.git" ]; then
-    echo "[entrypoint] Data repo git detecte dans $TRAINING_LOGS_PATH"
+if [ -n "$GIT_USER_NAME" ]; then
+    git config --global user.name "$GIT_USER_NAME"
+fi
+
+if [ -n "$GIT_USER_EMAIL" ]; then
+    git config --global user.email "$GIT_USER_EMAIL"
+fi
+
+if [ -n "$GIT_TOKEN" ]; then
+    git config --global credential.helper \
+        '!f() { echo "username='"$GIT_USER_NAME"'"; echo "password='"$GIT_TOKEN"'"; }; f'
 fi
 
 # -----------------------------------------------------------------------
