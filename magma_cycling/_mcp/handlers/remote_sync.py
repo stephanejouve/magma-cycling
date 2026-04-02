@@ -182,6 +182,11 @@ async def handle_sync_week_to_calendar(args: dict) -> list[TextContent]:
 
             created_count = 0
             updated_count = 0
+            tss_pairs = []
+            tss_reconciliation_summary = None
+
+            # Build local TSS lookup from plan sessions
+            local_tss_map = {s.session_id: s.tss_planned for s in sessions_to_process}
 
             if not dry_run:
                 for item in to_create:
@@ -214,6 +219,16 @@ async def handle_sync_week_to_calendar(args: dict) -> list[TextContent]:
 
                             created_count += 1
 
+                            # Collect TSS pair from create response
+                            remote_tss = created.get("icu_training_load")
+                            tss_pairs.append(
+                                {
+                                    "session_id": item["session_id"],
+                                    "local_tss": local_tss_map.get(item["session_id"], 0),
+                                    "remote_tss": remote_tss,
+                                }
+                            )
+
                     except Exception as e:
                         errors.append(f"Error creating {item['session_id']}: {str(e)}")
 
@@ -222,11 +237,60 @@ async def handle_sync_week_to_calendar(args: dict) -> list[TextContent]:
                         updated = client.update_event(item["intervals_id"], item["event_data"])
                         if updated:
                             updated_count += 1
+
+                            # Collect TSS pair from update response
+                            if isinstance(updated, dict):
+                                remote_tss = updated.get("icu_training_load")
+                                tss_pairs.append(
+                                    {
+                                        "session_id": item["session_id"],
+                                        "local_tss": local_tss_map.get(item["session_id"], 0),
+                                        "remote_tss": remote_tss,
+                                    }
+                                )
                         else:
                             errors.append(f"Failed to update {item['session_id']}")
 
                     except Exception as e:
                         errors.append(f"Error updating {item['session_id']}: {str(e)}")
+
+                # TSS reconciliation after all creates/updates
+                if tss_pairs:
+                    from magma_cycling.utils.tss_reconciliation import reconcile_week_tss
+
+                    recon = reconcile_week_tss(tss_pairs)
+                    updated_results = [r for r in recon["results"] if r.action == "updated"]
+
+                    if updated_results:
+                        with planning_tower.modify_week(
+                            week_id,
+                            requesting_script="mcp-server",
+                            reason="MCP: TSS reconciliation from remote icu_training_load",
+                        ) as plan:
+                            for r in updated_results:
+                                for session in plan.planned_sessions:
+                                    if session.session_id == r.session_id:
+                                        session.tss_planned = r.reconciled_tss
+                                        break
+
+                    tss_reconciliation_summary = {
+                        "sessions_updated": recon["sessions_updated"],
+                        "sessions_skipped": recon["sessions_skipped"],
+                        "tss_local_total": recon["tss_local_total"],
+                        "tss_remote_total": recon["tss_remote_total"],
+                        "tss_reconciled_total": recon["tss_reconciled_total"],
+                        "details": [
+                            {
+                                "session_id": r.session_id,
+                                "local_tss": r.local_tss,
+                                "remote_tss": r.remote_tss,
+                                "reconciled_tss": r.reconciled_tss,
+                                "delta": r.delta,
+                                "action": r.action,
+                            }
+                            for r in recon["results"]
+                        ],
+                    }
 
         if errors:
             status = "partial_success"
@@ -266,6 +330,9 @@ async def handle_sync_week_to_calendar(args: dict) -> list[TextContent]:
             "errors": errors if errors else None,
             "message": f"Sync {'preview' if dry_run else 'completed'} for {week_id}",
         }
+
+        if not dry_run and tss_reconciliation_summary:
+            result["tss_reconciliation"] = tss_reconciliation_summary
 
         return mcp_response(result, provider_info=_provider_info)
 

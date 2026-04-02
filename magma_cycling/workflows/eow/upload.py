@@ -195,6 +195,50 @@ class UploadMixin:
 
             print(f"     ✓ {len(workouts_sorted)} workouts uploadés")
 
+            # TSS reconciliation: compare local (LLM header) vs remote (icu_training_load)
+            from magma_cycling.utils.tss_reconciliation import reconcile_week_tss
+
+            tss_pairs = []
+            for ws in workouts_sorted:
+                wname = ws.get("name", "")
+                meta = workout_metadata.get(wname, {})
+                local_tss = meta.get("tss_planned", 0)
+                remote_tss = ws.get("icu_training_load")
+                # Extract session_id from workout name (e.g. S081-01)
+                sid_match = re.match(r"(S\d+-\d+)", wname)
+                sid = sid_match.group(1) if sid_match else wname
+                tss_pairs.append(
+                    {"session_id": sid, "local_tss": local_tss, "remote_tss": remote_tss}
+                )
+
+            if tss_pairs:
+                recon = reconcile_week_tss(tss_pairs)
+                updated_results = [r for r in recon["results"] if r.action == "updated"]
+
+                if updated_results:
+                    print(
+                        f"\n  🔄 TSS reconciliation: "
+                        f"{recon['sessions_updated']}/{len(tss_pairs)} sessions updated"
+                    )
+                    for r in updated_results:
+                        pct = (r.delta / r.local_tss * 100) if r.local_tss else 0
+                        print(
+                            f"     {r.session_id}: {r.local_tss} → {r.reconciled_tss} "
+                            f"({r.delta:+d}, {pct:+.1f}%)"
+                        )
+                    print(
+                        f"  Weekly TSS: {recon['tss_local_total']} (local) → "
+                        f"{recon['tss_reconciled_total']} (reconciled)"
+                    )
+
+                # Apply reconciled TSS back to workout_metadata
+                for r in recon["results"]:
+                    if r.action == "updated":
+                        for wname, meta in workout_metadata.items():
+                            if wname.startswith(f"{r.session_id}-"):
+                                meta["tss_planned"] = r.reconciled_tss
+                                break
+
             # Build planning data structure
             planning_data = {
                 "week_id": self.week_next,
