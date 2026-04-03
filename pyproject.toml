@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "magma-cycling"
-version = "2.2.0"
+version = "3.2.0"
 description = "Système automatisé d'analyse entraînements cyclisme"
 authors = ["Stéphane"]
 readme = "README.md"
@@ -123,6 +123,7 @@ project-clean = "scripts.maintenance.project_cleaner:main"
 clear-week-planning = "scripts.maintenance.clear_week_planning:main"
 check-tools-docs = "scripts.maintenance.check_tools_documentation:main"
 format-planning = "scripts.maintenance.format_planning:main"
+data-repo-sync = "scripts.maintenance.data_repo_sync:main"
 
 [build-system]
 requires = ["poetry-core"]
