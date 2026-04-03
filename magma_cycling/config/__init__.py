@@ -54,6 +54,7 @@ from magma_cycling.config.logging_config import (
     get_logger,
     set_log_level,
     setup_logging,
+    setup_mcp_logging,
 )
 
 # Training thresholds (Sprint R2)
@@ -112,6 +113,7 @@ __all__ = [
     "TrainingThresholds",
     # Logging
     "setup_logging",
+    "setup_mcp_logging",
     "get_logger",
     "set_log_level",
     # Utilities
