@@ -33,6 +33,8 @@ Examples:
 import logging
 import os
 import sys
+from logging.handlers import RotatingFileHandler
+from pathlib import Path
 
 # Log level mapping
 LOG_LEVELS = {
@@ -52,7 +54,12 @@ LOG_FORMATS = {
 
 
 def setup_logging(
-    level: str | None = None, format_name: str | None = None, force: bool = False
+    level: str | None = None,
+    format_name: str | None = None,
+    force: bool = False,
+    file_path: str | None = None,
+    max_bytes: int = 5_242_880,
+    backup_count: int = 3,
 ) -> None:
     """Set up logging configuration.
 
@@ -62,11 +69,14 @@ def setup_logging(
         format_name: Log format name (simple, detailed, json).
                      If None, reads from LOG_FORMAT env var (default: detailed)
         force: If True, reconfigure even if already setup
+        file_path: Path for a RotatingFileHandler. If None, no file logging.
+        max_bytes: Max file size before rotation (default: 5 MB).
+        backup_count: Number of backup files to keep (default: 3).
 
     Examples:
         >>> setup_logging()  # Use env vars
         >>> setup_logging(level="DEBUG")  # Override level
-        >>> setup_logging(level="DEBUG", format_name="simple")
+        >>> setup_logging(file_path="/tmp/app.log")  # Add file logging
     """
     # Get configuration
 
@@ -94,6 +104,14 @@ def setup_logging(
         force=force,
         handlers=[logging.StreamHandler(sys.stderr)],
     )
+
+    # Add file handler if requested
+    if file_path:
+        Path(file_path).parent.mkdir(parents=True, exist_ok=True)
+        file_handler = RotatingFileHandler(file_path, maxBytes=max_bytes, backupCount=backup_count)
+        file_handler.setLevel(log_level)
+        file_handler.setFormatter(logging.Formatter(log_format, datefmt="%Y-%m-%d %H:%M:%S"))
+        logging.getLogger().addHandler(file_handler)
 
     # Log configuration (only at DEBUG level)
     logger = logging.getLogger(__name__)
@@ -135,6 +153,41 @@ def set_log_level(level: str) -> None:
     logging.getLogger().setLevel(LOG_LEVELS[level_name])
     logger = get_logger(__name__)
     logger.debug(f"Log level changed to {level_name}")
+
+
+_MCP_LOG_DEFAULT = "~/.local/share/magma-cycling/mcp-server.log"
+
+
+def setup_mcp_logging() -> str | None:
+    """Configure logging for the MCP server with file output.
+
+    Reads configuration from environment variables:
+        MCP_LOG_FILE: Log file path (empty string to disable, default: ~/.local/share/...)
+        MCP_LOG_LEVEL: Log level (fallback: LOG_LEVEL, default: INFO)
+        MCP_LOG_MAX_BYTES: Max file size before rotation (default: 5 MB)
+        MCP_LOG_BACKUP_COUNT: Number of backup files (default: 3)
+
+    Returns:
+        Path to the log file, or None if file logging is disabled.
+    """
+    log_file = os.getenv("MCP_LOG_FILE", _MCP_LOG_DEFAULT)
+    if log_file == "":
+        setup_logging(force=True)
+        return None
+
+    log_file = os.path.expanduser(log_file)
+    log_level = os.getenv("MCP_LOG_LEVEL", os.getenv("LOG_LEVEL", "INFO")).upper()
+    max_bytes = int(os.getenv("MCP_LOG_MAX_BYTES", "5242880"))
+    backup_count = int(os.getenv("MCP_LOG_BACKUP_COUNT", "3"))
+
+    setup_logging(
+        level=log_level,
+        force=True,
+        file_path=log_file,
+        max_bytes=max_bytes,
+        backup_count=backup_count,
+    )
+    return log_file
 
 
 # Auto-setup logging when module is imported (can be overridden)

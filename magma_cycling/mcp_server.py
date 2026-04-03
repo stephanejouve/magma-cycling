@@ -24,7 +24,7 @@ Claude Desktop config (~/.config/claude/claude_desktop_config.json):
 
 import json
 import os
-import sys
+import time
 
 from mcp.server import Server
 from mcp.types import TextContent, Tool
@@ -125,6 +125,7 @@ from magma_cycling._mcp.schemas import rest as _s_rest
 from magma_cycling._mcp.schemas import sessions as _s_sessions
 from magma_cycling._mcp.schemas import terrain as _s_terrain
 from magma_cycling._mcp.schemas import workouts as _s_workouts
+from magma_cycling.config import get_logger, setup_mcp_logging
 
 # ---------------------------------------------------------------------------
 # Server initialization
@@ -135,6 +136,8 @@ server = Server("magma-cycling")
 TRANSPORT_MODE = os.getenv("MCP_TRANSPORT", "stdio")  # "stdio" (default) or "http"
 HTTP_HOST = os.getenv("MCP_HTTP_HOST", "localhost")
 HTTP_PORT = int(os.getenv("MCP_HTTP_PORT", "3000"))
+
+logger = get_logger("magma_cycling.mcp_server")
 
 
 # ---------------------------------------------------------------------------
@@ -232,15 +235,21 @@ TOOL_HANDLERS = {
 }
 
 
-@server.call_tool()
-async def call_tool(name: str, arguments: dict) -> list[TextContent]:
-    """Handle tool calls from MCP clients."""
+async def dispatch_tool(name: str, arguments: dict) -> list[TextContent]:
+    """Dispatch a tool call with logging and timing."""
+    logger.info("tool_call_start: %s", name)
+    t0 = time.monotonic()
     try:
         handler = TOOL_HANDLERS.get(name)
         if not handler:
             raise ValueError(f"Unknown tool: {name}")
-        return await handler(arguments)
+        result = await handler(arguments)
+        elapsed = time.monotonic() - t0
+        logger.info("tool_call_ok: %s (%.3fs)", name, elapsed)
+        return result
     except Exception as e:
+        elapsed = time.monotonic() - t0
+        logger.error("tool_call_error: %s (%.3fs) — %s", name, elapsed, e)
         return [
             TextContent(
                 type="text",
@@ -256,15 +265,27 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         ]
 
 
+@server.call_tool()
+async def call_tool(name: str, arguments: dict) -> list[TextContent]:
+    """Handle tool calls from MCP clients."""
+    return await dispatch_tool(name, arguments)
+
+
 # ---------------------------------------------------------------------------
 # Entry points
 # ---------------------------------------------------------------------------
 async def async_main():
     """Run MCP server with configured transport (stdio or HTTP/SSE)."""
+    log_file = setup_mcp_logging()
+    tool_count = len(TOOL_HANDLERS)
+    logger.info(
+        "server_start: transport=%s tools=%d log_file=%s",
+        TRANSPORT_MODE,
+        tool_count,
+        log_file,
+    )
     if TRANSPORT_MODE == "http":
-        print(f"[MCP] Starting HTTP/SSE server on {HTTP_HOST}:{HTTP_PORT}", file=sys.stderr)
-    else:
-        print("[MCP] Starting stdio transport", file=sys.stderr)
+        logger.info("server_http: host=%s port=%d", HTTP_HOST, HTTP_PORT)
 
     transport = MCPTransportManager(
         server=server,
@@ -273,7 +294,10 @@ async def async_main():
         port=HTTP_PORT,
     )
 
-    await transport.start()
+    try:
+        await transport.start()
+    finally:
+        logger.info("server_shutdown: transport=%s", TRANSPORT_MODE)
 
 
 def main():
