@@ -34,6 +34,10 @@ if [ -n "$GIT_TOKEN" ]; then
         '!f() { echo "username='"$GIT_USER_NAME"'"; echo "password='"$GIT_TOKEN"'"; }; f'
 fi
 
+if [ -d "$TRAINING_LOGS_PATH" ]; then
+    git config --global --add safe.directory "$TRAINING_LOGS_PATH"
+fi
+
 # -----------------------------------------------------------------------
 # Lancement de la commande
 # -----------------------------------------------------------------------
