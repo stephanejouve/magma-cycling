@@ -37,6 +37,22 @@ jobs:
       - name: Verify executable exists
         run: dir dist\
 
+      - name: "Smoke test: --version"
+        run: dist\magma-cycling.exe --version
+
+      - name: "Smoke test: mcp-server (timeout 5s)"
+        shell: pwsh
+        run: |
+          $proc = Start-Process -FilePath "dist\magma-cycling.exe" -ArgumentList "mcp-server" -PassThru -NoNewWindow
+          Start-Sleep -Seconds 5
+          if (!$proc.HasExited) {
+            Stop-Process -Id $proc.Id -Force
+            Write-Host "MCP server started successfully (killed after 5s)"
+          } else {
+            Write-Host "Process exited with code $($proc.ExitCode)"
+            if ($proc.ExitCode -ne 0) { exit 1 }
+          }
+
       - name: Rename with version (release only)
         if: github.event_name == 'release'
         run: |
