@@ -13,6 +13,7 @@ Test Categories:
 """
 
 import json
+import os
 from datetime import date
 from pathlib import Path
 from unittest.mock import Mock, mock_open, patch
@@ -1286,7 +1287,12 @@ class TestCredentialsLoadingAdvanced:
     @patch("json.load")
     @patch.dict(
         "os.environ",
-        {"VITE_INTERVALS_ATHLETE_ID": "i123", "VITE_INTERVALS_API_KEY": "key123"},
+        {
+            "VITE_INTERVALS_ATHLETE_ID": "i123",
+            "VITE_INTERVALS_API_KEY": "key123",
+            "HOME": os.environ.get("HOME", ""),
+            "USERPROFILE": os.environ.get("USERPROFILE", ""),
+        },
         clear=True,
     )
     def test_load_credentials_config_file_missing_keys(

@@ -1,0 +1,59 @@
+name: Build Windows EXE
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    name: Build magma-cycling.exe
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Poetry and dependencies
+        run: |
+          pip install poetry
+          poetry config virtualenvs.create true
+          poetry config virtualenvs.in-project true
+          poetry install --no-interaction --no-ansi
+
+      - name: Install PyInstaller
+        run: poetry run pip install pyinstaller
+
+      - name: Build executable
+        env:
+          PYTHONUTF8: "1"
+        run: poetry run pyinstaller packaging/magma-cycling.spec --distpath dist/
+
+      - name: Verify executable exists
+        run: dir dist\
+
+      - name: Rename with version (release only)
+        if: github.event_name == 'release'
+        run: |
+          $version = "${{ github.event.release.tag_name }}"
+          Rename-Item dist\magma-cycling.exe "magma-cycling-${version}-windows.exe"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: magma-cycling-windows
+          path: dist/magma-cycling*.exe
+          retention-days: 30
+
+      - name: Attach to release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          $version = "${{ github.event.release.tag_name }}"
+          gh release upload $version "dist/magma-cycling-${version}-windows.exe" --clobber

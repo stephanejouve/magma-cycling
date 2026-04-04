@@ -4,8 +4,8 @@ services:
   mcp-server:
     image: ghcr.io/stephanejouve/magma-cycling:latest
     command: ["mcp-server"]
-    ports:
-      - "${MCP_HTTP_PORT:-3000}:3000"
+    expose:
+      - "3000"
     volumes:
       - ${TRAINING_DATA_PATH:-./training-logs}:/data/training-logs
     env_file: stack.env
@@ -15,6 +15,17 @@ services:
       interval: 60s
       timeout: 5s
       retries: 3
+
+  nginx-mtls:
+    image: nginx:alpine
+    ports:
+      - "8443:8443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ${MTLS_CERTS_PATH:-./certs}:/etc/nginx/certs:ro
+    depends_on:
+      - mcp-server
+    restart: unless-stopped
 
   cron-jobs:
     image: ghcr.io/stephanejouve/magma-cycling:latest

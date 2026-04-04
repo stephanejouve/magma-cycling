@@ -2,6 +2,7 @@
 
 import json
 import logging
+import os
 import time
 from pathlib import Path
 
@@ -35,7 +36,7 @@ class CredentialsMixin:
             return False
 
         try:
-            with open(path, "r") as f:
+            with open(path, "r", encoding="utf-8") as f:
                 creds = json.load(f)
 
             self.access_token = creds.get("access_token")
@@ -73,11 +74,12 @@ class CredentialsMixin:
         self.credentials_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Write credentials
-        with open(self.credentials_path, "w") as f:
+        with open(self.credentials_path, "w", encoding="utf-8") as f:
             json.dump(creds, f, indent=2)
 
         # Set file permissions to 600 (owner read/write only)
-        self.credentials_path.chmod(0o600)
+        if os.name != "nt":
+            self.credentials_path.chmod(0o600)
 
         logger.info(f"Saved credentials to {self.credentials_path}")
 

@@ -268,8 +268,9 @@ def _ensure_data_directories(data_repo_path: Path):
 def _detect_claude_desktop() -> Path | None:
     """Detecte l'installation de Claude Desktop."""
     candidates = [
-        Path.home() / "Library" / "Application Support" / "Claude",
-        Path.home() / ".config" / "claude",
+        Path.home() / "Library" / "Application Support" / "Claude",  # macOS
+        Path.home() / "AppData" / "Roaming" / "Claude",  # Windows
+        Path.home() / ".config" / "claude",  # Linux
     ]
     for p in candidates:
         if p.exists():
