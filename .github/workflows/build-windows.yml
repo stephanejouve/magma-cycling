@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    name: Build mcp-server.exe
+    name: Build magma-cycling.exe
     runs-on: windows-latest
 
     steps:
@@ -32,7 +32,7 @@ jobs:
       - name: Build executable
         env:
           PYTHONUTF8: "1"
-        run: poetry run pyinstaller packaging/mcp-server.spec --distpath dist/
+        run: poetry run pyinstaller packaging/magma-cycling.spec --distpath dist/
 
       - name: Verify executable exists
         run: dir dist\
@@ -41,13 +41,13 @@ jobs:
         if: github.event_name == 'release'
         run: |
           $version = "${{ github.event.release.tag_name }}"
-          Rename-Item dist\mcp-server.exe "mcp-server-${version}-windows.exe"
+          Rename-Item dist\magma-cycling.exe "magma-cycling-${version}-windows.exe"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: mcp-server-windows
-          path: dist/mcp-server*.exe
+          name: magma-cycling-windows
+          path: dist/magma-cycling*.exe
           retention-days: 30
 
       - name: Attach to release
@@ -56,4 +56,4 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           $version = "${{ github.event.release.tag_name }}"
-          gh release upload $version "dist/mcp-server-${version}-windows.exe" --clobber
+          gh release upload $version "dist/magma-cycling-${version}-windows.exe" --clobber

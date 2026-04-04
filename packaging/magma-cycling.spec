@@ -84,7 +84,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name="mcp-server",
+    name="magma-cycling",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
