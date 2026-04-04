@@ -5,6 +5,7 @@ Gerent toutes KeyboardInterrupt -> message propre + sys.exit(0).
 """
 
 import getpass
+import os
 import sys
 
 
@@ -186,13 +187,17 @@ def ask_secret(label: str) -> str:
         Valeur saisie (non vide).
     """
     prompt = f"  {label} : "
+    # getpass ne fonctionne pas dans les .exe PyInstaller sur Windows
+    use_getpass = not (os.name == "nt" and getattr(sys, "frozen", False))
     while True:
         try:
-            value = getpass.getpass(prompt)
+            if use_getpass:
+                value = getpass.getpass(prompt)
+            else:
+                value = input(prompt).strip()
         except (KeyboardInterrupt, EOFError):
             _handle_interrupt()
         except Exception:
-            # Fallback si getpass echoue (certains terminaux)
             try:
                 value = input(prompt).strip()
             except (KeyboardInterrupt, EOFError):
