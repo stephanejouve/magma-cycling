@@ -10,7 +10,13 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-load_dotenv()
+from magma_cycling.paths import get_env_path
+
+_env_file = get_env_path()
+if _env_file.exists():
+    load_dotenv(_env_file)
+else:
+    load_dotenv()
 
 logger = logging.getLogger(__name__)
 

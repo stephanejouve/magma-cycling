@@ -10,9 +10,15 @@ from pathlib import Path
 
 import yaml
 
+from magma_cycling.paths import get_athlete_yaml_path
+
 logger = logging.getLogger(__name__)
 
-ATHLETE_CONTEXT_PATH = Path(__file__).parent / "athlete_context.yaml"
+# User config dir first (bundle or dev), then fallback to bundled data
+_user_yaml = get_athlete_yaml_path()
+ATHLETE_CONTEXT_PATH = (
+    _user_yaml if _user_yaml.exists() else Path(__file__).parent / "athlete_context.yaml"
+)
 
 
 def load_athlete_context(path: Path | None = None) -> dict:

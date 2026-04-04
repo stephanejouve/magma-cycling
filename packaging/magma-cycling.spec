@@ -12,7 +12,7 @@ PROJECT_ROOT = Path(SPECPATH).parent
 
 # Collect all magma_cycling submodules
 a = Analysis(
-    [str(PROJECT_ROOT / "magma_cycling" / "mcp_server.py")],
+    [str(PROJECT_ROOT / "magma_cycling" / "cli.py")],
     pathex=[str(PROJECT_ROOT)],
     binaries=[],
     datas=[
@@ -28,6 +28,13 @@ a = Analysis(
          "magma_cycling/prompts"),
     ],
     hiddenimports=[
+        # CLI + paths
+        "magma_cycling.paths",
+        "magma_cycling.cli",
+        # Setup wizard
+        "magma_cycling.scripts.setup_wizard",
+        "magma_cycling.scripts.setup",
+        "magma_cycling.scripts.setup.prompts",
         # AI providers (loaded dynamically)
         "magma_cycling.ai.providers.anthropic_provider",
         "magma_cycling.ai.providers.mistral_provider",
