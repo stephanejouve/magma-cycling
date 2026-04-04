@@ -34,20 +34,26 @@ jobs:
           PYTHONUTF8: "1"
         run: poetry run pyinstaller packaging/mcp-server.spec --distpath dist/
 
-      - name: Verify executable
+      - name: Verify executable exists
+        run: dir dist\
+
+      - name: Rename with version (release only)
+        if: github.event_name == 'release'
         run: |
-          dir dist\
-          dist\mcp-server.exe --help 2>&1 || echo "Exit code: $LASTEXITCODE (expected for MCP server)"
+          $version = "${{ github.event.release.tag_name }}"
+          Rename-Item dist\mcp-server.exe "mcp-server-${version}-windows.exe"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: mcp-server-windows
-          path: dist/mcp-server.exe
+          path: dist/mcp-server*.exe
           retention-days: 30
 
       - name: Attach to release
         if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: gh release upload ${{ github.event.release.tag_name }} dist/mcp-server.exe --clobber
+        run: |
+          $version = "${{ github.event.release.tag_name }}"
+          gh release upload $version "dist/mcp-server-${version}-windows.exe" --clobber
