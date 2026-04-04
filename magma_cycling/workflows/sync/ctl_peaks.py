@@ -132,7 +132,7 @@ class CTLPeaksMixin:
                 try:
                     import json
 
-                    with open(state_file) as f:
+                    with open(state_file, encoding="utf-8") as f:
                         state_data = json.load(f)
                         pid_state = state_data.get("pid_state", {})
 
