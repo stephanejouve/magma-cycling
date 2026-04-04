@@ -96,7 +96,7 @@ L'IA prend le profil de ta route (denivele, pentes) et ajuste les objectifs segm
 |---------|:---:|-------------|
 | **Intervals.icu** (compte gratuit) | Oui* | Plateforme d'entrainement testee et supportee. L'architecture est concue pour accueillir d'autres plateformes (TrainingPeaks, Strava, etc.) mais seul Intervals.icu est valide a ce jour |
 | **Un client MCP** (Claude Desktop, Cursor, Windsurf...) | Oui | L'interface pour parler a l'IA — c'est lui qui fournit le LLM |
-| **Python 3.11+** | Oui | Le moteur — installe une seule fois |
+| **Python 3.11+** | Non* | Le moteur — sauf si tu utilises l'executable Windows standalone |
 | **Withings Sleep Analyzer** | Non | Pour le suivi automatique du sommeil |
 | **Cle API IA** (Claude ou Mistral) | Non | Uniquement pour les analyses automatiques (crons). En usage interactif, c'est ton agent desktop qui fait le travail |
 
@@ -132,7 +132,21 @@ poetry install
 
 ### Installation Windows
 
-**Etape 1 — Installer les outils** (une seule fois)
+Tu as **3 options** selon ton confort technique. Le resultat est le meme.
+
+#### Option A — Executable standalone (recommande)
+
+Aucune installation technique requise. Telecharge et lance.
+
+1. Va sur la page [Releases](https://github.com/stephanejouve/magma-cycling/releases) du projet
+2. Telecharge `magma-cycling-vX.X.X-windows.exe` (la derniere version)
+3. Place le fichier ou tu veux (ex: `C:\magma-cycling\`)
+
+C'est tout. Python, Poetry, dependances — tout est embarque dans l'executable.
+
+#### Option B — Python + Poetry
+
+Pour ceux qui veulent le code source et les mises a jour en `git pull` :
 
 1. Telecharge et installe **Python 3.12** depuis python.org
    (coche "Add Python to PATH" pendant l'installation)
@@ -140,31 +154,34 @@ poetry install
 3. Ouvre **PowerShell** et copie-colle :
 
 ```powershell
-# Installer Poetry (gestionnaire de paquets)
 pip install poetry
-
-# Cloner le projet
 git clone https://github.com/stephanejouve/magma-cycling.git
 cd magma-cycling
-
-# Installer les dependances
 poetry install
 ```
 
-> **Alternative Docker** : si tu preferes ne rien installer sur ta machine,
-> installe Docker Desktop (docker.com) et lance :
->
-> ```powershell
-> docker run -it -v $HOME\training-logs:/data/training-logs `
->     ghcr.io/stephanejouve/magma-cycling:latest mcp-server
-> ```
+#### Option C — Docker
+
+Si tu preferes ne rien installer sur ta machine :
+
+1. Installe **Docker Desktop** depuis docker.com
+2. Ouvre **PowerShell** :
+
+```powershell
+docker run -it -v $HOME\training-logs:/data/training-logs `
+    ghcr.io/stephanejouve/magma-cycling:latest mcp-server
+```
 
 ### Suite commune (Mac et Windows)
 
 **Etape 2 — Lancer l'assistant de configuration**
 
 ```bash
+# Si Python + Poetry :
 poetry run setup
+
+# Si executable Windows :
+magma-cycling.exe setup
 ```
 
 L'assistant te pose 5 questions :
@@ -189,7 +206,9 @@ Tu peux utiliser n'importe quel client compatible. Voici les principaux :
 | **Windsurf** | Mac, Windows, Linux | Freemium | Settings > MCP Servers |
 | **Continue** | VS Code / JetBrains | Oui | config.json > mcpServers |
 
-Dans tous les cas, la config MCP a ajouter est la meme :
+La config MCP depend de ton mode d'installation :
+
+**Si Python + Poetry (Mac ou Windows option B) :**
 
 ```json
 {
@@ -198,6 +217,34 @@ Dans tous les cas, la config MCP a ajouter est la meme :
       "command": "poetry",
       "args": ["run", "mcp-server"],
       "cwd": "/chemin/vers/magma-cycling"
+    }
+  }
+}
+```
+
+**Si executable Windows (option A) :**
+
+```json
+{
+  "mcpServers": {
+    "magma-cycling": {
+      "command": "C:\\magma-cycling\\magma-cycling.exe",
+      "args": ["mcp-server"]
+    }
+  }
+}
+```
+
+**Si Docker (option C) :**
+
+```json
+{
+  "mcpServers": {
+    "magma-cycling": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm",
+        "-v", "/chemin/vers/training-logs:/data/training-logs",
+        "ghcr.io/stephanejouve/magma-cycling:latest", "mcp-server"]
     }
   }
 }
@@ -451,7 +498,7 @@ Intervals.icu est gratuit. Le code Magma est open source et gratuit. Ton agent d
 Oui. Le serveur tourne sur ton Mac (ou ton NAS). Tes donnees ne passent par aucun serveur tiers sauf Intervals.icu (que tu utilises deja) et le fournisseur IA pour les analyses textuelles (pas de donnees personnelles transmises, seulement les metriques d'entrainement).
 
 **Q : Je peux l'utiliser sur Windows ?**
-Oui. Python et Claude Desktop fonctionnent nativement sur Windows. Voir la section "Installation Windows" plus haut. Alternative : Docker Desktop si tu ne veux rien installer.
+Oui, 3 options : un executable standalone (zero installation technique), Python classique, ou Docker. Voir la section "Installation Windows" plus haut.
 
 **Q : Ca remplace un vrai coach ?**
 Non. Ca automatise les taches repetitives d'un coach : planification, suivi d'adherence, feedback post-seance. Si tu as un coach humain, Magma est un complement. Si tu n'en as pas, c'est une excellente base structuree.
