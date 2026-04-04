@@ -136,13 +136,36 @@ Tu as **3 options** selon ton confort technique. Le resultat est le meme.
 
 #### Option A — Executable standalone (recommande)
 
-Aucune installation technique requise. Telecharge et lance.
+Aucune installation technique requise. Telecharge, double-clique, c'est parti.
 
 1. Va sur la page [Releases](https://github.com/stephanejouve/magma-cycling/releases) du projet
 2. Telecharge `magma-cycling-vX.X.X-windows.exe` (la derniere version)
 3. Place le fichier ou tu veux (ex: `C:\magma-cycling\`)
+4. **Double-clique sur l'exe** — un menu interactif s'affiche :
 
-C'est tout. Python, Poetry, dependances — tout est embarque dans l'executable.
+```
+  magma-cycling v3.4.0
+
+  Configuration
+    ok .env trouve
+    -- Intervals.icu non configure
+    -- Withings non configure
+    -- Espace donnees non trouve
+
+  Connexion IA
+    -- Claude Desktop non detecte
+    -- MCP magma-cycling non enregistre
+
+  Actions :
+    1. Lancer le setup (configuration)
+    2. Demarrer le serveur MCP
+    3. Quitter
+```
+
+5. Tape **1** pour lancer l'assistant de configuration (5 questions)
+6. A la fin du setup, Claude Desktop est configure automatiquement
+
+Python, Poetry, dependances — tout est embarque dans l'executable.
 
 #### Option B — Python + Poetry
 
@@ -172,16 +195,16 @@ docker run -it -v $HOME\training-logs:/data/training-logs `
     ghcr.io/stephanejouve/magma-cycling:latest mcp-server
 ```
 
-### Suite commune (Mac et Windows)
+### Suite commune (Mac et Windows Python)
 
 **Etape 2 — Lancer l'assistant de configuration**
+
+> **Utilisateurs Windows .exe** : pas besoin de cette etape manuellement.
+> Double-clique sur l'exe et tape 1 dans le menu — le setup se lance tout seul.
 
 ```bash
 # Si Python + Poetry :
 poetry run setup
-
-# Si executable Windows :
-magma-cycling.exe setup
 ```
 
 L'assistant te pose 5 questions :
@@ -223,6 +246,9 @@ La config MCP depend de ton mode d'installation :
 ```
 
 **Si executable Windows (option A) :**
+
+> L'assistant de configuration fait ca automatiquement.
+> En cas de besoin, voici la config manuelle :
 
 ```json
 {
