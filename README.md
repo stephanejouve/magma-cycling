@@ -9,6 +9,8 @@
 
 A personal cycling training log system integrating Intervals.icu, AI coaching, and structured workout management.
 
+> **Nouveau ?** Consulte le [guide de demarrage (PDF)](project-docs/onboarding-club-zwift.pdf) — installation pas-a-pas, scenarios d'utilisation concrets, et FAQ.
+
 ---
 
 ## Quick Start
@@ -92,6 +94,12 @@ Matériel validé par l'auteur — les données transitent correctement du capte
 ---
 
 ## Installation
+
+### Windows — Executable standalone (recommande)
+
+Telecharge le `.exe` depuis [Releases](https://github.com/stephanejouve/magma-cycling/releases), double-clique, et suis le menu interactif. Aucune installation technique requise.
+
+### Python + Poetry (Mac / Windows / Linux)
 
 **Requirements:** Python 3.11+, [Poetry](https://python-poetry.org/)
 

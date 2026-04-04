@@ -8,6 +8,7 @@ Usage:
 """
 
 import base64
+import json
 import os
 import shutil
 import subprocess
@@ -16,6 +17,8 @@ from pathlib import Path
 
 import requests
 
+from magma_cycling import __version__
+from magma_cycling.paths import get_athlete_yaml_path, get_env_path, get_user_config_dir, is_bundled
 from magma_cycling.scripts.setup.prompts import (
     ask_choice,
     ask_float,
@@ -35,36 +38,41 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
 
 def _get_version() -> str:
-    """Lit la version depuis pyproject.toml."""
-    pyproject = PROJECT_ROOT / "pyproject.toml"
-    if pyproject.exists():
-        for line in pyproject.read_text().splitlines():
-            if line.strip().startswith("version"):
-                return line.split('"')[1]
-    return "?"
+    """Return package version."""
+    return __version__
 
 
 def _env_path() -> Path:
     """Chemin du fichier .env."""
-    return PROJECT_ROOT / ".env"
+    return get_env_path()
 
 
 def _check_prerequisites() -> bool:
-    """Verifie Python >= 3.11 et git installe."""
+    """Verifie Python >= 3.11 et git installe.
+
+    In bundled mode: skip Python check (embedded), git is optional.
+    """
     ok = True
-    if sys.version_info < (3, 11):
-        print_error(
-            f"Python 3.11+ requis (actuel : {sys.version_info.major}.{sys.version_info.minor})"
-        )
-        ok = False
+
+    if is_bundled():
+        print_success("Executable standalone")
     else:
-        print_success(f"Python {sys.version_info.major}.{sys.version_info.minor}")
+        if sys.version_info < (3, 11):
+            print_error(
+                f"Python 3.11+ requis (actuel : {sys.version_info.major}.{sys.version_info.minor})"
+            )
+            ok = False
+        else:
+            print_success(f"Python {sys.version_info.major}.{sys.version_info.minor}")
 
     if shutil.which("git"):
         print_success("git installe")
     else:
-        print_error("git non trouve — installe-le avant de continuer")
-        ok = False
+        if is_bundled():
+            print_info("git non trouve — optionnel (synchro GitHub desactivee)")
+        else:
+            print_error("git non trouve — installe-le avant de continuer")
+            ok = False
     return ok
 
 
@@ -225,17 +233,21 @@ def _build_athlete_yaml(config: dict) -> str:
 
 
 def _init_data_repo(data_repo_path: Path):
-    """Initialise l'espace de donnees (git init, fichiers, arborescence)."""
+    """Initialise l'espace de donnees (git init, fichiers, arborescence).
+
+    Git operations are skipped silently if git is not installed.
+    """
     if data_repo_path.exists() and (data_repo_path / "workouts-history.md").exists():
         print_success(f"Deja en place : {data_repo_path}")
-        # Assure quand meme les sous-dossiers
         _ensure_data_directories(data_repo_path)
         return
 
     data_repo_path.mkdir(parents=True, exist_ok=True)
 
-    # git init
-    subprocess.run(["git", "init"], cwd=data_repo_path, capture_output=True)
+    has_git = shutil.which("git") is not None
+
+    if has_git:
+        subprocess.run(["git", "init"], cwd=data_repo_path, capture_output=True)
 
     # Fichiers de base
     (data_repo_path / "workouts-history.md").write_text(
@@ -243,16 +255,16 @@ def _init_data_repo(data_repo_path: Path):
     )
     (data_repo_path / ".workflow_state.json").write_text("{}", encoding="utf-8")
 
-    # Arborescence
     _ensure_data_directories(data_repo_path)
 
-    # Commit initial
-    subprocess.run(["git", "add", "-A"], cwd=data_repo_path, capture_output=True)
-    subprocess.run(
-        ["git", "commit", "-m", "Initial setup"],
-        cwd=data_repo_path,
-        capture_output=True,
-    )
+    if has_git:
+        subprocess.run(["git", "add", "-A"], cwd=data_repo_path, capture_output=True)
+        subprocess.run(
+            ["git", "commit", "-m", "Initial setup"],
+            cwd=data_repo_path,
+            capture_output=True,
+        )
+
     print_success(f"Espace de donnees cree : {data_repo_path}")
 
 
@@ -463,55 +475,90 @@ class SetupWizard:
         """Etape 6 — Ecriture des fichiers + resume."""
         print_step(6, TOTAL_STEPS, "Finalisation")
 
+        # Ensure config directory exists (bundle mode)
+        config_dir = get_user_config_dir()
+        config_dir.mkdir(parents=True, exist_ok=True)
+
         # 1. Ecrire .env
         env_content = _build_env_content(self.config)
         _env_path().write_text(env_content, encoding="utf-8")
-        print_success(".env cree")
+        print_success(f".env cree ({_env_path()})")
 
-        # 2. Ecrire athlete_context.yaml (avec backup)
-        yaml_path = PROJECT_ROOT / "magma_cycling" / "config" / "athlete_context.yaml"
+        # 2. Ecrire athlete_context.yaml in user config dir
+        yaml_path = get_athlete_yaml_path()
         if yaml_path.exists():
             backup_path = yaml_path.with_suffix(".yaml.bak")
             shutil.copy2(yaml_path, backup_path)
             print_info(f"Backup : {backup_path.name}")
         yaml_content = _build_athlete_yaml(self.config)
         yaml_path.write_text(yaml_content, encoding="utf-8")
-        print_success("athlete_context.yaml genere")
+        print_success(f"athlete_context.yaml genere ({yaml_path})")
 
         # 3. Resume
-        print("\n  ── Resume ──\n")
+        print("\n  -- Resume --\n")
         print_success(f"Athlete    : {self.config.get('name')}")
         print_success(f"Categorie  : {self.config['category']}")
-        print_success(f"FTP        : {self.config['ftp']}W → objectif {self.config['ftp_target']}W")
+        print_success(
+            f"FTP        : {self.config['ftp']}W -> objectif {self.config['ftp_target']}W"
+        )
         print_success(f"Plateforme : {self.config.get('platform')}")
         print_success(f"Coach IA   : {self.config.get('ai_provider', 'clipboard')}")
         print_success(f"Donnees    : {self.config.get('data_repo')}")
 
-        # 4. MCP Claude Desktop
+        # 4. Auto-configure Claude Desktop MCP
         claude_path = _detect_claude_desktop()
         if claude_path:
-            print("\n  ── Integration Claude Desktop detectee ──\n")
-            print_info("Ajoute ce bloc dans ta config MCP :\n")
-            cwd = str(PROJECT_ROOT)
-            print(
-                f"""    {{
-      "mcpServers": {{
-        "magma-cycling": {{
-          "command": "poetry",
-          "args": ["run", "mcp-server"],
-          "cwd": "{cwd}"
-        }}
-      }}
-    }}"""
-            )
+            self._auto_configure_claude_desktop(claude_path)
         else:
             print_info("\nClaude Desktop non detecte — tu pourras configurer le MCP plus tard.")
 
         # 5. Prochaines etapes
-        print("\n  ── Prochaines etapes ──\n")
-        print_info("Lance `poetry run daily-sync` pour ta premiere synchronisation")
-        print_info("Pour connecter une balance/montre : `poetry run setup-withings`")
+        print("\n  -- Prochaines etapes --\n")
+        if is_bundled():
+            print_info("Redemarre Claude Desktop pour activer le serveur MCP")
+            print_info("Tu peux aussi lancer le serveur manuellement depuis le menu principal")
+        else:
+            print_info("Lance `poetry run daily-sync` pour ta premiere synchronisation")
+            print_info("Pour connecter une balance/montre : `poetry run setup-withings`")
         print()
+
+    def _auto_configure_claude_desktop(self, claude_path: Path):
+        """Auto-configure Claude Desktop MCP entry.
+
+        Reads the existing config, merges our entry, writes back.
+        SECURITY: only touches the 'magma-cycling' key in mcpServers.
+        """
+        config_file = claude_path / "claude_desktop_config.json"
+
+        # Build our MCP entry
+        if is_bundled():
+            exe_path = sys.executable
+            mcp_entry = {"command": exe_path, "args": ["mcp-server"]}
+        else:
+            mcp_entry = {
+                "command": "poetry",
+                "args": ["run", "mcp-server"],
+                "cwd": str(PROJECT_ROOT),
+            }
+
+        # Read existing config or start fresh
+        existing = {}
+        if config_file.exists():
+            try:
+                existing = json.loads(config_file.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError):
+                existing = {}
+
+        # Merge — only touch our key
+        if "mcpServers" not in existing:
+            existing["mcpServers"] = {}
+        existing["mcpServers"]["magma-cycling"] = mcp_entry
+
+        config_file.write_text(
+            json.dumps(existing, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
+        print_success("Claude Desktop configure automatiquement")
+        print_info("Redemarre Claude Desktop pour activer le serveur MCP")
 
 
 @cli_main
