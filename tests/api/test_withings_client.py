@@ -468,8 +468,11 @@ class TestCredentialsManagement:
         client.save_credentials()
 
         assert creds_path.exists()
-        # Check file permissions (600 = owner read/write only)
-        assert oct(creds_path.stat().st_mode)[-3:] == "600"
+        # Check file permissions (600 = owner read/write only, skip on Windows)
+        import os
+
+        if os.name != "nt":
+            assert oct(creds_path.stat().st_mode)[-3:] == "600"
 
     def test_save_credentials_without_path_raises_error(self, client):
         """Saving without credentials_path should raise ValueError."""

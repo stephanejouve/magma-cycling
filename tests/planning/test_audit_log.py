@@ -90,7 +90,7 @@ class TestLogOperation:
             backup_path=Path("/backups/test.json"),
         )
         assert entry.backup_created is True
-        assert entry.backup_path == "/backups/test.json"
+        assert entry.backup_path == str(Path("/backups/test.json"))
 
     def test_log_with_error(self, audit_log):
         entry = audit_log.log_operation(
