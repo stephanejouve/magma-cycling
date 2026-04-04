@@ -121,6 +121,7 @@ jobs:
 
       - name: Run unit tests
         env:
+          PYTHONUTF8: "1"
           ATHLETE_AGE: 54
           ATHLETE_CATEGORY: master
           ATHLETE_RECOVERY_CAPACITY: exceptional

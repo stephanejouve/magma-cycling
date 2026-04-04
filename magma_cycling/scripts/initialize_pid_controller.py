@@ -27,7 +27,7 @@ def load_historical_data():
     if not data_file.exists():
         raise FileNotFoundError("Historical data not found. Run Sprint R10 Day 1 extraction first.")
 
-    with open(data_file) as f:
+    with open(data_file, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -348,7 +348,7 @@ def main():
         "pid_state": state,
     }
 
-    with open(output_file, "w") as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
 
     print(f"💾 Résultats sauvegardés: {output_file}")

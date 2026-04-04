@@ -36,7 +36,7 @@ class CredentialsMixin:
             return False
 
         try:
-            with open(path, "r") as f:
+            with open(path, "r", encoding="utf-8") as f:
                 creds = json.load(f)
 
             self.access_token = creds.get("access_token")
@@ -74,7 +74,7 @@ class CredentialsMixin:
         self.credentials_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Write credentials
-        with open(self.credentials_path, "w") as f:
+        with open(self.credentials_path, "w", encoding="utf-8") as f:
             json.dump(creds, f, indent=2)
 
         # Set file permissions to 600 (owner read/write only)
