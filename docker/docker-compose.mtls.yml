@@ -1,0 +1,30 @@
+version: "3.8"
+
+# Stack pré-prod mTLS — coexiste avec la prod (port 3000)
+# Déployer comme stack séparée "magma-cycling-mtls" dans Portainer
+#
+# Flux : stunnel (Mac :3001) ──mTLS──► nginx (NAS :8443) → mcp-server-mtls (:3000 interne)
+
+services:
+  mcp-server-mtls:
+    image: ghcr.io/stephanejouve/magma-cycling:latest
+    container_name: magma-mcp-server-mtls
+    command: ["mcp-server"]
+    expose:
+      - "3000"
+    volumes:
+      - ${TRAINING_DATA_PATH:-./training-logs}:/data/training-logs
+    env_file: stack.env
+    restart: unless-stopped
+
+  nginx-mtls:
+    image: nginx:alpine
+    container_name: magma-nginx-mtls
+    ports:
+      - "8443:8443"
+    volumes:
+      - /volume1/docker/magma-cycling/certs/nginx-mtls.conf:/etc/nginx/conf.d/default.conf:ro
+      - /volume1/docker/magma-cycling/certs:/etc/nginx/certs:ro
+    depends_on:
+      - mcp-server-mtls
+    restart: unless-stopped
