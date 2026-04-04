@@ -2,6 +2,7 @@
 
 import json
 import logging
+import os
 import time
 from pathlib import Path
 
@@ -77,7 +78,8 @@ class CredentialsMixin:
             json.dump(creds, f, indent=2)
 
         # Set file permissions to 600 (owner read/write only)
-        self.credentials_path.chmod(0o600)
+        if os.name != "nt":
+            self.credentials_path.chmod(0o600)
 
         logger.info(f"Saved credentials to {self.credentials_path}")
 

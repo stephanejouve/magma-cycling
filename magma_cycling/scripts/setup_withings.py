@@ -34,6 +34,7 @@ Example:
     You can now use Withings tools in the MCP server!
 """
 
+import os
 import sys
 import webbrowser
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -335,9 +336,12 @@ def main():
         print("   ✓ Credentials saved to:")
         print(f"     {config.credentials_path}")
 
-        # Set file permissions
-        config.credentials_path.chmod(0o600)
-        print("   ✓ File permissions set to 600 (owner read/write only)")
+        # Set file permissions (Unix only — Windows uses ACLs)
+        if os.name != "nt":
+            config.credentials_path.chmod(0o600)
+            print("   ✓ File permissions set to 600 (owner read/write only)")
+        else:
+            print("   ✓ Credentials saved (set file permissions manually on Windows)")
     else:
         print("\n❌ Warning: Credentials file not found at:")
         print(f"   {config.credentials_path}")
