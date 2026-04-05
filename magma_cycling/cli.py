@@ -180,12 +180,13 @@ def interactive_menu():
     print("  Actions :")
     print("    1. Lancer le setup (configuration)")
     print("    2. Demarrer le serveur MCP")
-    print("    3. Quitter")
+    print("    3. Configurer le client MCP")
+    print("    4. Quitter")
     print()
 
     while True:
         try:
-            choice = input("  Choix [1-3] : ").strip()
+            choice = input("  Choix [1-4] : ").strip()
         except (EOFError, KeyboardInterrupt):
             print()
             break
@@ -197,9 +198,12 @@ def interactive_menu():
             _run_mcp_server()
             break
         elif choice == "3":
+            _register_mcp()
+            break
+        elif choice == "4":
             break
         else:
-            print("  Choix invalide, tape 1, 2 ou 3.")
+            print("  Choix invalide, tape 1, 2, 3 ou 4.")
 
 
 def _run_setup():
@@ -207,6 +211,28 @@ def _run_setup():
     from magma_cycling.scripts.setup_wizard import main as setup_main
 
     setup_main()
+
+
+def _register_mcp():
+    """Register MCP server entry in the detected MCP client."""
+    from magma_cycling.scripts.setup_wizard import SetupWizard, _detect_claude_desktop
+
+    claude_path = _detect_claude_desktop()
+    if not claude_path:
+        # Folder doesn't exist yet — create the default one for this OS
+        import sys as _sys
+
+        if _sys.platform == "win32":
+            claude_path = Path.home() / "AppData" / "Roaming" / "Claude"
+        elif _sys.platform == "darwin":
+            claude_path = Path.home() / "Library" / "Application Support" / "Claude"
+        else:
+            claude_path = Path.home() / ".config" / "claude"
+        claude_path.mkdir(parents=True, exist_ok=True)
+        print(f"  Dossier cree : {claude_path}")
+
+    wizard = SetupWizard()
+    wizard._auto_configure_claude_desktop(claude_path)
 
 
 def _run_mcp_server():
@@ -236,6 +262,7 @@ def main():
     subparsers = parser.add_subparsers(dest="command")
     subparsers.add_parser("mcp-server", help="Demarrer le serveur MCP")
     subparsers.add_parser("setup", help="Lancer l'assistant de configuration")
+    subparsers.add_parser("register-mcp", help="Configurer le client MCP")
 
     args = parser.parse_args()
 
@@ -245,6 +272,8 @@ def main():
         _run_mcp_server()
     elif args.command == "setup":
         _run_setup()
+    elif args.command == "register-mcp":
+        _register_mcp()
 
 
 if __name__ == "__main__":
