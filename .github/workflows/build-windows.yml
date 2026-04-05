@@ -29,6 +29,14 @@ jobs:
       - name: Install PyInstaller
         run: poetry run pip install pyinstaller
 
+      - name: Inject version from tag
+        if: github.event_name == 'release'
+        shell: pwsh
+        run: |
+          $version = "${{ github.event.release.tag_name }}".TrimStart("v")
+          (Get-Content magma_cycling/__init__.py) -replace '__version__ = ".*"', "__version__ = `"$version`"" | Set-Content magma_cycling/__init__.py
+          Write-Host "Injected version $version"
+
       - name: Build executable
         env:
           PYTHONUTF8: "1"
