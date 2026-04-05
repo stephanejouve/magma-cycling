@@ -8,8 +8,10 @@ from magma_cycling.paths import (
     get_athlete_yaml_path,
     get_bundle_data_dir,
     get_env_path,
+    get_install_dir,
     get_user_config_dir,
     is_bundled,
+    is_in_temporary_location,
 )
 
 
@@ -77,3 +79,64 @@ def test_get_bundle_data_dir_with_meipass():
     with patch.object(sys, "_MEIPASS", "/tmp/meipass", create=True):
         result = get_bundle_data_dir()
         assert result == Path("/tmp/meipass")
+
+
+# ---------------------------------------------------------------------------
+# get_install_dir
+# ---------------------------------------------------------------------------
+
+
+def test_get_install_dir_windows():
+    """On Windows, uses LOCALAPPDATA."""
+    with (
+        patch.object(sys, "platform", "win32"),
+        patch.dict("os.environ", {"LOCALAPPDATA": r"C:\Users\Test\AppData\Local"}),
+    ):
+        result = get_install_dir()
+        assert result.name == "magma-cycling"
+        assert "AppData" in str(result)
+
+
+def test_get_install_dir_unix():
+    """On Unix, uses ~/.local/bin/magma-cycling."""
+    with patch.object(sys, "platform", "linux"):
+        result = get_install_dir()
+        assert result == Path.home() / ".local" / "bin" / "magma-cycling"
+
+
+# ---------------------------------------------------------------------------
+# is_in_temporary_location
+# ---------------------------------------------------------------------------
+
+
+def test_is_in_temporary_location_dev_mode():
+    """In dev mode (not bundled), always returns False."""
+    assert is_in_temporary_location() is False
+
+
+def test_is_in_temporary_location_downloads(monkeypatch):
+    """Detects Downloads folder as temporary."""
+    monkeypatch.setattr(sys, "executable", r"C:\Users\steph\Downloads\magma.exe")
+    monkeypatch.setattr("magma_cycling.paths.is_bundled", lambda: True)
+    assert is_in_temporary_location() is True
+
+
+def test_is_in_temporary_location_permanent(monkeypatch):
+    """Permanent install path is not temporary."""
+    monkeypatch.setattr(sys, "executable", r"C:\Users\steph\AppData\Local\magma-cycling\magma.exe")
+    monkeypatch.setattr("magma_cycling.paths.is_bundled", lambda: True)
+    assert is_in_temporary_location() is False
+
+
+def test_is_in_temporary_location_bureau_fr(monkeypatch):
+    """Detects French 'Bureau' (Desktop) as temporary."""
+    monkeypatch.setattr(sys, "executable", r"C:\Users\steph\Bureau\magma.exe")
+    monkeypatch.setattr("magma_cycling.paths.is_bundled", lambda: True)
+    assert is_in_temporary_location() is True
+
+
+def test_is_in_temporary_location_temp(monkeypatch):
+    """Detects Temp folder as temporary."""
+    monkeypatch.setattr(sys, "executable", r"C:\Users\steph\AppData\Local\Temp\magma.exe")
+    monkeypatch.setattr("magma_cycling.paths.is_bundled", lambda: True)
+    assert is_in_temporary_location() is True

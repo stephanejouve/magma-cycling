@@ -167,7 +167,15 @@ def print_dashboard():
 
 def interactive_menu():
     """Display dashboard and action menu."""
+    import sys
+
+    from magma_cycling.paths import auto_install_exe, is_bundled, is_in_temporary_location
+
     print_dashboard()
+
+    if is_bundled() and is_in_temporary_location():
+        if auto_install_exe():
+            sys.exit(0)
 
     print("  Actions :")
     print("    1. Lancer le setup (configuration)")
@@ -203,8 +211,10 @@ def _run_setup():
 
 def _run_mcp_server():
     """Launch the MCP server."""
-    print("  Demarrage du serveur MCP... (en attente de connexion)")
-    print("  Ctrl+C pour arreter.\n")
+    import sys
+
+    print("  Demarrage du serveur MCP... (en attente de connexion)", file=sys.stderr)
+    print("  Ctrl+C pour arreter.\n", file=sys.stderr)
     from magma_cycling.mcp_server import main as mcp_main
 
     mcp_main()
