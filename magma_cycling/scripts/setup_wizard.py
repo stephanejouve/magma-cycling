@@ -339,7 +339,7 @@ class SetupWizard:
         print_info("Connecte-toi sur intervals.icu → Settings → Developer Settings → API Key\n")
 
         while True:
-            athlete_id = ask_text("Ton identifiant athlete (commence par 'i', ex: i123456)")
+            athlete_id = ask_text("Ton identifiant athlete (ex: i123456 ou 15002177)")
             api_key = ask_secret("Ta cle API Intervals.icu")
 
             print_info("Verification en cours...")
