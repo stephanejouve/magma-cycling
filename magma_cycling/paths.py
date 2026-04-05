@@ -96,7 +96,7 @@ def auto_install_exe() -> bool:
     install_dir.mkdir(parents=True, exist_ok=True)
     shutil.copy2(sys.executable, target)
     print(f"  Copie vers {target}")
-    print("  Relancement...")
+    print("  Redemarrage...")
 
     flags = 0
     if os.name == "nt":
