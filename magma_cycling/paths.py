@@ -50,3 +50,56 @@ def get_bundle_data_dir() -> Path | None:
     if is_bundled():
         return Path(sys._MEIPASS)  # type: ignore[attr-defined]
     return None
+
+
+def get_install_dir() -> Path:
+    """Return the recommended permanent install directory for the .exe."""
+    if sys.platform == "win32":
+        base = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local"))
+    else:
+        base = Path.home() / ".local" / "bin"
+    return base / "magma-cycling"
+
+
+def is_in_temporary_location() -> bool:
+    """Check if the .exe runs from Downloads, Temp, or Desktop."""
+    if not is_bundled():
+        return False
+    exe_str = str(Path(sys.executable).resolve()).lower()
+    return any(m in exe_str for m in ("downloads", "temp", "tmp", "desktop", "bureau"))
+
+
+def auto_install_exe() -> bool:
+    """Copy the .exe to a permanent location and relaunch.
+
+    Returns True if relaunched (caller should exit), False if skipped.
+    """
+    import shutil
+    import subprocess
+
+    install_dir = get_install_dir()
+    target = install_dir / "magma-cycling.exe"
+
+    print("  Le programme tourne depuis un emplacement temporaire.")
+    print(f"  Installation recommandee : {target}")
+    print()
+
+    try:
+        answer = input("  Installer a cet emplacement ? (O/n) : ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return False
+
+    if answer not in ("", "o", "oui", "y", "yes"):
+        return False
+
+    install_dir.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(sys.executable, target)
+    print(f"  Copie vers {target}")
+    print("  Relancement...")
+
+    flags = 0
+    if os.name == "nt":
+        flags = subprocess.CREATE_NEW_CONSOLE
+    subprocess.Popen([str(target)], creationflags=flags)
+    return True
