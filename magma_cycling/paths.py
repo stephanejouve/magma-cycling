@@ -78,7 +78,10 @@ def auto_install_exe() -> bool:
     import subprocess
 
     install_dir = get_install_dir()
-    target = install_dir / "magma-cycling.exe"
+    if sys.platform == "win32":
+        target = install_dir / "magma-cycling.exe"
+    else:
+        target = install_dir / "magma-cycling"
 
     print("  Le programme tourne depuis un emplacement temporaire.")
     print(f"  Installation recommandee : {target}")

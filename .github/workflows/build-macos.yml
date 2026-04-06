@@ -1,0 +1,90 @@
+name: Build macOS Binary
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    name: Build magma-cycling (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - runner: macos-13
+            arch: x86_64
+          - runner: macos-14
+            arch: arm64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Poetry and dependencies
+        run: |
+          pip install poetry
+          poetry config virtualenvs.create true
+          poetry config virtualenvs.in-project true
+          poetry install --no-interaction --no-ansi
+
+      - name: Install PyInstaller
+        run: poetry run pip install pyinstaller
+
+      - name: Inject version from tag
+        if: github.event_name == 'release'
+        run: |
+          VERSION="${{ github.event.release.tag_name }}"
+          VERSION="${VERSION#v}"
+          sed -i '' "s/__version__ = \".*\"/__version__ = \"$VERSION\"/" magma_cycling/__init__.py
+          echo "Injected version $VERSION"
+
+      - name: Build binary
+        run: poetry run pyinstaller packaging/magma-cycling.spec --distpath dist/
+
+      - name: Verify binary exists
+        run: ls -la dist/
+
+      - name: "Smoke test: --version"
+        run: dist/magma-cycling --version
+
+      - name: "Smoke test: mcp-server (timeout 5s)"
+        run: |
+          dist/magma-cycling mcp-server &
+          PID=$!
+          sleep 5
+          if kill -0 $PID 2>/dev/null; then
+            kill $PID
+            echo "MCP server started successfully (killed after 5s)"
+          else
+            wait $PID
+            EXIT_CODE=$?
+            echo "Process exited with code $EXIT_CODE"
+            if [ $EXIT_CODE -ne 0 ]; then exit 1; fi
+          fi
+
+      - name: Rename with version (release only)
+        if: github.event_name == 'release'
+        run: |
+          VERSION="${{ github.event.release.tag_name }}"
+          mv dist/magma-cycling "dist/magma-cycling-${VERSION}-macos-${{ matrix.arch }}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: magma-cycling-macos-${{ matrix.arch }}
+          path: dist/magma-cycling*
+          retention-days: 30
+
+      - name: Attach to release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          VERSION="${{ github.event.release.tag_name }}"
+          gh release upload "$VERSION" "dist/magma-cycling-${VERSION}-macos-${{ matrix.arch }}" --clobber
