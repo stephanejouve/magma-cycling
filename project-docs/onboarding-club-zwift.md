@@ -121,24 +121,30 @@ Aucune installation technique requise. Telecharge, autorise, lance.
    - **Mac Intel** (avant 2020) : `magma-cycling-vX.X.X-macos-x86_64`
    - **Mac Apple Silicon** (M1/M2/M3/M4) : `magma-cycling-vX.X.X-macos-arm64`
    - _Pas sur ?_ Clique  > **A propos de ce Mac** — si tu vois "Puce Apple M...", c'est ARM64. Sinon c'est Intel.
-3. Ouvre le Terminal (Cmd+Espace > "Terminal") et rends le fichier executable (cette commande ne produit aucune sortie, c'est normal) :
+3. Ouvre le Terminal (Cmd+Espace > "Terminal") et copie-colle ces **deux commandes** une par une, en appuyant sur Entree apres chacune.
+
+**Commande 1** — rendre le fichier executable (ne produit aucune sortie, c'est normal) :
 
 ```bash
 chmod +x ~/Downloads/magma-cycling-*-macos-*
 ```
 
-4. Lance le programme :
+**Commande 2** — lancer le programme :
 
 ```bash
 ~/Downloads/magma-cycling-*-macos-*
 ```
 
-5. Le Mac va probablement bloquer l'ouverture (Gatekeeper). Pour autoriser :
+> **Qu'est-ce que ces etoiles `*` ?** C'est un raccourci du Terminal qui veut dire "n'importe quel texte".
+> Le Terminal trouvera tout seul le fichier que tu as telecharge, quel que soit le numero de version.
+> Tu n'as rien a remplacer — copie-colle tel quel.
+
+4. **Si le Mac bloque** avec un message de securite (Gatekeeper) :
    - Va dans **Reglages systeme** > **Confidentialite et securite**
    - Tout en bas, tu verras un message du type "magma-cycling a ete bloque"
    - Clique **Ouvrir quand meme**
-   - Relance la commande de l'etape 4
-6. Un menu interactif s'affiche — tape **1** pour lancer l'assistant de configuration
+   - Retourne dans le Terminal et relance la commande 2
+5. Un menu interactif s'affiche — tape **1** pour lancer l'assistant de configuration
 
 > **Note** : ce message de securite n'apparait qu'a la premiere ouverture.
 > Le binaire n'est pas signe (version beta) — c'est pour ca que macOS se mefie.
