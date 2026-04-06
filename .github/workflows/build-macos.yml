@@ -10,6 +10,8 @@ jobs:
     name: Build magma-cycling (${{ matrix.arch }})
     runs-on: ${{ matrix.runner }}
     strategy:
+      fail-fast: false
+      max-parallel: 1
       matrix:
         include:
           - runner: macos-13
