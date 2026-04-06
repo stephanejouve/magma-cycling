@@ -44,15 +44,23 @@ Aucune installation technique requise. Telecharge, autorise, lance.
 ### Etape 2 — Autoriser et lancer
 
 1. Ouvre le Terminal (Cmd+Espace > "Terminal")
-2. Rends le fichier executable :
+2. Rends le fichier executable (cette commande ne produit aucune sortie, c'est normal) :
 
 ```bash
 chmod +x ~/Downloads/magma-cycling-*-macos-*
 ```
 
-3. Le Mac va bloquer l'ouverture (Gatekeeper). Pour autoriser :
-   - Fais **clic droit** sur le fichier dans le Finder > **Ouvrir**
-   - Ou bien : **Reglages systeme** > **Confidentialite et securite** > clique **Ouvrir quand meme**
+3. Lance le programme :
+
+```bash
+~/Downloads/magma-cycling-*-macos-*
+```
+
+4. Le Mac va probablement bloquer l'ouverture (Gatekeeper). Pour autoriser :
+   - Va dans **Reglages systeme** > **Confidentialite et securite**
+   - Tout en bas, tu verras un message du type "magma-cycling a ete bloque"
+   - Clique **Ouvrir quand meme**
+   - Relance la commande de l'etape 3
 
 > **Note** : ce message de securite n'apparait qu'a la premiere ouverture.
 > Le binaire n'est pas signe (version beta) — c'est pour ca que macOS se mefie.
