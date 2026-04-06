@@ -99,10 +99,14 @@ def auto_install_exe() -> bool:
     install_dir.mkdir(parents=True, exist_ok=True)
     shutil.copy2(sys.executable, target)
     print(f"  Copie vers {target}")
-    print("  Redemarrage...")
 
-    flags = 0
     if os.name == "nt":
-        flags = subprocess.CREATE_NEW_CONSOLE
-    subprocess.Popen([str(target)], creationflags=flags)
+        print("  Redemarrage...")
+        subprocess.Popen([str(target)], creationflags=subprocess.CREATE_NEW_CONSOLE)
+    else:
+        print()
+        print("  Pour lancer le programme, copie-colle dans le Terminal :")
+        print(f"  {target}")
+        print()
+
     return True
