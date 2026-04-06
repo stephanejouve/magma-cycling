@@ -96,7 +96,7 @@ L'IA prend le profil de ta route (denivele, pentes) et ajuste les objectifs segm
 |---------|:---:|-------------|
 | **Intervals.icu** (compte gratuit) | Oui* | Plateforme d'entrainement testee et supportee. L'architecture est concue pour accueillir d'autres plateformes (TrainingPeaks, Strava, etc.) mais seul Intervals.icu est valide a ce jour |
 | **Un client MCP** (Claude Desktop, Cursor, Windsurf...) | Oui | L'interface pour parler a l'IA — c'est lui qui fournit le LLM |
-| **Python 3.11+** | Non* | Le moteur — sauf si tu utilises l'executable Windows standalone |
+| **Python 3.11+** | Non* | Le moteur — sauf si tu utilises l'executable standalone (Mac ou Windows) |
 | **Withings Sleep Analyzer** | Non | Pour le suivi automatique du sommeil |
 | **Cle API IA** (Claude ou Mistral) | Non | Uniquement pour les analyses automatiques (crons). En usage interactif, c'est ton agent desktop qui fait le travail |
 
@@ -110,7 +110,38 @@ Choisis ta methode selon ton systeme. Mac ou Windows, le resultat est le meme.
 
 ### Installation Mac
 
-**Etape 1 — Installer les outils** (une seule fois)
+Tu as **2 options** selon ton confort technique. Le resultat est le meme.
+
+#### Option A — Executable standalone (recommande)
+
+Aucune installation technique requise. Telecharge, autorise, lance.
+
+1. Va sur la page [Releases](https://github.com/stephanejouve/magma-cycling/releases) du projet
+2. Telecharge le fichier correspondant a ton Mac :
+   - **Mac Intel** (avant 2020) : `magma-cycling-vX.X.X-macos-x86_64`
+   - **Mac Apple Silicon** (M1/M2/M3/M4) : `magma-cycling-vX.X.X-macos-arm64`
+   - _Pas sur ?_ Clique  > **A propos de ce Mac** — si tu vois "Puce Apple M...", c'est ARM64. Sinon c'est Intel.
+3. Ouvre le Terminal (Cmd+Espace > "Terminal") et rends le fichier executable :
+
+```bash
+chmod +x ~/Downloads/magma-cycling-*-macos-*
+```
+
+4. Le Mac va bloquer l'ouverture (Gatekeeper). Pour autoriser :
+   - Fais **clic droit** sur le fichier dans le Finder > **Ouvrir**
+   - Ou bien : **Reglages systeme** > **Confidentialite et securite** > clique **Ouvrir quand meme**
+5. Un menu interactif s'affiche — tape **1** pour lancer l'assistant de configuration
+
+> **Note** : ce message de securite n'apparait qu'a la premiere ouverture.
+> Le binaire n'est pas signe (version beta) — c'est pour ca que macOS se mefie.
+
+> Si Claude Desktop est deja installe, le wizard configure le MCP automatiquement.
+> Sinon, il affiche "Claude Desktop non detecte" — c'est normal. Installe Claude Desktop
+> ensuite (voir plus bas), puis relance le setup pour que la connexion se fasse.
+
+#### Option B — Python + Poetry
+
+Pour ceux qui veulent le code source et les mises a jour en `git pull` :
 
 Ouvre le Terminal et copie-colle :
 
@@ -195,12 +226,12 @@ docker run -it -v $HOME\training-logs:/data/training-logs `
     ghcr.io/stephanejouve/magma-cycling:latest mcp-server
 ```
 
-### Suite commune (Mac et Windows Python)
+### Suite commune (Mac option B et Windows option B)
 
 **Etape 2 — Lancer l'assistant de configuration**
 
-> **Utilisateurs Windows .exe** : pas besoin de cette etape manuellement.
-> Double-clique sur l'exe et tape 1 dans le menu — le setup se lance tout seul.
+> **Utilisateurs executable standalone (Mac option A / Windows option A)** :
+> pas besoin de cette etape manuellement. Lance l'executable et tape 1 dans le menu — le setup se lance tout seul.
 
 ```bash
 # Si Python + Poetry :
@@ -245,10 +276,25 @@ La config MCP depend de ton mode d'installation :
 }
 ```
 
-**Si executable Windows (option A) :**
+**Si executable standalone (Mac option A / Windows option A) :**
 
 > L'assistant de configuration fait ca automatiquement.
 > En cas de besoin, voici la config manuelle :
+
+Mac :
+
+```json
+{
+  "mcpServers": {
+    "magma-cycling": {
+      "command": "/chemin/vers/magma-cycling",
+      "args": ["mcp-server"]
+    }
+  }
+}
+```
+
+Windows :
 
 ```json
 {
@@ -525,6 +571,9 @@ Oui. Le serveur tourne sur ton Mac (ou ton NAS). Tes donnees ne passent par aucu
 
 **Q : Je peux l'utiliser sur Windows ?**
 Oui, 3 options : un executable standalone (zero installation technique), Python classique, ou Docker. Voir la section "Installation Windows" plus haut.
+
+**Q : Je peux l'utiliser sur Mac ?**
+Oui, 2 options : un executable standalone (zero installation technique) ou Python + Poetry. Voir la section "Installation Mac" plus haut.
 
 **Q : Ca remplace un vrai coach ?**
 Non. Ca automatise les taches repetitives d'un coach : planification, suivi d'adherence, feedback post-seance. Si tu as un coach humain, Magma est un complement. Si tu n'en as pas, c'est une excellente base structuree.
