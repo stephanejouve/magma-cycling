@@ -103,6 +103,12 @@ def auto_install_exe() -> bool:
     if os.name == "nt":
         print("  Redemarrage...")
         subprocess.Popen([str(target)], creationflags=subprocess.CREATE_NEW_CONSOLE)
+    elif sys.platform == "darwin":
+        _create_macos_app(target)
+        print()
+        print("  Pour lancer le programme, copie-colle dans le Terminal :")
+        print(f"  {target}")
+        print()
     else:
         print()
         print("  Pour lancer le programme, copie-colle dans le Terminal :")
@@ -110,3 +116,76 @@ def auto_install_exe() -> bool:
         print()
 
     return True
+
+
+def _create_macos_app(binary_path: Path):
+    """Create a minimal .app bundle in /Applications for the binary."""
+    import plistlib
+
+    app_dir = Path("/Applications/Magma Cycling.app")
+    contents = app_dir / "Contents"
+    macos_dir = contents / "MacOS"
+
+    try:
+        macos_dir.mkdir(parents=True, exist_ok=True)
+
+        # Launcher script
+        launcher = macos_dir / "launcher"
+        launcher.write_text(
+            "#!/bin/bash\n" f'open -a Terminal "{binary_path}"\n',
+            encoding="utf-8",
+        )
+        launcher.chmod(0o755)
+
+        # Info.plist
+        plist = {
+            "CFBundleName": "Magma Cycling",
+            "CFBundleDisplayName": "Magma Cycling",
+            "CFBundleIdentifier": "com.magma-cycling.app",
+            "CFBundleVersion": "1.0",
+            "CFBundleExecutable": "launcher",
+            "CFBundlePackageType": "APPL",
+            "LSUIElement": False,
+        }
+        plist_path = contents / "Info.plist"
+        plist_path.write_bytes(plistlib.dumps(plist))
+
+        print(f"  Application creee : {app_dir}")
+        print("  Tu peux lancer Magma Cycling depuis le Launchpad ou Spotlight.")
+    except PermissionError:
+        # /Applications peut nécessiter sudo — fallback silencieux
+        _create_macos_app_user(binary_path)
+
+
+def _create_macos_app_user(binary_path: Path):
+    """Fallback: create .app in ~/Applications if /Applications is read-only."""
+    import plistlib
+
+    user_apps = Path.home() / "Applications"
+    app_dir = user_apps / "Magma Cycling.app"
+    contents = app_dir / "Contents"
+    macos_dir = contents / "MacOS"
+
+    macos_dir.mkdir(parents=True, exist_ok=True)
+
+    launcher = macos_dir / "launcher"
+    launcher.write_text(
+        "#!/bin/bash\n" f'open -a Terminal "{binary_path}"\n',
+        encoding="utf-8",
+    )
+    launcher.chmod(0o755)
+
+    plist = {
+        "CFBundleName": "Magma Cycling",
+        "CFBundleDisplayName": "Magma Cycling",
+        "CFBundleIdentifier": "com.magma-cycling.app",
+        "CFBundleVersion": "1.0",
+        "CFBundleExecutable": "launcher",
+        "CFBundlePackageType": "APPL",
+        "LSUIElement": False,
+    }
+    plist_path = contents / "Info.plist"
+    plist_path.write_bytes(plistlib.dumps(plist))
+
+    print(f"  Application creee : {app_dir}")
+    print("  Tu peux lancer Magma Cycling depuis Spotlight (Cmd+Espace).")
