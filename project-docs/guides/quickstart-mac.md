@@ -1,7 +1,7 @@
 # Magma Cycling — Installation Mac pas a pas
 
 Guide pour installer le coach IA cyclisme sur ton Mac.
-Temps estime : 15-20 minutes. Aucune connaissance technique requise.
+Aucune connaissance technique requise.
 
 ---
 
@@ -16,11 +16,60 @@ Temps estime : 15-20 minutes. Aucune connaissance technique requise.
 > Va sur https://intervals.icu > clique sur ton nom en haut a droite >
 > **Settings** > **Developer Settings** > **API Key**.
 > Si tu n'en as pas, clique "Generate" pour en creer une.
-> Copie-la quelque part (bloc-notes), tu en auras besoin a l'etape 5.
+> Copie-la quelque part (bloc-notes), tu en auras besoin pendant la configuration.
 
 ---
 
-## Etape 1 — Ouvrir le Terminal
+## Choisis ta methode d'installation
+
+| Methode | Temps | Pour qui |
+|---------|-------|----------|
+| **Option A — Executable standalone** | 5 min | Tout le monde (recommande) |
+| **Option B — Python + Poetry** | 15-20 min | Ceux qui veulent le code source et `git pull` |
+
+---
+
+## Option A — Executable standalone (recommande)
+
+Aucune installation technique requise. Telecharge, autorise, lance.
+
+### Etape 1 — Telecharger
+
+1. Va sur la page [Releases](https://github.com/stephanejouve/magma-cycling/releases) du projet
+2. Telecharge le fichier correspondant a ton Mac :
+   - **Mac Intel** (avant 2020) : `magma-cycling-vX.X.X-macos-x86_64`
+   - **Mac Apple Silicon** (M1/M2/M3/M4) : `magma-cycling-vX.X.X-macos-arm64`
+   - _Pas sur ?_ Clique  > **A propos de ce Mac** — si tu vois "Puce Apple M...", c'est ARM64. Sinon c'est Intel.
+
+### Etape 2 — Autoriser et lancer
+
+1. Ouvre le Terminal (Cmd+Espace > "Terminal")
+2. Rends le fichier executable :
+
+```bash
+chmod +x ~/Downloads/magma-cycling-*-macos-*
+```
+
+3. Le Mac va bloquer l'ouverture (Gatekeeper). Pour autoriser :
+   - Fais **clic droit** sur le fichier dans le Finder > **Ouvrir**
+   - Ou bien : **Reglages systeme** > **Confidentialite et securite** > clique **Ouvrir quand meme**
+
+> **Note** : ce message de securite n'apparait qu'a la premiere ouverture.
+> Le binaire n'est pas signe (version beta) — c'est pour ca que macOS se mefie.
+
+4. Un menu interactif s'affiche — tape **1** pour lancer l'assistant de configuration
+5. L'assistant te pose quelques questions (ID athlete, cle API, profil). Reponds et c'est fait.
+
+> Si Claude Desktop est deja installe, le wizard le detecte et configure le MCP automatiquement.
+> Sinon, il affiche "Claude Desktop non detecte" — c'est normal, on l'installe juste apres.
+
+Passe a l'etape **Installer Claude Desktop** ci-dessous.
+
+---
+
+## Option B — Python + Poetry
+
+### Etape 1 — Ouvrir le Terminal
 
 Le Terminal est l'application qui permet de taper des commandes sur Mac.
 Pas de panique, tu vas juste copier-coller ce qui suit.
@@ -35,9 +84,7 @@ Une fenetre noire (ou blanche) s'ouvre avec un curseur qui clignote. C'est la.
 > **Astuce** : pour copier-coller dans le Terminal, utilise **Cmd+C** / **Cmd+V**
 > comme d'habitude. Colle une commande a la fois, puis appuie sur Entree.
 
----
-
-## Etape 2 — Installer Homebrew (le "magasin d'apps" du Terminal)
+### Etape 2 — Installer Homebrew (le "magasin d'apps" du Terminal)
 
 Copie-colle cette commande dans le Terminal et appuie sur Entree :
 
@@ -54,9 +101,7 @@ Copie-colle cette commande dans le Terminal et appuie sur Entree :
 
 > **Sur les Mac Apple Silicon (M1/M2/M3)** : Homebrew peut afficher un message te demandant d'ajouter une ligne a ton profil. Si tu vois un bloc "Next steps", copie-colle les commandes indiquees.
 
----
-
-## Etape 3 — Installer Python et Git
+### Etape 3 — Installer Python et Git
 
 Toujours dans le Terminal, copie-colle ces commandes **une par une** :
 
@@ -95,9 +140,7 @@ poetry --version
 
 Si les 3 repondent, c'est bon. Passe a la suite.
 
----
-
-## Etape 4 — Telecharger et installer Magma Cycling
+### Etape 4 — Telecharger et installer Magma Cycling
 
 Copie-colle ces commandes **une par une** :
 
@@ -118,9 +161,7 @@ poetry install
 > Ca installe les dependances. Attends 1-2 minutes que ca finisse.
 > Tu verras defiler des lignes — c'est normal. Attends le retour du curseur.
 
----
-
-## Etape 5 — Lancer l'assistant de configuration
+### Etape 5 — Lancer l'assistant de configuration
 
 ```bash
 cd ~/magma-cycling
@@ -140,7 +181,7 @@ L'assistant te guide avec des questions. Voici ce qu'il va te demander :
 
 ---
 
-## Etape 6 — Installer Claude Desktop
+## Installer Claude Desktop
 
 1. Va sur https://claude.ai/download
 2. Telecharge la version Mac
@@ -151,9 +192,29 @@ L'assistant te guide avec des questions. Voici ce qu'il va te demander :
 
 > **Si Claude Desktop etait deja installe** : quitte-le completement avec **Cmd+Q** et relance-le pour qu'il prenne en compte la configuration Magma.
 
+### Connecter Magma a Claude Desktop
+
+Si tu as installe Claude Desktop **apres** le setup Magma, le wizard n'a pas pu configurer le MCP automatiquement. Deux options :
+
+**Option rapide — relancer le setup :**
+
+```bash
+# Executable standalone :
+./magma-cycling    # puis tape 1
+
+# Python + Poetry :
+cd ~/magma-cycling && poetry run setup
+```
+
+Le wizard detectera Claude Desktop et configurera le MCP automatiquement.
+
+**Option manuelle :**
+
+Dans Claude Desktop : **Settings** > **Developer** > **Edit Config**, puis colle la config MCP correspondante (voir la section Depannage plus bas).
+
 ---
 
-## Etape 7 — Verifier que tout fonctionne
+## Verifier que tout fonctionne
 
 1. Dans Claude Desktop, regarde en bas a gauche de la fenetre de chat
 2. Tu dois voir une **icone marteau** avec le chiffre correspondant aux outils disponibles
@@ -173,7 +234,22 @@ Si l'IA te repond avec tes metriques Intervals.icu (CTL, ATL, TSB...), c'est gag
 
 1. Dans Claude Desktop, va dans **Settings** (icone engrenage)
 2. **Developer** > **Edit Config**
-3. Un fichier s'ouvre. Tu dois voir :
+3. Un fichier s'ouvre. Tu dois voir une config MCP.
+
+**Si tu utilises l'executable standalone :**
+
+```json
+{
+  "mcpServers": {
+    "magma-cycling": {
+      "command": "/chemin/vers/magma-cycling",
+      "args": ["mcp-server"]
+    }
+  }
+}
+```
+
+**Si tu utilises Python + Poetry :**
 
 ```json
 {
@@ -187,7 +263,7 @@ Si l'IA te repond avec tes metriques Intervals.icu (CTL, ATL, TSB...), c'est gag
 }
 ```
 
-4. Si ce n'est pas la, copie-colle ce bloc (remplace `TON_NOM` par ton nom d'utilisateur Mac — celui qui apparait quand tu tapes `whoami` dans le Terminal)
+4. Si ce n'est pas la, copie-colle le bloc correspondant a ta methode (remplace les chemins par les tiens — pour `TON_NOM`, tape `whoami` dans le Terminal)
 5. Sauvegarde (Cmd+S), ferme le fichier
 6. Quitte Claude Desktop (Cmd+Q) et relance
 
@@ -207,7 +283,7 @@ Ca veut dire que les outils de dev Apple ne sont pas installes. Tape :
 xcode-select --install
 ```
 
-Une fenetre apparait, clique "Installer", attends 5-10 minutes, puis reprends a l'etape 3.
+Une fenetre apparait, clique "Installer", attends 5-10 minutes, puis reprends l'installation.
 
 ### "permission denied" ou "operation not permitted"
 
@@ -227,7 +303,13 @@ Contacte Stephane — un partage d'ecran de 5 minutes et c'est regle.
 
 ## Mises a jour futures
 
-Quand une nouvelle version sort, ouvre le Terminal et tape :
+### Executable standalone
+
+Retelecharge la derniere version depuis la page [Releases](https://github.com/stephanejouve/magma-cycling/releases), remplace l'ancien fichier, et relance Claude Desktop (Cmd+Q et rouvre).
+
+### Python + Poetry
+
+Ouvre le Terminal et tape :
 
 ```bash
 cd ~/magma-cycling
