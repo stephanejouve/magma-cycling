@@ -139,7 +139,7 @@ async def handle_weekly_planner(args: dict) -> list[TextContent]:
 
     week_id = args["week_id"]
     start_date_str = args["start_date"]
-    provider = args.get("provider", "clipboard")
+    provider = args.get("provider", "prompt_only")
     force = args.get("force", False)
 
     start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
@@ -781,11 +781,25 @@ async def handle_modify_session_details(args: dict) -> list[TextContent]:
                         if duration_min is not None:
                             session.duration_min = duration_min
 
+                        # Capture session attrs for workouts.txt update
+                        if description:
+                            _wt_intervals_name = (
+                                f"{session_id}-{session.session_type}-"
+                                f"{session.name}-{session.version}"
+                            )
+
                         session_found = True
                         break
 
                 if not session_found:
                     raise ValueError(f"Session {session_id} not found in {week_id}")
+
+            # Propagate description to workouts.txt (outside modify_week lock)
+            if description:
+                from magma_cycling.workout_parser import update_workouts_file
+
+                update_workouts_file(week_id, _wt_intervals_name, description)
+                modifications.append("workouts_txt_updated")
 
         result = {
             "status": "success",

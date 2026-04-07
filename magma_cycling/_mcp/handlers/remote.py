@@ -11,6 +11,7 @@ from magma_cycling._mcp.handlers.remote_activities import (  # noqa: F401
     handle_get_activity_details,
     handle_get_activity_intervals,
     handle_get_activity_streams,
+    handle_list_activities,
 )
 from magma_cycling._mcp.handlers.remote_analysis import (  # noqa: F401
     handle_apply_workout_intervals,
@@ -32,6 +33,7 @@ __all__ = [
     "handle_sync_week_to_calendar",
     "handle_delete_remote_event",
     "handle_list_remote_events",
+    "handle_list_activities",
     "handle_get_activity_details",
     "handle_get_activity_intervals",
     "handle_get_activity_streams",
