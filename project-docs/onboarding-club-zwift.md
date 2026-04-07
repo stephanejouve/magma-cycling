@@ -56,6 +56,49 @@ Toi sur Zwift / route
 
 ---
 
+## D'ou viennent les donnees ?
+
+Magma est un **moteur d'analyse** — il ne stocke pas tes sorties, il les lit depuis Intervals.icu via leur API. Le flux est simple :
+
+```
+Ton compteur (Garmin / Wahoo / Hammerhead / Zwift)
+       |
+       v
+  Intervals.icu  <--- connexion directe (automatique)
+       |
+       v
+  Magma lit tes donnees via l'API
+       |
+       v
+  Ton agent IA analyse et te repond
+```
+
+### Configurer la connexion directe de ton compteur
+
+Dans Intervals.icu, va dans **Settings > Connections** et active la synchro avec ton compteur. Les principales :
+
+- **Garmin Connect** : toggle dans Connections, tes sorties arrivent automatiquement
+- **Wahoo** : idem, connexion native
+- **Zwift** : synchro automatique via Strava ou Garmin Connect
+
+C'est un toggle, ca prend 2 minutes, et apres chaque sortie remonte automatiquement dans Intervals.icu — donc dans Magma.
+
+### Et Strava dans tout ca ?
+
+Tu peux garder Strava pour le cote social (segments, kudos, clubs). Mais l'API Strava **interdit contractuellement le re-export de donnees vers un tiers** — c'est leur politique, pas la notre, et ca empeche toute integration directe Strava → Magma.
+
+Soyons honnetes : si tu as des annees d'historique uniquement dans Strava, le demarrage demande un effort initial. Il faut exporter ton historique Strava (archive ZIP depuis les parametres de ton compte), puis l'importer dans Intervals.icu (Settings > Import). C'est une operation unique mais longue (24-48h pour un gros historique). Une fois fait, les donnees restent dans Intervals.icu definitivement, meme si tu deconnectes Strava ensuite.
+
+Pour la suite, configure ton compteur pour envoyer les fichiers FIT **directement** vers Intervals.icu, en parallele de Strava. Les deux cohabitent sans probleme — ton compteur envoie les donnees aux deux plateformes independamment.
+
+### J'ai deja un historique Intervals.icu
+
+**Tu n'as rien a changer.** Magma lit ton historique existant tel quel. Des la connexion, tu peux demander "analyse ma forme des 6 dernieres semaines" ou "montre-moi mes activites de mars" — tout est deja accessible.
+
+Magma ne modifie jamais ton historique. Il ecrit uniquement sur ton calendrier quand tu lui demandes de synchroniser un plan d'entrainement, et seulement sur les jours futurs.
+
+---
+
 ## Les 5 fonctions que tu vas utiliser tout le temps
 
 ### 1. Planification de la semaine
@@ -100,7 +143,7 @@ L'IA prend le profil de ta route (denivele, pentes) et ajuste les objectifs segm
 | **Withings Sleep Analyzer** | Non | Pour le suivi automatique du sommeil |
 | **Cle API IA** (Claude ou Mistral) | Non | Uniquement pour les analyses automatiques (crons). En usage interactif, c'est ton agent desktop qui fait le travail |
 
-**Zwift, Garmin, Wahoo** : pas besoin de configuration specifique. Si tes sorties remontent dans Intervals.icu (ce qui est le cas par defaut), Magma les voit.
+**Zwift, Garmin, Wahoo** : configure la connexion directe vers Intervals.icu (Settings > Connections). Tes sorties remontent automatiquement et Magma les voit. Tu peux garder Strava en parallele sans probleme.
 
 ---
 
@@ -121,15 +164,21 @@ Aucune installation technique requise. Telecharge, autorise, lance.
    - **Mac Intel** (avant 2020) : `magma-cycling-vX.X.X-macos-x86_64`
    - **Mac Apple Silicon** (M1/M2/M3/M4) : `magma-cycling-vX.X.X-macos-arm64`
    - _Pas sur ?_ Clique  > **A propos de ce Mac** — si tu vois "Puce Apple M...", c'est ARM64. Sinon c'est Intel.
-3. Ouvre le Terminal (Cmd+Espace > "Terminal") et copie-colle ces **deux commandes** une par une, en appuyant sur Entree apres chacune.
+3. Ouvre le Terminal (Cmd+Espace > "Terminal") et copie-colle ces **trois commandes** une par une, en appuyant sur Entree apres chacune.
 
-**Commande 1** — rendre le fichier executable (ne produit aucune sortie, c'est normal) :
+**Commande 1** — lever la quarantaine macOS (ne produit aucune sortie, c'est normal) :
+
+```bash
+xattr -d com.apple.quarantine ~/Downloads/magma-cycling-*-macos-*
+```
+
+**Commande 2** — rendre le fichier executable (ne produit aucune sortie, c'est normal) :
 
 ```bash
 chmod +x ~/Downloads/magma-cycling-*-macos-*
 ```
 
-**Commande 2** — lancer le programme :
+**Commande 3** — lancer le programme :
 
 ```bash
 ~/Downloads/magma-cycling-*-macos-*
@@ -139,15 +188,10 @@ chmod +x ~/Downloads/magma-cycling-*-macos-*
 > Le Terminal trouvera tout seul le fichier que tu as telecharge, quel que soit le numero de version.
 > Tu n'as rien a remplacer — copie-colle tel quel.
 
-4. **Si le Mac bloque** avec un message de securite (Gatekeeper) :
-   - Va dans **Reglages systeme** > **Confidentialite et securite**
-   - Tout en bas, tu verras un message du type "magma-cycling a ete bloque"
-   - Clique **Ouvrir quand meme**
-   - Retourne dans le Terminal et relance la commande 2
-5. Un menu interactif s'affiche — tape **1** pour lancer l'assistant de configuration
+> **Pourquoi la commande `xattr` ?** Les fichiers telecharges depuis Internet sont mis en quarantaine
+> par macOS. Sans cette commande, le Mac tue silencieusement le programme sans message d'erreur.
 
-> **Note** : ce message de securite n'apparait qu'a la premiere ouverture.
-> Le binaire n'est pas signe (version beta) — c'est pour ca que macOS se mefie.
+4. Un menu interactif s'affiche — tape **1** pour lancer l'assistant de configuration
 
 > Si Claude Desktop est deja installe, le wizard configure le MCP automatiquement.
 > Sinon, il affiche "Claude Desktop non detecte" — c'est normal. Installe Claude Desktop
@@ -596,7 +640,13 @@ Non. Ca automatise les taches repetitives d'un coach : planification, suivi d'ad
 Oui. La majorite des fonctions (planification, analyse, suivi de charge) sont independantes du terrain. L'adaptation terrain est un bonus pour les sorties outdoor.
 
 **Q : Je n'utilise pas Intervals.icu, ca marche quand meme ?**
-Pas encore. Aujourd'hui seul Intervals.icu est teste et supporte. Mais le code est concu avec une couche d'abstraction (provider agnostique) qui permettra d'ajouter TrainingPeaks, Strava ou d'autres plateformes sans tout recoder. Si tu es sur une autre plateforme et motive pour contribuer, fais signe.
+Pas encore. Aujourd'hui seul Intervals.icu est teste et supporte. Le code est concu avec une couche d'abstraction (provider agnostique) qui permettra d'ajouter d'autres plateformes sans tout recoder. Si tu es sur une autre plateforme et motive pour contribuer, fais signe. Intervals.icu est gratuit et s'alimente directement depuis ton compteur (Garmin, Wahoo, Zwift) — voir la section "D'ou viennent les donnees" plus haut.
+
+**Q : J'ai deja des annees de donnees dans Intervals.icu, je dois tout recommencer ?**
+Non. Magma lit ton historique existant via l'API. Tu connectes ton compte et tout est disponible immediatement — activites, metriques, courbe de puissance. Magma ne modifie jamais ton historique, il le consulte.
+
+**Q : Et si mes donnees sont dans Strava ?**
+L'API Strava interdit le re-export vers des tiers, donc Magma ne peut pas lire Strava directement. La solution : configure ton compteur pour envoyer les FIT vers Intervals.icu en parallele (Settings > Connections, 2 minutes). Pour importer ton historique Strava existant, utilise l'outil d'import natif d'Intervals.icu (Settings > Import). C'est un processus long (24-48h pour plusieurs annees) mais c'est une operation unique.
 
 ---
 
