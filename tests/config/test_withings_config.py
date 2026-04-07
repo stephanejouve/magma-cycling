@@ -67,6 +67,7 @@ class TestWithingsConfigInitialization:
         """Credentials path should be in data repository."""
         monkeypatch.setenv("WITHINGS_CLIENT_ID", "test_client_id")
         monkeypatch.setenv("WITHINGS_CLIENT_SECRET", "test_secret")
+        monkeypatch.delenv("WITHINGS_CREDENTIALS_PATH", raising=False)
 
         with patch("magma_cycling.config.data_repo.get_data_config") as mock_data:
             mock_data.return_value.data_repo_path = tmp_path
@@ -75,6 +76,19 @@ class TestWithingsConfigInitialization:
 
             expected_path = tmp_path / ".withings_credentials.json"
             assert config.credentials_path == expected_path
+
+    def test_credentials_path_from_env_var(self, monkeypatch):
+        """WITHINGS_CREDENTIALS_PATH should override default credentials path."""
+        from pathlib import Path
+
+        monkeypatch.setenv("WITHINGS_CLIENT_ID", "test_client_id")
+        monkeypatch.setenv("WITHINGS_CLIENT_SECRET", "test_secret")
+        monkeypatch.setenv("WITHINGS_CREDENTIALS_PATH", "/data/credentials/withings.json")
+
+        reset_withings_config()
+        config = get_withings_config()
+
+        assert config.credentials_path == Path("/data/credentials/withings.json")
 
 
 class TestWithingsConfigValidation:

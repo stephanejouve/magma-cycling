@@ -26,14 +26,20 @@ class WithingsConfig:
 
     def __init__(self):
         """Initialize Withings configuration from environment variables."""
-        from magma_cycling.config.data_repo import get_data_config
+        from pathlib import Path
 
         self.client_id = os.getenv("WITHINGS_CLIENT_ID")
         self.client_secret = os.getenv("WITHINGS_CLIENT_SECRET")
         self.redirect_uri = os.getenv("WITHINGS_REDIRECT_URI", "http://localhost:8080/callback")
 
-        data_config = get_data_config()
-        self.credentials_path = data_config.data_repo_path / ".withings_credentials.json"
+        env_creds_path = os.getenv("WITHINGS_CREDENTIALS_PATH")
+        if env_creds_path:
+            self.credentials_path = Path(env_creds_path)
+        else:
+            from magma_cycling.config.data_repo import get_data_config
+
+            data_config = get_data_config()
+            self.credentials_path = data_config.data_repo_path / ".withings_credentials.json"
 
     def is_configured(self) -> bool:
         """Check if Withings API credentials are properly configured.
