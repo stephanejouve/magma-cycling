@@ -92,7 +92,10 @@ Cooldown
         mock_cm.__enter__ = MagicMock(return_value=mock_plan)
         mock_cm.__exit__ = MagicMock(return_value=False)
 
-        with patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower:
+        with (
+            patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower,
+            patch("magma_cycling.workout_parser.update_workouts_file"),
+        ):
             mock_tower.modify_week.return_value = mock_cm
 
             result = await handle_modify_session_details(
