@@ -78,6 +78,26 @@ def get_tools() -> list[Tool]:
             },
         ),
         Tool(
+            name="list-activities",
+            description="List completed activities for a date range (TSS, power, HR, cadence per activity)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "start_date": {
+                        "type": "string",
+                        "description": "Start date in YYYY-MM-DD format",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    },
+                    "end_date": {
+                        "type": "string",
+                        "description": "End date in YYYY-MM-DD format",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    },
+                },
+                "required": ["start_date", "end_date"],
+            },
+        ),
+        Tool(
             name="get-activity-details",
             description="Get complete details for a completed activity (TSS, IF, power curves, streams)",
             inputSchema={

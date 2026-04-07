@@ -10,10 +10,62 @@ if TYPE_CHECKING:
     from mcp.types import TextContent
 
 __all__ = [
+    "handle_list_activities",
     "handle_get_activity_details",
     "handle_get_activity_intervals",
     "handle_get_activity_streams",
 ]
+
+
+async def handle_list_activities(args: dict) -> list[TextContent]:
+    """List completed activities for a date range."""
+    from magma_cycling.config import create_intervals_client
+
+    start_date = args["start_date"]
+    end_date = args["end_date"]
+
+    try:
+        with suppress_stdout_stderr():
+            client = create_intervals_client()
+            _provider_info = client.get_provider_info()
+            activities = client.get_activities(oldest=start_date, newest=end_date)
+
+        keep_fields = {
+            "id",
+            "name",
+            "start_date_local",
+            "type",
+            "moving_time",
+            "distance",
+            "icu_training_load",
+            "icu_intensity",
+            "average_watts",
+            "weighted_average_watts",
+            "average_heartrate",
+            "average_cadence",
+            "total_elevation_gain",
+        }
+
+        filtered = []
+        for act in activities:
+            filtered.append({k: v for k, v in act.items() if k in keep_fields and v is not None})
+
+        result = {
+            "start_date": start_date,
+            "end_date": end_date,
+            "total": len(filtered),
+            "activities": filtered,
+        }
+
+        return mcp_response(result, provider_info=_provider_info)
+
+    except Exception as e:
+        error = {
+            "error": f"Failed to list activities: {str(e)}",
+            "start_date": start_date,
+            "end_date": end_date,
+        }
+        return mcp_response(error)
 
 
 async def handle_get_activity_details(args: dict) -> list[TextContent]:

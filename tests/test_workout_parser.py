@@ -1,5 +1,8 @@
 """Tests for workout_parser module."""
 
+from pathlib import Path
+from unittest.mock import patch
+
 import pytest
 
 from magma_cycling.workout_parser import (
@@ -9,6 +12,7 @@ from magma_cycling.workout_parser import (
     classify_interval_type,
     compute_intervals,
     parse_workout_text,
+    update_workouts_file,
 )
 
 
@@ -326,3 +330,88 @@ Cooldown
 """
         # 10+5+40+5+10+5 = 75 (header says 90)
         assert calculate_workout_duration(text) == 75
+
+
+class TestUpdateWorkoutsFile:
+    """Tests for update_workouts_file()."""
+
+    @pytest.fixture(autouse=True)
+    def _setup(self, tmp_path):
+        """Patch planning_dir and safe_write for all tests."""
+        self.planning_dir = tmp_path
+
+        def _fake_safe_write(file_path, content, backup_dir=None):
+            Path(file_path).write_text(content, encoding="utf-8")
+            return None
+
+        with (
+            patch(
+                "magma_cycling.planning.control_tower.planning_tower",
+                new=type("FakeTower", (), {"planning_dir": tmp_path})(),
+            ),
+            patch(
+                "magma_cycling.planning.backup.safe_write",
+                side_effect=_fake_safe_write,
+            ),
+        ):
+            yield
+
+    def test_replace_existing_block(self, tmp_path):
+        """Existing block is replaced, rest untouched."""
+        workouts_file = tmp_path / "S081_workouts.txt"
+        workouts_file.write_text(
+            "=== WORKOUT S081-J1-Endurance-Tempo-v1 ===\nOld description\n=== FIN WORKOUT ===\n",
+            encoding="utf-8",
+        )
+
+        update_workouts_file("S081", "S081-J1-Endurance-Tempo-v1", "New description")
+
+        content = workouts_file.read_text(encoding="utf-8")
+        assert "New description" in content
+        assert "Old description" not in content
+
+    def test_insert_new_block(self, tmp_path):
+        """New block appended when not found in existing file."""
+        workouts_file = tmp_path / "S081_workouts.txt"
+        workouts_file.write_text(
+            "=== WORKOUT S081-J1-Endurance-Base-v1 ===\nExisting\n=== FIN WORKOUT ===\n",
+            encoding="utf-8",
+        )
+
+        update_workouts_file("S081", "S081-J2-SweetSpot-v1", "Brand new workout")
+
+        content = workouts_file.read_text(encoding="utf-8")
+        assert "=== WORKOUT S081-J1-Endurance-Base-v1 ===" in content
+        assert "Existing" in content
+        assert "=== WORKOUT S081-J2-SweetSpot-v1 ===" in content
+        assert "Brand new workout" in content
+
+    def test_create_file_when_absent(self, tmp_path):
+        """File is created when it doesn't exist."""
+        workouts_file = tmp_path / "S082_workouts.txt"
+        assert not workouts_file.exists()
+
+        update_workouts_file("S082", "S082-J1-Recovery-v1", "Easy spin")
+
+        assert workouts_file.exists()
+        content = workouts_file.read_text(encoding="utf-8")
+        assert "=== WORKOUT S082-J1-Recovery-v1 ===" in content
+        assert "Easy spin" in content
+        assert "=== FIN WORKOUT ===" in content
+
+    def test_preserve_other_blocks(self, tmp_path):
+        """Other workout blocks remain intact after replacement."""
+        workouts_file = tmp_path / "S081_workouts.txt"
+        workouts_file.write_text(
+            "=== WORKOUT S081-J1-Endurance-v1 ===\nBlock A\n=== FIN WORKOUT ===\n\n"
+            "=== WORKOUT S081-J2-Tempo-v1 ===\nBlock B\n=== FIN WORKOUT ===\n",
+            encoding="utf-8",
+        )
+
+        update_workouts_file("S081", "S081-J1-Endurance-v1", "Updated A")
+
+        content = workouts_file.read_text(encoding="utf-8")
+        assert "Updated A" in content
+        assert "Block A" not in content
+        assert "Block B" in content
+        assert "=== WORKOUT S081-J2-Tempo-v1 ===" in content

@@ -84,6 +84,7 @@ from magma_cycling._mcp.handlers.remote import (  # noqa: F401
     handle_get_activity_details,
     handle_get_activity_intervals,
     handle_get_activity_streams,
+    handle_list_activities,
     handle_list_remote_events,
     handle_sync_remote_to_local,
     handle_sync_week_to_calendar,
@@ -184,10 +185,11 @@ TOOL_HANDLERS = {
     # Workouts (2)
     "get-workout": handle_get_workout,
     "validate-workout": handle_validate_workout,
-    # Remote / Calendar (12)
+    # Remote / Calendar (13)
     "sync-week-to-calendar": handle_sync_week_to_calendar,
     "delete-remote-event": handle_delete_remote_event,
     "list-remote-events": handle_list_remote_events,
+    "list-activities": handle_list_activities,
     "get-activity-details": handle_get_activity_details,
     "get-activity-intervals": handle_get_activity_intervals,
     "get-activity-streams": handle_get_activity_streams,

@@ -8,6 +8,9 @@ services:
       - "3000"
     volumes:
       - ${TRAINING_DATA_PATH:-./training-logs}:/data/training-logs
+      - ${WITHINGS_CREDENTIALS_DIR:-./credentials}:/data/credentials
+    environment:
+      - WITHINGS_CREDENTIALS_PATH=/data/credentials/withings.json
     env_file: stack.env
     restart: unless-stopped
     healthcheck:
@@ -32,6 +35,9 @@ services:
     command: ["supercronic", "/app/crontab"]
     volumes:
       - ${TRAINING_DATA_PATH:-./training-logs}:/data/training-logs
+      - ${WITHINGS_CREDENTIALS_DIR:-./credentials}:/data/credentials
+    environment:
+      - WITHINGS_CREDENTIALS_PATH=/data/credentials/withings.json
     env_file: stack.env
     restart: unless-stopped
     init: true

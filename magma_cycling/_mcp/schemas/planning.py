@@ -32,7 +32,7 @@ def get_tools() -> list[Tool]:
                             "mcp_direct",
                             "prompt_only",
                         ],
-                        "default": "clipboard",
+                        "default": "prompt_only",
                     },
                     "force": {
                         "type": "boolean",

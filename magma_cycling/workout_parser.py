@@ -331,3 +331,41 @@ def load_workout_descriptions(week_id: str) -> dict[str, str]:
         descriptions[name] = workout_content.strip()
 
     return descriptions
+
+
+def update_workouts_file(week_id: str, intervals_name: str, new_description: str) -> None:
+    """Update or insert a workout block in {week_id}_workouts.txt.
+
+    If the block ``=== WORKOUT {intervals_name} ===`` exists, its content is
+    replaced.  Otherwise, a new block is appended at the end.  The file is
+    created when absent.
+
+    Args:
+        week_id: Week ID (e.g., "S081").
+        intervals_name: Full workout name used as block header.
+        new_description: New workout description text.
+    """
+    from magma_cycling.planning.backup import safe_write
+    from magma_cycling.planning.control_tower import planning_tower
+
+    workouts_file = planning_tower.planning_dir / f"{week_id}_workouts.txt"
+
+    new_block = (
+        f"=== WORKOUT {intervals_name} ===\n" f"{new_description.strip()}\n" f"=== FIN WORKOUT ==="
+    )
+
+    if workouts_file.exists():
+        content = workouts_file.read_text(encoding="utf-8")
+        pattern = re.compile(
+            rf"=== WORKOUT {re.escape(intervals_name)} ===\n.*?\n=== FIN WORKOUT ===",
+            re.DOTALL,
+        )
+        if pattern.search(content):
+            updated = pattern.sub(new_block, content)
+        else:
+            # Append new block at end
+            updated = content.rstrip("\n") + "\n\n" + new_block + "\n"
+    else:
+        updated = new_block + "\n"
+
+    safe_write(workouts_file, updated)
