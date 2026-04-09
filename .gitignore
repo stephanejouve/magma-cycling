@@ -142,3 +142,10 @@ docs/_build/
 project-docs/sessions/*.jsonl
 project-docs/sessions/*.jsonl.gz
 project-docs/sessions/*.jsonl.original
+
+# Internal briefs and working notes (not for public repo)
+# These may contain personal paths, beta-tester identities, incident details, etc.
+project-docs/prompts/brief_*.md
+project-docs/prompts/S*_*_DevLead_*.md
+project-docs/prompts/doc_claude_desktop_*.md
+project-docs/prompts/magma_config_wizard.*
