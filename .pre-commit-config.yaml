@@ -72,7 +72,7 @@ repos:
 
       - id: check-tools-docs
         name: Check tools documentation
-        entry: poetry run check-tools-docs
+        entry: check-tools-docs
         args: ['--verbose']  # Warning only (change to --fail to make it blocking)
         language: system
         files: ^(pyproject\.toml|docs/modules/tools\.rst|magma_cycling/.*\.py)$

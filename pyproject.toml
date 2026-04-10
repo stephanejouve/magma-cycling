@@ -122,12 +122,7 @@ setup-withings = "magma_cycling.scripts.setup_withings:main"
 analyze-baseline = "magma_cycling.analysis.baseline_preliminary:main"
 
 # === Maintenance & Cleanup ===
-cleanup-archives = "scripts.maintenance.cleanup_old_archives:main"
-project-clean = "scripts.maintenance.project_cleaner:main"
 clear-week-planning = "scripts.maintenance.clear_week_planning:main"
-check-tools-docs = "scripts.maintenance.check_tools_documentation:main"
-format-planning = "scripts.maintenance.format_planning:main"
-data-repo-sync = "scripts.maintenance.data_repo_sync:main"
 
 [build-system]
 requires = ["poetry-core"]
