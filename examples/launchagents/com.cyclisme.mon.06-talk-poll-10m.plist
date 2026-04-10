@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- MONITORING: Talk Poll — Surveillance Nextcloud Talk               -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+
+    <!-- Service identifier -->
+    <key>Label</key>
+    <string>com.cyclisme.mon.06-talk-poll-10m</string>
+
+    <!-- Metadata (documentation) -->
+    <key>Description</key>
+    <string>Poll Nextcloud Talk rooms every 10 min, write new messages to inbox files for each agent.</string>
+
+    <key>Category</key>
+    <string>monitoring</string>
+
+    <key>Sequence</key>
+    <integer>6</integer>
+
+    <!-- Command to execute -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/stephanejouve/.local/bin/poetry</string>
+        <string>run</string>
+        <string>python</string>
+        <string>scripts/maintenance/talk_poll_daemon.py</string>
+    </array>
+
+    <!-- Working directory -->
+    <key>WorkingDirectory</key>
+    <string>/Users/stephanejouve/magma-cycling</string>
+
+    <!-- Schedule: every 10 minutes -->
+    <key>StartInterval</key>
+    <integer>600</integer>
+
+    <!-- Don't run at load -->
+    <key>RunAtLoad</key>
+    <false/>
+
+    <!-- Logging -->
+    <key>StandardOutPath</key>
+    <string>/Users/stephanejouve/Library/Logs/cyclisme-mon-talk-poll.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/stephanejouve/Library/Logs/cyclisme-mon-talk-poll.error.log</string>
+
+    <!-- Environment variables -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/Users/stephanejouve/.local/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>HOME</key>
+        <string>/Users/stephanejouve</string>
+    </dict>
+
+    <!-- Low priority -->
+    <key>Nice</key>
+    <integer>5</integer>
+
+    <!-- Low IO priority -->
+    <key>LowPriorityIO</key>
+    <true/>
+</dict>
+</plist>
