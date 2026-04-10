@@ -1,0 +1,17 @@
+{
+  "week_reference": {
+    "seasons": {
+      "2024-2025": {
+        "s001_date": "2024-08-05",
+        "global_week_start": 1,
+        "global_week_end": 74
+      },
+      "2026": {
+        "s001_date": "2026-01-05",
+        "global_week_start": 75,
+        "global_week_end": null
+      }
+    },
+    "active_season": "2026"
+  }
+}

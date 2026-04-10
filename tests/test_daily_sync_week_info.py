@@ -13,10 +13,10 @@ from magma_cycling.daily_sync import calculate_current_week_info
 class TestCalculateCurrentWeekInfo:
     """Tests for calculate_current_week_info()."""
 
-    def _setup_mock(self, mock_config, s001_date=date(2024, 10, 28)):
+    def _setup_mock(self, mock_config, s001_date=date(2024, 10, 28), global_week_start=1):
         """Helper to setup mock week config with S001 reference date."""
         config = MagicMock()
-        config.get_s001_date_obj.return_value = s001_date
+        config.get_s001_for_date.return_value = (s001_date, global_week_start)
         mock_config.return_value = config
 
     def test_s001_reference_date(self, mock_config):
@@ -58,3 +58,16 @@ class TestCalculateCurrentWeekInfo:
         week_id, start_date = calculate_current_week_info()
         assert week_id.startswith("S")
         assert start_date <= date.today()
+
+    def test_multi_season_week_id(self, mock_config):
+        """Multi-season: S001 at week 75 gives correct week IDs."""
+        self._setup_mock(mock_config, s001_date=date(2026, 1, 5), global_week_start=75)
+        # First week of season 2026
+        week_id, start_date = calculate_current_week_info(date(2026, 1, 5))
+        assert week_id == "S075"
+        assert start_date == date(2026, 1, 5)
+
+        # Second week of season 2026
+        week_id, start_date = calculate_current_week_info(date(2026, 1, 12))
+        assert week_id == "S076"
+        assert start_date == date(2026, 1, 12)

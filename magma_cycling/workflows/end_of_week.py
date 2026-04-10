@@ -123,7 +123,7 @@ def calculate_weekly_transition(reference_date: date | None = None) -> tuple[str
 
     # Get week config
     week_config = get_week_config()
-    s001_date = week_config.get_s001_date_obj("S001")
+    s001_date, season_week_start = week_config.get_s001_for_date(reference_date)
 
     # Use yesterday to determine completed week: on Monday (first day of
     # new week), yesterday=Sunday falls in the previous week, giving the
@@ -134,7 +134,7 @@ def calculate_weekly_transition(reference_date: date | None = None) -> tuple[str
     weeks_offset = delta.days // 7
 
     # Completed week is the one containing yesterday
-    current_week_num = weeks_offset + 1
+    current_week_num = weeks_offset + season_week_start
     week_completed = f"S{current_week_num:03d}"
     week_next = f"S{current_week_num + 1:03d}"
 

@@ -5,7 +5,7 @@ multiple training seasons.
 """
 
 import json
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 
 
@@ -174,6 +174,36 @@ class WeekReferenceConfig:
         weeks_offset = week_num - season_start
 
         return (reference_date, weeks_offset)
+
+    def get_s001_for_date(self, target_date: date) -> tuple[date, int]:
+        """Get S001 reference date and global_week_start for the season containing target_date.
+
+        Scans seasons and returns the one whose s001_date is closest to
+        (but not after) target_date.
+
+        Args:
+            target_date: The date to find the season for.
+
+        Returns:
+            Tuple of (s001_date, global_week_start) for the matching season.
+        """
+        best_season = None
+        best_s001 = None
+
+        for season_data in self.seasons.values():
+            s001 = datetime.strptime(season_data["s001_date"], "%Y-%m-%d").date()
+            if s001 <= target_date:
+                if best_s001 is None or s001 > best_s001:
+                    best_s001 = s001
+                    best_season = season_data
+
+        # Fallback: if no season starts before target_date, use the first season
+        if best_season is None:
+            first_season = next(iter(self.seasons.values()))
+            best_s001 = datetime.strptime(first_season["s001_date"], "%Y-%m-%d").date()
+            best_season = first_season
+
+        return (best_s001, best_season["global_week_start"])
 
     def get_s001_date_obj(self, week_id: str = "S001"):
         """Get S001 reference date for a given week's season.
