@@ -198,3 +198,110 @@ class TestRestDayCreatesNote:
         # Validator should never be instantiated for rest days
         mock_validator_cls.assert_not_called()
         assert result["summary"]["errors"] == 0
+
+
+class TestUnstructuredEndRecCreatesNote:
+    """END/REC sessions without structured workout → NOTE event (3rd path)."""
+
+    @pytest.mark.asyncio
+    async def test_end_session_without_workout_creates_note(self):
+        """END session not in workouts.txt should sync as NOTE with duration+TSS."""
+        session = _make_session(
+            session_id="S099-03",
+            name="EnduranceForce",
+            session_type="END",
+            tss_planned=34,
+            duration_min=45,
+            description="Endurance Force 45 min Z2",
+            status="planned",
+        )
+        plan = _make_plan([session])
+        client = _make_client()
+
+        # No workout_descriptions → END takes permissive NOTE path
+        with _patch_sync(plan, client):
+            result = _extract(await handle_sync_week_to_calendar({"week_id": "S099"}))
+
+        assert result["summary"]["to_create"] == 1
+        assert result["summary"]["errors"] == 0
+        call_args = client.create_event.call_args[0][0]
+        assert call_args["category"] == "NOTE"
+        assert "type" not in call_args
+        assert "Durée: 45 min" in call_args["description"]
+        assert "TSS: 34" in call_args["description"]
+
+    @pytest.mark.asyncio
+    async def test_rec_session_without_workout_creates_note(self):
+        """Active REC session (TSS>0, duration>0) not in workouts.txt → NOTE."""
+        session = _make_session(
+            session_id="S099-04",
+            name="RecupActive",
+            session_type="REC",
+            tss_planned=20,
+            duration_min=30,
+            description="Récup active 30 min",
+            status="planned",
+        )
+        plan = _make_plan([session])
+        client = _make_client()
+
+        with _patch_sync(plan, client):
+            result = _extract(await handle_sync_week_to_calendar({"week_id": "S099"}))
+
+        assert result["summary"]["to_create"] == 1
+        assert result["summary"]["errors"] == 0
+        call_args = client.create_event.call_args[0][0]
+        assert call_args["category"] == "NOTE"
+        assert "Durée: 30 min" in call_args["description"]
+        assert "TSS: 20" in call_args["description"]
+
+    @pytest.mark.asyncio
+    async def test_end_session_with_structured_workout_creates_workout(self):
+        """END session WITH entry in workouts.txt → WORKOUT (existing path)."""
+        session = _make_session(
+            session_id="S099-05",
+            name="EnduranceLongue",
+            session_type="END",
+            tss_planned=55,
+            duration_min=90,
+            description="- 90m 60% 85rpm",
+            status="planned",
+        )
+        plan = _make_plan([session])
+        client = _make_client()
+
+        descs = {"S099-05-END-EnduranceLongue-V001": "- 90m 60% 85rpm"}
+        with _patch_sync(plan, client, workout_descriptions=descs):
+            result = _extract(await handle_sync_week_to_calendar({"week_id": "S099"}))
+
+        assert result["summary"]["to_create"] == 1
+        call_args = client.create_event.call_args[0][0]
+        assert call_args["category"] == "WORKOUT"
+        assert call_args["type"] == "VirtualRide"
+
+    @pytest.mark.asyncio
+    async def test_end_note_skips_format_validation(self):
+        """END without workouts.txt → NOTE, IntervalsFormatValidator never called."""
+        session = _make_session(
+            session_id="S099-06",
+            name="EnduranceLibre",
+            session_type="END",
+            tss_planned=40,
+            duration_min=60,
+            description="Endurance libre Z2",
+            status="planned",
+        )
+        plan = _make_plan([session])
+        client = _make_client()
+
+        with (
+            _patch_sync(plan, client),
+            patch(
+                "magma_cycling.intervals_format_validator.IntervalsFormatValidator"
+            ) as mock_validator_cls,
+        ):
+            result = _extract(await handle_sync_week_to_calendar({"week_id": "S099"}))
+
+        mock_validator_cls.assert_not_called()
+        assert result["summary"]["errors"] == 0
+        assert result["summary"]["to_create"] == 1
