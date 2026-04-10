@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GitHub API utilities for CI monitoring, secrets, and PR lifecycle.
+"""GitHub API utilities for CI monitoring, secrets, PR lifecycle, and issue management.
 
 Provides CLI sub-commands:
   wait-ci <pr_number>        — poll PR check runs until completion
@@ -9,6 +9,12 @@ Provides CLI sub-commands:
   wait-main                  — poll CI checks on latest main commit
   codecov-status [--compare] — show current Codecov coverage and delta
   list-prs [--state open]    — list pull requests
+  create-issue               — create a GitHub issue with labels
+  list-issues                — list issues (excludes PRs)
+  close-issue <N>            — close an issue
+  add-labels <N>             — add labels to an issue
+  remove-label <N>           — remove a label from an issue
+  setup-labels               — bootstrap project labels (idempotent)
 
 Full PR lifecycle in 2 commands:
   python scripts/maintenance/github_utils.py create-pr --title "feat: ..."
@@ -31,6 +37,30 @@ REPO = "magma-cycling"
 API_BASE = f"https://api.github.com/repos/{OWNER}/{REPO}"
 IGNORED_CHECKS = {"codecov/patch"}
 POLL_INTERVAL = 15
+
+# Labels for issue management (name → color hex without #)
+LABELS = {
+    # Severity
+    "bug": "d73a4a",
+    "P0-critical": "b60205",
+    "P1-important": "fbca04",
+    "P2-minor": "0e8a16",
+    # Workflow
+    "beta-feedback": "c5def5",
+    "confirmed": "1d76db",
+    "fix-in-progress": "f9d0c4",
+    "fix-released": "0e8a16",
+    # Components
+    "component:planner": "bfdadc",
+    "component:mcp": "bfdadc",
+    "component:sync": "bfdadc",
+    "component:health": "bfdadc",
+    "component:terrain": "bfdadc",
+    "component:reports": "bfdadc",
+    "component:analysis": "bfdadc",
+    "component:docker": "bfdadc",
+    "component:exe": "bfdadc",
+}
 
 
 def _get_token():
@@ -480,6 +510,173 @@ def create_pr(title=None, body=None):
 
 
 # ---------------------------------------------------------------------------
+# setup-labels
+# ---------------------------------------------------------------------------
+
+
+def setup_labels():
+    """Bootstrap project labels (idempotent — creates or updates)."""
+    token = _get_token()
+    hdrs = _headers(token)
+
+    for name, color in LABELS.items():
+        resp = requests.get(
+            f"{API_BASE}/labels/{name}",
+            headers=hdrs,
+            timeout=15,
+        )
+        if resp.status_code == 200:
+            existing = resp.json()
+            if existing["color"] != color:
+                requests.patch(
+                    f"{API_BASE}/labels/{name}",
+                    headers=hdrs,
+                    json={"color": color},
+                    timeout=15,
+                ).raise_for_status()
+                print(f"  updated {name} (color → {color})")
+            else:
+                print(f"  exists  {name}")
+        elif resp.status_code == 404:
+            requests.post(
+                f"{API_BASE}/labels",
+                headers=hdrs,
+                json={"name": name, "color": color},
+                timeout=15,
+            ).raise_for_status()
+            print(f"  created {name}")
+        else:
+            resp.raise_for_status()
+
+    print(f"\n{len(LABELS)} labels processed")
+
+
+# ---------------------------------------------------------------------------
+# create-issue
+# ---------------------------------------------------------------------------
+
+
+def create_issue(title, body="", labels=None):
+    """Create a GitHub issue with optional labels."""
+    token = _get_token()
+    hdrs = _headers(token)
+
+    payload = {"title": title, "body": body}
+    if labels:
+        payload["labels"] = labels
+
+    resp = requests.post(
+        f"{API_BASE}/issues",
+        headers=hdrs,
+        json=payload,
+        timeout=15,
+    )
+    resp.raise_for_status()
+    issue = resp.json()
+
+    print(f"Issue #{issue['number']}: {issue['title']}")
+    print(f"URL: {issue['html_url']}")
+    return issue["number"]
+
+
+# ---------------------------------------------------------------------------
+# list-issues
+# ---------------------------------------------------------------------------
+
+
+def list_issues(state="open", labels=None):
+    """List issues (excludes pull requests)."""
+    token = _get_token()
+    hdrs = _headers(token)
+
+    params = {"state": state, "per_page": 30}
+    if labels:
+        params["labels"] = labels
+
+    resp = requests.get(
+        f"{API_BASE}/issues",
+        headers=hdrs,
+        params=params,
+        timeout=15,
+    )
+    resp.raise_for_status()
+    issues = [i for i in resp.json() if "pull_request" not in i]
+
+    if not issues:
+        print(f"No {state} issues")
+        return
+
+    for issue in issues:
+        number = issue["number"]
+        title = issue["title"]
+        issue_labels = ", ".join(lbl["name"] for lbl in issue["labels"])
+        label_str = f" [{issue_labels}]" if issue_labels else ""
+        print(f"  #{number}  {title}{label_str}")
+
+    print(f"\n{len(issues)} {state} issue(s)")
+
+
+# ---------------------------------------------------------------------------
+# close-issue
+# ---------------------------------------------------------------------------
+
+
+def close_issue(number):
+    """Close a GitHub issue."""
+    token = _get_token()
+    hdrs = _headers(token)
+
+    resp = requests.patch(
+        f"{API_BASE}/issues/{number}",
+        headers=hdrs,
+        json={"state": "closed"},
+        timeout=15,
+    )
+    resp.raise_for_status()
+    print(f"Issue #{number} closed")
+
+
+# ---------------------------------------------------------------------------
+# add-labels / remove-label
+# ---------------------------------------------------------------------------
+
+
+def add_labels(number, labels):
+    """Add labels to an issue."""
+    token = _get_token()
+    hdrs = _headers(token)
+
+    resp = requests.post(
+        f"{API_BASE}/issues/{number}/labels",
+        headers=hdrs,
+        json={"labels": labels},
+        timeout=15,
+    )
+    resp.raise_for_status()
+    current = [lbl["name"] for lbl in resp.json()]
+    print(f"Issue #{number} labels: {', '.join(current)}")
+
+
+def remove_label(number, label):
+    """Remove a label from an issue."""
+    token = _get_token()
+    hdrs = _headers(token)
+
+    resp = requests.delete(
+        f"{API_BASE}/issues/{number}/labels/{label}",
+        headers=hdrs,
+        timeout=15,
+    )
+    if resp.status_code == 200:
+        current = [lbl["name"] for lbl in resp.json()]
+        print(f"Removed '{label}' from #{number}. Labels: {', '.join(current)}")
+    elif resp.status_code == 404:
+        print(f"Label '{label}' not found on issue #{number}")
+    else:
+        resp.raise_for_status()
+
+
+# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
@@ -520,6 +717,34 @@ def main():
     cp.add_argument("--title", help="PR title (default: last commit subject)")
     cp.add_argument("--body", help="PR body (default: last commit body)")
 
+    # setup-labels
+    sub.add_parser("setup-labels", help="Bootstrap project labels (idempotent)")
+
+    # create-issue
+    ci = sub.add_parser("create-issue", help="Create a GitHub issue")
+    ci.add_argument("--title", required=True, help="Issue title")
+    ci.add_argument("--body", default="", help="Issue body (markdown)")
+    ci.add_argument("--labels", default="", help="Comma-separated labels")
+
+    # list-issues
+    li = sub.add_parser("list-issues", help="List issues (excludes PRs)")
+    li.add_argument("--state", default="open", choices=["open", "closed", "all"])
+    li.add_argument("--labels", default="", help="Filter by comma-separated labels")
+
+    # close-issue
+    cis = sub.add_parser("close-issue", help="Close an issue")
+    cis.add_argument("issue_number", type=int, help="Issue number")
+
+    # add-labels
+    al = sub.add_parser("add-labels", help="Add labels to an issue")
+    al.add_argument("issue_number", type=int, help="Issue number")
+    al.add_argument("--labels", required=True, help="Comma-separated labels to add")
+
+    # remove-label
+    rl = sub.add_parser("remove-label", help="Remove a label from an issue")
+    rl.add_argument("issue_number", type=int, help="Issue number")
+    rl.add_argument("--label", required=True, help="Label to remove")
+
     args = parser.parse_args()
 
     if args.command == "wait-ci":
@@ -543,6 +768,22 @@ def main():
         list_prs(state=args.state)
     elif args.command == "create-pr":
         create_pr(title=args.title, body=args.body)
+    elif args.command == "setup-labels":
+        setup_labels()
+    elif args.command == "create-issue":
+        labels = (
+            [lbl.strip() for lbl in args.labels.split(",") if lbl.strip()] if args.labels else []
+        )
+        create_issue(title=args.title, body=args.body, labels=labels)
+    elif args.command == "list-issues":
+        list_issues(state=args.state, labels=args.labels or None)
+    elif args.command == "close-issue":
+        close_issue(args.issue_number)
+    elif args.command == "add-labels":
+        labels = [lbl.strip() for lbl in args.labels.split(",") if lbl.strip()]
+        add_labels(args.issue_number, labels)
+    elif args.command == "remove-label":
+        remove_label(args.issue_number, args.label)
 
 
 if __name__ == "__main__":

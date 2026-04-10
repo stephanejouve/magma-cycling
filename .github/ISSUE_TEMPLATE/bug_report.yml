@@ -1,0 +1,122 @@
+name: Bug Report
+description: Report a bug found during beta testing
+title: "[BUG] "
+labels: ["bug", "beta-feedback"]
+body:
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - P0-critical (bloquant, perte de donnees)
+        - P1-important (fonctionnel, contournable)
+        - P2-minor (cosmétique, ergonomie)
+    validations:
+      required: true
+
+  - type: input
+    id: reporter
+    attributes:
+      label: Reporter
+      description: Who reported this bug?
+      placeholder: "Georges"
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Application version (e.g. v3.11.1)
+      placeholder: "v3.11.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      options:
+        - Windows (exe)
+        - macOS (poetry)
+        - Docker NAS (MCP)
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: transport
+    attributes:
+      label: Transport MCP
+      description: How is the MCP server accessed?
+      options:
+        - N/A (standalone exe)
+        - supergateway SSE
+        - stdio local
+    validations:
+      required: false
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - planner
+        - mcp
+        - sync
+        - health
+        - terrain
+        - reports
+        - analysis
+        - docker
+        - exe
+        - unknown
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: Detailed steps to reproduce the issue
+      placeholder: |
+        1. Open the application...
+        2. Click on...
+        3. Observe...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+    validations:
+      required: true
+
+  - type: input
+    id: diagnostic
+    attributes:
+      label: Diagnostic link
+      description: Link to Nextcloud diagnostic file (if any)
+      placeholder: "magma-cycling-beta/bugs-reportes/BUG-20260410-xxx/"
+
+  - type: input
+    id: sessions
+    attributes:
+      label: Related sessions
+      description: Relevant session IDs (e.g. S086-04)
+      placeholder: "S086-04"
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log excerpt
+      description: Relevant log output or error messages
+      render: shell
