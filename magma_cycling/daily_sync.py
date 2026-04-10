@@ -89,14 +89,14 @@ def calculate_current_week_info(target_date: date | None = None) -> tuple[str, d
 
     # Get S001 reference date from config
     week_config = get_week_config()
-    s001_date = week_config.get_s001_date_obj("S001")
+    s001_date, season_week_start = week_config.get_s001_for_date(target_date)
 
     # Calculate weeks difference from S001
     delta = target_date - s001_date
     weeks_offset = delta.days // 7
 
     # Calculate week-id
-    week_id = f"S{weeks_offset + 1:03d}"
+    week_id = f"S{weeks_offset + season_week_start:03d}"
 
     # Calculate Monday start date for this week
     start_date = s001_date + timedelta(weeks=weeks_offset)

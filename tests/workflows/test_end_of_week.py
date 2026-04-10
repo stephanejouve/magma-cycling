@@ -86,7 +86,7 @@ class TestCalculateWeeklyTransition:
     def test_calculate_weekly_transition_sunday(self, mock_config):
         """Test transition calculation on Sunday."""
         mock_week_config = Mock()
-        mock_week_config.get_s001_date_obj.return_value = date(2024, 8, 5)
+        mock_week_config.get_s001_for_date.return_value = (date(2024, 8, 5), 1)
         mock_config.return_value = mock_week_config
 
         # Sunday 2026-01-25 (S077 → S078)
@@ -105,7 +105,7 @@ class TestCalculateWeeklyTransition:
     def test_calculate_weekly_transition_monday(self, mock_config):
         """Test transition on Monday gives same result as Sunday."""
         mock_week_config = Mock()
-        mock_week_config.get_s001_date_obj.return_value = date(2024, 8, 5)
+        mock_week_config.get_s001_for_date.return_value = (date(2024, 8, 5), 1)
         mock_config.return_value = mock_week_config
 
         # Monday 2026-01-26 (first day of S078)
@@ -125,7 +125,7 @@ class TestCalculateWeeklyTransition:
     def test_calculate_weekly_transition_midweek(self, mock_config):
         """Test transition mid-week (Wednesday)."""
         mock_week_config = Mock()
-        mock_week_config.get_s001_date_obj.return_value = date(2024, 8, 5)
+        mock_week_config.get_s001_for_date.return_value = (date(2024, 8, 5), 1)
         mock_config.return_value = mock_week_config
 
         # Wednesday 2026-01-28 (mid-S078)
@@ -143,7 +143,7 @@ class TestCalculateWeeklyTransition:
         This is the exact scenario that caused the S084 incident.
         """
         mock_week_config = Mock()
-        mock_week_config.get_s001_date_obj.return_value = date(2024, 8, 5)
+        mock_week_config.get_s001_for_date.return_value = (date(2024, 8, 5), 1)
         mock_config.return_value = mock_week_config
 
         # Monday 2026-03-09 = first day of S084
@@ -163,7 +163,7 @@ class TestCalculateWeeklyTransition:
     def test_calculate_weekly_transition_no_reference_date(self, mock_date_class, mock_config):
         """Test transition uses today() when no reference_date provided."""
         mock_week_config = Mock()
-        mock_week_config.get_s001_date_obj.return_value = date(2024, 8, 5)
+        mock_week_config.get_s001_for_date.return_value = (date(2024, 8, 5), 1)
         mock_config.return_value = mock_week_config
 
         # Mock date.today()
@@ -174,6 +174,30 @@ class TestCalculateWeeklyTransition:
 
         assert week_completed == "S077"
         assert week_next == "S078"
+
+    @patch("magma_cycling.workflows.end_of_week.get_week_config")
+    def test_calculate_weekly_transition_multi_season(self, mock_config):
+        """Test transition with multi-season config selects correct season."""
+        mock_week_config = Mock()
+        # Season 2026: s001_date=2026-01-05, global_week_start=75
+        mock_week_config.get_s001_for_date.return_value = (date(2026, 1, 5), 75)
+        mock_config.return_value = mock_week_config
+
+        # Monday 2026-03-09 → 9 weeks after 2026-01-05 = week 75+8=S083
+        # adjusted_date = 2026-03-08 (Sunday), delta = 63 days, offset = 9
+        # current_week_num = 9 + 75 = 84... wait
+        # Let me recalculate: adjusted = 2026-03-08, delta from 2026-01-05 = 62 days
+        # weeks_offset = 62 // 7 = 8, current_week_num = 8 + 75 = 83
+        reference_date = date(2026, 3, 9)
+
+        week_completed, week_next, completed_start, next_start = calculate_weekly_transition(
+            reference_date
+        )
+
+        assert week_completed == "S083"
+        assert week_next == "S084"
+        assert completed_start == date(2026, 3, 2)
+        assert next_start == date(2026, 3, 9)
 
 
 # =============================================================================

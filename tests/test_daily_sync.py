@@ -32,7 +32,7 @@ class TestCalculateCurrentWeekInfo:
         """Test calculating current week info for today."""
         # Mock config with S001 reference date
         mock_config = MagicMock()
-        mock_config.get_s001_date_obj.return_value = date(2024, 7, 15)  # S001 Monday
+        mock_config.get_s001_for_date.return_value = (date(2024, 7, 15), 1)
         mock_get_config.return_value = mock_config
 
         # Calculate for a specific date (S002 would be one week later)
@@ -47,7 +47,7 @@ class TestCalculateCurrentWeekInfo:
     def test_calculate_current_week_info_far_future(self, mock_get_config):
         """Test calculating week info for future date."""
         mock_config = MagicMock()
-        mock_config.get_s001_date_obj.return_value = date(2024, 7, 15)  # S001
+        mock_config.get_s001_for_date.return_value = (date(2024, 7, 15), 1)
         mock_get_config.return_value = mock_config
 
         # Test S100 (99 weeks after S001)
@@ -66,7 +66,7 @@ class TestCalculateCurrentWeekInfo:
         mock_date.today.return_value = mock_today
 
         mock_config = MagicMock()
-        mock_config.get_s001_date_obj.return_value = date(2024, 7, 15)
+        mock_config.get_s001_for_date.return_value = (date(2024, 7, 15), 1)
         mock_get_config.return_value = mock_config
 
         week_id, start_date = calculate_current_week_info(target_date=None)
