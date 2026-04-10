@@ -83,34 +83,18 @@ async def handle_sync_week_to_calendar(args: dict) -> list[TextContent]:
                     and session.duration_min == 0
                 )
 
-                has_structured_workout = intervals_name in workout_descriptions
+                # Guard: non-rest sessions MUST have a structured workout
+                # from the workouts file — escalate if missing (never sync placeholders)
+                if not is_rest_day and intervals_name not in workout_descriptions:
+                    errors.append(
+                        f"Session {session.session_id}: workout description not found in "
+                        f"{week_id}_workouts.txt for '{intervals_name}'. "
+                        f"Provide a structured workout via modify-session-details "
+                        f"or regenerate workouts before syncing."
+                    )
+                    continue
 
-                # Guard: sessions requiring structured workouts MUST have one
-                # END/REC without structured workout → NOTE event (no ZWO forge risk)
-                if not is_rest_day and not has_structured_workout:
-                    if session.session_type in ("END", "REC"):
-                        # Permissive path: push as NOTE (calendar event, no ZWO)
-                        note_desc = session.description or session.name
-                        if session.duration_min:
-                            note_desc += f"\nDurée: {session.duration_min} min"
-                        if session.tss_planned:
-                            note_desc += f"\nTSS: {session.tss_planned}"
-                        event_data = {
-                            "category": "NOTE",
-                            "name": intervals_name,
-                            "description": note_desc,
-                            "start_date_local": f"{session.session_date}T{start_time}",
-                        }
-                    else:
-                        # Strict path: structured workout required (INT, TST, RACE, etc.)
-                        errors.append(
-                            f"Session {session.session_id}: workout description not found in "
-                            f"{week_id}_workouts.txt for '{intervals_name}'. "
-                            f"Provide a structured workout via modify-session-details "
-                            f"or regenerate workouts before syncing."
-                        )
-                        continue
-                elif is_rest_day:
+                if is_rest_day:
                     event_data = {
                         "category": "NOTE",
                         "name": intervals_name,
@@ -118,7 +102,6 @@ async def handle_sync_week_to_calendar(args: dict) -> list[TextContent]:
                         "start_date_local": f"{session.session_date}T06:00:00",
                     }
                 else:
-                    # Has structured workout → WORKOUT event
                     event_data = {
                         "category": "WORKOUT",
                         "type": "VirtualRide",
