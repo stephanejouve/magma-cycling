@@ -177,6 +177,12 @@ def interactive_menu():
         if auto_install_exe():
             sys.exit(0)
 
+    # First run: auto-start setup if no .env exists
+    if not get_env_path().exists():
+        print("  Premiere utilisation detectee — lancement de la configuration.\n")
+        _run_setup()
+        return
+
     print("  Actions :")
     print("    1. Lancer le setup (configuration)")
     print("    2. Demarrer le serveur MCP")
@@ -216,6 +222,10 @@ def _run_setup():
 def _register_mcp():
     """Register MCP server entry in the detected MCP client."""
     from magma_cycling.scripts.setup_wizard import SetupWizard, _detect_claude_desktop
+
+    if not get_env_path().exists():
+        print("  Configuration manquante — lance d'abord le setup (option 1).")
+        return
 
     claude_path = _detect_claude_desktop()
     if not claude_path:
