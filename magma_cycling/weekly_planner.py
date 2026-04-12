@@ -14,6 +14,7 @@ from typing import Any
 from magma_cycling.config import create_intervals_client
 from magma_cycling.utils.cli import cli_main
 from magma_cycling.workflows.planner.context_loading import ContextLoadingMixin
+from magma_cycling.workflows.planner.events import EventsMixin
 from magma_cycling.workflows.planner.output import OutputMixin
 from magma_cycling.workflows.planner.periodization import PeriodizationMixin
 from magma_cycling.workflows.planner.prompt import PromptMixin
@@ -22,6 +23,7 @@ from magma_cycling.workflows.planner.prompt import PromptMixin
 class WeeklyPlanner(
     ContextLoadingMixin,
     PeriodizationMixin,
+    EventsMixin,
     PromptMixin,
     OutputMixin,
 ):

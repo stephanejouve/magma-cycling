@@ -1,0 +1,29 @@
+zrl_2025_26_r4:
+  series: "Zwift Racing League"
+  season: "2025/26"
+  round: 4
+  name: "Legends Route"
+  weeks:
+    - week: 1
+      date: "2026-04-07"
+      format: "TTT"
+      circuit: "hell-of-the-north"
+      laps: {AB: "?", CD: "?"}
+    - week: 2
+      date: "2026-04-14"
+      format: "Points Race"
+      circuit: "the-classic"
+      laps: {AB: 6, CD: 4}
+      distances: {AB: "33.2km / 306m", CD: "23.5km / 210m"}
+    - week: 3
+      date: "2026-04-21"
+      format: "Scratch Race"
+      circuit: "croissant"
+      laps: {AB: 4, CD: 3}
+      distances: {AB: "40.4km / 219m", CD: "31.1km / 170m"}
+    - week: 4
+      date: "2026-04-28"
+      format: "Points Race"
+      circuit: "double-span-spin"
+      laps: {AB: 5, CD: 3}
+      distances: {AB: "40.6km / 531m", CD: "26.6km / 371m"}
