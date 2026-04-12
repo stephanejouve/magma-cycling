@@ -51,6 +51,11 @@ class PromptMixin:
         if mesocycle_context:
             prompt += mesocycle_context + "\n---\n"
 
+        # Conditional: upcoming events (races, targets, etc.)
+        events_section = self._load_week_events_section()
+        if events_section:
+            prompt += events_section + "\n---\n"
+
         # Static methodology template with variable substitution
         template_text = (_TEMPLATE_DIR / "peaks_methodology.md").read_text(encoding="utf-8")
         prompt += template_text.format(
