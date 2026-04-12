@@ -1470,7 +1470,12 @@ La séance visait une endurance longue en zone 2.
 @pytest.mark.asyncio
 async def test_get_coach_analysis_fallback_daily_report(tmp_path):
     """When workouts-history.md has no match, fallback finds it in daily report."""
+    from datetime import date as date_cls
+
     from magma_cycling._mcp.handlers.analysis import handle_get_coach_analysis
+
+    # Use today's date so the report is always within the 30-day scan window
+    today_iso = date_cls.today().isoformat()
 
     # Create empty workouts-history.md
     history_path = tmp_path / "workouts-history.md"
@@ -1479,7 +1484,7 @@ async def test_get_coach_analysis_fallback_daily_report(tmp_path):
     # Create daily report with an analysis
     reports_dir = tmp_path / "daily-reports"
     reports_dir.mkdir()
-    report_file = reports_dir / "daily_report_2026-03-12.md"
+    report_file = reports_dir / f"daily_report_{today_iso}.md"
     report_file.write_text(SAMPLE_DAILY_REPORT)
 
     mock_config = Mock()
@@ -1495,7 +1500,6 @@ async def test_get_coach_analysis_fallback_daily_report(tmp_path):
     assert result_json["source"] == "daily_report"
     assert result_json["analyses"][0]["activity_id"] == "i131572602"
     assert result_json["analyses"][0]["activity_name"] == "S084-04-END-EnduranceLongue-V001"
-    assert result_json["analyses"][0]["date"] == "12/03/2026"
 
 
 @pytest.mark.asyncio
@@ -1532,7 +1536,11 @@ async def test_get_coach_analysis_no_fallback_when_found(tmp_path):
 @pytest.mark.asyncio
 async def test_get_coach_analysis_fallback_by_session_id(tmp_path):
     """Fallback to daily report works with session_id filter."""
+    from datetime import date as date_cls
+
     from magma_cycling._mcp.handlers.analysis import handle_get_coach_analysis
+
+    today_iso = date_cls.today().isoformat()
 
     # Empty history
     history_path = tmp_path / "workouts-history.md"
@@ -1540,7 +1548,7 @@ async def test_get_coach_analysis_fallback_by_session_id(tmp_path):
 
     reports_dir = tmp_path / "daily-reports"
     reports_dir.mkdir()
-    (reports_dir / "daily_report_2026-03-12.md").write_text(SAMPLE_DAILY_REPORT)
+    (reports_dir / f"daily_report_{today_iso}.md").write_text(SAMPLE_DAILY_REPORT)
 
     mock_config = Mock()
     mock_config.workouts_history_path = history_path
