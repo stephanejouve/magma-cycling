@@ -527,12 +527,22 @@ class SetupWizard:
 
         Reads the existing config, merges our entry, writes back.
         SECURITY: only touches the 'magma-cycling' key in mcpServers.
+
+        In bundled mode, always uses the permanent install path so that
+        the config remains valid even if the exe was launched from Downloads.
+        json.dumps handles Windows backslash escaping automatically.
         """
         config_file = claude_path / "claude_desktop_config.json"
 
         # Build our MCP entry
         if is_bundled():
-            exe_path = sys.executable
+            from magma_cycling.paths import get_install_dir
+
+            install_dir = get_install_dir()
+            if sys.platform == "win32":
+                exe_path = str(install_dir / "magma-cycling.exe")
+            else:
+                exe_path = str(install_dir / "magma-cycling")
             mcp_entry = {"command": exe_path, "args": ["mcp-server"]}
         else:
             mcp_entry = {
