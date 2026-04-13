@@ -26,6 +26,11 @@ a = Analysis(
         # Prompt files
         (str(PROJECT_ROOT / "magma_cycling" / "prompts"),
          "magma_cycling/prompts"),
+        # Reference files for planning context
+        (str(PROJECT_ROOT / "references"),
+         "references"),
+        (str(PROJECT_ROOT / "project-docs" / "PLANNING_PREFERENCES.md"),
+         "project-docs"),
     ],
     hiddenimports=[
         # CLI + paths

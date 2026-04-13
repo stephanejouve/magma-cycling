@@ -52,6 +52,17 @@ def get_bundle_data_dir() -> Path | None:
     return None
 
 
+def get_project_root() -> Path:
+    """Return the project root for reading bundled data files.
+
+    - Bundled: _MEIPASS (contains references/, project-docs/, etc.)
+    - Dev mode: parent of magma_cycling package
+    """
+    if is_bundled():
+        return Path(sys._MEIPASS)  # type: ignore[attr-defined]
+    return _PROJECT_ROOT
+
+
 def get_install_dir() -> Path:
     """Return the recommended permanent install directory for the .exe."""
     if sys.platform == "win32":

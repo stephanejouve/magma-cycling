@@ -43,10 +43,10 @@ import argparse
 import hashlib
 import logging
 import sys
-from pathlib import Path
 
 from magma_cycling.ai_providers import AIProviderFactory
 from magma_cycling.config import get_ai_config, get_data_config
+from magma_cycling.paths import get_project_root
 from magma_cycling.utils.cli import cli_main
 from magma_cycling.workflows.coach._ui import UIHelpersMixin
 from magma_cycling.workflows.coach.ai_analysis import AIAnalysisMixin
@@ -106,7 +106,7 @@ class WorkflowCoach(
         self.servo_mode = servo_mode
         self.provider_name = provider
         self.auto_mode = auto_mode
-        self.project_root = Path.cwd()
+        self.project_root = get_project_root()
         self.scripts_dir = self.project_root / "magma_cycling"
         self.activity_name = None
 
