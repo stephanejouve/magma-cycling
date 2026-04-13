@@ -31,6 +31,8 @@ a = Analysis(
          "references"),
         (str(PROJECT_ROOT / "project-docs" / "PLANNING_PREFERENCES.md"),
          "project-docs"),
+        (str(PROJECT_ROOT / "project-docs" / "prompts"),
+         "project-docs/prompts"),
     ],
     hiddenimports=[
         # CLI + paths
