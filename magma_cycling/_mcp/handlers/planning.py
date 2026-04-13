@@ -7,7 +7,6 @@ import logging
 import re
 import subprocess
 from datetime import date, datetime, timedelta
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from magma_cycling._mcp._utils import (
@@ -146,7 +145,11 @@ async def handle_weekly_planner(args: dict) -> list[TextContent]:
 
     # Suppress all output to prevent JSON protocol pollution
     with suppress_stdout_stderr():
-        planner = WeeklyPlanner(week_number=week_id, start_date=start_date, project_root=Path.cwd())
+        from magma_cycling.paths import get_project_root
+
+        planner = WeeklyPlanner(
+            week_number=week_id, start_date=start_date, project_root=get_project_root()
+        )
 
     # --- Guard: reject overwrite unless force=True ---
     existing_file = planner.planning_dir / f"week_planning_{week_id}.json"

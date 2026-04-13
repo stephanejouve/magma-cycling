@@ -1,8 +1,8 @@
 """AI workout generation methods for EndOfWeekWorkflow."""
 
 import sys
-from pathlib import Path
 
+from magma_cycling.paths import get_project_root
 from magma_cycling.prompts.prompt_builder import build_prompt, load_current_metrics
 
 
@@ -137,7 +137,9 @@ class AIWorkoutsMixin:
             # Step 1: Generate prompt with WeeklyPlanner
             print("  📝 Génération du prompt de planification...")
             planner = WeeklyPlanner(
-                week_number=self.week_next, start_date=self.next_start_date, project_root=Path.cwd()
+                week_number=self.week_next,
+                start_date=self.next_start_date,
+                project_root=get_project_root(),
             )
 
             # Collect metrics and context

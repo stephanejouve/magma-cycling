@@ -61,6 +61,7 @@ from pathlib import Path
 
 from magma_cycling.api.intervals_client import IntervalsClient
 from magma_cycling.config import create_intervals_client, get_ai_config
+from magma_cycling.paths import get_project_root
 from magma_cycling.utils.cli import cli_main
 from magma_cycling.workflow_state import WorkflowState
 from magma_cycling.workflows.prompt.context_loading import ContextLoadingMixin
@@ -93,11 +94,11 @@ class PromptGenerator(
                 self.data_repo_path = config.data_repo_path
                 self.logs_dir = config.data_repo_path  # For backward compat
                 # References dir stays in code repo
-                self.project_root = Path.cwd()
+                self.project_root = get_project_root()
                 self.references_dir = self.project_root / "references"
             except FileNotFoundError:
-                # Fallback to current directory (legacy)
-                self.project_root = Path.cwd()
+                # Fallback to code repo root (legacy)
+                self.project_root = get_project_root()
                 self.references_dir = self.project_root / "references"
                 self.logs_dir = self.project_root / "logs"
         else:
