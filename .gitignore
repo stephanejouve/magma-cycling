@@ -26,6 +26,9 @@ tmp/
 temp/
 *.tmp
 
+# Incoming diagnostics (transient, analyze then delete)
+incoming/
+
 # Logs et bases de données
 *.log
 *.sql
@@ -149,3 +152,4 @@ project-docs/prompts/brief_*.md
 project-docs/prompts/S*_*_DevLead_*.md
 project-docs/prompts/doc_claude_desktop_*.md
 project-docs/prompts/magma_config_wizard.*
+project-docs/prompts/beta-support-secretary.md
