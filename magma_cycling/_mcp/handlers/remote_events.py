@@ -293,16 +293,6 @@ async def handle_create_remote_note(args: dict) -> list[TextContent]:
     name = args["name"]
     description = args["description"]
 
-    ALLOWED_PREFIXES = ["[ANNULÉE]", "[SAUTÉE]", "[REMPLACÉE]"]
-    if not any(name.startswith(prefix) for prefix in ALLOWED_PREFIXES):
-        error = {
-            "success": False,
-            "error": f"Invalid NOTE name. Name must start with one of: {', '.join(ALLOWED_PREFIXES)}",
-            "provided_name": name,
-            "allowed_prefixes": ALLOWED_PREFIXES,
-        }
-        return mcp_response(error)
-
     try:
         with suppress_stdout_stderr():
             client = create_intervals_client()

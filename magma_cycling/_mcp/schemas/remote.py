@@ -251,7 +251,7 @@ def get_tools() -> list[Tool]:
         ),
         Tool(
             name="create-remote-note",
-            description="Create a NOTE (calendar note) on the training calendar (category=NOTE, type=null). NOTE: Name MUST start with one of the allowed prefixes: [ANNULÉE], [SAUTÉE], or [REMPLACÉE]",
+            description="Create a NOTE (calendar note) on the training calendar. Supports free-form titles and optional planning integration via session ID detection.",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -262,8 +262,7 @@ def get_tools() -> list[Tool]:
                     },
                     "name": {
                         "type": "string",
-                        "description": "Note title - MUST start with [ANNULÉE], [SAUTÉE], or [REMPLACÉE] prefix followed by session details (e.g., '[ANNULÉE] S081-04-INT-TempoSoutenu')",
-                        "pattern": "^\\[(ANNULÉE|SAUTÉE|REMPLACÉE)\\] .+",
+                        "description": "Titre de la note (texte libre). Si le nom contient un session_id (ex: S081-04), le planning local sera mis à jour.",
                     },
                     "description": {
                         "type": "string",
