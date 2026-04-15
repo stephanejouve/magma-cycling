@@ -1,5 +1,6 @@
 """Upload mixin for WorkoutUploader."""
 
+import re
 from datetime import datetime, timedelta
 
 from magma_cycling.utils.event_sync import (
@@ -42,6 +43,57 @@ def _find_matching_event(
     return None
 
 
+# Regex pour détecter une ligne d'instruction d'intervalle Intervals.icu
+# Pattern : - {durée}{unité} {intensité}% {cadence}rpm  (avec variantes ramp, plages)
+_INTERVAL_LINE_RE = re.compile(r"^-\s+\d+[msh]\s+")  # tiret + durée (10m, 30s, 1h)
+
+
+def sanitize_description(description: str) -> str:
+    """Remplace les tirets non-intervalle par des bullets dans la description.
+
+    Intervals.icu interprète toute ligne commençant par '-' comme un bloc
+    d'intervalle structuré. Les lignes textuelles (Points clés, notes) qui
+    utilisent des tirets comme puces de liste génèrent des barres parasites
+    sur le graphique de puissance.
+    """
+    lines = description.split("\n")
+    result = []
+    in_interval_section = False
+
+    for line in lines:
+        stripped = line.strip()
+
+        # Détecter les headers de section d'intervalles
+        if re.match(r"(?i)^(warmup|main set|cooldown)", stripped):
+            in_interval_section = True
+            result.append(line)
+            continue
+
+        # Ligne vide ou nouveau header textuel → fin de section intervalle
+        if not stripped or (
+            stripped
+            and not stripped.startswith("-")
+            and not _INTERVAL_LINE_RE.match(stripped)
+            and not in_interval_section
+        ):
+            if stripped and not re.match(r"(?i)^(warmup|main set|cooldown)", stripped):
+                in_interval_section = False
+
+        # Ligne avec tiret
+        if stripped.startswith("- "):
+            if in_interval_section and _INTERVAL_LINE_RE.match(stripped):
+                # Vraie instruction d'intervalle — garder le tiret
+                result.append(line)
+            else:
+                # Texte non-intervalle — remplacer par bullet
+                result.append(line.replace("- ", "• ", 1))
+                in_interval_section = False
+        else:
+            result.append(line)
+
+    return "\n".join(result)
+
+
 class UploadMixin:
     """Upload vers Intervals.icu."""
 
@@ -72,7 +124,7 @@ class UploadMixin:
                 "category": "WORKOUT",
                 "type": "VirtualRide",
                 "name": workout["name"],
-                "description": workout["description"],
+                "description": sanitize_description(workout["description"]),
                 "start_date_local": f"{workout['date']}T{start_time}",
             }
 
