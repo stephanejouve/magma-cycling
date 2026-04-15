@@ -1,10 +1,10 @@
-"""Tests for rest day NOTE sync in _mcp/handlers/remote_sync.py."""
+"""Tests for _mcp/handlers/remote_sync.py (rest day NOTE + temporal heuristic)."""
 
 from __future__ import annotations
 
 import json
 from contextlib import contextmanager
-from datetime import date
+from datetime import date, datetime, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -45,12 +45,18 @@ def _make_session(
     return s
 
 
-def _make_plan(sessions, start_date=date(2026, 3, 30), end_date=date(2026, 4, 5)):
+def _make_plan(
+    sessions,
+    start_date=date(2026, 3, 30),
+    end_date=date(2026, 4, 5),
+    last_updated=None,
+):
     """Create a mock WeeklyPlan."""
     plan = MagicMock()
     plan.start_date = start_date
     plan.end_date = end_date
     plan.planned_sessions = sessions
+    plan.last_updated = last_updated or datetime(2026, 4, 12, 18, 0, tzinfo=timezone.utc)
     return plan
 
 
@@ -198,3 +204,103 @@ class TestRestDayCreatesNote:
         # Validator should never be instantiated for rest days
         mock_validator_cls.assert_not_called()
         assert result["summary"]["errors"] == 0
+
+
+class TestTemporalHeuristic:
+    """SYNC-001: temporal heuristic prevents stale remote from blocking sync."""
+
+    _VALIDATOR_PATCH = "magma_cycling.intervals_format_validator.IntervalsFormatValidator"
+
+    def _workout_session(self, intervals_id="evt-100"):
+        return _make_session(
+            session_id="S099-03",
+            name="TempoBlock",
+            session_type="INT",
+            tss_planned=65,
+            duration_min=60,
+            session_date=date(2026, 4, 2),
+            description="- 3x12min @ 88% FTP",
+            status="planned",
+            intervals_id=intervals_id,
+        )
+
+    def _workout_descs(self):
+        return {"S099-03-INT-TempoBlock-V001": "- 3x12min @ 88% FTP"}
+
+    @pytest.mark.asyncio
+    async def test_local_authoritative_allows_sync(self):
+        """When plan.last_updated > remote.updated, sync should proceed (no warning)."""
+        session = self._workout_session()
+        plan = _make_plan(
+            [session],
+            last_updated=datetime(2026, 4, 12, 18, 0, tzinfo=timezone.utc),
+        )
+        client = _make_client()
+        remote_event = {
+            "id": "evt-100",
+            "category": "WORKOUT",
+            "name": "S099-03-INT-OldName-V001",
+            "description": "- 3x12min @ 88% FTP",
+            "start_date_local": "2026-04-02T17:00:00",
+            "updated": "2026-04-01T10:00:00Z",
+        }
+        client.get_events.return_value = [remote_event]
+        client.update_event.return_value = {"id": "evt-100", "icu_training_load": 65}
+
+        with _patch_sync(plan, client, workout_descriptions=self._workout_descs()):
+            with patch(self._VALIDATOR_PATCH) as mock_val:
+                mock_val.return_value.validate_workout.return_value = (True, [], [])
+                result = _extract(await handle_sync_week_to_calendar({"week_id": "S099"}))
+
+        assert result["summary"]["to_update"] == 1
+        assert result["summary"]["warnings"] == 0
+
+    @pytest.mark.asyncio
+    async def test_remote_newer_blocks_sync(self):
+        """When remote.updated > plan.last_updated, sync should warn and skip."""
+        session = self._workout_session()
+        plan = _make_plan(
+            [session],
+            last_updated=datetime(2026, 4, 1, 10, 0, tzinfo=timezone.utc),
+        )
+        client = _make_client()
+        remote_event = {
+            "id": "evt-100",
+            "category": "WORKOUT",
+            "name": "S099-03-INT-ManualEdit-V001",
+            "description": "- 3x12min @ 88% FTP",
+            "start_date_local": "2026-04-02T17:00:00",
+            "updated": "2026-04-12T18:00:00Z",
+        }
+        client.get_events.return_value = [remote_event]
+
+        with _patch_sync(plan, client, workout_descriptions=self._workout_descs()):
+            with patch(self._VALIDATOR_PATCH) as mock_val:
+                mock_val.return_value.validate_workout.return_value = (True, [], [])
+                result = _extract(await handle_sync_week_to_calendar({"week_id": "S099"}))
+
+        assert result["summary"]["warnings"] == 1
+        assert result["warnings"][0]["type"] == "remote_modification_detected"
+
+    @pytest.mark.asyncio
+    async def test_no_remote_timestamp_falls_back_to_warning(self):
+        """When remote has no 'updated' field, fallback to warning (old behavior)."""
+        session = self._workout_session()
+        plan = _make_plan([session])
+        client = _make_client()
+        remote_event = {
+            "id": "evt-100",
+            "category": "WORKOUT",
+            "name": "S099-03-INT-OldName-V001",
+            "description": "- 3x12min @ 88% FTP",
+            "start_date_local": "2026-04-02T17:00:00",
+            # No "updated" field
+        }
+        client.get_events.return_value = [remote_event]
+
+        with _patch_sync(plan, client, workout_descriptions=self._workout_descs()):
+            with patch(self._VALIDATOR_PATCH) as mock_val:
+                mock_val.return_value.validate_workout.return_value = (True, [], [])
+                result = _extract(await handle_sync_week_to_calendar({"week_id": "S099"}))
+
+        assert result["summary"]["warnings"] == 1

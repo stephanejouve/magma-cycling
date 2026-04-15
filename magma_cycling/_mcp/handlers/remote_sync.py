@@ -155,18 +155,38 @@ async def handle_sync_week_to_calendar(args: dict) -> list[TextContent]:
                         remote_name != intervals_name
                         or remote_start != event_data["start_date_local"]
                     ):
-                        warnings.append(
-                            {
-                                "session_id": session.session_id,
-                                "intervals_id": session.intervals_id,
-                                "type": "remote_modification_detected",
-                                "message": f"⚠️ Remote event {session.intervals_id} has been manually modified in Intervals.icu",
-                                "local_name": intervals_name,
-                                "remote_name": remote_name,
-                                "suggestion": "Use force_update=true to overwrite remote changes",
-                            }
-                        )
-                        continue
+                        # Temporal heuristic: if local plan is newer than remote → local is authoritative
+                        local_is_authoritative = False
+                        remote_updated_str = existing_event.get("updated")
+                        if remote_updated_str and plan.last_updated:
+                            from datetime import datetime, timezone
+
+                            try:
+                                remote_updated = datetime.fromisoformat(
+                                    remote_updated_str.replace("Z", "+00:00")
+                                )
+                                plan_updated = plan.last_updated
+                                if plan_updated.tzinfo is None:
+                                    plan_updated = plan_updated.replace(tzinfo=timezone.utc)
+                                if remote_updated.tzinfo is None:
+                                    remote_updated = remote_updated.replace(tzinfo=timezone.utc)
+                                local_is_authoritative = plan_updated > remote_updated
+                            except (ValueError, TypeError):
+                                pass
+
+                        if not local_is_authoritative:
+                            warnings.append(
+                                {
+                                    "session_id": session.session_id,
+                                    "intervals_id": session.intervals_id,
+                                    "type": "remote_modification_detected",
+                                    "message": f"⚠️ Remote event {session.intervals_id} has been manually modified in Intervals.icu",
+                                    "local_name": intervals_name,
+                                    "remote_name": remote_name,
+                                    "suggestion": "Use force_update=true to overwrite remote changes",
+                                }
+                            )
+                            continue
 
                 if decision.action == "create":
                     to_create.append(
