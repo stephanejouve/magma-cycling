@@ -279,6 +279,7 @@ Cooldown
 - Format texte pur Intervals.icu uniquement
 - Chaque workout séparé par `=== WORKOUT ... ===` et `=== FIN WORKOUT ===`
 - Directement copiable dans Intervals.icu Workout Builder
+- **TIRETS** : les lignes commençant par `-` sont interprétées comme des intervalles par Intervals.icu. N'utiliser `-` QUE pour les instructions d'intervalles (Warmup, Main set, Cooldown). Pour les notes textuelles (Points clés, consignes), utiliser `•` comme préfixe
 
 ### Convention de Nommage
 
@@ -377,9 +378,9 @@ Pour chaque séance, spécifie :
 [Structure Intervals.icu]
 
 **Points clés** :
-- [Consigne technique 1]
-- [Consigne technique 2]
-- [Hydratation si nécessaire]
+• [Consigne technique 1]
+• [Consigne technique 2]
+• [Hydratation si nécessaire]
 
 **Placement semaine** : [Justification]
 ```
