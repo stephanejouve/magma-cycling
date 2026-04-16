@@ -313,19 +313,30 @@ class TestHandleCreateRemoteNote:
     """Tests for handle_create_remote_note."""
 
     @pytest.mark.asyncio
-    async def test_rejects_invalid_prefix(self):
-        """Rejects note names without allowed prefix."""
-        result = await handle_create_remote_note(
-            {"date": "2026-03-02", "name": "Bad Name", "description": "test"}
-        )
+    @patch("magma_cycling.config.create_intervals_client")
+    async def test_create_note_freeform(self, mock_factory, mock_client):
+        """Accepts free-form note names (no prefix restriction)."""
+        mock_factory.return_value = mock_client
+
+        with patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower:
+            mock_tower.planning_dir.exists.return_value = False
+
+            result = await handle_create_remote_note(
+                {
+                    "date": "2026-03-02",
+                    "name": "Course reconnaissance parcours",
+                    "description": "test",
+                }
+            )
+
         data = json.loads(result[0].text)
-        assert data["success"] is False
-        assert "allowed_prefixes" in data
+        assert data["success"] is True
+        assert data["event_id"] == 99
 
     @pytest.mark.asyncio
     @patch("magma_cycling.config.create_intervals_client")
     async def test_create_note_success(self, mock_factory, mock_client):
-        """Creates note on API successfully."""
+        """Creates note with prefix on API successfully."""
         mock_factory.return_value = mock_client
 
         with patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower:
