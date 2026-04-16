@@ -1,5 +1,6 @@
-"""Tests for Withings sleep segment aggregation."""
+"""Tests for Withings sleep segment aggregation and false positive filtering."""
 
+from magma_cycling.api.withings.sleep import SleepMixin
 from magma_cycling.api.withings_client import WithingsClient
 
 
@@ -175,3 +176,54 @@ class TestDifferentDates:
         assert len(result) == 2
         assert result[0]["segments_count"] == 1
         assert result[1]["segments_count"] == 1
+
+
+class TestFalsePositiveFiltering:
+    """SLEEP-001: filter short false-positive segments before aggregation."""
+
+    def test_short_night_segment_filtered(self):
+        """A 30min segment at 03:00 (nighttime) should be filtered out."""
+        seg = _make_segment("2026-04-10", "2026-04-10T03:00:00", "2026-04-10T03:30:00", 0.5)
+        result = SleepMixin._filter_false_positives([seg])
+        assert len(result) == 0
+
+    def test_normal_night_segment_kept(self):
+        """A 7h night segment should pass through."""
+        seg = _make_segment("2026-04-10", "2026-04-09T23:00:00", "2026-04-10T06:00:00", 7.0)
+        result = SleepMixin._filter_false_positives([seg])
+        assert len(result) == 1
+
+    def test_short_daytime_segment_filtered(self):
+        """A 45min segment at 14:00 (desk inactivity) should be filtered."""
+        seg = _make_segment("2026-04-10", "2026-04-10T14:00:00", "2026-04-10T14:45:00", 0.75)
+        result = SleepMixin._filter_false_positives([seg])
+        assert len(result) == 0
+
+    def test_long_nap_kept(self):
+        """A 1.5h+ daytime nap should be kept."""
+        seg = _make_segment("2026-04-10", "2026-04-10T13:00:00", "2026-04-10T14:45:00", 1.75)
+        result = SleepMixin._filter_false_positives([seg])
+        assert len(result) == 1
+
+    def test_mixed_segments_only_valid_kept(self):
+        """Only valid segments survive filtering."""
+        segments = [
+            _make_segment("2026-04-10", "2026-04-09T23:00:00", "2026-04-10T06:00:00", 7.0),
+            _make_segment("2026-04-10", "2026-04-10T10:30:00", "2026-04-10T11:00:00", 0.5),
+            _make_segment("2026-04-10", "2026-04-10T02:00:00", "2026-04-10T02:15:00", 0.25),
+        ]
+        result = SleepMixin._filter_false_positives(segments)
+        assert len(result) == 1
+        assert result[0]["total_sleep_hours"] == 7.0
+
+    def test_boundary_2h_night_segment_kept(self):
+        """A 2h night segment is exactly at the threshold — should be kept."""
+        seg = _make_segment("2026-04-10", "2026-04-10T01:00:00", "2026-04-10T03:00:00", 2.0)
+        result = SleepMixin._filter_false_positives([seg])
+        assert len(result) == 1
+
+    def test_boundary_1h5_nap_kept(self):
+        """A 1.5h daytime nap is at the threshold — should be kept."""
+        seg = _make_segment("2026-04-10", "2026-04-10T14:00:00", "2026-04-10T15:30:00", 1.5)
+        result = SleepMixin._filter_false_positives([seg])
+        assert len(result) == 1
