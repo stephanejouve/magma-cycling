@@ -791,6 +791,11 @@ async def handle_modify_session_details(args: dict) -> list[TextContent]:
                                 f"{session.name}-{session.version}"
                             )
 
+                        # Capture state for post-save type validation
+                        _val_type = session.session_type
+                        _val_desc = session.description or ""
+                        _val_tss = session.tss_planned
+
                         session_found = True
                         break
 
@@ -804,28 +809,19 @@ async def handle_modify_session_details(args: dict) -> list[TextContent]:
                 update_workouts_file(week_id, _wt_intervals_name, description)
                 modifications.append("workouts_txt_updated")
 
-        # Semantic type validation (non-blocking warning)
+        # Semantic type validation (non-blocking, uses captured state)
         type_warnings = None
         try:
-            with suppress_stdout_stderr():
-                plan = planning_tower.read_week(week_id)
-                for session in plan.planned_sessions:
-                    if session.session_id == session_id:
-                        from magma_cycling.utils.type_validator import validate_session_type
+            from magma_cycling.utils.type_validator import validate_session_type
 
-                        validation = validate_session_type(
-                            session.session_type,
-                            session.description or "",
-                            session.tss_planned,
-                        )
-                        if not validation.valid:
-                            type_warnings = {
-                                "warnings": validation.warnings,
-                                "suggested_type": validation.suggested_type,
-                            }
-                        break
-        except Exception:
-            pass
+            validation = validate_session_type(_val_type, _val_desc, _val_tss)
+            if not validation.valid:
+                type_warnings = {
+                    "warnings": validation.warnings,
+                    "suggested_type": validation.suggested_type,
+                }
+        except Exception as e:
+            logger.debug("Type validation skipped: %s", e)
 
         result = {
             "status": "success",
