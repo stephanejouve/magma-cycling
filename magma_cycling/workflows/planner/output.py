@@ -156,5 +156,26 @@ class OutputMixin:
             file_timestamp=planning_dict["created_at"],
         )
 
+        # Semantic type validation (non-blocking warnings)
+        from magma_cycling.utils.type_validator import validate_session_type
+
+        for session in plan.planned_sessions:
+            validation = validate_session_type(
+                session.session_type,
+                session.description or "",
+                session.tss_planned,
+            )
+            if not validation.valid:
+                for w in validation.warnings:
+                    print(
+                        f"  ⚠️ {session.session_id}: {w}"
+                        + (
+                            f" (suggestion: {validation.suggested_type})"
+                            if validation.suggested_type
+                            else ""
+                        ),
+                        file=sys.stderr,
+                    )
+
         print(f"\n📄 Planning JSON sauvegardé : {json_file}", file=sys.stderr)
         return json_file
