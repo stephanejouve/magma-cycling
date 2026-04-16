@@ -125,11 +125,41 @@ class SleepMixin:
                 }
             )
 
+        # Filter false positives before aggregation
+        sleep_sessions = self._filter_false_positives(sleep_sessions)
+
         # Aggregate segments by sleep_date
         sleep_sessions = self._aggregate_sleep_segments(sleep_sessions)
 
         logger.info(f"Retrieved {len(sleep_sessions)} sleep sessions")
         return sleep_sessions
+
+    @staticmethod
+    def _filter_false_positives(
+        sessions: list[dict],
+        min_sleep_hours: float = 2.0,
+        min_nap_hours: float = 1.5,
+    ) -> list[dict]:
+        """Filter out Withings false positive sleep segments.
+
+        Short segments during the night (< 2h) and short daytime segments
+        (< 1.5h, 06:00-20:00) are likely inactivity misdetected as sleep.
+        """
+        filtered = []
+        for s in sessions:
+            hours = s["total_sleep_hours"]
+            start_str = s.get("start_datetime", "")
+            start_hour = int(start_str[11:13]) if len(start_str) >= 13 else 0
+            is_daytime = 6 <= start_hour < 20
+
+            if not is_daytime and hours < min_sleep_hours:
+                logger.warning("Filtered short night segment: %.1fh (%s)", hours, start_str)
+                continue
+            if is_daytime and hours < min_nap_hours:
+                logger.warning("Filtered short daytime segment: %.1fh (%s)", hours, start_str)
+                continue
+            filtered.append(s)
+        return filtered
 
     @staticmethod
     def _aggregate_sleep_segments(

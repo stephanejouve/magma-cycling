@@ -2,27 +2,53 @@
 
 from __future__ import annotations
 
+import logging
+
 from magma_cycling.health.base import HealthProvider
+
+logger = logging.getLogger(__name__)
 
 
 def create_health_provider() -> HealthProvider:
     """Create a HealthProvider based on available configuration.
 
-    Returns WithingsProvider if Withings is configured, NullProvider otherwise.
+    Priority chain:
+        1. WithingsProvider if Withings is configured
+        2. IntervalsHealthProvider if Intervals.icu has sleep data
+        3. NullProvider (silent fallback)
+
     Never raises — falls back silently to NullProvider on any error.
     """
+    # 1. Try Withings
     try:
         from magma_cycling.config import create_withings_client, get_withings_config
         from magma_cycling.health.withings_provider import WithingsProvider
 
         config = get_withings_config()
-        if not config.is_configured():
-            from magma_cycling.health.null_provider import NullProvider
-
-            return NullProvider()
-        client = create_withings_client()
-        return WithingsProvider(client)
+        if config.is_configured():
+            client = create_withings_client()
+            return WithingsProvider(client)
     except Exception:
-        from magma_cycling.health.null_provider import NullProvider
+        pass
 
-        return NullProvider()
+    # 2. Try Intervals.icu wellness (Garmin/other watch)
+    try:
+        from datetime import date, timedelta
+
+        from magma_cycling.config import create_intervals_client
+
+        client = create_intervals_client()
+        yesterday = str(date.today() - timedelta(days=1))
+        wellness = client.get_wellness(oldest=yesterday, newest=yesterday)
+        if wellness and wellness[0].get("sleepTime"):
+            from magma_cycling.health.intervals_provider import IntervalsHealthProvider
+
+            logger.info("Using IntervalsHealthProvider (sleep data found in wellness)")
+            return IntervalsHealthProvider(client)
+    except Exception:
+        pass
+
+    # 3. Fallback
+    from magma_cycling.health.null_provider import NullProvider
+
+    return NullProvider()
