@@ -153,3 +153,9 @@ project-docs/prompts/S*_*_DevLead_*.md
 project-docs/prompts/doc_claude_desktop_*.md
 project-docs/prompts/magma_config_wizard.*
 project-docs/prompts/beta-support-secretary.md
+
+# Withings OAuth credentials — never commit tokens to any path in this repo
+.withings_credentials.json
+withings-local.json
+**/withings_credentials.json
+**/withings-local.json
