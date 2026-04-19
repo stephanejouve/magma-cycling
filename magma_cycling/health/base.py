@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 from datetime import date
 from typing import Any
 
+from magma_cycling.models.hrv_models import HrvReading
 from magma_cycling.models.withings_models import (
     BloodPressureMeasurement,
     SleepData,
@@ -52,6 +53,14 @@ class HealthProvider(ABC):
     @abstractmethod
     def auth_status(self) -> dict[str, Any]:
         """Authentication / configuration status."""
+
+    def get_hrv_nocturnal(self, target_date: date) -> HrvReading | None:
+        """HRV reading captured at the end of the night ending on target_date.
+
+        Default: return None (provider does not expose HRV). Subclasses override
+        when they have access to such data (e.g. Withings Sleep Analyzer).
+        """
+        return None
 
     def get_provider_info(self) -> dict[str, str]:
         """Provider metadata (concrete — not abstract)."""

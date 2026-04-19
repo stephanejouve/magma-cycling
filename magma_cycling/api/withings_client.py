@@ -22,6 +22,7 @@ import logging
 from pathlib import Path
 
 from magma_cycling.api.withings.credentials import CredentialsMixin
+from magma_cycling.api.withings.hrv import HrvMixin
 from magma_cycling.api.withings.http import HttpMixin
 from magma_cycling.api.withings.measurements import MeasurementsMixin
 from magma_cycling.api.withings.oauth import OAuthMixin
@@ -36,6 +37,7 @@ class WithingsClient(
     HttpMixin,
     SleepMixin,
     MeasurementsMixin,
+    HrvMixin,
 ):
     """Client for Withings API with OAuth 2.0 authentication.
 

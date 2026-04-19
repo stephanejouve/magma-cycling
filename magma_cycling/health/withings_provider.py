@@ -7,6 +7,7 @@ from typing import Any
 
 from magma_cycling.api.withings_client import WithingsClient
 from magma_cycling.health.base import HealthProvider
+from magma_cycling.models.hrv_models import HrvReading
 from magma_cycling.models.withings_models import (
     BloodPressureMeasurement,
     SleepData,
@@ -93,6 +94,30 @@ class WithingsProvider(HealthProvider):
         if weight:
             readiness_dict["weight_kg"] = weight.weight_kg
         return TrainingReadiness(**readiness_dict)
+
+    # -- hrv -----------------------------------------------------------------
+
+    def get_hrv_nocturnal(self, target_date: date) -> HrvReading | None:
+        """Nocturnal RMSSD for the night ending on target_date.
+
+        Uses the "end-of-night" average exposed by Sleep Analyzer devices,
+        which is the most representative of the wake-up state and therefore
+        the most useful signal for pre-session readiness.
+        """
+        summaries = self._client.get_sleep_hrv(target_date, target_date)
+        if not summaries:
+            return None
+        entry = summaries[0]
+        value = entry.get("rmssd_end_avg")
+        if value is None or value <= 0:
+            return None
+        return HrvReading(
+            measurement_date=target_date,
+            metric_type="rmssd",
+            value_ms=float(value),
+            context="nocturnal_end",
+            source_provider="withings",
+        )
 
     # -- auth ----------------------------------------------------------------
 
