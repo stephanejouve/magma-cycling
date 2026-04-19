@@ -14,7 +14,6 @@ Created: 2026-03-01
 """
 
 import os
-import shutil
 import subprocess
 from datetime import date, datetime
 from pathlib import Path
@@ -25,7 +24,6 @@ from magma_cycling.planning.control_tower import planning_tower
 from magma_cycling.utils.cli import cli_main
 
 PREFIX = "[session-monitor]"
-POETRY = os.environ.get("POETRY_BIN", shutil.which("poetry") or "poetry")
 PROJECT_DIR = os.environ.get(
     "MAGMA_PROJECT_DIR",
     str(Path(__file__).resolve().parent.parent),
@@ -166,13 +164,13 @@ def main() -> int:
     log(f"Activity {activity_id} detected ({len(cycling)} activities, {completed_count} completed)")
 
     # Step 6: Pre-sync Withings → Intervals.icu
-    run_command("withings-presync", [POETRY, "run", "withings-presync"])
+    run_command("withings-presync", ["withings-presync"])
 
     # Step 7a: Trigger daily-sync
     try:
         run_command(
             "daily-sync",
-            [POETRY, "run", "daily-sync", "--send-email", "--ai-analysis", "--auto-servo"],
+            ["daily-sync", "--send-email", "--ai-analysis", "--auto-servo"],
         )
     except Exception as e:
         log(f"daily-sync error: {e}")
@@ -181,13 +179,7 @@ def main() -> int:
     try:
         run_command(
             "adherence",
-            [
-                POETRY,
-                "run",
-                "python",
-                "scripts/monitoring/check_workout_adherence.py",
-                "--weekly-alert",
-            ],
+            ["check-workout-adherence", "--weekly-alert"],
         )
     except Exception as e:
         log(f"adherence error: {e}")
@@ -196,7 +188,7 @@ def main() -> int:
     try:
         run_command(
             "pid-evaluation",
-            [POETRY, "run", "pid-daily-evaluation", "--days-back", "7"],
+            ["pid-daily-evaluation", "--days-back", "7"],
         )
     except Exception as e:
         log(f"pid-evaluation error: {e}")
@@ -208,8 +200,6 @@ def main() -> int:
             run_command(
                 "end-of-week",
                 [
-                    POETRY,
-                    "run",
                     "end-of-week",
                     "--auto-calculate",
                     "--provider",
