@@ -91,12 +91,18 @@ class DataRepoConfig:
         """Path to .workflow_state.json in data repo."""
         return self.data_repo_path / ".workflow_state.json"
 
+    @property
+    def handoff_dir(self) -> Path:
+        """Path to handoff/ directory in data repo (context-handoff snapshots)."""
+        return self.data_repo_path / "handoff"
+
     def ensure_directories(self):
         """Create required directories if they don't exist."""
         self.bilans_dir.mkdir(parents=True, exist_ok=True)
         self.week_planning_dir.mkdir(parents=True, exist_ok=True)
         self.workout_templates_dir.mkdir(parents=True, exist_ok=True)
         self.terrain_circuits_dir.mkdir(parents=True, exist_ok=True)
+        self.handoff_dir.mkdir(parents=True, exist_ok=True)
 
     def validate(self) -> bool:
         """Validate data repository structure.
