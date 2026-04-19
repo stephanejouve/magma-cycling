@@ -52,6 +52,10 @@ from magma_cycling._mcp.handlers.athlete import (  # noqa: F401
 from magma_cycling._mcp.handlers.catalog import (  # noqa: F401
     handle_list_workout_catalog,
 )
+from magma_cycling._mcp.handlers.handoff import (  # noqa: F401
+    handle_context_handoff_resume,
+    handle_context_handoff_save,
+)
 from magma_cycling._mcp.handlers.health import (  # noqa: F401
     handle_analyze_health_trends,
     handle_enrich_session_health,
@@ -119,6 +123,7 @@ from magma_cycling._mcp.schemas import admin as _s_admin
 from magma_cycling._mcp.schemas import analysis as _s_analysis
 from magma_cycling._mcp.schemas import athlete as _s_athlete
 from magma_cycling._mcp.schemas import catalog as _s_catalog
+from magma_cycling._mcp.schemas import handoff as _s_handoff
 from magma_cycling._mcp.schemas import health as _s_health
 from magma_cycling._mcp.schemas import planning as _s_planning
 from magma_cycling._mcp.schemas import remote as _s_remote
@@ -159,6 +164,7 @@ async def list_tools() -> list[Tool]:
         *_s_health.get_tools(),
         *_s_rest.get_tools(),
         *_s_terrain.get_tools(),
+        *_s_handoff.get_tools(),
     ]
 
 
@@ -234,6 +240,9 @@ TOOL_HANDLERS = {
     "list-terrain-circuits": handle_list_terrain_circuits,
     "adapt-workout-to-terrain": handle_adapt_workout_to_terrain,
     "evaluate-outdoor-execution": handle_evaluate_outdoor_execution,
+    # Context handoff (2)
+    "context-handoff-save": handle_context_handoff_save,
+    "context-handoff-resume": handle_context_handoff_resume,
 }
 
 
