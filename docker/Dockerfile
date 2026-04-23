@@ -42,6 +42,14 @@ COPY scripts/ scripts/
 COPY pyproject.toml README.md ./
 RUN pip install --no-cache-dir -e .
 
+# Installer magma-cycling-tools (source of truth pour data_repo_sync et futurs
+# adapters/ops, spin-off d'outillages). Repo public → pas d'auth nécessaire au
+# build. Restaure l'entry point `data-repo-sync` invoqué par supercronic au
+# tick 22:30 (cron quotidien) et 20:30 (dimanche), KO depuis le commit
+# 8e01f8d (extraction des tools vers outillages sans mise à jour du Dockerfile).
+RUN pip install --no-cache-dir \
+    git+https://github.com/stephanejouve/magma-cycling-tools.git@main
+
 # Crontab + entrypoint
 COPY docker/crontab /app/crontab
 COPY docker/entrypoint.sh /app/entrypoint.sh
