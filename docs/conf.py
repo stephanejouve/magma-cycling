@@ -21,8 +21,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 project = "Magma Cycling"
 copyright = "2025-2026, Stéphane Jouve"
 author = "Stéphane Jouve"
-release = "2.3.0"
-version = "2.3"
+release = "3.7.0"
+version = "3.7"
 
 # Extensions
 extensions = [
@@ -31,7 +31,16 @@ extensions = [
     "sphinx.ext.viewcode",  # Link to source code
     "sphinx.ext.intersphinx",  # Link to other projects
     "sphinx.ext.todo",  # Support for Todo sections
+    "myst_parser",  # Markdown support (for docs/architecture/*.md)
 ]
+
+# MyST settings
+source_suffix = {
+    ".rst": "restructuredtext",
+    ".md": "markdown",
+}
+myst_enable_extensions = ["colon_fence", "deflist"]
+myst_heading_anchors = 3  # auto-anchors for ## and ### headings
 
 # Napoleon settings (Google Style)
 napoleon_google_docstring = True
