@@ -148,3 +148,33 @@ class TestDispatcherLogging:
         messages = caplog.text
         assert "tool_call_start: nonexistent-tool" in messages
         assert "tool_call_error: nonexistent-tool" in messages
+
+
+class TestServerTimeMeta:
+    """Tests for the server_time meta block appended to tool responses."""
+
+    @pytest.mark.asyncio
+    async def test_dispatcher_appends_server_time_on_success(self):
+        """Successful tool calls end with a [meta] server_time= line."""
+        from mcp.types import TextContent
+
+        from magma_cycling.mcp_server import TOOL_HANDLERS, dispatch_tool
+
+        mock_handler = AsyncMock(return_value=[TextContent(type="text", text="ok")])
+        with patch.dict(TOOL_HANDLERS, {"test-tool": mock_handler}):
+            result = await dispatch_tool("test-tool", {})
+
+        assert len(result) == 2
+        assert result[0].text == "ok"
+        assert result[1].text.startswith("[meta] server_time=")
+
+    @pytest.mark.asyncio
+    async def test_dispatcher_appends_server_time_on_error(self):
+        """Failed tool calls also end with a [meta] server_time= line."""
+        from magma_cycling.mcp_server import dispatch_tool
+
+        result = await dispatch_tool("nonexistent-tool", {})
+
+        assert len(result) == 2
+        assert "error" in result[0].text
+        assert result[1].text.startswith("[meta] server_time=")

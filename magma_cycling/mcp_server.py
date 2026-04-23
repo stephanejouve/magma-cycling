@@ -25,6 +25,7 @@ Claude Desktop config (~/.config/claude/claude_desktop_config.json):
 import json
 import os
 import time
+from datetime import datetime
 
 from mcp.server import Server
 from mcp.types import TextContent, Tool
@@ -246,6 +247,20 @@ TOOL_HANDLERS = {
 }
 
 
+def _server_time_meta() -> TextContent:
+    """Return a meta TextContent with the current server time.
+
+    Appended to every tool response so LLM clients automatically refresh
+    their temporal context on each tool call. Prevents stale "today" in
+    long-running conversations that cross midnight.
+    """
+    now = datetime.now().astimezone()
+    return TextContent(
+        type="text",
+        text=f"[meta] server_time={now.isoformat(timespec='seconds')}",
+    )
+
+
 async def dispatch_tool(name: str, arguments: dict) -> list[TextContent]:
     """Dispatch a tool call with logging and timing."""
     logger.info("tool_call_start: %s", name)
@@ -257,7 +272,7 @@ async def dispatch_tool(name: str, arguments: dict) -> list[TextContent]:
         result = await handler(arguments)
         elapsed = time.monotonic() - t0
         logger.info("tool_call_ok: %s (%.3fs)", name, elapsed)
-        return result
+        return [*result, _server_time_meta()]
     except Exception as e:
         elapsed = time.monotonic() - t0
         logger.error("tool_call_error: %s (%.3fs) — %s", name, elapsed, e)
@@ -272,7 +287,8 @@ async def dispatch_tool(name: str, arguments: dict) -> list[TextContent]:
                     },
                     indent=2,
                 ),
-            )
+            ),
+            _server_time_meta(),
         ]
 
 
