@@ -3,9 +3,16 @@ Magma Cycling - API Documentation
 
 Documentation auto-générée depuis les docstrings Google Style du code source.
 
-**Version :** 2.3.0
+**Version :** 3.7.0
 
 **Dernière mise à jour :** |today_date|
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Architecture:
+
+   architecture/training-logs-sync
+   SHIFT_SESSIONS_ALIASES
 
 .. toctree::
    :maxdepth: 2
