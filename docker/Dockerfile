@@ -15,9 +15,11 @@ RUN pip install --no-cache-dir poetry poetry-plugin-export \
 # =============================================================================
 FROM python:3.12-slim
 
-# Deps systeme : git (push data repo) + curl (healthcheck)
+# Deps systeme : git (push data repo) + curl (healthcheck) +
+# openssh-client (SSH deploy key pour git push vers training-logs, cf. bascule
+# HTTPS→SSH du 18/04 suite expiration PAT — ephemere auparavant, pérennisé ici)
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends git curl \
+    && apt-get install -y --no-install-recommends git curl openssh-client \
     && rm -rf /var/lib/apt/lists/*
 
 # Supercronic (cron leger pour Docker) — multi-arch via TARGETARCH
