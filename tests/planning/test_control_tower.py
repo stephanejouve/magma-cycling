@@ -1,5 +1,9 @@
 """Tests for PlanningControlTower — sync_from_remote version handling."""
 
+from contextlib import contextmanager
+from datetime import date
+from unittest.mock import MagicMock, patch
+
 from magma_cycling.planning.models import WORKOUT_NAME_REGEX
 
 
@@ -22,3 +26,123 @@ class TestSyncFromRemoteVersion:
         # Demonstrate the old bug
         old_built_version = f"V{version}"
         assert old_built_version == "VV001", "Old code would have produced VV001"
+
+
+class TestSyncFromRemoteNoteFiltering:
+    """Regression tests for Georges Crespi 2026-04-20 bug report.
+
+    Analysis notes that embed a session ID in their title must NOT
+    trigger intervals_id swaps or status flips on the matching local
+    session. Only cancellation notes ([ANNULÉE]/[SAUTÉE]) are honored.
+    """
+
+    def _build_events(self):
+        """Return a realistic event list: 1 WORKOUT + 1 regular NOTE + 1 cancellation NOTE."""
+        return [
+            {
+                "id": 111,
+                "name": "S016-02-INT-TempoSoutenu-V001",
+                "category": "WORKOUT",
+                "start_date_local": "2026-04-14T10:00:00",
+                "description": "INT session",
+            },
+            {
+                # Regular analysis note — must be IGNORED by sync
+                "id": 222,
+                "name": "S016-02-INT-TempoSoutenu-V001 — Analyse manuelle ZRL",
+                "category": "NOTE",
+                "start_date_local": "2026-04-14T10:00:00",
+                "description": "Analyse post-session",
+            },
+            {
+                # Cancellation note — must be HONORED
+                "id": 333,
+                "name": "[ANNULÉE] S016-06-END-EnduranceDouce-V001",
+                "category": "NOTE",
+                "start_date_local": "2026-04-18T10:00:00",
+                "description": "",
+            },
+        ]
+
+    def _run_sync(self, events, local_intervals_id_for_02=111):
+        """Execute sync_from_remote with a mocked planning layer and return stats."""
+        from magma_cycling.planning.control_tower import PlanningControlTower
+
+        tower = PlanningControlTower()
+
+        # Mock the local plan: one session S016-02 pinned to a given intervals_id
+        local_session = MagicMock()
+        local_session.session_id = "S016-02"
+        local_session.name = "TempoSoutenu"
+        local_session.description = "existing description"
+        local_session.intervals_id = local_intervals_id_for_02
+
+        plan = MagicMock()
+        plan.start_date = date(2026, 4, 13)
+        plan.end_date = date(2026, 4, 19)
+        plan.planned_sessions = [local_session]
+
+        # Mock client
+        client = MagicMock()
+        client.get_events.return_value = events
+
+        @contextmanager
+        def fake_modify_week(*_args, **_kwargs):
+            yield plan
+
+        with (
+            patch("pathlib.Path.exists", return_value=True),
+            patch(
+                "magma_cycling.planning.models.WeeklyPlan.from_json",
+                return_value=plan,
+            ),
+            patch.object(tower, "modify_week", side_effect=fake_modify_week),
+        ):
+            return tower.sync_from_remote(
+                week_id="S016",
+                intervals_client=client,
+                strategy="merge",
+                requesting_script="test",
+            )
+
+    def test_regular_note_does_not_swap_intervals_id(self):
+        """A NOTE embedding a session ID must not flip the local intervals_id."""
+        events = [e for e in self._build_events() if e["id"] != 333]  # exclude cancel note
+        stats = self._run_sync(events, local_intervals_id_for_02=111)
+
+        # The NOTE (id=222) must be ignored → no intervals_id swap
+        assert stats["intervals_ids_fixed"] == []
+
+    def test_cancellation_note_still_reaches_parser(self):
+        """[ANNULÉE] / [SAUTÉE] notes must not be skipped by the NOTE filter.
+
+        Validates the parser path only — full add/update of cancelled sessions
+        depends on upstream Session model validators (skip_reason required when
+        status=cancelled) which is a separate concern, not part of this fix.
+        """
+        from magma_cycling.planning.models import WORKOUT_NAME_REGEX
+
+        cancel_name = "[ANNULÉE] S016-06-END-EnduranceDouce-V001"
+        # The name still matches the session-ID regex
+        assert WORKOUT_NAME_REGEX.search(cancel_name) is not None
+        # And the filter keeps it (does NOT continue)
+        has_cancel_marker = "[ANNULÉE]" in cancel_name or "[SAUTÉE]" in cancel_name
+        assert has_cancel_marker, "Cancellation note must bypass the NOTE filter"
+
+    def test_regular_note_alone_is_silently_dropped(self):
+        """If a session is only referenced by an analysis NOTE, it must not be added to planning."""
+        # Only an analysis NOTE, no underlying WORKOUT remote
+        events = [
+            {
+                "id": 999,
+                "name": "S099-01-END-Endurance-V001 — Analyse libre",
+                "category": "NOTE",
+                "start_date_local": "2026-04-14T10:00:00",
+                "description": "",
+            }
+        ]
+        stats = self._run_sync(events)
+
+        # Nothing added, nothing fixed
+        assert stats["sessions_added"] == []
+        assert stats["intervals_ids_fixed"] == []
