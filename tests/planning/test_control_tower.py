@@ -70,9 +70,11 @@ class TestSyncFromRemoteNoteFiltering:
 
         tower = PlanningControlTower()
 
-        # Mock the local plan: one session S016-02 pinned to a given intervals_id
+        # Mock the local plan: one session S016-02 pinned to a given intervals_id.
+        # session_date must be a real date for the post-sync sort to succeed.
         local_session = MagicMock()
         local_session.session_id = "S016-02"
+        local_session.session_date = date(2026, 4, 14)
         local_session.name = "TempoSoutenu"
         local_session.description = "existing description"
         local_session.intervals_id = local_intervals_id_for_02
@@ -114,12 +116,7 @@ class TestSyncFromRemoteNoteFiltering:
         assert stats["intervals_ids_fixed"] == []
 
     def test_cancellation_note_still_reaches_parser(self):
-        """[ANNULÉE] / [SAUTÉE] notes must not be skipped by the NOTE filter.
-
-        Validates the parser path only — full add/update of cancelled sessions
-        depends on upstream Session model validators (skip_reason required when
-        status=cancelled) which is a separate concern, not part of this fix.
-        """
+        """[ANNULÉE] / [SAUTÉE] notes must not be skipped by the NOTE filter."""
         from magma_cycling.planning.models import WORKOUT_NAME_REGEX
 
         cancel_name = "[ANNULÉE] S016-06-END-EnduranceDouce-V001"
@@ -128,6 +125,19 @@ class TestSyncFromRemoteNoteFiltering:
         # And the filter keeps it (does NOT continue)
         has_cancel_marker = "[ANNULÉE]" in cancel_name or "[SAUTÉE]" in cancel_name
         assert has_cancel_marker, "Cancellation note must bypass the NOTE filter"
+
+    def test_cancellation_note_adds_session_with_skip_reason(self):
+        """Adding a cancelled session from a NOTE must inject a default skip_reason.
+
+        The Session pydantic model requires skip_reason non-null when
+        status='cancelled'. sync_from_remote must provide a default, otherwise
+        the constructor raises ValidationError. Regression test for BT-011.
+        """
+        events = self._build_events()
+        stats = self._run_sync(events)
+
+        # Session S016-06 should be added via the cancellation NOTE, not crash
+        assert "S016-06" in stats["sessions_added"]
 
     def test_regular_note_alone_is_silently_dropped(self):
         """If a session is only referenced by an analysis NOTE, it must not be added to planning."""
