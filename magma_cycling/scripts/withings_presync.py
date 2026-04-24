@@ -36,7 +36,7 @@ def main() -> int:
     today = date.today()
     yesterday = today - timedelta(days=1)
 
-    log(f"Syncing {yesterday} → {today} (sleep, weight)")
+    log(f"Syncing {yesterday} → {today} (sleep, weight, blood pressure)")
 
     try:
         from magma_cycling._mcp.handlers.health import sync_health_to_calendar
@@ -44,7 +44,7 @@ def main() -> int:
         result = sync_health_to_calendar(
             start_date=yesterday,
             end_date=today,
-            data_types=["sleep", "weight"],
+            data_types=["sleep", "weight", "blood_pressure"],
         )
 
         synced = result.get("synced_count", 0)
