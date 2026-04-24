@@ -411,6 +411,18 @@ class PlanningControlTower:
             if not match:
                 continue
 
+            # Regular NOTE events that merely embed a session ID in their
+            # title (e.g., "S016-02-INT-... — Analyse manuelle") are user
+            # commentary, not session data — they must NOT trigger
+            # intervals_id swaps or status overrides against the local plan.
+            # Only NOTE events that explicitly cancel a session via
+            # [ANNULÉE] or [SAUTÉE] markers are still honored.
+            # Bug report: Georges Crespi, 2026-04-20 (S016-02/06 flipped
+            # to cancelled after creating analysis notes).
+            category = event.get("category", "")
+            if category == "NOTE" and "[ANNULÉE]" not in name and "[SAUTÉE]" not in name:
+                continue
+
             session_id = match.group(1)
             session_type = match.group(2)
             session_name = match.group(3)
@@ -424,14 +436,9 @@ class PlanningControlTower:
                 continue
 
             # Determine status from category
-            category = event.get("category", "")
             if category == "NOTE":
-                if "[ANNULÉE]" in name:
-                    status = "cancelled"
-                elif "[SAUTÉE]" in name:
-                    status = "cancelled"
-                else:
-                    status = "planned"
+                # Reached only when name contains [ANNULÉE] or [SAUTÉE]
+                status = "cancelled"
             else:
                 status = "planned"  # Will be updated by daily-sync
 
