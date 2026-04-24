@@ -500,6 +500,15 @@ class PlanningControlTower:
 
                 else:
                     # Add new session from remote
+                    # Session pydantic model requires skip_reason non-null when
+                    # status is "cancelled" (cf. models.py validator). The remote
+                    # status can only be "cancelled" here via an [ANNULÉE] /
+                    # [SAUTÉE] NOTE — inject a default skip_reason so the
+                    # constructor does not raise.
+                    skip_reason: str | None = None
+                    if remote_data["status"] == "cancelled":
+                        skip_reason = "Cancelled via Intervals.icu note ([ANNULÉE]/[SAUTÉE])"
+
                     new_session = Session(
                         session_id=session_id,
                         session_date=remote_data["session_date"],
@@ -512,7 +521,7 @@ class PlanningControlTower:
                         status=remote_data["status"],
                         intervals_id=remote_data["intervals_id"],
                         description_hash=None,
-                        skip_reason=None,
+                        skip_reason=skip_reason,
                     )
                     plan.planned_sessions.append(new_session)
                     stats["sessions_added"].append(session_id)
