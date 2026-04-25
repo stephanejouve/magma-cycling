@@ -144,7 +144,7 @@ class ActivityDetectionMixin:
             import contextlib
             import os
 
-            with open(os.devnull, "w") as devnull:
+            with open(os.devnull, "w", encoding="utf-8") as devnull:
                 with contextlib.redirect_stdout(devnull), contextlib.redirect_stderr(devnull):
                     return self._check_activities_internal(check_date)
         else:

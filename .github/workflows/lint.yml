@@ -37,3 +37,6 @@ jobs:
     - name: Run Ruff formatter check
       run: poetry run ruff format --check magma_cycling/
       continue-on-error: true
+
+    - name: Check safe I/O conformity (encoding=utf-8 enforcement)
+      run: python scripts/lint/check_safe_io.py magma_cycling/
