@@ -55,7 +55,7 @@ def _detect_emoji_support() -> bool:
 
 # (Internal mapping — single source of truth for glyph definitions.)
 _GLYPH_TABLE: dict[str, tuple[str, str]] = {
-    # name        (emoji,    ascii fallback)
+    # name           (emoji,    ascii fallback)
     "SEARCH": ("🔍", "[*]"),
     "OK": ("✅", "[ok]"),
     "WARN": ("⚠️", "[!]"),
@@ -68,6 +68,22 @@ _GLYPH_TABLE: dict[str, tuple[str, str]] = {
     "REFRESH": ("🔄", "[sync]"),
     "BIKE": ("🚴", "[bike]"),
     "TRASH": ("🗑️", "[del]"),
+    # B-LIGHT extension (2026-04-25, daily-sync path migration)
+    "NOTE": ("📝", "[note]"),
+    "LIST": ("📋", "[list]"),
+    "ROBOT": ("🤖", "[ai]"),
+    "WRITE": ("✍", "[write]"),
+    "INBOX": ("📥", "[inbox]"),
+    "CHECK_LIGHT": ("✓", "[ok]"),
+    "CALENDAR": ("📅", "[date]"),
+    "BOOK": ("📖", "[doc]"),
+    "RECYCLE": ("♻", "[recycle]"),
+    "FOLDER": ("📂", "[dir]"),
+    "DOCUMENT": ("📄", "[doc]"),
+    "LAB": ("🧪", "[test]"),
+    "THOUGHT": ("💭", "[note]"),
+    "HAND_STOP": ("✋", "[stop]"),
+    "ARROW_RIGHT": ("➡", "->"),
 }
 
 
@@ -102,4 +118,36 @@ def _publish_module_constants() -> None:
 _publish_module_constants()
 
 
-__all__ = ["use", *list(_GLYPH_TABLE.keys())]
+def safe_print(*args, **kwargs) -> None:
+    """Drop-in replacement for ``print()`` that never raises on encoding errors.
+
+    On a stdout that cannot encode the arguments (typical Windows ``cp1252``
+    when an emoji slips through unmigrated code), the call is retried with the
+    arguments sanitized through the current stdout encoding using
+    ``errors="replace"``. The user sees ``?`` characters instead of a crash.
+
+    Use this anywhere user-facing output may contain emoji literals or other
+    non-encodable Unicode. The migration from raw ``print()`` to ``safe_print``
+    can be done piecewise — the helper has the same call signature.
+
+    Why a wrapper at all
+    --------------------
+
+    Even with ``sys.stdout.reconfigure(encoding="utf-8")`` applied at package
+    import (cf. ``magma_cycling.__init__``), some bundled environments
+    (PyInstaller / py2app on Windows) re-bind stdout in ways that defeat the
+    reconfigure. ``safe_print`` is the last-line defense that cannot be bypassed
+    by binding tricks.
+    """
+    try:
+        print(*args, **kwargs)
+    except UnicodeEncodeError:
+        encoding = (getattr(sys.stdout, "encoding", None) or "ascii").lower()
+        sanitized = [
+            str(a).encode(encoding, errors="replace").decode(encoding, errors="replace")
+            for a in args
+        ]
+        print(*sanitized, **kwargs)
+
+
+__all__ = ["use", "safe_print", *list(_GLYPH_TABLE.keys())]

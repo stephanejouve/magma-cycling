@@ -306,7 +306,7 @@ class EndOfWeekWorkflow(
 
             # Write idempotence marker (skip in dry-run — no real work done)
             if not self.dry_run:
-                marker.write_text(datetime.now().isoformat())
+                marker.write_text(datetime.now().isoformat(), encoding="utf-8")
 
             return True
 

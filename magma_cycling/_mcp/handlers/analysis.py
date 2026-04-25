@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from magma_cycling._mcp._utils import mcp_response, suppress_stdout_stderr
+from magma_cycling.utils.safe_io import safe_read_text, safe_write_text
 
 if TYPE_CHECKING:
     from mcp.types import TextContent
@@ -107,7 +108,7 @@ async def handle_get_recommendations(args: dict) -> list[TextContent]:
             rec_file = Path("project-docs") / "recommendations" / f"{week_id}_recommendations.json"
 
             if rec_file.exists():
-                recommendations = json.loads(rec_file.read_text())
+                recommendations = json.loads(safe_read_text(rec_file))
                 result = {
                     "week_id": week_id,
                     "found": True,
@@ -315,7 +316,7 @@ async def handle_export_week_to_json(args: dict) -> list[TextContent]:
 
             # Write to file
             output_file = Path(output_path)
-            output_file.write_text(json.dumps(plan_dict, indent=2))
+            safe_write_text(output_file, json.dumps(plan_dict, indent=2))
 
             result = {
                 "success": True,
@@ -359,7 +360,7 @@ async def handle_restore_week_from_backup(args: dict) -> list[TextContent]:
                 error = {"error": f"Backup file not found: {backup_path}"}
                 return mcp_response(error)
 
-            backup_data = json.loads(backup_file.read_text())
+            backup_data = json.loads(safe_read_text(backup_file))
 
             # Reconstruct WeeklyPlan
             sessions = [
@@ -561,7 +562,7 @@ async def handle_analyze_training_patterns(args: dict) -> list[TextContent]:
                             / f"{week_id}_recommendations.json"
                         )
                         if rec_file.exists():
-                            result["recommendations"] = json.loads(rec_file.read_text())
+                            result["recommendations"] = json.loads(safe_read_text(rec_file))
 
                     # Add athlete profile
                     athlete = client.get_athlete()

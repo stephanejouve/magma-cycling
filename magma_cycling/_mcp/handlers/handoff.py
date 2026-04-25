@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 from magma_cycling._mcp._utils import mcp_response
 from magma_cycling.models.handoff import HandoffSnapshot
+from magma_cycling.utils.safe_io import safe_read_text, safe_write_text
 
 if TYPE_CHECKING:
     from mcp.types import TextContent
@@ -36,7 +37,7 @@ def _write_snapshot(snapshot: HandoffSnapshot, handoff_dir: Path) -> Path:
     path = handoff_dir / filename
     if path.exists():
         path = handoff_dir / (snapshot.created_at.strftime("%Y-%m-%d-%H%M%S") + ".json")
-    path.write_text(snapshot.model_dump_json(indent=2) + "\n")
+    safe_write_text(path, snapshot.model_dump_json(indent=2) + "\n")
     return path
 
 
@@ -47,7 +48,7 @@ def _latest_unconsumed(handoff_dir: Path) -> tuple[Path, HandoffSnapshot] | None
     candidates: list[tuple[Path, HandoffSnapshot]] = []
     for path in handoff_dir.glob("*.json"):
         try:
-            snap = HandoffSnapshot.model_validate_json(path.read_text())
+            snap = HandoffSnapshot.model_validate_json(safe_read_text(path))
         except Exception as exc:
             logger.warning("Skipping invalid handoff file %s: %s", path, exc)
             continue
@@ -99,7 +100,7 @@ async def handle_context_handoff_resume(args: dict) -> list[TextContent]:
     path, snapshot = found
     if not peek:
         snapshot.consumed = True
-        path.write_text(snapshot.model_dump_json(indent=2) + "\n")
+        safe_write_text(path, snapshot.model_dump_json(indent=2) + "\n")
     return mcp_response(
         {
             "status": "resumed" if not peek else "peeked",

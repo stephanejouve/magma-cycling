@@ -33,7 +33,7 @@ Examples:
         # Valider fichier .txt avant conversion
         workout_file = Path("S073-01-workout.txt")
 
-        result = validate_workout(workout_file.read_text())
+        result = validate_workout(safe_read_text(workout_file))
 
         # Afficher warnings
         for warning in result.warnings:
