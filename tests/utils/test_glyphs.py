@@ -73,3 +73,41 @@ class TestModuleConstants:
         # __all__ should contain every named constant
         for name in glyphs._GLYPH_TABLE:
             assert name in glyphs.__all__
+
+
+class TestSafePrint:
+    """safe_print never raises on UnicodeEncodeError."""
+
+    def test_prints_normal_text(self, capsys):
+        glyphs.safe_print("hello world")
+        captured = capsys.readouterr()
+        assert "hello world" in captured.out
+
+    def test_prints_emoji_when_stdout_supports_utf8(self, capsys):
+        # capsys captures via UTF-8 by default
+        glyphs.safe_print("🔍 search")
+        captured = capsys.readouterr()
+        assert "🔍" in captured.out
+
+    def test_handles_unicode_encode_error_silently(self):
+        """When stdout encoding cannot encode the text, fall back to ? placeholders."""
+        from io import BytesIO, TextIOWrapper
+
+        # cp1252 stdout that cannot encode 🔍
+        cp_buffer = BytesIO()
+        cp_stream = TextIOWrapper(cp_buffer, encoding="cp1252", errors="strict")
+
+        with patch.object(sys, "stdout", cp_stream):
+            # Direct print would raise; safe_print must catch and sanitize.
+            glyphs.safe_print("🔍 emoji-search")
+            sys.stdout.flush()
+
+        output = cp_buffer.getvalue().decode("cp1252", errors="replace")
+        assert "emoji-search" in output
+        # The 🔍 must have been substituted (no UnicodeEncodeError raised).
+        assert "🔍" not in output
+
+    def test_passes_through_kwargs(self, capsys):
+        glyphs.safe_print("a", "b", sep="|", end="!\n")
+        captured = capsys.readouterr()
+        assert captured.out == "a|b!\n"

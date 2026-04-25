@@ -171,7 +171,7 @@ class PlanningAuditLog:
         )
 
         # Append to log file (JSON Lines format)
-        with self.log_file.open("a") as f:
+        with self.log_file.open("a", encoding="utf-8") as f:
             f.write(entry.model_dump_json() + "\n")
 
         # Trim if needed
@@ -191,14 +191,14 @@ class PlanningAuditLog:
         if not self.log_file.exists():
             return 0
 
-        with self.log_file.open("r") as f:
+        with self.log_file.open("r", encoding="utf-8") as f:
             lines = f.readlines()
 
         if len(lines) <= max_lines:
             return 0
 
         removed = len(lines) - max_lines
-        with self.log_file.open("w") as f:
+        with self.log_file.open("w", encoding="utf-8") as f:
             f.writelines(lines[removed:])
 
         return removed
@@ -226,7 +226,7 @@ class PlanningAuditLog:
             return []
 
         # Read log file in reverse (newest first)
-        with self.log_file.open("r") as f:
+        with self.log_file.open("r", encoding="utf-8") as f:
             lines = f.readlines()
 
         for line in reversed(lines):
