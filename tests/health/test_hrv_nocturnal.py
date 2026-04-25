@@ -49,9 +49,16 @@ class TestHealthProviderDefault:
     def test_null_provider_returns_none(self):
         assert NullProvider().get_hrv_nocturnal(date(2026, 4, 19)) is None
 
-    def test_intervals_provider_returns_none(self):
-        """Intervals.icu has no HRV endpoint in the current impl — returns None by default."""
-        p = IntervalsHealthProvider(Mock())
+    def test_intervals_provider_returns_none_when_no_wellness(self):
+        """IntervalsHealthProvider.get_hrv_nocturnal returns None when wellness is empty.
+
+        Since 2026-04-25 (PR #284), this provider reads the `hrv` field from
+        the Intervals.icu wellness payload. With an empty client response
+        (no data for the date), it must return None.
+        """
+        client = Mock()
+        client.get_wellness.return_value = []
+        p = IntervalsHealthProvider(client)
         assert p.get_hrv_nocturnal(date(2026, 4, 19)) is None
 
     def test_base_returns_none_by_default(self):

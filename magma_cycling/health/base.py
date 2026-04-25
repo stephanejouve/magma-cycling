@@ -58,9 +58,28 @@ class HealthProvider(ABC):
         """HRV reading captured at the end of the night ending on target_date.
 
         Default: return None (provider does not expose HRV). Subclasses override
-        when they have access to such data (e.g. Withings Sleep Analyzer).
+        when they have access to such data (e.g. Withings Sleep Analyzer or
+        Intervals.icu wellness).
         """
         return None
+
+    def get_hrv_range(self, start_date: date, end_date: date) -> list[HrvReading]:
+        """HRV readings over a date range.
+
+        Default implementation iterates day-by-day calling get_hrv_nocturnal.
+        Providers with batch-capable APIs (single wellness fetch covering the
+        whole window) should override for efficiency.
+        """
+        from datetime import timedelta
+
+        readings: list[HrvReading] = []
+        current = start_date
+        while current <= end_date:
+            reading = self.get_hrv_nocturnal(current)
+            if reading is not None:
+                readings.append(reading)
+            current = current + timedelta(days=1)
+        return readings
 
     def get_provider_info(self) -> dict[str, str]:
         """Provider metadata (concrete — not abstract)."""
