@@ -9,6 +9,12 @@ Documentation auto-générée depuis les docstrings Google Style du code source.
 
 .. toctree::
    :maxdepth: 2
+   :caption: Onboarding:
+
+   onboarding-zwift-foudre
+
+.. toctree::
+   :maxdepth: 2
    :caption: Architecture:
 
    architecture/training-logs-sync
