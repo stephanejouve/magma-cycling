@@ -48,6 +48,7 @@ from magma_cycling.config import (
 from magma_cycling.insert_analysis import WorkoutHistoryManager
 from magma_cycling.prepare_analysis import PromptGenerator
 from magma_cycling.utils.cli import cli_main
+from magma_cycling.utils.glyphs import SEARCH
 from magma_cycling.utils.hot_reload import (
     hot_reload_if_needed,
     mark_modules_loaded,
@@ -216,7 +217,7 @@ class DailySync(
         # 2b. Auto-servo mode evaluation (if enabled and AI analysis active)
         servo_result = None
         if self.enable_auto_servo and self.enable_ai_analysis and new_activities and week_id:
-            print("\n🔍 Évaluation conditions auto-servo...")
+            print(f"\n{SEARCH} Évaluation conditions auto-servo...")
 
             # Evaluate only the most recent activity (last one analyzed)
             latest_activity = new_activities[-1]
@@ -259,7 +260,7 @@ class DailySync(
         # 2c. TSS Proactive Compensation (if week specified and AI analysis enabled)
         compensation_result = None
         if week_id and self.enable_ai_analysis:
-            print("\n🔍 Évaluation déficit TSS hebdomadaire...")
+            print(f"\n{SEARCH} Évaluation déficit TSS hebdomadaire...")
 
             # Evaluate weekly deficit
             deficit_context = evaluate_weekly_deficit(
@@ -309,7 +310,7 @@ class DailySync(
         # 2d. CTL Analysis (Peaks Coaching principles)
         ctl_analysis = None
         if self.enable_ai_analysis:
-            print("\n🔍 Analyse CTL selon principes Peaks Coaching...")
+            print(f"\n{SEARCH} Analyse CTL selon principes Peaks Coaching...")
             ctl_analysis = self.analyze_ctl_peaks(check_date=check_date)
 
             if ctl_analysis and ctl_analysis.get("alerts"):
