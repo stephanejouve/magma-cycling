@@ -179,7 +179,7 @@ class WorkoutAdherenceChecker:
         """
         log_file = self.log_dir / "workout_adherence.jsonl"
 
-        with open(log_file, "a") as f:
+        with open(log_file, "a", encoding="utf-8") as f:
             f.write(json.dumps(result) + "\n")
 
         print(f"\n📝 Results logged to: {log_file}")
