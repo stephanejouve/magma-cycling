@@ -15,9 +15,8 @@ Documentation auto-générée depuis les docstrings Google Style du code source.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Architecture:
+   :caption: Utilitaires:
 
-   architecture/training-logs-sync
    SHIFT_SESSIONS_ALIASES
 
 .. toctree::

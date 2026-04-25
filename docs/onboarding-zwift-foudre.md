@@ -1,306 +1,203 @@
-# Magma Cycling MCP — Référence des Outils
+# Magma Cycling MCP — Référence des outils
 
-**Version** : v3.21 (avril 2026)
-**Public** : Beta testeurs Zwift Foudre, utilisateurs Claude Desktop
-**Total** : 60 outils répartis sur 11 domaines fonctionnels
+**Public** : Beta-testeurs, utilisateurs Claude Desktop
+**Plateformes** : Windows, macOS
 
 ---
 
 ## Avant-propos
 
-Magma Cycling est un MCP server cross-platform (Windows installer, macOS bundle, container Docker pour les déploiements NAS preprod/prod) qui pont entre **Claude Desktop**, **Intervals.icu** (planning + analyse), **Withings** (sommeil + composition corporelle) et un système de **fichiers planning locaux** (`.md` hebdomadaires). Cette doc liste l'ensemble des outils exposés au LLM, leur fonction, et les workflows critiques qui les enchaînent.
+Magma Cycling expose à Claude Desktop un ensemble d'outils qui te permettent, en langage naturel, de planifier ton entraînement, lire tes activités réalisées, suivre tes données santé et obtenir des analyses coach. Cette doc liste les outils par domaine, leur usage côté utilisateur, et les workflows fréquents.
 
-⚠️ **Important** : Ces outils ne sont accessibles que depuis Claude Desktop avec MCP configuré. Les interfaces Claude.ai (web/mobile) n'y ont pas accès.
+⚠️ Ces outils ne sont accessibles que depuis Claude Desktop avec MCP configuré. Les interfaces Claude.ai (web/mobile) n'y ont pas accès.
 
 ---
 
-## 🗓️ Planning local (gestion des semaines)
+## 🗓️ Planning de la semaine
 
-Fichiers `.md` hebdo dans `training-data/planning/`. Source de vérité pour la planification.
+Gérer les semaines d'entraînement et leurs séances.
 
-| Outil | Fonction |
+| Outil | Ce qu'il fait |
 |---|---|
-| `list-weeks` | Liste les semaines disponibles avec dates et infos basiques |
-| `get-week-details` | Détails complets d'une semaine et de ses 7 sessions |
-| `validate-week-consistency` | Vérifie cohérence (conflits, TSS, format) |
-| `export-week-to-json` | Backup JSON de la semaine |
-| `restore-week-from-backup` | Restaure depuis backup (confirmation requise) |
-| `weekly-planner` | Génération IA du plan hebdo |
+| `list-weeks` | Liste les semaines disponibles |
+| `get-week-details` | Détails d'une semaine et de ses séances |
+| `validate-week-consistency` | Vérifie que la semaine est cohérente |
+| `export-week-to-json` | Sauvegarde la semaine en JSON |
+| `restore-week-from-backup` | Restaure une sauvegarde |
+| `weekly-planner` | Génère un plan hebdomadaire |
 
 ---
 
-## 🏃 Sessions (CRUD planning)
+## 🏃 Séances
 
-Manipulation des séances individuelles à l'intérieur d'une semaine.
+Créer, modifier et organiser tes séances dans une semaine.
 
-| Outil | Fonction |
+| Outil | Ce qu'il fait |
 |---|---|
 | `create-session` | Crée une nouvelle séance |
-| `update-session` | MAJ statut (completed, cancelled, skipped, replaced…) |
+| `update-session` | Met à jour le statut (réalisée, annulée, sautée…) |
 | `modify-session-details` | Modifie nom, type, description, TSS, durée |
-| `rename-session` | Renomme un session_id (avec sync remote) |
-| `delete-session` | Supprime du planning local |
+| `rename-session` | Renomme une séance |
+| `delete-session` | Supprime une séance |
 | `duplicate-session` | Duplique vers une autre date |
-| `swap-sessions` | Échange dates de 2 sessions (local + remote en 1 appel) |
-
-⚠️ `swap-sessions` et `modify-session-details` sont **mutuellement exclusifs** sur une même opération de swap — ne jamais chaîner.
+| `swap-sessions` | Échange les dates de deux séances |
 
 ---
 
-## 📅 Calendrier remote (Intervals.icu)
+## 📅 Calendrier Intervals.icu
 
-Synchronisation et manipulation directe des events sur Intervals.icu.
+Synchroniser ton planning avec ton calendrier Intervals.icu.
 
-| Outil | Fonction |
+| Outil | Ce qu'il fait |
 |---|---|
-| `list-remote-events` | Liste events remote sur une plage de dates |
-| `sync-week-to-calendar` | Sync planning local → remote |
-| `sync-remote-to-local` | Sync inverse (fix désynchro) |
-| `update-remote-event` | MAJ directe d'un event remote |
-| `delete-remote-event` | Suppression directe (permanente) d'un event |
-| `create-remote-note` | Crée une NOTE calendrier (annulation, info…) |
-| `validate-local-remote-sync` | Détecte décalages local ↔ remote |
+| `list-remote-events` | Liste tes événements Intervals sur une période |
+| `sync-week-to-calendar` | Pousse une semaine de planning sur Intervals |
+| `sync-remote-to-local` | Récupère depuis Intervals vers le planning local |
+| `update-remote-event` | Modifie un événement Intervals |
+| `delete-remote-event` | Supprime un événement Intervals |
+| `create-remote-note` | Crée une note (annulation, info) sur Intervals |
+| `validate-local-remote-sync` | Vérifie que local et Intervals sont alignés |
 
-📝 **Notes pratiques** :
-- `sync-week-to-calendar` **protège** les sessions `completed` et `cancelled` (`skipped_protected`) — pour nettoyer un workout remote d'une session annulée, passer par `delete-remote-event` puis `create-remote-note`.
-- Les descriptions doivent être **plain text dès le premier appel** : du markdown dans `modify-session-details` laisse des résidus persistants même avec `force_update: True`.
-- `validate-local-remote-sync` retourne par défaut `include_description_check: false` — les `DESCRIPTION_MISMATCH LOW` sont du bruit attendu.
-- Depuis v3.20.4 : les notes Intervals dont le titre contient un session ID (ex. analyses libres) ne déclenchent plus de `cancelled` local au prochain `sync-remote-to-local`. Seules les notes avec `[ANNULÉE]` / `[SAUTÉE]` font basculer la session locale.
+📝 **Astuce** : préfère du texte simple (sans markdown) dans les descriptions de séances — certains rendus Intervals laissent du formatage parasite sinon.
 
 ---
 
 ## 💪 Workouts structurés
 
-Gestion des fichiers workout (`.zwo`, `.mrc`, `.erg`) et adaptation terrain.
+Gérer les fichiers de workout (`.zwo`, `.mrc`, `.erg`) et adapter à ton parcours.
 
-| Outil | Fonction |
+| Outil | Ce qu'il fait |
 |---|---|
-| `list-workout-catalog` | Catalogue des workouts disponibles |
-| `get-workout` | Récupère le contenu workout d'une session |
-| `attach-workout` | Attache un fichier `.zwo`/`.mrc`/`.erg` à une session |
-| `validate-workout` | Validation syntaxique avec auto-fix optionnel |
-| `apply-workout-intervals` | Applique des bornes d'intervalles à une activité réalisée |
-| `adapt-workout-to-terrain` | Adapte un workout structuré à un circuit terrain |
-| `extract-terrain-circuit` | Extrait le profil terrain (segments, pentes, braquets) |
-| `list-terrain-circuits` | Liste les circuits terrain sauvegardés |
-| `evaluate-outdoor-execution` | Évalue exécution outdoor vs prescription terrain-adaptée |
-
-📝 `structured_file: null` retourné par `get-workout` est **normal** (pas de `.zwo` généré pour cette session).
+| `list-workout-catalog` | Liste les workouts disponibles |
+| `get-workout` | Récupère le contenu d'une séance |
+| `attach-workout` | Attache un workout à une séance |
+| `validate-workout` | Vérifie que le fichier est correct |
+| `apply-workout-intervals` | Applique des bornes d'intervalles à une activité |
+| `adapt-workout-to-terrain` | Adapte un workout à un parcours réel |
+| `extract-terrain-circuit` | Extrait le profil d'un parcours |
+| `list-terrain-circuits` | Liste les parcours sauvegardés |
+| `evaluate-outdoor-execution` | Compare ton exécution outdoor à la prescription |
 
 ---
 
 ## 📊 Activités réalisées
 
-Lecture et analyse des activités terminées.
+Lire et analyser tes séances terminées.
 
-| Outil | Fonction |
+| Outil | Ce qu'il fait |
 |---|---|
-| `list-activities` | Liste activités sur plage de dates (TSS, puissance, FC, cadence) |
-| `get-activity-details` | Détails complets (TSS, IF, courbes puissance, streams) |
-| `get-activity-intervals` | Intervalles agrégés (laps : avg power, HR, cadence) |
-| `get-activity-streams` | Streams temps-série bruts (slicing optionnel) |
-| `compare-activity-intervals` | Compare intervalles entre plusieurs activités (progression) |
-| `analyze-session-adherence` | Analyse adhérence prescription ↔ réalisé (TSS, IF, durée) |
-| `backfill-activities` | Reconstruit l'historique des sessions vides (lien remote↔local) |
-
-📝 `backfill-activities` est la méthode fiable pour reconstruire des semaines où `get-week-details` retourne des valeurs vides.
+| `list-activities` | Liste tes activités sur une période |
+| `get-activity-details` | Détails complets d'une activité (TSS, IF, courbes) |
+| `get-activity-intervals` | Intervalles agrégés (laps, puissance, FC) |
+| `get-activity-streams` | Données temps-série brutes |
+| `compare-activity-intervals` | Compare plusieurs activités |
+| `analyze-session-adherence` | Compare prescription vs réalisé |
+| `backfill-activities` | Recharge des séances anciennes manquantes |
 
 ---
 
-## 🏥 Santé (Withings + Intervals.icu wellness)
+## 🏥 Santé
 
-Données sommeil, composition corporelle, HRV et évaluation readiness.
+Sommeil, poids, HRV, et évaluation de ta forme du jour.
 
-| Outil | Fonction |
+| Outil | Ce qu'il fait |
 |---|---|
-| `health-auth-status` | Statut OAuth provider santé |
-| `health-authorize` | Lance ou complète le flow OAuth |
-| `get-sleep` | Données sommeil détaillées |
-| `get-hrv` | HRV nocturne (rMSSD) — Withings Sleep Analyzer ou wellness Intervals.icu |
-| `get-body-composition` | Poids + composition corporelle |
-| `get-readiness` | Évalue readiness (sommeil + santé combinés) |
+| `health-auth-status` | Statut de connexion à ton fournisseur santé |
+| `health-authorize` | Connecte ton compte santé |
+| `get-sleep` | Tes données de sommeil |
+| `get-hrv` | Ta variabilité cardiaque (rMSSD) |
+| `get-body-composition` | Poids et composition corporelle |
+| `get-readiness` | Évalue si tu es en forme pour t'entraîner |
 | `analyze-health-trends` | Tendances santé sur une période |
-| `enrich-session-health` | Injecte les métriques santé dans une session |
-| `pre-session-check` | **Veto sécurité pré-séance** (sommeil + TSB + risque surentraînement) |
-| `sync-health-to-calendar` | Sync santé → calendrier wellness Intervals.icu |
+| `enrich-session-health` | Ajoute tes métriques santé à une séance |
+| `pre-session-check` | **Veto sécurité avant séance** (sommeil + forme + risque) |
+| `sync-health-to-calendar` | Pousse tes données santé sur Intervals |
 
-📝 **Bascule provider automatique** : si Withings n'est pas configuré, le système lit la wellness Intervals.icu (poids, sommeil, FC repos via `hr_min`, HRV via le champ `hrv`). Aucune config supplémentaire pour les utilisateurs Garmin/Apple Watch/etc. qui poussent déjà vers Intervals.icu.
-
-⚠️ **Pattern Withings critique** :
-- Withings tronque parfois le sommeil (fausses détections d'éveil, siestes non détectées, sommeil canapé non capté).
-- Workflow correction : demander à l'athlète bedtime/wake réels → utiliser `extra_sleep_hours` dans `pre-session-check` (cap à 6.0h).
-- ⚠️ La correction **ne se propage pas** à `enrich-session-health` ni `daily-sync` — patcher après coup avec `patch-coach-analysis(sleep_hours=…)`.
+📝 **Astuce sommeil** : si ton tracker a mal détecté la nuit (siestes ratées, sommeil canapé non capté), tu peux dire à Claude « j'ai dormi X heures » et il ajustera l'évaluation.
 
 ---
 
-## 📈 Métriques athlète
+## 📈 Profil et métriques
 
-Profil athlète et statistiques de charge.
-
-| Outil | Fonction |
+| Outil | Ce qu'il fait |
 |---|---|
-| `get-athlete-profile` | Profil complet (FTP, poids, FC max/repos, zones) |
-| `update-athlete-profile` | MAJ du profil (FTP, poids, FC, etc.) |
-| `get-metrics` | Métriques actuelles (CTL, ATL, TSB, FTP) |
-| `get-training-statistics` | Statistiques agrégées sur une période (TSS, compliance, intensité) |
+| `get-athlete-profile` | Ton profil (FTP, poids, FC max/repos, zones) |
+| `update-athlete-profile` | Met à jour ton profil |
+| `get-metrics` | Tes métriques actuelles (CTL, ATL, TSB) |
+| `get-training-statistics` | Statistiques agrégées (TSS, compliance, intensité) |
 
 ---
 
-## 🤖 Analyse coach IA
+## 🤖 Analyses coach IA
 
-Analyse intelligente, recommandations et historique des analyses passées.
-
-| Outil | Fonction |
+| Outil | Ce qu'il fait |
 |---|---|
-| `get-coach-analysis` | Récupère analyse IA passée (par activity_id, session_id, ou date) |
-| `patch-coach-analysis` | Patch d'une analyse sans re-générer (append, préserve original) |
-| `analyze-training-patterns` | **Méta-tool** : analyse globale (planning + activités + métriques) |
-| `monthly-analysis` | Analyse mensuelle complète + insights IA |
-| `get-recommendations` | Recommandations système PID & Peaks |
+| `get-coach-analysis` | Récupère une analyse passée |
+| `patch-coach-analysis` | Ajoute des notes à une analyse existante |
+| `analyze-training-patterns` | Analyse globale (planning + activités + métriques) |
+| `monthly-analysis` | Analyse mensuelle complète |
+| `get-recommendations` | Recommandations d'entraînement |
 
-📝 `patch-coach-analysis` **ajoute** sans remplacer — toute correction est traçable.
+📝 `patch-coach-analysis` ne remplace jamais ton analyse — elle ajoute des éléments traçables.
 
 ---
 
-## 🔄 Sync & maintenance
+## 🔄 Sync quotidienne
 
-| Outil | Fonction |
+| Outil | Ce qu'il fait |
 |---|---|
-| `daily-sync` | Sync activités du jour + MAJ statuts sessions |
-
-📝 `daily-sync` avec `ai_analysis: False` est **requis** pour récupérer un `activity_id` avant `get-activity-details` ou `get-activity-intervals`.
+| `daily-sync` | Synchronise tes activités du jour et met à jour les statuts |
 
 ---
 
-## 💾 Contexte conversationnel
+## 💾 Mémoire de conversation
 
-Persistance d'éléments non encore figés en planning.
-
-| Outil | Fonction |
+| Outil | Ce qu'il fait |
 |---|---|
-| `context-handoff-save` | Snapshot du contexte non-persisté (décisions en cours, hypothèses) |
-| `context-handoff-resume` | Reprend le dernier snapshot non consommé |
+| `context-handoff-save` | Sauvegarde le contexte (décisions en cours, hypothèses) avant fin de session |
+| `context-handoff-resume` | Reprend le dernier contexte sauvegardé |
 
 ---
 
-## ⚙️ Système / dev
+## ⚙️ Système
 
-| Outil | Fonction |
+| Outil | Ce qu'il fait |
 |---|---|
-| `system-info` | Providers actifs + métadonnées système |
-| `reload-server` | [DEV] Reload des modules sans redémarrer Claude |
+| `system-info` | État du système et des connexions |
+| `reload-server` | [Dev] Recharge sans redémarrer Claude |
 
 ---
 
-## 🎯 Workflows critiques
+## 🎯 Workflows usuels
 
-### Pré-séance standard
+### Avant une séance
 
-```
-pre-session-check(date, week_id)         # veto sécurité
-       ↓ (si GO)
-enrich-session-health(session_id)        # injection métriques
-```
+1. Demande à Claude un **pré-check** de la journée — il évalue ta forme à partir de ton sommeil et de ta charge récente.
+2. Si feu vert : il enrichit ta séance avec tes métriques santé du jour.
 
-⚠️ **Omettre `enrich-session-health` est une erreur** — la session restera sans contexte santé pour l'analyse post-séance.
+### Après une séance
 
-### Post-séance standard
+1. Lance la **sync du jour** pour récupérer ton activité Intervals.
+2. Demande l'**analyse d'adhérence** : Claude compare ta séance prescrite à ce que tu as réalisé.
+3. Si tu vois quelque chose à corriger (sommeil mal capté, contexte inhabituel), dis-le-lui — il patche l'analyse en conséquence.
 
-```
-daily-sync(date, ai_analysis=False)      # récupère activity_id
-       ↓
-get-activity-details(activity_id)        # données brutes
-       ↓
-get-activity-intervals(activity_id)      # intervalles agrégés
-       ↓
-analyze-session-adherence(session_id)    # comparaison vs prescription
-       ↓ (si correction Withings nécessaire)
-patch-coach-analysis(session_id, sleep_hours=...)
-```
+### Annuler une séance
 
-### Annulation de séance
+Dis simplement à Claude « annule la séance Sxxx-yy parce que [raison] ». Il met à jour le statut local + nettoie le calendrier Intervals si l'événement y est encore.
 
-```
-update-session(session_id, status=cancelled, reason=...)
-       ↓ (si workout remote toujours présent)
-delete-remote-event(event_id, confirm=True)
-       ↓
-create-remote-note(date, name="Sxxx-yy annulée", description=...)
-```
+### Échanger deux séances
 
-📝 Le pipeline auto-nettoie parfois l'event remote lors du `update-session(cancelled)` — vérifier avec `list-remote-events` avant d'enchaîner.
-
-### Swap de séances
-
-```
-swap-sessions(session_a, session_b, week_id)
-       ↓
-validate-local-remote-sync(week_id)      # confirme IN_SYNC
-```
-
-⚠️ **Ne jamais** chaîner `swap-sessions` + `modify-session-details` sur les mêmes sessions.
+« Échange ma séance de mardi avec celle de jeudi » — Claude swappe les dates côté local et côté Intervals en une opération.
 
 ---
 
-## 📐 Conventions et règles
+## 📚 Comment ça marche
 
-### Nommage des sessions
-Format : `Sxxx-yy[a-z]?`
-- `Sxxx` = numéro de semaine (ex. `S090`)
-- `yy` = jour ordinal (01 = lundi, 07 = dimanche)
-- `[a-z]` = sous-séance optionnelle (ex. `S090-06a`, `S090-06b` pour 2 séances le même jour)
+Magma Cycling se branche entre Claude Desktop, ton compte Intervals.icu et ton tracker santé (Withings, ou alimentation par ta montre via Intervals). Toutes les données restent sous ton contrôle.
 
-### Statuts de session
-
-| Statut | Signification |
-|---|---|
-| `pending` | Planifiée, non statuée |
-| `planned` | Validée, prête à exécuter |
-| `uploaded` | Activité uploadée, statut intermédiaire |
-| `completed` | Réalisée et analysée |
-| `skipped` | Sautée (motif requis) |
-| `cancelled` | Annulée (motif requis) |
-| `rest_day` | Jour de repos |
-| `replaced` | Remplacée par une autre séance |
-| `modified` | Modifiée par rapport au plan initial |
-
-### Types de session
-
-| Code | Type |
-|---|---|
-| `END` | Endurance |
-| `INT` | Intervalles / intensité |
-| `REC` | Récupération |
-| `RACE` | Course |
-
-### Codes workout étendus (nommage `.zwo`)
-
-Format : `SSSS-JJ-TYPE-NomExercice-VVVV.zwo`
-Codes TYPE : `END`, `INT`, `FTP`, `SPR`, `CLM`, `REC`, `FOR`, `CAD`, `TEC`, `MIX`, `PDC`, `TST`
+- **GitHub** : `stephanejouve/magma-cycling`
+- **Plateformes connectées** : Intervals.icu, Withings, Zwift, Wahoo
 
 ---
 
-## 🔧 Bugs et limitations connus (v3.21)
-
-| ID | Description | Priorité |
-|---|---|---|
-| **SYNC-001** | `remote_modification_detected` heuristique trop agressive (faux positifs depuis remote stale) | Haute |
-| **VALID-001** | Gap validation sémantique type↔contenu dans `validate-local-remote-sync` | Basse |
-| Withings | Fausse détection de fenêtres de sommeil (sleep canapé non détecté) | Moyenne |
-| `sync-week-to-calendar` | Comportement non-déterministe sur l'auto-nettoyage des workouts remote lors d'un statut `cancelled` | À investiguer |
-
----
-
-## 📚 Ressources externes
-
-- **GitHub** : `stephanejouve/magma-cycling` (public)
-- **Plateformes intégrées** : Intervals.icu, Withings Sleep Analyzer, Zwift, Wahoo ELEMNT ROAM V2
-- **Dépendances** : Poetry pour la gestion Python
-- **Pipelines indépendants** :
-  - `poetry run end-of-week` (utilise Mistral API directement, hors Claude)
-  - `poetry run withings-presync` (LaunchAgent macOS, sync wellness Withings → Intervals.icu)
-  - `poetry run data-repo-sync` (LaunchAgent macOS + cron container NAS, push training-logs → GitHub)
-
----
-
-*Référence générée le 25/04/2026 — Maintenue dans le repo `magma-cycling/docs/`*
+*Doc maintenue dans `docs/` du repo magma-cycling.*
