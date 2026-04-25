@@ -90,6 +90,30 @@ def get_tools() -> list[Tool]:
             },
         ),
         Tool(
+            name="get-hrv",
+            description="Get nocturnal HRV (rMSSD) readings from the configured health provider (Withings Sleep Analyzer or Intervals.icu wellness)",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "start_date": {
+                        "type": "string",
+                        "description": "Start date (YYYY-MM-DD)",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    },
+                    "end_date": {
+                        "type": "string",
+                        "description": "End date (YYYY-MM-DD, default: today)",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    },
+                    "last_night_only": {
+                        "type": "boolean",
+                        "description": "Get only last night's HRV (ignores date range)",
+                        "default": False,
+                    },
+                },
+            },
+        ),
+        Tool(
             name="sync-health-to-calendar",
             description="Synchronize health data (sleep, weight, blood pressure) to training calendar wellness fields",
             inputSchema={

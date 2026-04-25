@@ -7,6 +7,7 @@ from datetime import date, datetime, timedelta
 from typing import Any
 
 from magma_cycling.health.base import HealthProvider
+from magma_cycling.models.hrv_models import HrvReading
 from magma_cycling.models.withings_models import (
     BloodPressureMeasurement,
     SleepData,
@@ -87,6 +88,65 @@ class IntervalsHealthProvider(HealthProvider):
     ) -> list[BloodPressureMeasurement]:
         """Return empty list — not available from Intervals.icu wellness."""
         return []
+
+    # -- hrv -----------------------------------------------------------------
+
+    def get_hrv_nocturnal(self, target_date: date) -> HrvReading | None:
+        """Read rMSSD HRV from Intervals.icu wellness for ``target_date``.
+
+        Reads the ``hrv`` field of the wellness payload (rMSSD by Intervals.icu
+        convention). Returns None if the day has no entry, the field is missing,
+        or the value is non-positive (sentinel for "no measurement").
+        """
+        wellness = self._client.get_wellness(
+            oldest=target_date.isoformat(),
+            newest=target_date.isoformat(),
+        )
+        if not wellness:
+            return None
+        value = wellness[0].get("hrv")
+        if value is None or value <= 0:
+            return None
+        return HrvReading(
+            measurement_date=target_date,
+            metric_type="rmssd",
+            value_ms=float(value),
+            context="nocturnal_avg",
+            source_provider="intervals_icu",
+        )
+
+    def get_hrv_range(self, start_date: date, end_date: date) -> list[HrvReading]:
+        """Read rMSSD HRV over a date range with a single wellness API call.
+
+        Overrides the base implementation that would call get_hrv_nocturnal once
+        per day. One wellness fetch covers the whole window.
+        """
+        wellness = self._client.get_wellness(
+            oldest=start_date.isoformat(),
+            newest=end_date.isoformat(),
+        )
+        readings: list[HrvReading] = []
+        for entry in wellness or []:
+            value = entry.get("hrv")
+            if value is None or value <= 0:
+                continue
+            day_str = entry.get("id")
+            if not day_str:
+                continue
+            try:
+                day = date.fromisoformat(day_str)
+            except ValueError:
+                continue
+            readings.append(
+                HrvReading(
+                    measurement_date=day,
+                    metric_type="rmssd",
+                    value_ms=float(value),
+                    context="nocturnal_avg",
+                    source_provider="intervals_icu",
+                )
+            )
+        return readings
 
     # -- readiness -----------------------------------------------------------
 

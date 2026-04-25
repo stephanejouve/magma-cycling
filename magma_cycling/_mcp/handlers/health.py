@@ -19,6 +19,7 @@ __all__ = [
     "handle_health_auth_status",
     "handle_health_authorize",
     "handle_get_sleep",
+    "handle_get_hrv",
     "handle_get_body_composition",
     "handle_get_readiness",
     "handle_sync_health_to_calendar",
@@ -157,6 +158,44 @@ async def handle_get_sleep(args: dict) -> list[TextContent]:
                 "end_date": end_date_val.isoformat(),
                 "sleep_sessions": [s.model_dump() for s in sessions],
                 "count": len(sessions),
+            }
+
+    return mcp_response(result, provider_info=provider_info, default=str)
+
+
+async def handle_get_hrv(args: dict) -> list[TextContent]:
+    """Get nocturnal HRV readings via HealthProvider."""
+    with suppress_stdout_stderr():
+        from magma_cycling.health import create_health_provider
+
+        provider = create_health_provider()
+        provider_info = provider.get_provider_info()
+
+        last_night_only = args.get("last_night_only", False)
+
+        if last_night_only:
+            reading = provider.get_hrv_nocturnal(date.today())
+            result = {"last_night_hrv": reading.model_dump() if reading else None}
+            if not reading:
+                result["message"] = "No HRV data available for last night"
+        else:
+            start_date_str = args.get("start_date")
+            end_date_str = args.get("end_date")
+
+            if not start_date_str:
+                end_date_val = date.today()
+                start_date_val = end_date_val - timedelta(days=7)
+            else:
+                start_date_val = date.fromisoformat(start_date_str)
+                end_date_val = date.fromisoformat(end_date_str) if end_date_str else date.today()
+
+            readings = provider.get_hrv_range(start_date_val, end_date_val)
+
+            result = {
+                "start_date": start_date_val.isoformat(),
+                "end_date": end_date_val.isoformat(),
+                "readings": [r.model_dump() for r in readings],
+                "count": len(readings),
             }
 
     return mcp_response(result, provider_info=provider_info, default=str)
