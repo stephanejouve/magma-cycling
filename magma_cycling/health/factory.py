@@ -31,19 +31,23 @@ def create_health_provider() -> HealthProvider:
     except Exception:
         pass
 
-    # 2. Try Intervals.icu wellness (Garmin/other watch)
+    # 2. Try Intervals.icu wellness (Garmin/other watch).
+    # Probe a 7-day window (not just yesterday) so that a single missing day
+    # — late Garmin sync, day off without watch, weekend retreat, etc. — does
+    # not silently disable the provider for the whole session.
     try:
         from datetime import date, timedelta
 
         from magma_cycling.config import create_intervals_client
 
         client = create_intervals_client()
+        seven_days_ago = str(date.today() - timedelta(days=7))
         yesterday = str(date.today() - timedelta(days=1))
-        wellness = client.get_wellness(oldest=yesterday, newest=yesterday)
-        if wellness and wellness[0].get("sleepTime"):
+        wellness = client.get_wellness(oldest=seven_days_ago, newest=yesterday)
+        if wellness and any(w.get("sleepTime") for w in wellness):
             from magma_cycling.health.intervals_provider import IntervalsHealthProvider
 
-            logger.info("Using IntervalsHealthProvider (sleep data found in wellness)")
+            logger.info("Using IntervalsHealthProvider (sleep data found in last 7 days)")
             return IntervalsHealthProvider(client)
     except Exception:
         pass
