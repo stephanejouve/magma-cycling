@@ -496,3 +496,51 @@ class TestPatchNoSleepInAttention:
         assert "- Sommeil : 7.8h" in written
         # No error
         assert "error" not in data
+
+
+class TestLocateEntryHeaderFormats:
+    """8. _locate_entry must accept both legacy hyphen and pipe-delimited headers.
+
+    Two header conventions coexist in workouts-history.md:
+    - Legacy auto-pipeline: `### S084-04-END-RecupActive-V001` (hyphen-separated)
+    - Pipe-delimited (manually pasted entries): `### S018-01 | activity_id | date | name`
+
+    `get-coach-analysis` already handles both via word-boundary regex.
+    `patch-coach-analysis` previously required a hyphen after session_id and
+    failed silently on the pipe format (returns "Entry not found").
+    """
+
+    def test_locate_entry_matches_legacy_hyphen_format(self):
+        from magma_cycling._mcp.handlers.rest import _locate_entry
+
+        content = (
+            "### S084-04-END-RecupActive-V001\n"
+            "ID : i131572602\n"
+            "Date : 15/03/2026\n"
+            "Some content\n"
+        )
+        result = _locate_entry(content, activity_id=None, session_id="S084-04")
+        assert result is not None
+        start, end = result
+        assert content[start:end].startswith("### S084-04-END-RecupActive-V001")
+
+    def test_locate_entry_matches_pipe_delimited_format(self):
+        from magma_cycling._mcp.handlers.rest import _locate_entry
+
+        content = (
+            "### S018-01 | i143294645 | 2026-04-27 | ReposPostTinyRaces\n"
+            "ID : i143294645\n"
+            "Date : 27/04/2026\n"
+            "Some content\n"
+        )
+        result = _locate_entry(content, activity_id=None, session_id="S018-01")
+        assert result is not None, "patch must support pipe-delimited headers"
+        start, end = result
+        assert content[start:end].startswith("### S018-01 | i143294645")
+
+    def test_locate_entry_does_not_match_partial_session_id(self):
+        from magma_cycling._mcp.handlers.rest import _locate_entry
+
+        content = "### S084-040-END-RecupActive-V001\n" "ID : i131572602\n" "Date : 15/03/2026\n"
+        result = _locate_entry(content, activity_id=None, session_id="S084-04")
+        assert result is None, "word boundary must prevent S084-04 matching S084-040"

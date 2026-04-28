@@ -217,9 +217,11 @@ def _locate_entry(
         if m:
             anchor_pos = m.start()
 
-    # Fallback: session_id
+    # Fallback: session_id (word-boundary match — supports both legacy hyphen
+    # format `### S018-01-EnduranceLongue` and pipe-delimited format
+    # `### S018-01 | activity_id | date | name`).
     if anchor_pos is None and session_id:
-        m = re.search(rf"^### {re.escape(session_id)}-", content, re.MULTILINE)
+        m = re.search(rf"^###\s+{re.escape(session_id)}\b", content, re.MULTILINE)
         if m:
             anchor_pos = m.start()
 
