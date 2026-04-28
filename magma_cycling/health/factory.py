@@ -28,8 +28,8 @@ def create_health_provider() -> HealthProvider:
         if config.is_configured():
             client = create_withings_client()
             return WithingsProvider(client)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning("Withings provider probe failed: %s", e)
 
     # 2. Try Intervals.icu wellness (Garmin/other watch).
     # Probe a 7-day window (not just yesterday) so that a single missing day
@@ -49,8 +49,8 @@ def create_health_provider() -> HealthProvider:
 
             logger.info("Using IntervalsHealthProvider (sleep data found in last 7 days)")
             return IntervalsHealthProvider(client)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning("Intervals provider probe failed: %s", e)
 
     # 3. Fallback
     from magma_cycling.health.null_provider import NullProvider
