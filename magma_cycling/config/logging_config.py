@@ -108,7 +108,13 @@ def setup_logging(
     # Add file handler if requested
     if file_path:
         Path(file_path).parent.mkdir(parents=True, exist_ok=True)
-        file_handler = RotatingFileHandler(file_path, maxBytes=max_bytes, backupCount=backup_count)
+        file_handler = RotatingFileHandler(
+            file_path,
+            maxBytes=max_bytes,
+            backupCount=backup_count,
+            encoding="utf-8",
+            errors="replace",
+        )
         file_handler.setLevel(log_level)
         file_handler.setFormatter(logging.Formatter(log_format, datefmt="%Y-%m-%d %H:%M:%S"))
         logging.getLogger().addHandler(file_handler)
