@@ -398,3 +398,130 @@ class TestHandleCreateRemoteNote:
         assert data["success"] is True
         # Verify local planning was updated
         assert "local planning" in data["message"].lower()
+
+    @pytest.mark.asyncio
+    @patch("magma_cycling.config.create_intervals_client")
+    async def test_documentary_note_does_not_mutate_planning(self, mock_factory, patch_tower):
+        """Note name leading with the session_id (without status prefix) is documentary
+        and must NOT mutate the local planning status."""
+        client = MagicMock()
+        client.get_provider_info.return_value = MOCK_PROVIDER_INFO
+        client.create_event.return_value = {"id": 99}
+        mock_factory.return_value = client
+
+        result = await handle_create_remote_note(
+            {
+                "date": "2026-03-02",
+                "name": "S999-01 données complètes — patch impossible",
+                "description": "Documentation only",
+            }
+        )
+
+        data = json.loads(result[0].text)
+        assert data["success"] is True
+        assert "local planning not updated" in data["message"]
+        assert "documentary" in data["message"]
+
+        plan_path = patch_tower / "week_planning_S999.json"
+        plan = json.loads(plan_path.read_text(encoding="utf-8"))
+        s01 = next(s for s in plan["planned_sessions"] if s["session_id"] == "S999-01")
+        assert s01["status"] == "uploaded"
+
+    @pytest.mark.asyncio
+    @patch("magma_cycling.config.create_intervals_client")
+    async def test_session_id_mid_sentence_does_not_mutate_planning(
+        self, mock_factory, patch_tower
+    ):
+        """Session_id buried in prose (mid-name) must NOT mutate the local planning."""
+        client = MagicMock()
+        client.get_provider_info.return_value = MOCK_PROVIDER_INFO
+        client.create_event.return_value = {"id": 99}
+        mock_factory.return_value = client
+
+        result = await handle_create_remote_note(
+            {
+                "date": "2026-03-02",
+                "name": "Analyse hebdo — résultats S999-01 et S999-02",
+                "description": "Recap analytique",
+            }
+        )
+
+        data = json.loads(result[0].text)
+        assert data["success"] is True
+        assert "documentary" in data["message"]
+
+        plan_path = patch_tower / "week_planning_S999.json"
+        plan = json.loads(plan_path.read_text(encoding="utf-8"))
+        s01 = next(s for s in plan["planned_sessions"] if s["session_id"] == "S999-01")
+        assert s01["status"] == "uploaded"
+
+    @pytest.mark.asyncio
+    @patch("magma_cycling.config.create_intervals_client")
+    async def test_skipped_prefix_sets_status_skipped(self, mock_factory, patch_tower):
+        """[SAUTÉE] prefix sets status=skipped."""
+        client = MagicMock()
+        client.get_provider_info.return_value = MOCK_PROVIDER_INFO
+        client.create_event.return_value = {"id": 99}
+        mock_factory.return_value = client
+
+        await handle_create_remote_note(
+            {
+                "date": "2026-03-02",
+                "name": "[SAUTÉE] S999-01 Endurance",
+                "description": "Oubli",
+            }
+        )
+
+        plan_path = patch_tower / "week_planning_S999.json"
+        plan = json.loads(plan_path.read_text(encoding="utf-8"))
+        s01 = next(s for s in plan["planned_sessions"] if s["session_id"] == "S999-01")
+        assert s01["status"] == "skipped"
+
+    @pytest.mark.asyncio
+    @patch("magma_cycling.config.create_intervals_client")
+    async def test_replaced_prefix_sets_status_replaced(self, mock_factory, patch_tower):
+        """[REMPLACÉE] prefix sets status=replaced."""
+        client = MagicMock()
+        client.get_provider_info.return_value = MOCK_PROVIDER_INFO
+        client.create_event.return_value = {"id": 99}
+        mock_factory.return_value = client
+
+        await handle_create_remote_note(
+            {
+                "date": "2026-03-02",
+                "name": "[REMPLACÉE] S999-01 par INT",
+                "description": "Swap",
+            }
+        )
+
+        plan_path = patch_tower / "week_planning_S999.json"
+        plan = json.loads(plan_path.read_text(encoding="utf-8"))
+        s01 = next(s for s in plan["planned_sessions"] if s["session_id"] == "S999-01")
+        assert s01["status"] == "replaced"
+
+    @pytest.mark.asyncio
+    @patch("magma_cycling.config.create_intervals_client")
+    async def test_prefix_without_session_id_no_planning_update(self, mock_factory, patch_tower):
+        """[ANNULÉE] without a parseable session_id in the name → planning untouched,
+        explicit message in response."""
+        client = MagicMock()
+        client.get_provider_info.return_value = MOCK_PROVIDER_INFO
+        client.create_event.return_value = {"id": 99}
+        mock_factory.return_value = client
+
+        result = await handle_create_remote_note(
+            {
+                "date": "2026-03-02",
+                "name": "[ANNULÉE] vacances",
+                "description": "Off-week",
+            }
+        )
+
+        data = json.loads(result[0].text)
+        assert data["success"] is True
+        assert "no session_id" in data["message"]
+
+        plan_path = patch_tower / "week_planning_S999.json"
+        plan = json.loads(plan_path.read_text(encoding="utf-8"))
+        s01 = next(s for s in plan["planned_sessions"] if s["session_id"] == "S999-01")
+        assert s01["status"] == "uploaded"
