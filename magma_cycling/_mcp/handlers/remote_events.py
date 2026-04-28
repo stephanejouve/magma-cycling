@@ -308,51 +308,61 @@ async def handle_create_remote_note(args: dict) -> list[TextContent]:
             created_event = client.create_event(event_data)
 
             if created_event and "id" in created_event:
-                session_id_match = re.search(SESSION_ID_PATTERN, name)
-                if session_id_match:
-                    session_id = session_id_match.group()
-                    week_id = session_id.split("-")[0]
+                # Status write-back is opt-in: only triggered if the note name
+                # starts with an explicit status prefix. A note merely mentioning
+                # a session_id (e.g. documentation) must NOT mutate the planning.
+                status_map = {
+                    "[ANNULÉE]": "cancelled",
+                    "[SAUTÉE]": "skipped",
+                    "[REMPLACÉE]": "replaced",
+                }
+                new_status = next(
+                    (status for prefix, status in status_map.items() if name.startswith(prefix)),
+                    None,
+                )
 
-                    try:
-                        status_map = {
-                            "[ANNULÉE]": "cancelled",
-                            "[SAUTÉE]": "skipped",
-                            "[REMPLACÉE]": "replaced",
-                        }
-                        new_status = next(
-                            (
-                                status
-                                for prefix, status in status_map.items()
-                                if name.startswith(prefix)
-                            ),
-                            "cancelled",
-                        )
-
-                        with planning_tower.modify_week(
-                            week_id,
-                            requesting_script="create-remote-note",
-                            reason=f"Write-back from NOTE creation: {new_status} session {session_id}",
-                        ) as plan:
-                            updated_sessions = []
-                            for session in plan.planned_sessions:
-                                if session.session_id == session_id:
-                                    session_dict = session.model_dump()
-                                    session_dict["status"] = new_status
-                                    session_dict["reason"] = description[:100]
-                                    updated_session = Session(**session_dict)
-                                    updated_sessions.append(updated_session)
-                                else:
-                                    updated_sessions.append(session)
-
-                            plan.planned_sessions = updated_sessions
-
-                        local_update_msg = (
-                            f" (+ local planning {week_id}/{session_id} → {new_status})"
-                        )
-                    except Exception as e:
-                        local_update_msg = f" (local planning update failed: {str(e)})"
+                if new_status is None:
+                    local_update_msg = (
+                        " (documentary note — local planning not updated; "
+                        "use [ANNULÉE]/[SAUTÉE]/[REMPLACÉE] prefix to opt in)"
+                    )
                 else:
-                    local_update_msg = " (no session_id found in name, local planning not updated)"
+                    session_id_match = re.search(SESSION_ID_PATTERN, name)
+                    if not session_id_match:
+                        local_update_msg = (
+                            " (status prefix found but no session_id — "
+                            "local planning not updated)"
+                        )
+                    else:
+                        session_id = session_id_match.group()
+                        week_id = session_id.split("-")[0]
+                        try:
+                            with planning_tower.modify_week(
+                                week_id,
+                                requesting_script="create-remote-note",
+                                reason=(
+                                    f"Write-back from NOTE creation: "
+                                    f"{new_status} session {session_id}"
+                                ),
+                            ) as plan:
+                                updated_sessions = []
+                                for session in plan.planned_sessions:
+                                    if session.session_id == session_id:
+                                        session_dict = session.model_dump()
+                                        session_dict["status"] = new_status
+                                        session_dict["reason"] = description[:100]
+                                        updated_session = Session(**session_dict)
+                                        updated_sessions.append(updated_session)
+                                    else:
+                                        updated_sessions.append(session)
+
+                                plan.planned_sessions = updated_sessions
+
+                            local_update_msg = (
+                                f" (+ local planning {week_id}/{session_id} → {new_status})"
+                            )
+                        except Exception as e:
+                            local_update_msg = f" (local planning update failed: {str(e)})"
 
                 result = {
                     "success": True,
