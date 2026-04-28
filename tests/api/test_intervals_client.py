@@ -287,3 +287,70 @@ class TestErrorHandling:
 
         with pytest.raises(requests.exceptions.HTTPError):
             client.get_athlete()
+
+
+class TestSafeDecodeHelpers:
+    """Regression tests for BT-011 — Intervals.icu API responses with raw
+    Latin-1 bytes (notably 0xE9) in user-authored fields like notes must not
+    crash the MCP tool. The _safe_text / _safe_json helpers fall back to a
+    UTF-8 decode with errors='replace' when response.text / response.json()
+    raise UnicodeDecodeError."""
+
+    def test_safe_text_passthrough_when_clean_utf8(self):
+        from magma_cycling.api.intervals_client import _safe_text
+
+        response = Mock()
+        response.text = "no problem here"
+        assert _safe_text(response) == "no problem here"
+
+    def test_safe_text_falls_back_on_unicode_decode_error(self):
+        from magma_cycling.api.intervals_client import _safe_text
+
+        response = Mock()
+        type(response).text = property(
+            lambda self: (_ for _ in ()).throw(UnicodeDecodeError("utf-8", b"", 0, 1, "stub"))
+        )
+        # Raw body containing a stray Latin-1 byte 0xE9 in the middle of a
+        # UTF-8 string — Intervals.icu real-world payload pattern.
+        response.content = b"prefix " + bytes([0xE9]) + b" suffix"
+
+        result = _safe_text(response)
+        assert result.startswith("prefix ")
+        assert result.endswith(" suffix")
+
+    def test_safe_json_passthrough_when_clean_utf8(self):
+        from magma_cycling.api.intervals_client import _safe_json
+
+        response = Mock()
+        response.json.return_value = {"id": 42, "name": "ok"}
+        assert _safe_json(response) == {"id": 42, "name": "ok"}
+
+    def test_safe_json_falls_back_on_unicode_decode_error(self):
+        from magma_cycling.api.intervals_client import _safe_json
+
+        response = Mock()
+        response.json.side_effect = UnicodeDecodeError("utf-8", b"", 0, 1, "stub")
+        # Forge a JSON body where the user-authored "name" field contains a
+        # raw Latin-1 byte 0xE9 (cp1252 'é'), invalid as UTF-8.
+        response.content = b'{"id": 42, "name": "Kin' + bytes([0xE9]) + b' midi"}'
+
+        result = _safe_json(response)
+        assert result["id"] == 42
+        assert result["name"].startswith("Kin")
+        assert result["name"].endswith(" midi")
+
+    def test_safe_helpers_used_throughout_client(self, client, mock_session):
+        """Smoke test: a get_events call where the API response would have
+        previously crashed (UnicodeDecodeError on response.json()) returns a
+        usable payload through the fallback decode path."""
+        response = Mock()
+        response.json.side_effect = UnicodeDecodeError("utf-8", b"", 0, 1, "stub")
+        response.content = (
+            b'[{"id": 106796340, "name": "Insolation ' + bytes([0xE9]) + b'", "category": "NOTE"}]'
+        )
+        mock_session.get.return_value = response
+
+        events = client.get_events(oldest="2026-04-01", newest="2026-04-30")
+        assert events[0]["id"] == 106796340
+        assert events[0]["category"] == "NOTE"
+        assert events[0]["name"].startswith("Insolation ")

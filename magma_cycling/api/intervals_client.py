@@ -7,6 +7,7 @@ This module provides a single, canonical implementation of the Intervals.icu API
 replacing multiple duplicated implementations across the codebase.
 """
 
+import json as _json
 import logging
 from datetime import datetime, timedelta
 from typing import Any
@@ -14,6 +15,37 @@ from typing import Any
 import requests
 
 logger = logging.getLogger(__name__)
+
+
+def _safe_text(response: requests.Response) -> str:
+    """Decode an HTTP response body, tolerating non-UTF-8 bytes.
+
+    Intervals.icu occasionally returns responses whose body contains a raw
+    Latin-1 byte (notably 0xE9 for 'é') in user-authored fields like notes
+    or descriptions, even though the Content-Type header advertises UTF-8.
+    Plain `response.text` then raises UnicodeDecodeError before any handler
+    sees the data, crashing the MCP tool. We fall back to a UTF-8 decode
+    with errors='replace' on the raw bytes — keeps the rest of the response
+    usable and replaces only the offending byte(s).
+    """
+    try:
+        return response.text
+    except UnicodeDecodeError:
+        return response.content.decode("utf-8", errors="replace")
+
+
+def _safe_json(response: requests.Response) -> Any:
+    """Parse an HTTP response body as JSON tolerating non-UTF-8 bytes.
+
+    See _safe_text() for context on why this is needed. Falls back to a
+    raw bytes decode + json.loads only when response.json() raises
+    UnicodeDecodeError, so callers and tests relying on the standard
+    requests behaviour are unaffected.
+    """
+    try:
+        return response.json()
+    except UnicodeDecodeError:
+        return _json.loads(response.content.decode("utf-8", errors="replace"))
 
 
 class IntervalsClient:
@@ -76,7 +108,7 @@ class IntervalsClient:
 
         response = self.session.get(url)
         response.raise_for_status()
-        return response.json()
+        return _safe_json(response)
 
     def update_athlete(self, athlete_data: dict[str, Any]) -> dict[str, Any]:
         """
@@ -103,7 +135,7 @@ class IntervalsClient:
         response = self.session.put(url, json=athlete_data)
         response.raise_for_status()
         logger.info(f"Updated athlete profile: {athlete_data}")
-        return response.json()
+        return _safe_json(response)
 
     def get_activities(
         self, oldest: str | None = None, newest: str | None = None
@@ -140,7 +172,7 @@ class IntervalsClient:
 
         response = self.session.get(url, params=params)
         response.raise_for_status()
-        return response.json()
+        return _safe_json(response)
 
     def get_activity(self, activity_id: str) -> dict[str, Any]:
         """
@@ -165,7 +197,7 @@ class IntervalsClient:
 
         response = self.session.get(url)
         response.raise_for_status()
-        return response.json()
+        return _safe_json(response)
 
     def get_activity_streams(self, activity_id: str) -> list[dict[str, Any]]:
         """
@@ -194,7 +226,7 @@ class IntervalsClient:
 
         response = self.session.get(url)
         response.raise_for_status()
-        return response.json()
+        return _safe_json(response)
 
     def get_activity_intervals(self, activity_id: str) -> list[dict[str, Any]]:
         """
@@ -220,7 +252,7 @@ class IntervalsClient:
 
         response = self.session.get(url)
         response.raise_for_status()
-        data = response.json()
+        data = _safe_json(response)
         # API returns {"id": ..., "icu_intervals": [...], "icu_groups": [...]}
         return data.get("icu_intervals", [])
 
@@ -247,7 +279,7 @@ class IntervalsClient:
 
         response = self.session.put(url, json=intervals)
         response.raise_for_status()
-        return response.json()
+        return _safe_json(response)
 
     def get_wellness(
         self, oldest: str | None = None, newest: str | None = None
@@ -289,7 +321,7 @@ class IntervalsClient:
 
         response = self.session.get(url, params=params)
         response.raise_for_status()
-        return response.json()
+        return _safe_json(response)
 
     def update_wellness(self, date: str, wellness_data: dict[str, Any]) -> dict[str, Any]:
         """Update wellness data for a specific date.
@@ -318,7 +350,7 @@ class IntervalsClient:
 
         response = self.session.put(url, json=wellness_data)
         response.raise_for_status()
-        return response.json()
+        return _safe_json(response)
 
     def get_events(
         self, oldest: str | None = None, newest: str | None = None
@@ -355,7 +387,7 @@ class IntervalsClient:
 
         response = self.session.get(url, params=params)
         response.raise_for_status()
-        return response.json()
+        return _safe_json(response)
 
     def get_planned_workout(
         self, activity_id: str, activity_date: datetime
@@ -432,7 +464,7 @@ class IntervalsClient:
             response = self.session.post(url, json=event_data)
             response.raise_for_status()
 
-            created_event = response.json()
+            created_event = _safe_json(response)
             logger.info(f"Created event: {created_event.get('id')} - {created_event.get('name')}")
             return created_event
 
@@ -440,10 +472,10 @@ class IntervalsClient:
             logger.error(f"HTTP error creating event: {e}")
             if e.response is not None:
                 try:
-                    error_detail = e.response.json()
+                    error_detail = _safe_json(e.response)
                     logger.error(f"Error detail: {error_detail}")
                 except Exception:
-                    logger.error(f"Response: {e.response.text}")
+                    logger.error(f"Response: {_safe_text(e.response)}")
             logger.error(f"Event data: {event_data}")
             return None
 
@@ -476,7 +508,7 @@ class IntervalsClient:
         except requests.exceptions.HTTPError as e:
             logger.error(f"HTTP error deleting event {event_id}: {e}")
             if e.response is not None:
-                logger.error(f"Response: {e.response.text}")
+                logger.error(f"Response: {_safe_text(e.response)}")
             return False
 
         except Exception as e:
@@ -504,7 +536,7 @@ class IntervalsClient:
             response = self.session.put(url, json=event_data)
             response.raise_for_status()
 
-            updated_event = response.json()
+            updated_event = _safe_json(response)
             logger.info(f"Updated event ID: {event_id}")
             return updated_event
 
@@ -512,10 +544,10 @@ class IntervalsClient:
             logger.error(f"HTTP error updating event {event_id}: {e}")
             if e.response is not None:
                 try:
-                    error_detail = e.response.json()
+                    error_detail = _safe_json(e.response)
                     logger.error(f"Error detail: {error_detail}")
                 except Exception:
-                    logger.error(f"Response: {e.response.text}")
+                    logger.error(f"Response: {_safe_text(e.response)}")
             return None
 
         except Exception as e:
@@ -551,7 +583,7 @@ class IntervalsClient:
         except requests.exceptions.HTTPError as e:
             logger.error(f"HTTP error posting note to {activity_id}: {e}")
             if e.response is not None:
-                logger.error(f"Response: {e.response.text}")
+                logger.error(f"Response: {_safe_text(e.response)}")
             return False
 
         except Exception as e:
