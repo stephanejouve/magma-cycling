@@ -36,6 +36,50 @@ class TestCreateHealthProvider:
         assert isinstance(provider, NullProvider)
 
 
+class TestSilentExceptionLogging:
+    """Probe failures must be logged at WARNING level so the cause of an
+    unexpected NullProvider fallback is recoverable from the MCP log,
+    instead of being swallowed by a silent `except Exception: pass`."""
+
+    def _withings_unconfigured(self):
+        cfg = Mock()
+        cfg.is_configured.return_value = False
+        return cfg
+
+    def test_withings_probe_exception_is_logged(self, caplog):
+        """A raised exception during the Withings probe must produce a
+        WARNING log entry, not a silent fallthrough."""
+        import logging
+
+        with (
+            patch(
+                "magma_cycling.config.get_withings_config",
+                side_effect=RuntimeError("withings config broken"),
+            ),
+            caplog.at_level(logging.WARNING, logger="magma_cycling.health.factory"),
+        ):
+            create_health_provider()
+        assert any("Withings provider probe failed" in r.message for r in caplog.records)
+
+    def test_intervals_probe_exception_is_logged(self, caplog):
+        """A raised exception during the Intervals probe must produce a
+        WARNING log entry, not a silent fallthrough."""
+        import logging
+
+        client = Mock()
+        client.get_wellness.side_effect = RuntimeError("api timeout")
+        with (
+            patch(
+                "magma_cycling.config.get_withings_config",
+                return_value=self._withings_unconfigured(),
+            ),
+            patch("magma_cycling.config.create_intervals_client", return_value=client),
+            caplog.at_level(logging.WARNING, logger="magma_cycling.health.factory"),
+        ):
+            create_health_provider()
+        assert any("Intervals provider probe failed" in r.message for r in caplog.records)
+
+
 class TestIntervalsHealthProviderProbeWindow:
     """The Intervals provider probe must accept any sleep entry within a 7-day
     window. A single missing day (late Garmin sync, day off, weekend without
