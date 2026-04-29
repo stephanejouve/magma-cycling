@@ -102,34 +102,15 @@ async def handle_system_info(args: dict) -> list[TextContent]:
         except Exception:
             pass
 
-        # Tool count
+        # Tool count — single source of truth = TOOL_HANDLERS (qu'on dispatche
+        # en runtime). L'ancienne implémentation re-listait 10 schemas et
+        # oubliait `terrain` (4) + `handoff` (2), retournant 54 au lieu de 60.
+        # Avec TOOL_HANDLERS on a une garantie : ce que system-info compte
+        # est ce que le serveur peut réellement exécuter.
         try:
-            from magma_cycling._mcp.schemas import admin as _s_admin
-            from magma_cycling._mcp.schemas import analysis as _s_analysis
-            from magma_cycling._mcp.schemas import athlete as _s_athlete
-            from magma_cycling._mcp.schemas import catalog as _s_catalog
-            from magma_cycling._mcp.schemas import health as _s_health
-            from magma_cycling._mcp.schemas import planning as _s_planning
-            from magma_cycling._mcp.schemas import remote as _s_remote
-            from magma_cycling._mcp.schemas import rest as _s_rest
-            from magma_cycling._mcp.schemas import sessions as _s_sessions
-            from magma_cycling._mcp.schemas import workouts as _s_workouts
+            from magma_cycling.mcp_server import TOOL_HANDLERS
 
-            tool_count = sum(
-                len(mod.get_tools())
-                for mod in (
-                    _s_planning,
-                    _s_sessions,
-                    _s_workouts,
-                    _s_remote,
-                    _s_athlete,
-                    _s_analysis,
-                    _s_admin,
-                    _s_catalog,
-                    _s_health,
-                    _s_rest,
-                )
-            )
+            tool_count = len(TOOL_HANDLERS)
         except Exception:
             tool_count = -1
 
