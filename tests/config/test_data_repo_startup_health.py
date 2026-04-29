@@ -76,6 +76,31 @@ class TestStartupHealthCheck:
             history.chmod(0o644)
 
 
+class TestSkipEnvVar:
+    """`MCP_SKIP_STARTUP_HEALTH_CHECK=1` bypasses the check entirely.
+
+    Used by the PyInstaller smoke tests on CI runners that have no
+    `~/training-logs/` repo. Production deployments must not set it.
+    """
+
+    def test_skip_env_returns_none_without_validation(self, tmp_path, monkeypatch, caplog):
+        # No TRAINING_DATA_REPO set, no repo on disk — would normally fail
+        monkeypatch.setenv("MCP_SKIP_STARTUP_HEALTH_CHECK", "1")
+        monkeypatch.delenv("TRAINING_DATA_REPO", raising=False)
+        reset_data_config()
+        with caplog.at_level(logging.WARNING, logger="magma_cycling.config.data_repo"):
+            result = startup_health_check()
+        assert result is None
+        assert any("data_repo_health_skipped" in r.message for r in caplog.records)
+
+    def test_skip_env_false_value_does_not_skip(self, tmp_path, monkeypatch, capsys):
+        monkeypatch.setenv("MCP_SKIP_STARTUP_HEALTH_CHECK", "0")
+        monkeypatch.setenv("TRAINING_DATA_REPO", str(tmp_path / "nonexistent"))
+        reset_data_config()
+        with pytest.raises(SystemExit):
+            startup_health_check()
+
+
 class TestGitHeadShort:
     def test_returns_none_for_non_git_dir(self, tmp_path):
         assert _git_head_short(tmp_path) is None
