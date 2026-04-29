@@ -50,6 +50,12 @@ jobs:
 
       - name: "Smoke test: mcp-server (timeout 5s)"
         shell: pwsh
+        env:
+          # Skip the data-repo startup health-check on the CI runner — it has
+          # no ~/training-logs/workouts-history.md, so the check would
+          # sys.exit(1) and the smoke test would falsely fail. Production
+          # deployments must NOT set this variable.
+          MCP_SKIP_STARTUP_HEALTH_CHECK: "1"
         run: |
           $proc = Start-Process -FilePath "dist\magma-cycling.exe" -ArgumentList "mcp-server" -PassThru -NoNewWindow
           Start-Sleep -Seconds 5

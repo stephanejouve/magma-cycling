@@ -183,7 +183,7 @@ def _git_head_short(path: Path) -> str | None:
     return None
 
 
-def startup_health_check() -> DataRepoConfig:
+def startup_health_check() -> DataRepoConfig | None:
     """Fail-fast startup health-check pour le serveur MCP.
 
     Validation à BOOT (vs lazy au 1er tool call) :
@@ -198,10 +198,23 @@ def startup_health_check() -> DataRepoConfig:
     En cas de succès, log INFO avec le path résolu, la taille de
     ``workouts-history.md`` et le SHA HEAD git si applicable.
 
+    The ``MCP_SKIP_STARTUP_HEALTH_CHECK=1`` env var skips the validation and
+    returns ``None`` — used by the PyInstaller smoke tests in CI where there
+    is no training-logs repo on the runner. Production deployments must NOT
+    set this variable.
+
     Returns:
         DataRepoConfig validé (peut être ré-utilisé par le caller pour éviter
-        une 2e instanciation).
+        une 2e instanciation), ou ``None`` si le check est skipped.
     """
+    if os.getenv("MCP_SKIP_STARTUP_HEALTH_CHECK", "").lower() in ("1", "true", "yes"):
+        logger.warning(
+            "data_repo_health_skipped: MCP_SKIP_STARTUP_HEALTH_CHECK=%s "
+            "(intended for PyInstaller smoke tests; do NOT set in production)",
+            os.getenv("MCP_SKIP_STARTUP_HEALTH_CHECK"),
+        )
+        return None
+
     try:
         cfg = DataRepoConfig()
         cfg.validate()
