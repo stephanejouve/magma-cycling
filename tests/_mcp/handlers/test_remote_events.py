@@ -303,6 +303,38 @@ class TestHandleUpdateRemoteEvent:
         assert "error" in data
         assert "completed" in data["error"].lower() or "COMPLETED" in data.get("message", "")
 
+    @pytest.mark.asyncio
+    async def test_workout_doc_field_rejected_with_actionable_message(self):
+        """Reject `workout_doc` early with a clear, actionable message
+        before hitting the Intervals.icu API (which rejects with an opaque
+        400 'JSON parse error'). Suggested workaround documented in the
+        response so the caller can self-recover."""
+        result = await handle_update_remote_event(
+            {
+                "event_id": 105661265,
+                "updates": {"workout_doc": "warmup\n3 ramp...\nmain\n25 46 50 90"},
+            }
+        )
+        data = json.loads(result[0].text)
+        assert data["success"] is False
+        assert data["rejected_field"] == "workout_doc"
+        assert "modify-session-details" in data["reason"]
+        assert "modify-session-details" in data["message"]
+
+    @pytest.mark.asyncio
+    @patch("magma_cycling.config.create_intervals_client")
+    async def test_workout_doc_check_runs_before_api_call(self, mock_factory):
+        """The pre-check must short-circuit BEFORE create_intervals_client is
+        invoked — no network round-trip for a request we already know will
+        fail."""
+        result = await handle_update_remote_event(
+            {"event_id": 42, "updates": {"workout_doc": "warmup\nmain\ncooldown"}}
+        )
+        data = json.loads(result[0].text)
+        assert data["success"] is False
+        assert data["rejected_field"] == "workout_doc"
+        mock_factory.assert_not_called()
+
 
 # ---------------------------------------------------------------------------
 # handle_create_remote_note

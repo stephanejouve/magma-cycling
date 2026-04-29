@@ -193,6 +193,31 @@ async def handle_update_remote_event(args: dict) -> list[TextContent]:
     event_id = args["event_id"]
     updates = args["updates"]
 
+    # Pre-check: fields known to be rejected by Intervals.icu's PUT /events
+    # endpoint (returns 400 "JSON parse error" with no useful detail). Reject
+    # early with an actionable message instead of letting the silent failure
+    # surface as "Failed to update event <id>" with no clue for the caller.
+    _UNSUPPORTED_UPDATE_FIELDS = {
+        "workout_doc": (
+            "structured workout content is not editable through update-remote-event; "
+            "use modify-session-details to change the workout, then "
+            "sync-week-to-calendar to push it to Intervals.icu"
+        ),
+    }
+    for _field, _reason in _UNSUPPORTED_UPDATE_FIELDS.items():
+        if _field in updates:
+            return mcp_response(
+                {
+                    "success": False,
+                    "event_id": event_id,
+                    "rejected_field": _field,
+                    "reason": _reason,
+                    "message": (
+                        f"❌ field '{_field}' not supported by update-remote-event — " f"{_reason}"
+                    ),
+                }
+            )
+
     try:
         with suppress_stdout_stderr():
             target_week_id = None
