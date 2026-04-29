@@ -6,6 +6,8 @@ Manages paths to the external training-logs data repository.
 import json
 import logging
 import os
+import subprocess
+import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -158,6 +160,71 @@ def reset_data_config():
     """Reset global configuration (mainly for testing)."""
     global _global_config
     _global_config = None
+
+
+def _git_head_short(path: Path) -> str | None:
+    """Best-effort lecture du SHA HEAD git du repo data — None si pas un git repo.
+
+    Utile pour log INFO au boot (traçabilité version data) et future ADR Phase 2
+    où le hash subdir writer sera dérivé du SHA. Timeout court pour pas bloquer
+    le boot si git est lent.
+    """
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(path), "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=2,
+        )
+        if result.returncode == 0:
+            return result.stdout.strip()[:12]
+    except (subprocess.SubprocessError, OSError):
+        pass
+    return None
+
+
+def startup_health_check() -> DataRepoConfig:
+    """Fail-fast startup health-check pour le serveur MCP.
+
+    Validation à BOOT (vs lazy au 1er tool call) :
+    - ``TRAINING_DATA_REPO`` env existe et pointe vers un dossier
+    - ``workouts-history.md`` présent à la racine (file à plat post-rollback ADR v5)
+    - Lecture autorisée
+
+    En cas d'échec, log FATAL puis ``sys.exit(1)`` avec message clair —
+    évite le pattern observé sur INFRA-001 où ``FileNotFoundError`` surfaçait
+    en plein tool call (perte de séance utilisateur S091-02 le 2026-04-28).
+
+    En cas de succès, log INFO avec le path résolu, la taille de
+    ``workouts-history.md`` et le SHA HEAD git si applicable.
+
+    Returns:
+        DataRepoConfig validé (peut être ré-utilisé par le caller pour éviter
+        une 2e instanciation).
+    """
+    try:
+        cfg = DataRepoConfig()
+        cfg.validate()
+        # Lecture-test : os.access (perm bit) + open (ouverture effective) pour
+        # détecter les permissions cassées au lieu d'attendre un read en runtime.
+        if not os.access(cfg.workouts_history_path, os.R_OK):
+            raise PermissionError(f"workouts-history.md not readable: {cfg.workouts_history_path}")
+        with cfg.workouts_history_path.open("rb") as fh:
+            fh.read(1)
+    except (FileNotFoundError, PermissionError, OSError) as exc:
+        msg = f"FATAL: training data repo invalid: {exc}"
+        logger.error(msg)
+        print(msg, file=sys.stderr)
+        sys.exit(1)
+
+    head_sha = _git_head_short(cfg.data_repo_path)
+    logger.info(
+        "data_repo_health_ok: path=%s workouts_history_bytes=%d head_sha=%s",
+        cfg.data_repo_path,
+        cfg.workouts_history_path.stat().st_size,
+        head_sha or "n/a",
+    )
+    return cfg
 
 
 def load_json_config(config_file: str) -> dict | None:
