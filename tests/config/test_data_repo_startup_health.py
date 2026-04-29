@@ -1,6 +1,7 @@
 """Tests for startup_health_check (INFRA-001)."""
 
 import logging
+import sys
 
 import pytest
 
@@ -54,6 +55,12 @@ class TestStartupHealthCheck:
         err = capsys.readouterr().err
         assert "FATAL" in err and "workouts-history.md" in err
 
+    @pytest.mark.skipif(
+        sys.platform == "win32",
+        reason="POSIX chmod 0o000 doesn't translate to a read-blocking ACL on "
+        "Windows; the readability check there is exercised through the "
+        "FileNotFoundError and PermissionError paths covered above.",
+    )
     def test_fails_when_workouts_history_unreadable(self, valid_repo, capsys):
         # chmod 000 → unreadable
         history = valid_repo / "workouts-history.md"
@@ -78,8 +85,18 @@ class TestGitHeadShort:
 
         subprocess.run(["git", "init", "--quiet"], cwd=tmp_path, check=True)
         subprocess.run(
-            ["git", "-c", "user.email=t@t", "-c", "user.name=T", "commit",
-             "--allow-empty", "-m", "init", "--quiet"],
+            [
+                "git",
+                "-c",
+                "user.email=t@t",
+                "-c",
+                "user.name=T",
+                "commit",
+                "--allow-empty",
+                "-m",
+                "init",
+                "--quiet",
+            ],
             cwd=tmp_path,
             check=True,
         )
