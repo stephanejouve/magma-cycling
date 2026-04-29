@@ -313,6 +313,12 @@ async def async_main():
         tool_count,
         log_file,
     )
+
+    # Fail-fast au boot si TRAINING_DATA_REPO invalide (INFRA-001) — évite
+    # qu'un FileNotFoundError surface au 1er tool call utilisateur.
+    from magma_cycling.config.data_repo import startup_health_check
+
+    startup_health_check()
     if TRANSPORT_MODE == "http":
         logger.info("server_http: host=%s port=%d", HTTP_HOST, HTTP_PORT)
 
