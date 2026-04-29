@@ -54,3 +54,23 @@ class TestHandleReloadServer:
         data = json.loads(result[0].text)
         assert "note" in data
         assert "NOT reloaded" in data["note"]
+
+
+class TestHandleSystemInfoToolCount:
+    """tool_count est aligné avec TOOL_HANDLERS (single source of truth)."""
+
+    @pytest.mark.asyncio
+    async def test_tool_count_matches_handlers(self):
+        """`tool_count` retourné == `len(TOOL_HANDLERS)` — pas de drift possible.
+
+        Régression : avant le fix, system-info re-listait 10 schemas et
+        oubliait `terrain` + `handoff`, retournant 54 alors que TOOL_HANDLERS
+        en contient 60. Ce test pin l'invariant : ce que system-info compte
+        doit être exactement ce que le serveur peut dispatcher.
+        """
+        from magma_cycling._mcp.handlers.admin import handle_system_info
+        from magma_cycling.mcp_server import TOOL_HANDLERS
+
+        result = await handle_system_info({})
+        data = json.loads(result[0].text)
+        assert data["tool_count"] == len(TOOL_HANDLERS)
