@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from magma_cycling._mcp._utils import mcp_response, suppress_stdout_stderr
 
 if TYPE_CHECKING:
     from mcp.types import TextContent
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "handle_reload_server",
@@ -87,7 +90,16 @@ async def handle_system_info(args: dict) -> list[TextContent]:
         except Exception as e:
             calendar_info = {"provider": "unavailable", "status": "error", "error": str(e)}
 
-        # AI providers (list configured ones)
+        # AI providers (list configured ones).
+        #
+        # Le bare ``except: pass`` original avalait silencieusement les
+        # erreurs de probe — Mistral est démontrablement actif en prod
+        # (`daily-sync` 27/04 a écrit `ai_provider: MistralAPIAnalyzer`,
+        # `get-coach-analysis` produit des analyses Mistral) mais
+        # ``system-info`` retournait ``ai_providers: []`` côté Stéphane.
+        # On log les exceptions pour permettre le diag au prochain run sans
+        # changer le comportement (même pattern que `health/factory.py`
+        # depuis PR #297).
         ai_info: list[str] = []
         try:
             from magma_cycling.ai_providers.factory import AIProviderFactory
@@ -97,10 +109,10 @@ async def handle_system_info(args: dict) -> list[TextContent]:
                     analyzer = AIProviderFactory.create(provider_name)
                     if analyzer.validate_config():
                         ai_info.append(provider_name)
-                except Exception:
-                    pass
-        except Exception:
-            pass
+                except Exception as e:
+                    logger.warning("ai_provider probe failed: %s: %s", provider_name, e)
+        except Exception as e:
+            logger.warning("ai_provider factory import failed: %s", e)
 
         # Tool count
         try:

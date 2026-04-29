@@ -54,3 +54,32 @@ class TestHandleReloadServer:
         data = json.loads(result[0].text)
         assert "note" in data
         assert "NOT reloaded" in data["note"]
+
+
+class TestHandleSystemInfoAIProvidersLogging:
+    """Probe failures sur ai_providers loggent un warning au lieu d'être silencés."""
+
+    @pytest.mark.asyncio
+    async def test_provider_probe_exception_is_logged(self, caplog):
+        """Si AIProviderFactory.create() ou validate_config() raise, log warning.
+
+        Régression : le bare `except: pass` rendait invisible la cause de
+        `ai_providers: []` côté preprod alors que Mistral fonctionnait à
+        l'exécution. Maintenant l'opérateur voit la cause au log.
+        """
+        import logging
+
+        from magma_cycling._mcp.handlers.admin import handle_system_info
+
+        with patch(
+            "magma_cycling.ai_providers.factory.AIProviderFactory.create",
+            side_effect=RuntimeError("simulated probe failure"),
+        ):
+            with caplog.at_level(logging.WARNING, logger="magma_cycling._mcp.handlers.admin"):
+                await handle_system_info({})
+
+        # 3 providers probés (claude_api, mistral_api, ollama) → 3 warnings
+        warnings = [r for r in caplog.records if "ai_provider probe failed" in r.message]
+        assert len(warnings) == 3
+        for w in warnings:
+            assert "simulated probe failure" in w.message
