@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from magma_cycling._mcp._utils import mcp_response, suppress_stdout_stderr
 
 if TYPE_CHECKING:
     from mcp.types import TextContent
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "handle_reload_server",
@@ -87,20 +90,29 @@ async def handle_system_info(args: dict) -> list[TextContent]:
         except Exception as e:
             calendar_info = {"provider": "unavailable", "status": "error", "error": str(e)}
 
-        # AI providers (list configured ones)
+        # AI providers (list configured ones).
+        #
+        # Bug d'origine : l'ancienne implémentation appelait
+        # ``AIProviderFactory.create(provider_name)`` avec **un seul argument**
+        # alors que la signature exige ``(provider: str, config: dict)``. Chaque
+        # itération levait ``TypeError: create() missing 1 required positional
+        # argument: 'config'`` qui était avalée par le ``except Exception: pass``
+        # silencieux — d'où ``ai_providers: []`` constant alors que Mistral est
+        # démontrablement actif en prod (``daily-sync`` 27/04 écrit
+        # ``ai_provider: MistralAPIAnalyzer``, ``get-coach-analysis`` produit
+        # des analyses Mistral).
+        #
+        # Fix : utiliser ``AIConfig.get_available_providers()`` qui retourne
+        # directement la liste des providers configurés (mêmes paths que
+        # ``daily_sync.py:150-155`` qui fonctionne en prod). Plus de probe via
+        # Factory à 1 arg manquant, plus de TypeError silenced.
         ai_info: list[str] = []
         try:
-            from magma_cycling.ai_providers.factory import AIProviderFactory
+            from magma_cycling.config import get_ai_config
 
-            for provider_name in ("claude_api", "mistral_api", "ollama"):
-                try:
-                    analyzer = AIProviderFactory.create(provider_name)
-                    if analyzer.validate_config():
-                        ai_info.append(provider_name)
-                except Exception:
-                    pass
-        except Exception:
-            pass
+            ai_info = get_ai_config().get_available_providers()
+        except Exception as e:
+            logger.warning("ai_provider discovery failed: %s", e)
 
         # Tool count
         try:

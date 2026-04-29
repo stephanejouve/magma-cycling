@@ -2,7 +2,7 @@
 
 import json
 import types
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -54,3 +54,48 @@ class TestHandleReloadServer:
         data = json.loads(result[0].text)
         assert "note" in data
         assert "NOT reloaded" in data["note"]
+
+
+class TestHandleSystemInfoAIProvidersDiscovery:
+    """ai_providers utilise AIConfig.get_available_providers (single source).
+
+    Régression du bug d'origine : ``AIProviderFactory.create(name)`` était
+    appelé avec un seul argument alors que la signature exige
+    ``(provider, config)``, levant ``TypeError`` silencieusement avalée par
+    ``except Exception: pass`` → ``ai_providers: []`` constant en prod.
+    """
+
+    @pytest.mark.asyncio
+    async def test_uses_ai_config_get_available_providers(self):
+        """Le retour ai_providers vient de get_ai_config().get_available_providers()."""
+        from magma_cycling._mcp.handlers.admin import handle_system_info
+
+        fake_config = MagicMock()
+        fake_config.get_available_providers.return_value = ["mistral_api", "claude_api"]
+
+        with patch("magma_cycling.config.get_ai_config", return_value=fake_config):
+            result = await handle_system_info({})
+
+        data = json.loads(result[0].text)
+        assert data["ai_providers"] == ["mistral_api", "claude_api"]
+        fake_config.get_available_providers.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_discovery_failure_logs_warning_and_returns_empty(self, caplog):
+        """Si get_ai_config() raise, log warning et retourne []."""
+        import logging
+
+        from magma_cycling._mcp.handlers.admin import handle_system_info
+
+        with patch(
+            "magma_cycling.config.get_ai_config",
+            side_effect=RuntimeError("simulated config failure"),
+        ):
+            with caplog.at_level(logging.WARNING, logger="magma_cycling._mcp.handlers.admin"):
+                result = await handle_system_info({})
+
+        data = json.loads(result[0].text)
+        assert data["ai_providers"] == []
+        warnings = [r for r in caplog.records if "ai_provider discovery failed" in r.message]
+        assert len(warnings) == 1
+        assert "simulated config failure" in warnings[0].message
