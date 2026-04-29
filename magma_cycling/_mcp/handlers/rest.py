@@ -208,40 +208,43 @@ def _locate_entry(
     """Locate a coach analysis entry in workouts-history.md.
 
     Returns (start, end) character offsets or None if not found.
-    """
-    anchor_pos = None
 
-    # Priority: activity_id
+    The match logic is split between two anchor types:
+    - activity_id matches an inline `ID : <activity_id>` line in the entry body,
+      which requires walking back to the enclosing `### header`.
+    - session_id matches the `### header` line directly — there is no walk-back
+      to do, the anchor IS the header start. Walking back here would land on
+      the *previous* entry's header and silently patch the wrong session
+      (regression observed on entries with adjacent session_ids).
+    """
+    header_start: int | None = None
+    anchor_pos: int | None = None
+
+    # Priority: activity_id (anchor is inline, walk back to header)
     if activity_id:
         m = re.search(rf"^ID\s*:\s*{re.escape(activity_id)}\s*$", content, re.MULTILINE)
         if m:
             anchor_pos = m.start()
+            prev = content.rfind("\n### ", 0, anchor_pos)
+            header_start = 0 if prev == -1 else prev + 1
 
-    # Fallback: session_id (word-boundary match — supports both legacy hyphen
-    # format `### S018-01-EnduranceLongue` and pipe-delimited format
-    # `### S018-01 | activity_id | date | name`).
-    if anchor_pos is None and session_id:
+    # Fallback: session_id (anchor IS the header — no walk-back).
+    # Word-boundary match supports both legacy hyphen format
+    # `### S018-01-EnduranceLongue` and pipe-delimited format
+    # `### S018-01 | activity_id | date | name`.
+    if header_start is None and session_id:
         m = re.search(rf"^###\s+{re.escape(session_id)}\b", content, re.MULTILINE)
         if m:
-            anchor_pos = m.start()
+            header_start = m.start()
+            anchor_pos = header_start
 
-    if anchor_pos is None:
+    if header_start is None or anchor_pos is None:
         return None
 
-    # Walk back to the ### header containing this anchor
-    header_start = content.rfind("\n### ", 0, anchor_pos)
-    if header_start == -1:
-        # Entry is at the very start of the file
-        header_start = 0
-    else:
-        header_start += 1  # skip the leading newline
-
-    # Find the next ### header (end of this entry)
-    next_header = content.find("\n### ", anchor_pos)
-    if next_header == -1:
-        entry_end = len(content)
-    else:
-        entry_end = next_header
+    # Find the next ### header (end of this entry). Search strictly after the
+    # current header line to avoid re-matching it.
+    next_header = content.find("\n### ", header_start + 1)
+    entry_end = len(content) if next_header == -1 else next_header
 
     return header_start, entry_end
 

@@ -544,3 +544,66 @@ class TestLocateEntryHeaderFormats:
         content = "### S084-040-END-RecupActive-V001\n" "ID : i131572602\n" "Date : 15/03/2026\n"
         result = _locate_entry(content, activity_id=None, session_id="S084-04")
         assert result is None, "word boundary must prevent S084-04 matching S084-040"
+
+    def test_locate_entry_session_id_returns_correct_entry_not_previous(self):
+        """Regression: when matching by session_id, the returned entry must
+        be the one whose header starts with that session_id — NOT the entry
+        immediately preceding it. The previous _locate_entry walked back
+        from the matched header to the previous `\\n### ` and silently
+        returned the wrong entry, causing patch-coach-analysis to apply
+        the patch on `### S017-05 ...` when asked for session_id=S018-01."""
+        from magma_cycling._mcp.handlers.rest import _locate_entry
+
+        content = (
+            "### S017-05 | i142473936 | 2026-04-24 | ActivationPreTinyRaces\n"
+            "ID : i142473936\n"
+            "Date : 24/04/2026\n"
+            "Some S017 body\n"
+            "\n"
+            "### S018-01 | i143294645 | 2026-04-27 | ReposPostTinyRaces\n"
+            "ID : i143294645\n"
+            "Date : 27/04/2026\n"
+            "Some S018-01 body\n"
+        )
+        result = _locate_entry(content, activity_id=None, session_id="S018-01")
+        assert result is not None
+        start, end = result
+        entry = content[start:end]
+        assert entry.startswith(
+            "### S018-01 | i143294645"
+        ), f"expected entry to start with S018-01 header, got: {entry[:80]!r}"
+        assert "S017-05" not in entry, (
+            f"the returned entry must NOT contain the preceding S017-05 entry: " f"{entry[:200]!r}"
+        )
+
+    def test_locate_entry_activity_id_still_walks_back_to_header(self):
+        """Walk-back is still required for activity_id matches (anchor is
+        on an inline `ID :` line in the entry body, not on the header)."""
+        from magma_cycling._mcp.handlers.rest import _locate_entry
+
+        content = (
+            "### S017-05 | i142473936 | 2026-04-24 | Header-A\n"
+            "ID : i142473936\n"
+            "Body A\n"
+            "\n"
+            "### S018-01 | i143294645 | 2026-04-27 | Header-B\n"
+            "ID : i143294645\n"
+            "Body B\n"
+        )
+        # activity_id matches an inline ID line → walk back must find the
+        # enclosing header (### S018-01), not the previous one (### S017-05).
+        result = _locate_entry(content, activity_id="i143294645", session_id=None)
+        assert result is not None
+        start, end = result
+        entry = content[start:end]
+        assert entry.startswith("### S018-01 |")
+        assert "S017-05" not in entry
+
+    def test_locate_entry_session_id_returns_none_for_unknown(self):
+        """Regression: a session_id that doesn't appear must return None,
+        not silently fall through to a previous entry's header."""
+        from magma_cycling._mcp.handlers.rest import _locate_entry
+
+        content = "### S017-05 | i142473936 | 2026-04-24 | Header\n" "ID : i142473936\n" "Body\n"
+        result = _locate_entry(content, activity_id=None, session_id="S018-02")
+        assert result is None
