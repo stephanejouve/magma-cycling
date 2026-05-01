@@ -38,7 +38,10 @@ import os
 import sys
 import webbrowser
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from pathlib import Path
 from urllib.parse import parse_qs, urlparse
+
+from outillages.oauth import redact_url_secrets
 
 from magma_cycling.config import create_withings_client, get_withings_config
 from magma_cycling.utils.cli import cli_main
@@ -287,16 +290,52 @@ def main():
         print(f"\n❌ Error generating URL: {e}")
         sys.exit(1)
 
+    # Stdout never sees the full URL (it leaks `client_id` etc.). Write the
+    # full URL to a 600-mode file under the user's cache so they can open it
+    # manually if the browser fails to auto-open. An atexit handler cleans
+    # the file up at process exit (success, sys.exit, or KeyboardInterrupt).
+    oauth_url_file = Path.home() / ".cache" / "magma-cycling" / "oauth_url.txt"
+    try:
+        oauth_url_file.parent.mkdir(parents=True, exist_ok=True)
+        oauth_url_file.write_text(auth_url, encoding="utf-8")
+        oauth_url_file.chmod(0o600)
+    except OSError as e:
+        print(f"   ⚠ Could not write {oauth_url_file}: {e} — continuing anyway")
+        oauth_url_file = None
+
+    if oauth_url_file is not None:
+        import atexit
+
+        def _cleanup_oauth_url_file(path=oauth_url_file):
+            try:
+                if path.exists():
+                    path.unlink()
+            except OSError:
+                pass
+
+        atexit.register(_cleanup_oauth_url_file)
+
     # Open browser
     print("\n4. Opening browser for authorization...")
-    print(f"   URL: {auth_url}")
+    print(f"   URL (redacted): {redact_url_secrets(auth_url)}")
+    if oauth_url_file is not None:
+        print(f"   Full URL (read-only to you, chmod 600) → {oauth_url_file}")
 
     try:
         webbrowser.open(auth_url)
         print("   ✓ Browser opened")
     except Exception as e:
         print(f"\n⚠️  Could not open browser automatically: {e}")
-        print(f"\nPlease manually visit:\n{auth_url}\n")
+        if oauth_url_file is not None:
+            print(f"\nPlease manually visit the URL stored in {oauth_url_file}.")
+            print("   You can copy it to your browser address bar with:")
+            print(f"     cat {oauth_url_file} | pbcopy   # macOS")
+            print("     # then ⌘V into your browser")
+        else:
+            print(f"\nPlease manually visit (redacted): {redact_url_secrets(auth_url)}")
+            print(
+                "   (full URL not persisted to disk — see logs of magma_cycling.api.withings.oauth)"
+            )
 
     # Start callback server
     print("\n5. Waiting for authorization...")
