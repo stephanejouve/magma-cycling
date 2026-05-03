@@ -118,6 +118,7 @@ from magma_cycling._mcp.handlers.terrain import (  # noqa: F401
 )
 from magma_cycling._mcp.handlers.workouts import (  # noqa: F401
     handle_get_workout,
+    handle_upload_workouts,
     handle_validate_workout,
 )
 
@@ -191,9 +192,10 @@ TOOL_HANDLERS = {
     "duplicate-session": handle_duplicate_session,
     "swap-sessions": handle_swap_sessions,
     "attach-workout": handle_attach_workout,
-    # Workouts (2)
+    # Workouts (3)
     "get-workout": handle_get_workout,
     "validate-workout": handle_validate_workout,
+    "upload-workouts": handle_upload_workouts,
     # Remote / Calendar (13)
     "sync-week-to-calendar": handle_sync_week_to_calendar,
     "delete-remote-event": handle_delete_remote_event,
