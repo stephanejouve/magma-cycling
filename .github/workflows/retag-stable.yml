@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
     inputs:
       source_tag:
-        description: "Version tag to promote to :stable (e.g. v3.25.5)"
+        description: "Version to promote to :stable. Both '3.25.5' and 'v3.25.5' are accepted (leading 'v' is stripped automatically)."
         required: true
         type: string
 
@@ -40,18 +40,30 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Retag ${{ inputs.source_tag }} → :stable
+      - name: Normalize source_tag (strip leading "v" if present)
+        id: norm
         run: |
           set -eu
-          src="${REGISTRY}/${IMAGE_NAME}:${{ inputs.source_tag }}"
+          # docker-publish.yml tags images via {{version}} semver pattern,
+          # which strips the leading "v". Accept both "v3.25.5" and "3.25.5"
+          # as user input — strip the leading "v" once if present.
+          raw="${{ inputs.source_tag }}"
+          stripped="${raw#v}"
+          echo "Input: ${raw} → resolved: ${stripped}"
+          echo "tag=${stripped}" >> "${GITHUB_OUTPUT}"
+
+      - name: Retag ${{ steps.norm.outputs.tag }} → :stable
+        run: |
+          set -eu
+          src="${REGISTRY}/${IMAGE_NAME}:${{ steps.norm.outputs.tag }}"
           dst="${REGISTRY}/${IMAGE_NAME}:stable"
           echo "Promoting ${src} → ${dst}"
           docker buildx imagetools create -t "${dst}" "${src}"
 
-      - name: Verify :stable now points to ${{ inputs.source_tag }}
+      - name: Verify :stable now points to ${{ steps.norm.outputs.tag }}
         run: |
           set -eu
-          src_digest=$(docker buildx imagetools inspect "${REGISTRY}/${IMAGE_NAME}:${{ inputs.source_tag }}" --format '{{.Manifest.Digest}}')
+          src_digest=$(docker buildx imagetools inspect "${REGISTRY}/${IMAGE_NAME}:${{ steps.norm.outputs.tag }}" --format '{{.Manifest.Digest}}')
           dst_digest=$(docker buildx imagetools inspect "${REGISTRY}/${IMAGE_NAME}:stable" --format '{{.Manifest.Digest}}')
           echo "source digest: ${src_digest}"
           echo "stable digest: ${dst_digest}"
@@ -59,4 +71,4 @@ jobs:
             echo "::error::Digest mismatch after retag"
             exit 1
           fi
-          echo "✓ :stable now points to ${{ inputs.source_tag }} (${dst_digest})"
+          echo "✓ :stable now points to ${{ steps.norm.outputs.tag }} (${dst_digest})"
