@@ -215,7 +215,9 @@ class ServoEvaluationMixin:
                 return True
 
         # Criterion 3: Keywords in notes/description
-        description = activity.get("description", "").lower()
+        # `or ""` gère le cas Intervals.icu renvoyant `description: null`
+        # (la clé existe mais vaut None — `.get(default)` ne couvre que l'absence).
+        description = (activity.get("description") or "").lower()
         keywords = [
             "accompagnement",
             "accompagner",
