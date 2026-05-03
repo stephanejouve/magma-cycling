@@ -71,6 +71,37 @@ def get_tools() -> list[Tool]:
             },
         ),
         Tool(
+            name="sync-recent-activities",
+            description=(
+                "Detect new completed cycling activities for the day and trigger "
+                "the post-session chain : daily-sync (Withings presync + activity "
+                "sync + AI analysis + auto-servo) + check-workout-adherence "
+                "(weekly_alert mode) + pid-daily-evaluation (7 days). On-demand "
+                "MCP equivalent of the legacy LaunchAgent session-monitor (which "
+                "polled every 20 min). Returns 'no_new_activity' if no new "
+                "activity beyond already-completed sessions, else 'chain_executed' "
+                "with results from each step."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "date": {
+                        "type": "string",
+                        "description": "Date to check (YYYY-MM-DD, default: today)",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    },
+                    "force": {
+                        "type": "boolean",
+                        "description": (
+                            "Skip new-activity detection, run the chain unconditionally "
+                            "(default: false)."
+                        ),
+                        "default": False,
+                    },
+                },
+            },
+        ),
+        Tool(
             name="monthly-analysis",
             description="Generate comprehensive monthly training analysis with statistics and AI insights",
             inputSchema={

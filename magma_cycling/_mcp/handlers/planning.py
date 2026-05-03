@@ -26,6 +26,7 @@ __all__ = [
     "handle_weekly_analysis",
     "handle_monthly_analysis",
     "handle_daily_sync",
+    "handle_sync_recent_activities",
     "handle_update_session",
     "handle_list_weeks",
     "handle_get_metrics",
@@ -1173,3 +1174,149 @@ async def handle_delete_session(args: dict) -> list[TextContent]:
     except Exception as e:
         error = {"error": f"Error deleting session: {str(e)}"}
         return mcp_response(error)
+
+
+async def handle_sync_recent_activities(args: dict) -> list[TextContent]:
+    """Detect new completed activities and trigger the post-session chain.
+
+    On-demand MCP equivalent of the legacy LaunchAgent ``session-monitor``
+    (poller every 20 min). Detects new cycling activities for the day, and
+    if found, triggers the chain : daily-sync + check-workout-adherence
+    (weekly_alert) + pid-daily-evaluation (7 days).
+
+    Detection logic (from legacy session-monitor) :
+    1. Read today's planned sessions
+    2. Count actionable (status not in completed/cancelled/skipped/rest_day)
+    3. Get cycling activities (Ride/VirtualRide) from Intervals.icu for today
+    4. New activity = activities count > completed sessions count
+    5. If new → trigger chain. Else → no_new_activity (no-op).
+
+    Use ``force=true`` to bypass detection and run the chain unconditionally.
+
+    Note : end-of-week (Sunday) is handled by the dedicated end-of-week MCP
+    handler — not chained here.
+    """
+    from datetime import datetime as _dt
+
+    from magma_cycling.config import create_intervals_client
+    from magma_cycling.daily_sync import calculate_current_week_info
+    from magma_cycling.planning.control_tower import planning_tower
+
+    date_str = args.get("date")
+    force = args.get("force", False)
+
+    today = _dt.strptime(date_str, "%Y-%m-%d").date() if date_str else _dt.now().date()
+
+    # --- Detection (skipped if force=true) ---
+    if not force:
+        with suppress_stdout_stderr():
+            week_id, _start_date = calculate_current_week_info(today)
+            try:
+                plan = planning_tower.read_week(week_id)
+            except FileNotFoundError:
+                return mcp_response(
+                    {
+                        "status": "no_planning",
+                        "date": today.isoformat(),
+                        "week_id": week_id,
+                        "message": f"No planning file for {week_id}, nothing to sync.",
+                    }
+                )
+
+            todays_sessions = [s for s in plan.planned_sessions if s.session_date == today]
+            terminal = ("completed", "cancelled", "skipped", "rest_day")
+            actionable = [s for s in todays_sessions if s.status not in terminal]
+            completed_count = sum(1 for s in todays_sessions if s.status == "completed")
+
+            if not todays_sessions:
+                return mcp_response(
+                    {
+                        "status": "no_session_today",
+                        "date": today.isoformat(),
+                        "message": "No planned session today, nothing to sync.",
+                    }
+                )
+
+            if not actionable:
+                return mcp_response(
+                    {
+                        "status": "all_terminal",
+                        "date": today.isoformat(),
+                        "message": "All sessions in terminal state, already processed.",
+                    }
+                )
+
+            try:
+                client = create_intervals_client()
+                date_iso = today.isoformat()
+                activities = client.get_activities(oldest=date_iso, newest=date_iso)
+                cycling = [
+                    a
+                    for a in activities
+                    if a.get("type") in ("Ride", "VirtualRide")
+                    and not a.get("icu_ignore_time", False)
+                ]
+            except Exception as exc:
+                return mcp_response(
+                    {
+                        "status": "error",
+                        "message": f"Error querying Intervals.icu: {exc}",
+                    }
+                )
+
+            if len(cycling) <= completed_count:
+                waiting_ids = [s.session_id for s in actionable]
+                return mcp_response(
+                    {
+                        "status": "no_new_activity",
+                        "date": today.isoformat(),
+                        "activities_count": len(cycling),
+                        "completed_count": completed_count,
+                        "waiting": waiting_ids,
+                        "message": (
+                            f"No new activity beyond already-completed sessions "
+                            f"({len(cycling)} activities, {completed_count} completed)."
+                        ),
+                    }
+                )
+
+    # --- Chain trigger ---
+    chain_results: dict[str, dict] = {}
+
+    # Step 1 : daily-sync
+    try:
+        await handle_daily_sync({"date": today.isoformat()})
+        chain_results["daily_sync"] = {"status": "ok"}
+    except Exception as exc:
+        chain_results["daily_sync"] = {"status": "error", "error": str(exc)}
+
+    # Step 2 : check-workout-adherence (weekly_alert)
+    try:
+        from magma_cycling._mcp.handlers.analysis import handle_check_workout_adherence
+
+        await handle_check_workout_adherence({"mode": "weekly_alert"})
+        chain_results["adherence"] = {"status": "ok"}
+    except Exception as exc:
+        chain_results["adherence"] = {"status": "error", "error": str(exc)}
+
+    # Step 3 : pid-daily-evaluation
+    try:
+        from magma_cycling._mcp.handlers.analysis import handle_pid_daily_evaluation
+
+        await handle_pid_daily_evaluation({"mode": "daily", "days_back": 7})
+        chain_results["pid_evaluation"] = {"status": "ok"}
+    except Exception as exc:
+        chain_results["pid_evaluation"] = {"status": "error", "error": str(exc)}
+
+    return mcp_response(
+        {
+            "status": "chain_executed",
+            "date": today.isoformat(),
+            "force": force,
+            "chain": chain_results,
+            "message": (
+                "Post-session chain executed (daily-sync + adherence + pid-evaluation). "
+                "Note: end-of-week is a separate handler if needed."
+            ),
+        }
+    )
