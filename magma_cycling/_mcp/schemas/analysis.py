@@ -7,6 +7,53 @@ def get_tools() -> list[Tool]:
     """Return analysis and backup tool schemas."""
     return [
         Tool(
+            name="pid-daily-evaluation",
+            description=(
+                "Run the PID training intelligence pipeline (legacy CLI "
+                "pid-daily-evaluation). Two modes : 'daily' (default) collects "
+                "cycle metrics + learnings + CTL/Peaks monitoring + test FTP "
+                "opportunity check ; 'cycle' recalibrates PID with a measured "
+                "FTP at end of training cycle. Updates ~/data/intelligence.json "
+                "and appends to ~/data/monitoring/pid_evaluation.jsonl."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "mode": {
+                        "type": "string",
+                        "description": "Evaluation mode (daily collects, cycle recalibrates PID)",
+                        "enum": ["daily", "cycle"],
+                        "default": "daily",
+                    },
+                    "days_back": {
+                        "type": "integer",
+                        "description": "Days to analyze in daily mode (default 7)",
+                        "minimum": 1,
+                        "maximum": 90,
+                        "default": 7,
+                    },
+                    "measured_ftp": {
+                        "type": "number",
+                        "description": ("Measured FTP from test (W). REQUIRED when mode='cycle'."),
+                        "minimum": 50,
+                        "maximum": 600,
+                    },
+                    "cycle_weeks": {
+                        "type": "integer",
+                        "description": "Cycle duration in weeks (default 6, mode='cycle')",
+                        "minimum": 1,
+                        "maximum": 52,
+                        "default": 6,
+                    },
+                    "dry_run": {
+                        "type": "boolean",
+                        "description": "Dry-run mode (no file writes)",
+                        "default": False,
+                    },
+                },
+            },
+        ),
+        Tool(
             name="validate-week-consistency",
             description="Validate week planning consistency (no conflicts, TSS coherent, sessions well-formed)",
             inputSchema={

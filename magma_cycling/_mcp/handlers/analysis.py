@@ -24,6 +24,7 @@ __all__ = [
     "handle_analyze_training_patterns",
     "handle_get_coach_analysis",
     "handle_validate_local_remote_sync",
+    "handle_pid_daily_evaluation",
 ]
 
 
@@ -1134,3 +1135,73 @@ async def handle_validate_local_remote_sync(args: dict) -> list[TextContent]:
                 "week_id": week_id,
             }
         )
+
+
+async def handle_pid_daily_evaluation(args: dict) -> list[TextContent]:
+    """Run the PID training intelligence pipeline.
+
+    Wraps the legacy CLI ``pid-daily-evaluation`` (PIDDailyEvaluator) to
+    expose its capability via MCP. Two modes :
+
+    - ``daily`` (default) : collect cycle metrics + create learnings + monitor
+      CTL/Peaks + check FTP test opportunity. Idempotent on a given day.
+    - ``cycle`` : recalibrate PID with the measured FTP at end of training
+      cycle. Requires ``measured_ftp``. One-shot per cycle.
+
+    Updates ``~/data/intelligence.json`` and appends to
+    ``~/data/monitoring/pid_evaluation.jsonl`` (skipped in dry_run).
+    """
+    mode = args.get("mode", "daily")
+    days_back = args.get("days_back", 7)
+    measured_ftp = args.get("measured_ftp")
+    cycle_weeks = args.get("cycle_weeks", 6)
+    dry_run = args.get("dry_run", False)
+
+    if mode == "cycle" and measured_ftp is None:
+        return mcp_response(
+            {
+                "status": "error",
+                "message": (
+                    "measured_ftp is required when mode='cycle' "
+                    "(measured FTP from end-of-cycle test, in W)."
+                ),
+            }
+        )
+
+    with suppress_stdout_stderr():
+        from magma_cycling.scripts.pid_daily_evaluation import PIDDailyEvaluator
+
+        evaluator = PIDDailyEvaluator(dry_run=dry_run)
+
+        if mode == "cycle":
+            result = evaluator.run_cycle_evaluation(
+                measured_ftp=measured_ftp,
+                cycle_duration_weeks=cycle_weeks,
+            )
+        else:
+            result = evaluator.run_daily_evaluation(days_back=days_back)
+
+    payload = {
+        "mode": mode,
+        "dry_run": dry_run,
+        "status": result.get("status", "UNKNOWN"),
+    }
+
+    # Surface key fields without dumping the whole result blob (which can
+    # contain heavy nested metrics). The consumer can request more specific
+    # data via dedicated tools (analyze-training-patterns, get-recommendations).
+    if "test_recommendation" in result:
+        payload["test_recommendation"] = result["test_recommendation"]
+    if "ctl_monitoring" in result:
+        payload["ctl_monitoring"] = result["ctl_monitoring"]
+    if "pid_correction" in result:
+        payload["pid_correction"] = result["pid_correction"]
+    if "metrics" in result:
+        # Métriques cycle compactes : pas tout le détail, juste le top-level
+        m = result["metrics"]
+        if isinstance(m, dict):
+            payload["metrics_summary"] = {
+                k: v for k, v in m.items() if isinstance(v, (int, float, str, bool, type(None)))
+            }
+
+    return mcp_response(payload)
