@@ -472,9 +472,20 @@ async def handle_update_session(args: dict) -> list[TextContent]:
                             f"Status is 'completed'. Refusing to modify completed sessions."
                         )
 
-                    # Set skip_reason BEFORE status (Pydantic validator)
-                    if reason and new_status in ("skipped", "cancelled", "replaced"):
-                        session.skip_reason = reason
+                    # Invariant : skip_reason n'a de sens que pour les états où la
+                    # session a été interrompue (skipped/cancelled/replaced). Pour
+                    # tout autre état (pending/completed/planned/in_progress), le
+                    # champ doit être None — sinon on a un état incohérent (ex.
+                    # transition skipped→pending laissait l'ancienne raison, polluant
+                    # les analyses compliance et l'audit trail). Clear explicit.
+                    if new_status in ("skipped", "cancelled", "replaced"):
+                        if reason:
+                            session.skip_reason = reason
+                        # else : garde l'ancien skip_reason si la nouvelle transition
+                        # reste dans le scope « interrompu » sans nouvelle raison
+                        # explicite — pas d'écrasement silencieux.
+                    else:
+                        session.skip_reason = None
 
                     session.status = new_status
                     session_found = True

@@ -175,6 +175,95 @@ class TestHandleUpdateSession:
         data = json.loads(result[0].text)
         assert data["synced"] is True
 
+    @pytest.mark.asyncio
+    async def test_skip_reason_cleared_on_transition_to_pending(self, mock_plan, mock_session):
+        """Regression B2 (2026-05-03 prod test) : skipped(reason) → pending must
+        clear skip_reason. Invariant : skip_reason n'a de sens que pour
+        skipped/cancelled/replaced — un statut pending portant skip_reason est
+        un état incohérent qui pollue compliance + audit trail.
+        """
+        from magma_cycling.mcp_server import handle_update_session
+
+        # État initial : session skipped avec une raison
+        mock_session.status = "skipped"
+        mock_session.skip_reason = "test-non-regression-prod-20260503"
+
+        tower = make_tower(mock_plan)
+        args = {
+            "week_id": "S081",
+            "session_id": "S081-03",
+            "status": "pending",
+            # Pas de reason — bascule retour pending
+        }
+        with patch(TOWER_PATCH, tower):
+            await handle_update_session(args)
+
+        assert mock_session.status == "pending"
+        assert mock_session.skip_reason is None, (
+            f"Invariant violé : pending ne doit jamais porter de skip_reason, "
+            f"got {mock_session.skip_reason!r}"
+        )
+
+    @pytest.mark.asyncio
+    async def test_skip_reason_cleared_on_transition_to_completed(self, mock_plan, mock_session):
+        """Idem pour transition vers completed : skip_reason doit être cleared."""
+        from magma_cycling.mcp_server import handle_update_session
+
+        mock_session.status = "skipped"
+        mock_session.skip_reason = "Sick"
+
+        tower = make_tower(mock_plan)
+        args = {"week_id": "S081", "session_id": "S081-03", "status": "completed"}
+        with patch(TOWER_PATCH, tower):
+            await handle_update_session(args)
+
+        assert mock_session.status == "completed"
+        assert mock_session.skip_reason is None
+
+    @pytest.mark.asyncio
+    async def test_skip_reason_preserved_on_skipped_to_skipped_without_reason(
+        self, mock_plan, mock_session
+    ):
+        """skipped(reason X) → skipped (sans reason) : préserve l'ancienne raison
+        plutôt que d'écraser silencieusement à None.
+        """
+        from magma_cycling.mcp_server import handle_update_session
+
+        mock_session.status = "skipped"
+        mock_session.skip_reason = "Original reason"
+
+        tower = make_tower(mock_plan)
+        args = {"week_id": "S081", "session_id": "S081-03", "status": "skipped"}
+        with patch(TOWER_PATCH, tower):
+            await handle_update_session(args)
+
+        assert mock_session.status == "skipped"
+        assert (
+            mock_session.skip_reason == "Original reason"
+        ), "skipped→skipped sans nouvelle reason doit préserver l'existante"
+
+    @pytest.mark.asyncio
+    async def test_skip_reason_overwritten_on_skipped_to_skipped_with_new_reason(
+        self, mock_plan, mock_session
+    ):
+        """skipped(reason A) → skipped(reason B) : nouvelle raison écrase l'ancienne."""
+        from magma_cycling.mcp_server import handle_update_session
+
+        mock_session.status = "skipped"
+        mock_session.skip_reason = "Old reason"
+
+        tower = make_tower(mock_plan)
+        args = {
+            "week_id": "S081",
+            "session_id": "S081-03",
+            "status": "skipped",
+            "reason": "New reason",
+        }
+        with patch(TOWER_PATCH, tower):
+            await handle_update_session(args)
+
+        assert mock_session.skip_reason == "New reason"
+
 
 # =======================
 # TestHandleSyncWeekToIntervals
