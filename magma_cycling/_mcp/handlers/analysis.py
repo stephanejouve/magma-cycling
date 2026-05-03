@@ -24,6 +24,8 @@ __all__ = [
     "handle_analyze_training_patterns",
     "handle_get_coach_analysis",
     "handle_validate_local_remote_sync",
+    "handle_pid_daily_evaluation",
+    "handle_check_workout_adherence",
 ]
 
 
@@ -1134,3 +1136,128 @@ async def handle_validate_local_remote_sync(args: dict) -> list[TextContent]:
                 "week_id": week_id,
             }
         )
+
+
+async def handle_pid_daily_evaluation(args: dict) -> list[TextContent]:
+    """Run the PID training intelligence pipeline.
+
+    Wraps the legacy CLI ``pid-daily-evaluation`` (PIDDailyEvaluator) to
+    expose its capability via MCP. Two modes :
+
+    - ``daily`` (default) : collect cycle metrics + create learnings + monitor
+      CTL/Peaks + check FTP test opportunity. Idempotent on a given day.
+    - ``cycle`` : recalibrate PID with the measured FTP at end of training
+      cycle. Requires ``measured_ftp``. One-shot per cycle.
+
+    Updates ``~/data/intelligence.json`` and appends to
+    ``~/data/monitoring/pid_evaluation.jsonl`` (skipped in dry_run).
+    """
+    mode = args.get("mode", "daily")
+    days_back = args.get("days_back", 7)
+    measured_ftp = args.get("measured_ftp")
+    cycle_weeks = args.get("cycle_weeks", 6)
+    dry_run = args.get("dry_run", False)
+
+    if mode == "cycle" and measured_ftp is None:
+        return mcp_response(
+            {
+                "status": "error",
+                "message": (
+                    "measured_ftp is required when mode='cycle' "
+                    "(measured FTP from end-of-cycle test, in W)."
+                ),
+            }
+        )
+
+    with suppress_stdout_stderr():
+        from magma_cycling.scripts.pid_daily_evaluation import PIDDailyEvaluator
+
+        evaluator = PIDDailyEvaluator(dry_run=dry_run)
+
+        if mode == "cycle":
+            result = evaluator.run_cycle_evaluation(
+                measured_ftp=measured_ftp,
+                cycle_duration_weeks=cycle_weeks,
+            )
+        else:
+            result = evaluator.run_daily_evaluation(days_back=days_back)
+
+    payload = {
+        "mode": mode,
+        "dry_run": dry_run,
+        "status": result.get("status", "UNKNOWN"),
+    }
+
+    # Surface key fields without dumping the whole result blob (which can
+    # contain heavy nested metrics). The consumer can request more specific
+    # data via dedicated tools (analyze-training-patterns, get-recommendations).
+    if "test_recommendation" in result:
+        payload["test_recommendation"] = result["test_recommendation"]
+    if "ctl_monitoring" in result:
+        payload["ctl_monitoring"] = result["ctl_monitoring"]
+    if "pid_correction" in result:
+        payload["pid_correction"] = result["pid_correction"]
+    if "metrics" in result:
+        # Métriques cycle compactes : pas tout le détail, juste le top-level
+        m = result["metrics"]
+        if isinstance(m, dict):
+            payload["metrics_summary"] = {
+                k: v for k, v in m.items() if isinstance(v, (int, float, str, bool, type(None)))
+            }
+
+    return mcp_response(payload)
+
+
+async def handle_check_workout_adherence(args: dict) -> list[TextContent]:
+    """Daily-batch adherence check (legacy CLI check-workout-adherence).
+
+    Wraps the legacy WorkoutAdherenceChecker (from scripts/monitoring/) to
+    expose its capability via MCP. Different from analyze-session-adherence
+    which is per-session — this one is a batch check of a day or a week.
+
+    Three modes :
+    - ``day`` (default) : check single date (defaults to today).
+    - ``week`` : check Monday→Sunday of the date's week.
+    - ``weekly_alert`` : R10 weekly adherence with alerts if <85%.
+    """
+    from datetime import datetime as _dt
+
+    from scripts.monitoring.check_workout_adherence import WorkoutAdherenceChecker
+
+    mode = args.get("mode", "day")
+    date_str = args.get("date")
+    dry_run = args.get("dry_run", False)
+
+    if date_str:
+        check_date = _dt.strptime(date_str, "%Y-%m-%d")
+    else:
+        check_date = _dt.now()
+
+    with suppress_stdout_stderr():
+        checker = WorkoutAdherenceChecker(dry_run=dry_run)
+
+        if mode == "weekly_alert":
+            result = checker.check_weekly_adherence_and_alert()
+        elif mode == "week":
+            week_start = check_date - timedelta(days=check_date.weekday())
+            result = checker.check_week(week_start)
+        else:
+            result = checker.check_date(check_date)
+
+    payload = {
+        "mode": mode,
+        "date": check_date.strftime("%Y-%m-%d"),
+        "dry_run": dry_run,
+        "status": "SUCCESS",
+    }
+
+    # Surface only scalar/dict-of-scalars from the checker result to keep
+    # response compact. Heavy nested data (full session lists) stays out.
+    if isinstance(result, dict):
+        payload["adherence"] = {
+            k: v
+            for k, v in result.items()
+            if isinstance(v, (int, float, str, bool, type(None), list))
+        }
+
+    return mcp_response(payload)
