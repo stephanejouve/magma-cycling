@@ -44,6 +44,33 @@ def get_tools() -> list[Tool]:
             },
         ),
         Tool(
+            name="weekly-analysis",
+            description=(
+                "Generate the 6 weekly report files (bilan_final, transition, "
+                "workout_history, metrics_evolution, training_learnings, "
+                "protocol_adaptations) for a given week. Wraps the legacy CLI "
+                "weekly-analysis (workflow_weekly:main). Saves markdown files in "
+                "<data_repo>/weekly-reports/<week_id>/. Idempotent — safe to "
+                "re-run, overwrites existing files."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "week_id": {
+                        "type": "string",
+                        "description": "Week ID (e.g. S091)",
+                        "pattern": "^S\\d{3}$",
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "description": "Week start date (YYYY-MM-DD, Monday)",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    },
+                },
+                "required": ["week_id", "start_date"],
+            },
+        ),
+        Tool(
             name="monthly-analysis",
             description="Generate comprehensive monthly training analysis with statistics and AI insights",
             inputSchema={

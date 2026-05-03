@@ -79,6 +79,7 @@ from magma_cycling._mcp.handlers.planning import (  # noqa: F401
     handle_monthly_analysis,
     handle_rename_session,
     handle_update_session,
+    handle_weekly_analysis,
     handle_weekly_planner,
 )
 from magma_cycling._mcp.handlers.remote import (  # noqa: F401
@@ -175,8 +176,9 @@ async def list_tools() -> list[Tool]:
 # Tool dispatch
 # ---------------------------------------------------------------------------
 TOOL_HANDLERS = {
-    # Planning (11)
+    # Planning (12)
     "weekly-planner": handle_weekly_planner,
+    "weekly-analysis": handle_weekly_analysis,
     "monthly-analysis": handle_monthly_analysis,
     "daily-sync": handle_daily_sync,
     "update-session": handle_update_session,

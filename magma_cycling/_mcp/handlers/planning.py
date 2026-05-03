@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     "handle_weekly_planner",
+    "handle_weekly_analysis",
     "handle_monthly_analysis",
     "handle_daily_sync",
     "handle_update_session",
@@ -289,6 +290,45 @@ async def handle_weekly_planner(args: dict) -> list[TextContent]:
         ]
 
     return mcp_response(result)
+
+
+async def handle_weekly_analysis(args: dict) -> list[TextContent]:
+    """Generate the 6 weekly report files (bilan_final, transition, …) for a given week.
+
+    Wraps the legacy ``run_weekly_analysis`` (CLI ``weekly-analysis``) to expose
+    its capability via MCP. Saves markdown files into
+    ``<data_repo>/weekly-reports/<week_id>/``. AI clipboard side-effect from the
+    legacy CLI is intentionally disabled (``ai_analysis=False``) — irrelevant in
+    MCP context where the consumer (CD or another tool) drives any AI step.
+    """
+    from datetime import datetime as _dt
+
+    from magma_cycling.workflows.workflow_weekly import run_weekly_analysis
+
+    week_id = args["week_id"]
+    start_date_str = args["start_date"]
+    start_date = _dt.strptime(start_date_str, "%Y-%m-%d").date()
+
+    with suppress_stdout_stderr():
+        reports = run_weekly_analysis(
+            week=week_id,
+            start_date=start_date,
+            ai_analysis=False,
+        )
+
+    return mcp_response(
+        {
+            "status": "success",
+            "week_id": week_id,
+            "start_date": start_date_str,
+            "reports_generated": sorted(reports.keys()),
+            "report_count": len(reports),
+            "message": (
+                f"Generated {len(reports)} weekly reports for {week_id} in "
+                f"weekly-reports/{week_id}/"
+            ),
+        }
+    )
 
 
 async def handle_monthly_analysis(args: dict) -> list[TextContent]:
