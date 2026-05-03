@@ -101,6 +101,7 @@ from magma_cycling._mcp.handlers.remote import (  # noqa: F401
 # Re-exports — all handlers importable from mcp_server
 # ---------------------------------------------------------------------------
 from magma_cycling._mcp.handlers.rest import (  # noqa: F401
+    handle_insert_workout_history,
     handle_patch_coach_analysis,
     handle_pre_session_check,
 )
@@ -235,9 +236,10 @@ TOOL_HANDLERS = {
     "sync-health-to-calendar": handle_sync_health_to_calendar,
     "analyze-health-trends": handle_analyze_health_trends,
     "enrich-session-health": handle_enrich_session_health,
-    # Rest / Recovery (2)
+    # Rest / Recovery (3)
     "pre-session-check": handle_pre_session_check,
     "patch-coach-analysis": handle_patch_coach_analysis,
+    "insert-workout-history": handle_insert_workout_history,
     # Terrain (4)
     "extract-terrain-circuit": handle_extract_terrain_circuit,
     "list-terrain-circuits": handle_list_terrain_circuits,

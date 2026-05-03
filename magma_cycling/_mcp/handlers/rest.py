@@ -12,7 +12,11 @@ from magma_cycling._mcp._utils import mcp_response, suppress_stdout_stderr
 if TYPE_CHECKING:
     from mcp.types import TextContent
 
-__all__ = ["handle_pre_session_check", "handle_patch_coach_analysis"]
+__all__ = [
+    "handle_insert_workout_history",
+    "handle_patch_coach_analysis",
+    "handle_pre_session_check",
+]
 
 logger = logging.getLogger(__name__)
 
@@ -247,6 +251,48 @@ def _locate_entry(
     entry_end = len(content) if next_header == -1 else next_header
 
     return header_start, entry_end
+
+
+async def handle_insert_workout_history(args: dict) -> list[TextContent]:
+    """Insert a new entry into workouts-history.md at the chronologically correct position.
+
+    Wraps the legacy ``WorkoutHistoryManager.insert_analysis`` (CLI ``insert-analysis``)
+    to expose its capability via MCP. The legacy logic handles parsing, duplicate
+    detection, and chronological insertion via ``TimelineInjector``.
+
+    Use this when CD has just generated a coach analysis for a session that does
+    NOT yet exist in ``workouts-history.md``. For correcting an entry already
+    present, use ``patch-coach-analysis`` instead.
+    """
+    analysis_text = args.get("analysis_text")
+    yes_confirm = args.get("yes_confirm", False)
+
+    if not analysis_text or not isinstance(analysis_text, str):
+        raise ValueError("analysis_text is required (non-empty markdown string)")
+
+    with suppress_stdout_stderr():
+        from magma_cycling.inserter.history import WorkoutHistoryManager
+
+        manager = WorkoutHistoryManager(yes_confirm=yes_confirm)
+        success = manager.insert_analysis(analysis_text)
+
+    if success:
+        return mcp_response(
+            {
+                "status": "success",
+                "message": "Entry inserted into workouts-history.md at chronological position.",
+            }
+        )
+    return mcp_response(
+        {
+            "status": "error",
+            "message": (
+                "Insert failed — likely a duplicate entry without yes_confirm=true, "
+                "or a parsing error on the analysis_text. Check the date format "
+                "(DD/MM/YYYY required) and ensure the entry isn't already present."
+            ),
+        }
+    )
 
 
 async def handle_patch_coach_analysis(args: dict) -> list[TextContent]:

@@ -40,6 +40,40 @@ def get_tools() -> list[Tool]:
             },
         ),
         Tool(
+            name="insert-workout-history",
+            description=(
+                "Insert a new entry into workouts-history.md at the chronologically "
+                "correct position. Wraps WorkoutHistoryManager.insert_analysis "
+                "(legacy CLI insert-analysis) — handles duplicate detection and "
+                "atomic write. For correcting an existing entry, use "
+                "patch-coach-analysis instead."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "analysis_text": {
+                        "type": "string",
+                        "description": (
+                            "Full markdown analysis block to insert. Must contain "
+                            "a date in DD/MM/YYYY format (used for chronological "
+                            "placement). Typically a complete `### SXXX-NN | type | "
+                            "date` entry with metrics + analysis."
+                        ),
+                    },
+                    "yes_confirm": {
+                        "type": "boolean",
+                        "description": (
+                            "Auto-confirm overwrite if a similar entry exists for "
+                            "the same date. Default false — will refuse with a "
+                            "clear error if duplicate detected."
+                        ),
+                        "default": False,
+                    },
+                },
+                "required": ["analysis_text"],
+            },
+        ),
+        Tool(
             name="patch-coach-analysis",
             description=(
                 "Patch a coach analysis entry in workouts-history.md without "
