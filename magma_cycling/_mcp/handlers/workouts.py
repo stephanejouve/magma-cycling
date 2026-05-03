@@ -11,6 +11,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "handle_get_workout",
+    "handle_upload_workouts",
     "handle_validate_workout",
 ]
 
@@ -155,3 +156,110 @@ async def handle_validate_workout(args: dict) -> list[TextContent]:
 
     except Exception as e:
         return mcp_response({"error": f"Validation error: {str(e)}"})
+
+
+async def handle_upload_workouts(args: dict) -> list[TextContent]:
+    """Upload structured workouts to Intervals.icu calendar.
+
+    Wraps the legacy CLI ``upload-workouts`` (``WorkoutUploader.upload_all``)
+    to expose its capability via MCP. Reads workouts from a file relative to
+    the data repo (path traversal is rejected for safety). Auto-backup before
+    real upload (skipped in dry_run).
+
+    The clipboard parsing path of the legacy CLI is intentionally not
+    exposed — irrelevant in MCP context.
+    """
+    from datetime import datetime as _dt
+    from pathlib import Path
+
+    from magma_cycling.config import get_data_config
+    from magma_cycling.upload_workouts import (
+        WorkoutUploader,
+        calculate_week_start_date,
+    )
+
+    week_id = args["week_id"]
+    workouts_file_path = args["workouts_file_path"]
+    start_date_str = args.get("start_date")
+    dry_run = args.get("dry_run", False)
+    auto_backup = args.get("auto_backup", True)
+
+    # Resolve and validate path stays within data_repo (no traversal)
+    config = get_data_config()
+    data_repo = config.data_repo_path.resolve()
+    candidate = (data_repo / workouts_file_path).resolve()
+    try:
+        candidate.relative_to(data_repo)
+    except ValueError:
+        return mcp_response(
+            {
+                "status": "error",
+                "message": (
+                    f"workouts_file_path must stay within the data repo. "
+                    f"Got '{workouts_file_path}' which resolves outside."
+                ),
+            }
+        )
+    if not candidate.is_file():
+        return mcp_response(
+            {
+                "status": "error",
+                "message": f"workouts file not found: {workouts_file_path}",
+            }
+        )
+
+    # Compute start_date (auto if absent)
+    if start_date_str:
+        start_date = _dt.strptime(start_date_str, "%Y-%m-%d")
+    else:
+        try:
+            start_date = calculate_week_start_date(week_id)
+        except (FileNotFoundError, ValueError) as exc:
+            return mcp_response(
+                {
+                    "status": "error",
+                    "message": (
+                        f"Cannot auto-compute start_date for {week_id}: {exc}. "
+                        "Provide start_date explicitly."
+                    ),
+                }
+            )
+
+    with suppress_stdout_stderr():
+        # Auto-backup before real upload (skipped in dry_run)
+        if not dry_run and auto_backup:
+            try:
+                from magma_cycling.planning.backup import auto_backup as _do_backup
+
+                _do_backup(week_id)
+            except Exception:
+                # Non-blocking — backup failure shouldn't stop upload
+                pass
+
+        uploader = WorkoutUploader(week_id, start_date)
+        workouts = uploader.parse_workouts_file(Path(candidate))
+
+    if not workouts:
+        return mcp_response(
+            {
+                "status": "error",
+                "message": "No workouts parsed from file (empty or malformed format).",
+            }
+        )
+
+    with suppress_stdout_stderr():
+        stats = uploader.upload_all(workouts, dry_run=dry_run)
+
+    return mcp_response(
+        {
+            "status": "success" if stats.get("failed", 0) == 0 else "partial_failure",
+            "week_id": week_id,
+            "dry_run": dry_run,
+            "workout_count": len(workouts),
+            "stats": stats,
+            "message": (
+                f"Uploaded {stats.get('success', 0)}/{len(workouts)} workouts "
+                f"for {week_id}" + (" (dry_run)" if dry_run else "")
+            ),
+        }
+    )
