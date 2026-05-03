@@ -68,8 +68,8 @@ class TestFallbackChain:
 
             chain = config.get_fallback_chain()
 
-            # Should have all 5 providers in priority order
-            expected = ["claude_api", "mistral_api", "openai", "ollama", "clipboard"]
+            # Should have all 5 providers in priority order (mistral first, magma-cycling strategy)
+            expected = ["mistral_api", "claude_api", "openai", "ollama", "clipboard"]
             assert chain == expected
 
     def test_fallback_skips_unconfigured_providers(self):
@@ -168,11 +168,13 @@ class TestFallbackChain:
 
     def test_custom_fallback_priority(self):
         """Test that fallback priority is respected from config."""
-        config = get_ai_config()
+        with patch.dict(os.environ, {}, clear=True):
+            reset_ai_config()
+            config = get_ai_config()
 
-        # Check that priority list is as expected
-        expected_priority = ["claude_api", "mistral_api", "openai", "ollama", "clipboard"]
-        assert config.fallback_priority == expected_priority
+            # Default priority puts mistral_api first (magma-cycling strategy)
+            expected_priority = ["mistral_api", "claude_api", "openai", "ollama", "clipboard"]
+            assert config.fallback_priority == expected_priority
 
     def test_fallback_with_all_api_providers_unavailable(self):
         """Test fallback when all API providers are unavailable."""
@@ -221,8 +223,8 @@ class TestFallbackScenarios:
             # Should have multiple fallbacks
             assert len(chain) >= 3
 
-            # If first fails, has backup
-            assert chain[0] == "claude_api"
+            # claude_api is configured (key set, even if expired) and openai is also there
+            assert "claude_api" in chain
             assert "openai" in chain
             assert "clipboard" in chain
 
@@ -276,3 +278,86 @@ class TestFallbackScenarios:
             # Clipboard always available as final fallback
             chain = config.get_fallback_chain()
             assert "clipboard" in chain
+
+
+class TestFallbackPriorityOverride:
+    """Tests for AI_FALLBACK_PRIORITY env var override."""
+
+    def setup_method(self):
+        """Reset config before each test."""
+        reset_ai_config()
+
+    def teardown_method(self):
+        """Reset config after each test."""
+        reset_ai_config()
+
+    def test_default_priority_puts_mistral_first(self):
+        """Default fallback priority should put mistral_api first (magma-cycling strategy)."""
+        with patch.dict(os.environ, {}, clear=True):
+            reset_ai_config()
+            config = get_ai_config()
+
+            assert config.fallback_priority[0] == "mistral_api"
+            assert config.fallback_priority == [
+                "mistral_api",
+                "claude_api",
+                "openai",
+                "ollama",
+                "clipboard",
+            ]
+
+    def test_env_override_replaces_default_order(self):
+        """AI_FALLBACK_PRIORITY env var overrides the default order."""
+        with patch.dict(
+            os.environ,
+            {"AI_FALLBACK_PRIORITY": "claude_api,mistral_api,clipboard"},
+            clear=True,
+        ):
+            reset_ai_config()
+            config = get_ai_config()
+
+            assert config.fallback_priority == ["claude_api", "mistral_api", "clipboard"]
+
+    def test_env_override_with_whitespace_is_trimmed(self):
+        """Whitespace around provider names in env var is stripped."""
+        with patch.dict(
+            os.environ,
+            {"AI_FALLBACK_PRIORITY": " mistral_api , clipboard "},
+            clear=True,
+        ):
+            reset_ai_config()
+            config = get_ai_config()
+
+            assert config.fallback_priority == ["mistral_api", "clipboard"]
+
+    def test_env_override_filters_unknown_providers(self):
+        """Unknown provider names in env var are silently dropped."""
+        with patch.dict(
+            os.environ,
+            {"AI_FALLBACK_PRIORITY": "mistral_api,bogus_provider,clipboard"},
+            clear=True,
+        ):
+            reset_ai_config()
+            config = get_ai_config()
+
+            assert config.fallback_priority == ["mistral_api", "clipboard"]
+
+    def test_env_override_blank_falls_back_to_default(self):
+        """Blank or empty env var falls back to default priority."""
+        with patch.dict(os.environ, {"AI_FALLBACK_PRIORITY": "   "}, clear=True):
+            reset_ai_config()
+            config = get_ai_config()
+
+            assert config.fallback_priority[0] == "mistral_api"
+
+    def test_env_override_only_unknown_falls_back_to_default(self):
+        """Env var with only unknown providers falls back to default."""
+        with patch.dict(
+            os.environ,
+            {"AI_FALLBACK_PRIORITY": "bogus1,bogus2"},
+            clear=True,
+        ):
+            reset_ai_config()
+            config = get_ai_config()
+
+            assert config.fallback_priority[0] == "mistral_api"

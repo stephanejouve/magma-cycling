@@ -22,11 +22,13 @@ class AIProvidersConfig:
         ['claude_api', 'mistral_api', 'clipboard']
     """
 
+    DEFAULT_FALLBACK_PRIORITY = ["mistral_api", "claude_api", "openai", "ollama", "clipboard"]
+
     def __init__(self):
         """Initialize AI providers configuration from environment variables."""
         self.default_provider = os.getenv("DEFAULT_AI_PROVIDER", "clipboard")
         self.enable_fallback = os.getenv("ENABLE_AI_FALLBACK", "true").lower() == "true"
-        self.fallback_priority = ["claude_api", "mistral_api", "openai", "ollama", "clipboard"]
+        self.fallback_priority = self._resolve_fallback_priority()
 
         # Mistral AI
         self.mistral_api_key = os.getenv("MISTRAL_API_KEY")
@@ -64,6 +66,20 @@ class AIProvidersConfig:
             "openai": {"openai_api_key": self.openai_api_key, "openai_model": self.openai_model},
             "ollama": {"ollama_base_url": self.ollama_base_url, "ollama_model": self.ollama_model},
         }
+
+    @classmethod
+    def _resolve_fallback_priority(cls) -> list[str]:
+        """Return fallback priority list, honoring AI_FALLBACK_PRIORITY env override.
+
+        Falls back to DEFAULT_FALLBACK_PRIORITY when the env var is unset, blank,
+        or contains no recognized provider names.
+        """
+        raw = os.getenv("AI_FALLBACK_PRIORITY", "")
+        if not raw.strip():
+            return list(cls.DEFAULT_FALLBACK_PRIORITY)
+        valid = set(cls.DEFAULT_FALLBACK_PRIORITY)
+        parsed = [p.strip() for p in raw.split(",") if p.strip() in valid]
+        return parsed or list(cls.DEFAULT_FALLBACK_PRIORITY)
 
     def is_provider_configured(self, provider: str) -> bool:
         """Check if provider has valid configuration.

@@ -222,7 +222,7 @@ class TestProviderIntegration:
             # Clipboard should be last (fallback of last resort)
             assert chain[-1] == "clipboard"
 
-            # Should maintain priority order
-            expected_order = ["claude_api", "mistral_api", "openai", "ollama", "clipboard"]
+            # Default order has mistral_api first (magma-cycling strategy)
+            expected_order = ["mistral_api", "claude_api", "openai", "ollama", "clipboard"]
             available_in_order = [p for p in expected_order if p in chain]
             assert chain == available_in_order
