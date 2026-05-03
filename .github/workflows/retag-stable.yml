@@ -1,0 +1,62 @@
+name: Retag stable
+
+# Promote an existing version tag (e.g. v3.25.5) to ":stable" on GHCR.
+#
+# Why: docker-publish.yml only emits :latest, :{version}, :{major}.{minor}.
+# The :stable tag follows a manual promotion workflow — only after the
+# corresponding image has been validated in preprod (see :stable→:latest
+# analysis ritual). This workflow performs the retag without requiring a
+# rebuild — it just rewrites the manifest pointer at the registry.
+#
+# Trigger: workflow_dispatch with `source_tag` input (e.g. "v3.25.5").
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_tag:
+        description: "Version tag to promote to :stable (e.g. v3.25.5)"
+        required: true
+        type: string
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  retag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Retag ${{ inputs.source_tag }} → :stable
+        run: |
+          set -eu
+          src="${REGISTRY}/${IMAGE_NAME}:${{ inputs.source_tag }}"
+          dst="${REGISTRY}/${IMAGE_NAME}:stable"
+          echo "Promoting ${src} → ${dst}"
+          docker buildx imagetools create -t "${dst}" "${src}"
+
+      - name: Verify :stable now points to ${{ inputs.source_tag }}
+        run: |
+          set -eu
+          src_digest=$(docker buildx imagetools inspect "${REGISTRY}/${IMAGE_NAME}:${{ inputs.source_tag }}" --format '{{.Manifest.Digest}}')
+          dst_digest=$(docker buildx imagetools inspect "${REGISTRY}/${IMAGE_NAME}:stable" --format '{{.Manifest.Digest}}')
+          echo "source digest: ${src_digest}"
+          echo "stable digest: ${dst_digest}"
+          if [ "${src_digest}" != "${dst_digest}" ]; then
+            echo "::error::Digest mismatch after retag"
+            exit 1
+          fi
+          echo "✓ :stable now points to ${{ inputs.source_tag }} (${dst_digest})"
