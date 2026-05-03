@@ -27,6 +27,7 @@ __all__ = [
     "handle_monthly_analysis",
     "handle_daily_sync",
     "handle_sync_recent_activities",
+    "handle_end_of_week",
     "handle_update_session",
     "handle_list_weeks",
     "handle_get_metrics",
@@ -1317,6 +1318,74 @@ async def handle_sync_recent_activities(args: dict) -> list[TextContent]:
             "message": (
                 "Post-session chain executed (daily-sync + adherence + pid-evaluation). "
                 "Note: end-of-week is a separate handler if needed."
+            ),
+        }
+    )
+
+
+async def handle_end_of_week(args: dict) -> list[TextContent]:
+    """End-of-week orchestrator — wraps EndOfWeekWorkflow.
+
+    Composes the 7-step Sunday workflow : weekly-analysis (6 bilan files) +
+    PID evaluation + monthly-analysis if month transition + weekly-planner
+    for next week + AI workouts generation + upload to Intervals.icu + save
+    planning JSON. Idempotent via marker .eow_done_{week_completed}.
+
+    auto_calculate=True (default) infers week_completed/week_next from
+    today's date via calculate_weekly_transition. Set false to override.
+
+    provider=mcp_direct uses the MCP host LLM (Claude Desktop) for AI
+    workouts generation. clipboard mode is interactive (legacy CLI flow,
+    not suitable for MCP).
+    """
+    from magma_cycling.workflows.end_of_week import (
+        EndOfWeekWorkflow,
+        calculate_weekly_transition,
+    )
+
+    auto_calculate = args.get("auto_calculate", True)
+    provider = args.get("provider", "mcp_direct")
+    dry_run = args.get("dry_run", False)
+    archive = args.get("archive", False)
+
+    if auto_calculate:
+        week_completed, week_next, _completed_start, _next_start = calculate_weekly_transition()
+    else:
+        week_completed = args.get("week_completed")
+        week_next = args.get("week_next")
+        if not week_completed or not week_next:
+            return mcp_response(
+                {
+                    "status": "error",
+                    "message": (
+                        "auto_calculate=false requires both week_completed "
+                        "and week_next args (e.g. S091 and S092)."
+                    ),
+                }
+            )
+
+    with suppress_stdout_stderr():
+        workflow = EndOfWeekWorkflow(
+            week_completed=week_completed,
+            week_next=week_next,
+            provider=provider,
+            dry_run=dry_run,
+            auto=True,  # MCP context = no interactive prompts
+            archive=archive,
+        )
+        success = workflow.run()
+
+    return mcp_response(
+        {
+            "status": "success" if success else "failure",
+            "week_completed": week_completed,
+            "week_next": week_next,
+            "provider": provider,
+            "dry_run": dry_run,
+            "archive": archive,
+            "message": (
+                f"End-of-week workflow {'completed' if success else 'failed'} "
+                f"for transition {week_completed} → {week_next}"
             ),
         }
     )

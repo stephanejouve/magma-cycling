@@ -44,6 +44,54 @@ def get_tools() -> list[Tool]:
             },
         ),
         Tool(
+            name="end-of-week",
+            description=(
+                "End-of-week orchestrator (legacy CLI end-of-week). Composes "
+                "the 7-step Sunday workflow : weekly-analysis (6 bilan files) + "
+                "PID evaluation + monthly-analysis if month transition + "
+                "weekly-planner for next week + AI workouts generation + upload "
+                "to Intervals.icu + save planning JSON. Idempotent via marker "
+                ".eow_done_{week_completed}. Refuses if next_week already has "
+                "active planning unless overwritten manually."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "auto_calculate": {
+                        "type": "boolean",
+                        "description": "Auto-calculate week IDs from today's date (default: true). If false, week_completed and week_next required.",
+                        "default": True,
+                    },
+                    "week_completed": {
+                        "type": "string",
+                        "description": "Completed week ID (e.g. S091). Required if auto_calculate=false.",
+                        "pattern": "^S\\d{3}$",
+                    },
+                    "week_next": {
+                        "type": "string",
+                        "description": "Next week ID to plan (e.g. S092). Required if auto_calculate=false.",
+                        "pattern": "^S\\d{3}$",
+                    },
+                    "provider": {
+                        "type": "string",
+                        "description": "AI provider for workout generation (mcp_direct = MCP host LLM = CD).",
+                        "enum": ["mcp_direct", "claude_api", "mistral_api", "clipboard"],
+                        "default": "mcp_direct",
+                    },
+                    "dry_run": {
+                        "type": "boolean",
+                        "description": "Simulation mode (no file writes, no upload).",
+                        "default": False,
+                    },
+                    "archive": {
+                        "type": "boolean",
+                        "description": "Archive + commit data repo at end (optional).",
+                        "default": False,
+                    },
+                },
+            },
+        ),
+        Tool(
             name="weekly-analysis",
             description=(
                 "Generate the 6 weekly report files (bilan_final, transition, "
