@@ -514,22 +514,33 @@ async def handle_update_session(args: dict) -> list[TextContent]:
                             f"Status is 'completed'. Refusing to modify completed sessions."
                         )
 
-                    # Invariant : skip_reason n'a de sens que pour les états où la
-                    # session a été interrompue (skipped/cancelled/replaced). Pour
-                    # tout autre état (pending/completed/planned/in_progress), le
-                    # champ doit être None — sinon on a un état incohérent (ex.
-                    # transition skipped→pending laissait l'ancienne raison, polluant
-                    # les analyses compliance et l'audit trail). Clear explicit.
+                    # Invariant : skip_reason n'a de sens que pour skipped/
+                    # cancelled/replaced. Pour pending/completed/planned/
+                    # in_progress, le champ doit être None.
+                    #
+                    # ORDRE D'AFFECTATION CRITIQUE — model_validator(mode="after")
+                    # sur Session se déclenche après chaque assignment et exige
+                    # `status in (skipped, cancelled, replaced) → skip_reason
+                    # not None`. Il faut donc inverser l'ordre selon la
+                    # direction de la transition, sinon on plante sur un état
+                    # transitoire incohérent (régression détectée par TNR
+                    # preprod 2026-05-03 sur PR #309 v1).
                     if new_status in ("skipped", "cancelled", "replaced"):
+                        # Vers état « interrompu » : set skip_reason AVANT status
+                        # (sinon validator plante car status=skipped + reason=None).
                         if reason:
                             session.skip_reason = reason
-                        # else : garde l'ancien skip_reason si la nouvelle transition
-                        # reste dans le scope « interrompu » sans nouvelle raison
-                        # explicite — pas d'écrasement silencieux.
+                        # else : garde l'ancien skip_reason si la nouvelle
+                        # transition reste dans le scope « interrompu » sans
+                        # nouvelle raison explicite — pas d'écrasement
+                        # silencieux.
+                        session.status = new_status
                     else:
+                        # Vers état « actif » (pending/completed/etc.) : status
+                        # AVANT clear skip_reason (sinon validator plante car
+                        # status=skipped + skip_reason=None).
+                        session.status = new_status
                         session.skip_reason = None
-
-                    session.status = new_status
                     session_found = True
                     break
 
