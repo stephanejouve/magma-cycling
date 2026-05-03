@@ -100,8 +100,11 @@ class TestInsertWorkoutHistoryWiring:
     def test_tool_count_includes_new_handler(self):
         from magma_cycling.mcp_server import TOOL_HANDLERS
 
-        # 61 = 60 (post-PR #302 baseline) + 1 (this PR)
-        assert len(TOOL_HANDLERS) == 61
+        # Test dynamique pour résilience aux ajouts futurs : on vérifie que
+        # le handler est bien dans le dispatcher, pas la valeur exacte de la
+        # constante (qui évolue à chaque nouveau handler ajouté).
+        assert "insert-workout-history" in TOOL_HANDLERS
+        assert len(TOOL_HANDLERS) >= 61
 
     def test_tool_schema_exposed(self):
         from magma_cycling._mcp.schemas.rest import get_tools
