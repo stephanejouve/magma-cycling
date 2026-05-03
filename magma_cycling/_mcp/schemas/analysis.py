@@ -7,6 +7,37 @@ def get_tools() -> list[Tool]:
     """Return analysis and backup tool schemas."""
     return [
         Tool(
+            name="check-workout-adherence",
+            description=(
+                "Daily-batch adherence check (legacy CLI check-workout-adherence). "
+                "Different from analyze-session-adherence which is per-session. "
+                "Three modes : 'day' (default, check single date), 'week' (Monday→Sunday "
+                "of the date's week), 'weekly_alert' (R10 alerts if weekly adherence "
+                "<85%%). Used by the legacy LaunchAgent at 22h daily."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "mode": {
+                        "type": "string",
+                        "description": "Check mode (day=single date, week=full week, weekly_alert=R10 alerts)",
+                        "enum": ["day", "week", "weekly_alert"],
+                        "default": "day",
+                    },
+                    "date": {
+                        "type": "string",
+                        "description": "Date to check (YYYY-MM-DD, default: today)",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                    },
+                    "dry_run": {
+                        "type": "boolean",
+                        "description": "Dry-run mode (no notifications)",
+                        "default": False,
+                    },
+                },
+            },
+        ),
+        Tool(
             name="pid-daily-evaluation",
             description=(
                 "Run the PID training intelligence pipeline (legacy CLI "

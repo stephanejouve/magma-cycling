@@ -25,6 +25,7 @@ __all__ = [
     "handle_get_coach_analysis",
     "handle_validate_local_remote_sync",
     "handle_pid_daily_evaluation",
+    "handle_check_workout_adherence",
 ]
 
 
@@ -1203,5 +1204,60 @@ async def handle_pid_daily_evaluation(args: dict) -> list[TextContent]:
             payload["metrics_summary"] = {
                 k: v for k, v in m.items() if isinstance(v, (int, float, str, bool, type(None)))
             }
+
+    return mcp_response(payload)
+
+
+async def handle_check_workout_adherence(args: dict) -> list[TextContent]:
+    """Daily-batch adherence check (legacy CLI check-workout-adherence).
+
+    Wraps the legacy WorkoutAdherenceChecker (from scripts/monitoring/) to
+    expose its capability via MCP. Different from analyze-session-adherence
+    which is per-session — this one is a batch check of a day or a week.
+
+    Three modes :
+    - ``day`` (default) : check single date (defaults to today).
+    - ``week`` : check Monday→Sunday of the date's week.
+    - ``weekly_alert`` : R10 weekly adherence with alerts if <85%.
+    """
+    from datetime import datetime as _dt
+
+    from scripts.monitoring.check_workout_adherence import WorkoutAdherenceChecker
+
+    mode = args.get("mode", "day")
+    date_str = args.get("date")
+    dry_run = args.get("dry_run", False)
+
+    if date_str:
+        check_date = _dt.strptime(date_str, "%Y-%m-%d")
+    else:
+        check_date = _dt.now()
+
+    with suppress_stdout_stderr():
+        checker = WorkoutAdherenceChecker(dry_run=dry_run)
+
+        if mode == "weekly_alert":
+            result = checker.check_weekly_adherence_and_alert()
+        elif mode == "week":
+            week_start = check_date - timedelta(days=check_date.weekday())
+            result = checker.check_week(week_start)
+        else:
+            result = checker.check_date(check_date)
+
+    payload = {
+        "mode": mode,
+        "date": check_date.strftime("%Y-%m-%d"),
+        "dry_run": dry_run,
+        "status": "SUCCESS",
+    }
+
+    # Surface only scalar/dict-of-scalars from the checker result to keep
+    # response compact. Heavy nested data (full session lists) stays out.
+    if isinstance(result, dict):
+        payload["adherence"] = {
+            k: v
+            for k, v in result.items()
+            if isinstance(v, (int, float, str, bool, type(None), list))
+        }
 
     return mcp_response(payload)
