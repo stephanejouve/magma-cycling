@@ -1171,7 +1171,7 @@ async def test_get_activity_details_decoupling_with_barely_long_enough_activity(
 
 @pytest.mark.asyncio
 async def test_get_activity_details_exposes_feel_rpe_and_extra_fields(mock_intervals_client):
-    """BT-012: feel, rpe, max_heartrate, trainer and other useful fields must be exposed."""
+    """BT-013: feel, rpe, max_heartrate, trainer + load/zones/perf fields must be exposed."""
     mock_intervals_client.get_activity = Mock(
         return_value={
             "id": "i123456",
@@ -1179,20 +1179,31 @@ async def test_get_activity_details_exposes_feel_rpe_and_extra_fields(mock_inter
             "start_date_local": "2026-05-04T10:00:00",
             "type": "Ride",
             "moving_time": 3600,
+            "elapsed_time": 3720,
             "distance": 30000,
             "total_elevation_gain": 500,
+            "average_speed": 8.33,
+            "max_speed": 18.5,
             "icu_training_load": 80,
             "icu_intensity": 75,
+            "trimp": 95.0,
+            "icu_efficiency_factor": 1.42,
+            "icu_variability_index": 1.05,
+            "icu_zone_times": [{"id": "Z1", "secs": 600}, {"id": "Z2", "secs": 3000}],
+            "icu_hr_zone_times": [3600, 0, 0, 0, 0, 0, 0],
             "average_watts": 180.0,
             "weighted_average_watts": 195.0,
             "max_watts": 320,
+            "p_max": 605,
             "average_heartrate": 145,
             "max_heartrate": 178,
             "average_cadence": 88,
             "feel": 2,
-            "rpe": 6,
+            "icu_rpe": 6,
+            "session_rpe": 360,
             "perceived_exertion": None,
             "trainer": False,
+            "device_name": "WAHOO_KICKR",
             "kj": 648,
             "calories": 720,
             "description": "Endurance ride outdoor",
@@ -1214,18 +1225,33 @@ async def test_get_activity_details_exposes_feel_rpe_and_extra_fields(mock_inter
         result_json = json.loads(result[0].text)
 
         assert result_json["feel"] == 2
+        # rpe exposed via icu_rpe (Intervals.icu uses prefixed name)
         assert result_json["rpe"] == 6
+        assert result_json["session_rpe"] == 360
         assert result_json["perceived_exertion"] is None
         assert result_json["max_watts"] == 320
+        assert result_json["p_max"] == 605
         assert result_json["max_heartrate"] == 178
         assert result_json["trainer"] is False
+        assert result_json["device_name"] == "WAHOO_KICKR"
         assert result_json["kj"] == 648
         assert result_json["calories"] == 720
+        assert result_json["elapsed_time"] == 3720
+        assert result_json["average_speed"] == 8.33
+        assert result_json["max_speed"] == 18.5
+        assert result_json["trimp"] == 95.0
+        assert result_json["icu_efficiency_factor"] == 1.42
+        assert result_json["icu_variability_index"] == 1.05
+        assert result_json["icu_zone_times"] == [
+            {"id": "Z1", "secs": 600},
+            {"id": "Z2", "secs": 3000},
+        ]
+        assert result_json["icu_hr_zone_times"] == [3600, 0, 0, 0, 0, 0, 0]
 
 
 @pytest.mark.asyncio
 async def test_get_activity_details_handles_missing_extra_fields(mock_intervals_client):
-    """BT-012: handler must not crash if feel/rpe/etc are absent in the activity payload."""
+    """BT-013: handler must not crash if feel/rpe/etc are absent in the activity payload."""
     mock_intervals_client.get_activity = Mock(
         return_value={
             "id": "i123456",
@@ -1254,12 +1280,60 @@ async def test_get_activity_details_handles_missing_extra_fields(mock_intervals_
 
         assert result_json["feel"] is None
         assert result_json["rpe"] is None
+        assert result_json["session_rpe"] is None
         assert result_json["perceived_exertion"] is None
         assert result_json["max_watts"] is None
+        assert result_json["p_max"] is None
         assert result_json["max_heartrate"] is None
         assert result_json["trainer"] is None
+        assert result_json["device_name"] is None
         assert result_json["kj"] is None
         assert result_json["calories"] is None
+        assert result_json["elapsed_time"] is None
+        assert result_json["average_speed"] is None
+        assert result_json["max_speed"] is None
+        assert result_json["trimp"] is None
+        assert result_json["icu_efficiency_factor"] is None
+        assert result_json["icu_variability_index"] is None
+        assert result_json["icu_zone_times"] is None
+        assert result_json["icu_hr_zone_times"] is None
+
+
+@pytest.mark.asyncio
+async def test_get_activity_details_rpe_reads_from_icu_rpe_not_rpe(mock_intervals_client):
+    """BT-013 v2 regression: the rpe field MUST be sourced from `icu_rpe`.
+
+    Intervals.icu uses prefixed names. A plain `rpe` key in the activity
+    payload does not exist — only `icu_rpe`. PR #320 v1 mistakenly mapped
+    `activity.get("rpe")` which always returned null even when the user
+    had saved a real RPE in Intervals.icu.
+    """
+    mock_intervals_client.get_activity = Mock(
+        return_value={
+            "id": "i123456",
+            "name": "Activity with saved RPE",
+            "type": "Ride",
+            "moving_time": 5500,
+            "icu_rpe": 5,  # User-entered RPE on the Intervals.icu side
+            "rpe": 99,  # Bait: this key should NOT exist on a real payload
+        }
+    )
+    mock_intervals_client.get_activity_streams = Mock(return_value=[])
+
+    with patch(
+        "magma_cycling.config.create_intervals_client",
+        return_value=mock_intervals_client,
+    ):
+        from magma_cycling.mcp_server import handle_get_activity_details
+
+        result = await handle_get_activity_details(
+            {"activity_id": "i123456", "include_streams": False}
+        )
+
+        result_json = json.loads(result[0].text)
+
+        # The handler must read from icu_rpe (5), not from rpe (99 bait)
+        assert result_json["rpe"] == 5
 
 
 # ---------------------------------------------------------------------------
