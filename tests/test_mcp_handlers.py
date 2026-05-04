@@ -1169,6 +1169,99 @@ async def test_get_activity_details_decoupling_with_barely_long_enough_activity(
         assert result_json["cardiovascular_decoupling"] is not None
 
 
+@pytest.mark.asyncio
+async def test_get_activity_details_exposes_feel_rpe_and_extra_fields(mock_intervals_client):
+    """BT-012: feel, rpe, max_heartrate, trainer and other useful fields must be exposed."""
+    mock_intervals_client.get_activity = Mock(
+        return_value={
+            "id": "i123456",
+            "name": "Test Activity",
+            "start_date_local": "2026-05-04T10:00:00",
+            "type": "Ride",
+            "moving_time": 3600,
+            "distance": 30000,
+            "total_elevation_gain": 500,
+            "icu_training_load": 80,
+            "icu_intensity": 75,
+            "average_watts": 180.0,
+            "weighted_average_watts": 195.0,
+            "max_watts": 320,
+            "average_heartrate": 145,
+            "max_heartrate": 178,
+            "average_cadence": 88,
+            "feel": 2,
+            "rpe": 6,
+            "perceived_exertion": None,
+            "trainer": False,
+            "kj": 648,
+            "calories": 720,
+            "description": "Endurance ride outdoor",
+            "paired_event_id": 123,
+        }
+    )
+    mock_intervals_client.get_activity_streams = Mock(return_value=[])
+
+    with patch(
+        "magma_cycling.config.create_intervals_client",
+        return_value=mock_intervals_client,
+    ):
+        from magma_cycling.mcp_server import handle_get_activity_details
+
+        result = await handle_get_activity_details(
+            {"activity_id": "i123456", "include_streams": False}
+        )
+
+        result_json = json.loads(result[0].text)
+
+        assert result_json["feel"] == 2
+        assert result_json["rpe"] == 6
+        assert result_json["perceived_exertion"] is None
+        assert result_json["max_watts"] == 320
+        assert result_json["max_heartrate"] == 178
+        assert result_json["trainer"] is False
+        assert result_json["kj"] == 648
+        assert result_json["calories"] == 720
+
+
+@pytest.mark.asyncio
+async def test_get_activity_details_handles_missing_extra_fields(mock_intervals_client):
+    """BT-012: handler must not crash if feel/rpe/etc are absent in the activity payload."""
+    mock_intervals_client.get_activity = Mock(
+        return_value={
+            "id": "i123456",
+            "name": "Minimal Activity",
+            "type": "Ride",
+            "moving_time": 1800,
+            "distance": 10000,
+            "average_watts": 150.0,
+            "weighted_average_watts": 160.0,
+            "average_heartrate": 130,
+        }
+    )
+    mock_intervals_client.get_activity_streams = Mock(return_value=[])
+
+    with patch(
+        "magma_cycling.config.create_intervals_client",
+        return_value=mock_intervals_client,
+    ):
+        from magma_cycling.mcp_server import handle_get_activity_details
+
+        result = await handle_get_activity_details(
+            {"activity_id": "i123456", "include_streams": False}
+        )
+
+        result_json = json.loads(result[0].text)
+
+        assert result_json["feel"] is None
+        assert result_json["rpe"] is None
+        assert result_json["perceived_exertion"] is None
+        assert result_json["max_watts"] is None
+        assert result_json["max_heartrate"] is None
+        assert result_json["trainer"] is None
+        assert result_json["kj"] is None
+        assert result_json["calories"] is None
+
+
 # ---------------------------------------------------------------------------
 # Tests: get-activity-streams
 # ---------------------------------------------------------------------------
