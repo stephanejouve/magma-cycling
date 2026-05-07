@@ -35,6 +35,9 @@ jobs:
           # Copier le binaire
           cp packaging/MagmaCycling/.build/release/MagmaCycling "$APP/Contents/MacOS/"
 
+          # Copier l'icone (referencee par CFBundleIconFile=AppIcon dans Info.plist)
+          cp packaging/icons/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+
           # Info.plist
           cat > "$APP/Contents/Info.plist" << 'PLIST'
           <?xml version="1.0" encoding="UTF-8"?>
@@ -74,6 +77,11 @@ jobs:
           VERSION="${VERSION#v}"
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $VERSION" MagmaCycling.app/Contents/Info.plist
           /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" MagmaCycling.app/Contents/Info.plist
+
+      - name: Re-codesign ad-hoc (required after bundle modifications)
+        run: |
+          codesign --force --deep --sign - MagmaCycling.app
+          codesign --verify --deep --strict MagmaCycling.app
 
       - name: Smoke test
         run: |

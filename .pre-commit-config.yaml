@@ -98,7 +98,11 @@ repos:
       - id: check-json
       - id: check-added-large-files
         args: ['--maxkb=1000']
-        exclude: project-docs/sessions/
+        exclude: |
+          (?x)(
+            ^project-docs/sessions/|
+            ^packaging/icons/
+          )
       - id: detect-private-key
       - id: check-case-conflict
       - id: mixed-line-ending
