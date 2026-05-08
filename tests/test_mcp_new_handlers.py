@@ -1347,6 +1347,32 @@ class TestHandleHealthAuthorize:
         assert "instructions" in data
 
     @pytest.mark.asyncio
+    async def test_no_code_passes_csrf_state_to_client(self):
+        """Withings exige le param `state` (anti-CSRF) — handler doit le générer.
+
+        Sans `state`, Withings répond `invalid_request — The state parameter is
+        required` au callback. Régression observée 2026-05-08 lors d'un
+        re-OAuth bundle local.
+        """
+        from magma_cycling.mcp_server import handle_health_authorize
+
+        mock_client = Mock()
+        mock_client.get_authorization_url.return_value = "https://account.withings.com/...&state=x"
+
+        with patch("magma_cycling.config.create_withings_client", return_value=mock_client):
+            await handle_health_authorize({})
+            await handle_health_authorize({})
+
+        assert mock_client.get_authorization_url.call_count == 2
+        states = [
+            call.kwargs.get("state") for call in mock_client.get_authorization_url.call_args_list
+        ]
+        assert all(states), "state must be passed to get_authorization_url"
+        assert states[0] != states[1], "state must be a fresh random nonce per call"
+        for s in states:
+            assert isinstance(s, str) and len(s) >= 16, "state must be a non-trivial string"
+
+    @pytest.mark.asyncio
     async def test_with_code_exchanges_successfully(self):
         from magma_cycling.mcp_server import handle_health_authorize
 
