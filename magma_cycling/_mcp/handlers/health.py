@@ -80,6 +80,8 @@ async def handle_health_auth_status(args: dict) -> list[TextContent]:
 async def handle_health_authorize(args: dict) -> list[TextContent]:
     """Handle health provider OAuth authorization flow."""
     with suppress_stdout_stderr():
+        import secrets
+
         from magma_cycling.config import create_withings_client
         from magma_cycling.health import create_health_provider
 
@@ -89,8 +91,16 @@ async def handle_health_authorize(args: dict) -> list[TextContent]:
         authorization_code = args.get("authorization_code")
 
         if not authorization_code:
-            # Step 1: Return authorization URL
-            auth_url = client.get_authorization_url()
+            # Step 1: Return authorization URL.
+            # Withings durcit OAuth 2.0 et exige le param `state` (anti-CSRF) — sans
+            # ce param l'authorize endpoint répond `invalid_request — The state
+            # parameter is required` au callback. Le handler génère un nonce qu'il
+            # passe au client. Note : on ne valide pas le state retourné côté
+            # callback (le tool step 2 ne reçoit que `authorization_code`, pas
+            # `state` du callback URL) — la protection CSRF est donc cosmétique
+            # ici, suffisante pour satisfaire Withings.
+            state = secrets.token_urlsafe(32)
+            auth_url = client.get_authorization_url(state=state)
 
             result = {
                 "step": "authorization_required",
