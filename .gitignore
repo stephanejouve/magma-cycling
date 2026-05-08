@@ -145,6 +145,10 @@ docs/_build/
 project-docs/sessions/*.jsonl
 project-docs/sessions/*.jsonl.gz
 project-docs/sessions/*.jsonl.original
+# Auto-summaries Claude Code — désormais externalisés dans ~/Documents/Claude/sessions/
+# (cf. politique 2026-05-08 — voir memory project_session_summarizer_redaction_followup.md)
+project-docs/sessions/SESSION_*.md
+project-docs/sessions/SESSION_*.md.bak
 
 # Internal briefs and working notes (not for public repo)
 # These may contain personal paths, beta-tester identities, incident details, etc.
