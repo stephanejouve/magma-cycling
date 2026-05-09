@@ -57,11 +57,21 @@ jobs:
       # (évite la fenêtre race entre `echo > path` et `chmod 600`).
       - name: Write outillages deploy key for build
         id: deploy_key
+        env:
+          # Pattern aligné sur magma-cycling-tools/.github/workflows/lint-and-test.yml
+          # qui passe vert : exposer le secret via env: + écrire avec
+          # `printf '%s\n'` qui garantit exactement un trailing newline (vs
+          # `echo` qui peut interpréter backslashes selon le shell, et la
+          # forme inline `${{ secrets.X }}` interpolée par GitHub Actions
+          # peut introduire des CR/LF mal formés). Diff cosmétique vs
+          # fonctionnel : sans ce pattern, `Load key: error in libcrypto`
+          # (vu sur run 25609550440 du tag v3.34.0).
+          OUTILLAGES_DEPLOY_KEY: ${{ secrets.OUTILLAGES_DEPLOY_KEY }}
         run: |
           KEY_DIR="$(mktemp -d)"
           KEY_PATH="$KEY_DIR/outillages-deploy-key"
           umask 077
-          echo "${{ secrets.OUTILLAGES_DEPLOY_KEY }}" > "$KEY_PATH"
+          printf '%s\n' "$OUTILLAGES_DEPLOY_KEY" | tr -d '\r' > "$KEY_PATH"
           echo "key_path=$KEY_PATH" >> "$GITHUB_OUTPUT"
           echo "key_dir=$KEY_DIR" >> "$GITHUB_OUTPUT"
 
