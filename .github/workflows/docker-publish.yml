@@ -44,6 +44,27 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=raw,value=latest,enable={{is_default_branch}}
 
+      # Deploy key SSH read-only pour cloner outillages (repo privé), dep
+      # transitive de magma-cycling-tools v0.2.0 — cf. Dockerfile commentaire
+      # "RUN --mount=type=secret,id=outillages_deploy_key". Le secret
+      # OUTILLAGES_DEPLOY_KEY est provisionné côté repo Settings → Secrets.
+      # ADR v5 prérequis Étape 1 + msg admin id=2203 + PR magma-cycling-tools #1.
+      #
+      # Garde-fou sécu (admin advice msg id=2216) : mktemp -d crée un dir
+      # 700 (lecture inaccessible aux autres users sur le runner ; même si
+      # GHA runner est éphémère mono-user, principe de défense en profondeur)
+      # + umask 077 garantit le fichier key en mode 600 dès sa création
+      # (évite la fenêtre race entre `echo > path` et `chmod 600`).
+      - name: Write outillages deploy key for build
+        id: deploy_key
+        run: |
+          KEY_DIR="$(mktemp -d)"
+          KEY_PATH="$KEY_DIR/outillages-deploy-key"
+          umask 077
+          echo "${{ secrets.OUTILLAGES_DEPLOY_KEY }}" > "$KEY_PATH"
+          echo "key_path=$KEY_PATH" >> "$GITHUB_OUTPUT"
+          echo "key_dir=$KEY_DIR" >> "$GITHUB_OUTPUT"
+
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
@@ -55,3 +76,27 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          secrets: |
+            outillages_deploy_key=${{ steps.deploy_key.outputs.key_path }}
+
+      # NB sécu (admin advice msg id=2216 point 2) : la privkey ne doit
+      # jamais apparaître dans une layer de l'image. Le pattern Dockerfile
+      # `RUN --mount=type=secret` garantit que le secret reste tmpfs et
+      # n'est jamais layered (BuildKit gère ça). Vérification ad-hoc
+      # impractical en CI multi-arch (build-push-action ne load pas
+      # localement après push). Pour audit manuel post-déploiement :
+      #   docker pull <image>
+      #   docker history --no-trunc <image> | grep -i "PRIVATE KEY"
+      #   docker run --rm <image> sh -c 'find / -name "id_*" -o -name "*.priv" 2>/dev/null'
+      # Doit retourner vide.
+
+      # Cleanup defensive — secret tmpfs est déjà nettoyé par GHA runner à
+      # destruction du job, mais shred explicite limite la fenêtre où une
+      # étape suivante pourrait y accéder par erreur.
+      - name: Cleanup outillages deploy key
+        if: always()
+        run: |
+          if [ -n "${{ steps.deploy_key.outputs.key_path }}" ]; then
+            shred -u "${{ steps.deploy_key.outputs.key_path }}" 2>/dev/null || true
+            rm -rf "${{ steps.deploy_key.outputs.key_dir }}" 2>/dev/null || true
+          fi
