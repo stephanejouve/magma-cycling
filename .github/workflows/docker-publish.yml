@@ -46,32 +46,31 @@ jobs:
 
       # Deploy key SSH read-only pour cloner outillages (repo privé), dep
       # transitive de magma-cycling-tools v0.2.0 — cf. Dockerfile commentaire
-      # "RUN --mount=type=secret,id=outillages_deploy_key". Le secret
-      # OUTILLAGES_DEPLOY_KEY est provisionné côté repo Settings → Secrets.
-      # ADR v5 prérequis Étape 1 + msg admin id=2203 + PR magma-cycling-tools #1.
+      # "RUN --mount=type=secret,id=outillages_deploy_key".
       #
-      # Garde-fou sécu (admin advice msg id=2216) : mktemp -d crée un dir
-      # 700 (lecture inaccessible aux autres users sur le runner ; même si
-      # GHA runner est éphémère mono-user, principe de défense en profondeur)
-      # + umask 077 garantit le fichier key en mode 600 dès sa création
-      # (évite la fenêtre race entre `echo > path` et `chmod 600`).
+      # Pattern base64 (workaround multilignes GHA secret) : après les
+      # 2 fails consécutifs des runs v3.34.0 + v3.34.1 avec
+      # `Load key "/run/secrets/key": error in libcrypto`, le constat est
+      # que GHA expose mal une privkey OpenSSH multilignes via
+      # `${{ secrets.X }}` (un quelconque étage de la chaîne storage→runtime
+      # introduit du mangling). Workaround robuste : Admin re-poste la
+      # privkey en base64 single-line (zéro newline → zéro mangling
+      # possible) sous un nouveau secret `OUTILLAGES_DEPLOY_KEY_B64`, et
+      # le workflow décode au moment d'écrire le fichier.
+      # Cf. msg admin id≈2243 (déploiement nocturne 2026-05-09).
+      #
+      # Garde-fou sécu : mktemp -d 700 (défense en profondeur sur runner
+      # éphémère) + install -m 600 garantit fichier en mode safe avant écriture
+      # (évite race condition vs chmod après).
       - name: Write outillages deploy key for build
         id: deploy_key
         env:
-          # Pattern aligné sur magma-cycling-tools/.github/workflows/lint-and-test.yml
-          # qui passe vert : exposer le secret via env: + écrire avec
-          # `printf '%s\n'` qui garantit exactement un trailing newline (vs
-          # `echo` qui peut interpréter backslashes selon le shell, et la
-          # forme inline `${{ secrets.X }}` interpolée par GitHub Actions
-          # peut introduire des CR/LF mal formés). Diff cosmétique vs
-          # fonctionnel : sans ce pattern, `Load key: error in libcrypto`
-          # (vu sur run 25609550440 du tag v3.34.0).
-          OUTILLAGES_DEPLOY_KEY: ${{ secrets.OUTILLAGES_DEPLOY_KEY }}
+          OUTILLAGES_DEPLOY_KEY_B64: ${{ secrets.OUTILLAGES_DEPLOY_KEY_B64 }}
         run: |
           KEY_DIR="$(mktemp -d)"
           KEY_PATH="$KEY_DIR/outillages-deploy-key"
-          umask 077
-          printf '%s\n' "$OUTILLAGES_DEPLOY_KEY" | tr -d '\r' > "$KEY_PATH"
+          install -m 600 /dev/null "$KEY_PATH"
+          printf '%s' "$OUTILLAGES_DEPLOY_KEY_B64" | base64 -d > "$KEY_PATH"
           echo "key_path=$KEY_PATH" >> "$GITHUB_OUTPUT"
           echo "key_dir=$KEY_DIR" >> "$GITHUB_OUTPUT"
 
