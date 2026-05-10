@@ -85,7 +85,20 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          secrets: |
+          # `secret-files:` (pas `secrets:`) = passer le **contenu** d'un
+          # fichier comme valeur du secret BuildKit. Avec `secrets:` la
+          # syntaxe `key=value` traite la valeur comme **literal string** —
+          # donc le `/tmp/tmp.XXX/outillages-deploy-key` arrivait dans
+          # `/run/secrets/key` côté Dockerfile mount comme une string brute
+          # ("/tmp/tmp.X3kF9Y/outillages-deploy-key"), pas comme la privkey
+          # OpenSSH. ssh -i tentait de parser la string-path → `Load key:
+          # error in libcrypto`. C'est ce qui a fait fail 3 builds
+          # consécutifs (v3.34.0, v3.34.1, workflow_dispatch 25610786404),
+          # même après le workaround base64. Cf. docker/build-push-action@v6
+          # action.yml :
+          #   secrets:      "List of secrets to expose ... key=string"
+          #   secret-files: "List of secret files to expose ... key=filename"
+          secret-files: |
             outillages_deploy_key=${{ steps.deploy_key.outputs.key_path }}
 
       # NB sécu (admin advice msg id=2216 point 2) : la privkey ne doit
