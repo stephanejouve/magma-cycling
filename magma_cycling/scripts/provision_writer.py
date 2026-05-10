@@ -27,7 +27,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import logging
-import os
 import socket
 import subprocess
 import sys
@@ -75,9 +74,7 @@ def _load_or_init_operators(yaml_path: Path) -> dict:
         with yaml_path.open(encoding="utf-8") as fh:
             data = yaml.safe_load(fh) or {}
         if not isinstance(data, dict):
-            raise RuntimeError(
-                f"{yaml_path} ne contient pas un mapping YAML valide"
-            )
+            raise RuntimeError(f"{yaml_path} ne contient pas un mapping YAML valide")
         data.setdefault("shared_root_files", list(DEFAULT_SHARED_ROOT_FILES))
         data.setdefault("writers", {})
         return data
@@ -147,10 +144,7 @@ def provision_writer(
     for existing_hash, meta in (operators.get("writers") or {}).items():
         if not isinstance(meta, dict):
             continue
-        if (
-            meta.get("alias") == alias
-            and meta.get("decommissioned_at") in (None, "", "null")
-        ):
+        if meta.get("alias") == alias and meta.get("decommissioned_at") in (None, "", "null"):
             raise RuntimeError(
                 f"Writer alias {alias!r} already provisioned and active "
                 f"(hash={existing_hash}). Decommission it first or pick a different alias."

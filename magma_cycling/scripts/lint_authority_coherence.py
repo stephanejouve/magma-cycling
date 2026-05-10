@@ -1,5 +1,6 @@
-"""Lint authority coherence between ``.operators.yaml`` and the actual
-training-logs repo state (ADR v5 Phase 2).
+"""Lint authority coherence between ``.operators.yaml`` and training-logs repo state.
+
+ADR v5 Phase 2.
 
 Vérifications :
 
@@ -221,6 +222,7 @@ def _self_test() -> int:
 
 
 def main() -> int:
+    """Entry point for the ``lint-authority-coherence`` CLI."""
     parser = argparse.ArgumentParser(
         prog="lint-authority-coherence",
         description="Lint .operators.yaml ↔ training-logs repo state coherence (ADR v5 Phase 2).",
@@ -268,9 +270,7 @@ def main() -> int:
         )
         return 0
 
-    formatter = (
-        Violation.format_gha if args.format == "gha" else Violation.format_plain
-    )
+    formatter = Violation.format_gha if args.format == "gha" else Violation.format_plain
     for v in violations:
         print(formatter(v))
     print(
