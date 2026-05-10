@@ -40,3 +40,7 @@ jobs:
 
     - name: Check safe I/O conformity (encoding=utf-8 enforcement)
       run: python scripts/lint/check_safe_io.py magma_cycling/
+
+    - name: Lint authority-coherence (ADR v5 Phase 2, WARN-only)
+      run: poetry run lint-authority-coherence --self-test
+      continue-on-error: true
