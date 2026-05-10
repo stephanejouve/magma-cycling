@@ -19,6 +19,3 @@
 # data-repo-sync : apres daily-sync (22h30) et apres end-of-week (20h30 dimanche)
 30 22 * * * data-repo-sync
 30 20 * * 0 data-repo-sync
-
-# project-clean : quotidien 03h00
-0 3 * * * project-clean
