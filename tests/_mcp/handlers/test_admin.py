@@ -119,3 +119,48 @@ class TestHandleSystemInfoAIProvidersDiscovery:
         warnings = [r for r in caplog.records if "ai_provider discovery failed" in r.message]
         assert len(warnings) == 1
         assert "simulated config failure" in warnings[0].message
+
+
+class TestHandleSystemInfoExtendedFields:
+    """Tests for the version + data_repo fields exposed for TNR post-deploy."""
+
+    @pytest.mark.asyncio
+    async def test_response_contains_version(self):
+        """The response exposes ``version`` from ``magma_cycling.__version__``."""
+        from magma_cycling import __version__
+        from magma_cycling._mcp.handlers.admin import handle_system_info
+
+        result = await handle_system_info({})
+        data = json.loads(result[0].text)
+        assert data["version"] == __version__
+
+    @pytest.mark.asyncio
+    async def test_response_contains_data_repo_fields(self):
+        """The response exposes ``data_repo_path`` and ``data_repo_health_ok``."""
+        from magma_cycling._mcp.handlers.admin import handle_system_info
+
+        result = await handle_system_info({})
+        data = json.loads(result[0].text)
+        assert "data_repo_path" in data
+        assert "data_repo_health_ok" in data
+        assert isinstance(data["data_repo_health_ok"], bool)
+
+    @pytest.mark.asyncio
+    async def test_data_repo_failure_is_logged_and_fields_safe(self, caplog):
+        """If get_data_config raises, fields fallback to None / False with log warning."""
+        import logging
+
+        from magma_cycling._mcp.handlers.admin import handle_system_info
+
+        with patch(
+            "magma_cycling.config.get_data_config",
+            side_effect=RuntimeError("simulated data_repo failure"),
+        ):
+            with caplog.at_level(logging.WARNING, logger="magma_cycling._mcp.handlers.admin"):
+                result = await handle_system_info({})
+
+        data = json.loads(result[0].text)
+        assert data["data_repo_path"] is None
+        assert data["data_repo_health_ok"] is False
+        warnings = [r for r in caplog.records if "data_repo discovery failed" in r.message]
+        assert len(warnings) == 1
