@@ -80,6 +80,8 @@ daily-sync = "magma_cycling.daily_sync:main"
 insert-analysis = "magma_cycling.insert_analysis:main"
 manage-state = "magma_cycling.manage_workflow_state:main"
 backfill-history = "magma_cycling.scripts.backfill_history:main"
+provision-writer = "magma_cycling.scripts.provision_writer:main"
+lint-authority-coherence = "magma_cycling.scripts.lint_authority_coherence:main"
 
 # === Utilitaires ===
 sync-intervals = "magma_cycling.sync_intervals:main"
