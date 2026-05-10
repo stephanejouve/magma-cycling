@@ -126,11 +126,35 @@ async def handle_system_info(args: dict) -> list[TextContent]:
         except Exception:
             tool_count = -1
 
+        # Version et data repo info — utiles pour TNR post-déploiement.
+        # ``__version__`` peut être stale (semantic-release ne bump pas
+        # ``magma_cycling/__init__.py``) — c'est cosmétique, pas un défaut.
+        try:
+            from magma_cycling import __version__ as version
+        except Exception:
+            version = "unknown"
+
+        data_repo_path: str | None = None
+        data_repo_health_ok = False
+        try:
+            from magma_cycling.config import get_data_config
+
+            cfg = get_data_config()
+            data_repo_path = str(cfg.data_repo_path)
+            data_repo_health_ok = (
+                cfg.data_repo_path.exists() and (cfg.data_repo_path / ".git").exists()
+            )
+        except Exception as e:
+            logger.warning("data_repo discovery failed: %s", e)
+
         result = {
+            "version": version,
             "health": health_info,
             "calendar": calendar_info,
             "ai_providers": ai_info,
             "tool_count": tool_count,
+            "data_repo_path": data_repo_path,
+            "data_repo_health_ok": data_repo_health_ok,
         }
 
     return mcp_response(result)
