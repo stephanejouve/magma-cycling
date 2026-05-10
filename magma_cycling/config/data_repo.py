@@ -254,7 +254,9 @@ class DataRepoConfig:
         if not self._is_under(p, self.root_path):
             return False
         rel = p.relative_to(self.root_path)
-        rel_str = str(rel)
+        # POSIX-style separator pour matching cross-platform (les patterns
+        # dans .operators.yaml utilisent toujours `/`, jamais `\` Windows).
+        rel_str = rel.as_posix()
         # Compare avec chaque entrée de la whitelist (matching exact ou prefix
         # pour les patterns dossier comme "docs/architecture/**")
         for entry in self.shared_root_files:
