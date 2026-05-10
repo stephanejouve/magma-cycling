@@ -11,6 +11,7 @@ services:
       - ${WITHINGS_CREDENTIALS_DIR:-./credentials}:/data/credentials
     environment:
       - WITHINGS_CREDENTIALS_PATH=/data/credentials/withings.json
+      - TZ=${TZ:-Europe/Paris}
     env_file: stack.env
     restart: unless-stopped
     healthcheck:
@@ -38,6 +39,7 @@ services:
       - ${WITHINGS_CREDENTIALS_DIR:-./credentials}:/data/credentials
     environment:
       - WITHINGS_CREDENTIALS_PATH=/data/credentials/withings.json
+      - TZ=${TZ:-Europe/Paris}
     env_file: stack.env
     restart: unless-stopped
     init: true
