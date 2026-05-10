@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 import yaml
 
 from magma_cycling.config.data_repo import OPERATORS_FILE
@@ -107,8 +106,7 @@ class TestRootEntryWhitelist:
         (repo / "leak.txt").write_text("oops")
         violations = lint(repo)
         assert any(
-            v.code == "ROOT_ENTRY_UNAUTHORIZED" and "leak.txt" in v.message
-            for v in violations
+            v.code == "ROOT_ENTRY_UNAUTHORIZED" and "leak.txt" in v.message for v in violations
         )
 
     def test_whitelist_dir_pattern_allows_subtree(self, tmp_path):

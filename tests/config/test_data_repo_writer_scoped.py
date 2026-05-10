@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import logging
 import subprocess
-from pathlib import Path
 
 import pytest
 import yaml
@@ -50,9 +49,7 @@ def temp_training_repo(tmp_path):
     repo = tmp_path / "training-logs"
     repo.mkdir()
 
-    subprocess.run(
-        ["git", "init", "-q", "--initial-branch=main"], cwd=repo, check=True
-    )
+    subprocess.run(["git", "init", "-q", "--initial-branch=main"], cwd=repo, check=True)
     subprocess.run(["git", "config", "user.email", "test@magma"], cwd=repo, check=True)
     subprocess.run(["git", "config", "user.name", "Test"], cwd=repo, check=True)
 
@@ -149,9 +146,7 @@ class TestFeatureFlagDefault:
 class TestWriterScopedMode:
     """Flag ON + WRITER_ID → data_repo_path = root/<writer_id>."""
 
-    def test_flag_on_with_writer_id_resolves_subdir(
-        self, temp_training_repo, monkeypatch
-    ):
+    def test_flag_on_with_writer_id_resolves_subdir(self, temp_training_repo, monkeypatch):
         repo, writer_a, _ = temp_training_repo
         monkeypatch.setenv(ROOT_ENV, str(repo))
         monkeypatch.setenv(WRITER_SCOPED_ENV, "1")
@@ -170,9 +165,7 @@ class TestWriterScopedMode:
         with pytest.raises(RuntimeError, match=WRITER_ID_ENV):
             DataRepoConfig()
 
-    def test_flag_off_via_constructor_overrides_env(
-        self, temp_training_repo, monkeypatch
-    ):
+    def test_flag_off_via_constructor_overrides_env(self, temp_training_repo, monkeypatch):
         """``writer_scoped=False`` constructeur force OFF même si env=1."""
         repo, writer_a, _ = temp_training_repo
         monkeypatch.setenv(ROOT_ENV, str(repo))
@@ -182,9 +175,7 @@ class TestWriterScopedMode:
         assert cfg.writer_scoped is False
         assert cfg.data_repo_path == repo.resolve()
 
-    def test_workouts_history_path_in_subdir_when_scoped(
-        self, temp_training_repo, monkeypatch
-    ):
+    def test_workouts_history_path_in_subdir_when_scoped(self, temp_training_repo, monkeypatch):
         repo, writer_a, _ = temp_training_repo
         monkeypatch.setenv(ROOT_ENV, str(repo))
         monkeypatch.setenv(WRITER_SCOPED_ENV, "1")
@@ -235,9 +226,7 @@ class TestIsSafeWritePath:
         monkeypatch.setenv(WRITER_ID_ENV, writer)
         return DataRepoConfig()
 
-    def test_legacy_allows_any_path_under_root(
-        self, temp_training_repo, monkeypatch
-    ):
+    def test_legacy_allows_any_path_under_root(self, temp_training_repo, monkeypatch):
         repo, _, _ = temp_training_repo
         cfg = self._config_legacy(repo, monkeypatch)
         # Tout sous root OK en legacy
@@ -245,42 +234,32 @@ class TestIsSafeWritePath:
         assert cfg.is_safe_write_path(repo / "bilans" / "S091.md")
         assert cfg.is_safe_write_path(repo / "data" / "week_planning" / "S091.json")
 
-    def test_legacy_refuses_path_outside_root(
-        self, tmp_path, temp_training_repo, monkeypatch
-    ):
+    def test_legacy_refuses_path_outside_root(self, tmp_path, temp_training_repo, monkeypatch):
         repo, _, _ = temp_training_repo
         cfg = self._config_legacy(repo, monkeypatch)
         outside = tmp_path / "elsewhere" / "leak.txt"
         assert cfg.is_safe_write_path(outside) is False
 
-    def test_scoped_allows_under_writer_subdir(
-        self, temp_training_repo, monkeypatch
-    ):
+    def test_scoped_allows_under_writer_subdir(self, temp_training_repo, monkeypatch):
         repo, writer_a, _ = temp_training_repo
         cfg = self._config_scoped(repo, writer_a, monkeypatch)
         assert cfg.is_safe_write_path(repo / writer_a / "workouts-history.md")
         assert cfg.is_safe_write_path(repo / writer_a / "bilans" / "S091.md")
 
-    def test_scoped_refuses_other_writer_subdir(
-        self, temp_training_repo, monkeypatch
-    ):
+    def test_scoped_refuses_other_writer_subdir(self, temp_training_repo, monkeypatch):
         repo, writer_a, writer_b = temp_training_repo
         cfg = self._config_scoped(repo, writer_a, monkeypatch)
         # writer_b est un autre writer — refus de write
         assert cfg.is_safe_write_path(repo / writer_b / "leak.md") is False
 
-    def test_scoped_refuses_root_write_outside_whitelist(
-        self, temp_training_repo, monkeypatch
-    ):
+    def test_scoped_refuses_root_write_outside_whitelist(self, temp_training_repo, monkeypatch):
         repo, writer_a, _ = temp_training_repo
         cfg = self._config_scoped(repo, writer_a, monkeypatch)
         # Pas dans whitelist → refus
         assert cfg.is_safe_write_path(repo / "leak.md") is False
         assert cfg.is_safe_write_path(repo / "secret.txt") is False
 
-    def test_scoped_allows_shared_root_files_whitelist(
-        self, temp_training_repo, monkeypatch
-    ):
+    def test_scoped_allows_shared_root_files_whitelist(self, temp_training_repo, monkeypatch):
         repo, writer_a, _ = temp_training_repo
         cfg = self._config_scoped(repo, writer_a, monkeypatch)
         # Dans whitelist (.operators.yaml::shared_root_files)
@@ -288,17 +267,13 @@ class TestIsSafeWritePath:
         assert cfg.is_safe_write_path(repo / "README.md")
         assert cfg.is_safe_write_path(repo / OPERATORS_FILE)
 
-    def test_scoped_allows_shared_root_dir_glob_pattern(
-        self, temp_training_repo, monkeypatch
-    ):
+    def test_scoped_allows_shared_root_dir_glob_pattern(self, temp_training_repo, monkeypatch):
         """Pattern ``docs/architecture/**`` matche les fichiers sous ce dossier."""
         repo, writer_a, _ = temp_training_repo
         cfg = self._config_scoped(repo, writer_a, monkeypatch)
         assert cfg.is_safe_write_path(repo / "docs" / "architecture" / "x.md")
 
-    def test_scoped_refuses_path_outside_root(
-        self, tmp_path, temp_training_repo, monkeypatch
-    ):
+    def test_scoped_refuses_path_outside_root(self, tmp_path, temp_training_repo, monkeypatch):
         repo, writer_a, _ = temp_training_repo
         cfg = self._config_scoped(repo, writer_a, monkeypatch)
         assert cfg.is_safe_write_path(tmp_path / "leak.txt") is False
@@ -307,9 +282,7 @@ class TestIsSafeWritePath:
 class TestOperatorsYaml:
     """``.operators.yaml`` lazy-loaded, ``shared_root_files`` parsing."""
 
-    def test_operators_yaml_loaded_when_present(
-        self, temp_training_repo, monkeypatch
-    ):
+    def test_operators_yaml_loaded_when_present(self, temp_training_repo, monkeypatch):
         repo, _, _ = temp_training_repo
         monkeypatch.setenv(ROOT_ENV, str(repo))
         cfg = DataRepoConfig()

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import re
 import subprocess
-from pathlib import Path
 
 import pytest
 import yaml
@@ -21,9 +20,7 @@ def empty_training_repo(tmp_path):
     """Repo training-logs vide initialisé git, prêt pour 1er provision."""
     repo = tmp_path / "training-logs"
     repo.mkdir()
-    subprocess.run(
-        ["git", "init", "-q", "--initial-branch=main"], cwd=repo, check=True
-    )
+    subprocess.run(["git", "init", "-q", "--initial-branch=main"], cwd=repo, check=True)
     subprocess.run(["git", "config", "user.email", "test@magma"], cwd=repo, check=True)
     subprocess.run(["git", "config", "user.name", "Test"], cwd=repo, check=True)
     (repo / "README.md").write_text("# training-logs\n")
@@ -96,17 +93,13 @@ class TestProvisionWriter:
 
     def test_default_shared_root_files_seeded(self, empty_training_repo):
         provision_writer("mac", empty_training_repo, push=False)
-        ops = yaml.safe_load(
-            (empty_training_repo / ".operators.yaml").read_text()
-        )
+        ops = yaml.safe_load((empty_training_repo / ".operators.yaml").read_text())
         assert "shared_root_files" in ops
         assert ".gitignore" in ops["shared_root_files"]
         assert ".operators.yaml" in ops["shared_root_files"]
 
     def test_commit_created_with_writer_metadata(self, empty_training_repo):
-        h = provision_writer(
-            "mac", empty_training_repo, host="tiresias", push=False
-        )
+        h = provision_writer("mac", empty_training_repo, host="tiresias", push=False)
         # Vérifier le commit log
         result = subprocess.run(
             ["git", "log", "-1", "--pretty=%B"],
@@ -123,9 +116,7 @@ class TestProvisionWriter:
     def test_appends_to_existing_yaml(self, empty_training_repo):
         h1 = provision_writer("mac", empty_training_repo, push=False)
         h2 = provision_writer("nas-prod", empty_training_repo, push=False)
-        ops = yaml.safe_load(
-            (empty_training_repo / ".operators.yaml").read_text()
-        )
+        ops = yaml.safe_load((empty_training_repo / ".operators.yaml").read_text())
         assert h1 in ops["writers"]
         assert h2 in ops["writers"]
         assert ops["writers"][h1]["alias"] == "mac"
