@@ -24,7 +24,7 @@ def get_tools() -> list[Tool]:
                             "REC (Recuperation), RACE (Course), TEC (Technique "
                             "Cadence/Force), SS (Sweet Spot), FTP (Test FTP), "
                             "SPR (Sprint), CLM / TT (Contre-la-montre / Time Trial), "
-                            "MIX (Mixte), VO2 (VO2max)."
+                            "TMP (Tempo Z3 sustained), MIX (Mixte), VO2 (VO2max)."
                         ),
                         "enum": [
                             "END",
@@ -37,6 +37,7 @@ def get_tools() -> list[Tool]:
                             "SPR",
                             "CLM",
                             "TT",
+                            "TMP",
                             "MIX",
                             "VO2",
                         ],

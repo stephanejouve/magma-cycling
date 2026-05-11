@@ -44,7 +44,7 @@ class TestVersionNormalization:
 
 
 class TestSessionTypeEnum:
-    """Session.session_type accepts only the unified enum (11 types)."""
+    """Session.session_type accepts only the unified enum (13 types)."""
 
     ALL_VALID_TYPES = [
         "END",
@@ -57,6 +57,7 @@ class TestSessionTypeEnum:
         "SPR",
         "CLM",
         "TT",
+        "TMP",
         "MIX",
         "VO2",
     ]
