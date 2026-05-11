@@ -768,7 +768,7 @@ class TestSyncCreateNote:
 
         session_info = {
             "name": "SweetSpot",
-            "type": "SST",
+            "type": "SS",
             "version": "V001",
             "description": "Sweet spot 2x20",
             "tss_planned": 70,

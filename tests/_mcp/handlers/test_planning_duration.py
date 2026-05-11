@@ -15,7 +15,7 @@ class TestParseAiWorkoutsRecalculatesDuration:
     def test_blocks_override_header_duration(self):
         """Header says 90min but blocks total 75min → duration_min == 75."""
         raw_text = """\
-=== WORKOUT S087-03-SST-SweetSpotProgressif-V001 ===
+=== WORKOUT S087-03-SS-SweetSpotProgressif-V001 ===
 SweetSpot Progressif (90min, 72 TSS)
 
 Warmup
@@ -53,7 +53,7 @@ class TestModifySessionAutoCalculatesDuration:
             session_id="S087-03",
             date=date(2026, 4, 2),
             name="SweetSpotProgressif",
-            type="SST",
+            type="SS",
             version="V001",
             tss_planned=72,
             duration_min=90,

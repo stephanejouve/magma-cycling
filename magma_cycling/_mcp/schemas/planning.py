@@ -311,8 +311,27 @@ def get_tools() -> list[Tool]:
                     },
                     "type": {
                         "type": "string",
-                        "description": "Session type",
-                        "enum": ["END", "INT", "REC", "RACE"],
+                        "description": (
+                            "Session type: END (Endurance), INT (Intervalles), "
+                            "REC (Recuperation), RACE (Course), TEC (Technique "
+                            "Cadence/Force), SS (Sweet Spot), FTP (Test FTP), "
+                            "SPR (Sprint), CLM / TT (Contre-la-montre / Time Trial), "
+                            "MIX (Mixte), VO2 (VO2max)."
+                        ),
+                        "enum": [
+                            "END",
+                            "INT",
+                            "REC",
+                            "RACE",
+                            "TEC",
+                            "SS",
+                            "FTP",
+                            "SPR",
+                            "CLM",
+                            "TT",
+                            "MIX",
+                            "VO2",
+                        ],
                     },
                     "description": {
                         "type": "string",
@@ -383,8 +402,28 @@ def get_tools() -> list[Tool]:
                     },
                     "type": {
                         "type": "string",
-                        "description": "Session type (default: END)",
-                        "enum": ["END", "INT", "REC", "RACE"],
+                        "description": (
+                            "Session type (default: END). Values: END (Endurance), "
+                            "INT (Intervalles), REC (Recuperation), RACE (Course), "
+                            "TEC (Technique Cadence/Force), SS (Sweet Spot), "
+                            "FTP (Test FTP), SPR (Sprint), CLM / TT "
+                            "(Contre-la-montre / Time Trial), MIX (Mixte), "
+                            "VO2 (VO2max)."
+                        ),
+                        "enum": [
+                            "END",
+                            "INT",
+                            "REC",
+                            "RACE",
+                            "TEC",
+                            "SS",
+                            "FTP",
+                            "SPR",
+                            "CLM",
+                            "TT",
+                            "MIX",
+                            "VO2",
+                        ],
                         "default": "END",
                     },
                     "description": {
