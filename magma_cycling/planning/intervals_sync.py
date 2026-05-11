@@ -410,7 +410,7 @@ class IntervalsSync:
                 # Map workout types to common name patterns
                 type_patterns = {
                     "ENDURANCE": ["END", "ENDURANCE"],
-                    "TEMPO": ["TEMPO", "SWEET", "SST"],
+                    "TMP": ["TEMPO", "TMP", "SWEET", "SST"],
                     "THRESHOLD": ["THRESHOLD", "FTP", "SEUIL"],
                     "VO2MAX": ["VO2", "INTERVALLE"],
                     "RECOVERY": ["RECOVERY", "REC", "RECUPERATION"],

@@ -19,8 +19,28 @@ def get_tools() -> list[Tool]:
                 "properties": {
                     "type": {
                         "type": "string",
-                        "description": "Type de seance: END, INT, FTP, REC, SPR, CLM, MIX",
-                        "enum": ["END", "INT", "FTP", "REC", "SPR", "CLM", "MIX"],
+                        "description": (
+                            "Type de seance: END (Endurance), INT (Intervalles), "
+                            "REC (Recuperation), RACE (Course), TEC (Technique "
+                            "Cadence/Force), SS (Sweet Spot), FTP (Test FTP), "
+                            "SPR (Sprint), CLM / TT (Contre-la-montre / Time Trial), "
+                            "TMP (Tempo Z3 sustained), MIX (Mixte), VO2 (VO2max)."
+                        ),
+                        "enum": [
+                            "END",
+                            "INT",
+                            "REC",
+                            "RACE",
+                            "TEC",
+                            "SS",
+                            "FTP",
+                            "SPR",
+                            "CLM",
+                            "TT",
+                            "TMP",
+                            "MIX",
+                            "VO2",
+                        ],
                     },
                     "duration_min": {
                         "type": "integer",

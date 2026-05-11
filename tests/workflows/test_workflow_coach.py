@@ -104,7 +104,7 @@ Here are the modifications:
                 "date": "2025-12-18",
                 "session_id": "S072-03",
                 "name": "Tempo",
-                "type": "TEMPO",
+                "type": "TMP",
                 "version": "V001",
                 "tss_planned": 75,
             },
@@ -112,7 +112,7 @@ Here are the modifications:
                 "date": "2025-12-19",
                 "session_id": "S072-04",
                 "name": "Recovery",
-                "type": "RECOVERY",
+                "type": "REC",
                 "version": "V001",
                 "tss_planned": 30,
             },
@@ -120,7 +120,7 @@ Here are the modifications:
                 "date": "2025-12-20",
                 "session_id": "S072-05",
                 "name": "Repos",
-                "type": "REST",
+                "type": "REC",
                 "status": "rest_day",
             },
         ]
@@ -128,8 +128,8 @@ Here are the modifications:
         result = format_remaining_sessions_compact(sessions)
 
         assert "PLANNING RESTANT (3 séances)" in result
-        assert "2025-12-18: S072-03-TEMPO-Tempo-V001 (75 TSS)" in result
-        assert "2025-12-19: S072-04-RECOVERY-Recovery-V001 (30 TSS)" in result
+        assert "2025-12-18: S072-03-TMP-Tempo-V001 (75 TSS)" in result
+        assert "2025-12-19: S072-04-REC-Recovery-V001 (30 TSS)" in result
         assert "2025-12-20: REPOS" in result
 
     @patch("builtins.open", new_callable=mock_open)
@@ -258,7 +258,7 @@ class TestPlanningModifications:
                     "session_id": "S072-03",
                     "date": "2025-12-18",
                     "name": "Tempo",
-                    "type": "TEMPO",
+                    "type": "TMP",
                     "version": "V001",
                     "tss_planned": 75,
                     "duration_min": 60,
@@ -284,7 +284,7 @@ class TestPlanningModifications:
 
         new_workout = {
             "code": "S072-03-RECOVERY-Easy",
-            "type": "RECOVERY",
+            "type": "REC",
             "tss": 50,
             "description": "Lightened recovery session",
         }
@@ -293,7 +293,7 @@ class TestPlanningModifications:
             week_id="S072",
             date="2025-12-18",
             new_workout=new_workout,
-            old_workout="S072-03-TEMPO-Tempo",
+            old_workout="S072-03-TMP-Tempo",
             reason="Fatigue detected",
         )
 
@@ -301,7 +301,7 @@ class TestPlanningModifications:
 
         # Verify file was updated with Pydantic
         plan = WeeklyPlan.from_json(temp_planning_file)
-        assert plan.planned_sessions[0].session_type == "RECOVERY"
+        assert plan.planned_sessions[0].session_type == "REC"
         assert plan.planned_sessions[0].tss_planned == 50
         assert "Lightened recovery session" in plan.planned_sessions[0].description
 
@@ -318,7 +318,7 @@ class TestPlanningModifications:
         result = coach._update_planning_json(
             week_id="S099",
             date="2025-12-18",
-            new_workout={"code": "test", "type": "TEST", "tss": 50, "description": "Test"},
+            new_workout={"code": "test", "type": "INT", "tss": 50, "description": "Test"},
             old_workout="old",
             reason="test",
         )
@@ -1464,7 +1464,7 @@ class TestRemainingSessionsLoading:
                     "session_id": "S072-01",
                     "date": past_date,
                     "name": "Past",
-                    "type": "TEMPO",
+                    "type": "TMP",
                     "version": "V001",
                     "tss_planned": 60,
                     "duration_min": 60,
@@ -1724,7 +1724,7 @@ class TestApplyLightenAutoMode:
                 "name": "Récupération Courte",
                 "tss": 25,
                 "duration_minutes": 45,
-                "type": "RECUP",
+                "type": "REC",
                 "description": "Récupération active courte",
                 "workout_code_pattern": "{week_id}-{day_num}-REC-RecuperationCourte-V001",
                 "intervals_icu_format": {},
@@ -1853,7 +1853,7 @@ class TestUpdatePlanningJsonErrors:
             result = coach._update_planning_json(
                 week_id="S082",
                 date="2026-02-25",
-                new_workout={"code": "X", "type": "RECUP", "tss": 25, "description": "Test"},
+                new_workout={"code": "X", "type": "REC", "tss": 25, "description": "Test"},
                 old_workout="old",
                 reason="test",
             )
@@ -1867,7 +1867,7 @@ class TestUpdatePlanningJsonErrors:
             result = coach._update_planning_json(
                 week_id="S999",
                 date="2026-02-25",
-                new_workout={"code": "X", "type": "RECUP", "tss": 25, "description": "Test"},
+                new_workout={"code": "X", "type": "REC", "tss": 25, "description": "Test"},
                 old_workout="old",
                 reason="test",
             )
@@ -1881,7 +1881,7 @@ class TestUpdatePlanningJsonErrors:
             result = coach._update_planning_json(
                 week_id="S082",
                 date="2026-02-25",
-                new_workout={"code": "X", "type": "RECUP", "tss": 25, "description": "Test"},
+                new_workout={"code": "X", "type": "REC", "tss": 25, "description": "Test"},
                 old_workout="old",
                 reason="test",
             )

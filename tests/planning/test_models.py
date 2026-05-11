@@ -41,3 +41,51 @@ class TestVersionNormalization:
         """Invalid version pattern is rejected by pydantic."""
         with pytest.raises(ValidationError):
             self._make_session("X001")
+
+
+class TestSessionTypeEnum:
+    """Session.session_type accepts only the unified enum (13 types)."""
+
+    ALL_VALID_TYPES = [
+        "END",
+        "INT",
+        "REC",
+        "RACE",
+        "TEC",
+        "SS",
+        "FTP",
+        "SPR",
+        "CLM",
+        "TT",
+        "TMP",
+        "MIX",
+        "VO2",
+    ]
+
+    def _make_session(self, session_type: str) -> Session:
+        return Session(
+            session_id="S087-01",
+            session_date=date(2026, 4, 6),
+            name="TestSession",
+            session_type=session_type,
+            tss_planned=50,
+            duration_min=60,
+        )
+
+    @pytest.mark.parametrize("valid_type", ALL_VALID_TYPES)
+    def test_all_valid_types_accepted(self, valid_type: str):
+        """Each of the 11 unified enum types is accepted."""
+        session = self._make_session(valid_type)
+        assert session.session_type == valid_type
+
+    @pytest.mark.parametrize("invalid_type", ["XYZ", "CAD", "ENDURO", "", "end"])
+    def test_invalid_types_rejected(self, invalid_type: str):
+        """Types outside the unified enum are rejected at Pydantic level.
+
+        Regression : the TEC issue on S093-03 (2026-05-11) was caused by
+        ``session_type: str`` being permissive. Now ``Literal[...]`` rejects
+        anything not in the enum, providing the write-side guard rail
+        requested in the bug report.
+        """
+        with pytest.raises(ValidationError):
+            self._make_session(invalid_type)

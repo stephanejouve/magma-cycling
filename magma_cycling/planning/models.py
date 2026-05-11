@@ -106,8 +106,31 @@ class Session(BaseModel):
     )
     session_date: date = Field(alias="date", description="Planned session date")
     name: str = Field(min_length=1, description="Session name")
-    session_type: str = Field(
-        alias="type", description="Session type (END, INT, REC, CAD, VO2, etc.)"
+    session_type: Literal[
+        "END",
+        "INT",
+        "REC",
+        "RACE",
+        "TEC",
+        "SS",
+        "FTP",
+        "SPR",
+        "CLM",
+        "TT",
+        "TMP",
+        "MIX",
+        "VO2",
+    ] = Field(
+        alias="type",
+        description=(
+            "Session type. Enum aligned across MCP schemas + Pydantic model "
+            "(superset of historical types used in SXXX_workouts.txt + "
+            "WorkoutType enum in calendar.py): END (Endurance), INT (Intervalles), "
+            "REC (Recuperation), RACE (Course), TEC (Technique Cadence/Force), "
+            "SS (Sweet Spot), FTP (Test FTP), SPR (Sprint), CLM / TT "
+            "(Contre-la-montre / Time Trial — synonymes), TMP (Tempo Z3 sustained), "
+            "MIX (Mixte), VO2 (VO2max)."
+        ),
     )  # Use alias to avoid 'type' keyword conflict
     version: str = Field(default="V001", pattern=r"^V\d{3}$", description="Session version")
 
