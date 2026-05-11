@@ -44,8 +44,9 @@ def get_tools() -> list[Tool]:
                 "pid-daily-evaluation). Two modes : 'daily' (default) collects "
                 "cycle metrics + learnings + CTL/Peaks monitoring + test FTP "
                 "opportunity check ; 'cycle' recalibrates PID with a measured "
-                "FTP at end of training cycle. Updates ~/data/intelligence.json "
-                "and appends to ~/data/monitoring/pid_evaluation.jsonl."
+                "FTP at end of training cycle. Updates <TRAINING_DATA_ROOT>/data/intelligence/"
+                "intelligence.json (or INTELLIGENCE_DATA_DIR override) and appends to "
+                "~/data/monitoring/pid_evaluation.jsonl."
             ),
             inputSchema={
                 "type": "object",

@@ -3,8 +3,9 @@
 import json
 import re
 import sys
-from pathlib import Path
 from typing import Any
+
+from magma_cycling.config.data_repo import resolve_intelligence_file_path
 
 
 class ContextLoadingMixin:
@@ -212,7 +213,7 @@ class ContextLoadingMixin:
                 context["protocols"] = "\n\n---\n\n".join(protocols)
 
         # Charger intelligence.json (recommandations PID et adaptations)
-        intelligence_file = Path.home() / "data" / "intelligence.json"
+        intelligence_file = resolve_intelligence_file_path()
         try:
             if intelligence_file.exists():
                 intelligence_data = json.loads(intelligence_file.read_text(encoding="utf-8"))

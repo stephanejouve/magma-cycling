@@ -56,15 +56,33 @@ WRITER_ID_ENV = "TRAINING_DATA_WRITER_ID"
 #: sécurité #1 du protocole niveau diamant).
 WRITER_SCOPED_ENV = "TRAINING_DATA_WRITER_SCOPED"
 
+#: Var d'env override pour le dossier de l'intelligence (rétro-compat dev
+#: local). Si définie, prend priorité sur ``<root>/data/intelligence/``.
+#: Par défaut (env absent) : ``<TRAINING_DATA_ROOT>/data/intelligence/``
+#: pour que le fichier survive aux redeploys container (cf. plan iso-config
+#: PR1, incident 2026-05-12 où redeploy stack #33 a effacé
+#: ``/home/magma/data/intelligence.json`` du writable layer Docker).
+INTELLIGENCE_DATA_DIR_ENV = "INTELLIGENCE_DATA_DIR"
+
 #: Nom du fichier d'index `.operators.yaml` à la racine du repo.
 OPERATORS_FILE = ".operators.yaml"
 
+#: Sous-dossier (relatif à la racine training-logs) qui héberge
+#: ``intelligence.json`` et les artefacts apparentés (= shared entre writers).
+INTELLIGENCE_SUBDIR = "data/intelligence"
+
+#: Nom du fichier intelligence sous :data:`INTELLIGENCE_SUBDIR`.
+INTELLIGENCE_FILENAME = "intelligence.json"
+
 #: Whitelist par défaut des fichiers racine autorisés (utilisée si
 #: ``.operators.yaml`` absent ou ne définit pas ``shared_root_files``).
+#: ``data/intelligence/**`` est inclus pour que le mode writer-scoped futur
+#: (cf. ADR v5) autorise l'écriture intelligence shared cross-writers.
 DEFAULT_SHARED_ROOT_FILES = [
     ".gitignore",
     "README.md",
     OPERATORS_FILE,
+    "data/intelligence/**",
 ]
 
 
@@ -100,6 +118,28 @@ def _resolve_root_from_env() -> Path | None:
         )
         return Path(legacy).expanduser()
     return None
+
+
+def resolve_intelligence_file_path() -> Path:
+    """Résout le path de ``intelligence.json`` sans instancier ``DataRepoConfig``.
+
+    Priorité (cf. plan iso-config PR1, ADR v5 §3) :
+
+    1. :data:`INTELLIGENCE_DATA_DIR_ENV` (override explicite, rétro-compat dev local).
+    2. :data:`ROOT_ENV` (``TRAINING_DATA_ROOT``) → ``<root>/data/intelligence/intelligence.json``.
+    3. :data:`LEGACY_ROOT_ENV` (``TRAINING_DATA_REPO``) → idem (avec DeprecationWarning).
+    4. Fallback legacy ``~/data/intelligence.json`` (dev local sans env, comportement pré-PR1).
+
+    Le helper ne touche pas au file system — la création du dossier parent reste
+    à la charge du caller (``mkdir(parents=True, exist_ok=True)``).
+    """
+    override = os.getenv(INTELLIGENCE_DATA_DIR_ENV)
+    if override:
+        return Path(override).expanduser() / INTELLIGENCE_FILENAME
+    root = _resolve_root_from_env()
+    if root is not None:
+        return root / INTELLIGENCE_SUBDIR / INTELLIGENCE_FILENAME
+    return Path.home() / "data" / INTELLIGENCE_FILENAME
 
 
 def _load_operators_yaml(root: Path) -> dict | None:
@@ -312,6 +352,28 @@ class DataRepoConfig:
         return self.data_repo_path / ".workflow_state.json"
 
     @property
+    def intelligence_dir(self) -> Path:
+        """Path au dossier intelligence (shared cross-writers).
+
+        Résolution :
+        1. Si :data:`INTELLIGENCE_DATA_DIR_ENV` est défini → ``Path(env).expanduser()``
+           (rétro-compat dev local / override explicite).
+        2. Sinon → ``root_path / data/intelligence/`` (mount training-logs partagé).
+
+        Le path utilise :attr:`root_path` (et non :attr:`data_repo_path`) pour
+        rester shared cross-writers en mode writer-scoped futur.
+        """
+        env_override = os.getenv(INTELLIGENCE_DATA_DIR_ENV)
+        if env_override:
+            return Path(env_override).expanduser()
+        return self.root_path / INTELLIGENCE_SUBDIR
+
+    @property
+    def intelligence_file_path(self) -> Path:
+        """Path au fichier ``intelligence.json`` (sous :attr:`intelligence_dir`)."""
+        return self.intelligence_dir / INTELLIGENCE_FILENAME
+
+    @property
     def handoff_dir(self) -> Path:
         """Path to handoff/ directory in data repo (context-handoff snapshots)."""
         return self.data_repo_path / "handoff"
@@ -323,6 +385,7 @@ class DataRepoConfig:
         self.workout_templates_dir.mkdir(parents=True, exist_ok=True)
         self.terrain_circuits_dir.mkdir(parents=True, exist_ok=True)
         self.handoff_dir.mkdir(parents=True, exist_ok=True)
+        self.intelligence_dir.mkdir(parents=True, exist_ok=True)
 
     def validate(self) -> bool:
         """Validate data repository structure.

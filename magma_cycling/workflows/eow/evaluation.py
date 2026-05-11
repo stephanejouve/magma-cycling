@@ -32,10 +32,14 @@ class EvaluationMixin:
             # Run evaluation for the completed week
             result = evaluator.run_daily_evaluation(days_back=7)
 
+            from magma_cycling.config.data_repo import (
+                resolve_intelligence_file_path,
+            )
+
             print()
             print("  ✅ Évaluation PID terminée")
             print("  📊 Données sauvegardées dans ~/data/monitoring/pid_evaluation.jsonl")
-            print("  🧠 Intelligence mise à jour dans ~/data/intelligence.json")
+            print(f"  🧠 Intelligence mise à jour dans {resolve_intelligence_file_path()}")
 
             # Display test recommendation if present
             test_rec = result.get("test_recommendation")
