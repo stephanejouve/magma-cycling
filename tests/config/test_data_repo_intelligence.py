@@ -130,13 +130,12 @@ class TestIntelligenceDirOnConfig:
         monkeypatch.setenv(ROOT_ENV, str(repo))
         cfg = DataRepoConfig()
         assert cfg.intelligence_dir == (repo / INTELLIGENCE_SUBDIR).resolve()
-        assert cfg.intelligence_file_path == (
-            repo / INTELLIGENCE_SUBDIR / INTELLIGENCE_FILENAME
-        ).resolve()
+        assert (
+            cfg.intelligence_file_path
+            == (repo / INTELLIGENCE_SUBDIR / INTELLIGENCE_FILENAME).resolve()
+        )
 
-    def test_shared_under_root_even_when_writer_scoped(
-        self, temp_training_repo, monkeypatch
-    ):
+    def test_shared_under_root_even_when_writer_scoped(self, temp_training_repo, monkeypatch):
         """Critical: intelligence stays under ROOT in writer-scoped mode."""
         repo, writer_a = temp_training_repo
         monkeypatch.setenv(ROOT_ENV, str(repo))
@@ -148,9 +147,7 @@ class TestIntelligenceDirOnConfig:
         # but intelligence_dir stays at root (shared cross-writers)
         assert cfg.intelligence_dir == (repo / INTELLIGENCE_SUBDIR).resolve()
 
-    def test_override_env_takes_priority_on_config(
-        self, tmp_path, temp_training_repo, monkeypatch
-    ):
+    def test_override_env_takes_priority_on_config(self, tmp_path, temp_training_repo, monkeypatch):
         repo, _ = temp_training_repo
         monkeypatch.setenv(ROOT_ENV, str(repo))
         monkeypatch.setenv(INTELLIGENCE_DATA_DIR_ENV, str(tmp_path / "custom"))
