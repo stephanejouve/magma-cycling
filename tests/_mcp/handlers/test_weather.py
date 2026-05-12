@@ -8,7 +8,13 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from magma_cycling._mcp.handlers.weather import (
+pytest.importorskip(
+    "magma_cycling_tools",
+    reason="magma-cycling-tools optional dep; installed via Dockerfile in prod, "
+    "skip in CI dev minimal",
+)
+
+from magma_cycling._mcp.handlers.weather import (  # noqa: E402
     handle_get_rain_next_hour,
     handle_get_vigilance,
     handle_get_weather_along_route,
