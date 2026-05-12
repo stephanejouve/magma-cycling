@@ -121,6 +121,12 @@ from magma_cycling._mcp.handlers.terrain import (  # noqa: F401
     handle_extract_terrain_circuit,
     handle_list_terrain_circuits,
 )
+from magma_cycling._mcp.handlers.weather import (  # noqa: F401
+    handle_get_rain_next_hour,
+    handle_get_vigilance,
+    handle_get_weather_along_route,
+    handle_get_weather_for_session,
+)
 from magma_cycling._mcp.handlers.workouts import (  # noqa: F401
     handle_get_workout,
     handle_upload_workouts,
@@ -139,6 +145,7 @@ from magma_cycling._mcp.schemas import remote as _s_remote
 from magma_cycling._mcp.schemas import rest as _s_rest
 from magma_cycling._mcp.schemas import sessions as _s_sessions
 from magma_cycling._mcp.schemas import terrain as _s_terrain
+from magma_cycling._mcp.schemas import weather as _s_weather
 from magma_cycling._mcp.schemas import workouts as _s_workouts
 from magma_cycling.config import get_logger, setup_mcp_logging
 
@@ -173,6 +180,7 @@ async def list_tools() -> list[Tool]:
         *_s_health.get_tools(),
         *_s_rest.get_tools(),
         *_s_terrain.get_tools(),
+        *_s_weather.get_tools(),
         *_s_handoff.get_tools(),
     ]
 
@@ -257,6 +265,11 @@ TOOL_HANDLERS = {
     "list-terrain-circuits": handle_list_terrain_circuits,
     "adapt-workout-to-terrain": handle_adapt_workout_to_terrain,
     "evaluate-outdoor-execution": handle_evaluate_outdoor_execution,
+    # Weather (4) — wrap magma_cycling_tools.weather
+    "get-weather-for-session": handle_get_weather_for_session,
+    "get-weather-along-route": handle_get_weather_along_route,
+    "get-rain-next-hour": handle_get_rain_next_hour,
+    "get-vigilance": handle_get_vigilance,
     # Context handoff (2)
     "context-handoff-save": handle_context_handoff_save,
     "context-handoff-resume": handle_context_handoff_resume,
