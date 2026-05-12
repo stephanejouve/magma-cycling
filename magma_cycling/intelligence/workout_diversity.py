@@ -19,6 +19,8 @@ from dataclasses import asdict, dataclass
 from datetime import date, timedelta
 from pathlib import Path
 
+from magma_cycling.config.data_repo import resolve_intelligence_file_path
+
 logger = logging.getLogger(__name__)
 
 
@@ -78,7 +80,7 @@ class WorkoutDiversityTracker:
             max_repetition_rate: Maximum allowed repetition rate (0.0-1.0)
         """
         if intelligence_file is None:
-            intelligence_file = Path.home() / "data" / "intelligence.json"
+            intelligence_file = resolve_intelligence_file_path()
 
         self.intelligence_file = intelligence_file
         self.rotation_window_days = rotation_window_days

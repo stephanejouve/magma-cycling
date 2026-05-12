@@ -38,6 +38,7 @@ from typing import Any
 
 from magma_cycling.api.intervals_client import IntervalsClient
 from magma_cycling.config import get_intervals_config
+from magma_cycling.config.data_repo import resolve_intelligence_file_path
 from magma_cycling.intelligence.training_intelligence import TrainingIntelligence
 from magma_cycling.utils.cli import cli_main
 from magma_cycling.workflows.pid_eval.adherence import AdherenceMixin
@@ -97,7 +98,7 @@ class PIDDailyEvaluator(
         self.evaluation_log = (
             evaluation_log or Path.home() / "data" / "monitoring" / "pid_evaluation.jsonl"
         )
-        self.intelligence_file = intelligence_file or Path.home() / "data" / "intelligence.json"
+        self.intelligence_file = intelligence_file or resolve_intelligence_file_path()
 
         self.dry_run = dry_run
 
