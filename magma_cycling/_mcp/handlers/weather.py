@@ -17,6 +17,7 @@ le Coach IA / CD, pas par le handler lui-même (cf spec PoC Junior §1
 from __future__ import annotations
 
 import logging
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 from magma_cycling._mcp._utils import mcp_response, suppress_stdout_stderr
@@ -32,6 +33,20 @@ __all__ = [
     "handle_get_weather_along_route",
     "handle_get_weather_for_session",
 ]
+
+
+def _freshness_minutes(reference_dt: datetime | None) -> float | None:
+    """Compute minutes elapsed between reference_dt and now (UTC).
+
+    Used to surface data age to the coach LLM so it can weight stale
+    forecasts vs server time without recomputing client-side.
+    """
+    if reference_dt is None:
+        return None
+    if reference_dt.tzinfo is None:
+        reference_dt = reference_dt.replace(tzinfo=UTC)
+    delta = datetime.now(UTC) - reference_dt
+    return round(delta.total_seconds() / 60.0, 1)
 
 
 def _missing_circuit_error_payload(reason: str, session_id: str | None = None) -> dict:
@@ -105,6 +120,12 @@ async def handle_get_weather_along_route(args: dict) -> list[TextContent]:
                     "encore branchée. Dépend du chantier mining circuits depuis "
                     "Intervals.icu history (cf note d'archi §1.ter)."
                 ),
+                "interim_workaround": (
+                    "Utiliser get-rain-next-hour avec lat/lon des waypoints "
+                    "connus du circuit, ou get-vigilance avec le département "
+                    "traversé. La composition timestamp passage + segments "
+                    "viendra avec la milestone circuit resolution."
+                ),
             }
         )
 
@@ -140,6 +161,7 @@ async def handle_get_rain_next_hour(args: dict) -> list[TextContent]:
                 "status": "ok",
                 "handler": "get-rain-next-hour",
                 "data": rain.model_dump(mode="json"),
+                "freshness_minutes": _freshness_minutes(rain.update_time),
                 "query": {"lat": lat, "lon": lon},
             },
             provider_info={"name": provider.provider_name},
@@ -187,6 +209,7 @@ async def handle_get_vigilance(args: dict) -> list[TextContent]:
                 "handler": "get-vigilance",
                 "data": data,
                 "recommended_action": recommended_action,
+                "freshness_minutes": _freshness_minutes(bulletin.fetched_at),
                 "query": {"departement": departement},
             },
             provider_info={"name": provider.provider_name},

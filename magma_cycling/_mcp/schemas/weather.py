@@ -97,9 +97,12 @@ def get_tools() -> list[Tool]:
                 "sur tous les phénomènes du département + détail par "
                 "phénomène (vent/pluie/orages/neige/canicule/grand_froid/"
                 "avalanches/vagues_submersion/crues). "
-                "Politique recommandée côté Coach IA (cf note d'archi §3) : "
+                "Politique recommandée côté Coach IA (cf note d'archi §3), "
+                "alignée sur le champ recommended_action calculé côté handler : "
                 "rouge → bascule indoor automatique (avec confirmation Stéphane), "
-                "orange → flag pour décision, vert/jaune → info présentée."
+                "orange → flag pour décision humaine, "
+                "jaune → info présentée sans action, "
+                "vert → aucune action (pas de vigilance, rien à signaler)."
             ),
             inputSchema={
                 "type": "object",

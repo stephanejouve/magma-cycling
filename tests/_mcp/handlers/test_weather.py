@@ -84,6 +84,8 @@ class TestGetRainNextHour:
         assert data["query"]["lon"] == 3.4
         assert data["_metadata"]["provider"]["name"] == "meteofrance_community"
         assert "response_timestamp" in data["_metadata"]
+        assert "freshness_minutes" in data
+        assert isinstance(data["freshness_minutes"], int | float)
 
     @pytest.mark.asyncio
     async def test_provider_error_surfaces_structured(self):
@@ -140,6 +142,8 @@ class TestGetVigilance:
         assert data["status"] == "ok"
         assert data["recommended_action"] == expected_action
         assert data["data"]["max_color"] == max_color
+        assert "freshness_minutes" in data
+        assert isinstance(data["freshness_minutes"], int | float)
 
 
 class TestStubHandlers:
@@ -164,3 +168,5 @@ class TestStubHandlers:
         data = json.loads(result[0].text)
         assert data["status"] == "not_implemented_yet"
         assert data["circuit_id"] == "chataigneraie-56km"
+        assert "interim_workaround" in data
+        assert "get-rain-next-hour" in data["interim_workaround"]
