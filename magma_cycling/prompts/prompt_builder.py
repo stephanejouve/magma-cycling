@@ -269,25 +269,28 @@ def format_athlete_profile(context: dict, metrics: dict) -> str:
             limit = metrics.get("intensity_limit_pct")
             if limit and limit < 100:
                 lines.append(f"  - Intensite max: {limit}% FTP")
+        # ACWR / monotonie / strain : valeurs brutes uniquement (plan iso-config
+        # PR4bis). Les anciens labels sémantiques pré-mâchés
+        # (optimal/attention/DANGER, OK/elevee, OK/ALERTE) produisaient des faux
+        # positifs récurrents (ex. CTL effondré post-blessure + ATL modeste →
+        # ACWR > 1.5 → "DANGER" injecté à tort). Le Coach IA reçoit la phase
+        # explicite dans le daily report et croise valeur brute + contexte.
+        # Cohérent doctrine « Claude reste seul décisionnaire ».
         acwr = metrics.get("acwr")
         if acwr is not None:
-            if acwr < 0.8:
-                acwr_label = "sous-entrainement"
-            elif acwr <= 1.3:
-                acwr_label = "optimal"
-            elif acwr <= 1.5:
-                acwr_label = "attention"
-            else:
-                acwr_label = "DANGER"
-            lines.append(f"  - ACWR: {acwr:.2f} ({acwr_label})")
+            lines.append(f"  - ACWR: {acwr:.2f}")
+            chronic_load = metrics.get("chronic_load")
+            if chronic_load is not None:
+                lines.append(f"  - Charge chronique (CTL 28j): {chronic_load:.1f}")
+            acute_load = metrics.get("acute_load")
+            if acute_load is not None:
+                lines.append(f"  - Charge aigue (ATL 7j): {acute_load:.1f}")
         monotony = metrics.get("monotony")
         if monotony is not None:
-            mono_label = "elevee (risque)" if monotony > 2.0 else "OK"
-            lines.append(f"  - Monotonie: {monotony:.2f} ({mono_label})")
+            lines.append(f"  - Monotonie: {monotony:.2f}")
         strain = metrics.get("strain")
         if strain is not None:
-            strain_label = "ALERTE" if strain > 3500 else "OK"
-            lines.append(f"  - Strain: {strain:.0f} ({strain_label})")
+            lines.append(f"  - Strain: {strain:.0f}")
         consec = metrics.get("consecutive_training_days")
         if consec and consec >= 2:
             lines.append(f"  - Jours consecutifs: {consec}")

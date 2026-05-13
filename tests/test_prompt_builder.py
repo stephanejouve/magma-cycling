@@ -391,8 +391,13 @@ class TestFormatAthleteProfile:
         result = format_athlete_profile(context, metrics)
         assert "Indicateurs de charge" not in result
 
-    def test_acwr_monotony_strain_displayed(self):
-        """ACWR, Monotony, Strain appear in load indicators."""
+    def test_acwr_monotony_strain_raw_values_only(self):
+        """ACWR, Monotony, Strain shown as raw values without sematic labels.
+
+        Plan iso-config PR4bis: no more (optimal)/(attention)/(DANGER) on ACWR,
+        no (OK)/(elevee) on monotony, no (OK)/(ALERTE) on strain. Coach IA
+        cross-references raw value with phase context, decides itself.
+        """
         context = {"name": "Test", "age": 54}
         metrics = {
             "overtraining_risk": "low",
@@ -407,12 +412,24 @@ class TestFormatAthleteProfile:
             "strain": 2800,
         }
         result = format_athlete_profile(context, metrics)
-        assert "ACWR: 1.10 (optimal)" in result
-        assert "Monotonie: 1.50 (OK)" in result
-        assert "Strain: 2800 (OK)" in result
+        assert "ACWR: 1.10" in result
+        assert "Monotonie: 1.50" in result
+        assert "Strain: 2800" in result
+        # No more semantic labels in the prompt
+        assert "optimal" not in result
+        assert "attention" not in result
+        assert "DANGER" not in result
+        assert "(OK)" not in result
+        assert "elevee" not in result
+        assert "ALERTE" not in result
 
-    def test_acwr_danger_label(self):
-        """ACWR > 1.5 shows DANGER label."""
+    def test_acwr_high_value_no_danger_label(self):
+        """ACWR > 1.5 displays raw value without DANGER label.
+
+        Plan iso-config PR4bis: the 'DANGER' tag was a frequent false positive
+        on RECONSTRUCTION_BASE phase (collapsed CTL + modest ATL → mechanically
+        high ACWR). Coach IA reads the phase from the daily report and judges.
+        """
         context = {"name": "Test", "age": 54}
         metrics = {
             "overtraining_risk": "high",
@@ -423,7 +440,52 @@ class TestFormatAthleteProfile:
             "acwr": 1.8,
         }
         result = format_athlete_profile(context, metrics)
-        assert "ACWR: 1.80 (DANGER)" in result
+        assert "ACWR: 1.80" in result
+        assert "DANGER" not in result
+        assert "attention" not in result
+
+    def test_acwr_with_chronic_acute_load_context(self):
+        """ACWR is accompanied by chronic_load (CTL 28d) and acute_load (ATL 7d).
+
+        Plan iso-config PR4bis: provides the Coach IA with the raw building
+        blocks of ACWR so it can sanity-check the ratio (ex. ACWR > 1.5 caused
+        by collapsed chronic_load is a recovery context, not danger).
+        """
+        context = {"name": "Test", "age": 54}
+        metrics = {
+            "overtraining_risk": "low",
+            "overtraining_veto": False,
+            "overtraining_factors": [],
+            "atl_ctl_ratio": 0.95,
+            "tsb": 3.0,
+            "acwr": 1.1,
+            "chronic_load": 65.4,
+            "acute_load": 71.9,
+        }
+        result = format_athlete_profile(context, metrics)
+        assert "ACWR: 1.10" in result
+        assert "Charge chronique (CTL 28j): 65.4" in result
+        assert "Charge aigue (ATL 7j): 71.9" in result
+
+    def test_acwr_without_chronic_acute_load_compat(self):
+        """ACWR alone is still displayed when chronic/acute are missing.
+
+        Backward-compat: callers that build `metrics` manually (older fixtures)
+        and only pass `acwr` should still produce a valid prompt.
+        """
+        context = {"name": "Test", "age": 54}
+        metrics = {
+            "overtraining_risk": "low",
+            "overtraining_veto": False,
+            "overtraining_factors": [],
+            "atl_ctl_ratio": 0.95,
+            "tsb": 3.0,
+            "acwr": 1.1,
+        }
+        result = format_athlete_profile(context, metrics)
+        assert "ACWR: 1.10" in result
+        assert "Charge chronique" not in result
+        assert "Charge aigue" not in result
 
     def test_intensity_100_not_displayed(self):
         """Intensity limit of 100% is not displayed (normal training)."""
