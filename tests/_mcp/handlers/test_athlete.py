@@ -18,14 +18,13 @@ from magma_cycling._mcp.schemas import athlete as athlete_schema
 
 @pytest.fixture
 def isolated_yaml(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    """Redirect get_athlete_yaml_path to a temp file for isolation."""
+    """Redirect athlete YAML resolution to a temp file via the env override."""
     yaml_path = tmp_path / "athlete.yaml"
-    # Both the geo module and athlete_context import the resolver — patch it
-    # at the source so every caller redirects.
-    monkeypatch.setattr(
-        "magma_cycling.config.geo.get_athlete_yaml_path",
-        lambda: yaml_path,
-    )
+    # ATHLETE_CONFIG_PATH overrides every resolver path; clean ROOT envs so
+    # the test is independent of the host environment.
+    for var in ("TRAINING_DATA_ROOT", "TRAINING_DATA_REPO"):
+        monkeypatch.delenv(var, raising=False)
+    monkeypatch.setenv("ATHLETE_CONFIG_PATH", str(yaml_path))
     return yaml_path
 
 

@@ -64,6 +64,16 @@ WRITER_SCOPED_ENV = "TRAINING_DATA_WRITER_SCOPED"
 #: ``/home/magma/data/intelligence.json`` du writable layer Docker).
 INTELLIGENCE_DATA_DIR_ENV = "INTELLIGENCE_DATA_DIR"
 
+#: Var d'env override pour le path complet du fichier ``athlete.yaml``
+#: (rétro-compat dev / tests). Si définie, prend priorité sur
+#: ``<root>/config/athlete.yaml``. Par défaut (env absent) :
+#: ``<TRAINING_DATA_ROOT>/config/athlete.yaml`` pour que la config athlète
+#: vive dans le repo training-logs portable (plan iso-config PR5, AC1
+#: portabilité). Fallback final = ``paths.get_athlete_yaml_path()`` (legacy
+#: user config dir) quand aucune des deux options n'est disponible (boot
+#: initial sans repo, dev sans env).
+ATHLETE_CONFIG_PATH_ENV = "ATHLETE_CONFIG_PATH"
+
 #: Nom du fichier d'index `.operators.yaml` à la racine du repo.
 OPERATORS_FILE = ".operators.yaml"
 
@@ -74,6 +84,15 @@ INTELLIGENCE_SUBDIR = "data/intelligence"
 #: Nom du fichier intelligence sous :data:`INTELLIGENCE_SUBDIR`.
 INTELLIGENCE_FILENAME = "intelligence.json"
 
+#: Sous-dossier (relatif à la racine training-logs) qui héberge la config
+#: athlète portable (PR5 AC1). Shared cross-writers — un seul athlète par repo.
+ATHLETE_CONFIG_SUBDIR = "config"
+
+#: Nom du fichier athlète sous :data:`ATHLETE_CONFIG_SUBDIR`. PR5 plan
+#: iso-config : externalisation depuis ``magma_cycling/config/athlete_context.yaml``
+#: (bundle, devient bootstrap fallback) vers ce fichier portable.
+ATHLETE_CONFIG_FILENAME = "athlete.yaml"
+
 #: Whitelist par défaut des fichiers racine autorisés (utilisée si
 #: ``.operators.yaml`` absent ou ne définit pas ``shared_root_files``).
 #: ``data/intelligence/**`` est inclus pour que le mode writer-scoped futur
@@ -83,6 +102,7 @@ DEFAULT_SHARED_ROOT_FILES = [
     "README.md",
     OPERATORS_FILE,
     "data/intelligence/**",
+    "config/athlete.yaml",
 ]
 
 
@@ -118,6 +138,37 @@ def _resolve_root_from_env() -> Path | None:
         )
         return Path(legacy).expanduser()
     return None
+
+
+def resolve_athlete_yaml_path() -> Path:
+    """Résout le path de ``athlete.yaml`` (config athlète portable, PR5 AC1).
+
+    Priorité :
+
+    1. :data:`ATHLETE_CONFIG_PATH_ENV` (override explicite, dev / tests).
+    2. :data:`ROOT_ENV` (``TRAINING_DATA_ROOT``) → ``<root>/config/athlete.yaml``.
+    3. :data:`LEGACY_ROOT_ENV` (``TRAINING_DATA_REPO``) → idem (avec DeprecationWarning
+       déjà émis par :func:`_resolve_root_from_env`).
+    4. Fallback legacy ``paths.get_athlete_yaml_path()`` (user config dir),
+       qui préserve le comportement pré-PR5 sur un poste sans env training-logs.
+
+    Le helper ne touche pas au file system — la création du dossier parent
+    reste à la charge du caller (``mkdir(parents=True, exist_ok=True)``).
+    Le bundle ``magma_cycling/config/athlete_context.yaml`` reste utilisé en
+    bootstrap fallback en lecture par
+    :func:`magma_cycling.config.athlete_context.load_athlete_context` quand
+    le path résolu n'existe pas encore (= 1ère exécution sur un repo
+    training-logs vierge).
+    """
+    override = os.getenv(ATHLETE_CONFIG_PATH_ENV)
+    if override:
+        return Path(override).expanduser()
+    root = _resolve_root_from_env()
+    if root is not None:
+        return root / ATHLETE_CONFIG_SUBDIR / ATHLETE_CONFIG_FILENAME
+    from magma_cycling.paths import get_athlete_yaml_path
+
+    return get_athlete_yaml_path()
 
 
 def resolve_intelligence_file_path() -> Path:
@@ -352,6 +403,22 @@ class DataRepoConfig:
         return self.data_repo_path / ".workflow_state.json"
 
     @property
+    def athlete_config_path(self) -> Path:
+        """Path à ``athlete.yaml`` (shared cross-writers, sous root_path).
+
+        PR5 plan iso-config : la config athlète vit dans le repo training-logs
+        portable, pas dans le bundle MCP. Sous ``root_path`` (et non
+        ``data_repo_path``) car un seul athlète par repo training-logs —
+        invariant ADR v5 — donc shared cross-writers en mode writer-scoped.
+
+        :data:`ATHLETE_CONFIG_PATH_ENV` reste prioritaire (override dev / tests).
+        """
+        override = os.getenv(ATHLETE_CONFIG_PATH_ENV)
+        if override:
+            return Path(override).expanduser()
+        return self.root_path / ATHLETE_CONFIG_SUBDIR / ATHLETE_CONFIG_FILENAME
+
+    @property
     def intelligence_dir(self) -> Path:
         """Path au dossier intelligence (shared cross-writers).
 
@@ -386,6 +453,7 @@ class DataRepoConfig:
         self.terrain_circuits_dir.mkdir(parents=True, exist_ok=True)
         self.handoff_dir.mkdir(parents=True, exist_ok=True)
         self.intelligence_dir.mkdir(parents=True, exist_ok=True)
+        self.athlete_config_path.parent.mkdir(parents=True, exist_ok=True)
 
     def validate(self) -> bool:
         """Validate data repository structure.

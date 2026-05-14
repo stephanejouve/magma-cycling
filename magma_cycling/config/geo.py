@@ -5,11 +5,11 @@ Hosts :class:`GeoPoint` (lat/lon + optional label) and the
 MCP handler dispatch (see ``magma_cycling/_mcp/handlers/athlete.py``).
 
 The data lives in the athlete YAML resolved by
-:func:`magma_cycling.paths.get_athlete_yaml_path`. Today that's the user
-config dir (``~/.config/magma-cycling/athlete_context.yaml`` in a bundle,
-project root in dev). The plan iso-config PR5 (sprint S094) will move the
-file to ``training-logs/config/athlete.yaml`` racine; only the path
-resolution changes — the schema and helpers stay.
+:func:`magma_cycling.config.data_repo.resolve_athlete_yaml_path` (PR5
+plan iso-config). Priority: ``ATHLETE_CONFIG_PATH`` env override →
+``<TRAINING_DATA_ROOT>/config/athlete.yaml`` (cible portable PR5) →
+``paths.get_athlete_yaml_path()`` (legacy user config dir) → bundle
+fallback handled separately by ``athlete_context.load_athlete_context``.
 
 Migration noop : if ``home_location`` is absent from the YAML,
 :func:`load_home_location` returns ``None``. The caller surfaces this as
@@ -25,7 +25,7 @@ from pathlib import Path
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
-from magma_cycling.paths import get_athlete_yaml_path
+from magma_cycling.config.data_repo import resolve_athlete_yaml_path
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +71,7 @@ def load_home_location(path: Path | None = None) -> GeoPoint | None:
     Returns ``None`` when the YAML is absent or the key is missing
     (migration-noop semantics for pre-MCT-XXX-0 configs).
     """
-    yaml_path = path or get_athlete_yaml_path()
+    yaml_path = path or resolve_athlete_yaml_path()
     data = _read_yaml(yaml_path)
     raw = (data.get("athlete") or {}).get("home_location")
     if not raw:
@@ -90,7 +90,7 @@ def save_home_location(location: GeoPoint, path: Path | None = None) -> Path:
     ``athlete.home_location`` key, and writes back atomically. Returns the
     resolved path written.
     """
-    yaml_path = path or get_athlete_yaml_path()
+    yaml_path = path or resolve_athlete_yaml_path()
     data = _read_yaml(yaml_path)
     athlete = data.get("athlete")
     if not isinstance(athlete, dict):
