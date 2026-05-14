@@ -2,7 +2,7 @@
 
 import sys as _sys
 
-__version__ = "3.42.1"
+__version__ = "3.43.1"
 
 
 # Force UTF-8 on stdout/stderr so emoji characters used throughout the
