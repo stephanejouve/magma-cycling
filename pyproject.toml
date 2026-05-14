@@ -202,6 +202,11 @@ exclude = [
 commit_parser = "conventional"
 tag_format = "v{version}"
 version_toml = ["pyproject.toml:tool.poetry.version"]
+# Verrouille la cohérence cross-fichier : semantic-release bumpe aussi
+# ``magma_cycling/__init__.py:__version__`` à chaque release. Évite la
+# désync chronique observable runtime (CLI ``--version``, setup wizard,
+# handler MCP admin) qui était documentée en code (admin.py) sans fix.
+version_variables = ["magma_cycling/__init__.py:__version__"]
 
 [tool.semantic_release.branches.main]
 match = "main"
