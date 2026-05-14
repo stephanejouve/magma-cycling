@@ -90,6 +90,12 @@ INTELLIGENCE_FILENAME = "intelligence.json"
 #: backfill 90j via PR2bis remplit rétroactivement ce dossier (~270 KB).
 WELLNESS_SUBDIR = "data/wellness"
 
+#: Sous-dossier (relatif à la racine training-logs) qui héberge le decision
+#: log go-forward (PR8 plan iso-config). 1 fichier markdown par décision
+#: stratégique : ``decision-SXXX-NN.md`` avec front-matter YAML.
+#: Shared cross-writers — décisions = athlète, pas opérateur.
+DECISIONS_SUBDIR = "data/decisions"
+
 #: Sous-dossier (relatif à la racine training-logs) qui héberge la config
 #: athlète portable (PR5 AC1). Shared cross-writers — un seul athlète par repo.
 ATHLETE_CONFIG_SUBDIR = "config"
@@ -110,6 +116,7 @@ DEFAULT_SHARED_ROOT_FILES = [
     OPERATORS_FILE,
     "data/intelligence/**",
     "data/wellness/**",
+    "data/decisions/**",
     "config/athlete.yaml",
 ]
 
@@ -427,6 +434,16 @@ class DataRepoConfig:
         return self.root_path / ATHLETE_CONFIG_SUBDIR / ATHLETE_CONFIG_FILENAME
 
     @property
+    def decisions_dir(self) -> Path:
+        """Path au decision log go-forward (shared cross-writers, sous root_path).
+
+        PR8 plan iso-config : decisions = stratégiques athlète (changement
+        cible, bascule modale, post-incident, adaptation post-bilan ≥S+1).
+        1 fichier markdown par décision, granularité ≤10/mois.
+        """
+        return self.root_path / DECISIONS_SUBDIR
+
+    @property
     def wellness_dir(self) -> Path:
         """Path au dossier d'archive wellness (shared cross-writers, sous root_path).
 
@@ -474,6 +491,7 @@ class DataRepoConfig:
         self.intelligence_dir.mkdir(parents=True, exist_ok=True)
         self.athlete_config_path.parent.mkdir(parents=True, exist_ok=True)
         self.wellness_dir.mkdir(parents=True, exist_ok=True)
+        self.decisions_dir.mkdir(parents=True, exist_ok=True)
 
     def validate(self) -> bool:
         """Validate data repository structure.
