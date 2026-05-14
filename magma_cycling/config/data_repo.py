@@ -84,6 +84,12 @@ INTELLIGENCE_SUBDIR = "data/intelligence"
 #: Nom du fichier intelligence sous :data:`INTELLIGENCE_SUBDIR`.
 INTELLIGENCE_FILENAME = "intelligence.json"
 
+#: Sous-dossier (relatif à la racine training-logs) qui héberge l'archive
+#: wellness brut (1 fichier JSON par jour, PR2 plan iso-config AC2). Shared
+#: cross-writers — wellness est un fait per-athlète, pas per-writer. Le
+#: backfill 90j via PR2bis remplit rétroactivement ce dossier (~270 KB).
+WELLNESS_SUBDIR = "data/wellness"
+
 #: Sous-dossier (relatif à la racine training-logs) qui héberge la config
 #: athlète portable (PR5 AC1). Shared cross-writers — un seul athlète par repo.
 ATHLETE_CONFIG_SUBDIR = "config"
@@ -95,13 +101,15 @@ ATHLETE_CONFIG_FILENAME = "athlete.yaml"
 
 #: Whitelist par défaut des fichiers racine autorisés (utilisée si
 #: ``.operators.yaml`` absent ou ne définit pas ``shared_root_files``).
-#: ``data/intelligence/**`` est inclus pour que le mode writer-scoped futur
-#: (cf. ADR v5) autorise l'écriture intelligence shared cross-writers.
+#: ``data/intelligence/**`` et ``data/wellness/**`` sont inclus pour que le
+#: mode writer-scoped futur (cf. ADR v5) autorise l'écriture des artefacts
+#: shared cross-writers.
 DEFAULT_SHARED_ROOT_FILES = [
     ".gitignore",
     "README.md",
     OPERATORS_FILE,
     "data/intelligence/**",
+    "data/wellness/**",
     "config/athlete.yaml",
 ]
 
@@ -419,6 +427,17 @@ class DataRepoConfig:
         return self.root_path / ATHLETE_CONFIG_SUBDIR / ATHLETE_CONFIG_FILENAME
 
     @property
+    def wellness_dir(self) -> Path:
+        """Path au dossier d'archive wellness (shared cross-writers, sous root_path).
+
+        PR2 plan iso-config (AC2 self-contained) : 1 fichier JSON par jour de
+        wellness brut Intervals.icu (sleep, HRV, weight, readiness, CTL/ATL/TSB).
+        Sous ``root_path`` (et non ``data_repo_path``) car wellness est un fait
+        per-athlète, pas per-writer — invariant ADR v5.
+        """
+        return self.root_path / WELLNESS_SUBDIR
+
+    @property
     def intelligence_dir(self) -> Path:
         """Path au dossier intelligence (shared cross-writers).
 
@@ -454,6 +473,7 @@ class DataRepoConfig:
         self.handoff_dir.mkdir(parents=True, exist_ok=True)
         self.intelligence_dir.mkdir(parents=True, exist_ok=True)
         self.athlete_config_path.parent.mkdir(parents=True, exist_ok=True)
+        self.wellness_dir.mkdir(parents=True, exist_ok=True)
 
     def validate(self) -> bool:
         """Validate data repository structure.

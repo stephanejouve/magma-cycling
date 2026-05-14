@@ -170,6 +170,21 @@ class DailySync(
             "tsb_threshold": -10,  # TSB <-10
         }
 
+    def _archive_wellness_for_date(self, check_date: date) -> None:
+        """Archive raw wellness for ``check_date`` to training-logs (PR2)."""
+        from magma_cycling.wellness import archive_wellness_day, wellness_archive_exists
+
+        date_str = check_date.isoformat()
+        if wellness_archive_exists(date_str):
+            return
+        wellness_data = self.client.get_wellness(oldest=date_str, newest=date_str)
+        payload = next((d for d in wellness_data if d.get("id") == date_str), None)
+        if payload is None:
+            print(f"ℹ️  no wellness data for {date_str} — archive skipped")
+            return
+        target = archive_wellness_day(date_str, payload)
+        print(f"💾 wellness archived: {target}")
+
     def run(
         self,
         check_date: date,
@@ -189,6 +204,14 @@ class DailySync(
         print("=" * 80)
         print("DAILY SYNC - Vérification Quotidienne")
         print("=" * 80)
+
+        # 0. Archive raw wellness for the day under training-logs/data/wellness/
+        # (PR2 plan iso-config AC2 self-contained). Idempotent: skip if file
+        # already exists. Failures are non-fatal — daily-sync continues.
+        try:
+            self._archive_wellness_for_date(check_date)
+        except Exception as exc:  # noqa: BLE001 - non-fatal best-effort
+            print(f"⚠️  wellness archive skipped: {exc}")
 
         # 1. Check activities - returns (new_activities, completed_activities)
         new_activities, completed_activities = self.check_activities(check_date)
