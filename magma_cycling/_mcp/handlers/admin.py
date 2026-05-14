@@ -127,8 +127,6 @@ async def handle_system_info(args: dict) -> list[TextContent]:
             tool_count = -1
 
         # Version et data repo info — utiles pour TNR post-déploiement.
-        # ``__version__`` peut être stale (semantic-release ne bump pas
-        # ``magma_cycling/__init__.py``) — c'est cosmétique, pas un défaut.
         try:
             from magma_cycling import __version__ as version
         except Exception:
