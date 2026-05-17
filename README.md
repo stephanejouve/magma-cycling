@@ -299,7 +299,7 @@ User guides in `project-docs/guides/`:
 
 Technical docs in `project-docs/`:
 - [ROADMAP.md](project-docs/ROADMAP.md) — Project roadmap
-- [CHANGELOG.md](project-docs/CHANGELOG.md) — Version history
+- [CHANGELOG.md](CHANGELOG.md) — Version history
 - [COMMIT_CONVENTIONS.md](project-docs/COMMIT_CONVENTIONS.md) — Git commit traceability
 - [architecture/](project-docs/architecture/) — System architecture
 - [workflows/](project-docs/workflows/) — Workflow diagrams (GRAFCET, UML)
