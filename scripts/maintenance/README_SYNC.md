@@ -251,7 +251,7 @@ poetry run cleanup-archives --dry-run
 
 **✅ Nettoie:** `~/Documents/magma-cycling-archives/` (iCloud)
 
-**❌ Préserve:** `releases/` (local, jamais touché)
+**Note** : le dossier `releases/` du repo a été externalisé vers `~/Documents/Claude/magma-cycling/releases/` (hors repo public). Ce script ne le touche pas.
 
 ### Automatisation (optionnelle)
 
@@ -294,7 +294,7 @@ Summary:
 
 ### Sécurité
 
-- ✅ Archives locales (`releases/`) **jamais touchées**
+- ✅ Archives externalisées (`~/Documents/Claude/magma-cycling/releases/`) **jamais touchées**
 - ✅ Dry-run disponible pour prévisualiser
 - ✅ Ne supprime que les `.tar.gz` et `.sha256` dans iCloud
 - ✅ Garde toujours les N plus récentes

@@ -104,8 +104,9 @@ Le bot maintient le projet impeccable en :
 
 2. **Détectant les fichiers mal placés**
    - Identifie fichiers à la racine qui ne devraient pas y être
-   - Suggère l'emplacement approprié (releases/, archives/, etc.)
+   - Suggère l'emplacement approprié (`scripts/maintenance/`, `scripts/debug/`, etc.)
    - Liste blanche des fichiers autorisés à la racine
+   - **Note** : les archives (`*.tar.gz`) et la méta projet (`*moa*`, `*livraison*`, `*sprint*`) sont désormais externalisées hors repo public — voir `~/Documents/Claude/magma-cycling/`
 
 3. **Créant des archives**
    - Archive complète du projet (hors .git, caches, etc.)
@@ -291,20 +292,16 @@ Le bot suggère automatiquement où déplacer les fichiers :
 
 | Type de Fichier | Destination Suggérée |
 |-----------------|---------------------|
-| `*.tar.gz`, `*.zip` | `releases/` |
-| `*moa*`, `*livraison*`, `*sprint*` | `project-docs/archives/` |
 | `fix_*.py` | `scripts/maintenance/` |
 | `test_*.py` | `scripts/debug/` |
-| Autres `*.txt`, `*.md` | `project-docs/archives/` |
+| `*.tar.gz`, `*.zip` | externalisé — `~/Documents/Claude/magma-cycling/releases/` |
+| `*moa*`, `*livraison*`, `*sprint*`, autres `*.md` | externalisé — `~/Documents/Claude/magma-cycling/project-docs/archives/` |
 
 **Exemple :**
 ```
-⚠️  Found 3 misplaced files at root:
-  → ANALYSE_MOA.md → project-docs/archives/
-  → sprint-r5.tar.gz → releases/
+⚠️  Found 2 misplaced files at root:
   → fix_something.py → scripts/maintenance/
-
-Run 'git mv <file> <destination>' to organize these files
+  → ANALYSE_MOA.md → externalisé (~/Documents/Claude/magma-cycling/project-docs/archives/)
 ```
 
 #### Archives Hors Projet

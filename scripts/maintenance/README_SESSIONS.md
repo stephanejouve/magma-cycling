@@ -2,6 +2,8 @@
 
 Scripts pour gérer et archiver les sessions Claude Code.
 
+> ⚠️ **Doc partiellement obsolète (2026-05-17)** : `archive_claude_sessions.py` n'existe plus dans ce repo ; le sous-dossier `project-docs/sessions/` a été externalisé vers `~/Documents/Claude/magma-cycling/project-docs/sessions/`. Les sections qui référencent ces paths/scripts sont conservées pour historique mais ne reflètent plus l'état du repo. Le bot d'archivage actuel (résumés de session) vit dans le repo `outillages` (`session-summarizer`).
+
 ## 📋 Scripts Disponibles
 
 ### 1. `session_summarizer.py` - Résumé de Sessions

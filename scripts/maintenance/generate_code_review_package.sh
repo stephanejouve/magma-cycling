@@ -294,7 +294,7 @@ cat > "$OUTPUT_DIR/metrics_summary.txt" << METRICS_EOF
 ### Project Organization
 - ✅ Root directory clean (files essentiels seulement)
 - ✅ Scripts organized (maintenance/, debug/)
-- ✅ Archives centralized (releases/)
+- ✅ Archives externalisées (~/Documents/Claude/magma-cycling/releases/)
 - ✅ Documentation structured (project-docs/)
 
 ---
@@ -342,7 +342,7 @@ cat > "$OUTPUT_DIR/metrics_summary.txt" << METRICS_EOF
 ### Organization
 - ✅ Root cleanup: 14 fichiers déplacés/supprimés
 - ✅ Scripts organizés: 8 scripts → scripts/maintenance/
-- ✅ Archives centralisées: releases/ créé
+- ✅ Archives externalisées: ~/Documents/Claude/magma-cycling/releases/
 - ✅ Bot maintenance: Créé et opérationnel
 
 ---
@@ -387,19 +387,12 @@ echo "📄 Copie de la documentation..."
 cp CODING_STANDARDS.md "$OUTPUT_DIR/" 2>/dev/null || echo "⚠️  CODING_STANDARDS.md non trouvé"
 cp README.md "$OUTPUT_DIR/" 2>/dev/null || echo "⚠️  README.md non trouvé"
 
-# Copier les documents MOA récents
-if [ -d "project-docs/sprints" ]; then
-    cp project-docs/sprints/LIVRAISON_MOA_20260104.md "$OUTPUT_DIR/" 2>/dev/null && echo "✅ LIVRAISON_MOA copiée" || echo "ℹ️  LIVRAISON_MOA non trouvée"
-fi
+# Copier l'explication des warnings (déplacé sous guides/ depuis le tri initial)
+cp project-docs/guides/REVIEW_WARNINGS_EXPLAINED.md "$OUTPUT_DIR/" 2>/dev/null && echo "✅ Documentation warnings copiée" || echo "ℹ️  REVIEW_WARNINGS_EXPLAINED.md non trouvé"
 
-# Copier l'explication des warnings
-cp project-docs/REVIEW_WARNINGS_EXPLAINED.md "$OUTPUT_DIR/" 2>/dev/null && echo "✅ Documentation warnings copiée" || echo "ℹ️  REVIEW_WARNINGS_EXPLAINED.md non trouvé"
-
-# Copier les sessions de développement récentes
-if [ -d "project-docs/sessions" ]; then
-    mkdir -p "$OUTPUT_DIR/sessions"
-    cp project-docs/sessions/SESSION_20260104_PEP8_LIVRABLE.md "$OUTPUT_DIR/sessions/" 2>/dev/null && echo "✅ Session documentation copiée"
-fi
+# Note : project-docs/{sprints,sessions}/ ont été externalisés hors repo public
+# (~/Documents/Claude/magma-cycling/project-docs/) le 2026-05-17.
+# Les anciens cp de LIVRAISON_MOA et SESSION_*_PEP8_LIVRABLE ont été retirés.
 
 echo "⚙️  Copie des configurations..."
 echo "   📝 Configuration moderne dans pyproject.toml (PEP 518/621)"
@@ -947,7 +940,7 @@ review_package_v2.2.0_[TIMESTAMP]/
 
 - **Root directory** clean (essentiels seulement)
 - **Scripts** organisés (maintenance/, debug/)
-- **Archives** centralisées (releases/)
+- **Archives** externalisées (~/Documents/Claude/magma-cycling/releases/)
 - **Documentation** structurée (project-docs/)
 
 ---
