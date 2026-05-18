@@ -304,3 +304,101 @@ class TestTemporalHeuristic:
                 result = _extract(await handle_sync_week_to_calendar({"week_id": "S099"}))
 
         assert result["summary"]["warnings"] == 1
+
+
+class TestIntensityCoherenceValidation:
+    """Validate IF/type coherence rejects nonsensical sessions before sync."""
+
+    _VALIDATOR_PATCH = "magma_cycling.intervals_format_validator.IntervalsFormatValidator"
+
+    @pytest.mark.asyncio
+    async def test_rec_with_high_if_rejected_with_error(self):
+        """S094-01 régression: REC + TSS=18 + 15min → IF=0.85 (zone SS) → ERROR, no create."""
+        session = _make_session(
+            session_id="S094-01",
+            name="MorningRec",
+            session_type="REC",
+            tss_planned=18,
+            duration_min=15,
+            session_date=date(2026, 5, 18),
+            description="Récup",
+            status="planned",
+        )
+        plan = _make_plan(
+            [session],
+            start_date=date(2026, 5, 18),
+            end_date=date(2026, 5, 24),
+        )
+        client = _make_client()
+        workout_descs = {"S094-01-REC-MorningRec-V001": "- 15min @ 60% FTP"}
+
+        with _patch_sync(plan, client, workout_descriptions=workout_descs):
+            with patch(self._VALIDATOR_PATCH) as mock_val:
+                mock_val.return_value.validate_workout.return_value = (True, [], [])
+                result = _extract(await handle_sync_week_to_calendar({"week_id": "S094"}))
+
+        assert result["summary"]["to_create"] == 0
+        assert result["summary"]["errors"] == 1
+        assert "intensity incoherent" in result["errors"][0]
+        assert "SS" in result["errors"][0]
+        client.create_event.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_coherent_session_passes_validation(self):
+        """END + TSS=70 + 60min → IF=0.84... falls in TMP zone — fails coherence as expected.
+
+        Note: with adjacent-zone windows, any drift falls into a neighbour and fails.
+        Use exact-window values to pass: END 60min / 49 TSS → IF=0.7 (mid window).
+        """
+        session = _make_session(
+            session_id="S094-02",
+            name="EnduranceRide",
+            session_type="END",
+            tss_planned=49,
+            duration_min=60,
+            session_date=date(2026, 5, 19),
+            description="Endurance Z2",
+            status="planned",
+        )
+        plan = _make_plan(
+            [session],
+            start_date=date(2026, 5, 18),
+            end_date=date(2026, 5, 24),
+        )
+        client = _make_client()
+        workout_descs = {"S094-02-END-EnduranceRide-V001": "- 60min @ 70% FTP"}
+
+        with _patch_sync(plan, client, workout_descriptions=workout_descs):
+            with patch(self._VALIDATOR_PATCH) as mock_val:
+                mock_val.return_value.validate_workout.return_value = (True, [], [])
+                result = _extract(await handle_sync_week_to_calendar({"week_id": "S094"}))
+
+        assert result["summary"]["to_create"] == 1
+        assert result["summary"]["errors"] == 0
+        client.create_event.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_rest_day_bypass_coherence_check(self):
+        """A true rest day (REC, TSS=0, duration=0) bypasses coherence and creates NOTE."""
+        session = _make_session(
+            session_id="S094-07",
+            name="ReposComplet",
+            session_type="REC",
+            tss_planned=0,
+            duration_min=0,
+            session_date=date(2026, 5, 24),
+        )
+        plan = _make_plan(
+            [session],
+            start_date=date(2026, 5, 18),
+            end_date=date(2026, 5, 24),
+        )
+        client = _make_client()
+
+        with _patch_sync(plan, client):
+            result = _extract(await handle_sync_week_to_calendar({"week_id": "S094"}))
+
+        assert result["summary"]["to_create"] == 1
+        assert result["summary"]["errors"] == 0
+        call_args = client.create_event.call_args[0][0]
+        assert call_args["category"] == "NOTE"
