@@ -21,6 +21,35 @@ class ValidationResult(str, Enum):
     FAIL = "fail"
 
 
+TYPE_TO_IF_WINDOW: dict[str, tuple[float, float]] = {
+    "REC": (0.55, 0.65),
+    "END": (0.65, 0.75),
+    "TMP": (0.75, 0.85),
+    "SS": (0.85, 0.94),
+    "FTP": (0.95, 1.04),
+    "CLM": (0.95, 1.04),
+    "TT": (0.95, 1.04),
+    "VO2": (1.05, 1.14),
+}
+
+SKIP_IF_VALIDATION_TYPES: frozenset[str] = frozenset({"INT", "RACE", "TEC", "MIX", "SPR"})
+
+IF_WARNING_TOLERANCE = 0.05
+
+# Ordered intensity ladder (low → high) used to measure zone distance.
+# CLM/TT alias to FTP (same rank).
+_IF_ZONE_LADDER: list[str] = ["REC", "END", "TMP", "SS", "FTP", "VO2"]
+_IF_ZONE_ALIASES: dict[str, str] = {"CLM": "FTP", "TT": "FTP"}
+
+
+def _zone_rank(session_type: str) -> int:
+    canon = _IF_ZONE_ALIASES.get(session_type, session_type)
+    try:
+        return _IF_ZONE_LADDER.index(canon)
+    except ValueError:
+        return -1
+
+
 @dataclass
 class WorkoutCheck:
     """Single validation check result."""
@@ -293,6 +322,129 @@ def validate_workout(
         checks=checks,
         safe_to_prescribe=safe_to_prescribe,
         recommendations=recommendations,
+    )
+
+
+def compute_intensity_factor(tss: float, duration_minutes: float) -> float | None:
+    """Compute Intensity Factor from TSS and duration.
+
+    Inverse of TrainingPeaks formula: TSS = (t_sec × IF² × 100) / 3600
+    → IF = sqrt(TSS × 3600 / (t_sec × 100))
+
+    Returns None if inputs are non-positive (IF undefined).
+    """
+    if duration_minutes <= 0 or tss <= 0:
+        return None
+    duration_sec = duration_minutes * 60
+    return (tss * 3600 / (duration_sec * 100)) ** 0.5
+
+
+def validate_intensity_coherence(
+    session_type: str, tss: int, duration_minutes: int
+) -> WorkoutCheck:
+    """Validate (TSS, duration) produces an IF coherent with declared session_type.
+
+    Args:
+        session_type: Magma session type (REC, END, TMP, SS, FTP, CLM, TT, VO2, ...)
+        tss: Planned Training Stress Score
+        duration_minutes: Planned duration in minutes
+
+    Returns:
+        WorkoutCheck with result PASS / WARNING / FAIL.
+        - PASS: IF within reference window, OR session_type non-validable
+          (INT, RACE, TEC, MIX, SPR — multi-block or ad-hoc, no stable IF target)
+        - WARNING: IF within IF_WARNING_TOLERANCE of window edge
+        - FAIL: IF beyond tolerance OR falls in another zone's window
+    """
+    if session_type in SKIP_IF_VALIDATION_TYPES:
+        return WorkoutCheck(
+            check_name="Cohérence IF/type",
+            result=ValidationResult.PASS,
+            message=f"Type {session_type} : validation IF non-applicable (multi-bloc / ad-hoc)",
+            severity="info",
+        )
+
+    window = TYPE_TO_IF_WINDOW.get(session_type)
+    if window is None:
+        return WorkoutCheck(
+            check_name="Cohérence IF/type",
+            result=ValidationResult.PASS,
+            message=f"Type {session_type} : pas de window IF référence (validation skipped)",
+            severity="info",
+        )
+
+    if_calc = compute_intensity_factor(tss, duration_minutes)
+    if if_calc is None:
+        return WorkoutCheck(
+            check_name="Cohérence IF/type",
+            result=ValidationResult.PASS,
+            message=f"TSS={tss}, durée={duration_minutes}min : IF non-calculable (valeurs nulles)",
+            severity="info",
+        )
+
+    low, high = window
+
+    if low <= if_calc <= high:
+        return WorkoutCheck(
+            check_name="Cohérence IF/type",
+            result=ValidationResult.PASS,
+            message=f"IF calculé {if_calc:.2f} ∈ window {session_type} [{low:.2f}–{high:.2f}]",
+            severity="info",
+        )
+
+    delta = (low - if_calc) if if_calc < low else (if_calc - high)
+
+    zone_match = None
+    for other_type, (other_low, other_high) in TYPE_TO_IF_WINDOW.items():
+        if other_type == session_type:
+            continue
+        if other_low <= if_calc <= other_high:
+            zone_match = other_type
+            break
+
+    if zone_match is not None:
+        declared_rank = _zone_rank(session_type)
+        match_rank = _zone_rank(zone_match)
+        if declared_rank >= 0 and match_rank >= 0 and abs(declared_rank - match_rank) <= 1:
+            return WorkoutCheck(
+                check_name="Cohérence IF/type",
+                result=ValidationResult.WARNING,
+                message=(
+                    f"IF calculé {if_calc:.2f} dans zone adjacente {zone_match} "
+                    f"(déclaré {session_type}, window [{low:.2f}–{high:.2f}])"
+                ),
+                severity="warning",
+            )
+        return WorkoutCheck(
+            check_name="Cohérence IF/type",
+            result=ValidationResult.FAIL,
+            message=(
+                f"IF calculé {if_calc:.2f} (TSS={tss}, durée={duration_minutes}min) "
+                f"tombe dans la zone {zone_match}, pas {session_type} "
+                f"(window attendue [{low:.2f}–{high:.2f}])"
+            ),
+            severity="critical",
+        )
+
+    if delta > IF_WARNING_TOLERANCE:
+        return WorkoutCheck(
+            check_name="Cohérence IF/type",
+            result=ValidationResult.FAIL,
+            message=(
+                f"IF calculé {if_calc:.2f} hors window {session_type} "
+                f"[{low:.2f}–{high:.2f}] (écart {delta:+.2f})"
+            ),
+            severity="critical",
+        )
+
+    return WorkoutCheck(
+        check_name="Cohérence IF/type",
+        result=ValidationResult.WARNING,
+        message=(
+            f"IF calculé {if_calc:.2f} légèrement hors window {session_type} "
+            f"[{low:.2f}–{high:.2f}] (écart {delta:+.2f})"
+        ),
+        severity="warning",
     )
 
 

@@ -83,6 +83,33 @@ async def handle_sync_week_to_calendar(args: dict) -> list[TextContent]:
                     and session.duration_min == 0
                 )
 
+                if not is_rest_day:
+                    from magma_cycling.planning.workout_validation import (
+                        ValidationResult,
+                        validate_intensity_coherence,
+                    )
+
+                    coherence_check = validate_intensity_coherence(
+                        session_type=session.session_type,
+                        tss=session.tss_planned,
+                        duration_minutes=session.duration_min,
+                    )
+                    if coherence_check.result == ValidationResult.FAIL:
+                        errors.append(
+                            f"Session {session.session_id}: intensity incoherent — "
+                            f"{coherence_check.message}. "
+                            f"Correct session_type, tss_planned, or duration_min before syncing."
+                        )
+                        continue
+                    if coherence_check.result == ValidationResult.WARNING:
+                        warnings.append(
+                            {
+                                "session_id": session.session_id,
+                                "type": "intensity_drift",
+                                "message": coherence_check.message,
+                            }
+                        )
+
                 # Guard: non-rest sessions MUST have a structured workout
                 # from the workouts file — escalate if missing (never sync placeholders)
                 if not is_rest_day and intervals_name not in workout_descriptions:

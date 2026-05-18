@@ -10,7 +10,9 @@ import pytest
 
 from magma_cycling.planning.workout_validation import (
     ValidationResult,
+    compute_intensity_factor,
     format_validation_report,
+    validate_intensity_coherence,
     validate_workout,
 )
 
@@ -453,6 +455,159 @@ class TestEdgeCases:
         # Should have multiple checks failing/warning
         failed_checks = [c for c in validation.checks if c.result == ValidationResult.FAIL]
         assert len(failed_checks) >= 1  # At least sleep failure
+
+
+class TestComputeIntensityFactor:
+    """Tests for IF computation from (TSS, duration)."""
+
+    def test_if_60min_at_threshold(self):
+        """1h à FTP = 100 TSS = IF 1.00 par définition."""
+        assert compute_intensity_factor(tss=100, duration_minutes=60) == pytest.approx(1.0)
+
+    def test_if_s094_01_regression(self):
+        """S094-01 régression : REC 18 TSS / 15min → IF ≈ 0.849."""
+        assert compute_intensity_factor(tss=18, duration_minutes=15) == pytest.approx(
+            0.849, abs=0.01
+        )
+
+    def test_if_s094_05_regression(self):
+        """S094-05 régression : REC 16 TSS / 10min → IF ≈ 0.980."""
+        assert compute_intensity_factor(tss=16, duration_minutes=10) == pytest.approx(
+            0.980, abs=0.01
+        )
+
+    def test_if_zero_tss_returns_none(self):
+        assert compute_intensity_factor(tss=0, duration_minutes=60) is None
+
+    def test_if_zero_duration_returns_none(self):
+        assert compute_intensity_factor(tss=100, duration_minutes=0) is None
+
+
+class TestValidateIntensityCoherence:
+    """Tests for IF/type coherence validation."""
+
+    def test_rec_in_window_pass(self):
+        """REC 60min / 36 TSS → IF 0.60 ∈ [0.55-0.65]."""
+        check = validate_intensity_coherence("REC", tss=36, duration_minutes=60)
+        assert check.result == ValidationResult.PASS
+
+    def test_end_in_window_pass(self):
+        """END 120min / 98 TSS → IF 0.70 ∈ [0.65-0.75]."""
+        check = validate_intensity_coherence("END", tss=98, duration_minutes=120)
+        assert check.result == ValidationResult.PASS
+
+    def test_tmp_in_window_pass(self):
+        """TMP 60min / 64 TSS → IF 0.80 ∈ [0.75-0.85]."""
+        check = validate_intensity_coherence("TMP", tss=64, duration_minutes=60)
+        assert check.result == ValidationResult.PASS
+
+    def test_ss_in_window_pass(self):
+        """SS 60min / 81 TSS → IF 0.90 ∈ [0.85-0.94]."""
+        check = validate_intensity_coherence("SS", tss=81, duration_minutes=60)
+        assert check.result == ValidationResult.PASS
+
+    def test_ftp_in_window_pass(self):
+        """FTP 60min / 100 TSS → IF 1.00 ∈ [0.95-1.04]."""
+        check = validate_intensity_coherence("FTP", tss=100, duration_minutes=60)
+        assert check.result == ValidationResult.PASS
+
+    def test_vo2_in_window_pass(self):
+        """VO2 30min / 60 TSS → IF ≈ 1.095 ∈ [1.05-1.14]."""
+        check = validate_intensity_coherence("VO2", tss=60, duration_minutes=30)
+        assert check.result == ValidationResult.PASS
+
+    def test_s094_01_rec_to_ss_fail(self):
+        """Régression S094-01 : REC 15min / 18 TSS → IF 0.85 = zone SS → FAIL."""
+        check = validate_intensity_coherence("REC", tss=18, duration_minutes=15)
+        assert check.result == ValidationResult.FAIL
+        assert check.severity == "critical"
+        assert "SS" in check.message
+
+    def test_s094_05_rec_to_ftp_fail(self):
+        """Régression S094-05 : REC 10min / 16 TSS → IF 0.98 = zone FTP → FAIL."""
+        check = validate_intensity_coherence("REC", tss=16, duration_minutes=10)
+        assert check.result == ValidationResult.FAIL
+        assert check.severity == "critical"
+        assert "FTP" in check.message
+
+    def test_vo2_too_high_no_zone_match_fail(self):
+        """VO2 60min / 169 TSS → IF ≈ 1.30 hors window, pas dans autre zone → FAIL."""
+        check = validate_intensity_coherence("VO2", tss=169, duration_minutes=60)
+        assert check.result == ValidationResult.FAIL
+        assert check.severity == "critical"
+
+    def test_rec_just_below_window_warning(self):
+        """REC 60min / 26 TSS → IF ≈ 0.510, écart 0.04 < tolérance 0.05, no zone match → WARNING."""
+        check = validate_intensity_coherence("REC", tss=26, duration_minutes=60)
+        assert check.result == ValidationResult.WARNING
+        assert check.severity == "warning"
+
+    def test_vo2_just_above_window_warning(self):
+        """VO2 60min / 134 TSS → IF ≈ 1.158, écart 0.018 < tolérance 0.05, no zone match → WARNING."""
+        check = validate_intensity_coherence("VO2", tss=134, duration_minutes=60)
+        assert check.result == ValidationResult.WARNING
+
+    def test_adjacent_zone_drift_warning(self):
+        """END 60min / 65 TSS → IF ≈ 0.806 dans zone TMP adjacente → WARNING (pas FAIL).
+
+        Drift d'une seule zone (rank distance = 1) accepté en WARNING : sync continue,
+        on flagge mais on ne bloque pas. Évite de rejeter des sessions END légèrement
+        teintées de Tempo ou Recovery.
+        """
+        check = validate_intensity_coherence("END", tss=65, duration_minutes=60)
+        assert check.result == ValidationResult.WARNING
+        assert "TMP" in check.message
+        assert "adjacente" in check.message
+
+    def test_end_just_below_window_to_rec_warning(self):
+        """END 90min / 55 TSS → IF ≈ 0.605 dans REC adjacente → WARNING.
+
+        Cas test_session_ids_filter (fixture historique) : la séance END légère
+        ne doit pas être bloquée, juste flaggée.
+        """
+        check = validate_intensity_coherence("END", tss=55, duration_minutes=90)
+        assert check.result == ValidationResult.WARNING
+        assert "REC" in check.message
+
+    def test_distant_zone_drift_fail(self):
+        """REC déclaré + IF tombant 2+ zones plus haut → FAIL (cas S094-01/05)."""
+        check = validate_intensity_coherence("REC", tss=18, duration_minutes=15)
+        assert check.result == ValidationResult.FAIL
+
+    def test_int_skip_validation(self):
+        check = validate_intensity_coherence("INT", tss=18, duration_minutes=15)
+        assert check.result == ValidationResult.PASS
+        assert "non-applicable" in check.message
+
+    def test_race_skip_validation(self):
+        check = validate_intensity_coherence("RACE", tss=200, duration_minutes=60)
+        assert check.result == ValidationResult.PASS
+
+    def test_mix_skip_validation(self):
+        check = validate_intensity_coherence("MIX", tss=100, duration_minutes=60)
+        assert check.result == ValidationResult.PASS
+
+    def test_unknown_type_skip_validation(self):
+        check = validate_intensity_coherence("XYZ", tss=100, duration_minutes=60)
+        assert check.result == ValidationResult.PASS
+        assert "pas de window IF référence" in check.message
+
+    def test_zero_tss_skip(self):
+        check = validate_intensity_coherence("REC", tss=0, duration_minutes=60)
+        assert check.result == ValidationResult.PASS
+        assert "non-calculable" in check.message
+
+    def test_zero_duration_skip(self):
+        check = validate_intensity_coherence("REC", tss=36, duration_minutes=0)
+        assert check.result == ValidationResult.PASS
+
+    def test_clm_aliases_to_ftp_window_pass(self):
+        check = validate_intensity_coherence("CLM", tss=100, duration_minutes=60)
+        assert check.result == ValidationResult.PASS
+
+    def test_tt_aliases_to_ftp_window_pass(self):
+        check = validate_intensity_coherence("TT", tss=100, duration_minutes=60)
+        assert check.result == ValidationResult.PASS
 
 
 if __name__ == "__main__":
