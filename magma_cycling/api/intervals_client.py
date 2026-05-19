@@ -87,6 +87,7 @@ class IntervalsClient:
         self.session = requests.Session()
         self.session.auth = ("API_KEY", api_key)
         self.session.headers.update({"Content-Type": "application/json"})
+        self.last_error: dict[str, Any] | None = None
 
     def get_athlete(self) -> dict[str, Any]:
         """
@@ -459,6 +460,7 @@ class IntervalsClient:
             >>> if created:
             ...     print(f"Created event ID: {created.get('id')}")
         """
+        self.last_error = None
         try:
             url = f"{self.BASE_URL}/athlete/{self.athlete_id}/events"
             response = self.session.post(url, json=event_data)
@@ -469,17 +471,33 @@ class IntervalsClient:
             return created_event
 
         except requests.exceptions.HTTPError as e:
-            logger.error(f"HTTP error creating event: {e}")
+            status_code = e.response.status_code if e.response is not None else None
+            body: Any = None
             if e.response is not None:
                 try:
-                    error_detail = _safe_json(e.response)
-                    logger.error(f"Error detail: {error_detail}")
+                    body = _safe_json(e.response)
                 except Exception:
-                    logger.error(f"Response: {_safe_text(e.response)}")
+                    body = _safe_text(e.response)
+            self.last_error = {
+                "type": "http_error",
+                "status_code": status_code,
+                "body": body,
+                "message": str(e),
+                "event_data": event_data,
+            }
+            logger.error(f"HTTP error creating event: {e}")
+            if body is not None:
+                logger.error(f"Error detail: {body}")
             logger.error(f"Event data: {event_data}")
             return None
 
         except Exception as e:
+            self.last_error = {
+                "type": "exception",
+                "exception_class": type(e).__name__,
+                "message": str(e),
+                "event_data": event_data,
+            }
             logger.error(f"Error creating event: {e}")
             logger.error(f"Event data: {event_data}")
             return None

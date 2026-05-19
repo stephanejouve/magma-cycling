@@ -252,10 +252,16 @@ async def handle_sync_week_to_calendar(args: dict) -> list[TextContent]:
                         created = client.create_event(item["event_data"])
 
                         if created is None:
-                            errors.append(
-                                f"Failed to create {item['session_id']}: API returned None "
-                                f"(check logs for HTTP errors)"
-                            )
+                            err = getattr(client, "last_error", None) or {}
+                            detail = err.get("message") or "API returned None"
+                            status_code = err.get("status_code")
+                            body = err.get("body")
+                            parts = [f"Failed to create {item['session_id']}: {detail}"]
+                            if status_code is not None:
+                                parts.append(f" (HTTP {status_code})")
+                            if body:
+                                parts.append(f" — body: {str(body)[:200]}")
+                            errors.append("".join(parts))
                         elif "id" not in created:
                             errors.append(
                                 f"Failed to create {item['session_id']}: Response missing 'id' field. "

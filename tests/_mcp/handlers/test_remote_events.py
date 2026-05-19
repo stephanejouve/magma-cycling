@@ -393,6 +393,7 @@ class TestHandleCreateRemoteNote:
         client = MagicMock()
         client.get_provider_info.return_value = MOCK_PROVIDER_INFO
         client.create_event.return_value = {}  # no 'id' key
+        client.last_error = None
         mock_factory.return_value = client
 
         with patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower:
@@ -557,3 +558,126 @@ class TestHandleCreateRemoteNote:
         plan = json.loads(plan_path.read_text(encoding="utf-8"))
         s01 = next(s for s in plan["planned_sessions"] if s["session_id"] == "S999-01")
         assert s01["status"] == "uploaded"
+
+
+class TestHandleCreateRemoteNoteErrorBubbleUp:
+    """Section O regression: surface Intervals.icu HTTP errors in MCP response.
+
+    Before fix: `create_event` returned None silently on HTTP error and the
+    handler responded with a generic 'Failed to create NOTE - no ID returned'
+    message — leaving Coach AI / Claude Desktop with 'Tool execution failed'
+    and no actionable detail. After fix: `client.last_error` carries
+    {status_code, body, message} and the handler propagates it.
+    """
+
+    _PAYLOADS = [
+        {
+            "date": "2026-05-20",
+            "name": "Test Coaching avec accents é à",
+            "description": "Boire 1L+, IF cible 0.70, plan B en cas pluie",
+        },
+        {
+            "date": "2026-05-20",
+            "name": "Test Coaching sans accents",
+            "description": "Boire eau, IF cible 0.70",
+        },
+        {
+            "date": "2026-05-20",
+            "name": "Test minimal",
+            "description": "Test",
+        },
+    ]
+
+    @pytest.mark.asyncio
+    @patch("magma_cycling.config.create_intervals_client")
+    async def test_http_400_surfaces_status_and_body(self, mock_factory):
+        """HTTP 400 from Intervals.icu must produce an actionable MCP message."""
+        client = MagicMock()
+        client.get_provider_info.return_value = MOCK_PROVIDER_INFO
+        client.create_event.return_value = None
+        client.last_error = {
+            "type": "http_error",
+            "status_code": 400,
+            "body": {"error": "Invalid start_date_local format"},
+            "message": "400 Bad Request",
+            "event_data": self._PAYLOADS[0],
+        }
+        mock_factory.return_value = client
+
+        with patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower:
+            mock_tower.planning_dir.exists.return_value = False
+            result = await handle_create_remote_note(self._PAYLOADS[0])
+
+        data = json.loads(result[0].text)
+        assert data["success"] is False
+        assert "HTTP 400" in data["message"]
+        assert "Invalid start_date_local format" in data["message"]
+        assert data["error_detail"]["status_code"] == 400
+
+    @pytest.mark.asyncio
+    @patch("magma_cycling.config.create_intervals_client")
+    async def test_http_401_surfaces_auth_error(self, mock_factory):
+        """HTTP 401 (auth fail) propagated with status code."""
+        client = MagicMock()
+        client.get_provider_info.return_value = MOCK_PROVIDER_INFO
+        client.create_event.return_value = None
+        client.last_error = {
+            "type": "http_error",
+            "status_code": 401,
+            "body": "Unauthorized",
+            "message": "401 Unauthorized",
+            "event_data": self._PAYLOADS[1],
+        }
+        mock_factory.return_value = client
+
+        with patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower:
+            mock_tower.planning_dir.exists.return_value = False
+            result = await handle_create_remote_note(self._PAYLOADS[1])
+
+        data = json.loads(result[0].text)
+        assert data["success"] is False
+        assert "HTTP 401" in data["message"]
+        assert data["error_detail"]["status_code"] == 401
+
+    @pytest.mark.asyncio
+    @patch("magma_cycling.config.create_intervals_client")
+    async def test_http_404_minimal_payload(self, mock_factory):
+        """Minimal payload + HTTP 404 still surfaces error detail."""
+        client = MagicMock()
+        client.get_provider_info.return_value = MOCK_PROVIDER_INFO
+        client.create_event.return_value = None
+        client.last_error = {
+            "type": "http_error",
+            "status_code": 404,
+            "body": {"error": "Not found"},
+            "message": "404 Not Found",
+            "event_data": self._PAYLOADS[2],
+        }
+        mock_factory.return_value = client
+
+        with patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower:
+            mock_tower.planning_dir.exists.return_value = False
+            result = await handle_create_remote_note(self._PAYLOADS[2])
+
+        data = json.loads(result[0].text)
+        assert data["success"] is False
+        assert "HTTP 404" in data["message"]
+        assert data["error_detail"]["status_code"] == 404
+
+    @pytest.mark.asyncio
+    @patch("magma_cycling.config.create_intervals_client")
+    async def test_no_last_error_falls_back_to_unknown(self, mock_factory):
+        """If client has no last_error (legacy path), fallback to 'unknown error'."""
+        client = MagicMock()
+        client.get_provider_info.return_value = MOCK_PROVIDER_INFO
+        client.create_event.return_value = None
+        client.last_error = None
+        mock_factory.return_value = client
+
+        with patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower:
+            mock_tower.planning_dir.exists.return_value = False
+            result = await handle_create_remote_note(self._PAYLOADS[0])
+
+        data = json.loads(result[0].text)
+        assert data["success"] is False
+        assert "unknown error" in data["message"]

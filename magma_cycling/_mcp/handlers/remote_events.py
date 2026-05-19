@@ -397,9 +397,22 @@ async def handle_create_remote_note(args: dict) -> list[TextContent]:
                     "message": f"✅ NOTE created successfully on Intervals.icu (ID: {created_event['id']}){local_update_msg}",
                 }
             else:
+                err = getattr(client, "last_error", None) or {}
+                detail = err.get("message") or "unknown error"
+                status_code = err.get("status_code")
+                body = err.get("body")
+                message_parts = ["❌ Failed to create NOTE on Intervals.icu — ", detail]
+                if status_code is not None:
+                    message_parts.append(f" (HTTP {status_code})")
+                if body:
+                    body_preview = str(body)[:200]
+                    message_parts.append(f" — body: {body_preview}")
                 result = {
                     "success": False,
-                    "message": "❌ Failed to create NOTE - no ID returned from Intervals.icu",
+                    "message": "".join(message_parts),
+                    "error_detail": err,
+                    "date": note_date,
+                    "name": name,
                 }
 
         return mcp_response(result, provider_info=_provider_info)
