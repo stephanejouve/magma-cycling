@@ -25,12 +25,16 @@ def reconcile_session_tss(
     *,
     threshold_abs: int = 5,
     threshold_pct: float = 0.10,
+    suspicious_ratio: float = 2.0,
 ) -> TssReconciliationResult:
     """Reconcile TSS for a single session.
 
-    Remote-wins strategy with threshold: adopt remote if delta exceeds
-    max(threshold_abs, local * threshold_pct). Skip if remote is None/0
-    (rest day) or delta within tolerance (LLM rounding).
+    Remote-wins strategy with two thresholds:
+    1. Below `max(threshold_abs, local * threshold_pct)` → skip (LLM rounding)
+    2. Above `suspicious_ratio` factor (default 2x) → skipped_suspicious
+       (likely remote parser bug, e.g. power range "67-72%" misinterpreted
+       as borne haute multiplied — observed S094-04 with local=60 vs remote=212)
+    3. Between the two → adopt remote (genuine Intervals correction)
 
     Args:
         session_id: Session identifier (e.g. "S087-01").
@@ -38,6 +42,8 @@ def reconcile_session_tss(
         remote_tss: TSS from remote platform (icu_training_load), None for rest days.
         threshold_abs: Absolute threshold in TSS (default 5).
         threshold_pct: Percentage threshold of local TSS (default 10%).
+        suspicious_ratio: Ratio above which divergence is flagged as aberrant
+            (default 2.0 → flags if remote ≥ 2× local OR remote ≤ 0.5× local).
 
     Returns:
         TssReconciliationResult with reconciled value and action taken.
@@ -67,7 +73,24 @@ def reconcile_session_tss(
             reason=f"Delta {delta} within threshold {threshold}",
         )
 
-    # Remote wins — clamp to [0, 500] for Pydantic model safety
+    if local_tss > 0:
+        ratio = remote_tss / local_tss
+        if ratio >= suspicious_ratio or ratio <= (1.0 / suspicious_ratio):
+            return TssReconciliationResult(
+                session_id=session_id,
+                local_tss=local_tss,
+                remote_tss=remote_tss,
+                reconciled_tss=local_tss,
+                delta=delta,
+                action="skipped_suspicious",
+                reason=(
+                    f"Suspicious divergence: remote/local ratio {ratio:.2f}x outside "
+                    f"[{1.0 / suspicious_ratio:.2f}x, {suspicious_ratio:.2f}x] "
+                    f"(likely remote parser bug, e.g. power range misinterpretation). "
+                    f"Local TSS kept."
+                ),
+            )
+
     reconciled = max(0, min(500, remote_tss))
     return TssReconciliationResult(
         session_id=session_id,
@@ -109,6 +132,7 @@ def reconcile_week_tss(
     tss_reconciled_total = sum(r.reconciled_tss for r in results)
     sessions_updated = sum(1 for r in results if r.action == "updated")
     sessions_skipped = sum(1 for r in results if r.action in ("skipped", "skipped_rest"))
+    sessions_suspicious = sum(1 for r in results if r.action == "skipped_suspicious")
 
     return {
         "results": results,
@@ -117,4 +141,5 @@ def reconcile_week_tss(
         "tss_reconciled_total": tss_reconciled_total,
         "sessions_updated": sessions_updated,
         "sessions_skipped": sessions_skipped,
+        "sessions_suspicious": sessions_suspicious,
     }
