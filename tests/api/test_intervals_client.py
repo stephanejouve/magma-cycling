@@ -273,6 +273,60 @@ class TestCreateEvent:
 
         assert result is None
 
+    def test_create_event_http_error_populates_last_error(self, client, mock_session):
+        """HTTP error must populate client.last_error with status_code + body + message."""
+        import requests
+
+        err_response = Mock()
+        err_response.status_code = 400
+        err_response.json.return_value = {"error": "Invalid date format"}
+        err_response.text = '{"error": "Invalid date format"}'
+
+        mock_response = Mock()
+        http_err = requests.exceptions.HTTPError("400 Bad Request")
+        http_err.response = err_response
+        mock_response.raise_for_status.side_effect = http_err
+        mock_session.post.return_value = mock_response
+
+        event_data = {"category": "NOTE", "name": "Test", "description": "Test"}
+
+        result = client.create_event(event_data)
+
+        assert result is None
+        assert client.last_error is not None
+        assert client.last_error["type"] == "http_error"
+        assert client.last_error["status_code"] == 400
+        assert client.last_error["body"] == {"error": "Invalid date format"}
+        assert "400 Bad Request" in client.last_error["message"]
+        assert client.last_error["event_data"] == event_data
+
+    def test_create_event_generic_error_populates_last_error(self, client, mock_session):
+        """Generic exception must populate client.last_error with exception_class + message."""
+        mock_session.post.side_effect = ValueError("Bad payload")
+
+        event_data = {"category": "NOTE", "name": "Test", "description": "Test"}
+
+        result = client.create_event(event_data)
+
+        assert result is None
+        assert client.last_error is not None
+        assert client.last_error["type"] == "exception"
+        assert client.last_error["exception_class"] == "ValueError"
+        assert client.last_error["message"] == "Bad payload"
+
+    def test_create_event_success_resets_last_error(self, client, mock_session):
+        """Successful create_event must reset last_error from any previous failure."""
+        client.last_error = {"type": "http_error", "status_code": 500}
+
+        mock_response = Mock()
+        mock_response.json.return_value = {"id": 42}
+        mock_session.post.return_value = mock_response
+
+        result = client.create_event({"category": "NOTE", "name": "OK", "description": "OK"})
+
+        assert result == {"id": 42}
+        assert client.last_error is None
+
 
 class TestErrorHandling:
     """Tests for error handling across all methods."""
