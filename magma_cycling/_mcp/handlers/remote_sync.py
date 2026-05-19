@@ -331,9 +331,23 @@ async def handle_sync_week_to_calendar(args: dict) -> list[TextContent]:
                                         session.tss_planned = r.reconciled_tss
                                         break
 
+                    for r in recon["results"]:
+                        if r.action == "skipped_suspicious":
+                            warnings.append(
+                                {
+                                    "session_id": r.session_id,
+                                    "type": "tss_divergence_suspicious",
+                                    "message": (
+                                        f"⚠️ TSS divergence flagged: local={r.local_tss}, "
+                                        f"remote={r.remote_tss}, delta={r.delta}. {r.reason}"
+                                    ),
+                                }
+                            )
+
                     tss_reconciliation_summary = {
                         "sessions_updated": recon["sessions_updated"],
                         "sessions_skipped": recon["sessions_skipped"],
+                        "sessions_suspicious": recon.get("sessions_suspicious", 0),
                         "tss_local_total": recon["tss_local_total"],
                         "tss_remote_total": recon["tss_remote_total"],
                         "tss_reconciled_total": recon["tss_reconciled_total"],

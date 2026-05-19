@@ -128,3 +128,62 @@ class TestReconcileWeekTss:
         result = reconcile_week_tss(sessions)
         assert result["sessions_updated"] == 0
         assert result["sessions_skipped"] == 2
+
+
+class TestSuspiciousDivergence:
+    """Tests for the suspicious divergence guard (Section N regression)."""
+
+    def test_s094_04_regression_remote_3x_higher_skipped_suspicious(self):
+        """S094-04 régression : local=60, remote=212 (3.53x) → skipped_suspicious, local kept."""
+        r = reconcile_session_tss("S094-04", local_tss=60, remote_tss=212)
+        assert r.action == "skipped_suspicious"
+        assert r.reconciled_tss == 60
+        assert r.delta == 152
+        assert "Suspicious divergence" in r.reason
+        assert "3.53x" in r.reason
+
+    def test_s094_06_regression_modest_divergence_still_updated(self):
+        """S094-06 régression : local=75, remote=92 (1.23x) → updated (under suspicious threshold)."""
+        r = reconcile_session_tss("S094-06", local_tss=75, remote_tss=92)
+        assert r.action == "updated"
+        assert r.reconciled_tss == 92
+
+    def test_remote_half_local_skipped_suspicious(self):
+        """Symmetric guard: remote ≤ 0.5 × local → also flagged suspicious."""
+        r = reconcile_session_tss("S094-XX", local_tss=100, remote_tss=40)
+        assert r.action == "skipped_suspicious"
+        assert r.reconciled_tss == 100
+
+    def test_exactly_2x_threshold_is_suspicious(self):
+        """Ratio exactly at 2.0x is flagged (boundary inclusive)."""
+        r = reconcile_session_tss("S094-XX", local_tss=50, remote_tss=100)
+        assert r.action == "skipped_suspicious"
+
+    def test_just_below_2x_threshold_is_updated(self):
+        """Ratio 1.95x is genuine correction (under suspicious threshold)."""
+        r = reconcile_session_tss("S094-XX", local_tss=100, remote_tss=195)
+        assert r.action == "updated"
+
+    def test_custom_suspicious_ratio_more_lenient(self):
+        """Custom suspicious_ratio=3.0 lets 2.5x through."""
+        r = reconcile_session_tss("S094-XX", local_tss=60, remote_tss=150, suspicious_ratio=3.0)
+        assert r.action == "updated"
+        assert r.reconciled_tss == 150
+
+    def test_custom_suspicious_ratio_more_strict(self):
+        """Custom suspicious_ratio=1.5 catches 1.6x as suspicious."""
+        r = reconcile_session_tss("S094-XX", local_tss=100, remote_tss=160, suspicious_ratio=1.5)
+        assert r.action == "skipped_suspicious"
+
+    def test_week_summary_includes_sessions_suspicious(self):
+        """Weekly summary surfaces sessions_suspicious counter."""
+        sessions = [
+            {"session_id": "S094-01", "local_tss": 60, "remote_tss": 212},
+            {"session_id": "S094-02", "local_tss": 75, "remote_tss": 92},
+            {"session_id": "S094-03", "local_tss": 72, "remote_tss": 74},
+        ]
+        result = reconcile_week_tss(sessions)
+        assert result["sessions_suspicious"] == 1
+        assert result["sessions_updated"] == 1
+        assert result["sessions_skipped"] == 1
+        assert result["tss_reconciled_total"] == 60 + 92 + 72

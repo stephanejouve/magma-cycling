@@ -402,3 +402,87 @@ class TestIntensityCoherenceValidation:
         assert result["summary"]["errors"] == 0
         call_args = client.create_event.call_args[0][0]
         assert call_args["category"] == "NOTE"
+
+
+class TestTssReconciliationSuspiciousDivergence:
+    """N regression: remote icu_training_load aberrant → flagged + local kept."""
+
+    _VALIDATOR_PATCH = "magma_cycling.intervals_format_validator.IntervalsFormatValidator"
+
+    @pytest.mark.asyncio
+    async def test_aberrant_remote_tss_flagged_as_warning_and_local_kept(self):
+        """S094-04 régression : local=60, remote=212 (3.53x) → warning + local preserved."""
+        session = _make_session(
+            session_id="S094-04",
+            name="OutdoorEnduranceTempo",
+            session_type="END",
+            tss_planned=60,
+            duration_min=75,
+            session_date=date(2026, 5, 21),
+            description="- 75m 67-72% 85rpm",
+            status="planned",
+        )
+        plan = _make_plan(
+            [session],
+            start_date=date(2026, 5, 18),
+            end_date=date(2026, 5, 24),
+        )
+        client = _make_client(create_return={"id": 9999, "icu_training_load": 212})
+        workout_descs = {"S094-04-END-OutdoorEnduranceTempo-V001": "- 75m 67-72% 85rpm"}
+
+        with _patch_sync(plan, client, workout_descriptions=workout_descs):
+            with patch(self._VALIDATOR_PATCH) as mock_val:
+                mock_val.return_value.validate_workout.return_value = (True, [], [])
+                result = _extract(await handle_sync_week_to_calendar({"week_id": "S094"}))
+
+        assert result["summary"]["created"] == 1
+        recon = result["tss_reconciliation"]
+        assert recon["sessions_suspicious"] == 1
+        assert recon["sessions_updated"] == 0
+        suspicious_detail = next(d for d in recon["details"] if d["session_id"] == "S094-04")
+        assert suspicious_detail["action"] == "skipped_suspicious"
+        assert suspicious_detail["reconciled_tss"] == 60
+        suspicious_warnings = [
+            w
+            for w in (result.get("warnings") or [])
+            if w.get("type") == "tss_divergence_suspicious"
+        ]
+        assert len(suspicious_warnings) == 1
+        assert suspicious_warnings[0]["session_id"] == "S094-04"
+        assert "Suspicious divergence" in suspicious_warnings[0]["message"]
+
+    @pytest.mark.asyncio
+    async def test_modest_divergence_still_adopted_as_correction(self):
+        """S094-06 régression : local=75, remote=92 (1.23x) → updated, no warning."""
+        session = _make_session(
+            session_id="S094-06",
+            name="ENDLongue",
+            session_type="END",
+            tss_planned=75,
+            duration_min=105,
+            session_date=date(2026, 5, 23),
+            description="- 105m 70% 85rpm",
+            status="planned",
+        )
+        plan = _make_plan(
+            [session],
+            start_date=date(2026, 5, 18),
+            end_date=date(2026, 5, 24),
+        )
+        client = _make_client(create_return={"id": 9998, "icu_training_load": 92})
+        workout_descs = {"S094-06-END-ENDLongue-V001": "- 105m 70% 85rpm"}
+
+        with _patch_sync(plan, client, workout_descriptions=workout_descs):
+            with patch(self._VALIDATOR_PATCH) as mock_val:
+                mock_val.return_value.validate_workout.return_value = (True, [], [])
+                result = _extract(await handle_sync_week_to_calendar({"week_id": "S094"}))
+
+        recon = result["tss_reconciliation"]
+        assert recon["sessions_updated"] == 1
+        assert recon["sessions_suspicious"] == 0
+        suspicious_warnings = [
+            w
+            for w in (result.get("warnings") or [])
+            if w.get("type") == "tss_divergence_suspicious"
+        ]
+        assert suspicious_warnings == []
