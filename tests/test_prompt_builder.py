@@ -1185,3 +1185,109 @@ class TestRecoveryDirectivesInProfile:
         assert "REPOS OBLIGATOIRE" in result
         assert "Alterner" in result
         assert "reduire TSS" in result
+
+
+class TestTrainingPhaseInjection:
+    """Tests for Section L: training phase recommendation injection.
+
+    Coach AI receives the training phase (RECONSTRUCTION_BASE / CONSOLIDATION
+    / DEVELOPMENT_FTP) at the same time as the raw ACWR / CTL / ATL metrics,
+    so it can weight ACWR interpretation by the cycle position instead of
+    applying a static 0.8-1.3 sweet-spot regardless of phase.
+    """
+
+    def test_phase_block_appears_with_full_context(self):
+        """ctl + ftp + ftp_target + age present → phase block injected."""
+        context = {"name": "Test", "age": 54}
+        metrics = {
+            "ftp": 220,
+            "weight": 84.0,
+            "ctl": 42.0,
+            "ftp_target": 260,
+            "athlete_age": 54,
+        }
+        result = format_athlete_profile(context, metrics)
+        assert "Phase entrainement" in result
+        assert "Phase: RECONSTRUCTION_BASE" in result
+        assert "CTL cible:" in result
+        assert "TSS hebdo cible" in result
+        assert "Rationale:" in result
+
+    def test_phase_skipped_when_ftp_target_absent(self):
+        """No ftp_target → phase block silently skipped."""
+        context = {"name": "Test", "age": 54}
+        metrics = {"ftp": 220, "weight": 84.0, "ctl": 42.0, "athlete_age": 54}
+        result = format_athlete_profile(context, metrics)
+        assert "Phase entrainement" not in result
+
+    def test_phase_skipped_when_ctl_absent(self):
+        """No ctl → phase block silently skipped."""
+        context = {"name": "Test", "age": 54}
+        metrics = {"ftp": 220, "weight": 84.0, "ftp_target": 260, "athlete_age": 54}
+        result = format_athlete_profile(context, metrics)
+        assert "Phase entrainement" not in result
+
+    def test_phase_skipped_when_ftp_absent(self):
+        """No ftp → phase block silently skipped."""
+        context = {"name": "Test", "age": 54}
+        metrics = {"ctl": 42.0, "ftp_target": 260, "athlete_age": 54}
+        result = format_athlete_profile(context, metrics)
+        assert "Phase entrainement" not in result
+
+    def test_consolidation_phase_label(self):
+        """CTL in [0.85*target, target) → CONSOLIDATION."""
+        context = {"name": "Test", "age": 54}
+        metrics = {
+            "ftp": 260,
+            "weight": 84.0,
+            "ctl": 75.0,
+            "ftp_target": 260,
+            "athlete_age": 54,
+        }
+        result = format_athlete_profile(context, metrics)
+        assert "Phase: CONSOLIDATION" in result
+
+    def test_development_ftp_phase_label(self):
+        """CTL >= ctl_target → DEVELOPMENT_FTP.
+
+        Simulates an athlete who reached/exceeded an earlier ftp_target: current
+        ftp 260 > ftp_target 220, ctl 80 above calculated ctl_target ~77.85.
+        """
+        context = {"name": "Test", "age": 54}
+        metrics = {
+            "ftp": 260,
+            "weight": 84.0,
+            "ctl": 80.0,
+            "ftp_target": 220,
+            "athlete_age": 54,
+        }
+        result = format_athlete_profile(context, metrics)
+        assert "Phase: DEVELOPMENT_FTP" in result
+
+    def test_phase_block_appears_outside_overtraining_risk_block(self):
+        """Phase block must appear even without overtraining_risk set (independent indicator)."""
+        context = {"name": "Test", "age": 54}
+        metrics = {
+            "ftp": 220,
+            "weight": 84.0,
+            "ctl": 42.0,
+            "ftp_target": 260,
+            "athlete_age": 54,
+        }
+        result = format_athlete_profile(context, metrics)
+        assert "Indicateurs de charge" not in result
+        assert "Phase entrainement" in result
+
+    def test_phase_rationale_mentions_ctl_values(self):
+        """Rationale string contains CTL current and target for context."""
+        context = {"name": "Test", "age": 54}
+        metrics = {
+            "ftp": 220,
+            "weight": 84.0,
+            "ctl": 42.0,
+            "ftp_target": 260,
+            "athlete_age": 54,
+        }
+        result = format_athlete_profile(context, metrics)
+        assert "42" in result
+        assert "reconstruction base" in result.lower()
