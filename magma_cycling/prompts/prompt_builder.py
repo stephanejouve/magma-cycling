@@ -34,6 +34,8 @@ def load_current_metrics() -> dict:
         profile = AthleteProfile.from_env()
         metrics["ftp"] = profile.ftp
         metrics["weight"] = profile.weight
+        metrics["ftp_target"] = profile.ftp_target
+        metrics["athlete_age"] = profile.age
     except Exception:
         logger.debug("Could not load AthleteProfile, skipping FTP/weight")
 
@@ -294,6 +296,49 @@ def format_athlete_profile(context: dict, metrics: dict) -> str:
         consec = metrics.get("consecutive_training_days")
         if consec and consec >= 2:
             lines.append(f"  - Jours consecutifs: {consec}")
+
+    ctl_for_phase = metrics.get("ctl")
+    ftp_for_phase = metrics.get("ftp")
+    ftp_target_for_phase = metrics.get("ftp_target")
+    athlete_age_for_phase = metrics.get("athlete_age", 54)
+    if (
+        ctl_for_phase is not None
+        and ftp_for_phase
+        and ftp_target_for_phase
+        and ftp_target_for_phase > 0
+    ):
+        try:
+            from magma_cycling.planning.peaks_phases import (
+                TrainingPhase,
+                determine_training_phase,
+            )
+
+            phase_rec = determine_training_phase(
+                ctl_current=float(ctl_for_phase),
+                ftp_current=int(ftp_for_phase),
+                ftp_target=int(ftp_target_for_phase),
+                athlete_age=int(athlete_age_for_phase),
+            )
+            phase_labels = {
+                TrainingPhase.RECONSTRUCTION_BASE: "RECONSTRUCTION_BASE",
+                TrainingPhase.CONSOLIDATION: "CONSOLIDATION",
+                TrainingPhase.DEVELOPMENT_FTP: "DEVELOPMENT_FTP",
+            }
+            lines.append("")
+            lines.append("Phase entrainement (Peaks methodology):")
+            lines.append(f"  - Phase: {phase_labels.get(phase_rec.phase, phase_rec.phase.value)}")
+            lines.append(
+                f"  - CTL cible: {phase_rec.ctl_target:.0f} "
+                f"(deficit {phase_rec.ctl_deficit:.0f})"
+            )
+            if phase_rec.weeks_to_rebuild > 0:
+                lines.append(f"  - Semaines pour rebuild: {phase_rec.weeks_to_rebuild}")
+            lines.append(f"  - TSS hebdo cible (charge): {phase_rec.weekly_tss_load}")
+            lines.append(f"  - TSS hebdo (recup): {phase_rec.weekly_tss_recovery}")
+            lines.append(f"  - Frequence semaine recup: 1 sur {phase_rec.recovery_week_frequency}")
+            lines.append(f"  - Rationale: {phase_rec.rationale}")
+        except Exception:
+            logger.debug("Could not compute training phase recommendation")
 
     # Blood pressure (cardiovascular recovery marker)
     sys_bp = metrics.get("systolic")
