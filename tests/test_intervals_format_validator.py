@@ -154,3 +154,104 @@ class TestWarmupCooldownMonoBloc:
         )
         fixed = v.fix_warmup_cooldown(workout)
         assert "- 15m 65% 85rpm" in fixed
+
+
+class TestNotesSectionFiltering:
+    """Section M regression: skip validation in non-workout sections.
+
+    Before fix: any line starting with "-" was validated for duration
+    suffix, even if it lived in a "Notes execution", "Plan B",
+    "Hydratation" etc. section — producing false-positive errors like
+    "Ligne 16: Durée invalide '90min'" when "1L+ pour 90min" was a
+    legitimate coaching note. After fix: only lines under
+    Warmup/Main set/Cooldown/Block are validated; lines under other
+    section titles are ignored.
+    """
+
+    def test_s094_02_intro_30min_in_notes_no_error(self):
+        """S094-02 regression: '30min' mentioned in notes section under non-workout title."""
+        validator = IntervalsFormatValidator()
+        workout = (
+            "Warmup\n- 10m ramp 50-75% 85rpm\n"
+            "\nMain set\n- 30m 75%\n"
+            "\nCooldown\n- 10m ramp 75-50% 85rpm\n"
+            "\nNotes execution\n- Tempo progressif sur 30min puis relax\n"
+        )
+        is_valid, errors, _warnings = validator.validate_workout(workout)
+        assert is_valid, f"unexpected errors: {errors}"
+
+    def test_s094_04_plan_b_45min_in_notes_no_error(self):
+        """S094-04 regression: 'Plan B 45min' in notes must not fail validation."""
+        validator = IntervalsFormatValidator()
+        workout = (
+            "Warmup\n- 10m ramp 50-75% 85rpm\n"
+            "\nMain set\n- 75m 70%\n"
+            "\nCooldown\n- 10m ramp 75-50% 85rpm\n"
+            "\nPlan B\n- Si pluie: indoor 45min Z2\n"
+        )
+        is_valid, errors, _warnings = validator.validate_workout(workout)
+        assert is_valid, f"unexpected errors: {errors}"
+
+    def test_s094_06_hydration_90min_in_notes_no_error(self):
+        """S094-06 regression: '90min' in hydration note must not fail."""
+        validator = IntervalsFormatValidator()
+        workout = (
+            "Warmup\n- 10m ramp 50-75% 85rpm\n"
+            "\nMain set\n- 70m 70%\n"
+            "\nCooldown\n- 10m ramp 75-50% 85rpm\n"
+            "\nHydratation\n- 1L+ pour 90min effort\n"
+        )
+        is_valid, errors, _warnings = validator.validate_workout(workout)
+        assert is_valid, f"unexpected errors: {errors}"
+
+    def test_invalid_duration_in_workout_section_still_rejected(self):
+        """Anti-false-negative: '30min' in Main set MUST still be flagged."""
+        validator = IntervalsFormatValidator()
+        workout = (
+            "Warmup\n- 10m ramp 50-75% 85rpm\n"
+            "\nMain set\n- 30min 75%\n"
+            "\nCooldown\n- 10m ramp 75-50% 85rpm\n"
+        )
+        is_valid, errors, _warnings = validator.validate_workout(workout)
+        assert not is_valid
+        assert any("30min" in e for e in errors)
+
+    def test_invalid_duration_in_block_section_still_rejected(self):
+        """Block section also counts as workout section — must validate."""
+        validator = IntervalsFormatValidator()
+        workout = (
+            "Warmup\n- 10m ramp 50-75% 85rpm\n"
+            "\nBlock 3x\n- 5min 95%\n- 3m 60%\n"
+            "\nCooldown\n- 10m ramp 75-50% 85rpm\n"
+        )
+        is_valid, errors, _warnings = validator.validate_workout(workout)
+        assert not is_valid
+        assert any("5min" in e for e in errors)
+
+    def test_multiple_invalid_durations_in_notes_no_error(self):
+        """Multiple bogus 'Xmin' across several non-workout sections all skipped."""
+        validator = IntervalsFormatValidator()
+        workout = (
+            "Warmup\n- 10m ramp 50-75% 85rpm\n"
+            "\nMain set\n- 60m 75%\n"
+            "\nCooldown\n- 10m ramp 75-50% 85rpm\n"
+            "\nNotes execution\n- Intro 30min easy\n"
+            "\nPlan B\n- Si météo défavorable, indoor 45min Z2\n"
+            "\nHydratation\n- 1L+ pour 90min effort\n"
+            "\nItinéraire\n- Boucle 75min via Z3\n"
+        )
+        is_valid, errors, _warnings = validator.validate_workout(workout)
+        assert is_valid, f"unexpected errors: {errors}"
+
+    def test_switch_back_to_workout_section_after_notes(self):
+        """Notes → return to Cooldown: validation must resume."""
+        validator = IntervalsFormatValidator()
+        workout = (
+            "Warmup\n- 10m ramp 50-75% 85rpm\n"
+            "\nMain set\n- 60m 75%\n"
+            "\nNotes\n- Garder cadence 90rpm sur 30min\n"
+            "\nCooldown\n- 10min ramp 75-50%\n"
+        )
+        is_valid, errors, _warnings = validator.validate_workout(workout)
+        assert not is_valid
+        assert any("10min" in e for e in errors), f"expected 10min flag, got: {errors}"
