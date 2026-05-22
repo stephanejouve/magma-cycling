@@ -172,12 +172,30 @@ class IntervalsFormatValidator:
 
         Format attendu: "- [durée] [intensité] [cadence]"
         Exemples: "- 10m 90% 85rpm", "- 5m ramp 50-65%"
+
+        Limite la validation aux sections workout structurées
+        (Warmup / Main set / Cooldown / Block). Les lignes commençant par "-"
+        dans des sections de prose (Notes execution, Plan B, Itinéraire,
+        Hydratation, etc.) sont ignorées — la mention d'une durée libre
+        type "30min" ou "90min" dans ces sections est légitime et ne doit
+        pas déclencher une erreur de format Intervals.icu.
         """
+        in_workout_section = True
+
         for i, line in enumerate(lines):
             stripped = line.strip()
 
-            # Ignorer lignes vides et sections
-            if not stripped or not stripped.startswith("-"):
+            if not stripped:
+                continue
+
+            if not stripped.startswith("-"):
+                if self.SECTION_TITLE_PATTERN.match(stripped):
+                    in_workout_section = True
+                else:
+                    in_workout_section = False
+                continue
+
+            if not in_workout_section:
                 continue
 
             # Vérifier suffixes de durée invalides (min, sec, hr, etc.)
