@@ -21,6 +21,34 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Closes T-github-utils-version-variables (vault P2). Root cause :
+      # release.yml force ``commit: "false"`` pour python-semantic-release
+      # (branch protection main bloque le push direct du bot) → le tag
+      # ``vX.Y.Z`` pointe sur un commit où pyproject.toml::version et
+      # magma_cycling/__init__.py::__version__ sont restés stale. L'image
+      # Docker buildée depuis ce commit hérite donc d'un ``__version__``
+      # qui ne correspond pas au tag pushé → ``system_info`` retourne une
+      # version fausse en runtime (catch Stéphane msg 3424 2026-05-23).
+      #
+      # Fix : sed les 2 fichiers AVANT ``docker build`` en utilisant le tag
+      # name. Git source reste intentionnellement stale (artefact tag-driven
+      # ``commit: "false"`` doctrine release Stéphane), seule l'image
+      # embarque la version correcte.
+      #
+      # Skipped sur ``workflow_dispatch`` (pas de tag git → pas de version
+      # à propager, image reste sur ce que dit pyproject à HEAD).
+      - name: Sync version markers from git tag
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          echo "Propagating tag version $TAG_VERSION to pyproject.toml + magma_cycling/__init__.py"
+          sed -i "s/^version = \".*\"/version = \"$TAG_VERSION\"/" pyproject.toml
+          sed -i "s/^__version__ = \".*\"/__version__ = \"$TAG_VERSION\"/" magma_cycling/__init__.py
+          echo "--- pyproject.toml after sync ---"
+          grep "^version = " pyproject.toml
+          echo "--- magma_cycling/__init__.py after sync ---"
+          grep "^__version__ = " magma_cycling/__init__.py
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
