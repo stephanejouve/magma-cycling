@@ -46,6 +46,24 @@ class TestGetSleepSummary:
         provider = IntervalsHealthProvider(mock_client)
         assert provider.get_sleep_summary(date(2026, 4, 15)) is None
 
+    def test_reads_sleep_secs_canonical_garmin_push(self, mock_client):
+        # BT-010 — Garmin push via Intervals.icu wellness uses `sleepSecs`,
+        # not the legacy `sleepTime` alias. Confirmed empirically with Max's
+        # raw payload 2026-05-21.
+        mock_client.get_wellness.return_value = [
+            {
+                "id": "2026-05-21",
+                "sleepSecs": 27758,
+                "sleepScore": 86,
+                "sleepQuality": 2,
+            }
+        ]
+        provider = IntervalsHealthProvider(mock_client)
+        result = provider.get_sleep_summary(date(2026, 5, 21))
+        assert result is not None
+        assert result.total_sleep_hours == round(27758 / 3600, 2)
+        assert result.sleep_score == 86
+
 
 class TestGetReadiness:
     def test_good_sleep_all_systems_go(self, provider):

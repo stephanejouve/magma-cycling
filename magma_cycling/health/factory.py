@@ -44,7 +44,7 @@ def create_health_provider() -> HealthProvider:
         seven_days_ago = str(date.today() - timedelta(days=7))
         yesterday = str(date.today() - timedelta(days=1))
         wellness = client.get_wellness(oldest=seven_days_ago, newest=yesterday)
-        if wellness and any(w.get("sleepTime") for w in wellness):
+        if wellness and any(w.get("sleepSecs") or w.get("sleepTime") for w in wellness):
             from magma_cycling.health.intervals_provider import IntervalsHealthProvider
 
             logger.info("Using IntervalsHealthProvider (sleep data found in last 7 days)")

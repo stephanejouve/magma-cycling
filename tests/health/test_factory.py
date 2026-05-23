@@ -23,14 +23,24 @@ class TestCreateHealthProvider:
     def test_returns_null_provider_when_not_configured(self):
         mock_config = Mock()
         mock_config.is_configured.return_value = False
-        with patch("magma_cycling.config.get_withings_config", return_value=mock_config):
+        intervals_client = Mock()
+        intervals_client.get_wellness.return_value = []
+        with (
+            patch("magma_cycling.config.get_withings_config", return_value=mock_config),
+            patch("magma_cycling.config.create_intervals_client", return_value=intervals_client),
+        ):
             provider = create_health_provider()
         assert isinstance(provider, NullProvider)
 
     def test_returns_null_provider_on_exception(self):
-        with patch(
-            "magma_cycling.config.get_withings_config",
-            side_effect=RuntimeError("config broken"),
+        intervals_client = Mock()
+        intervals_client.get_wellness.return_value = []
+        with (
+            patch(
+                "magma_cycling.config.get_withings_config",
+                side_effect=RuntimeError("config broken"),
+            ),
+            patch("magma_cycling.config.create_intervals_client", return_value=intervals_client),
         ):
             provider = create_health_provider()
         assert isinstance(provider, NullProvider)
@@ -130,11 +140,28 @@ class TestIntervalsHealthProviderProbeWindow:
             provider = create_health_provider()
         assert isinstance(provider, IntervalsHealthProvider)
 
-    def test_falls_back_to_null_when_full_week_empty(self):
-        """If the entire 7-day window has no sleepTime, NullProvider is the
-        right answer (legitimately no Garmin/watch sync configured)."""
+    def test_returns_intervals_when_sleep_secs_canonical_field(self):
+        """BT-010 — Garmin push via Intervals.icu uses ``sleepSecs`` (canonical),
+        not the legacy ``sleepTime`` alias. The probe must accept both."""
         client = Mock()
-        client.get_wellness.return_value = [{"id": f"day-{i}", "sleepTime": None} for i in range(7)]
+        client.get_wellness.return_value = [
+            {"id": "2026-05-21", "sleepSecs": 27758, "sleepScore": 86},
+        ]
+        with (
+            patch(
+                "magma_cycling.config.get_withings_config",
+                return_value=self._withings_unconfigured(),
+            ),
+            patch("magma_cycling.config.create_intervals_client", return_value=client),
+        ):
+            provider = create_health_provider()
+        assert isinstance(provider, IntervalsHealthProvider)
+
+    def test_falls_back_to_null_when_full_week_empty(self):
+        """If the entire 7-day window has neither sleepSecs nor sleepTime,
+        NullProvider is the right answer (legitimately no Garmin/watch sync)."""
+        client = Mock()
+        client.get_wellness.return_value = [{"id": f"day-{i}", "sleepSecs": None} for i in range(7)]
         with (
             patch(
                 "magma_cycling.config.get_withings_config",
