@@ -97,9 +97,9 @@ async def handle_pre_session_check(args: dict) -> list[TextContent]:
         wellness_list = client.get_wellness(oldest=date_str, newest=date_str)
         wellness_raw = wellness_list[0] if wellness_list else {}
 
-        sleep_hours = wellness_raw.get("sleepTime")
+        sleep_hours = wellness_raw.get("sleepSecs") or wellness_raw.get("sleepTime")
         if sleep_hours and isinstance(sleep_hours, (int, float)) and sleep_hours > 24:
-            # sleepTime is in seconds from Intervals.icu
+            # sleepSecs is in seconds from Intervals.icu (sleepTime = legacy alias)
             sleep_hours = round(sleep_hours / 3600, 2)
 
         wellness = {

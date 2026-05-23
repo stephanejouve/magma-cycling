@@ -40,7 +40,7 @@ class IntervalsHealthProvider(HealthProvider):
         w = self._get_wellness_day(target_date)
         if not w:
             return None
-        sleep_secs = w.get("sleepTime")
+        sleep_secs = w.get("sleepSecs") or w.get("sleepTime")
         if not sleep_secs:
             return None
         # Build a SleepData from available wellness fields
