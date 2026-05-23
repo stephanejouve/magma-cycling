@@ -13,6 +13,7 @@ Author: Claude Code
 Created: 2026-03-01
 """
 
+import json
 import os
 import subprocess
 from datetime import date, datetime
@@ -28,6 +29,7 @@ PROJECT_DIR = os.environ.get(
     "MAGMA_PROJECT_DIR",
     str(Path(__file__).resolve().parent.parent),
 )
+PROCESSED_CACHE_PATH = Path.home() / ".local/share/magma-cycling/processed_today.json"
 
 
 def log(msg: str) -> None:
@@ -88,6 +90,118 @@ def _fallback_cutoff(day_of_week: int) -> int:
     return 21
 
 
+def _load_processed_today_cache(today: date) -> set[str]:
+    """Load processed activity IDs from cache, reset if date changed.
+
+    Cache file: ~/.local/share/magma-cycling/processed_today.json
+    Format: {"date": "YYYY-MM-DD", "activity_ids": ["id1", "id2", ...]}
+    Stale cache (different day) returns empty set, callers must save fresh.
+    """
+    if not PROCESSED_CACHE_PATH.exists():
+        return set()
+    try:
+        data = json.loads(PROCESSED_CACHE_PATH.read_text(encoding="utf-8"))
+        if data.get("date") != today.isoformat():
+            return set()
+        return {str(x) for x in data.get("activity_ids", [])}
+    except Exception:
+        return set()
+
+
+def _save_processed_today_cache(today: date, activity_ids: set[str]) -> None:
+    """Persist processed activity IDs cache for today."""
+    PROCESSED_CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    data = {"date": today.isoformat(), "activity_ids": sorted(activity_ids)}
+    PROCESSED_CACHE_PATH.write_text(
+        json.dumps(data, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+
+def _handle_unplanned_activity(today: date) -> int:
+    """Trigger adapted pipeline when activity exists without planned session.
+
+    Adapted pipeline (skip adherence — null result without plan ref):
+      1. withings-presync
+      2. daily-sync --send-email --ai-analysis --auto-servo
+      3. pid-daily-evaluation --days-back 7
+      4. end-of-week (Sunday only)
+
+    Idempotence: skips if all detected activities already in
+    ``processed_today.json`` cache (handles re-trigger on next cron tick
+    AND case where the session gets added to the planning a posteriori).
+
+    Returns 0 in all cases (LaunchAgent must not retry on its own).
+    """
+    try:
+        client = create_intervals_client()
+        date_str = today.isoformat()
+        activities = client.get_activities(oldest=date_str, newest=date_str)
+        cycling = [
+            a
+            for a in activities
+            if a.get("type") in ("Ride", "VirtualRide") and not a.get("icu_ignore_time", False)
+        ]
+    except Exception as e:
+        log(f"Error querying Intervals.icu (unplanned check): {e}")
+        return 0
+
+    if not cycling:
+        log("No planned session, no Intervals activity, exit")
+        return 0
+
+    processed = _load_processed_today_cache(today)
+    new_activities = [a for a in cycling if str(a.get("id", "")) not in processed]
+    if not new_activities:
+        log(f"All {len(cycling)} unplanned activities already processed, exit")
+        return 0
+
+    new_ids = ", ".join(str(a.get("id", "?")) for a in new_activities)
+    log(f"Unplanned activity detected (id={new_ids}), triggering adapted pipeline")
+
+    run_command("withings-presync", ["withings-presync"])
+
+    try:
+        run_command(
+            "daily-sync",
+            ["daily-sync", "--send-email", "--ai-analysis", "--auto-servo"],
+        )
+    except Exception as e:
+        log(f"daily-sync error: {e}")
+
+    log("adherence... SKIPPED (no plan reference for unplanned activity)")
+
+    try:
+        run_command(
+            "pid-evaluation",
+            ["pid-daily-evaluation", "--days-back", "7"],
+        )
+    except Exception as e:
+        log(f"pid-evaluation error: {e}")
+
+    if today.weekday() == 6:
+        log("Sunday detected, triggering end-of-week")
+        try:
+            run_command(
+                "end-of-week",
+                [
+                    "end-of-week",
+                    "--auto-calculate",
+                    "--provider",
+                    "mistral_api",
+                    "--auto",
+                ],
+            )
+        except Exception as e:
+            log(f"end-of-week error: {e}")
+
+    processed.update(str(a.get("id", "")) for a in new_activities)
+    _save_processed_today_cache(today, processed)
+
+    log("Done (unplanned)")
+    return 0
+
+
 @cli_main
 def main() -> int:
     """Entry point."""
@@ -104,15 +218,15 @@ def main() -> int:
     try:
         plan = planning_tower.read_week(week_id)
     except FileNotFoundError:
-        log(f"No planning file for {week_id}, exit")
-        return 0
+        log(f"No planning file for {week_id}, checking for unplanned activity...")
+        return _handle_unplanned_activity(today)
 
     todays_sessions = [s for s in plan.planned_sessions if s.session_date == today]
 
-    # Step 2: No session today
+    # Step 2: No session today → check for unplanned activity (#368 ghost session)
     if not todays_sessions:
-        log("No session today, exit")
-        return 0
+        log("No session today, checking for unplanned activity...")
+        return _handle_unplanned_activity(today)
 
     # Step 3: Classify sessions (supports double sessions)
     terminal = ("completed", "cancelled", "skipped", "rest_day")
