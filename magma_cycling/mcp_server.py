@@ -55,6 +55,9 @@ from magma_cycling._mcp.handlers.athlete import (  # noqa: F401
 from magma_cycling._mcp.handlers.catalog import (  # noqa: F401
     handle_list_workout_catalog,
 )
+from magma_cycling._mcp.handlers.current_time import (  # noqa: F401
+    handle_current_time,
+)
 from magma_cycling._mcp.handlers.decisions import (  # noqa: F401
     handle_record_decision,
 )
@@ -141,6 +144,7 @@ from magma_cycling._mcp.schemas import admin as _s_admin
 from magma_cycling._mcp.schemas import analysis as _s_analysis
 from magma_cycling._mcp.schemas import athlete as _s_athlete
 from magma_cycling._mcp.schemas import catalog as _s_catalog
+from magma_cycling._mcp.schemas import current_time as _s_current_time
 from magma_cycling._mcp.schemas import decisions as _s_decisions
 from magma_cycling._mcp.schemas import handoff as _s_handoff
 from magma_cycling._mcp.schemas import health as _s_health
@@ -180,6 +184,7 @@ async def list_tools() -> list[Tool]:
         *_s_athlete.get_tools(),
         *_s_analysis.get_tools(),
         *_s_admin.get_tools(),
+        *_s_current_time.get_tools(),
         *_s_catalog.get_tools(),
         *_s_health.get_tools(),
         *_s_rest.get_tools(),
@@ -249,6 +254,8 @@ TOOL_HANDLERS = {
     # Admin (2)
     "reload-server": handle_reload_server,
     "system-info": handle_system_info,
+    # Time / AC6 levier 2 (1) — PR8ter plan iso-config
+    "current-time": handle_current_time,
     # Catalog (1)
     "list-workout-catalog": handle_list_workout_catalog,
     # Health (8)
