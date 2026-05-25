@@ -481,6 +481,131 @@ class DataRepoConfig:
         """Path to handoff/ directory in data repo (context-handoff snapshots)."""
         return self.data_repo_path / "handoff"
 
+    @property
+    def authority_rules(self) -> list[tuple[str, str]]:
+        """Liste ordonnée ``(pattern, writer_alias)`` issue de ``.operators.yaml::authority``.
+
+        L'ordre de déclaration YAML est préservé (premier match gagne dans
+        :meth:`resolve_read_path`). Retourne ``[]`` si la section ``authority``
+        est absente, le fichier ``.operators.yaml`` n'existe pas, ou les
+        valeurs ne sont pas des dicts simples ``pattern -> alias``.
+
+        Phase 3 PR D (plan iso-config PR11a) — strict read-only.
+        """
+        ops = self.operators_yaml
+        if not ops:
+            return []
+        auth = ops.get("authority")
+        if not isinstance(auth, dict):
+            return []
+        out: list[tuple[str, str]] = []
+        for pattern, alias in auth.items():
+            if isinstance(pattern, str) and isinstance(alias, str):
+                out.append((pattern, alias))
+        return out
+
+    def _resolve_writer_alias_to_hash(self, alias: str) -> str | None:
+        """Résoud un alias writer (``mac``, ``nas-prod``, ...) en son hash 12-char.
+
+        Consulte la section ``writers:`` de ``.operators.yaml``. Retourne
+        ``None`` si l'alias n'est pas trouvé ou si la section est absente.
+        Une entrée writer avec ``decommissioned_at`` non-null n'est PAS
+        exclue (read fallback historique reste possible — l'historique est
+        préservé même après décommission par convention ADR v5 §3).
+        """
+        ops = self.operators_yaml
+        if not ops:
+            return None
+        writers = ops.get("writers")
+        if not isinstance(writers, dict):
+            return None
+        for writer_hash, meta in writers.items():
+            if not isinstance(meta, dict):
+                continue
+            if meta.get("alias") == alias:
+                return writer_hash if isinstance(writer_hash, str) else None
+        return None
+
+    @staticmethod
+    def _match_authority_pattern(file_pattern: str, rule_pattern: str) -> bool:
+        """Match un ``file_pattern`` (path POSIX) contre un ``rule_pattern`` ``.operators.yaml::authority``.
+
+        Sémantique des patterns supportés :
+        - Suffixe ``/**`` ou ``/*`` → match préfixe directory récursif (ex.
+          ``workouts/**`` matche ``workouts/foo.zwo`` et ``workouts/sub/bar.zwo``)
+        - Sinon → match exact via :func:`fnmatch.fnmatchcase` (glob standard
+          POSIX, supporte ``*`` / ``?`` / ``[abc]``)
+
+        L'argument ``rule_pattern`` est tel que déclaré dans ``authority:``
+        (un seul wildcard récursif terminal est typiquement utilisé).
+        """
+        import fnmatch
+
+        if rule_pattern.endswith("/**") or rule_pattern.endswith("/*"):
+            prefix = rule_pattern.rsplit("/", 1)[0].rstrip("/") + "/"
+            return file_pattern.startswith(prefix)
+        return fnmatch.fnmatchcase(file_pattern, rule_pattern)
+
+    def resolve_read_path(self, file_pattern: str) -> Path:
+        """Résoud un path de lecture multi-writer selon ``.operators.yaml::authority``.
+
+        Phase 3 PR D (plan iso-config PR11a) — helper central consumer-side
+        pour faire converger les lectures vers la subdir du writer autoritaire,
+        plutôt que de lire flat depuis la racine du repo.
+
+        Comportement :
+
+        - **Mode legacy** (``writer_scoped=False``, défaut) : retourne
+          ``root_path / file_pattern`` — comportement runtime inchangé pour
+          tous les consumers, l'helper est un no-op jusqu'à l'activation
+          du flag.
+        - **Mode scoped** (``writer_scoped=True``) :
+            1. Itère :attr:`authority_rules` dans l'ordre de déclaration YAML
+            2. Premier ``rule_pattern`` qui matche ``file_pattern`` gagne
+            3. Si l'alias résolvable en hash via :meth:`_resolve_writer_alias_to_hash` →
+               retourne ``root_path / <hash> / file_pattern``
+            4. Si pas de match, ou alias non résolvable → fallback
+               ``root_path / file_pattern`` + warning log (le fichier pourrait
+               être co-owned racine, ou la config ``.operators.yaml`` incomplète)
+
+        Args:
+            file_pattern: Path relatif POSIX-style depuis la racine du repo
+                (ex. ``weekly-reports/S094/bilan_final_s094.md``).
+
+        Returns:
+            Path absolu résolu. **Le path n'est PAS vérifié pour existence**
+            — le caller décide (read-only helper, pas de side effect FS).
+
+        Examples:
+            >>> cfg.resolve_read_path("workouts/MyWorkout.zwo")
+            PosixPath('/Users/me/training-logs/b08921dae3e7/workouts/MyWorkout.zwo')
+
+            >>> cfg.resolve_read_path("weekly-reports/S094/bilan_final.md")
+            PosixPath('/Users/me/training-logs/5e6f282f9f03/weekly-reports/S094/bilan_final.md')
+        """
+        if not self.writer_scoped:
+            return self.root_path / file_pattern
+
+        for rule_pattern, writer_alias in self.authority_rules:
+            if self._match_authority_pattern(file_pattern, rule_pattern):
+                writer_hash = self._resolve_writer_alias_to_hash(writer_alias)
+                if writer_hash:
+                    return self.root_path / writer_hash / file_pattern
+                logger.warning(
+                    "authority rule '%s' → alias '%s' but no writer hash "
+                    "resolved in .operators.yaml::writers ; falling back to root_path",
+                    rule_pattern,
+                    writer_alias,
+                )
+                return self.root_path / file_pattern
+
+        logger.debug(
+            "no authority rule matched file_pattern '%s' ; falling back to root_path "
+            "(file may be co-owned shared_root_files)",
+            file_pattern,
+        )
+        return self.root_path / file_pattern
+
     def ensure_directories(self):
         """Create required directories if they don't exist."""
         self.bilans_dir.mkdir(parents=True, exist_ok=True)
