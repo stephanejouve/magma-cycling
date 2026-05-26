@@ -256,3 +256,26 @@ class TestRunAIIntegration:
 
         mock_load.assert_called_once()
         assert result["ctl"] == 65
+
+
+class TestDefaultBehavior:
+    """PR4 iso-config — lock the AI-on-by-default behaviour for monthly-analysis."""
+
+    def test_defaults_enable_mistral_api_and_ai(self):
+        """Default constructor uses provider='mistral_api' and no_ai=False (AI enabled)."""
+        with (
+            patch("magma_cycling.monthly_analysis.get_data_config") as mock_dc,
+            patch("magma_cycling.monthly_analysis.get_ai_config") as mock_ai_config,
+            patch("magma_cycling.monthly_analysis.AIProviderFactory") as mock_factory,
+        ):
+            mock_dc.return_value.data_repo_path = MagicMock()
+            mock_ai_config.return_value.get_provider_config.return_value = {
+                "mistral_api_key": "test-key"
+            }
+            mock_factory.create.return_value = MagicMock()
+
+            analyzer = MonthlyAnalyzer(month="2026-02")
+
+        assert analyzer.provider == "mistral_api"
+        assert analyzer.no_ai is False
+        assert analyzer.ai_analyzer is not None
