@@ -346,7 +346,8 @@ class TestEndOfWeekWorkflowSteps:
         mock_run_analysis.assert_called_once()
         call_args = mock_run_analysis.call_args
         assert call_args[1]["week"] == "S075"
-        assert call_args[1]["ai_analysis"] is False
+        # PR3 iso-config AC3: Mistral analysis activated on EOW Sunday runs
+        assert call_args[1]["ai_analysis"] is True
 
     @patch("magma_cycling.workflows.workflow_weekly.run_weekly_analysis")
     @patch("pathlib.Path.exists")
