@@ -215,11 +215,32 @@ class MistralAPIAnalyzer(AIAnalyzer):
                 f"tokens: ~{len(analysis) // 4})"
             )
 
+            self._log_usage(response, status="ok")
+
             return analysis
 
         except Exception as e:
             logger.error(f"Mistral API call failed: {e}")
+            self._log_usage(None, status="error")
             raise WorkflowError(f"Failed to analyze session with Mistral API: {e}") from e
+
+    @staticmethod
+    def _log_usage(response, *, status: str) -> None:
+        """Best-effort call counter + per-month log (PR3 iso-config AC3).
+
+        Failure here must never block the analysis path.
+        """
+        try:
+            from magma_cycling.intelligence.mistral_usage import get_logger
+
+            n_tokens: int | None = None
+            usage = getattr(response, "usage", None) if response is not None else None
+            if usage is not None:
+                n_tokens = getattr(usage, "total_tokens", None)
+
+            get_logger().log_call(n_tokens=n_tokens, status=status)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("mistral_usage log_call failed: %s", exc)
 
     def _ensure_date_field(self, analysis: str, prompt: str) -> str:
         r"""Ensure Date field is present in analysis (Mistral v1.10 workaround).

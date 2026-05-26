@@ -115,6 +115,42 @@ class TestMistralAPIAnalyzer:
         assert "Analyse complète" in result
         mock_mistral_client.chat.complete.assert_called_once()
 
+    def test_analyze_session_logs_usage_on_success(self, valid_api_key, mock_mistral_client):
+        """PR3 iso-config AC3: every successful call increments the usage log."""
+        mock_response = MagicMock()
+        mock_choice = MagicMock()
+        mock_message = MagicMock()
+        mock_message.content = "ok"
+        mock_choice.message = mock_message
+        mock_response.choices = [mock_choice]
+        mock_response.usage = MagicMock(total_tokens=42)
+        mock_mistral_client.chat.complete.return_value = mock_response
+
+        fake_logger = MagicMock()
+        with patch(
+            "magma_cycling.intelligence.mistral_usage.get_logger",
+            return_value=fake_logger,
+        ):
+            analyzer = MistralAPIAnalyzer(api_key=valid_api_key)
+            analyzer.analyze_session("p")
+
+        fake_logger.log_call.assert_called_once_with(n_tokens=42, status="ok")
+
+    def test_analyze_session_logs_usage_on_error(self, valid_api_key, mock_mistral_client):
+        """PR3 iso-config AC3: API errors also increment the usage log."""
+        mock_mistral_client.chat.complete.side_effect = RuntimeError("boom")
+
+        fake_logger = MagicMock()
+        with patch(
+            "magma_cycling.intelligence.mistral_usage.get_logger",
+            return_value=fake_logger,
+        ):
+            analyzer = MistralAPIAnalyzer(api_key=valid_api_key)
+            with pytest.raises(WorkflowError):
+                analyzer.analyze_session("p")
+
+        fake_logger.log_call.assert_called_once_with(n_tokens=None, status="error")
+
     def test_analyze_with_dataset(self, valid_api_key, mock_mistral_client):
         """Test analysis with dataset parameter."""
         mock_response = MagicMock()

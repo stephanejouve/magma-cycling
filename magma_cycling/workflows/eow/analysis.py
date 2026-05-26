@@ -47,12 +47,15 @@ class AnalysisMixin:
                         run_weekly_analysis,
                     )
 
-                    # Run weekly-analysis programmatically (Phase 2 - modern system)
+                    # Run weekly-analysis programmatically (Phase 2 - modern system).
+                    # PR3 iso-config AC3: activate Mistral analysis on EOW Sunday
+                    # runs. Per-call usage tracking + runaway alert live in
+                    # ``magma_cycling.intelligence.mistral_usage``.
                     run_weekly_analysis(
                         week=self.week_completed,
                         start_date=self.completed_start_date,
                         data_dir=self.data_dir,
-                        ai_analysis=False,
+                        ai_analysis=True,
                     )
 
                     # Verify that analysis was created
