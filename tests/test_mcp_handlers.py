@@ -64,6 +64,152 @@ def test_mcp_response_error():
     assert "_metadata" in payload
 
 
+# ---------------------------------------------------------------------------
+# Tests: AC6 server-time metadata injection (PR8bis levier 1/3)
+# ---------------------------------------------------------------------------
+
+
+class TestMcpResponseServerTimeMetadata:
+    """`mcp_response` injects 5 AC6 timestamp fields into `_metadata`.
+
+    Contrat plan iso-config S093-S096 AC6 — toute réponse MCP doit exposer
+    une autorité temporelle nom-stable pour que le LLM coach recale sa
+    dérive sans appel `current-time` explicite.
+    """
+
+    def test_metadata_contains_5_ac6_fields(self):
+        from magma_cycling._mcp._utils import mcp_response
+
+        payload = json.loads(mcp_response({"k": "v"})[0].text)
+
+        required = {
+            "server_time_utc",
+            "server_time_local",
+            "tz",
+            "today_iso",
+            "day_of_week_fr",
+        }
+        assert required.issubset(payload["_metadata"].keys())
+
+    def test_legacy_response_date_and_timestamp_still_present(self):
+        """response_date / response_timestamp restent injectés (rétro-compat)."""
+        from magma_cycling._mcp._utils import mcp_response
+
+        payload = json.loads(mcp_response({"k": "v"})[0].text)
+        meta = payload["_metadata"]
+
+        assert "response_date" in meta
+        assert "response_timestamp" in meta
+        # ISO datetime parsable (naive, sans offset — historique pré-AC6)
+        datetime.fromisoformat(meta["response_timestamp"])
+        date.fromisoformat(meta["response_date"])
+
+    def test_server_time_utc_is_iso8601_utc(self):
+        from magma_cycling._mcp._utils import mcp_response
+
+        payload = json.loads(mcp_response({})[0].text)
+        parsed = datetime.fromisoformat(payload["_metadata"]["server_time_utc"])
+
+        assert parsed.tzinfo is not None
+        assert parsed.utcoffset().total_seconds() == 0
+
+    def test_server_time_local_carries_offset(self):
+        from magma_cycling._mcp._utils import mcp_response
+
+        payload = json.loads(mcp_response({})[0].text)
+        parsed = datetime.fromisoformat(payload["_metadata"]["server_time_local"])
+
+        assert parsed.tzinfo is not None
+
+    def test_today_iso_format(self):
+        import re
+
+        from magma_cycling._mcp._utils import mcp_response
+
+        payload = json.loads(mcp_response({})[0].text)
+        assert re.match(r"^\d{4}-\d{2}-\d{2}$", payload["_metadata"]["today_iso"])
+
+    def test_day_of_week_fr_is_french(self):
+        from magma_cycling._mcp._utils import mcp_response
+
+        payload = json.loads(mcp_response({})[0].text)
+        assert payload["_metadata"]["day_of_week_fr"] in {
+            "lundi",
+            "mardi",
+            "mercredi",
+            "jeudi",
+            "vendredi",
+            "samedi",
+            "dimanche",
+        }
+
+    def test_utc_and_local_represent_same_instant(self):
+        from magma_cycling._mcp._utils import mcp_response
+
+        payload = json.loads(mcp_response({})[0].text)
+        utc = datetime.fromisoformat(payload["_metadata"]["server_time_utc"])
+        local = datetime.fromisoformat(payload["_metadata"]["server_time_local"])
+
+        assert abs((utc - local).total_seconds()) < 1.5
+
+    def test_provider_info_coexists_with_server_time(self):
+        """provider_info historique reste posé à côté des champs AC6."""
+        from magma_cycling._mcp._utils import mcp_response
+
+        payload = json.loads(mcp_response({}, provider_info={"name": "intervals_icu"})[0].text)
+        meta = payload["_metadata"]
+
+        assert meta["provider"] == {"name": "intervals_icu"}
+        assert "server_time_utc" in meta
+
+
+class TestBuildServerTimeMetadata:
+    """Direct unit tests for the helper :func:`build_server_time_metadata`."""
+
+    def test_default_now_returns_5_fields(self):
+        from magma_cycling._mcp._utils import build_server_time_metadata
+
+        meta = build_server_time_metadata()
+
+        assert set(meta.keys()) == {
+            "server_time_utc",
+            "server_time_local",
+            "tz",
+            "today_iso",
+            "day_of_week_fr",
+        }
+
+    def test_explicit_now_local_is_used(self):
+        """Passing a TZ-aware now_local pins all 5 fields deterministically."""
+        from datetime import datetime, timedelta, timezone
+
+        from magma_cycling._mcp._utils import build_server_time_metadata
+
+        # Lundi 25 mai 2026 09:00 Europe/Paris (UTC+2)
+        paris = timezone(timedelta(hours=2), "Europe/Paris")
+        pinned = datetime(2026, 5, 25, 9, 0, 0, tzinfo=paris)
+
+        meta = build_server_time_metadata(pinned)
+
+        assert meta["server_time_utc"] == "2026-05-25T07:00:00+00:00"
+        assert meta["server_time_local"] == "2026-05-25T09:00:00+02:00"
+        assert meta["today_iso"] == "2026-05-25"
+        assert meta["day_of_week_fr"] == "lundi"
+        assert meta["tz"] == "Europe/Paris"
+
+    def test_weekend_day_fr(self):
+        from datetime import datetime, timedelta, timezone
+
+        from magma_cycling._mcp._utils import build_server_time_metadata
+
+        # Dimanche 31 mai 2026
+        paris = timezone(timedelta(hours=2))
+        meta = build_server_time_metadata(datetime(2026, 5, 31, 12, 0, tzinfo=paris))
+
+        assert meta["day_of_week_fr"] == "dimanche"
+        assert meta["today_iso"] == "2026-05-31"
+
+
 # Fixtures
 
 
