@@ -135,7 +135,7 @@ Sommeil, poids, HRV, et évaluation de ta forme du jour.
 | `get-coach-analysis` | Récupère une analyse passée |
 | `patch-coach-analysis` | Ajoute des notes à une analyse existante |
 | `analyze-training-patterns` | Analyse globale (planning + activités + métriques) |
-| `monthly-analysis` | Analyse mensuelle complète |
+| `monthly-analysis` | Analyse mensuelle complète (IA Mistral activée par défaut, désactivable via `--no-ai`) |
 | `get-recommendations` | Recommandations d'entraînement |
 
 📝 `patch-coach-analysis` ne remplace jamais ton analyse — elle ajoute des éléments traçables.
