@@ -82,6 +82,50 @@ class TestGetReadiness:
         assert readiness.recommended_intensity == "endurance_max"
         assert len(readiness.veto_reasons) == 1
 
+    def test_populates_weight_and_resting_hr_bt015(self, mock_client):
+        # BT-015 — IntervalsHealthProvider must read `weight` + `restingHR`
+        # from the same wellness payload and populate them on the
+        # returned TrainingReadiness. Pre-fix the fields were always null.
+        mock_client.get_wellness.return_value = [
+            {
+                "id": "2026-05-21",
+                "sleepSecs": 27758,
+                "sleepScore": 86,
+                "weight": 69.4,
+                "restingHR": 46,
+            }
+        ]
+        provider = IntervalsHealthProvider(mock_client)
+        readiness = provider.get_readiness(date(2026, 5, 21))
+        assert readiness is not None
+        assert readiness.weight_kg == 69.4
+        assert readiness.resting_hr == 46
+
+    def test_weight_and_resting_hr_none_when_absent(self, provider):
+        # Default fixture has no weight / restingHR — must remain None.
+        readiness = provider.get_readiness(date(2026, 4, 15))
+        assert readiness is not None
+        assert readiness.weight_kg is None
+        assert readiness.resting_hr is None
+
+    def test_weight_and_resting_hr_none_when_zero_sentinel(self, mock_client):
+        # Intervals.icu uses 0 as "no measurement" sentinel for these
+        # fields ; reject them rather than letting Pydantic raise.
+        mock_client.get_wellness.return_value = [
+            {
+                "id": "2026-05-21",
+                "sleepSecs": 27000,
+                "sleepScore": 80,
+                "weight": 0,
+                "restingHR": 0,
+            }
+        ]
+        provider = IntervalsHealthProvider(mock_client)
+        readiness = provider.get_readiness(date(2026, 5, 21))
+        assert readiness is not None
+        assert readiness.weight_kg is None
+        assert readiness.resting_hr is None
+
 
 class TestBodyComposition:
     def test_returns_none(self, provider):

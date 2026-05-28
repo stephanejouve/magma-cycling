@@ -151,8 +151,15 @@ class IntervalsHealthProvider(HealthProvider):
     # -- readiness -----------------------------------------------------------
 
     def get_readiness(self, target_date: date | None = None) -> TrainingReadiness | None:
-        """Evaluate readiness from Intervals.icu sleep data."""
-        sleep = self.get_sleep_summary(target_date or date.today())
+        """Evaluate readiness from Intervals.icu sleep + wellness data.
+
+        BT-015: weight and restingHR are also extracted from the same
+        wellness payload and populated on the returned TrainingReadiness.
+        Pre-fix, the IntervalsHealthProvider only read sleep and left
+        ``weight_kg`` / ``resting_hr`` null even when the payload had them.
+        """
+        target = target_date or date.today()
+        sleep = self.get_sleep_summary(target)
         if not sleep:
             return None
         ready = sleep.total_sleep_hours >= 6.5
@@ -167,13 +174,20 @@ class IntervalsHealthProvider(HealthProvider):
         veto = []
         if sleep.total_sleep_hours < 5.5:
             veto.append(f"Insufficient sleep: {sleep.total_sleep_hours}h")
+        w = self._get_wellness_day(target) or {}
+        weight_raw = w.get("weight")
+        resting_raw = w.get("restingHR")
+        weight_kg = float(weight_raw) if weight_raw else None
+        resting_hr = int(resting_raw) if resting_raw else None
         return TrainingReadiness(
-            date=target_date or date.today(),
+            date=target,
             sleep_hours=sleep.total_sleep_hours,
             sleep_score=sleep.sleep_score,
             ready_for_intense=ready,
             recommended_intensity=intensity,
             veto_reasons=veto,
+            weight_kg=weight_kg,
+            resting_hr=resting_hr,
         )
 
     # -- auth ----------------------------------------------------------------
