@@ -380,6 +380,16 @@ def main():
     """Entry point for Poetry script."""
     import asyncio
 
+    # Best-effort update probe (silent failure, opt-out via
+    # MAGMA_NO_UPDATE_CHECK=1). Runs once per 24h on disk cache, prints
+    # one stderr line when a newer release exists.
+    try:
+        from magma_cycling.update_check import announce_update_if_any
+
+        announce_update_if_any()
+    except Exception:  # noqa: BLE001
+        pass
+
     asyncio.run(async_main())
 
 
