@@ -45,6 +45,7 @@ from magma_cycling.config import (
     get_data_config,
     get_week_config,
 )
+from magma_cycling.health.weight_fallback import apply_weight_fallback
 from magma_cycling.insert_analysis import WorkoutHistoryManager
 from magma_cycling.prepare_analysis import PromptGenerator
 from magma_cycling.utils.cli import cli_main
@@ -253,6 +254,9 @@ class DailySync(
                     oldest=activity_date_str, newest=activity_date_str
                 )
                 wellness_pre = wellness_data[0] if wellness_data else None
+                wellness_pre = apply_weight_fallback(
+                    self.client, date.fromisoformat(activity_date_str), wellness_pre
+                )
             except Exception:
                 wellness_pre = None
 

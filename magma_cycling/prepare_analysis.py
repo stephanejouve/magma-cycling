@@ -56,11 +56,13 @@ Metadata:
 import argparse
 import subprocess
 import sys
+from datetime import date as _date
 from datetime import datetime, timedelta
 from pathlib import Path
 
 from magma_cycling.api.intervals_client import IntervalsClient
 from magma_cycling.config import create_intervals_client, get_ai_config
+from magma_cycling.health.weight_fallback import apply_weight_fallback
 from magma_cycling.paths import get_project_root
 from magma_cycling.utils.cli import cli_main
 from magma_cycling.workflow_state import WorkflowState
@@ -166,6 +168,7 @@ def analyze_batch(api, unanalyzed_activities, generator, state, project_root):
             # Wellness
             wellness_data = api.get_wellness(oldest=date_str, newest=date_str)
             wellness = wellness_data[0] if wellness_data else None
+            wellness = apply_weight_fallback(api, _date.fromisoformat(date_str), wellness)
 
             # Workout planifié
             print("🔍 Recherche du workout planifié...")
@@ -543,6 +546,7 @@ def main():
     # Récupérer wellness
     wellness_data = api.get_wellness(oldest=date, newest=date)
     wellness = wellness_data[0] if wellness_data else None
+    wellness = apply_weight_fallback(api, _date.fromisoformat(date), wellness)
 
     # Récupérer le workout planifié si disponible
     print(f"   ✅ Activité : {activity.get('name', 'Séance')}")

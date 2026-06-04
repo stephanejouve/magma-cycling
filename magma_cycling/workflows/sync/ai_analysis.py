@@ -2,6 +2,7 @@
 
 from datetime import date, timedelta
 
+from magma_cycling.health.weight_fallback import apply_weight_fallback
 from magma_cycling.planning.control_tower import planning_tower
 from magma_cycling.prompts.prompt_builder import build_prompt, load_current_metrics
 
@@ -117,6 +118,9 @@ class AIAnalysisMixin:
                     oldest=activity_date_str, newest=activity_date_str
                 )
                 wellness_pre = wellness_data[0] if wellness_data else None
+                wellness_pre = apply_weight_fallback(
+                    self.client, date.fromisoformat(activity_date_str), wellness_pre
+                )
             except Exception:
                 wellness_pre = None
 

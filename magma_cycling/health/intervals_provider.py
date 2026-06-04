@@ -155,9 +155,11 @@ class IntervalsHealthProvider(HealthProvider):
 
         BT-015: weight and restingHR are also extracted from the same
         wellness payload and populated on the returned TrainingReadiness.
-        Pre-fix, the IntervalsHealthProvider only read sleep and left
-        ``weight_kg`` / ``resting_hr`` null even when the payload had them.
+        BT-015 follow-up: if the day J payload has no weight (e.g. FitnessSyncer
+        J+1 lag), fall back to the most recent ``weight > 0`` in the last 14 days.
         """
+        from magma_cycling.health.weight_fallback import get_last_known_weight
+
         target = target_date or date.today()
         sleep = self.get_sleep_summary(target)
         if not sleep:
@@ -178,6 +180,20 @@ class IntervalsHealthProvider(HealthProvider):
         weight_raw = w.get("weight")
         resting_raw = w.get("restingHR")
         weight_kg = float(weight_raw) if weight_raw else None
+        if weight_kg is None or weight_kg <= 0:
+            fallback_weight, fallback_date = get_last_known_weight(
+                self._client, target, max_days_back=14
+            )
+            if fallback_weight is not None:
+                weight_kg = fallback_weight
+                if fallback_date is not None:
+                    age = (target - fallback_date).days
+                    logger.info(
+                        "BT-015 weight fallback (readiness): %.1fkg from %s (%d days ago)",
+                        fallback_weight,
+                        fallback_date.isoformat(),
+                        age,
+                    )
         resting_hr = int(resting_raw) if resting_raw else None
         return TrainingReadiness(
             date=target,
