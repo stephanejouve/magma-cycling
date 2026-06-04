@@ -126,6 +126,24 @@ class TestGetReadiness:
         assert readiness.weight_kg is None
         assert readiness.resting_hr is None
 
+    def test_weight_falls_back_to_last_known_bt015_followup(self, mock_client):
+        # BT-015 follow-up — when day J has no weight (FitnessSyncer J+1 lag),
+        # IntervalsHealthProvider.get_readiness must look back up to 14 days
+        # and return the most recent weight > 0 found in the window.
+        def get_wellness(oldest, newest):
+            if oldest == newest == "2026-05-28":
+                return [{"id": "2026-05-28", "sleepSecs": 27000, "sleepScore": 80}]
+            return [
+                {"id": "2026-05-25", "weight": 72.5},
+                {"id": "2026-05-28", "sleepSecs": 27000, "sleepScore": 80},
+            ]
+
+        mock_client.get_wellness.side_effect = get_wellness
+        provider = IntervalsHealthProvider(mock_client)
+        readiness = provider.get_readiness(date(2026, 5, 28))
+        assert readiness is not None
+        assert readiness.weight_kg == 72.5
+
 
 class TestBodyComposition:
     def test_returns_none(self, provider):
