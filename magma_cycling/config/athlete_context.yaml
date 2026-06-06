@@ -3,7 +3,17 @@ athlete:
   age: 54
   training_since: "2023-06"
   platform: "Home trainer (virtuel)"
-  objectives: "Progression forme generale, pas de competition"
+  objectives: "Objectif prioritaire : preparation Les Copains 81km (granfondo, 2026-07-04). Progression forme generale en dehors des fenetres de prep."
+  objectifs:
+    prioritaire:
+      nom: "Les Copains 81km"
+      type: granfondo
+      date: 2026-07-04
+      priorite: A
+      distance_km: 81
+      notes: |
+        Build S098-S099, taper + race week S100.
+        Pas d'application autonome auto-servo sur cette fenetre.
   constraints:
     - "Dette de sommeil chronique (moyenne 5-6h/nuit)"
     - "Travail terrain (technicien telecom), fatigue physique variable selon chantiers"
