@@ -2,13 +2,22 @@
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from magma_cycling._mcp._utils import mcp_response, suppress_stdout_stderr
 from magma_cycling.config.geo import GeoPoint, load_home_location, save_home_location
+from magma_cycling.config.objectives import (
+    PriorityObjective,
+    clear_priority_objective,
+    load_priority_objective,
+    save_priority_objective,
+)
 
 if TYPE_CHECKING:
     from mcp.types import TextContent
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "handle_get_athlete_profile",
@@ -17,7 +26,7 @@ __all__ = [
 
 # Local-only fields routed to the athlete YAML (not Intervals.icu).
 # Extend this set as more portable fields land (PR5 iso-config and beyond).
-_LOCAL_FIELDS = frozenset({"home_location"})
+_LOCAL_FIELDS = frozenset({"home_location", "priority_objective"})
 
 
 async def handle_get_athlete_profile(args: dict) -> list[TextContent]:
@@ -73,6 +82,11 @@ async def handle_get_athlete_profile(args: dict) -> list[TextContent]:
         home = load_home_location()
         result["home_location"] = home.model_dump(exclude_none=True) if home else None
 
+        priority = load_priority_objective()
+        result["priority_objective"] = (
+            priority.model_dump(mode="json", exclude_none=True) if priority else None
+        )
+
         return mcp_response(result)
 
     except Exception as e:
@@ -98,6 +112,22 @@ async def handle_update_athlete_profile(args: dict) -> list[TextContent]:
                 save_home_location(location)
                 updated_fields.append("home_location")
                 current_values["home_location"] = location.model_dump(exclude_none=True)
+
+            if "priority_objective" in local_updates:
+                raw = local_updates["priority_objective"]
+                if raw is None:
+                    cleared = clear_priority_objective()
+                    updated_fields.append("priority_objective")
+                    current_values["priority_objective"] = None
+                    if cleared is None:
+                        logger.debug("priority_objective clear request with no existing value")
+                else:
+                    objective = PriorityObjective.model_validate(raw)
+                    save_priority_objective(objective)
+                    updated_fields.append("priority_objective")
+                    current_values["priority_objective"] = objective.model_dump(
+                        mode="json", exclude_none=True
+                    )
 
             # 2. Remote fields (Intervals.icu)
             if remote_updates:

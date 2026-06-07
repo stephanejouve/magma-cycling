@@ -58,6 +58,41 @@ def get_tools() -> list[Tool]:
                                 "required": ["lat", "lon"],
                                 "additionalProperties": False,
                             },
+                            "priority_objective": {
+                                "description": (
+                                    "Priority training objective (event-style "
+                                    "goal with target date). Stored in the user "
+                                    "athlete YAML — never in the bundle. Pass "
+                                    "null to clear an existing objective."
+                                ),
+                                "oneOf": [
+                                    {"type": "null"},
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "name": {"type": "string", "minLength": 1},
+                                            "type": {"type": "string", "minLength": 1},
+                                            "target_date": {
+                                                "type": "string",
+                                                "format": "date",
+                                                "description": "YYYY-MM-DD",
+                                            },
+                                            "priority": {
+                                                "type": "string",
+                                                "enum": ["A", "B", "C"],
+                                                "default": "A",
+                                            },
+                                            "distance_km": {
+                                                "type": "number",
+                                                "exclusiveMinimum": 0,
+                                            },
+                                            "notes": {"type": "string"},
+                                        },
+                                        "required": ["name", "type", "target_date"],
+                                        "additionalProperties": False,
+                                    },
+                                ],
+                            },
                         },
                     },
                 },
