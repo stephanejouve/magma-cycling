@@ -16,13 +16,12 @@ Migration noop: if ``priority_objective`` is absent from the YAML,
 from __future__ import annotations
 
 import logging
-import os
 from datetime import date
 from pathlib import Path
 
-import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
+from magma_cycling.config._yaml_io import atomic_write_yaml, read_yaml
 from magma_cycling.config.data_repo import resolve_athlete_yaml_path
 
 logger = logging.getLogger(__name__)
@@ -45,39 +44,17 @@ class PriorityObjective(BaseModel):
     notes: str | None = Field(default=None, description="Free-form notes")
 
 
-def _atomic_write_yaml(path: Path, data: dict) -> None:
-    """Atomic YAML write via tmp + replace, preserves perms via 0o600."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    with tmp.open("w", encoding="utf-8") as fh:
-        yaml.safe_dump(data, fh, default_flow_style=False, sort_keys=False, allow_unicode=True)
-    os.chmod(tmp, 0o600)
-    tmp.replace(path)
-
-
-def _read_yaml(path: Path) -> dict:
-    if not path.exists():
-        return {}
-    try:
-        with path.open(encoding="utf-8") as fh:
-            data = yaml.safe_load(fh) or {}
-    except yaml.YAMLError:
-        logger.exception("Failed to parse %s", path)
-        return {}
-    return data if isinstance(data, dict) else {}
-
-
 def load_priority_objective(path: Path | None = None) -> PriorityObjective | None:
     """Read ``athlete.priority_objective`` from the user YAML."""
     yaml_path = path or resolve_athlete_yaml_path()
-    data = _read_yaml(yaml_path)
+    data = read_yaml(yaml_path)
     raw = (data.get("athlete") or {}).get("priority_objective")
     if not raw:
         return None
     try:
         return PriorityObjective.model_validate(raw)
     except Exception:
-        logger.exception("Invalid priority_objective in %s, ignoring", yaml_path)
+        logger.warning("priority_objective in %s failed pydantic validation; ignoring", yaml_path)
         return None
 
 
@@ -89,14 +66,14 @@ def save_priority_objective(obj: PriorityObjective, path: Path | None = None) ->
     never touched — only the resolved user file. Returns the path written.
     """
     yaml_path = path or resolve_athlete_yaml_path()
-    data = _read_yaml(yaml_path)
+    data = read_yaml(yaml_path)
     athlete = data.get("athlete")
     if not isinstance(athlete, dict):
         athlete = {}
         data["athlete"] = athlete
     payload = obj.model_dump(mode="json", exclude_none=True)
     athlete["priority_objective"] = payload
-    _atomic_write_yaml(yaml_path, data)
+    atomic_write_yaml(yaml_path, data)
     return yaml_path
 
 
@@ -109,10 +86,10 @@ def clear_priority_objective(path: Path | None = None) -> Path | None:
     yaml_path = path or resolve_athlete_yaml_path()
     if not yaml_path.exists():
         return None
-    data = _read_yaml(yaml_path)
+    data = read_yaml(yaml_path)
     athlete = data.get("athlete")
     if not isinstance(athlete, dict) or "priority_objective" not in athlete:
         return None
     athlete.pop("priority_objective", None)
-    _atomic_write_yaml(yaml_path, data)
+    atomic_write_yaml(yaml_path, data)
     return yaml_path

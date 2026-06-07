@@ -72,6 +72,11 @@ INTELLIGENCE_DATA_DIR_ENV = "INTELLIGENCE_DATA_DIR"
 #: portabilité). Fallback final = ``paths.get_athlete_yaml_path()`` (legacy
 #: user config dir) quand aucune des deux options n'est disponible (boot
 #: initial sans repo, dev sans env).
+#:
+#: ⚠️ ATHLETE_CONFIG_PATH = test / power-user only. Une valeur mal pointée
+#: route TOUTES les écritures `athlete.*` (home_location, priority_objective,
+#: ...) vers ce chemin, sans validation supplémentaire. Ne pas exposer dans
+#: une UI utilisateur ; usage attendu = tests automatisés et debug ciblé.
 ATHLETE_CONFIG_PATH_ENV = "ATHLETE_CONFIG_PATH"
 
 #: Nom du fichier d'index `.operators.yaml` à la racine du repo.
