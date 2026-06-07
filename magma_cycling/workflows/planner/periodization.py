@@ -2,8 +2,31 @@
 
 import logging
 import sys
+from datetime import date
 
 logger = logging.getLogger(__name__)
+
+
+def _load_priority_objective_dict() -> dict | None:
+    """Read the user priority objective and project ``days_until_target``.
+
+    Returns a JSON-serializable dict with the pydantic ``PriorityObjective``
+    fields plus a derived ``days_until_target`` (signed integer — negative if
+    the target date is in the past). Returns ``None`` if no objective is set
+    or if reading fails (silent : the coach prompt simply omits the line).
+    """
+    try:
+        from magma_cycling.config.objectives import load_priority_objective
+
+        obj = load_priority_objective()
+        if obj is None:
+            return None
+        payload = obj.model_dump(mode="json", exclude_none=True)
+        payload["days_until_target"] = (obj.target_date - date.today()).days
+        return payload
+    except Exception as exc:
+        logger.warning("priority_objective loading failed: %s", exc)
+        return None
 
 
 class PeriodizationMixin:
@@ -94,6 +117,7 @@ class PeriodizationMixin:
                 "recovery_week_frequency": phase_rec.recovery_week_frequency,
                 "intensity_distribution": phase_rec.intensity_distribution,
                 "rationale": phase_rec.rationale,
+                "priority_objective": _load_priority_objective_dict(),
             }
 
             print(
