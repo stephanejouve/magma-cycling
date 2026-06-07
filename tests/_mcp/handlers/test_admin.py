@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import sys
 import types
 from unittest.mock import MagicMock, patch
 
@@ -10,6 +11,11 @@ import pytest
 from magma_cycling._mcp.handlers.admin import (
     handle_reload_server,
     handle_report_config_file_state,
+)
+
+_SKIP_POSIX_PERMS = pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="POSIX permission bits (chmod 0o600/0o644/0o700) are not honoured by Windows",
 )
 
 
@@ -204,6 +210,7 @@ class TestHandleReportConfigFileState:
         assert "error" in data
         assert "invalid scope" in data["error"]
 
+    @_SKIP_POSIX_PERMS
     @pytest.mark.asyncio
     async def test_bundle_state_matches_known_fixture(self, tmp_path):
         """SHA256 + size + perms reported for a known fixture file."""
@@ -224,6 +231,25 @@ class TestHandleReportConfigFileState:
         assert bundle["perms_octal"] == "644"
 
     @pytest.mark.asyncio
+    async def test_bundle_state_shape_cross_platform(self, tmp_path):
+        """sha256/size/perms_octal fields exist regardless of OS (Windows-safe)."""
+        fake_bundle = tmp_path / "athlete_context.yaml"
+        content = b"name: test\n"
+        fake_bundle.write_bytes(content)
+        with patch(
+            "magma_cycling.config.athlete_context.BUNDLE_ATHLETE_YAML",
+            fake_bundle,
+        ):
+            result = await handle_report_config_file_state({"scope": "bundle"})
+        bundle = json.loads(result[0].text)["bundle"]
+        assert bundle["exists"] is True
+        assert bundle["size_bytes"] == len(content)
+        assert bundle["sha256"] == hashlib.sha256(content).hexdigest()
+        assert "perms_octal" in bundle
+        assert isinstance(bundle["perms_octal"], str)
+        assert len(bundle["perms_octal"]) == 3
+
+    @pytest.mark.asyncio
     async def test_bundle_missing_degrades_gracefully(self, tmp_path):
         """A missing bundle file reports exists=False without raising."""
         ghost = tmp_path / "does-not-exist.yaml"
@@ -237,6 +263,7 @@ class TestHandleReportConfigFileState:
         assert "sha256" not in bundle
         assert "error" not in bundle
 
+    @_SKIP_POSIX_PERMS
     @pytest.mark.asyncio
     async def test_user_yaml_reports_parent_dir_perms(self, tmp_path):
         """The user_yaml block embeds parent_dir perms (case 8 of the TNR brief)."""
@@ -255,6 +282,24 @@ class TestHandleReportConfigFileState:
         assert user_yaml["perms_octal"] == "600"
         assert user_yaml["parent_dir"]["exists"] is True
         assert user_yaml["parent_dir"]["perms_octal"] == "700"
+
+    @pytest.mark.asyncio
+    async def test_user_yaml_parent_dir_shape_cross_platform(self, tmp_path):
+        """parent_dir block is always emitted with path + exists + perms_octal (Windows-safe)."""
+        user_dir = tmp_path / "athlete"
+        user_dir.mkdir()
+        user_file = user_dir / "athlete.yaml"
+        user_file.write_text("name: stub\n")
+        with patch(
+            "magma_cycling.config.data_repo.resolve_athlete_yaml_path",
+            return_value=user_file,
+        ):
+            result = await handle_report_config_file_state({"scope": "user_yaml"})
+        user_yaml = json.loads(result[0].text)["user_yaml"]
+        assert user_yaml["exists"] is True
+        assert user_yaml["parent_dir"]["exists"] is True
+        assert "perms_octal" in user_yaml["parent_dir"]
+        assert len(user_yaml["parent_dir"]["perms_octal"]) == 3
 
     @pytest.mark.asyncio
     async def test_user_yaml_resolve_failure_reports_error(self):
