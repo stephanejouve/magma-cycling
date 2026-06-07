@@ -1019,6 +1019,67 @@ class TestHandleUpdateAthleteProfileError:
         assert "error" in data
 
 
+class TestHandleUpdateAthleteProfilePriorityObjective:
+    @pytest.mark.asyncio
+    async def test_save_priority_objective(self, tmp_path, monkeypatch):
+        from magma_cycling.mcp_server import handle_update_athlete_profile
+
+        yaml_path = tmp_path / "athlete.yaml"
+        monkeypatch.setenv("ATHLETE_CONFIG_PATH", str(yaml_path))
+
+        result = await handle_update_athlete_profile(
+            {
+                "updates": {
+                    "priority_objective": {
+                        "name": "Les Copains 81km",
+                        "type": "granfondo",
+                        "target_date": "2026-07-04",
+                        "priority": "A",
+                        "distance_km": 81,
+                        "notes": "Build + taper",
+                    }
+                }
+            }
+        )
+        data = json.loads(result[0].text)
+        assert data["success"] is True
+        assert "priority_objective" in data["updated_fields"]
+        assert data["current_values"]["priority_objective"]["name"] == "Les Copains 81km"
+        assert yaml_path.is_file()
+
+    @pytest.mark.asyncio
+    async def test_clear_priority_objective(self, tmp_path, monkeypatch):
+        from magma_cycling.mcp_server import handle_update_athlete_profile
+
+        yaml_path = tmp_path / "athlete.yaml"
+        yaml_path.write_text(
+            "athlete:\n"
+            "  priority_objective:\n"
+            "    name: x\n"
+            "    type: granfondo\n"
+            "    target_date: 2026-07-04\n",
+            encoding="utf-8",
+        )
+        monkeypatch.setenv("ATHLETE_CONFIG_PATH", str(yaml_path))
+
+        result = await handle_update_athlete_profile({"updates": {"priority_objective": None}})
+        data = json.loads(result[0].text)
+        assert data["success"] is True
+        assert "priority_objective" in data["updated_fields"]
+        assert data["current_values"]["priority_objective"] is None
+
+    @pytest.mark.asyncio
+    async def test_invalid_objective_returns_error(self, tmp_path, monkeypatch):
+        from magma_cycling.mcp_server import handle_update_athlete_profile
+
+        monkeypatch.setenv("ATHLETE_CONFIG_PATH", str(tmp_path / "athlete.yaml"))
+        result = await handle_update_athlete_profile(
+            {"updates": {"priority_objective": {"name": "x"}}}  # missing required
+        )
+        data = json.loads(result[0].text)
+        assert "error" in data
+
+
 # =======================
 # TestHandleValidateWeekConsistency
 # =======================
