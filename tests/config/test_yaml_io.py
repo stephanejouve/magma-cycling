@@ -4,11 +4,18 @@ from __future__ import annotations
 
 import os
 import stat
+import sys
 from pathlib import Path
 
+import pytest
 import yaml
 
 from magma_cycling.config._yaml_io import atomic_write_yaml, read_yaml
+
+posix_only = pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="POSIX file permissions are not enforced on Windows (INFRA-001)",
+)
 
 
 class TestReadYaml:
@@ -34,6 +41,7 @@ class TestReadYaml:
 
 
 class TestAtomicWriteYaml:
+    @posix_only
     def test_creates_file_with_0o600_perms(self, tmp_path: Path):
         p = tmp_path / "out.yaml"
         atomic_write_yaml(p, {"foo": "bar"})
@@ -41,6 +49,7 @@ class TestAtomicWriteYaml:
         mode = stat.S_IMODE(p.stat().st_mode)
         assert mode == 0o600, f"Expected 0o600, got {oct(mode)}"
 
+    @posix_only
     def test_creates_parent_dir_with_0o700_when_absent(self, tmp_path: Path):
         nested = tmp_path / "newdir" / "deeper"
         p = nested / "out.yaml"
@@ -49,6 +58,7 @@ class TestAtomicWriteYaml:
         mode = stat.S_IMODE(nested.stat().st_mode)
         assert mode == 0o700, f"Expected 0o700 on new parent, got {oct(mode)}"
 
+    @posix_only
     def test_does_not_change_existing_parent_perms(self, tmp_path: Path):
         existing = tmp_path / "preexisting"
         existing.mkdir(mode=0o755)

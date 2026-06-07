@@ -12,6 +12,13 @@ Security posture:
   left alone — responsibility delegated upstream).
 - Reads silently fall back to ``{}`` on missing / malformed YAML and log a
   short ``warning`` (no traceback) so the file contents are not echoed.
+
+Platform note: POSIX file permission modes (0o600, 0o700) are **not
+enforced on Windows** — the OS ignores the ``mode`` argument of ``os.open``
+and ``Path.mkdir``. On Windows hosts, user data confidentiality relies on
+NTFS ACLs (out of scope here). The hardening applied in this module
+protects macOS and Linux deployments fully; Windows hardening would be a
+separate workstream (see INFRA-001 for the existing skip convention).
 """
 
 from __future__ import annotations
