@@ -206,6 +206,31 @@ def _build_recovery_directives(
     return directives
 
 
+def _format_priority_objective_line(po) -> str | None:
+    """Format the optional priority-objective line for the athlete block.
+
+    Returns ``None`` when no objective is set or when the payload is missing
+    the required ``name`` field — the prompt simply omits the line in that
+    case (no noise). Negative ``days_until_target`` (event passed) is
+    rendered as ``J+<n>`` so coach output stays informative if the user
+    forgets to clear the objective post-event.
+    """
+    if not isinstance(po, dict):
+        return None
+    name = po.get("name")
+    if not name:
+        return None
+    type_ = po.get("type", "?")
+    target_date = po.get("target_date", "?")
+    days = po.get("days_until_target")
+    if isinstance(days, int):
+        day_marker = f"J-{days}" if days >= 0 else f"J+{-days}"
+        suffix = f", {day_marker}"
+    else:
+        suffix = ""
+    return f"- Objectif prioritaire : {name} ({type_}, {target_date}{suffix})"
+
+
 def format_athlete_profile(context: dict, metrics: dict) -> str:
     """Format athlete profile for prompt injection.
 
@@ -234,6 +259,10 @@ def format_athlete_profile(context: dict, metrics: dict) -> str:
         f"- Plateforme: {context.get('platform', '?')}",
         f"- Objectifs: {context.get('objectives', 'Non definis')}",
     ]
+
+    po_line = _format_priority_objective_line(context.get("priority_objective"))
+    if po_line:
+        lines.append(po_line)
 
     # Dynamic metrics line
     ctl = metrics.get("ctl")

@@ -5,6 +5,7 @@ import pytest
 from magma_cycling.prompts.prompt_builder import (
     VALID_MISSIONS,
     _build_recovery_directives,
+    _format_priority_objective_line,
     build_prompt,
     format_athlete_profile,
     load_current_metrics,
@@ -1291,3 +1292,100 @@ class TestTrainingPhaseInjection:
         result = format_athlete_profile(context, metrics)
         assert "42" in result
         assert "reconstruction base" in result.lower()
+
+
+class TestFormatPriorityObjectiveLine:
+    """Helper `_format_priority_objective_line` — covers all branches in isolation."""
+
+    def test_returns_none_when_payload_is_none(self):
+        assert _format_priority_objective_line(None) is None
+
+    def test_returns_none_when_payload_is_not_dict(self):
+        assert _format_priority_objective_line("not a dict") is None
+
+    def test_returns_none_when_name_missing(self):
+        po = {"type": "granfondo", "target_date": "2026-07-04", "days_until_target": 27}
+        assert _format_priority_objective_line(po) is None
+
+    def test_renders_future_event_with_j_minus(self):
+        po = {
+            "name": "Les Copains 81km",
+            "type": "granfondo",
+            "target_date": "2026-07-04",
+            "days_until_target": 27,
+        }
+        line = _format_priority_objective_line(po)
+        assert line == "- Objectif prioritaire : Les Copains 81km (granfondo, 2026-07-04, J-27)"
+
+    def test_renders_event_day_as_j_minus_zero(self):
+        po = {"name": "Race", "type": "race", "target_date": "2026-06-07", "days_until_target": 0}
+        line = _format_priority_objective_line(po)
+        assert line == "- Objectif prioritaire : Race (race, 2026-06-07, J-0)"
+
+    def test_renders_past_event_with_j_plus(self):
+        po = {
+            "name": "Old Fondo",
+            "type": "granfondo",
+            "target_date": "2026-05-01",
+            "days_until_target": -10,
+        }
+        line = _format_priority_objective_line(po)
+        assert line == "- Objectif prioritaire : Old Fondo (granfondo, 2026-05-01, J+10)"
+
+    def test_omits_day_suffix_when_days_unknown(self):
+        po = {"name": "Goal", "type": "race", "target_date": "2026-08-15"}
+        line = _format_priority_objective_line(po)
+        assert line == "- Objectif prioritaire : Goal (race, 2026-08-15)"
+
+
+class TestFormatAthleteProfilePriorityObjective:
+    """Integration: format_athlete_profile injects the line only when an objective exists."""
+
+    def _base_context(self):
+        return {
+            "name": "Athlete",
+            "age": 54,
+            "training_since": "2023-06",
+            "platform": "Home trainer",
+            "objectives": "General fitness",
+        }
+
+    def _base_metrics(self):
+        return {"ftp": 250, "weight": 80, "ctl": 60.0, "atl": 55.0}
+
+    def test_no_line_when_priority_objective_absent(self):
+        result = format_athlete_profile(self._base_context(), self._base_metrics())
+        assert "Objectif prioritaire" not in result
+
+    def test_no_line_when_priority_objective_is_none(self):
+        ctx = self._base_context()
+        ctx["priority_objective"] = None
+        result = format_athlete_profile(ctx, self._base_metrics())
+        assert "Objectif prioritaire" not in result
+
+    def test_line_present_when_priority_objective_set(self):
+        ctx = self._base_context()
+        ctx["priority_objective"] = {
+            "name": "Les Copains 81km",
+            "type": "granfondo",
+            "target_date": "2026-07-04",
+            "days_until_target": 27,
+        }
+        result = format_athlete_profile(ctx, self._base_metrics())
+        assert "Objectif prioritaire : Les Copains 81km" in result
+        assert "J-27" in result
+
+    def test_existing_blocks_unaffected(self):
+        """Athlete profile other blocks (CTL/ATL, recovery) remain when objective injected."""
+        ctx = self._base_context()
+        ctx["priority_objective"] = {
+            "name": "Race",
+            "type": "race",
+            "target_date": "2026-06-15",
+            "days_until_target": 8,
+        }
+        metrics = self._base_metrics()
+        result = format_athlete_profile(ctx, metrics)
+        assert "FTP: 250W" in result
+        assert "CTL: 60" in result
+        assert "Objectif prioritaire" in result
