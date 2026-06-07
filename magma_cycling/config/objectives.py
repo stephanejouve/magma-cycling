@@ -24,6 +24,14 @@ from pydantic import BaseModel, ConfigDict, Field
 from magma_cycling.config._yaml_io import atomic_write_yaml, read_yaml
 from magma_cycling.config.data_repo import resolve_athlete_yaml_path
 
+__all__ = [
+    "PriorityObjective",
+    "load_priority_objective",
+    "load_priority_objective_as_dict",
+    "save_priority_objective",
+    "clear_priority_objective",
+]
+
 logger = logging.getLogger(__name__)
 
 
@@ -55,6 +63,28 @@ def load_priority_objective(path: Path | None = None) -> PriorityObjective | Non
         return PriorityObjective.model_validate(raw)
     except Exception:
         logger.warning("priority_objective in %s failed pydantic validation; ignoring", yaml_path)
+        return None
+
+
+def load_priority_objective_as_dict(path: Path | None = None) -> dict | None:
+    """Read the user priority objective and project ``days_until_target``.
+
+    Returns a JSON-serializable dict with the pydantic ``PriorityObjective``
+    fields plus a derived ``days_until_target`` (signed integer — negative if
+    the target date is in the past). Returns ``None`` if no objective is set
+    or if reading fails. Used by both ``load_periodization_context`` (PR 1)
+    and the ``daily_sync`` auto-servo caller (PR 3 follow-up): single source
+    of truth for the serialization.
+    """
+    try:
+        obj = load_priority_objective(path)
+        if obj is None:
+            return None
+        payload = obj.model_dump(mode="json", exclude_none=True)
+        payload["days_until_target"] = (obj.target_date - date.today()).days
+        return payload
+    except Exception as exc:
+        logger.warning("priority_objective dict projection failed: %s", exc)
         return None
 
 

@@ -71,7 +71,12 @@ class TestLoadPriorityObjectiveDict:
         assert result["days_until_target"] == -3
 
     def test_silent_none_when_loader_raises(self, monkeypatch, caplog):
-        """If `load_priority_objective` raises, helper logs and returns None."""
+        """If `load_priority_objective` raises, helper logs and returns None.
+
+        Log lives in `magma_cycling.config.objectives` since the serialization
+        helper was promoted from the periodization private wrapper to the
+        public utility in `config.objectives` (see follow-up to PR #406).
+        """
 
         def boom(*_a, **_kw):
             raise RuntimeError("simulated YAML loader failure")
@@ -80,9 +85,9 @@ class TestLoadPriorityObjectiveDict:
             "magma_cycling.config.objectives.load_priority_objective",
             boom,
         )
-        with caplog.at_level("WARNING", logger="magma_cycling.workflows.planner.periodization"):
+        with caplog.at_level("WARNING", logger="magma_cycling.config.objectives"):
             assert periodization_mod._load_priority_objective_dict() is None
-        assert any("priority_objective loading failed" in r.message for r in caplog.records)
+        assert any("priority_objective dict projection failed" in r.message for r in caplog.records)
 
 
 class TestPeriodizationContextInjection:

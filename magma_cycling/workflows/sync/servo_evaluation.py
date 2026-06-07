@@ -4,6 +4,68 @@ from magma_cycling.planning.session_formatter import format_remaining_sessions_c
 from magma_cycling.utils.ai_response_parser import parse_ai_modifications
 from magma_cycling.utils.intervals_scales import format_feel
 
+#: Race-week window : J-0 to J-7 = strict no-load-increase, prioritise taper.
+PRIORITY_OBJECTIVE_RACE_WEEK_MAX_DAYS = 7
+#: Build-phase window : J-8 to J-21 = tolerant on intensity, fitness > comfort.
+PRIORITY_OBJECTIVE_BUILD_PHASE_MAX_DAYS = 21
+
+_RACE_WEEK_DIRECTIVE_TEMPLATE = (
+    "🏁 RACE WEEK (J-{days} de l'objectif prioritaire « {name} », {date}) — "
+    "**NE PROPOSE AUCUNE augmentation de charge ou d'intensité.** "
+    "Une modification ne peut qu'**alléger** ou maintenir, jamais **alourdir**. "
+    "Prioriser le taper, le repos actif et la récupération. "
+    "Cette règle est plus stricte que les seuils fatigue généraux."
+)
+_BUILD_PHASE_DIRECTIVE_TEMPLATE = (
+    "📌 BUILD PHASE (J-{days} de l'objectif prioritaire « {name} », {date}) — "
+    "La séance s'inscrit dans le cycle de préparation. Tu peux **tolérer une "
+    "intensité un peu plus élevée** et un découplage léger sans déclencher de "
+    "réduction si les autres signaux sont OK. L'objectif fitness prime sur le "
+    "confort tant qu'on n'entre pas dans la race week (J-{race_week_max} et moins)."
+)
+
+
+def _get_priority_objective_window(po: dict | None) -> dict | None:
+    """Compute the prep window meta for the auto-servo to consume.
+
+    Returns a dict with ``window`` (``"race_week"`` | ``"build_phase"``),
+    ``days_until_target`` (signed int), ``block_load_increase`` (bool — only
+    ``True`` for the race week) and ``prompt_directive`` (str injected into
+    the servo coach prompt). Returns ``None`` when no objective is set, when
+    the payload is malformed, when ``days_until_target`` is missing, or when
+    the date sits outside both windows (event passed → no taper logic to
+    enforce post-event, future > 21 days → too early to override criteria).
+    """
+    if not isinstance(po, dict):
+        return None
+    days = po.get("days_until_target")
+    if not isinstance(days, int):
+        return None
+    if days < 0 or days > PRIORITY_OBJECTIVE_BUILD_PHASE_MAX_DAYS:
+        return None
+    name = po.get("name", "objectif")
+    date = po.get("target_date", "?")
+    if days <= PRIORITY_OBJECTIVE_RACE_WEEK_MAX_DAYS:
+        directive = _RACE_WEEK_DIRECTIVE_TEMPLATE.format(days=days, name=name, date=date)
+        return {
+            "window": "race_week",
+            "days_until_target": days,
+            "block_load_increase": True,
+            "prompt_directive": directive,
+        }
+    directive = _BUILD_PHASE_DIRECTIVE_TEMPLATE.format(
+        days=days,
+        name=name,
+        date=date,
+        race_week_max=PRIORITY_OBJECTIVE_RACE_WEEK_MAX_DAYS,
+    )
+    return {
+        "window": "build_phase",
+        "days_until_target": days,
+        "block_load_increase": False,
+        "prompt_directive": directive,
+    }
+
 
 class ServoEvaluationMixin:
     """Mixin for servo evaluation: metrics extraction, social ride detection, and servo mode."""
@@ -387,7 +449,12 @@ class ServoEvaluationMixin:
             print(f"     ⚠️  Erreur sync Intervals.icu : {e}")
 
     def run_servo_adjustment(
-        self, week_id: str, activity: dict, metrics: dict, analysis: str | None
+        self,
+        week_id: str,
+        activity: dict,
+        metrics: dict,
+        analysis: str | None,
+        priority_objective: dict | None = None,
     ) -> dict | None:
         """
         Run servo mode to get AI recommendations for planning adjustments.
@@ -440,6 +507,13 @@ class ServoEvaluationMixin:
             # Generate servo prompt (same as workflow_coach)
             planning_context = format_remaining_sessions_compact(remaining_sessions)
 
+            priority_window = _get_priority_objective_window(priority_objective)
+            priority_objective_block = (
+                f"\n## Objectif prioritaire — fenêtre prep\n\n{priority_window['prompt_directive']}\n"
+                if priority_window
+                else ""
+            )
+
             servo_prompt = f"""# ASSERVISSEMENT PLANNING - Demande Coach AI.
 
 Contexte : Tu viens d'analyser la séance du jour (DÉJÀ RÉALISÉE).
@@ -468,6 +542,7 @@ Si modification planning nécessaire, utilise ces templates prédéfinis :
 **INTENSITÉ RÉDUITE** (remplacement Sweet-Spot/VO2) :
 - `sweetspot_short_50tss` : 2x10min 88% (50 TSS)
 
+{priority_objective_block}
 ## Instructions
 
 Basé sur l'analyse de la séance du jour et les métriques réelles ci-dessus, **recommandes-tu des ajustements au planning FUTUR ?**
