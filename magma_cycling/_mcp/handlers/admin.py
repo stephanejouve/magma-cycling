@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
 import logging
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from magma_cycling._mcp._utils import mcp_response, suppress_stdout_stderr
@@ -14,8 +16,18 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     "handle_reload_server",
+    "handle_report_config_file_state",
     "handle_system_info",
 ]
+
+
+_SELF_REPORT_DISCLAIMER = (
+    "Reports the current sha256 and permissions of bundled + user YAML "
+    "config files as seen by the running container. Not an external "
+    "integrity attestation — a compromised container could mis-report. "
+    "For external verification, inspect image overlay layers directly "
+    "(docker cp / image diff from host)."
+)
 
 
 async def handle_reload_server(args: dict) -> list[TextContent]:
@@ -67,6 +79,86 @@ async def handle_reload_server(args: dict) -> list[TextContent]:
                 "message": "⚠️ Module reload error - may need full restart",
             }
         )
+
+
+def _file_state(path: Path) -> dict:
+    """Return self-reported state (exists, size, perms_octal, sha256) for one path.
+
+    Pure read-only — no side effect, no mutation. Hashes the file content
+    in 8 KiB chunks (memory-bounded for large files). Missing file is not
+    an error, returns ``{"exists": False}`` so callers can degrade gracefully.
+    """
+    state: dict = {"path": str(path), "exists": path.exists()}
+    if not state["exists"]:
+        return state
+    try:
+        st = path.stat()
+        state["size_bytes"] = st.st_size
+        state["perms_octal"] = oct(st.st_mode & 0o777)[2:].zfill(3)
+        sha = hashlib.sha256()
+        with path.open("rb") as fh:
+            for chunk in iter(lambda: fh.read(8192), b""):
+                sha.update(chunk)
+        state["sha256"] = sha.hexdigest()
+    except OSError as exc:
+        state["error"] = f"stat/read failed: {exc}"
+    return state
+
+
+def _parent_dir_state(path: Path) -> dict:
+    """Return self-reported state of the parent directory (perms only)."""
+    parent = path.parent
+    info: dict = {"path": str(parent), "exists": parent.exists()}
+    if not info["exists"]:
+        return info
+    try:
+        info["perms_octal"] = oct(parent.stat().st_mode & 0o777)[2:].zfill(3)
+    except OSError as exc:
+        info["error"] = f"stat failed: {exc}"
+    return info
+
+
+async def handle_report_config_file_state(args: dict) -> list[TextContent]:
+    """Report self-reported state of bundled + user YAML config files.
+
+    See :data:`_SELF_REPORT_DISCLAIMER` for the boundary of what this tool
+    can attest to. In short: this is what the running container *sees*, not
+    an external integrity check.
+
+    Input:
+      - ``scope``: ``"bundle"`` | ``"user_yaml"`` | ``"both"`` (default ``"both"``)
+
+    Output (per scope):
+      - ``bundle.{path, exists, size_bytes, perms_octal, sha256}``
+      - ``user_yaml.{path, exists, size_bytes, perms_octal, sha256, parent_dir.{path, exists, perms_octal}}``
+    """
+    from magma_cycling.config.athlete_context import BUNDLE_ATHLETE_YAML
+    from magma_cycling.config.data_repo import resolve_athlete_yaml_path
+
+    scope = args.get("scope", "both")
+    if scope not in ("bundle", "user_yaml", "both"):
+        return mcp_response(
+            {
+                "error": f"invalid scope {scope!r}, expected one of: bundle, user_yaml, both",
+            }
+        )
+
+    result: dict = {"self_reported": True, "note": _SELF_REPORT_DISCLAIMER}
+
+    if scope in ("bundle", "both"):
+        result["bundle"] = _file_state(BUNDLE_ATHLETE_YAML)
+
+    if scope in ("user_yaml", "both"):
+        try:
+            user_path = resolve_athlete_yaml_path()
+        except Exception as exc:
+            result["user_yaml"] = {"error": f"resolve_athlete_yaml_path() failed: {exc}"}
+        else:
+            user_state = _file_state(user_path)
+            user_state["parent_dir"] = _parent_dir_state(user_path)
+            result["user_yaml"] = user_state
+
+    return mcp_response(result)
 
 
 async def handle_system_info(args: dict) -> list[TextContent]:

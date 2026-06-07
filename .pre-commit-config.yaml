@@ -80,7 +80,7 @@ repos:
 
       - id: check-safe-io
         name: Check safe I/O conformity (encoding=utf-8 enforcement)
-        entry: python scripts/lint/check_safe_io.py
+        entry: python3 scripts/lint/check_safe_io.py
         language: system
         types: [python]
         exclude: ^(tests/|scripts/debug/|project-docs/)
