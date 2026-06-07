@@ -33,6 +33,7 @@ from mcp_http_transport import MCPTransportManager
 
 from magma_cycling._mcp.handlers.admin import (  # noqa: F401
     handle_reload_server,
+    handle_report_config_file_state,
     handle_system_info,
 )
 from magma_cycling._mcp.handlers.analysis import (  # noqa: F401
@@ -251,9 +252,10 @@ TOOL_HANDLERS = {
     "validate-local-remote-sync": handle_validate_local_remote_sync,
     "pid-daily-evaluation": handle_pid_daily_evaluation,
     "check-workout-adherence": handle_check_workout_adherence,
-    # Admin (2)
+    # Admin (3)
     "reload-server": handle_reload_server,
     "system-info": handle_system_info,
+    "report-config-file-state": handle_report_config_file_state,
     # Time / AC6 levier 2 (1) — PR8ter plan iso-config
     "current-time": handle_current_time,
     # Catalog (1)
