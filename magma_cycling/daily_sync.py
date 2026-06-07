@@ -274,12 +274,18 @@ class DailySync(
                     print(f"   • {reason}")
                 print()
 
+                # Load user priority objective (race week / build phase awareness)
+                from magma_cycling.config.objectives import load_priority_objective_as_dict
+
+                priority_objective = load_priority_objective_as_dict()
+
                 # Run servo adjustment
                 servo_result = self.run_servo_adjustment(
                     week_id=week_id,
                     activity=latest_activity,
                     metrics=metrics,
                     analysis=latest_analysis,
+                    priority_objective=priority_objective,
                 )
             else:
                 print("  ✅ Aucun signal d'alerte - planning maintenu")
