@@ -64,11 +64,14 @@ def hot_reload_if_needed(package_name: str = "magma_cycling", verbose: bool = Fa
     """
     reloaded_modules = []
 
-    # Find all loaded modules from our package
+    # Find all loaded modules from our package.
+    # Filter out namespace packages and built-ins where ``__file__`` exists
+    # but is ``None`` — ``Path(None)`` would raise ``TypeError`` (not caught
+    # by the loop's ``except (AttributeError, OSError)``).
     our_modules = {
         name: module
         for name, module in sys.modules.items()
-        if name.startswith(package_name) and hasattr(module, "__file__")
+        if name.startswith(package_name) and getattr(module, "__file__", None) is not None
     }
 
     if not our_modules:
@@ -152,10 +155,11 @@ def mark_modules_loaded(package_name: str = "magma_cycling") -> None:
         >>> mark_modules_loaded()
         >>> # Later calls to hot_reload_if_needed() will detect changes
     """
+    # Same namespace-package guard as ``hot_reload_if_needed`` — see comment there.
     our_modules = {
         name: module
         for name, module in sys.modules.items()
-        if name.startswith(package_name) and hasattr(module, "__file__")
+        if name.startswith(package_name) and getattr(module, "__file__", None) is not None
     }
 
     for module_name, module in our_modules.items():
