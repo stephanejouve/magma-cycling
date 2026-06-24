@@ -13,9 +13,36 @@ from magma_cycling.config.objectives import (
     load_priority_objective,
     save_priority_objective,
 )
+from magma_cycling.config.profile_rich import (
+    AvailabilityPattern,
+    HrvBaseline,
+    InjuryHistory,
+    MacroPlan,
+    NutritionStrategy,
+    SleepBaseline,
+    clear_availability_pattern,
+    clear_hrv_baseline,
+    clear_injury_history,
+    clear_macro_plan,
+    clear_nutrition_strategy,
+    clear_sleep_baseline,
+    load_availability_pattern,
+    load_hrv_baseline,
+    load_injury_history,
+    load_macro_plan,
+    load_nutrition_strategy,
+    load_sleep_baseline,
+    save_availability_pattern,
+    save_hrv_baseline,
+    save_injury_history,
+    save_macro_plan,
+    save_nutrition_strategy,
+    save_sleep_baseline,
+)
 
 if TYPE_CHECKING:
     from mcp.types import TextContent
+    from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -24,9 +51,29 @@ __all__ = [
     "handle_update_athlete_profile",
 ]
 
+# BT-017 rich profile fields: (pydantic model, save fn, clear fn).
+# Each is dispatched identically — validated, persisted to athlete YAML,
+# or cleared when the update payload sends ``null``.
+_RICH_FIELDS: dict[str, tuple[type["BaseModel"], object, object]] = {
+    "hrv_baseline": (HrvBaseline, save_hrv_baseline, clear_hrv_baseline),
+    "injury_history": (InjuryHistory, save_injury_history, clear_injury_history),
+    "macro_plan": (MacroPlan, save_macro_plan, clear_macro_plan),
+    "nutrition_strategy": (
+        NutritionStrategy,
+        save_nutrition_strategy,
+        clear_nutrition_strategy,
+    ),
+    "sleep_baseline": (SleepBaseline, save_sleep_baseline, clear_sleep_baseline),
+    "availability_pattern": (
+        AvailabilityPattern,
+        save_availability_pattern,
+        clear_availability_pattern,
+    ),
+}
+
 # Local-only fields routed to the athlete YAML (not Intervals.icu).
 # Extend this set as more portable fields land (PR5 iso-config and beyond).
-_LOCAL_FIELDS = frozenset({"home_location", "priority_objective"})
+_LOCAL_FIELDS = frozenset({"home_location", "priority_objective"} | set(_RICH_FIELDS))
 
 
 async def handle_get_athlete_profile(args: dict) -> list[TextContent]:
@@ -87,6 +134,18 @@ async def handle_get_athlete_profile(args: dict) -> list[TextContent]:
             priority.model_dump(mode="json", exclude_none=True) if priority else None
         )
 
+        # BT-017 rich profile fields — all are optional / migration-noop.
+        for field, loader in (
+            ("hrv_baseline", load_hrv_baseline),
+            ("injury_history", load_injury_history),
+            ("macro_plan", load_macro_plan),
+            ("nutrition_strategy", load_nutrition_strategy),
+            ("sleep_baseline", load_sleep_baseline),
+            ("availability_pattern", load_availability_pattern),
+        ):
+            obj = loader()
+            result[field] = obj.model_dump(mode="json", exclude_none=True) if obj else None
+
         return mcp_response(result)
 
     except Exception as e:
@@ -128,6 +187,23 @@ async def handle_update_athlete_profile(args: dict) -> list[TextContent]:
                     current_values["priority_objective"] = objective.model_dump(
                         mode="json", exclude_none=True
                     )
+
+            # BT-017 rich profile fields — same dispatch for the 6 of them.
+            for field, (model_cls, save_fn, clear_fn) in _RICH_FIELDS.items():
+                if field not in local_updates:
+                    continue
+                raw = local_updates[field]
+                if raw is None:
+                    cleared = clear_fn()  # type: ignore[operator]
+                    updated_fields.append(field)
+                    current_values[field] = None
+                    if cleared is None:
+                        logger.debug("%s clear request with no existing value", field)
+                else:
+                    obj = model_cls.model_validate(raw)
+                    save_fn(obj)  # type: ignore[operator]
+                    updated_fields.append(field)
+                    current_values[field] = obj.model_dump(mode="json", exclude_none=True)
 
             # 2. Remote fields (Intervals.icu)
             if remote_updates:
