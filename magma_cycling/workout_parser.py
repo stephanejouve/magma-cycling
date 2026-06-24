@@ -86,13 +86,20 @@ def parse_workout_text(text: str) -> list[WorkoutBlock]:
     current_repeat = 1
     repeat_buffer: list[WorkoutBlock] = []
 
-    # Block pattern: - 10m ramp 50-65% 85rpm  OR  - 45m 68-72% 88rpm  OR  - 3m 65% 90rpm
+    # Block payload pattern. Matched anywhere AFTER the leading bullet so any
+    # Intervals.icu native textevent prefix (`NN^ Text …` or `Text1. Text2. …`)
+    # is transparently skipped. Examples that now parse:
+    #   - 10m ramp 50-65% 85rpm
+    #   - 45m 68-72% 88rpm
+    #   - 20^ First 5m 85% 90rpm              (cue with offset/duration)
+    #   - First. Second. Third. 10m 65% 90rpm (multi cues)
     block_re = re.compile(
-        r"^-\s+(\d+)m\s+"  # duration
+        r"(\d+)m\s+"  # duration
         r"(ramp\s+)?"  # optional ramp
         r"(\d+)(?:-(\d+))?%\s+"  # intensity (single or range)
         r"(\d+)rpm"  # cadence
     )
+    bullet_re = re.compile(r"^-\s+")
     # Phase header pattern
     warmup_re = re.compile(r"^Warmup\b", re.IGNORECASE)
     main_re = re.compile(r"^Main\s+set(?:\s+(\d+)x)?", re.IGNORECASE)
@@ -138,8 +145,10 @@ def parse_workout_text(text: str) -> list[WorkoutBlock]:
             current_repeat = 1
             continue
 
-        # Parse block
-        m = block_re.match(line)
+        # Parse block (bullet first, then search anywhere in the body so
+        # native Intervals.icu textevent prefixes are skipped transparently)
+        bullet = bullet_re.match(line)
+        m = block_re.search(line[bullet.end() :]) if bullet else None
         if m and current_phase is not None:
             duration_min = int(m.group(1))
             is_ramp = m.group(2) is not None
