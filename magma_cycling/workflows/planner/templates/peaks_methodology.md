@@ -249,6 +249,74 @@ Cooldown
 
 ---
 
+## 🆕 Cues textuels intra-step (text events Intervals.icu)
+
+Intervals.icu supporte des **cues textuels affichés à l'écran pendant un step** (rappels de posture, transitions, motivation). La syntaxe est intégrée à la ligne du bloc et **n'altère pas le parsing duration/intensité/cadence**.
+
+### Deux formes acceptées
+
+**Forme 1 — Cues multiples répartis** : `Text1. Text2. Text3. <durée> <intensité>% <cadence>rpm`
+
+```
+Main set
+- Respire. Relache epaules. Cadence stable. 10m 65% 90rpm
+```
+→ Affiche « Respire » au début, « Relache epaules » au tiers, « Cadence stable » aux deux tiers du step de 10 min.
+
+**Forme 2 — Cue ancré avec offset/durée explicite** : `NN^ <Texte> <durée> <intensité>% <cadence>rpm`
+
+```
+Main set 5x
+- 5^ Engage. 3m 110% 95rpm
+- 2m 55% 85rpm
+```
+→ Affiche « Engage » pendant les **5 premières secondes** de chaque effort VO2 de 3 min.
+
+### Quand utiliser quoi
+
+| Cas d'usage | Forme recommandée |
+|---|---|
+| Rappels distribués sur un bloc long (≥8 min) | **Forme 1** (3-4 cues max, séparés par `. `) |
+| Signal court au démarrage d'un effort intense | **Forme 2** (`NN^` avec NN = 3 à 10 secondes) |
+| Annonce de fin de bloc (« 30s restantes ») | **Forme 2** avec NN plus long si supportée |
+| Bloc < 3 min sans transition | Aucun cue (laisse respirer) |
+
+### Règles d'usage
+
+1. **Sobriété** : pas plus de **4 cues par bloc** (lisibilité à l'écran).
+2. **Brièveté** : un cue = 1 à 4 mots max (« Engage », « Respire profond », « Cadence 95 »).
+3. **ASCII pur** : pas d'accents ni de caractères spéciaux (« Releve » plutôt que « Relève »), pour compatibilité affichage Zwift/Garmin.
+4. **Pas de ponctuation interne** dans un cue (la forme 1 utilise déjà `. ` comme séparateur).
+5. **Cohérence cross-step** : si tu utilises des cues sur les efforts d'un Main set 5x, utilise les **mêmes cues** dans chaque répétition (l'athlète mémorise le rythme).
+6. **Cues optionnels** : ne mets des cues QUE si tu apportes une vraie valeur pédagogique. Un workout sans cue reste parfaitement valide.
+
+### ❌ Formats incorrects (à NE PAS faire)
+
+```
+- 10m First. Second. 65% 90rpm                ❌ pas de durée explicite avant les cues
+- Main set: Engage. 5m 110% 95rpm             ❌ cue dans la ligne de section, pas le bloc
+- 5^Engage 3m 110% 95rpm                      ❌ pas d'espace après NN^
+- 20m 75% 88rpm Respire bien.                 ❌ cue après le bloc, pas avant
+- - 5^ Très-bien! 3m 90% 90rpm                ❌ accent + ponctuation = parsing fragile
+```
+
+### ✅ Exemple complet avec cues (Sweet Spot 3x)
+
+```
+Warmup
+- 10m ramp 50-65% 85rpm
+- 3m 65% 90rpm
+
+Main set 3x
+- Engage. Cadence stable. Respire. 10m 90% 92rpm
+- 4m 62% 85rpm
+
+Cooldown
+- 10m ramp 65-50% 85rpm
+```
+
+---
+
 ## Mission
 
 Génère les **7 entraînements** pour la semaine {week_number} selon les critères suivants :
