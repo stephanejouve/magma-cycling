@@ -24,23 +24,43 @@ class TestPeaksTemplate:
 
         Two forms must be documented so the Coach AI LLM emits them by
         design (see PR #414 workout-parser fix for the parser side):
-        - ``NN^ Text`` anchored cue with explicit offset/duration
+        - ``N^ Text`` anchored cue, N = display duration in seconds
         - ``Text1. Text2. Text3.`` multiple cues spread across the step
 
         Plus minimal usage rules (sobriety, brevity, ASCII pure) and at
         least one positive + one negative example.
+
+        Assertions use regex / structural patterns so the test does not
+        break when the template wording is paraphrased (nit follow-up
+        review #416 — string-match fragility).
         """
+        import re
+
         template_file = _TEMPLATE_DIR / "peaks_methodology.md"
         content = template_file.read_text(encoding="utf-8")
-        # Both grammars present
-        assert "NN^" in content
-        assert "Text1. Text2. Text3." in content
-        # Section header anchor
-        assert "Cues textuels intra-step" in content
-        # At least one positive example with the multi-cue form
-        assert "Engage. Cadence stable. Respire. 10m 90% 92rpm" in content
-        # At least one negative example marked with ❌
-        assert "❌" in content and "5^Engage" in content  # missing space after ^
-        # Sobriety / ASCII rules so LLM doesn't spam cues or break parsing
-        assert "ASCII pur" in content
-        assert "4 cues" in content  # sobriety cap
+
+        # Section header (case-insensitive; tolerates emoji prefix or none).
+        assert re.search(r"^#+\s+.*Cues textuels intra-step", content, re.MULTILINE | re.IGNORECASE)
+
+        # Grammar 1 — multi-cue example anywhere in the template:
+        # at least one block line with ≥2 ``Text. Text.`` cues (cue may be
+        # multiple words like ``Relache epaules.``) followed by the
+        # duration / intensity / cadence tokens that the parser expects.
+        multi_cue_re = re.compile(r"-\s+(?:\S[^.\n]*?\.\s+){2,}\d+m\s+\d+(?:-\d+)?%\s+\d+rpm")
+        assert multi_cue_re.search(content), "Grammar 1 (Text. Text. Text. … rpm) missing"
+
+        # Grammar 2 — anchored ``N^ Text`` example in a block line.
+        anchored_re = re.compile(r"-\s+\d+\^\s+\S+.*?\d+m\s+\d+(?:-\d+)?%\s+\d+rpm")
+        assert anchored_re.search(content), "Grammar 2 (N^ Text … rpm) missing"
+
+        # NN^ must be described as a display duration (not an offset).
+        assert re.search(r"dur[ée]e d'affichage", content, re.IGNORECASE)
+
+        # At least one ✅ positive example and one ❌ negative example.
+        assert "✅" in content
+        assert "❌" in content
+
+        # Sobriety / ASCII rules so the LLM doesn't spam cues or break parsing.
+        # Use tolerant regex: number-of-cues cap + ASCII rule presence.
+        assert re.search(r"\b[1-9]\b\s*cues?\b", content), "Cue-count cap missing"
+        assert re.search(r"ASCII\s+pur", content, re.IGNORECASE)
