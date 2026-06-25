@@ -145,6 +145,56 @@ Séance reportée à samedi matin (S081-06a)
         blocks = parse_workout_text(text)
         assert blocks == []
 
+    def test_block_with_offset_textevent_prefix(self):
+        """`NN^ Text` cue prefix is skipped, the block payload still parses.
+
+        Intervals.icu native syntax for an anchored cue (display Text for NN
+        seconds at the start of the step) — see reference memory
+        ``reference_intervals_icu_step_text_cue_syntax``.
+        """
+        text = """\
+Cue Demo (15min, 13 TSS)
+
+Warmup
+- 5m ramp 50-65% 85rpm
+
+Main set
+- 20^ First 5m 85% 90rpm
+
+Cooldown
+- 5m ramp 65-50% 85rpm
+"""
+        blocks = parse_workout_text(text)
+        main = [b for b in blocks if b.phase == Phase.MAIN_SET]
+        assert len(main) == 1
+        assert main[0].duration_seconds == 5 * 60
+        assert main[0].intensity_low == 85
+        assert main[0].cadence == 90
+
+    def test_block_with_multi_textevent_prefix(self):
+        """`Text1. Text2. Text3.` cues prefix is skipped, block payload parses.
+
+        Intervals.icu native syntax for multiple cues spread across the step.
+        """
+        text = """\
+Cue Demo (15min, 13 TSS)
+
+Warmup
+- 5m ramp 50-65% 85rpm
+
+Main set
+- First. Second. Third. 10m 65% 90rpm
+
+Cooldown
+- 5m ramp 65-50% 85rpm
+"""
+        blocks = parse_workout_text(text)
+        main = [b for b in blocks if b.phase == Phase.MAIN_SET]
+        assert len(main) == 1
+        assert main[0].duration_seconds == 10 * 60
+        assert main[0].intensity_low == 65
+        assert main[0].cadence == 90
+
 
 class TestClassifyIntervalType:
     """Tests for classify_interval_type()."""
