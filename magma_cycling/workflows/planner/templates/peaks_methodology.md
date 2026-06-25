@@ -249,7 +249,7 @@ Cooldown
 
 ---
 
-## 🆕 Cues textuels intra-step (text events Intervals.icu)
+## Cues textuels intra-step (text events Intervals.icu)
 
 Intervals.icu supporte des **cues textuels affichés à l'écran pendant un step** (rappels de posture, transitions, motivation). La syntaxe est intégrée à la ligne du bloc et **n'altère pas le parsing duration/intensité/cadence**.
 
@@ -263,7 +263,9 @@ Main set
 ```
 → Affiche « Respire » au début, « Relache epaules » au tiers, « Cadence stable » aux deux tiers du step de 10 min.
 
-**Forme 2 — Cue ancré avec offset/durée explicite** : `NN^ <Texte> <durée> <intensité>% <cadence>rpm`
+**Forme 2 — Cue ancré, durée d'affichage explicite** : `N^ <Texte> <durée> <intensité>% <cadence>rpm`
+
+`N` est un **nombre entier de secondes** (1, 2, 3 chiffres tous valides : `5^`, `20^`, `120^`) qui exprime la **durée d'affichage du cue à partir du début du step** (et non un offset / délai d'attente).
 
 ```
 Main set 5x
@@ -277,8 +279,7 @@ Main set 5x
 | Cas d'usage | Forme recommandée |
 |---|---|
 | Rappels distribués sur un bloc long (≥8 min) | **Forme 1** (3-4 cues max, séparés par `. `) |
-| Signal court au démarrage d'un effort intense | **Forme 2** (`NN^` avec NN = 3 à 10 secondes) |
-| Annonce de fin de bloc (« 30s restantes ») | **Forme 2** avec NN plus long si supportée |
+| Signal court au démarrage d'un effort intense | **Forme 2** (`N^` avec N = 3 à 10 secondes d'affichage) |
 | Bloc < 3 min sans transition | Aucun cue (laisse respirer) |
 
 ### Règles d'usage
@@ -295,8 +296,7 @@ Main set 5x
 ```
 - 10m First. Second. 65% 90rpm                ❌ pas de durée explicite avant les cues
 - Main set: Engage. 5m 110% 95rpm             ❌ cue dans la ligne de section, pas le bloc
-- 5^Engage 3m 110% 95rpm                      ❌ pas d'espace après NN^
-- 20m 75% 88rpm Respire bien.                 ❌ cue après le bloc, pas avant
+- 5^Engage 3m 110% 95rpm                      ❌ pas d'espace après N^
 - - 5^ Très-bien! 3m 90% 90rpm                ❌ accent + ponctuation = parsing fragile
 ```
 
