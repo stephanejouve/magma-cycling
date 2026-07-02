@@ -1389,3 +1389,56 @@ class TestFormatAthleteProfilePriorityObjective:
         assert "FTP: 250W" in result
         assert "CTL: 60" in result
         assert "Objectif prioritaire" in result
+
+
+class TestRichProfileInjection:
+    """format_athlete_profile injects the BT-017 rich profile section when populated."""
+
+    def _base_context(self):
+        return {
+            "name": "Athlete",
+            "age": 54,
+            "training_since": "2023-06",
+            "platform": "Home trainer",
+            "objectives": "General fitness",
+        }
+
+    def _base_metrics(self):
+        return {"ftp": 250, "weight": 80, "ctl": 60.0, "atl": 55.0}
+
+    def test_section_absent_when_formatter_returns_empty(self, monkeypatch):
+        monkeypatch.setattr(
+            "magma_cycling.prompts.rich_profile_format.format_rich_profile",
+            lambda: "",
+        )
+        result = format_athlete_profile(self._base_context(), self._base_metrics())
+        assert "Contexte physiologique enrichi" not in result
+
+    def test_section_present_when_formatter_returns_content(self, monkeypatch):
+        rich = (
+            "## Contexte physiologique enrichi\n"
+            "\n"
+            "### HRV baseline (rMSSD)\n"
+            "- Range baseline : 40-55 ms\n"
+            "- Seuil alerte fatigue : < 35 ms"
+        )
+        monkeypatch.setattr(
+            "magma_cycling.prompts.rich_profile_format.format_rich_profile",
+            lambda: rich,
+        )
+        result = format_athlete_profile(self._base_context(), self._base_metrics())
+        assert "## Contexte physiologique enrichi" in result
+        assert "### HRV baseline (rMSSD)" in result
+        assert "Range baseline : 40-55 ms" in result
+
+    def test_formatter_failure_does_not_break_profile(self, monkeypatch):
+        def boom() -> str:
+            raise RuntimeError("simulated failure")
+
+        monkeypatch.setattr(
+            "magma_cycling.prompts.rich_profile_format.format_rich_profile",
+            boom,
+        )
+        result = format_athlete_profile(self._base_context(), self._base_metrics())
+        assert "FTP: 250W" in result
+        assert "Contexte physiologique enrichi" not in result

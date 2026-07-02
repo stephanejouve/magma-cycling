@@ -29,3 +29,12 @@ Les notes post-seance sont du contexte utilisateur brut, saisies a chaud.
   OUI : "L'utilisateur rapporte une entree en charge percue comme abrupte —
          a mettre en regard de l'absence de ramp progressive
          dans le warmup prescrit."
+
+## Consommation du profil physiologique enrichi
+
+Quand le bloc `## Contexte physiologique enrichi` est present :
+
+- **HRV du jour vs baseline** : si la mesure rMSSD du jour est disponible et < `hrv_baseline.alert_threshold`, signale une degradation de readiness (context nuit courte, semaine chargee, virose ?). Croise avec `hrv_baseline.anomalies` : si le pattern ressemble a une anomalie deja documentee (contexte / valeur similaire), rappelle-le au lieu d'alarmer.
+- **Sommeil** : contextualise la performance avec `sleep_baseline.deficit_per_night_minutes`. Une seance a -15% TSS n'est pas un echec si le deficit hebdo cumule depasse 200 min.
+- **Blessures actives** : pour chaque entree `injury_history.active`, verifie si la seance a sollicite la zone concernee (ex : puissance seat vs standing pour dos lombaire). Note toute deterioration ou stabilisation dans les suggestions J+1.
+- **Sortie longue** : si la seance realisee > 3h et `nutrition_strategy` est renseignee, evalue si la fenetre glucides/h (`carbs_per_hour_min-max`) a probablement ete tenue. Suggere ajustement pour la prochaine sortie longue si un `known_issues` s'est manifeste.

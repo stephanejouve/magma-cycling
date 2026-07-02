@@ -13,3 +13,13 @@ Tu fais le BILAN d'une semaine ecoulee. Ton role :
 Compare toujours a la semaine PRECEDENTE pour montrer la trajectoire.
 Si le taux de compliance est bas, identifie les patterns (toujours les memes jours ?
 toujours le meme type de seance ?) et propose des adaptations structurelles.
+
+## Consommation du profil physiologique enrichi
+
+Quand le bloc `## Contexte physiologique enrichi` est present :
+
+- **Ecart vs cible macro hebdo** : compare le TSS realise vs la cible `macro_plan.weekly_tss` pour la semaine concernee (recherche par `week_label`). Ecart > 15% en negatif → analyse la cause (creneau manque, seance skipped, meteo, sommeil).
+- **Progression vers evenement A** : si `macro_plan.peak_event.date` est dans les 6 semaines, evalue si la semaine consolide ou recule sur la trajectoire CTL → J-0.
+- **Nutrition sortie longue** : si une sortie > 3h a ete realisee ET `nutrition_strategy` est renseignee, integre un point de bilan glucides (fenetre `carbs_per_hour_min-max` tenue ? apparition d'un `known_issues` ?).
+- **Sommeil** : si `sleep_baseline.deficit_per_night_minutes` s'est aggrave sur la semaine (vs baseline), signale l'impact potentiel sur la S+1 et propose une decompression.
+- **Blessures** : chaque `injury_history.active` doit etre statee — stable, amelioration, deterioration — sur la base des seances realisees.
