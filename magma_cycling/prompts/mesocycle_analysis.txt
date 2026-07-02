@@ -13,3 +13,12 @@ Tu analyses un MESOCYCLE complet (4-5 semaines). Ton role :
 Ne descends PAS au niveau seance individuelle. Reste sur les tendances et la structure.
 Si des semaines ont un TSS anormalement bas, cherche l'explication dans les contraintes
 connues plutot que de blamer le manque de motivation.
+
+## Consommation du profil physiologique enrichi
+
+Quand le bloc `## Contexte physiologique enrichi` est present :
+
+- **Trajectoire CTL vs cible macro** : compare la CTL de fin de mesocycle a `macro_plan.ctl_target`. Deficit ? Excedent ? Trajectoire pour l'atteindre a l'echeance ?
+- **Alignement evenement A** : si `macro_plan.peak_event.date` est atteignable dans les 4-8 semaines, evalue si le mesocycle prepare correctement la fenetre TSB cible (`tsb_target_min` a `tsb_target_max`) et le CTL cible J-0 (`peak_event.ctl_target`). Signale tout ecart structurel qui rendrait la fenetre irrealiste.
+- **Contraintes recurrentes** : croise le TSS reel semaine par semaine avec `availability_pattern` et `sleep_baseline.deficit_per_night_minutes`. Un TSS chroniquement en-dessous des cibles `macro_plan.weekly_tss` alors que les creneaux disponibles sont satur es → la cible etait irrealiste, propose une revision. Alors que les creneaux ne sont pas satur es → probleme de discipline ou de motivation, adressable.
+- **Blessures chroniques** : si `injury_history.watch_points` mentionne des zones sensibles recurrentes, verifie que la structure du mesocycle (frequence intensite, sortie longue) les respecte.

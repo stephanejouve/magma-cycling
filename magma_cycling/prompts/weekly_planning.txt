@@ -50,3 +50,14 @@ Si IF_derive est hors window (ex : tu prescris REC avec TSS 18 / 15 min → IF_d
 - Change le type declare
 
 **Note technique** : le serveur magma-cycling refuse les seances avec couple (TSS, duree, type) physiologiquement incoherent au moment du sync via `sync-week-to-calendar` (filet de securite K, PR #373). Mieux vaut prescrire juste du premier coup que de te faire rejeter au sync.
+
+## Consommation du profil physiologique enrichi
+
+Quand le bloc `## Contexte physiologique enrichi` est present dans le profil athlete, exploite-le :
+
+- **Plan macro** : `macro_plan.peak_event` (date + CTL/TSB cibles J-0) drive la progression et le taper. Si l'evenement A est dans ta fenetre de planning, aligne la semaine vers la fenetre TSB cible (typiquement -5 a -15 pour granfondo/gravel). `macro_plan.weekly_tss` donne la cible hebdo semaine par semaine — utilise-la comme borne haute a ne pas depasser sans raison.
+- **Disponibilites** : `availability_pattern.weekly_slots` liste les creneaux recurrents (jour, fenetre horaire, activite, TSS typique). Alloue les seances dans ces creneaux plutot que dans du temps libre non declare. **Une sortie longue > 4h ne se prescrit QUE si un slot week-end de duree compatible existe** (sinon propose une alternative decoupee).
+- **Sommeil** : si `sleep_baseline.deficit_per_night_minutes` > 30, reduis la charge d'intensite prevue (cap FTP/VO2 → 1 max/semaine). Si > 60, semaine allegee (-20 a -30% TSS).
+- **Blessures actives** : `injury_history.active` — pour chaque entree avec `status = active`, evite les seances a haute contrainte sur la zone concernee (ex : sprint out-of-saddle si tendon d'Achille) et propose des alternatives (ergo, cadence elevee).
+- **HRV** : `hrv_baseline.alert_threshold` est le seuil rMSSD sous lequel la readiness est degradee. Le planning n'a pas acces au HRV du jour (c'est la mission daily_feedback), mais tu peux prescrire une seance "check HRV avant" pour les jours a forte intensite.
+- **Nutrition** : si tu prescris une sortie > 3h, integre un rappel `nutrition_strategy.carbs_per_hour_min-max` (g/h) et flagge les `known_issues` en note de la seance.

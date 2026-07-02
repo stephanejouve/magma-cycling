@@ -416,4 +416,15 @@ def format_athlete_profile(context: dict, metrics: dict) -> str:
         for d in directives:
             lines.append(f"  - {d}")
 
+    # BT-017 rich profile (hrv/injuries/macro/nutrition/sleep/availability)
+    try:
+        from magma_cycling.prompts.rich_profile_format import format_rich_profile
+
+        rich_section = format_rich_profile()
+        if rich_section:
+            lines.append("")
+            lines.append(rich_section)
+    except Exception:
+        logger.debug("Could not format rich profile section")
+
     return "\n".join(lines)
