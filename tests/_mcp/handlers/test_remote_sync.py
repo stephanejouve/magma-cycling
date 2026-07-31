@@ -206,6 +206,168 @@ class TestRestDayCreatesNote:
         assert result["summary"]["errors"] == 0
 
 
+class TestOffBikeCreatesInjured:
+    """Off-bike sessions (KIN, INJ) → category=INJURED, guard exempted."""
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("off_bike_type", ["KIN", "INJ"])
+    async def test_off_bike_creates_injured(self, off_bike_type):
+        """Off-bike session → category=INJURED, no VirtualRide type, no workout guard."""
+        session = _make_session(
+            session_id="S104-05",
+            name="KineEpaule",
+            session_type=off_bike_type,
+            tss_planned=0,
+            duration_min=30,
+            session_date=date(2026, 8, 1),
+            description="Bandes élastiques + mobilité rotateurs, 3 séries",
+        )
+        plan = _make_plan(
+            [session],
+            start_date=date(2026, 7, 27),
+            end_date=date(2026, 8, 2),
+        )
+        client = _make_client()
+
+        # No workout_descriptions provided — off-bike must not require one.
+        with _patch_sync(plan, client):
+            result = _extract(await handle_sync_week_to_calendar({"week_id": "S104"}))
+
+        assert result["summary"]["errors"] == 0
+        assert result["summary"]["to_create"] == 1
+        call_args = client.create_event.call_args[0][0]
+        assert call_args["category"] == "INJURED"
+        assert "type" not in call_args  # No VirtualRide for off-bike
+        assert call_args["name"].endswith(f"-{off_bike_type}-KineEpaule-V001")
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("off_bike_type", ["KIN", "INJ"])
+    async def test_off_bike_writeback_intervals_id(self, off_bike_type):
+        """Created INJURED event id is written back to local planning."""
+        session = _make_session(
+            session_id="S104-05",
+            name="KineEpaule",
+            session_type=off_bike_type,
+            tss_planned=0,
+            duration_min=30,
+            session_date=date(2026, 8, 1),
+        )
+        plan = _make_plan([session], start_date=date(2026, 7, 27), end_date=date(2026, 8, 2))
+        client = _make_client(create_return={"id": 999})
+
+        with _patch_sync(plan, client) as mock_tower:
+            modify_plan = MagicMock()
+            modify_plan.planned_sessions = [
+                _make_session(
+                    session_id="S104-05",
+                    session_type=off_bike_type,
+                    tss_planned=0,
+                    duration_min=30,
+                    intervals_id=None,
+                )
+            ]
+
+            @contextmanager
+            def _modify_cm(*args, **kwargs):
+                yield modify_plan
+
+            mock_tower.modify_week.side_effect = _modify_cm
+
+            result = _extract(await handle_sync_week_to_calendar({"week_id": "S104"}))
+
+        assert result["summary"]["created"] == 1
+        mock_tower.modify_week.assert_called_once()
+        assert modify_plan.planned_sessions[0].intervals_id == 999
+
+    @pytest.mark.asyncio
+    async def test_off_bike_preserves_multiline_description(self):
+        """Multi-line description passed verbatim to Intervals.icu."""
+        multiline = (
+            "Protocole kiné épaule droite:\n"
+            "- Bandes élastiques rouges 3x15 rot. externe\n"
+            "- Mobilité gainée 2x30s\n"
+            "- Étirements passifs 3x20s"
+        )
+        session = _make_session(
+            session_id="S104-05",
+            name="KineEpaule",
+            session_type="KIN",
+            tss_planned=0,
+            duration_min=30,
+            session_date=date(2026, 8, 1),
+            description=multiline,
+        )
+        plan = _make_plan([session], start_date=date(2026, 7, 27), end_date=date(2026, 8, 2))
+        client = _make_client()
+
+        with _patch_sync(plan, client):
+            _extract(await handle_sync_week_to_calendar({"week_id": "S104"}))
+
+        call_args = client.create_event.call_args[0][0]
+        assert call_args["description"] == multiline
+
+    @pytest.mark.asyncio
+    async def test_off_bike_skips_intensity_coherence_check(self):
+        """IntervalsFormatValidator and coherence check must not run on off-bike."""
+        session = _make_session(
+            session_id="S104-05",
+            name="KineEpaule",
+            session_type="INJ",
+            tss_planned=0,
+            duration_min=30,
+            session_date=date(2026, 8, 1),
+        )
+        plan = _make_plan([session], start_date=date(2026, 7, 27), end_date=date(2026, 8, 2))
+        client = _make_client()
+
+        with (
+            _patch_sync(plan, client),
+            patch(
+                "magma_cycling.intervals_format_validator.IntervalsFormatValidator"
+            ) as mock_validator_cls,
+        ):
+            result = _extract(await handle_sync_week_to_calendar({"week_id": "S104"}))
+
+        mock_validator_cls.assert_not_called()
+        assert result["summary"]["errors"] == 0
+        assert result["summary"]["to_create"] == 1
+
+    @pytest.mark.asyncio
+    async def test_off_bike_existing_injured_event_updates_via_all_events_index(self):
+        """Update path: off-bike matches existing INJURED event (indexed all-events, not WORKOUT-only)."""
+        session = _make_session(
+            session_id="S104-05",
+            name="KineEpaule",
+            session_type="KIN",
+            tss_planned=0,
+            duration_min=30,
+            session_date=date(2026, 8, 1),
+            description="Nouveau protocole kiné",
+            intervals_id="evt-kin-42",
+        )
+        plan = _make_plan(
+            [session],
+            start_date=date(2026, 7, 27),
+            end_date=date(2026, 8, 2),
+        )
+        client = _make_client()
+        remote_event = {
+            "id": "evt-kin-42",
+            "category": "INJURED",
+            "name": "S104-05-KIN-KineEpaule-V001",
+            "description": "Ancien protocole",
+            "start_date_local": "2026-08-01T09:00:00",
+        }
+        client.get_events.return_value = [remote_event]
+        client.update_event.return_value = {"id": "evt-kin-42"}
+
+        with _patch_sync(plan, client):
+            result = _extract(await handle_sync_week_to_calendar({"week_id": "S104"}))
+
+        assert result["summary"]["to_update"] == 1
+        assert result["summary"]["to_create"] == 0
+
+
 class TestTemporalHeuristic:
     """SYNC-001: temporal heuristic prevents stale remote from blocking sync."""
 
