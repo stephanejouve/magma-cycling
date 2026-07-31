@@ -335,28 +335,32 @@ class TestHandleModifySessionDetails:
         assert "error" in data
 
     @pytest.mark.asyncio
-    async def test_kin_transition_with_nonzero_tss_rejected(self, mock_tower):
-        """Transition to KIN while final tss stays non-zero is rejected clearly."""
+    @pytest.mark.parametrize("off_bike_type", ["KIN", "INJ"])
+    async def test_off_bike_transition_with_nonzero_tss_rejected(self, mock_tower, off_bike_type):
+        """Transition to off-bike type while final tss stays non-zero rejected."""
         from magma_cycling.mcp_server import handle_modify_session_details
 
         # mock_session starts as INT with tss_planned=65
-        args = {"week_id": "S081", "session_id": "S081-03", "type": "KIN"}
+        args = {"week_id": "S081", "session_id": "S081-03", "type": off_bike_type}
         with patch(TOWER_PATCH, mock_tower):
             result = await handle_modify_session_details(args)
         data = json.loads(result[0].text)
         assert "error" in data
-        assert "KIN" in data["error"]
+        assert off_bike_type in data["error"]
         assert "tss_planned=0" in data["error"]
 
     @pytest.mark.asyncio
-    async def test_kin_transition_with_explicit_tss_reset_accepted(self, mock_tower):
-        """Transition to KIN while resetting tss to 0 in same call succeeds."""
+    @pytest.mark.parametrize("off_bike_type", ["KIN", "INJ"])
+    async def test_off_bike_transition_with_explicit_tss_reset_accepted(
+        self, mock_tower, off_bike_type
+    ):
+        """Transition to off-bike type while resetting tss to 0 in same call succeeds."""
         from magma_cycling.mcp_server import handle_modify_session_details
 
         args = {
             "week_id": "S081",
             "session_id": "S081-03",
-            "type": "KIN",
+            "type": off_bike_type,
             "tss_planned": 0,
         }
         with patch(TOWER_PATCH, mock_tower):
@@ -432,15 +436,16 @@ class TestHandleCreateSession:
         assert data["session_id"].endswith("a")
 
     @pytest.mark.asyncio
-    async def test_kin_with_nonzero_tss_rejected(self, mock_tower, mock_plan):
-        """Creating a KIN session with non-zero TSS is rejected with a clear message."""
+    @pytest.mark.parametrize("off_bike_type", ["KIN", "INJ"])
+    async def test_off_bike_with_nonzero_tss_rejected(self, mock_tower, mock_plan, off_bike_type):
+        """Creating an off-bike session with non-zero TSS is rejected clearly."""
         from magma_cycling.mcp_server import handle_create_session
 
         args = {
             "week_id": "S081",
             "session_date": "2026-02-19",
-            "name": "KineEpaule",
-            "type": "KIN",
+            "name": "OffBike",
+            "type": off_bike_type,
             "tss_planned": 30,
             "duration_min": 30,
         }
@@ -448,28 +453,29 @@ class TestHandleCreateSession:
             result = await handle_create_session(args)
         data = json.loads(result[0].text)
         assert "error" in data
-        assert "KIN" in data["error"]
+        assert off_bike_type in data["error"]
         assert "tss_planned=0" in data["error"]
 
     @pytest.mark.asyncio
-    async def test_kin_with_zero_tss_accepted(self, mock_tower, mock_plan):
-        """Creating a KIN session with tss=0 succeeds."""
+    @pytest.mark.parametrize("off_bike_type", ["KIN", "INJ"])
+    async def test_off_bike_with_zero_tss_accepted(self, mock_tower, mock_plan, off_bike_type):
+        """Creating an off-bike session with tss=0 succeeds."""
         from magma_cycling.mcp_server import handle_create_session
 
         args = {
             "week_id": "S081",
             "session_date": "2026-02-19",
-            "name": "KineEpaule",
-            "type": "KIN",
+            "name": "OffBike",
+            "type": off_bike_type,
             "tss_planned": 0,
             "duration_min": 30,
-            "description": "Bandes élastiques + mobilité rotateurs",
+            "description": "Séance hors charge",
         }
         with patch(TOWER_PATCH, mock_tower):
             result = await handle_create_session(args)
         data = json.loads(result[0].text)
         assert data["status"] == "success"
-        assert data["type"] == "KIN"
+        assert data["type"] == off_bike_type
 
 
 # =======================

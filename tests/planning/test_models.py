@@ -44,7 +44,7 @@ class TestVersionNormalization:
 
 
 class TestSessionTypeEnum:
-    """Session.session_type accepts only the unified enum (14 types)."""
+    """Session.session_type accepts only the unified enum (15 types)."""
 
     ALL_VALID_TYPES = [
         "END",
@@ -61,11 +61,12 @@ class TestSessionTypeEnum:
         "MIX",
         "VO2",
         "KIN",
+        "INJ",
     ]
 
     def _make_session(self, session_type: str) -> Session:
-        # KIN sessions must have tss_planned=0 (off-bike work, no training load)
-        tss = 0 if session_type == "KIN" else 50
+        # Off-bike sessions (KIN, INJ) must have tss_planned=0 (no training load)
+        tss = 0 if session_type in ("KIN", "INJ") else 50
         return Session(
             session_id="S087-01",
             session_date=date(2026, 4, 6),
@@ -94,31 +95,36 @@ class TestSessionTypeEnum:
             self._make_session(invalid_type)
 
 
-class TestKinTssConstraint:
-    """KIN session_type forces tss_planned=0 (off-bike work, no training load)."""
+class TestOffBikeTssConstraint:
+    """Off-bike session_types (KIN, INJ) force tss_planned=0."""
 
-    def _make_kin_session(self, tss: int) -> Session:
+    def _make_off_bike_session(self, session_type: str, tss: int) -> Session:
         return Session(
             session_id="S104-05",
             session_date=date(2026, 7, 30),
-            name="KineEpaule",
-            session_type="KIN",
+            name="OffBike",
+            session_type=session_type,
             tss_planned=tss,
             duration_min=30,
         )
 
-    def test_kin_with_zero_tss_accepted(self):
-        session = self._make_kin_session(0)
-        assert session.session_type == "KIN"
+    @pytest.mark.parametrize("off_bike_type", ["KIN", "INJ"])
+    def test_off_bike_with_zero_tss_accepted(self, off_bike_type: str):
+        session = self._make_off_bike_session(off_bike_type, 0)
+        assert session.session_type == off_bike_type
         assert session.tss_planned == 0
 
+    @pytest.mark.parametrize("off_bike_type", ["KIN", "INJ"])
     @pytest.mark.parametrize("bad_tss", [1, 10, 50, 300])
-    def test_kin_with_nonzero_tss_rejected(self, bad_tss: int):
-        with pytest.raises(ValidationError, match="KIN session must have tss_planned=0"):
-            self._make_kin_session(bad_tss)
+    def test_off_bike_with_nonzero_tss_rejected(self, off_bike_type: str, bad_tss: int):
+        with pytest.raises(
+            ValidationError,
+            match=f"{off_bike_type} session must have tss_planned=0",
+        ):
+            self._make_off_bike_session(off_bike_type, bad_tss)
 
-    def test_non_kin_types_unaffected(self):
-        """Non-KIN types keep their tss_planned freedom (regression guard)."""
+    def test_non_off_bike_types_unaffected(self):
+        """On-bike types keep their tss_planned freedom (regression guard)."""
         session = Session(
             session_id="S104-06",
             session_date=date(2026, 7, 31),

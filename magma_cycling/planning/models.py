@@ -75,6 +75,12 @@ SESSION_ID_REGEX = re.compile(r"^" + SESSION_ID_PATTERN + r"$")
 WORKOUT_NAME_PATTERN = r"(" + SESSION_ID_PATTERN + r")-(\w+)-([^-]+)-(V\d{3})"
 WORKOUT_NAME_REGEX = re.compile(WORKOUT_NAME_PATTERN)
 
+# --- Off-bike session types (no training load, excluded from cycling flows) ---
+# KIN = kinésithérapie / renfo / mobilité (entretien)
+# INJ = blessure aiguë (arrêt / rééducation)
+# Both map to Intervals.icu category=INJURED and share the tss_planned=0 constraint.
+OFF_BIKE_SESSION_TYPES: frozenset[str] = frozenset({"KIN", "INJ"})
+
 
 class Session(BaseModel):
     """
@@ -121,6 +127,7 @@ class Session(BaseModel):
         "MIX",
         "VO2",
         "KIN",
+        "INJ",
     ] = Field(
         alias="type",
         description=(
@@ -131,7 +138,8 @@ class Session(BaseModel):
             "SS (Sweet Spot), FTP (Test FTP), SPR (Sprint), CLM / TT "
             "(Contre-la-montre / Time Trial — synonymes), TMP (Tempo Z3 sustained), "
             "MIX (Mixte), VO2 (VO2max), KIN (Kinésithérapie / hors charge — "
-            "renfo, mobilité, gainage ; tss_planned forcé à 0)."
+            "renfo, mobilité, gainage ; tss_planned forcé à 0), INJ (Blessure "
+            "aiguë / arrêt / rééducation ; tss_planned forcé à 0)."
         ),
     )  # Use alias to avoid 'type' keyword conflict
     version: str = Field(default="V001", pattern=r"^V\d{3}$", description="Session version")
@@ -172,12 +180,14 @@ class Session(BaseModel):
         return self
 
     @model_validator(mode="after")
-    def validate_kin_no_load(self) -> "Session":
-        """KIN sessions are off-bike (kinésithérapie/renfo/mobilité) and carry no training load."""
-        if self.session_type == "KIN" and self.tss_planned != 0:
+    def validate_off_bike_no_load(self) -> "Session":
+        """Off-bike sessions (KIN, INJ) carry no training load — tss_planned must be 0."""
+        if self.session_type in OFF_BIKE_SESSION_TYPES and self.tss_planned != 0:
             raise ValueError(
-                f"KIN session must have tss_planned=0 (got {self.tss_planned}). "
-                "KIN represents off-bike work (kinésithérapie / renfo / mobilité) "
+                f"{self.session_type} session must have tss_planned=0 "
+                f"(got {self.tss_planned}). "
+                f"{self.session_type} is an off-bike session type "
+                "(KIN=kinésithérapie / renfo / mobilité, INJ=blessure aiguë) "
                 "with no training stress contribution."
             )
         return self
