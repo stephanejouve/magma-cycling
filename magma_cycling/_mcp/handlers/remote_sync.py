@@ -27,6 +27,7 @@ async def handle_sync_week_to_calendar(args: dict) -> list[TextContent]:
     """Synchronize week planning to training calendar."""
     from magma_cycling.config import create_intervals_client
     from magma_cycling.planning.control_tower import planning_tower
+    from magma_cycling.planning.models import OFF_BIKE_SESSION_TYPES
 
     week_id = args["week_id"]
     dry_run = args.get("dry_run", False)
@@ -42,7 +43,10 @@ async def handle_sync_week_to_calendar(args: dict) -> list[TextContent]:
             start_date = str(plan.start_date)
             end_date = str(plan.end_date)
             remote_events = client.get_events(oldest=start_date, newest=end_date)
-            remote_workouts = {e["id"]: e for e in remote_events if e.get("category") == "WORKOUT"}
+            # Index all remote events by id — off-bike sessions land under
+            # category=INJURED, so the WORKOUT-only map is insufficient for
+            # existing_event lookup in the mixed case.
+            remote_events_by_id = {e["id"]: e for e in remote_events}
 
             workout_descriptions = load_workout_descriptions(week_id)
 
@@ -77,13 +81,16 @@ async def handle_sync_week_to_calendar(args: dict) -> list[TextContent]:
                 )
                 full_description = workout_descriptions.get(intervals_name, session.description)
 
+                is_off_bike = session.session_type in OFF_BIKE_SESSION_TYPES
                 is_rest_day = (
                     session.session_type == "REC"
                     and session.tss_planned == 0
                     and session.duration_min == 0
                 )
 
-                if not is_rest_day:
+                # Off-bike sessions (KIN, INJ) skip cycling-specific validations
+                # (no intensity coherence, no structured workout requirement).
+                if not is_rest_day and not is_off_bike:
                     from magma_cycling.planning.workout_validation import (
                         ValidationResult,
                         validate_intensity_coherence,
@@ -110,9 +117,15 @@ async def handle_sync_week_to_calendar(args: dict) -> list[TextContent]:
                             }
                         )
 
-                # Guard: non-rest sessions MUST have a structured workout
-                # from the workouts file — escalate if missing (never sync placeholders)
-                if not is_rest_day and intervals_name not in workout_descriptions:
+                # Guard: non-rest, non-off-bike sessions MUST have a structured
+                # workout from the workouts file — escalate if missing (never
+                # sync placeholders). KIN/INJ have no structured workout by
+                # design.
+                if (
+                    not is_rest_day
+                    and not is_off_bike
+                    and intervals_name not in workout_descriptions
+                ):
                     errors.append(
                         f"Session {session.session_id}: workout description not found in "
                         f"{week_id}_workouts.txt for '{intervals_name}'. "
@@ -121,7 +134,18 @@ async def handle_sync_week_to_calendar(args: dict) -> list[TextContent]:
                     )
                     continue
 
-                if is_rest_day:
+                if is_off_bike:
+                    # Off-bike sessions map to Intervals.icu category=INJURED.
+                    # The description (kiné/renfo/mobilité protocol or injury
+                    # notes) is preserved verbatim, including multi-line
+                    # content.
+                    event_data = {
+                        "category": "INJURED",
+                        "name": intervals_name,
+                        "description": session.description or "",
+                        "start_date_local": f"{session.session_date}T{start_time}",
+                    }
+                elif is_rest_day:
                     event_data = {
                         "category": "NOTE",
                         "name": intervals_name,
@@ -159,8 +183,8 @@ async def handle_sync_week_to_calendar(args: dict) -> list[TextContent]:
                             continue
 
                 existing_event = None
-                if session.intervals_id and session.intervals_id in remote_workouts:
-                    existing_event = remote_workouts[session.intervals_id]
+                if session.intervals_id and session.intervals_id in remote_events_by_id:
+                    existing_event = remote_events_by_id[session.intervals_id]
 
                 decision = evaluate_sync(event_data, existing_event, force_update=force_update)
 
