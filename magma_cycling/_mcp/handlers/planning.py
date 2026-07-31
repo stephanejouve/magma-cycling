@@ -826,9 +826,29 @@ async def handle_modify_session_details(args: dict) -> list[TextContent]:
                                 f"Status is 'completed'. Completed sessions are protected from modification."
                             )
 
-                        # Update fields if provided
+                        # KIN constraint: check the RESULTING (type, tss) tuple
+                        # before mutating, so we return a clean message instead
+                        # of Pydantic's validate_assignment blowing up mid-way.
+                        final_type = session_type if session_type else session.session_type
+                        final_tss = tss_planned if tss_planned is not None else session.tss_planned
+                        if final_type == "KIN" and final_tss != 0:
+                            raise ValueError(
+                                f"KIN session must have tss_planned=0 "
+                                f"(would become {final_tss}). "
+                                "KIN represents off-bike work (kinésithérapie / "
+                                "renfo / mobilité) with no training stress "
+                                "contribution."
+                            )
+
+                        # Update fields if provided. NOTE: with
+                        # validate_assignment=True, order matters when the KIN
+                        # constraint is at play — apply tss_planned BEFORE
+                        # session_type so a transition to KIN (which requires
+                        # tss=0) does not fire against a stale non-zero tss.
                         if name:
                             session.name = name
+                        if tss_planned is not None:
+                            session.tss_planned = tss_planned
                         if session_type:
                             session.session_type = session_type
                         if description:
@@ -843,8 +863,6 @@ async def handle_modify_session_details(args: dict) -> list[TextContent]:
                                 if calculated is not None:
                                     session.duration_min = calculated
                                     modifications.append(f"duration={calculated}min (auto)")
-                        if tss_planned is not None:
-                            session.tss_planned = tss_planned
                         if duration_min is not None:
                             session.duration_min = duration_min
 
@@ -1047,6 +1065,18 @@ async def handle_create_session(args: dict) -> list[TextContent]:
     description = args.get("description", "À définir")
     tss_planned = args.get("tss_planned", 0)
     duration_min = args.get("duration_min", 0)
+
+    # KIN sessions carry no training load — reject explicitly at the handler
+    # boundary so the caller gets a clear message (Pydantic backstop remains).
+    if session_type == "KIN" and tss_planned != 0:
+        error = {
+            "error": (
+                f"KIN session must have tss_planned=0 (got {tss_planned}). "
+                "KIN represents off-bike work (kinésithérapie / renfo / mobilité) "
+                "with no training stress contribution."
+            )
+        }
+        return mcp_response(error)
 
     try:
         # Suppress all output to prevent JSON protocol pollution
