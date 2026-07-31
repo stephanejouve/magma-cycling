@@ -334,6 +334,36 @@ class TestHandleModifySessionDetails:
         data = json.loads(result[0].text)
         assert "error" in data
 
+    @pytest.mark.asyncio
+    async def test_kin_transition_with_nonzero_tss_rejected(self, mock_tower):
+        """Transition to KIN while final tss stays non-zero is rejected clearly."""
+        from magma_cycling.mcp_server import handle_modify_session_details
+
+        # mock_session starts as INT with tss_planned=65
+        args = {"week_id": "S081", "session_id": "S081-03", "type": "KIN"}
+        with patch(TOWER_PATCH, mock_tower):
+            result = await handle_modify_session_details(args)
+        data = json.loads(result[0].text)
+        assert "error" in data
+        assert "KIN" in data["error"]
+        assert "tss_planned=0" in data["error"]
+
+    @pytest.mark.asyncio
+    async def test_kin_transition_with_explicit_tss_reset_accepted(self, mock_tower):
+        """Transition to KIN while resetting tss to 0 in same call succeeds."""
+        from magma_cycling.mcp_server import handle_modify_session_details
+
+        args = {
+            "week_id": "S081",
+            "session_id": "S081-03",
+            "type": "KIN",
+            "tss_planned": 0,
+        }
+        with patch(TOWER_PATCH, mock_tower):
+            result = await handle_modify_session_details(args)
+        data = json.loads(result[0].text)
+        assert data["status"] == "success"
+
 
 # =======================
 # TestHandleCreateSession
@@ -400,6 +430,46 @@ class TestHandleCreateSession:
         assert data["status"] == "success"
         # Should get 'a' suffix since first session (S081-03) has no suffix
         assert data["session_id"].endswith("a")
+
+    @pytest.mark.asyncio
+    async def test_kin_with_nonzero_tss_rejected(self, mock_tower, mock_plan):
+        """Creating a KIN session with non-zero TSS is rejected with a clear message."""
+        from magma_cycling.mcp_server import handle_create_session
+
+        args = {
+            "week_id": "S081",
+            "session_date": "2026-02-19",
+            "name": "KineEpaule",
+            "type": "KIN",
+            "tss_planned": 30,
+            "duration_min": 30,
+        }
+        with patch(TOWER_PATCH, mock_tower):
+            result = await handle_create_session(args)
+        data = json.loads(result[0].text)
+        assert "error" in data
+        assert "KIN" in data["error"]
+        assert "tss_planned=0" in data["error"]
+
+    @pytest.mark.asyncio
+    async def test_kin_with_zero_tss_accepted(self, mock_tower, mock_plan):
+        """Creating a KIN session with tss=0 succeeds."""
+        from magma_cycling.mcp_server import handle_create_session
+
+        args = {
+            "week_id": "S081",
+            "session_date": "2026-02-19",
+            "name": "KineEpaule",
+            "type": "KIN",
+            "tss_planned": 0,
+            "duration_min": 30,
+            "description": "Bandes élastiques + mobilité rotateurs",
+        }
+        with patch(TOWER_PATCH, mock_tower):
+            result = await handle_create_session(args)
+        data = json.loads(result[0].text)
+        assert data["status"] == "success"
+        assert data["type"] == "KIN"
 
 
 # =======================
