@@ -44,7 +44,7 @@ class TestVersionNormalization:
 
 
 class TestSessionTypeEnum:
-    """Session.session_type accepts only the unified enum (13 types)."""
+    """Session.session_type accepts only the unified enum (14 types)."""
 
     ALL_VALID_TYPES = [
         "END",
@@ -60,21 +60,24 @@ class TestSessionTypeEnum:
         "TMP",
         "MIX",
         "VO2",
+        "KIN",
     ]
 
     def _make_session(self, session_type: str) -> Session:
+        # KIN sessions must have tss_planned=0 (off-bike work, no training load)
+        tss = 0 if session_type == "KIN" else 50
         return Session(
             session_id="S087-01",
             session_date=date(2026, 4, 6),
             name="TestSession",
             session_type=session_type,
-            tss_planned=50,
+            tss_planned=tss,
             duration_min=60,
         )
 
     @pytest.mark.parametrize("valid_type", ALL_VALID_TYPES)
     def test_all_valid_types_accepted(self, valid_type: str):
-        """Each of the 11 unified enum types is accepted."""
+        """Each of the 14 unified enum types is accepted."""
         session = self._make_session(valid_type)
         assert session.session_type == valid_type
 
@@ -89,3 +92,39 @@ class TestSessionTypeEnum:
         """
         with pytest.raises(ValidationError):
             self._make_session(invalid_type)
+
+
+class TestKinTssConstraint:
+    """KIN session_type forces tss_planned=0 (off-bike work, no training load)."""
+
+    def _make_kin_session(self, tss: int) -> Session:
+        return Session(
+            session_id="S104-05",
+            session_date=date(2026, 7, 30),
+            name="KineEpaule",
+            session_type="KIN",
+            tss_planned=tss,
+            duration_min=30,
+        )
+
+    def test_kin_with_zero_tss_accepted(self):
+        session = self._make_kin_session(0)
+        assert session.session_type == "KIN"
+        assert session.tss_planned == 0
+
+    @pytest.mark.parametrize("bad_tss", [1, 10, 50, 300])
+    def test_kin_with_nonzero_tss_rejected(self, bad_tss: int):
+        with pytest.raises(ValidationError, match="KIN session must have tss_planned=0"):
+            self._make_kin_session(bad_tss)
+
+    def test_non_kin_types_unaffected(self):
+        """Non-KIN types keep their tss_planned freedom (regression guard)."""
+        session = Session(
+            session_id="S104-06",
+            session_date=date(2026, 7, 31),
+            name="Endurance",
+            session_type="END",
+            tss_planned=50,
+            duration_min=60,
+        )
+        assert session.tss_planned == 50
