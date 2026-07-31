@@ -826,17 +826,23 @@ async def handle_modify_session_details(args: dict) -> list[TextContent]:
                                 f"Status is 'completed'. Completed sessions are protected from modification."
                             )
 
-                        # KIN constraint: check the RESULTING (type, tss) tuple
-                        # before mutating, so we return a clean message instead
-                        # of Pydantic's validate_assignment blowing up mid-way.
+                        # Off-bike (KIN, INJ) constraint: check the RESULTING
+                        # (type, tss) tuple before mutating, so we return a
+                        # clean message instead of Pydantic's
+                        # validate_assignment blowing up mid-way.
+                        from magma_cycling.planning.models import (
+                            OFF_BIKE_SESSION_TYPES,
+                        )
+
                         final_type = session_type if session_type else session.session_type
                         final_tss = tss_planned if tss_planned is not None else session.tss_planned
-                        if final_type == "KIN" and final_tss != 0:
+                        if final_type in OFF_BIKE_SESSION_TYPES and final_tss != 0:
                             raise ValueError(
-                                f"KIN session must have tss_planned=0 "
+                                f"{final_type} session must have tss_planned=0 "
                                 f"(would become {final_tss}). "
-                                "KIN represents off-bike work (kinésithérapie / "
-                                "renfo / mobilité) with no training stress "
+                                f"{final_type} is an off-bike session type "
+                                "(KIN=kinésithérapie / renfo / mobilité, "
+                                "INJ=blessure aiguë) with no training stress "
                                 "contribution."
                             )
 
@@ -1066,13 +1072,18 @@ async def handle_create_session(args: dict) -> list[TextContent]:
     tss_planned = args.get("tss_planned", 0)
     duration_min = args.get("duration_min", 0)
 
-    # KIN sessions carry no training load — reject explicitly at the handler
-    # boundary so the caller gets a clear message (Pydantic backstop remains).
-    if session_type == "KIN" and tss_planned != 0:
+    # Off-bike sessions (KIN, INJ) carry no training load — reject explicitly
+    # at the handler boundary so the caller gets a clear message (Pydantic
+    # backstop remains).
+    from magma_cycling.planning.models import OFF_BIKE_SESSION_TYPES
+
+    if session_type in OFF_BIKE_SESSION_TYPES and tss_planned != 0:
         error = {
             "error": (
-                f"KIN session must have tss_planned=0 (got {tss_planned}). "
-                "KIN represents off-bike work (kinésithérapie / renfo / mobilité) "
+                f"{session_type} session must have tss_planned=0 "
+                f"(got {tss_planned}). "
+                f"{session_type} is an off-bike session type "
+                "(KIN=kinésithérapie / renfo / mobilité, INJ=blessure aiguë) "
                 "with no training stress contribution."
             )
         }

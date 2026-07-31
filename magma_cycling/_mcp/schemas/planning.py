@@ -317,7 +317,9 @@ def get_tools() -> list[Tool]:
                             "Cadence/Force), SS (Sweet Spot), FTP (Test FTP), "
                             "SPR (Sprint), CLM / TT (Contre-la-montre / Time Trial), "
                             "TMP (Tempo Z3 sustained), MIX (Mixte), VO2 (VO2max), "
-                            "KIN (Kinésithérapie / hors charge — tss_planned=0)."
+                            "KIN (Kinésithérapie / hors charge — tss_planned=0), "
+                            "INJ (Blessure aiguë / arrêt / rééducation — "
+                            "tss_planned=0)."
                         ),
                         "enum": [
                             "END",
@@ -334,6 +336,7 @@ def get_tools() -> list[Tool]:
                             "MIX",
                             "VO2",
                             "KIN",
+                            "INJ",
                         ],
                     },
                     "description": {
@@ -412,7 +415,8 @@ def get_tools() -> list[Tool]:
                             "FTP (Test FTP), SPR (Sprint), CLM / TT "
                             "(Contre-la-montre / Time Trial), TEMPO (Z3 sustained), "
                             "MIX (Mixte), VO2 (VO2max), KIN (Kinésithérapie / "
-                            "hors charge — tss_planned=0)."
+                            "hors charge — tss_planned=0), INJ (Blessure aiguë / "
+                            "arrêt / rééducation — tss_planned=0)."
                         ),
                         "enum": [
                             "END",
@@ -429,6 +433,7 @@ def get_tools() -> list[Tool]:
                             "MIX",
                             "VO2",
                             "KIN",
+                            "INJ",
                         ],
                         "default": "END",
                     },
