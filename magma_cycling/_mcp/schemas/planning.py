@@ -316,7 +316,8 @@ def get_tools() -> list[Tool]:
                             "REC (Recuperation), RACE (Course), TEC (Technique "
                             "Cadence/Force), SS (Sweet Spot), FTP (Test FTP), "
                             "SPR (Sprint), CLM / TT (Contre-la-montre / Time Trial), "
-                            "TMP (Tempo Z3 sustained), MIX (Mixte), VO2 (VO2max)."
+                            "TMP (Tempo Z3 sustained), MIX (Mixte), VO2 (VO2max), "
+                            "KIN (Kinésithérapie / hors charge — tss_planned=0)."
                         ),
                         "enum": [
                             "END",
@@ -332,6 +333,7 @@ def get_tools() -> list[Tool]:
                             "TMP",
                             "MIX",
                             "VO2",
+                            "KIN",
                         ],
                     },
                     "description": {
@@ -409,7 +411,8 @@ def get_tools() -> list[Tool]:
                             "TEC (Technique Cadence/Force), SS (Sweet Spot), "
                             "FTP (Test FTP), SPR (Sprint), CLM / TT "
                             "(Contre-la-montre / Time Trial), TEMPO (Z3 sustained), "
-                            "MIX (Mixte), VO2 (VO2max)."
+                            "MIX (Mixte), VO2 (VO2max), KIN (Kinésithérapie / "
+                            "hors charge — tss_planned=0)."
                         ),
                         "enum": [
                             "END",
@@ -425,6 +428,7 @@ def get_tools() -> list[Tool]:
                             "TMP",
                             "MIX",
                             "VO2",
+                            "KIN",
                         ],
                         "default": "END",
                     },

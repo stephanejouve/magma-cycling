@@ -120,6 +120,7 @@ class Session(BaseModel):
         "TMP",
         "MIX",
         "VO2",
+        "KIN",
     ] = Field(
         alias="type",
         description=(
@@ -129,7 +130,8 @@ class Session(BaseModel):
             "REC (Recuperation), RACE (Course), TEC (Technique Cadence/Force), "
             "SS (Sweet Spot), FTP (Test FTP), SPR (Sprint), CLM / TT "
             "(Contre-la-montre / Time Trial — synonymes), TMP (Tempo Z3 sustained), "
-            "MIX (Mixte), VO2 (VO2max)."
+            "MIX (Mixte), VO2 (VO2max), KIN (Kinésithérapie / hors charge — "
+            "renfo, mobilité, gainage ; tss_planned forcé à 0)."
         ),
     )  # Use alias to avoid 'type' keyword conflict
     version: str = Field(default="V001", pattern=r"^V\d{3}$", description="Session version")
@@ -167,6 +169,17 @@ class Session(BaseModel):
         """Ensure skip_reason is set when status requires a reason."""
         if self.status in ("skipped", "cancelled", "replaced") and not self.skip_reason:
             raise ValueError(f"skip_reason required when status is '{self.status}'")
+        return self
+
+    @model_validator(mode="after")
+    def validate_kin_no_load(self) -> "Session":
+        """KIN sessions are off-bike (kinésithérapie/renfo/mobilité) and carry no training load."""
+        if self.session_type == "KIN" and self.tss_planned != 0:
+            raise ValueError(
+                f"KIN session must have tss_planned=0 (got {self.tss_planned}). "
+                "KIN represents off-bike work (kinésithérapie / renfo / mobilité) "
+                "with no training stress contribution."
+            )
         return self
 
     def model_copy_deep(self) -> "Session":
