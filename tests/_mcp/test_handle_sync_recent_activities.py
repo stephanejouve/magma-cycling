@@ -128,6 +128,85 @@ class TestDetection:
         assert data["completed_count"] == 1
 
 
+class TestOffBikeExclusion:
+    """Off-bike sessions (KIN, INJ) must not participate in cycling-activity detection."""
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("off_bike_type", ["KIN", "INJ"])
+    async def test_only_off_bike_today_returns_no_session_today(self, off_bike_type):
+        """A day with ONLY off-bike sessions is treated as 'no cycling session'."""
+        from magma_cycling.mcp_server import handle_sync_recent_activities
+
+        today = _date.today()
+        plan = MagicMock()
+        kin = MagicMock(
+            session_id="S091-05",
+            session_date=today,
+            status="planned",
+            session_type=off_bike_type,
+        )
+        plan.planned_sessions = [kin]
+
+        tower = MagicMock()
+        tower.read_week.return_value = plan
+
+        with (
+            patch(
+                "magma_cycling.daily_sync.calculate_current_week_info",
+                return_value=("S091", today),
+            ),
+            patch("magma_cycling.planning.control_tower.planning_tower", tower),
+        ):
+            result = await handle_sync_recent_activities({})
+
+        data = json.loads(result[0].text.split("[meta]")[0].strip())
+        assert data["status"] == "no_session_today"
+
+    @pytest.mark.asyncio
+    async def test_off_bike_not_in_waiting_ids(self):
+        """A KIN + a cycling session : waiting_ids exposes only the cycling one."""
+        from magma_cycling.mcp_server import handle_sync_recent_activities
+
+        today = _date.today()
+        plan = MagicMock()
+        kin = MagicMock(
+            session_id="S091-05",
+            session_date=today,
+            status="planned",
+            session_type="KIN",
+        )
+        cycling = MagicMock(
+            session_id="S091-02",
+            session_date=today,
+            status="pending",
+            session_type="END",
+        )
+        plan.planned_sessions = [kin, cycling]
+
+        tower = MagicMock()
+        tower.read_week.return_value = plan
+
+        client = MagicMock()
+        # 0 cycling activities uploaded → detection returns no_new_activity
+        # with waiting_ids populated. KIN must NOT appear there.
+        client.get_activities.return_value = []
+
+        with (
+            patch(
+                "magma_cycling.daily_sync.calculate_current_week_info",
+                return_value=("S091", today),
+            ),
+            patch("magma_cycling.planning.control_tower.planning_tower", tower),
+            patch("magma_cycling.config.create_intervals_client", return_value=client),
+        ):
+            result = await handle_sync_recent_activities({})
+
+        data = json.loads(result[0].text.split("[meta]")[0].strip())
+        assert data["status"] == "no_new_activity"
+        assert data["waiting"] == ["S091-02"]
+        assert "S091-05" not in data["waiting"]
+
+
 class TestChain:
     @pytest.mark.asyncio
     async def test_force_skips_detection_runs_chain(self):

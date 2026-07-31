@@ -424,6 +424,77 @@ class TestValidateLocalRemoteSync:
         assert "API timeout" in result["error"]
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize("off_bike_type", ["KIN", "INJ"])
+    async def test_off_bike_synced_is_in_sync(self, off_bike_type):
+        """A synced off-bike session (INJURED remote event) → IN_SYNC, no drift."""
+        session = _make_session(
+            session_id="S104-05",
+            name="KineEpaule",
+            session_type=off_bike_type,
+            intervals_id=555,
+            description="Bandes élastiques",
+        )
+        injured_event = _make_event(
+            eid=555,
+            name=f"S104-05-{off_bike_type}-KineEpaule-V001",
+            start_date=f"{session.session_date}T09:00:00",
+            description="Bandes élastiques",
+            category="INJURED",
+        )
+
+        plan = MagicMock()
+        plan.start_date = date(2026, 3, 30)
+        plan.end_date = date(2026, 4, 5)
+        plan.planned_sessions = [session]
+
+        with (
+            patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower,
+            patch("magma_cycling.config.create_intervals_client") as mock_client_factory,
+        ):
+            mock_tower.read_week.return_value = plan
+            mock_client = MagicMock()
+            mock_client.get_events.return_value = [injured_event]
+            mock_client_factory.return_value = mock_client
+
+            result = _extract_result(await handle_validate_local_remote_sync({"week_id": "S104"}))
+
+        assert result["status"] == "IN_SYNC"
+        assert result["discrepancies"] == []
+        assert result["orphaned_remote"] == []
+        assert result["unlinked_local"] == []
+
+    @pytest.mark.asyncio
+    async def test_off_bike_injured_not_flagged_orphaned(self):
+        """An unlinked INJURED remote event is NOT reported as orphaned (only WORKOUT is)."""
+        session = _make_session(intervals_id=101)
+        event_linked = _make_event(eid=101)
+        injured_orphan = {
+            "id": 777,
+            "name": "S087-05-KIN-KineEpaule-V001",
+            "category": "INJURED",
+            "start_date_local": "2026-04-01T09:00:00",
+        }
+
+        plan = MagicMock()
+        plan.start_date = date(2026, 3, 30)
+        plan.end_date = date(2026, 4, 5)
+        plan.planned_sessions = [session]
+
+        with (
+            patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower,
+            patch("magma_cycling.config.create_intervals_client") as mock_client_factory,
+        ):
+            mock_tower.read_week.return_value = plan
+            mock_client = MagicMock()
+            mock_client.get_events.return_value = [event_linked, injured_orphan]
+            mock_client_factory.return_value = mock_client
+
+            result = _extract_result(await handle_validate_local_remote_sync({"week_id": "S087"}))
+
+        assert result["orphaned_remote"] == []
+        assert result["status"] == "IN_SYNC"
+
+    @pytest.mark.asyncio
     async def test_note_events_ignored(self):
         """NOTE events should not appear as orphaned_remote."""
         session = _make_session(intervals_id=101)

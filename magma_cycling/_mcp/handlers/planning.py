@@ -1254,6 +1254,7 @@ async def handle_sync_recent_activities(args: dict) -> list[TextContent]:
     from magma_cycling.config import create_intervals_client
     from magma_cycling.daily_sync import calculate_current_week_info
     from magma_cycling.planning.control_tower import planning_tower
+    from magma_cycling.planning.models import OFF_BIKE_SESSION_TYPES
 
     date_str = args.get("date")
     force = args.get("force", False)
@@ -1276,7 +1277,15 @@ async def handle_sync_recent_activities(args: dict) -> list[TextContent]:
                     }
                 )
 
-            todays_sessions = [s for s in plan.planned_sessions if s.session_date == today]
+            # Off-bike sessions (KIN, INJ) never generate cycling activities on
+            # Intervals.icu, so they must not participate in the "activities vs
+            # completed sessions" detection logic — otherwise they would inflate
+            # actionable/waiting_ids and mask legitimate no_new_activity states.
+            todays_sessions = [
+                s
+                for s in plan.planned_sessions
+                if s.session_date == today and s.session_type not in OFF_BIKE_SESSION_TYPES
+            ]
             terminal = ("completed", "cancelled", "skipped", "rest_day")
             actionable = [s for s in todays_sessions if s.status not in terminal]
             completed_count = sum(1 for s in todays_sessions if s.status == "completed")

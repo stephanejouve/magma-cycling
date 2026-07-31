@@ -107,6 +107,50 @@ class TestHandleCheckWorkoutAdherence:
         assert data["date"] == _dt.now().strftime("%Y-%m-%d")
 
 
+class TestOffBikeAdherenceExclusion:
+    """WorkoutAdherenceChecker must ignore INJURED events (off-bike KIN/INJ)."""
+
+    def test_injured_events_not_counted_in_planned_workouts(self, tmp_path, monkeypatch):
+        """INJURED remote events do NOT inflate planned_workouts nor skipped_workouts."""
+        from datetime import datetime
+        from pathlib import Path
+
+        from scripts.monitoring.check_workout_adherence import WorkoutAdherenceChecker
+
+        monkeypatch.setattr(
+            "magma_cycling.config.get_intervals_config",
+            lambda: MagicMock(athlete_id="iXXXXX", api_key="dummy"),
+        )
+        monkeypatch.setattr(Path, "home", lambda: tmp_path)
+
+        checker = WorkoutAdherenceChecker(dry_run=True)
+
+        real_workout = {
+            "id": 1,
+            "name": "S104-01-END-Endurance-V001",
+            "category": "WORKOUT",
+            "start_date_local": "2026-08-01T09:00:00",
+        }
+        injured_event = {
+            "id": 2,
+            "name": "S104-05-KIN-KineEpaule-V001",
+            "category": "INJURED",
+            "start_date_local": "2026-08-01T10:00:00",
+        }
+
+        checker.client = MagicMock()
+        checker.client.get_events.return_value = [real_workout, injured_event]
+        checker.client.get_activities.return_value = []
+
+        result = checker.check_date(datetime(2026, 8, 1))
+
+        # Only the WORKOUT counts as planned; INJURED is invisible.
+        assert result["planned_workouts"] == 1
+        skipped_names = [w["name"] for w in result["skipped_workouts"]]
+        assert "S104-05-KIN-KineEpaule-V001" not in skipped_names
+        assert "S104-01-END-Endurance-V001" in skipped_names
+
+
 class TestCheckWorkoutAdherenceWiring:
     """Verify the handler is properly wired into TOOL_HANDLERS dispatcher."""
 
