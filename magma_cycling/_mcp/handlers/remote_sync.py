@@ -65,15 +65,26 @@ async def handle_sync_week_to_calendar(args: dict) -> list[TextContent]:
 
             for session in sessions_to_process:
                 if session.status not in SYNCABLE_STATUSES:
-                    to_skip_protected.append(
-                        {
-                            "session_id": session.session_id,
-                            "name": session.name,
-                            "status": session.status,
-                            "reason": f"Session {session.status} - protected from sync",
-                        }
+                    # BT-019: off-bike (KIN/INJ) sessions saisies rétroactivement
+                    # (create-session → update-session(completed) sans traverser
+                    # le sync) doivent pouvoir créer leur INJURED event a
+                    # posteriori. Sans intervals_id il n'existe aucun event
+                    # distant à protéger, donc le guard ne s'applique pas.
+                    is_off_bike_backfill = (
+                        session.status == "completed"
+                        and session.intervals_id is None
+                        and session.session_type in OFF_BIKE_SESSION_TYPES
                     )
-                    continue
+                    if not is_off_bike_backfill:
+                        to_skip_protected.append(
+                            {
+                                "session_id": session.session_id,
+                                "name": session.name,
+                                "status": session.status,
+                                "reason": f"Session {session.status} - protected from sync",
+                            }
+                        )
+                        continue
 
                 start_time = compute_start_time(session.session_date, session.session_id)
                 intervals_name = (
