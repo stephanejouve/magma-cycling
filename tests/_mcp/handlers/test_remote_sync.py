@@ -368,6 +368,153 @@ class TestOffBikeCreatesInjured:
         assert result["summary"]["to_create"] == 0
 
 
+class TestOffBikeCompletedBackfill:
+    """BT-019: KIN/INJ saisies rétroactivement (completed sans intervals_id)
+    doivent pouvoir créer leur INJURED event a posteriori — le guard
+    'protected' ne s'applique que si un event distant existe déjà."""
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("off_bike_type", ["KIN", "INJ"])
+    async def test_off_bike_completed_without_intervals_id_creates_backfill(self, off_bike_type):
+        """completed + intervals_id=None + off-bike → INJURED event créé (pas skipped)."""
+        session = _make_session(
+            session_id="S105-01a",
+            name="ExcentriqueAchilleCharge15kg",
+            session_type=off_bike_type,
+            tss_planned=0,
+            duration_min=30,
+            session_date=date(2026, 8, 3),
+            description="Excentrique Achille, charge 15kg, 3x15",
+            status="completed",
+            intervals_id=None,
+        )
+        plan = _make_plan(
+            [session],
+            start_date=date(2026, 8, 3),
+            end_date=date(2026, 8, 9),
+        )
+        client = _make_client(create_return={"id": 127746500})
+
+        with _patch_sync(plan, client) as mock_tower:
+            modify_plan = MagicMock()
+            modify_plan.planned_sessions = [
+                _make_session(
+                    session_id="S105-01a",
+                    session_type=off_bike_type,
+                    tss_planned=0,
+                    duration_min=30,
+                    session_date=date(2026, 8, 3),
+                    status="completed",
+                    intervals_id=None,
+                )
+            ]
+
+            @contextmanager
+            def _modify_cm(*args, **kwargs):
+                yield modify_plan
+
+            mock_tower.modify_week.side_effect = _modify_cm
+
+            result = _extract(await handle_sync_week_to_calendar({"week_id": "S105"}))
+
+        assert result["summary"]["skipped_protected"] == 0
+        assert result["summary"]["to_create"] == 1
+        assert result["summary"]["created"] == 1
+        call_args = client.create_event.call_args[0][0]
+        assert call_args["category"] == "INJURED"
+        assert call_args["start_date_local"].startswith("2026-08-03T")
+        assert modify_plan.planned_sessions[0].intervals_id == 127746500
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("off_bike_type", ["KIN", "INJ"])
+    async def test_off_bike_completed_with_intervals_id_stays_protected(self, off_bike_type):
+        """Non-régression: completed + intervals_id posé → toujours skipped_protected
+        (aucun ré-envoi d'une prescription périmée par-dessus une séance effectuée)."""
+        session = _make_session(
+            session_id="S105-01a",
+            name="ExcentriqueAchilleCharge15kg",
+            session_type=off_bike_type,
+            tss_planned=0,
+            duration_min=30,
+            session_date=date(2026, 8, 3),
+            status="completed",
+            intervals_id="evt-existing-99",
+        )
+        plan = _make_plan(
+            [session],
+            start_date=date(2026, 8, 3),
+            end_date=date(2026, 8, 9),
+        )
+        client = _make_client()
+
+        with _patch_sync(plan, client):
+            result = _extract(await handle_sync_week_to_calendar({"week_id": "S105"}))
+
+        assert result["summary"]["skipped_protected"] == 1
+        assert result["summary"]["to_create"] == 0
+        client.create_event.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_cycling_completed_without_intervals_id_stays_protected(self):
+        """Non-régression: le fix ne concerne QUE les off-bike. Une session
+        cycling completed sans intervals_id (cas anormal, décision produit
+        séparée) reste protégée pour éviter la création d'un WORKOUT
+        VirtualRide inattendu."""
+        session = _make_session(
+            session_id="S105-02",
+            name="TempoBlock",
+            session_type="INT",
+            tss_planned=65,
+            duration_min=60,
+            session_date=date(2026, 8, 4),
+            description="- 3x12min @ 88% FTP",
+            status="completed",
+            intervals_id=None,
+        )
+        plan = _make_plan(
+            [session],
+            start_date=date(2026, 8, 3),
+            end_date=date(2026, 8, 9),
+        )
+        client = _make_client()
+
+        with _patch_sync(plan, client):
+            result = _extract(await handle_sync_week_to_calendar({"week_id": "S105"}))
+
+        assert result["summary"]["skipped_protected"] == 1
+        assert result["summary"]["to_create"] == 0
+        client.create_event.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_off_bike_cancelled_without_intervals_id_stays_protected(self):
+        """Non-régression: le backfill est scopé à status=completed uniquement.
+        Un KIN cancelled sans intervals_id reste skipped (rien à backfill,
+        pas de séance réellement effectuée)."""
+        session = _make_session(
+            session_id="S105-01a",
+            name="ExcentriqueAchille",
+            session_type="KIN",
+            tss_planned=0,
+            duration_min=30,
+            session_date=date(2026, 8, 3),
+            status="cancelled",
+            intervals_id=None,
+        )
+        plan = _make_plan(
+            [session],
+            start_date=date(2026, 8, 3),
+            end_date=date(2026, 8, 9),
+        )
+        client = _make_client()
+
+        with _patch_sync(plan, client):
+            result = _extract(await handle_sync_week_to_calendar({"week_id": "S105"}))
+
+        assert result["summary"]["skipped_protected"] == 1
+        assert result["summary"]["to_create"] == 0
+        client.create_event.assert_not_called()
+
+
 class TestTemporalHeuristic:
     """SYNC-001: temporal heuristic prevents stale remote from blocking sync."""
 
