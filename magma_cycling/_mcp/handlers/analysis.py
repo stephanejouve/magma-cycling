@@ -967,18 +967,18 @@ async def handle_validate_local_remote_sync(args: dict) -> list[TextContent]:
                 newest=str(plan.end_date),
             )
 
-            # Index all remote events by id (for intervals_id lookup)
+            # Index all remote events by id (for intervals_id lookup).
+            # BT-020: no category filter — orphan detection must cover
+            # WORKOUT + NOTE + INJURED, otherwise NOTE de repos et INJURED
+            # de kiné restent invisibles au validateur.
             remote_by_id: dict[int, dict] = {}
-            # Keep WORKOUT-only list for orphan detection
-            remote_workouts: list[dict] = []
             for event in remote_events:
                 eid = event.get("id")
                 if eid is not None:
                     remote_by_id[eid] = event
-                if event.get("category") == "WORKOUT":
-                    remote_workouts.append(event)
 
             discrepancies: list[dict] = []
+            dangling_references: list[dict] = []
             linked_remote_ids: set[int] = set()
 
             # Check each session that has an intervals_id
@@ -990,14 +990,18 @@ async def handle_validate_local_remote_sync(args: dict) -> list[TextContent]:
                 remote_event = remote_by_id.get(session.intervals_id)
 
                 if remote_event is None:
-                    discrepancies.append(
+                    # BT-020: dangling reference — intervals_id local pointe
+                    # vers un event absent (supprimé remote, hors fenêtre,
+                    # ou jamais créé). Catégorie dédiée pour ne pas être
+                    # confondu avec un vrai discrepancy structurel (name,
+                    # type, date, description). La remédiation diffère :
+                    # re-sync pour recréer l'event, ou effacer l'intervals_id
+                    # local si l'event est parti intentionnellement.
+                    dangling_references.append(
                         {
                             "session_id": session.session_id,
                             "intervals_id": session.intervals_id,
-                            "type": "REMOTE_MISSING",
-                            "local": session.session_id,
-                            "remote": None,
-                            "severity": "HIGH",
+                            "date": str(session.session_date),
                         }
                     )
                     continue
@@ -1080,20 +1084,25 @@ async def handle_validate_local_remote_sync(args: dict) -> list[TextContent]:
                                 }
                             )
 
-            # Orphaned remote: WORKOUT events not linked to any local session
+            # Orphaned remote: events not linked to any local session.
+            # BT-020: scan toutes catégories (WORKOUT, NOTE, INJURED, ...).
+            # Le champ "category" est exposé pour orienter la remédiation
+            # (delete-remote-event fait le job pour toutes catégories).
             orphaned_remote = []
-            for event in remote_workouts:
+            for event in remote_events:
                 eid = event.get("id")
-                if eid not in linked_remote_ids:
-                    parsed = _parse_event_name(event.get("name", ""))
-                    orphaned_remote.append(
-                        {
-                            "intervals_id": eid,
-                            "name": event.get("name", ""),
-                            "date": event.get("start_date_local", "")[:10],
-                            "parsed": parsed,
-                        }
-                    )
+                if eid is None or eid in linked_remote_ids:
+                    continue
+                parsed = _parse_event_name(event.get("name", ""))
+                orphaned_remote.append(
+                    {
+                        "intervals_id": eid,
+                        "category": event.get("category"),
+                        "name": event.get("name", ""),
+                        "date": event.get("start_date_local", "")[:10],
+                        "parsed": parsed,
+                    }
+                )
 
             # Unlinked local: sessions that should be synced but have no intervals_id
             unlinked_local = []
@@ -1109,7 +1118,11 @@ async def handle_validate_local_remote_sync(args: dict) -> list[TextContent]:
                     )
 
             sessions_checked = sum(1 for s in plan.planned_sessions if s.intervals_id is not None)
-            status = "DRIFT_DETECTED" if discrepancies or orphaned_remote else "IN_SYNC"
+            status = (
+                "DRIFT_DETECTED"
+                if discrepancies or orphaned_remote or dangling_references
+                else "IN_SYNC"
+            )
 
             result = {
                 "week_id": week_id,
@@ -1118,6 +1131,7 @@ async def handle_validate_local_remote_sync(args: dict) -> list[TextContent]:
                 "discrepancies": discrepancies,
                 "orphaned_remote": orphaned_remote,
                 "unlinked_local": unlinked_local,
+                "dangling_references": dangling_references,
             }
 
         return mcp_response(result)
