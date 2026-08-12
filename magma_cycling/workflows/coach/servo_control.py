@@ -121,8 +121,14 @@ class ServoControlMixin:
         day_num = extract_day_number(mod["target_date"], week_id, config.week_planning_dir)
         workout_code = template["workout_code_pattern"].format(week_id=week_id, day_num=day_num)
 
-        # 2. Supprimer ancien workout Intervals.icu
-        old_workout_id = self._get_workout_id_intervals(mod["target_date"])
+        # 2. Supprimer ancien workout Intervals.icu.
+        # BT-021: session_id explicite reconstruit depuis (week_id, day_num)
+        # pour un matching strict via WORKOUT_NAME_REGEX côté résolveur.
+        # Servo ne cible que les séances vélo cyclables (pas de suffixe a/b),
+        # mais l'invariant "matching strict" reste requis pour éviter de
+        # supprimer une INJURED du même jour.
+        session_id = f"{week_id}-{day_num:02d}"
+        old_workout_id = self._get_workout_id_intervals(mod["target_date"], session_id)
         if old_workout_id:
             if self._delete_workout_intervals(old_workout_id):
                 print("   🗑️  Ancien workout supprimé")

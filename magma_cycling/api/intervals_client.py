@@ -422,12 +422,16 @@ class IntervalsClient:
 
         events = self.get_events(oldest=oldest, newest=newest)
 
-        # Find event with matching paired_activity_id
-        for event in events:
-            if event.get("paired_activity_id") == activity_id:
-                return event
+        # BT-021: belt-and-suspenders. Intervals.icu guarantees uniqueness
+        # of paired_activity_id at the server level, but we don't trust a
+        # third-party invariant blindly. If two events ever surface with
+        # the same paired_activity_id (server bug, migration incident,
+        # duplicate from any prior tooling), raise rather than pick one
+        # silently — the caller (post-session workflow, adherence tracker)
+        # must not attribute analysis onto the wrong event.
+        from magma_cycling.utils.event_resolver import resolve_event_by_activity_id
 
-        return None
+        return resolve_event_by_activity_id(events, activity_id)
 
     def create_event(self, event_data: dict[str, Any]) -> dict[str, Any] | None:
         r"""

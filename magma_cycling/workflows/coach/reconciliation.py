@@ -171,7 +171,9 @@ class ReconciliationMixin:
                     )
 
                     # Supprimer le workout de Intervals.icu si présent
-                    workout_id = self._get_workout_id_intervals(session["date"])
+                    workout_id = self._get_workout_id_intervals(
+                        session["date"], session["session_id"]
+                    )
                     if workout_id:
                         print(f"   🗑️  Suppression workout Intervals.icu (ID: {workout_id})...")
                         if self._delete_workout_intervals(workout_id):

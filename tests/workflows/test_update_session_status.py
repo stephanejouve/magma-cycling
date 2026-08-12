@@ -211,8 +211,8 @@ class TestFindEventBySession:
         # Mock client
         mock_client = MagicMock()
         mock_client.get_events.return_value = [
-            {"id": 123, "name": "S999-01 EnduranceDouce", "category": "WORKOUT"},
-            {"id": 456, "name": "S999-02 Intervals", "category": "WORKOUT"},
+            {"id": 123, "name": "S999-01-END-EnduranceDouce-V001", "category": "WORKOUT"},
+            {"id": 456, "name": "S999-02-INT-Intervals-V001", "category": "WORKOUT"},
         ]
 
         # Find event
@@ -253,7 +253,7 @@ class TestSyncWithIntervals:
         mock_client.get_events.return_value = [
             {
                 "id": 123,
-                "name": "S999-01 EnduranceDouce",
+                "name": "S999-01-END-EnduranceDouce-V001",
                 "category": "WORKOUT",
                 "description": "Original workout description",
             }
@@ -280,7 +280,12 @@ class TestSyncWithIntervals:
         """Test that skipped status converts event to NOTE with [SAUTÉE] tag."""
         mock_client = MagicMock()
         mock_client.get_events.return_value = [
-            {"id": 456, "name": "S999-02 Intervals", "category": "WORKOUT", "description": "Test"}
+            {
+                "id": 456,
+                "name": "S999-02-INT-Intervals-V001",
+                "category": "WORKOUT",
+                "description": "Test",
+            }
         ]
         mock_client.update_event.return_value = {"id": 456}
 
@@ -329,7 +334,7 @@ class TestSyncWithIntervals:
         mock_client.get_events.return_value = [
             {
                 "id": 789,
-                "name": "S999-03 Tempo",
+                "name": "S999-03-INT-Tempo-V001",
                 "category": "WORKOUT",
                 "description": "Tempo ride",
             }
@@ -352,7 +357,7 @@ class TestSyncWithIntervals:
         mock_client.get_events.return_value = [
             {
                 "id": 321,
-                "name": "S999-04 Recovery",
+                "name": "S999-04-REC-Recovery-V001",
                 "category": "WORKOUT",
                 "description": "Easy ride",
             }
@@ -375,7 +380,7 @@ class TestSyncWithIntervals:
         mock_client.get_events.return_value = [
             {
                 "id": 555,
-                "name": "S999-02 Intervals",
+                "name": "S999-02-INT-Intervals-V001",
                 "category": "WORKOUT",
                 "description": "Original intervals",
             }
@@ -500,7 +505,7 @@ class TestSyncWithIntervals:
         mock_client.get_events.return_value = [
             {
                 "id": None,
-                "name": "S999-01 Test",
+                "name": "S999-01-END-Test-V001",
                 "category": "WORKOUT",
                 "description": "Test",
             }
@@ -517,7 +522,7 @@ class TestSyncWithIntervals:
         mock_client.get_events.return_value = [
             {
                 "id": None,
-                "name": "S999-01 Test",
+                "name": "S999-01-END-Test-V001",
                 "category": "WORKOUT",
                 "description": "Test",
             }
@@ -535,7 +540,7 @@ class TestSyncWithIntervals:
         mock_client.get_events.return_value = [
             {
                 "id": 123,
-                "name": "S999-01 Test",
+                "name": "S999-01-END-Test-V001",
                 "category": "WORKOUT",
                 "description": "Test",
             }
@@ -639,19 +644,43 @@ class TestFindEventBySessionEdgeCases:
 
         mock_client.get_events.assert_called_once_with(oldest="2026-03-15", newest="2026-03-15")
 
-    def test_find_event_returns_first_match(self):
-        """Test that first matching event is returned when multiple match."""
+    def test_find_event_raises_on_ambiguous_match(self):
+        """BT-021: two events with the same parsed session_id → raise, no silent pick.
+
+        This case used to return the first-in-iteration match silently
+        (bug #428 semantics extended to same-session_id duplicates).
+        """
+        from magma_cycling.utils.event_resolver import AmbiguousMatchError
+
         mock_client = MagicMock()
         mock_client.get_events.return_value = [
             {"id": 100, "name": "S999-01-END-Test-V001", "category": "WORKOUT"},
             {"id": 200, "name": "S999-01-END-Test-V002", "category": "WORKOUT"},
         ]
 
-        event = find_event_by_session(mock_client, "S999-01", "2026-03-02")
-        assert event["id"] == 100
+        with pytest.raises(AmbiguousMatchError, match="S999-01"):
+            find_event_by_session(mock_client, "S999-01", "2026-03-02")
+
+    def test_find_event_suffix_not_matched_as_prefix(self):
+        """BT-021 regression #428: S999-01 must NOT match S999-01a.
+
+        Symmetric assertion sens direct + sens inverse + independence to
+        iteration order (fixture replayed with reversed list).
+        """
+        events_ordered = [
+            {"id": 100, "name": "S999-01-END-EnduranceDouce-V001"},
+            {"id": 200, "name": "S999-01a-KIN-KineEpaule-V001"},
+        ]
+        events_reversed = list(reversed(events_ordered))
+
+        for events in (events_ordered, events_reversed):
+            mock_client = MagicMock()
+            mock_client.get_events.return_value = events
+            assert find_event_by_session(mock_client, "S999-01", "2026-03-02")["id"] == 100
+            assert find_event_by_session(mock_client, "S999-01a", "2026-03-02")["id"] == 200
 
     def test_find_event_partial_match(self):
-        """Test that partial session_id in name still matches."""
+        """Test that structured name matches strictly on the session_id."""
         mock_client = MagicMock()
         mock_client.get_events.return_value = [
             {"id": 100, "name": "S999-01-END-EnduranceDouce-V001"},
@@ -676,7 +705,12 @@ class TestErrorHandling:
         """Test handling when update_event fails."""
         mock_client = MagicMock()
         mock_client.get_events.return_value = [
-            {"id": 123, "name": "S999-01 Test", "category": "WORKOUT", "description": "Test"}
+            {
+                "id": 123,
+                "name": "S999-01-END-Test-V001",
+                "category": "WORKOUT",
+                "description": "Test",
+            }
         ]
         mock_client.update_event.return_value = None  # Failure
 
@@ -688,7 +722,12 @@ class TestErrorHandling:
         """Test handling when update_event raises exception."""
         mock_client = MagicMock()
         mock_client.get_events.return_value = [
-            {"id": 123, "name": "S999-01 Test", "category": "WORKOUT", "description": "Test"}
+            {
+                "id": 123,
+                "name": "S999-01-END-Test-V001",
+                "category": "WORKOUT",
+                "description": "Test",
+            }
         ]
         mock_client.update_event.side_effect = Exception("API Error")
 

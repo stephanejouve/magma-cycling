@@ -131,29 +131,40 @@ class IntervalsAPIMixin:
             print(f"⚠️  Erreur lecture planning : {e}")
             return []
 
-    def _get_workout_id_intervals(self, date: str):
-        """Récupère ID workout Intervals.icu pour une date.
+    def _get_workout_id_intervals(self, date: str, session_id: str):
+        """Récupère ID de l'event Intervals.icu correspondant à une session.
+
+        BT-021 : résolution par matching strict du session_id parsé depuis
+        `event.name` (via WORKOUT_NAME_REGEX), plus par le prédicat trop
+        large `category == "WORKOUT"`. Ce dernier tombait à zéro match sur
+        les semaines mixtes vélo+kiné (séances rééducation en catégorie
+        INJURED), et renvoyait un choix silencieux "premier WORKOUT
+        rencontré" quand deux séances vélo cohabitaient sur la même date.
 
         Args:
-            date: Date YYYY-MM-DD
+            date: Date YYYY-MM-DD.
+            session_id: Session ID local (e.g. "S106-02", "S106-02a"),
+                extrait par le call site depuis la session en cours.
 
         Returns:
-            str: ID workout ou None.
+            L'ID de l'unique event matchant, ou None si aucun match.
+
+        Raises:
+            AmbiguousMatchError: si 2+ events matchent (chemin interactif,
+                le call site est input-gated — l'humain tranche).
         """
+        from magma_cycling.utils.event_resolver import (
+            AmbiguousMatchError,
+            resolve_event_by_session_id,
+        )
+
         try:
-            # Get API client (centralized, Sprint R9.B Phase 2)
             api = self._get_api()
-
-            # Get events for the date
             events = api.get_events(oldest=date, newest=date)
-
-            # Filter for WORKOUT category
-            for event in events:
-                if event.get("category") == "WORKOUT":
-                    return event.get("id")
-
-            return None
-
+            event = resolve_event_by_session_id(events, session_id)
+            return event.get("id") if event else None
+        except AmbiguousMatchError:
+            raise
         except Exception as e:
             print(f"⚠️  Erreur get_workout_id : {e}")
             return None
