@@ -160,6 +160,19 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # BT-024 post-mortem preprod v3.69.1 (12/08) : sur trigger
+          # workflow_run, github.ref = refs/heads/main (le workflow parent
+          # Release tourne sur main, pas sur le tag créé). Le pattern
+          # ``type=semver`` matche uniquement refs/tags/v* → skip → seul
+          # ``latest`` sort → label OCI ``org.opencontainers.image.version``
+          # = "latest" au lieu de "3.69.1". Runtime __version__ correct
+          # (grâce à Sync + Assert BT-024), mais label cosmétique stale.
+          #
+          # Fix : ``context: git`` fait dériver les tags depuis
+          # ``git describe --tags`` sur le checkout (= head_sha en cascade,
+          # qui pointe le commit taggé). Marche identiquement sur push tag
+          # et workflow_dispatch (comportement legacy inchangé).
+          context: git
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
