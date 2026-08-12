@@ -61,9 +61,11 @@ jobs:
           if [ -z "$TAG" ]; then
             echo "::warning::No release tag on HEAD ${{ github.event.workflow_run.head_sha }} — build skipped"
             echo "tag_ref=" >> "$GITHUB_OUTPUT"
+            echo "version=" >> "$GITHUB_OUTPUT"
           else
             echo "::notice::Resolved tag $TAG for cascade build"
             echo "tag_ref=refs/tags/$TAG" >> "$GITHUB_OUTPUT"
+            echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
           fi
 
       # Closes T-github-utils-version-variables (vault P2). Root cause :
@@ -173,10 +175,21 @@ jobs:
           # qui pointe le commit taggé). Marche identiquement sur push tag
           # et workflow_dispatch (comportement legacy inchangé).
           context: git
+          # Ceinture-bretelles cascade workflow_run : docker/metadata-action
+          # dérive les tags via git describe en context:git, mais le pattern
+          # semver peut ne pas matcher si le HEAD checkouté (head_sha du run
+          # parent) est aussi le tip d'une branche (cas où le release commit
+          # est le dernier de main). Résultat observé sur v3.69.1 (Admin
+          # msg 12/08 22:49) : seul :latest publié, pas :3.69.1, retag
+          # :stable source_tag=3.69.1 échoue "not found".
+          # Le type=raw ci-dessous force explicitement le tag versionné
+          # quand resolve_tag a trouvé une version. No-op sur push tag et
+          # workflow_dispatch (resolve_tag est gated sur workflow_run).
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ steps.resolve_tag.outputs.version }},enable=${{ github.event_name == 'workflow_run' && steps.resolve_tag.outputs.version != '' }}
 
       # Deploy key SSH read-only pour cloner outillages (repo privé), dep
       # transitive de magma-cycling-tools v0.2.0 — cf. Dockerfile commentaire
