@@ -35,10 +35,15 @@ jobs:
       # ``commit: "false"`` doctrine release Stéphane), seule l'image
       # embarque la version correcte.
       #
-      # Skipped sur ``workflow_dispatch`` (pas de tag git → pas de version
-      # à propager, image reste sur ce que dit pyproject à HEAD).
+      # Actif sur push tag (déclenchement nominal) ET sur workflow_dispatch
+      # invoqué avec ``ref=vX.Y.Z`` (chemin de secours quand le trigger
+      # push est absorbé — notamment : push tag effectué par la CI Release
+      # avec le GITHUB_TOKEN natif ne cascade PAS les workflows downstream
+      # par design GitHub anti-boucles, cf. Admin msg 12/08 12:55).
+      # Skippé si ``workflow_dispatch`` sans ref tag (pas de version à
+      # propager, image reste sur ce que dit pyproject à HEAD).
       - name: Sync version markers from git tag
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && startsWith(github.ref, 'refs/tags/v')
         run: |
           TAG_VERSION="${GITHUB_REF_NAME#v}"
           echo "Propagating tag version $TAG_VERSION to pyproject.toml + magma_cycling/__init__.py"
