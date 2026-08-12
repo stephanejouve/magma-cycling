@@ -1,0 +1,80 @@
+# Étiquettes d'affichage des métriques d'entraînement.
+#
+# BT-022 : les libellés utilisateur sont ici, pas dans les templates
+# rapports ni les prompts LLM. Objectif = capacité de renommage à la
+# demande sans toucher au code (marques déposées TSS/NP/IF, tolérance
+# aux évolutions de branding, i18n future).
+#
+# Utilisation :
+#   from magma_cycling.utils.metric_labels import get_label
+#   get_label("tss")               → "TSS" (locale par défaut = fr)
+#   get_label("tss", locale="en")  → "TSS"
+#   get_label("normalized_power")  → "Puissance normalisée"
+#   get_label("unknown_key")       → "unknown_key" (fallback + warning log)
+#
+# Convention :
+# - `fr` : locale par défaut (Coach IA + rapports français).
+# - `en` : locale secondaire (pour futur bundling international).
+# - `short` : forme courte optionnelle (dashboards, tableaux étroits).
+# - `description` : glose explicative optionnelle (tooltip, docs).
+
+tss:
+  fr: "TSS"
+  en: "TSS"
+  short: "TSS"
+  description: "Charge d'entraînement quantifiée (Training Stress Score, marque déposée TrainingPeaks/Garmin)"
+
+tss_planned:
+  fr: "TSS Planifié"
+  en: "Planned TSS"
+  short: "TSS plan."
+
+tss_realized:
+  fr: "TSS Réalisé"
+  en: "Realized TSS"
+  short: "TSS réal."
+
+tss_target:
+  fr: "TSS Cible"
+  en: "Target TSS"
+  short: "TSS cible"
+
+tss_actual:
+  fr: "TSS Réalisé"
+  en: "Actual TSS"
+  short: "TSS réal."
+
+normalized_power:
+  fr: "Puissance normalisée"
+  en: "Normalized Power"
+  short: "NP"
+  description: "Puissance normalisée quadratique 30s (marque déposée TrainingPeaks/Garmin)"
+
+intensity_factor:
+  fr: "Facteur d'intensité"
+  en: "Intensity Factor"
+  short: "IF"
+  description: "Ratio Puissance normalisée / FTP (marque déposée TrainingPeaks/Garmin)"
+
+ctl:
+  fr: "CTL"
+  en: "CTL"
+  short: "CTL"
+  description: "Fitness chronique (Chronic Training Load, moyenne exponentielle 42 jours)"
+
+atl:
+  fr: "ATL"
+  en: "ATL"
+  short: "ATL"
+  description: "Fatigue aiguë (Acute Training Load, moyenne exponentielle 7 jours)"
+
+tsb:
+  fr: "TSB"
+  en: "TSB"
+  short: "TSB"
+  description: "Balance forme (Training Stress Balance = CTL - ATL)"
+
+training_load:
+  fr: "Charge"
+  en: "Load"
+  short: "Charge"
