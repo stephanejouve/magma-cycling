@@ -819,12 +819,83 @@ async def handle_modify_session_details(args: dict) -> list[TextContent]:
                 session_found = False
                 for session in plan.planned_sessions:
                     if session.session_id == session_id:
-                        # PROTECTION: Refuse to modify completed sessions
+                        # BT-026 : le verrou completed distingue les champs
+                        # DESCRIPTIFS (name, description, type sous condition)
+                        # des champs de CHARGE (tss_planned, duration_min).
+                        # Les descriptifs sont éditables post-completed
+                        # (documentation légitime a posteriori — cas nominal
+                        # phase rééducation quand la charge se constate au
+                        # lieu de se prescrire). Les champs de charge restent
+                        # protégés (falsification de l'historique).
+                        #
+                        # `type` = descriptif AVEC condition (Coach AI) :
+                        # refus si le nouveau type impose une contrainte
+                        # que les valeurs de charge en place violent.
+                        # Concrètement END→KIN avec tss_planned != 0 →
+                        # échec, on ne corrige pas un libellé en modifiant
+                        # silencieusement la charge historique.
+                        #
+                        # Traçabilité : log valeur avant/après pour chaque
+                        # modification descriptif post-completed (audit_log
+                        # planning_tower existant + logger.info explicite).
                         if session.status == "completed":
-                            raise ValueError(
-                                f"⛔ PROTECTION: Cannot modify session {session_id} - "
-                                f"Status is 'completed'. Completed sessions are protected from modification."
+                            from magma_cycling.planning.models import (
+                                OFF_BIKE_SESSION_TYPES,
                             )
+
+                            charge_fields = {}
+                            if tss_planned is not None:
+                                charge_fields["tss_planned"] = tss_planned
+                            if duration_min is not None:
+                                charge_fields["duration_min"] = duration_min
+                            if charge_fields:
+                                raise ValueError(
+                                    f"⛔ PROTECTION: Cannot modify charge fields "
+                                    f"{list(charge_fields)} on completed session "
+                                    f"{session_id}. Charge fields are protected to "
+                                    f"preserve training history. Descriptive fields "
+                                    f"(name, description, type) remain editable."
+                                )
+
+                            # Condition sur type change: refus si nouveau type
+                            # impose contrainte violée par valeurs en place.
+                            if (
+                                session_type
+                                and session_type in OFF_BIKE_SESSION_TYPES
+                                and session.tss_planned != 0
+                            ):
+                                raise ValueError(
+                                    f"⛔ PROTECTION: Cannot change type to "
+                                    f"{session_type} on completed session "
+                                    f"{session_id} — {session_type} requires "
+                                    f"tss_planned=0 but current is "
+                                    f"{session.tss_planned}. On ne corrige pas "
+                                    f"un libellé en modifiant silencieusement "
+                                    f"la charge historique."
+                                )
+
+                            # Log traçabilité BT-026: modification descriptif
+                            # post-completed = ce qui peut réécrire de
+                            # l'historique doit être bruyant (principe BT-021).
+                            _before = {
+                                "name": session.name,
+                                "description": (session.description or "")[:60],
+                                "type": session.session_type,
+                            }
+                            _after_desc = {
+                                "name": name if name else _before["name"],
+                                "description": (description or _before["description"])[:60],
+                                "type": session_type if session_type else _before["type"],
+                            }
+                            logger.info(
+                                "BT-026: descriptive modification on completed "
+                                "session %s | before=%s | after=%s",
+                                session_id,
+                                _before,
+                                _after_desc,
+                            )
+                            # Fall through to the actual mutation below —
+                            # charge fields have been rejected upfront.
 
                         # Off-bike (KIN, INJ) constraint: check the RESULTING
                         # (type, tss) tuple before mutating, so we return a

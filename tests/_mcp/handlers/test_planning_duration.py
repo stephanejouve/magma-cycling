@@ -234,3 +234,182 @@ class TestModifySessionTypeValidation:
         assert data["status"] == "success"
         assert "type_validation" in data
         assert data["type_validation"]["suggested_type"] == "INT"
+
+
+class TestBT026DescriptiveOnCompleted:
+    """BT-026 : modify-session-details sur session completed autorise les
+    champs descriptifs (name, description, type sous condition), refuse
+    les champs de charge (tss_planned, duration_min).
+
+    Cas d'usage : documentation a posteriori d'une séance completed
+    (phase rééducation, activité constatée après coup, correction d'un
+    mislabel type).
+    """
+
+    def _make_completed_plan(self, tss=0, session_type="END"):
+        """Build a WeeklyPlan with a single completed session."""
+        from magma_cycling.planning.models import Session, WeeklyPlan
+
+        session = Session(
+            session_id="S106-01",
+            date=date(2026, 8, 3),
+            name="Session1",
+            type=session_type,
+            version="V001",
+            tss_planned=tss,
+            duration_min=0,
+            description="A définir",
+            status="completed",
+        )
+        return WeeklyPlan(
+            week_id="S106",
+            start_date=date(2026, 8, 3),
+            end_date=date(2026, 8, 9),
+            tss_target=350,
+            planned_sessions=[session],
+            created_at=datetime.now(UTC),
+            last_updated=datetime.now(UTC),
+            version=1,
+            athlete_id="i000000",
+        )
+
+    def _call(self, plan, args):
+        from magma_cycling._mcp.handlers.planning import handle_modify_session_details
+
+        mock_cm = MagicMock()
+        mock_cm.__enter__ = MagicMock(return_value=plan)
+        mock_cm.__exit__ = MagicMock(return_value=False)
+
+        async def _run():
+            with (
+                patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower,
+                patch("magma_cycling.workout_parser.update_workouts_file"),
+            ):
+                mock_tower.modify_week.return_value = mock_cm
+                return await handle_modify_session_details(args)
+
+        import asyncio
+
+        return asyncio.run(_run())
+
+    def test_descriptive_name_allowed_on_completed(self):
+        """name seul → OK + log traçabilité."""
+        plan = self._make_completed_plan()
+        result = self._call(
+            plan,
+            {
+                "week_id": "S106",
+                "session_id": "S106-01",
+                "name": "MarcheRdvMedecin",
+            },
+        )
+        data = json.loads(result[0].text)
+        assert data.get("status") == "success"
+        assert plan.planned_sessions[0].name == "MarcheRdvMedecin"
+
+    def test_descriptive_description_allowed_on_completed(self):
+        """description seule → OK."""
+        plan = self._make_completed_plan()
+        result = self._call(
+            plan,
+            {
+                "week_id": "S106",
+                "session_id": "S106-01",
+                "description": "Marche ~55min + rdv médecin, ~55min debout total",
+            },
+        )
+        data = json.loads(result[0].text)
+        assert data.get("status") == "success"
+        assert "Marche" in plan.planned_sessions[0].description
+
+    def test_type_change_compatible_charge_allowed(self):
+        """Type END → REC sur completed, tss=0 déjà : OK."""
+        plan = self._make_completed_plan(tss=0, session_type="END")
+        result = self._call(
+            plan,
+            {"week_id": "S106", "session_id": "S106-01", "type": "REC"},
+        )
+        data = json.loads(result[0].text)
+        assert data.get("status") == "success"
+        assert plan.planned_sessions[0].session_type == "REC"
+
+    def test_type_change_to_kin_ok_when_tss_zero(self):
+        """Type END → KIN avec tss=0 : OK (cas S106-01 concret Coach AI)."""
+        plan = self._make_completed_plan(tss=0, session_type="END")
+        result = self._call(
+            plan,
+            {"week_id": "S106", "session_id": "S106-01", "type": "KIN"},
+        )
+        data = json.loads(result[0].text)
+        assert data.get("status") == "success"
+        assert plan.planned_sessions[0].session_type == "KIN"
+
+    def test_type_change_to_kin_refused_when_tss_nonzero(self):
+        """Type END → KIN avec tss=30 : refus explicite (spec Coach AI)."""
+        plan = self._make_completed_plan(tss=30, session_type="END")
+        result = self._call(
+            plan,
+            {"week_id": "S106", "session_id": "S106-01", "type": "KIN"},
+        )
+        data = json.loads(result[0].text)
+        assert "error" in data
+        assert "KIN" in data["error"]
+        assert "tss_planned" in data["error"] or "libellé" in data["error"]
+
+    def test_charge_tss_planned_refused_on_completed(self):
+        """tss_planned tentée sur completed : refus."""
+        plan = self._make_completed_plan()
+        result = self._call(
+            plan,
+            {"week_id": "S106", "session_id": "S106-01", "tss_planned": 50},
+        )
+        data = json.loads(result[0].text)
+        assert "error" in data
+        assert "charge" in data["error"].lower()
+
+    def test_charge_duration_refused_on_completed(self):
+        """duration_min tentée sur completed : refus."""
+        plan = self._make_completed_plan()
+        result = self._call(
+            plan,
+            {"week_id": "S106", "session_id": "S106-01", "duration_min": 60},
+        )
+        data = json.loads(result[0].text)
+        assert "error" in data
+        assert "charge" in data["error"].lower()
+
+    def test_mixed_descriptive_and_charge_refused(self):
+        """Refus total si args mixent descriptif + charge (pas de partial silent)."""
+        plan = self._make_completed_plan()
+        result = self._call(
+            plan,
+            {
+                "week_id": "S106",
+                "session_id": "S106-01",
+                "name": "Docu",
+                "tss_planned": 30,
+            },
+        )
+        data = json.loads(result[0].text)
+        assert "error" in data
+        assert "charge" in data["error"].lower()
+        # Le champ descriptif n'a pas été appliqué non plus
+        assert plan.planned_sessions[0].name == "Session1"
+
+    def test_non_completed_status_unaffected(self):
+        """Non-régression : sessions non-completed continuent d'accepter tout."""
+        plan = self._make_completed_plan()
+        plan.planned_sessions[0].status = "planned"
+        result = self._call(
+            plan,
+            {
+                "week_id": "S106",
+                "session_id": "S106-01",
+                "name": "N",
+                "tss_planned": 50,
+                "duration_min": 60,
+            },
+        )
+        data = json.loads(result[0].text)
+        assert data.get("status") == "success"
+        assert plan.planned_sessions[0].tss_planned == 50
