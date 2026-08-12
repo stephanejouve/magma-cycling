@@ -320,9 +320,76 @@ class IntervalsClient:
         if newest:
             params["newest"] = newest
 
-        response = self.session.get(url, params=params)
-        response.raise_for_status()
-        return _safe_json(response)
+        # BT-023: read-through cache local. Chemin nominal = API + write-through
+        # best-effort dans training-logs/data/wellness/. Chemin fallback (API
+        # indisponible: ConnectionError, Timeout, HTTP 5xx) = lecture de
+        # l'archive locale sur la fenêtre demandée. Le fallback ne s'active
+        # PAS sur 4xx (401/403 auth, 400 bad request) — masquer un problème
+        # d'auth avec du cache serait pire que la crash.
+        try:
+            response = self.session.get(url, params=params)
+            response.raise_for_status()
+            payload = _safe_json(response)
+        except requests.exceptions.HTTPError as http_err:
+            status = http_err.response.status_code if http_err.response is not None else None
+            if status is not None and 500 <= status < 600:
+                return self._wellness_cache_fallback(oldest, newest, http_err)
+            raise
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as net_err:
+            return self._wellness_cache_fallback(oldest, newest, net_err)
+
+        # Best-effort write-through : chaque récupération alimente l'archive
+        # locale pour être exploitable si l'API tombe plus tard. Silencieux
+        # sur échec (permissions, disque plein, cron auto-sync race).
+        if isinstance(payload, list) and payload:
+            try:
+                from magma_cycling.wellness import archive_wellness_payload
+
+                archive_wellness_payload(payload)
+            except Exception as cache_err:  # noqa: BLE001 — cache doit rester best-effort
+                logger.debug("wellness write-through cache best-effort skipped: %s", cache_err)
+
+        return payload
+
+    def _wellness_cache_fallback(
+        self,
+        oldest: str | None,
+        newest: str | None,
+        origin_exc: Exception,
+    ) -> list[dict[str, Any]]:
+        """BT-023 : sert l'archive locale quand l'API wellness est indisponible.
+
+        Propage l'exception d'origine si l'archive est vide sur la fenêtre
+        demandée — un fallback vide serait pire qu'un crash explicite
+        (l'appelant croit avoir des données à jour alors qu'il n'a rien).
+        """
+        logger.warning(
+            "Intervals wellness API unavailable (%s) — falling back to local cache", origin_exc
+        )
+        if not oldest or not newest:
+            logger.warning(
+                "wellness cache fallback requires oldest+newest — propagating original error"
+            )
+            raise origin_exc
+
+        from magma_cycling.wellness import read_wellness_range
+
+        cached = read_wellness_range(oldest, newest)
+        if not cached:
+            logger.warning(
+                "wellness cache empty on window [%s, %s] — propagating original error",
+                oldest,
+                newest,
+            )
+            raise origin_exc
+
+        logger.info(
+            "wellness cache hit: %d day(s) served locally for window [%s, %s]",
+            len(cached),
+            oldest,
+            newest,
+        )
+        return cached
 
     def update_wellness(self, date: str, wellness_data: dict[str, Any]) -> dict[str, Any]:
         """Update wellness data for a specific date.
