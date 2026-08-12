@@ -92,3 +92,101 @@ def archive_wellness_day(date_str: str, payload: dict[str, Any]) -> Path:
     tmp.replace(target)
     logger.info("wellness archived: %s (%d bytes)", target, target.stat().st_size)
     return target
+
+
+def read_wellness_day(date_str: str) -> dict[str, Any] | None:
+    """Read a single day's archived wellness payload from disk.
+
+    BT-023 : brique lecture du cache read-through. Retourne None si le
+    fichier n'existe pas — l'appelant décide quoi faire (fallback plus
+    large, propagation d'erreur, etc.). N'échoue jamais silencieusement
+    sur un JSON malformé : log warning + retour None (l'archive peut être
+    corrompue par un cron auto-sync qui aurait tronqué le fichier).
+
+    Args:
+        date_str: ISO 8601 ``YYYY-MM-DD``.
+
+    Returns:
+        Wellness dict pour la journée, ou None si absent / illisible.
+    """
+    path = wellness_archive_path(date_str)
+    if not path.is_file():
+        return None
+    try:
+        with path.open(encoding="utf-8") as fh:
+            return json.load(fh)
+    except (json.JSONDecodeError, OSError) as exc:
+        logger.warning("wellness archive corrupted at %s (%s) — treating as absent", path, exc)
+        return None
+
+
+def read_wellness_range(oldest: str, newest: str) -> list[dict[str, Any]]:
+    """Read archived wellness payloads for a range of dates.
+
+    BT-023 : chemin de fallback quand l'API Intervals.icu est
+    indisponible. Retourne la liste des jours archivés dans la fenêtre
+    ``[oldest, newest]`` (inclusifs), triés par date croissante — même
+    shape que ``IntervalsClient.get_wellness`` (list of dicts, chaque dict
+    porte un champ ``id`` = date). Jours absents localement = simplement
+    non inclus (la liste peut donc être partielle ou vide).
+
+    Args:
+        oldest: Start date ``YYYY-MM-DD`` (inclusive).
+        newest: End date ``YYYY-MM-DD`` (inclusive).
+
+    Returns:
+        Liste des payloads wellness archivés dans la fenêtre. Vide si
+        aucun jour n'est archivé sur la période.
+    """
+    from datetime import date, timedelta
+
+    if not _DATE_RE.match(oldest) or not _DATE_RE.match(newest):
+        raise ValueError(
+            f"oldest/newest must be YYYY-MM-DD, got oldest={oldest!r} newest={newest!r}"
+        )
+    start = date.fromisoformat(oldest)
+    end = date.fromisoformat(newest)
+    if start > end:
+        raise ValueError(f"oldest {oldest} must be <= newest {newest}")
+
+    result: list[dict[str, Any]] = []
+    cur = start
+    while cur <= end:
+        entry = read_wellness_day(cur.isoformat())
+        if entry is not None:
+            result.append(entry)
+        cur += timedelta(days=1)
+    return result
+
+
+def archive_wellness_payload(payload: list[dict[str, Any]]) -> int:
+    """Archive une liste wellness en best-effort (write-through cache).
+
+    BT-023 : appelée sur le chemin nominal du client — chaque récupération
+    API alimente le cache local pour être exploitable si l'API tombe plus
+    tard. Best-effort : les erreurs d'écriture individuelles sont loggées
+    et ignorées (disque plein, permissions, race condition avec cron
+    auto-sync training-logs). L'API call est déjà réussie côté user.
+
+    Args:
+        payload: Liste de dicts wellness (shape API Intervals.icu, chaque
+            dict porte un ``id`` = date).
+
+    Returns:
+        Nombre de jours effectivement archivés (peut être < len(payload)
+        si certains sont invalides ou si l'écriture a échoué).
+    """
+    written = 0
+    for entry in payload:
+        date_str = entry.get("id")
+        if not isinstance(date_str, str) or not _DATE_RE.match(date_str):
+            logger.debug("wellness entry without valid 'id' (date), skipped: %r", entry)
+            continue
+        try:
+            archive_wellness_day(date_str, entry)
+            written += 1
+        except (OSError, ValueError) as exc:
+            logger.warning(
+                "wellness archive write failed for %s (%s) — cache miss for that day", date_str, exc
+            )
+    return written
