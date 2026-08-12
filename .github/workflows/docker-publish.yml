@@ -204,8 +204,20 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # BT-025 post-mortem : cache-to gha a floppé 3× sur 4h le 12/08
+          # (v3.68.0 cascade + dispatch + v3.69.0 cascade), "failed to
+          # reserve cache" au step exporting to GitHub Actions Cache. Le
+          # build lui-même complète (layers push OK, manifest OK), c'est
+          # UNIQUEMENT le cache export qui foire → job cancelled.
+          # Diag : quota 10GB par repo GHA Cache atteint, OU flake backend
+          # GitHub. 3/3 aujourd'hui = ne peut plus être toléré comme flake.
+          # Fix : passer sur registry cache — stocké dans GHCR sous un tag
+          # dédié :buildcache, illimité, robuste, recommandé Docker pour
+          # les builds multi-arch (linux/amd64 + linux/arm64). Tag cosmétique
+          # à côté des tags versionnés, écrasé à chaque build, consommateurs
+          # prod l'ignorent (ils tirent :vX.Y.Z ou :stable).
+          cache-from: type=registry,ref=ghcr.io/stephanejouve/magma-cycling:buildcache
+          cache-to: type=registry,ref=ghcr.io/stephanejouve/magma-cycling:buildcache,mode=max
           # `secret-files:` (pas `secrets:`) = passer le **contenu** d'un
           # fichier comme valeur du secret BuildKit. Avec `secrets:` la
           # syntaxe `key=value` traite la valeur comme **literal string** —
