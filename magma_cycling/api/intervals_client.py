@@ -200,14 +200,34 @@ class IntervalsClient:
         response.raise_for_status()
         return _safe_json(response)
 
-    def get_activity_streams(self, activity_id: str) -> list[dict[str, Any]]:
+    def get_activity_streams(
+        self,
+        activity_id: str,
+        *,
+        activity_metadata: dict[str, Any] | None = None,
+    ) -> list[dict[str, Any]]:
         """
         Get time-series streams for a single activity.
 
         Récupérer les données temporelles (streams) d'une activité.
 
+        BT-025: read-through cache local sur l'archive streams cold.
+        - Nominal API OK → write-through best-effort dans training-logs/data/
+          streams/ SI ``activity_metadata`` est fourni (partitionnement
+          Q-K nécessite start_date_local, non déductible du seul activity_id).
+        - ConnectionError / Timeout / HTTP 5xx → fallback lecture manifest
+          local → retour si trouvé, sinon propage l'exception d'origine.
+        - HTTP 4xx (401 auth, 403, 400) → propage sans fallback (masquer un
+          problème d'auth avec du cache serait pire que la crash).
+
         Args:
-            activity_id: Activity ID (format: i107424849 or numeric string)
+            activity_id: Activity ID (format: i107424849 or numeric string).
+            activity_metadata: Optionnel. Si fourni, active le write-through
+                cache. Keys attendues : ``start_date_local`` (obligatoire,
+                ISO 8601 naive local, ex ``"2026-08-10T20:30:00"``),
+                ``start_date_utc``, ``duration_sec``, ``sport_type``,
+                ``session_id``. Backward compat : les 9 call sites existants
+                appellent sans ce param, comportement legacy préservé.
 
         Returns:
             List of stream dicts, each containing 'type' and 'data' fields.
@@ -216,18 +236,85 @@ class IntervalsClient:
             GearRatio, etc.
 
         Raises:
-            requests.HTTPError: If API request fails or activity not found
+            requests.HTTPError: on 4xx, ou sur 5xx / ConnectionError /
+                Timeout si le cache local ne contient pas cette activité.
 
         Example:
             >>> streams = client.get_activity_streams("i107424849")
-            >>> for stream in streams:
-            ...     print(f"{stream['type']}: {len(stream['data'])} points")
+            >>> # avec write-through cache actif :
+            >>> streams = client.get_activity_streams(
+            ...     "i107424849",
+            ...     activity_metadata={
+            ...         "start_date_local": "2026-08-10T20:30:00",
+            ...         "duration_sec": 3600,
+            ...         "sport_type": "Ride",
+            ...     },
+            ... )
         """
         url = f"{self.BASE_URL}/activity/{activity_id}/streams"
 
-        response = self.session.get(url)
-        response.raise_for_status()
-        return _safe_json(response)
+        try:
+            response = self.session.get(url)
+            response.raise_for_status()
+            payload = _safe_json(response)
+        except requests.exceptions.HTTPError as http_err:
+            status = http_err.response.status_code if http_err.response is not None else None
+            if status is not None and 500 <= status < 600:
+                return self._streams_cache_fallback(activity_id, http_err)
+            raise
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as net_err:
+            return self._streams_cache_fallback(activity_id, net_err)
+
+        # Best-effort write-through cache si les metadata sont fournies.
+        # Silencieux sur échec (permissions, disque plein, race avec cron
+        # auto-sync). La réponse API a déjà été renvoyée au user.
+        if activity_metadata and payload:
+            start_date_local = activity_metadata.get("start_date_local")
+            if start_date_local:
+                try:
+                    from magma_cycling.streams import archive_activity_streams
+
+                    archive_activity_streams(
+                        activity_id,
+                        payload,
+                        start_date_local=start_date_local,
+                        start_date_utc=activity_metadata.get("start_date_utc"),
+                        duration_sec=activity_metadata.get("duration_sec"),
+                        sport_type=activity_metadata.get("sport_type"),
+                        session_id=activity_metadata.get("session_id"),
+                    )
+                except Exception as cache_err:  # noqa: BLE001 — cache best-effort
+                    logger.debug(
+                        "streams write-through cache best-effort skipped for %s: %s",
+                        activity_id,
+                        cache_err,
+                    )
+
+        return payload
+
+    def _streams_cache_fallback(
+        self,
+        activity_id: str,
+        origin_exc: Exception,
+    ) -> list[dict[str, Any]]:
+        """BT-025 : sert l'archive locale quand l'API streams est indisponible.
+
+        Propage l'exception d'origine si l'archive ne contient pas cette
+        activité — un fallback vide serait pire qu'un crash explicite.
+        """
+        logger.warning(
+            "Intervals streams API unavailable (%s) — falling back to local cache", origin_exc
+        )
+        from magma_cycling.streams import read_activity_streams
+
+        cached = read_activity_streams(activity_id)
+        if cached is None:
+            logger.warning(
+                "streams cache miss for activity %s — propagating original error", activity_id
+            )
+            raise origin_exc
+        logger.info("streams cache hit: activity %s served from local archive", activity_id)
+        return cached
 
     def get_activity_intervals(self, activity_id: str) -> list[dict[str, Any]]:
         """
