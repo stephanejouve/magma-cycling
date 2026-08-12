@@ -12,7 +12,8 @@ from magma_cycling._mcp.handlers.planning import _parse_ai_workouts
 class TestParseAiWorkoutsRecalculatesDuration:
     """Test that _parse_ai_workouts recalculates duration from blocks."""
 
-    def test_blocks_override_header_duration(self):
+    @pytest.mark.asyncio
+    async def test_blocks_override_header_duration(self):
         """Header says 90min but blocks total 75min → duration_min == 75."""
         raw_text = """\
 === WORKOUT S087-03-SS-SweetSpotProgressif-V001 ===
@@ -273,29 +274,25 @@ class TestBT026DescriptiveOnCompleted:
             athlete_id="i000000",
         )
 
-    def _call(self, plan, args):
+    async def _call(self, plan, args):
         from magma_cycling._mcp.handlers.planning import handle_modify_session_details
 
         mock_cm = MagicMock()
         mock_cm.__enter__ = MagicMock(return_value=plan)
         mock_cm.__exit__ = MagicMock(return_value=False)
 
-        async def _run():
-            with (
-                patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower,
-                patch("magma_cycling.workout_parser.update_workouts_file"),
-            ):
-                mock_tower.modify_week.return_value = mock_cm
-                return await handle_modify_session_details(args)
+        with (
+            patch("magma_cycling.planning.control_tower.planning_tower") as mock_tower,
+            patch("magma_cycling.workout_parser.update_workouts_file"),
+        ):
+            mock_tower.modify_week.return_value = mock_cm
+            return await handle_modify_session_details(args)
 
-        import asyncio
-
-        return asyncio.run(_run())
-
-    def test_descriptive_name_allowed_on_completed(self):
+    @pytest.mark.asyncio
+    async def test_descriptive_name_allowed_on_completed(self):
         """name seul → OK + log traçabilité."""
         plan = self._make_completed_plan()
-        result = self._call(
+        result = await self._call(
             plan,
             {
                 "week_id": "S106",
@@ -307,10 +304,11 @@ class TestBT026DescriptiveOnCompleted:
         assert data.get("status") == "success"
         assert plan.planned_sessions[0].name == "MarcheRdvMedecin"
 
-    def test_descriptive_description_allowed_on_completed(self):
+    @pytest.mark.asyncio
+    async def test_descriptive_description_allowed_on_completed(self):
         """description seule → OK."""
         plan = self._make_completed_plan()
-        result = self._call(
+        result = await self._call(
             plan,
             {
                 "week_id": "S106",
@@ -322,10 +320,11 @@ class TestBT026DescriptiveOnCompleted:
         assert data.get("status") == "success"
         assert "Marche" in plan.planned_sessions[0].description
 
-    def test_type_change_compatible_charge_allowed(self):
+    @pytest.mark.asyncio
+    async def test_type_change_compatible_charge_allowed(self):
         """Type END → REC sur completed, tss=0 déjà : OK."""
         plan = self._make_completed_plan(tss=0, session_type="END")
-        result = self._call(
+        result = await self._call(
             plan,
             {"week_id": "S106", "session_id": "S106-01", "type": "REC"},
         )
@@ -333,10 +332,11 @@ class TestBT026DescriptiveOnCompleted:
         assert data.get("status") == "success"
         assert plan.planned_sessions[0].session_type == "REC"
 
-    def test_type_change_to_kin_ok_when_tss_zero(self):
+    @pytest.mark.asyncio
+    async def test_type_change_to_kin_ok_when_tss_zero(self):
         """Type END → KIN avec tss=0 : OK (cas S106-01 concret Coach AI)."""
         plan = self._make_completed_plan(tss=0, session_type="END")
-        result = self._call(
+        result = await self._call(
             plan,
             {"week_id": "S106", "session_id": "S106-01", "type": "KIN"},
         )
@@ -344,10 +344,11 @@ class TestBT026DescriptiveOnCompleted:
         assert data.get("status") == "success"
         assert plan.planned_sessions[0].session_type == "KIN"
 
-    def test_type_change_to_kin_refused_when_tss_nonzero(self):
+    @pytest.mark.asyncio
+    async def test_type_change_to_kin_refused_when_tss_nonzero(self):
         """Type END → KIN avec tss=30 : refus explicite (spec Coach AI)."""
         plan = self._make_completed_plan(tss=30, session_type="END")
-        result = self._call(
+        result = await self._call(
             plan,
             {"week_id": "S106", "session_id": "S106-01", "type": "KIN"},
         )
@@ -356,10 +357,11 @@ class TestBT026DescriptiveOnCompleted:
         assert "KIN" in data["error"]
         assert "tss_planned" in data["error"] or "libellé" in data["error"]
 
-    def test_charge_tss_planned_refused_on_completed(self):
+    @pytest.mark.asyncio
+    async def test_charge_tss_planned_refused_on_completed(self):
         """tss_planned tentée sur completed : refus."""
         plan = self._make_completed_plan()
-        result = self._call(
+        result = await self._call(
             plan,
             {"week_id": "S106", "session_id": "S106-01", "tss_planned": 50},
         )
@@ -367,10 +369,11 @@ class TestBT026DescriptiveOnCompleted:
         assert "error" in data
         assert "charge" in data["error"].lower()
 
-    def test_charge_duration_refused_on_completed(self):
+    @pytest.mark.asyncio
+    async def test_charge_duration_refused_on_completed(self):
         """duration_min tentée sur completed : refus."""
         plan = self._make_completed_plan()
-        result = self._call(
+        result = await self._call(
             plan,
             {"week_id": "S106", "session_id": "S106-01", "duration_min": 60},
         )
@@ -378,10 +381,11 @@ class TestBT026DescriptiveOnCompleted:
         assert "error" in data
         assert "charge" in data["error"].lower()
 
-    def test_mixed_descriptive_and_charge_refused(self):
+    @pytest.mark.asyncio
+    async def test_mixed_descriptive_and_charge_refused(self):
         """Refus total si args mixent descriptif + charge (pas de partial silent)."""
         plan = self._make_completed_plan()
-        result = self._call(
+        result = await self._call(
             plan,
             {
                 "week_id": "S106",
@@ -396,11 +400,12 @@ class TestBT026DescriptiveOnCompleted:
         # Le champ descriptif n'a pas été appliqué non plus
         assert plan.planned_sessions[0].name == "Session1"
 
-    def test_non_completed_status_unaffected(self):
+    @pytest.mark.asyncio
+    async def test_non_completed_status_unaffected(self):
         """Non-régression : sessions non-completed continuent d'accepter tout."""
         plan = self._make_completed_plan()
         plan.planned_sessions[0].status = "planned"
-        result = self._call(
+        result = await self._call(
             plan,
             {
                 "week_id": "S106",
