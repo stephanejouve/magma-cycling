@@ -1106,45 +1106,68 @@ class TestIntervalsAPI:
     """Test Intervals.icu API integration methods."""
 
     def test_get_workout_id_intervals_success(self):
-        """Test _get_workout_id_intervals finds workout ID."""
+        """BT-021: _get_workout_id_intervals matches strictly on parsed session_id.
+
+        Signature élargie (`date`, `session_id`) : le call site fournit
+        maintenant session_id explicite plutôt que de rétomber sur le
+        prédicat "premier WORKOUT du jour" qui trancherait à l'aveugle
+        sur les journées mixtes vélo + kiné.
+        """
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
 
-        # Mock API client (Sprint R9.B Phase 2 - centralized API)
         mock_client = Mock()
         mock_client.get_events.return_value = [
-            {"id": "12345", "category": "WORKOUT", "date": "2026-01-05"},
-            {"id": "67890", "category": "NOTE", "date": "2026-01-05"},
+            {"id": "12345", "name": "S087-05-END-Endurance-V001", "category": "WORKOUT"},
+            {"id": "67890", "name": "S087-05a-KIN-KineEpaule-V001", "category": "INJURED"},
         ]
 
         with patch.object(coach, "_get_api", return_value=mock_client):
-            workout_id = coach._get_workout_id_intervals("2026-01-05")
+            workout_id = coach._get_workout_id_intervals("2026-01-05", "S087-05")
 
         assert workout_id == "12345"
         mock_client.get_events.assert_called_once_with(oldest="2026-01-05", newest="2026-01-05")
 
-    def test_get_workout_id_intervals_not_found(self):
-        """Test _get_workout_id_intervals when no workout exists."""
+    def test_get_workout_id_intervals_matches_off_bike_by_session_id(self):
+        """BT-021 régression : cible une KIN (catégorie INJURED) par son session_id.
+
+        Le prédicat pré-BT-021 (`category == WORKOUT`) renvoyait toujours
+        None sur les KIN. Désormais on résout par session_id parsé, donc
+        les INJURED sont retrouvées comme n'importe quel event.
+        """
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
 
-        # Mock API client (Sprint R9.B Phase 2 - centralized API)
         mock_client = Mock()
         mock_client.get_events.return_value = [
-            {"id": "67890", "category": "NOTE", "date": "2026-01-05"}
+            {"id": "12345", "name": "S087-05-END-Endurance-V001", "category": "WORKOUT"},
+            {"id": "67890", "name": "S087-05a-KIN-KineEpaule-V001", "category": "INJURED"},
         ]
 
         with patch.object(coach, "_get_api", return_value=mock_client):
-            workout_id = coach._get_workout_id_intervals("2026-01-05")
+            workout_id = coach._get_workout_id_intervals("2026-01-05", "S087-05a")
+
+        assert workout_id == "67890"
+
+    def test_get_workout_id_intervals_not_found(self):
+        """_get_workout_id_intervals returns None when session_id doesn't match any event."""
+        coach = WorkflowCoach(skip_feedback=True, skip_git=True)
+
+        mock_client = Mock()
+        mock_client.get_events.return_value = [
+            {"id": "67890", "name": "S087-07-REC-ReposComplet-V001", "category": "NOTE"}
+        ]
+
+        with patch.object(coach, "_get_api", return_value=mock_client):
+            workout_id = coach._get_workout_id_intervals("2026-01-05", "S087-05")
 
         assert workout_id is None
 
     @patch("builtins.print")
     def test_get_workout_id_intervals_no_credentials(self, mock_print):
-        """Test _get_workout_id_intervals with missing credentials."""
+        """_get_workout_id_intervals returns None when API client raises."""
         coach = WorkflowCoach(skip_feedback=True, skip_git=True)
 
-        # Mock _get_api to raise ValueError (Sprint R9.B Phase 2 - centralized API)
         with patch.object(coach, "_get_api", side_effect=ValueError("Credentials not configured")):
-            workout_id = coach._get_workout_id_intervals("2026-01-05")
+            workout_id = coach._get_workout_id_intervals("2026-01-05", "S087-05")
 
         assert workout_id is None
 

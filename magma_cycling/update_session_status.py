@@ -52,26 +52,29 @@ def find_event_by_session(
 ) -> dict | None:
     """Find Intervals.icu event matching a session.
 
-    Args:
-        client: IntervalsClient instance
-        session_id: Session ID (e.g., "S074-05")
-        session_date: Session date (YYYY-MM-DD)
+    BT-021: strict equality on the parsed session_id, not substring match.
+    Prevents `find_event_by_session("S104-05")` from silently matching
+    events named `S104-05a-...`, which used to route mutations onto the
+    wrong target (update_event / create_event downstream).
+
+    Raises:
+        AmbiguousMatchError: if 2+ events at that date parse to the same
+            session_id. Interactive CLI context — the human tranche.
 
     Returns:
-        Event dict if found, None otherwise
+        The unique matching event, or None if no event matches or the
+        Intervals.icu call itself fails.
     """
+    from magma_cycling.utils.event_resolver import (
+        AmbiguousMatchError,
+        resolve_event_by_session_id,
+    )
+
     try:
-        # Get events for the session date
         events = client.get_events(oldest=session_date, newest=session_date)
-
-        # Find event matching session_id in name
-        for event in events:
-            event_name = event.get("name", "")
-            if session_id in event_name:
-                return event
-
-        return None
-
+        return resolve_event_by_session_id(events, session_id)
+    except AmbiguousMatchError:
+        raise
     except Exception as e:
         print(f"⚠️  Warning: Could not search for event on Intervals.icu: {e}")
         return None
