@@ -1,9 +1,22 @@
 name: Build and Push Docker Image
 
+# Triggers (BT-024) :
+# - push tag "v*"   : voie nominale historique. NB post-BT-022 : les
+#   tags poussés par le workflow Release avec le GITHUB_TOKEN natif ne
+#   déclenchent PAS ce workflow (protection GitHub anti-boucles). Le
+#   trigger reste utile pour un push manuel externe.
+# - workflow_run    : cascade native depuis Release. Résout le tag
+#   pointant sur le head_sha du run parent (voir step "Resolve tag").
+#   Supprime le besoin de dispatch manuel après chaque release.
+# - workflow_dispatch : chemin de secours manuel (avec ref=vX.Y.Z pour
+#   activer la sync + la garde de version, cf. patch PR #441).
 on:
   push:
     tags:
       - "v*"
+  workflow_run:
+    workflows: ["Release"]
+    types: [completed]
   workflow_dispatch:
 
 env:
@@ -13,13 +26,45 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    # BT-024 : skip nette si cascade workflow_run et Release en échec.
+    # Sur push et workflow_dispatch, exécution inconditionnelle (legacy).
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     permissions:
       contents: read
       packages: write
 
     steps:
+      # BT-024 cascade : sur trigger workflow_run, github.ref pointe sur
+      # refs/heads/main (le workflow parent Release s'exécute sur main),
+      # pas sur le tag qu'il vient de créer. Il faut checkout le head_sha
+      # exact du run parent pour retrouver le commit taggé. Sur push tag
+      # ou workflow_dispatch, comportement par défaut (github.ref).
+      #
+      # fetch-depth=0 obligatoire pour que `git tag --contains HEAD`
+      # trouve le tag pointant sur le commit dans la step suivante.
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.ref }}
+
+      # BT-024 cascade : résout le tag vX.Y.Z qui pointe sur le HEAD
+      # checkouté. Nécessaire uniquement en mode workflow_run — dans les
+      # autres triggers, github.ref porte déjà le tag ou n'en a pas.
+      # Sortie tag_ref="refs/tags/vX.Y.Z" ou tag_ref="" si aucun tag.
+      # Un run cascade sans tag correspondant est skippé proprement.
+      - name: Resolve tag from workflow_run head_sha
+        id: resolve_tag
+        if: github.event_name == 'workflow_run'
+        run: |
+          TAG=$(git tag --contains HEAD | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+' | head -1 || true)
+          if [ -z "$TAG" ]; then
+            echo "::warning::No release tag on HEAD ${{ github.event.workflow_run.head_sha }} — build skipped"
+            echo "tag_ref=" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Resolved tag $TAG for cascade build"
+            echo "tag_ref=refs/tags/$TAG" >> "$GITHUB_OUTPUT"
+          fi
 
       # Closes T-github-utils-version-variables (vault P2). Root cause :
       # release.yml force ``commit: "false"`` pour python-semantic-release
@@ -35,17 +80,29 @@ jobs:
       # ``commit: "false"`` doctrine release Stéphane), seule l'image
       # embarque la version correcte.
       #
-      # Actif sur push tag (déclenchement nominal) ET sur workflow_dispatch
-      # invoqué avec ``ref=vX.Y.Z`` (chemin de secours quand le trigger
-      # push est absorbé — notamment : push tag effectué par la CI Release
-      # avec le GITHUB_TOKEN natif ne cascade PAS les workflows downstream
-      # par design GitHub anti-boucles, cf. Admin msg 12/08 12:55).
-      # Skippé si ``workflow_dispatch`` sans ref tag (pas de version à
-      # propager, image reste sur ce que dit pyproject à HEAD).
+      # Actif sur les 3 triggers qui portent un tag :
+      # - push tag (nominal historique)
+      # - workflow_dispatch avec ref=vX.Y.Z (secours manuel)
+      # - workflow_run cascade avec tag résolu depuis workflow_run head_sha
+      #
+      # Skippé sinon (workflow_dispatch sans ref tag, cascade sans tag) —
+      # rien à propager, l'image reste sur ce que dit pyproject à HEAD.
+      #
+      # Source du TAG_VERSION selon le trigger :
+      # - push/workflow_dispatch : GITHUB_REF_NAME = vX.Y.Z
+      # - workflow_run           : steps.resolve_tag.outputs.tag_ref =
+      #                            refs/tags/vX.Y.Z
       - name: Sync version markers from git tag
-        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && startsWith(github.ref, 'refs/tags/v')
+        if: |
+          ((github.event_name == 'push' || github.event_name == 'workflow_dispatch') && startsWith(github.ref, 'refs/tags/v')) ||
+          (github.event_name == 'workflow_run' && steps.resolve_tag.outputs.tag_ref != '')
         run: |
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            TAG_REF="${{ steps.resolve_tag.outputs.tag_ref }}"
+            TAG_VERSION="${TAG_REF#refs/tags/v}"
+          else
+            TAG_VERSION="${GITHUB_REF_NAME#v}"
+          fi
           echo "Propagating tag version $TAG_VERSION to pyproject.toml + magma_cycling/__init__.py"
           sed -i "s/^version = \".*\"/version = \"$TAG_VERSION\"/" pyproject.toml
           sed -i "s/^__version__ = \".*\"/__version__ = \"$TAG_VERSION\"/" magma_cycling/__init__.py
@@ -53,6 +110,37 @@ jobs:
           grep "^version = " pyproject.toml
           echo "--- magma_cycling/__init__.py after sync ---"
           grep "^__version__ = " magma_cycling/__init__.py
+
+      # BT-024 garde : assert que le sync s'est bien appliqué avant docker
+      # build. Ce qui a cassé une fois sans bruit doit devenir bruyant :
+      # sur v3.67.0 le sync avait été skippé (dispatch manuel sur un
+      # workflow antérieur au patch PR #441) et l'image avait embarqué
+      # __version__ = 3.43.1 stale, découvert par hasard côté prod.
+      # Cette assertion catch tout futur trou de gate ou de sync, quel que
+      # soit le trigger, en faisant échouer le build explicitement.
+      #
+      # Critères Coach AI :
+      # (a) system-info renvoie le tag après release → garanti côté image.
+      # (b) un build volontairement désynchronisé échoue explicitement.
+      - name: Assert version markers match tag (BT-024)
+        if: |
+          ((github.event_name == 'push' || github.event_name == 'workflow_dispatch') && startsWith(github.ref, 'refs/tags/v')) ||
+          (github.event_name == 'workflow_run' && steps.resolve_tag.outputs.tag_ref != '')
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            TAG_REF="${{ steps.resolve_tag.outputs.tag_ref }}"
+            TAG_VERSION="${TAG_REF#refs/tags/v}"
+          else
+            TAG_VERSION="${GITHUB_REF_NAME#v}"
+          fi
+          RUNTIME_VERSION=$(sed -n 's/^__version__ = "\(.*\)"/\1/p' magma_cycling/__init__.py)
+          if [ "$TAG_VERSION" != "$RUNTIME_VERSION" ]; then
+            echo "::error::Version marker mismatch — tag=$TAG_VERSION runtime __version__=$RUNTIME_VERSION"
+            echo "The 'Sync version markers' step did not propagate the tag correctly (skipped gate,"
+            echo "regex miss, or manual desync). Docker build aborted to prevent shipping a stale label."
+            exit 1
+          fi
+          echo "✅ version markers match tag ($TAG_VERSION)"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
