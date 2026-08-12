@@ -293,6 +293,9 @@ class WeeklyAggregator(
         Returns:
             Markdown summary.
         """
+        # BT-022: libellés metric routés via get_label.
+        from magma_cycling.utils.metric_labels import get_label
+
         summary = processed_data.get("summary", {})
 
         output = [f"# Semaine {self.week} - Summary\n"]
@@ -303,16 +306,16 @@ class WeeklyAggregator(
         # Metrics
         output.append("## Métriques Globales\n")
         output.append(f"- **Séances :** {summary.get('total_sessions', 0)}")
-        output.append(f"- **TSS total :** {summary.get('total_tss', 0)}")
+        output.append(f"- **{get_label('tss')} total :** {summary.get('total_tss', 0)}")
         output.append(f"- **Durée totale :** {summary.get('total_duration', 0) // 60} min")
-        output.append(f"- **TSS moyen :** {summary.get('avg_tss', 0):.1f}")
+        output.append(f"- **{get_label('tss')} moyen :** {summary.get('avg_tss', 0):.1f}")
 
         # CTL/ATL/TSB
         if "final_metrics" in summary:
             metrics = summary["final_metrics"]
             output.append("\n## Forme")
-            output.append(f"- **CTL :** {metrics.get('ctl', 0):.1f}")
-            output.append(f"- **ATL :** {metrics.get('atl', 0):.1f}")
-            output.append(f"- **TSB :** {metrics.get('tsb', 0):.1f}")
+            output.append(f"- **{get_label('ctl')} :** {metrics.get('ctl', 0):.1f}")
+            output.append(f"- **{get_label('atl')} :** {metrics.get('atl', 0):.1f}")
+            output.append(f"- **{get_label('tsb')} :** {metrics.get('tsb', 0):.1f}")
 
         return "\n".join(output)

@@ -134,3 +134,73 @@ class TestOffBikeTssConstraint:
             duration_min=60,
         )
         assert session.tss_planned == 50
+
+
+class TestBT022BilateralAliases:
+    """BT-022 : alias bilatéral sur les champs tss_* — préserve la
+    capacité de renommage produit (marques déposées TSS/NP/IF appartenant
+    désormais à Garmin/TrainingPeaks) sans casser les payloads MCP actuels.
+    """
+
+    def _base_kwargs(self):
+        return dict(
+            session_id="S087-01",
+            session_date=date(2026, 4, 6),
+            name="EnduranceDouce",
+            session_type="END",
+            duration_min=60,
+        )
+
+    def test_tss_planned_canonical_name_still_accepted(self):
+        """Non-régression : le nom `tss_planned` continue de fonctionner."""
+        session = Session(tss_planned=75, **self._base_kwargs())
+        assert session.tss_planned == 75
+
+    def test_tss_planned_alias_training_load_planned_accepted(self):
+        """Le nom alias `training_load_planned` est aussi accepté."""
+        from magma_cycling.planning.models import WeeklyPlan  # noqa
+
+        session = Session(training_load_planned=75, **self._base_kwargs())
+        assert session.tss_planned == 75
+
+    def test_tss_planned_serialization_stays_on_canonical_name(self):
+        """Sortie JSON reste `tss_planned` — pas de breaking change payload MCP."""
+        session = Session(tss_planned=75, **self._base_kwargs())
+        dumped = session.model_dump(by_alias=True)
+        assert "tss_planned" in dumped
+        assert dumped["tss_planned"] == 75
+        assert "training_load_planned" not in dumped
+
+    def test_tss_target_bilateral_alias(self):
+        """WeeklyPlan.tss_target expose le même mécanisme d'alias.
+
+        Utilise WeeklyPlan sans sessions (default_factory=list) pour
+        éviter les artéfacts d'isolation Pydantic sur les instances
+        Session partagées en suite.
+        """
+        from datetime import datetime
+
+        from magma_cycling.planning.models import WeeklyPlan
+
+        common = dict(
+            week_id="S087",
+            start_date=date(2026, 4, 6),
+            end_date=date(2026, 4, 12),
+            created_at=datetime(2026, 4, 1, 12, 0),
+            last_updated=datetime(2026, 4, 1, 12, 0),
+            version=1,
+            athlete_id="iXXXXXX",
+        )
+
+        # Accept ancien nom
+        plan_canonical = WeeklyPlan(tss_target=350, **common)
+        assert plan_canonical.tss_target == 350
+
+        # Accept nouveau nom
+        plan_alias = WeeklyPlan(training_load_target=350, **common)
+        assert plan_alias.tss_target == 350
+
+        # Serialization stable
+        dumped = plan_alias.model_dump(by_alias=True)
+        assert "tss_target" in dumped
+        assert "training_load_target" not in dumped

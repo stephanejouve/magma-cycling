@@ -248,22 +248,26 @@ class DailyAggregator(DataAggregator):
         feedback = processed_data["feedback"]
         derived = processed_data["derived_metrics"]
 
+        # BT-022: libellés metric routés via get_label pour capacité de
+        # renommage à la demande (marques déposées TSS/NP/IF).
+        from magma_cycling.utils.metric_labels import get_label
+
         # Header
         output = f"### {workout['name']} ({workout['date']})\n"
         output += f"**Durée:** {workout['duration'] // 60}min | "
-        output += f"**TSS:** {workout['tss']} | "
-        output += f"**IF:** {workout['intensity_factor']:.2f}\n\n"
+        output += f"**{get_label('tss')}:** {workout['tss']} | "
+        output += f"**{get_label('intensity_factor', form='short')}:** {workout['intensity_factor']:.2f}\n\n"
 
         # Métriques pré-séance
         output += "#### Métriques Pré-séance\n"
-        output += f"- CTL: {athlete['ctl']:.1f}\n"
-        output += f"- ATL: {athlete['atl']:.1f}\n"
-        output += f"- TSB: {athlete['tsb']:.1f}\n\n"
+        output += f"- {get_label('ctl')}: {athlete['ctl']:.1f}\n"
+        output += f"- {get_label('atl')}: {athlete['atl']:.1f}\n"
+        output += f"- {get_label('tsb')}: {athlete['tsb']:.1f}\n\n"
 
         # Exécution
         output += "#### Exécution\n"
         output += f"- Puissance moyenne: {workout['average_power']}W\n"
-        output += f"- Puissance normalisée: {workout['normalized_power']}W\n"
+        output += f"- {get_label('normalized_power')}: {workout['normalized_power']}W\n"
         output += f"- FC moyenne: {workout['average_hr']} bpm\n"
         output += f"- Découplage: {derived.get('decoupling', 0.0):.1f}%\n\n"
 

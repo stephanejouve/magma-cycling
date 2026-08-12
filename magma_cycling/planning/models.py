@@ -67,7 +67,7 @@ from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, field_validator, model_validator
 
 # --- Session ID patterns (canonical source) ---
 SESSION_ID_PATTERN = r"S\d{3}-\d{2}[a-z]?"
@@ -152,7 +152,20 @@ class Session(BaseModel):
             return v[1:]
         return v
 
-    tss_planned: int = Field(ge=0, le=500, description="Planned Training Stress Score")
+    # BT-022: alias bilatéral pour rendre le nom de champ renommable sans
+    # breaking change côté payload MCP. `validation_alias` accepte à la
+    # fois "tss_planned" (canonique actuel) et "training_load_planned"
+    # (nom neutre prêt pour un renommage produit — TSS est une marque
+    # déposée TrainingPeaks/Garmin). `serialization_alias="tss_planned"`
+    # préserve le contrat de sortie actuel ; changer ici quand la
+    # décision produit de renommer sera prise.
+    tss_planned: int = Field(
+        ge=0,
+        le=500,
+        description="Planned Training Stress Score",
+        validation_alias=AliasChoices("tss_planned", "training_load_planned"),
+        serialization_alias="tss_planned",
+    )
     duration_min: int = Field(ge=0, le=600, description="Planned duration in minutes")
     description: str = Field(default="", description="Workout description")
     status: Literal[
@@ -249,7 +262,14 @@ class WeeklyPlan(BaseModel):
     last_updated: datetime = Field(description="Last modification timestamp")
     version: int = Field(ge=1, description="Plan version number")
     athlete_id: str = Field(description="Athlete identifier (e.g., iXXXXXX)")
-    tss_target: int = Field(ge=0, le=2000, description="Target weekly TSS")
+    # BT-022: alias bilatéral, cf. Session.tss_planned pour la motivation.
+    tss_target: int = Field(
+        ge=0,
+        le=2000,
+        description="Target weekly TSS",
+        validation_alias=AliasChoices("tss_target", "training_load_target"),
+        serialization_alias="tss_target",
+    )
     source: str | None = Field(
         default=None,
         description="Origin of planning creation (eow, mcp, planner, manual)",
