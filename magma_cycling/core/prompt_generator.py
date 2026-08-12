@@ -140,17 +140,20 @@ class PromptGenerator:
             duration_min = workout_data["duration"] // 60
             data += f"- **Durée :** {duration_min} min\n"
 
+        # BT-022: libellés metric routés via get_label.
+        from magma_cycling.utils.metric_labels import get_label
+
         if "tss" in workout_data:
-            data += f"- **TSS :** {workout_data['tss']}\n"
+            data += f"- **{get_label('tss')} :** {workout_data['tss']}\n"
 
         if "normalized_power" in workout_data:
-            data += f"- **Puissance normalisée :** {workout_data['normalized_power']}W\n"
+            data += f"- **{get_label('normalized_power')} :** {workout_data['normalized_power']}W\n"
 
         if "average_power" in workout_data:
             data += f"- **Puissance moyenne :** {workout_data['average_power']}W\n"
 
         if "intensity_factor" in workout_data:
-            data += f"- **IF :** {workout_data['intensity_factor']:.2f}\n"
+            data += f"- **{get_label('intensity_factor', form='short')} :** {workout_data['intensity_factor']:.2f}\n"
 
         return data
 
