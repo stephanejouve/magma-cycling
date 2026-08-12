@@ -153,7 +153,12 @@ def archive_activity_streams(
     tmp.replace(target)
 
     checksum = compute_sha256(target)
-    rel_path = str(target.relative_to(resolve_streams_dir()))
+    # BT-025 : force forward-slash pour portabilité cross-OS du manifest.
+    # Un manifest écrit sur Windows doit rester lisible sur Ubuntu/macOS
+    # (et vice versa) — l'archive git training-logs est partagée entre
+    # les 3 environnements. as_posix() garantit le séparateur "/" quelle
+    # que soit la plateforme, contrairement à str(Path) qui hérite du sep OS.
+    rel_path = target.relative_to(resolve_streams_dir()).as_posix()
 
     manifest = load_manifest()
     add_manifest_entry(
