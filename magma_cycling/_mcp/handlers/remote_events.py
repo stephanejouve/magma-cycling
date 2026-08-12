@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from magma_cycling._mcp._utils import mcp_response, suppress_stdout_stderr
 
 if TYPE_CHECKING:
     from mcp.types import TextContent
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "handle_delete_remote_event",
@@ -231,13 +234,47 @@ async def handle_update_remote_event(args: dict) -> list[TextContent]:
                         for session in plan.planned_sessions:
                             if session.intervals_id == event_id:
                                 if session.status == "completed":
-                                    error = {
-                                        "error": "Cannot update completed session",
-                                        "event_id": event_id,
-                                        "session_id": session.session_id,
-                                        "message": f"🛡️ PROTECTION: Session {session.session_id} is COMPLETED",
-                                    }
-                                    return mcp_response(error)
+                                    # BT-026 : distinction descriptif/charge côté remote.
+                                    # Champs descriptifs (safe post-completed) : name,
+                                    # description. Autres champs (start_date_local,
+                                    # category, etc.) = protégés — falsification de
+                                    # l'historique.
+                                    _DESCRIPTIVE_REMOTE_FIELDS = {"name", "description"}
+                                    charge_fields_remote = [
+                                        k for k in updates if k not in _DESCRIPTIVE_REMOTE_FIELDS
+                                    ]
+                                    if charge_fields_remote:
+                                        error = {
+                                            "error": (
+                                                "Cannot modify charge fields on "
+                                                "completed session"
+                                            ),
+                                            "event_id": event_id,
+                                            "session_id": session.session_id,
+                                            "rejected_fields": charge_fields_remote,
+                                            "message": (
+                                                f"🛡️ PROTECTION: Session "
+                                                f"{session.session_id} is COMPLETED "
+                                                f"— charge fields "
+                                                f"{charge_fields_remote} are "
+                                                f"protected. Descriptive fields "
+                                                f"(name, description) remain "
+                                                f"editable."
+                                            ),
+                                        }
+                                        return mcp_response(error)
+
+                                    # Log traçabilité BT-026 : mêmes règles que
+                                    # côté local (planning.py handle_modify_session_details).
+                                    logger.info(
+                                        "BT-026: descriptive update-remote-event on "
+                                        "completed session %s (event %s) | fields=%s",
+                                        session.session_id,
+                                        event_id,
+                                        list(updates.keys()),
+                                    )
+                                    # Fall through to the API call below —
+                                    # charge fields have been rejected upfront.
                                 target_week_id = week_id
                                 target_session = session
                                 break

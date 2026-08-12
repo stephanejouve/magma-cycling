@@ -292,16 +292,75 @@ class TestHandleUpdateRemoteEvent:
 
     @pytest.mark.asyncio
     @patch("magma_cycling.config.create_intervals_client")
-    async def test_blocks_update_of_completed_session(self, mock_factory, patch_tower):
-        """Cannot update a completed session."""
+    async def test_blocks_charge_field_update_on_completed_session(self, mock_factory, patch_tower):
+        """BT-026 : les champs de CHARGE sont refusés sur completed.
+
+        Ancien comportement : tout update bloqué. Nouveau comportement :
+        seuls les champs charge (start_date_local, category, ...) sont
+        rejetés. Les descriptifs (name, description) passent — voir
+        test_allows_descriptive_update_on_completed_session ci-dessous.
+        """
         client = MagicMock()
         client.get_provider_info.return_value = MOCK_PROVIDER_INFO
         mock_factory.return_value = client
 
-        result = await handle_update_remote_event({"event_id": 55, "updates": {"name": "X"}})
+        # start_date_local = champ de charge → refus attendu
+        result = await handle_update_remote_event(
+            {"event_id": 55, "updates": {"start_date_local": "2026-08-10T20:30:00"}}
+        )
         data = json.loads(result[0].text)
         assert "error" in data
-        assert "completed" in data["error"].lower() or "COMPLETED" in data.get("message", "")
+        assert data.get("rejected_fields") == ["start_date_local"]
+
+    @pytest.mark.asyncio
+    @patch("magma_cycling.config.create_intervals_client")
+    async def test_allows_descriptive_update_on_completed_session(self, mock_factory, patch_tower):
+        """BT-026 : les champs DESCRIPTIFS (name, description) sont éditables
+        post-completed. Cas d'usage nominal = documentation a posteriori
+        d'une séance non planifiée (phase rééducation, activité constatée)."""
+        client = MagicMock()
+        client.get_provider_info.return_value = MOCK_PROVIDER_INFO
+        client.update_event.return_value = {"id": 55, "name": "Nouveau nom"}
+        mock_factory.return_value = client
+
+        result = await handle_update_remote_event(
+            {
+                "event_id": 55,
+                "updates": {"name": "Nouveau nom", "description": "Documentation"},
+            }
+        )
+        data = json.loads(result[0].text)
+        # Pas de rejection — la charge fields liste n'existe pas ou est vide
+        assert "rejected_fields" not in data or not data.get("rejected_fields")
+        # L'update API a bien été appelée (fall-through après check descriptif)
+        client.update_event.assert_called_once()
+
+    @pytest.mark.asyncio
+    @patch("magma_cycling.config.create_intervals_client")
+    async def test_blocks_mixed_descriptive_and_charge_on_completed(
+        self, mock_factory, patch_tower
+    ):
+        """BT-026 : un update mixte descriptif + charge est refusé en bloc.
+
+        On ne veut pas d'update partiel silencieux — si l'appelant passe
+        de la charge, il faut lever la protection explicitement (à défaut
+        d'un tool dédié pour ça, hors scope BT-026)."""
+        client = MagicMock()
+        client.get_provider_info.return_value = MOCK_PROVIDER_INFO
+        mock_factory.return_value = client
+
+        result = await handle_update_remote_event(
+            {
+                "event_id": 55,
+                "updates": {"name": "Nouveau", "start_date_local": "2026-08-10T20:30:00"},
+            }
+        )
+        data = json.loads(result[0].text)
+        assert "rejected_fields" in data
+        assert "start_date_local" in data["rejected_fields"]
+        assert "name" not in data["rejected_fields"]
+        # L'update API n'a PAS été appelée (protection = refus total)
+        client.update_event.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_workout_doc_field_rejected_with_actionable_message(self):
