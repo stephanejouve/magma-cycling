@@ -135,6 +135,126 @@ def _writer_scoped_enabled() -> bool:
     return os.getenv(WRITER_SCOPED_ENV, "0").strip().lower() in ("1", "true", "yes")
 
 
+class LegacyLayoutError(RuntimeError):
+    """BT-027 / ADR v5 §7 : le repo training-logs est en layout flat legacy.
+
+    Levée quand :
+    - ``.operators.yaml`` est absent à la racine
+    - AU MOINS un fichier/dossier est présent à la racine hors
+      :data:`DEFAULT_SHARED_ROOT_FILES` (indice qu'il y a des données à
+      migrer, pas juste un repo vierge)
+
+    Le message d'erreur inclut la commande de migration pour que
+    l'utilisateur puisse rebond sans consulter la doc.
+    """
+
+
+def _root_files_outside_whitelist(root: Path) -> list[str]:
+    """Retourne les paths top-level du repo qui NE sont pas dans la whitelist.
+
+    Utilisé pour détecter un layout legacy : si le repo contient des
+    fichiers/dossiers en racine hors ``shared_root_files``, c'est qu'il
+    n'a jamais été migré vers le layout writer-scoped. Inversement,
+    un repo vraiment vierge (racine avec juste ``.git`` + ``.gitignore``
+    + ``README.md``) n'est pas considéré legacy — rien à migrer.
+
+    La whitelist utilisée est :data:`DEFAULT_SHARED_ROOT_FILES` — on ne
+    consulte pas ``.operators.yaml`` puisque la détection legacy est
+    précisément appelée quand ce fichier est absent.
+
+    Args:
+        root: Path racine du repo training-logs.
+
+    Returns:
+        Liste des noms de fichiers/dossiers top-level hors whitelist +
+        hors ``.git``. Chaîne vide si le repo est "clean" (rien à migrer).
+    """
+    # Extraire les noms top-level de la whitelist (ex: "data/intelligence/**"
+    # → "data"). Les patterns globs sont traités par leur premier segment.
+    whitelist_toplevel = set()
+    for pattern in DEFAULT_SHARED_ROOT_FILES:
+        first_segment = pattern.split("/", 1)[0]
+        whitelist_toplevel.add(first_segment)
+
+    # Toujours ignoré : le dossier .git lui-même + hashes writer 12-char
+    # (repo déjà partiellement migré, cas non-legacy).
+    import re
+
+    writer_hash_re = re.compile(r"^[0-9a-f]{12}$")
+
+    out = []
+    for entry in sorted(root.iterdir()):
+        name = entry.name
+        if name == ".git":
+            continue
+        if name in whitelist_toplevel:
+            continue
+        if writer_hash_re.match(name):
+            continue
+        out.append(name)
+    return out
+
+
+def detect_legacy_layout(root: Path) -> bool:
+    """Détecte un layout training-logs flat legacy (pré-Phase 1 ADR v5).
+
+    Un repo est en layout legacy si :
+
+    1. ``.operators.yaml`` est ABSENT à la racine (le fichier est le
+       marqueur du layout writer-scoped, présent dès Phase 1 pour nos 3
+       writers et dès migration pour les beta-testeurs)
+    2. ET au moins un fichier/dossier est présent à la racine hors
+       :data:`DEFAULT_SHARED_ROOT_FILES` + ``.git`` + hashes writer
+
+    Si le repo est vide (ou racine 100% whitelist), on ne le considère
+    PAS legacy — rien à migrer, le premier writer sera provisionné
+    normalement au setup.
+
+    Args:
+        root: Path racine du repo training-logs.
+
+    Returns:
+        ``True`` si layout legacy détecté (migration nécessaire).
+    """
+    if not root.is_dir():
+        return False
+    operators_path = root / OPERATORS_FILE
+    if operators_path.is_file():
+        return False
+    return len(_root_files_outside_whitelist(root)) > 0
+
+
+def raise_if_legacy_layout(root: Path) -> None:
+    """Lève :class:`LegacyLayoutError` si le repo est en layout legacy.
+
+    À appeler tôt dans l'init de :class:`DataRepoConfig` en mode
+    writer-scoped, pour empêcher le code de tourner sur un repo pas
+    encore migré (sinon les paths résolus pointent vers ``<root>/<hash>/``
+    qui n'existe pas → confusion, écriture à un mauvais endroit, etc.).
+
+    Args:
+        root: Path racine du repo training-logs.
+
+    Raises:
+        LegacyLayoutError: si layout legacy détecté (avec commande
+            actionnable dans le message).
+    """
+    if not detect_legacy_layout(root):
+        return
+    legacy_items = _root_files_outside_whitelist(root)
+    preview = ", ".join(legacy_items[:5])
+    if len(legacy_items) > 5:
+        preview += f", ... (+{len(legacy_items) - 5} autres)"
+    raise LegacyLayoutError(
+        f"Training logs repo detected in legacy layout (flat structure) at {root}.\n"
+        f"Legacy items in root: {preview}\n\n"
+        f"Migrate to writer-scoped layout:\n"
+        f"  poetry run setup --migrate-training-logs\n\n"
+        f"See ADR v5 §7 Upgrade path for details "
+        f"(/Users/Shared/archi/ADR-training-logs-sync-v5.md, meta hors repo)."
+    )
+
+
 def _resolve_root_from_env() -> Path | None:
     """Lit le path racine du repo depuis les vars d'env.
 
@@ -280,6 +400,15 @@ class DataRepoConfig:
                 writer_scoped if writer_scoped is not None else _writer_scoped_enabled()
             )
             if self.writer_scoped:
+                # BT-027 / ADR v5 §7 : en mode writer-scoped, un repo en
+                # layout flat legacy ne peut pas fonctionner (les paths
+                # résolus pointent vers <root>/<hash>/ qui n'existe pas).
+                # On lève tôt avec la commande de migration, plutôt que
+                # laisser le code s'écraser plus loin sur un FileNotFoundError
+                # opaque. Cas typique = beta-tester qui vient d'activer
+                # TRAINING_DATA_WRITER_SCOPED=1 sans avoir migré son repo.
+                raise_if_legacy_layout(self.root_path)
+
                 resolved_writer_id = writer_id or os.getenv(WRITER_ID_ENV)
                 if not resolved_writer_id:
                     raise RuntimeError(

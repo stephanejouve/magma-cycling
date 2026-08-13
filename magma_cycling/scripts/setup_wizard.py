@@ -650,7 +650,29 @@ class SetupWizard:
 
 @cli_main
 def main():
-    """Point d'entree du wizard de configuration."""
+    """Point d'entree du wizard de configuration.
+
+    BT-027 / ADR v5 §7 : si ``--migrate-training-logs`` est présent en
+    argv, court-circuite le wizard interactif et délègue à
+    :func:`magma_cycling.scripts.migrate_training_logs.main`. Cette
+    invocation est documentée dans le message d'erreur
+    :class:`LegacyLayoutError` pour qu'un beta-tester bloqué sache
+    immédiatement quelle commande taper.
+
+    Args supportés par ``--migrate-training-logs`` (transitifs vers
+    migrate_main) : ``--alias <name>``, ``--dry-run``, ``--no-push``,
+    ``--root <path>``.
+    """
+    import sys as _sys
+
+    if "--migrate-training-logs" in _sys.argv:
+        from magma_cycling.scripts.migrate_training_logs import main as migrate_main
+
+        # Retire uniquement le flag setup-specific, laisse passer les
+        # autres args (--alias, --dry-run, --no-push, --root) au migrate.
+        forwarded_argv = [a for a in _sys.argv[1:] if a != "--migrate-training-logs"]
+        _sys.exit(migrate_main(forwarded_argv))
+
     wizard = SetupWizard()
     wizard.run()
 
