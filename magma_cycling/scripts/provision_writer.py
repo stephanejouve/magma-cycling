@@ -109,6 +109,7 @@ def provision_writer(
     *,
     host: str | None = None,
     push: bool = True,
+    commit: bool = True,
 ) -> str:
     """Provisionne un writer dans le repo training-logs.
 
@@ -118,6 +119,12 @@ def provision_writer(
         host: Hostname de la machine (default = socket.gethostname()).
         push: Si ``True``, ``git push origin main`` après commit. ``False``
             pour les tests locaux ou setups offline.
+        commit: Si ``True`` (défaut), commit les changements (``.operators.yaml``
+            + subdir writer). Si ``False``, laisse les changements stagés
+            dans l'index — utile pour composer un commit atomique plus
+            large côté caller (ex. BT-027 ``migrate_training_logs`` qui
+            groupe provision + git mv des fichiers legacy en un seul commit).
+            Quand ``commit=False``, le param ``push`` est ignoré.
 
     Returns:
         Le hash 12-char du writer provisionné.
@@ -167,24 +174,26 @@ def provision_writer(
     if not any(subdir.iterdir()):
         (subdir / ".gitkeep").touch()
 
-    msg = (
-        f"chore(training-logs): provision writer {alias} ({writer_hash})\n\n"
-        f"timestamp_utc: {timestamp}\nhost: {host}\n"
-    )
     add = _git(["add", OPERATORS_FILE, writer_hash], cwd=root)
     if add.returncode != 0:
         raise RuntimeError(f"git add failed: {add.stderr.strip()}")
-    commit = _git(["commit", "-m", msg], cwd=root)
-    if commit.returncode != 0:
-        raise RuntimeError(f"git commit failed: {commit.stderr.strip()}")
 
-    if push:
-        push_res = _git(["push", "origin", "HEAD"], cwd=root)
-        if push_res.returncode != 0:
-            logger.warning(
-                "git push failed (writer provisioned locally only): %s",
-                push_res.stderr.strip(),
-            )
+    if commit:
+        msg = (
+            f"chore(training-logs): provision writer {alias} ({writer_hash})\n\n"
+            f"timestamp_utc: {timestamp}\nhost: {host}\n"
+        )
+        commit_res = _git(["commit", "-m", msg], cwd=root)
+        if commit_res.returncode != 0:
+            raise RuntimeError(f"git commit failed: {commit_res.stderr.strip()}")
+
+        if push:
+            push_res = _git(["push", "origin", "HEAD"], cwd=root)
+            if push_res.returncode != 0:
+                logger.warning(
+                    "git push failed (writer provisioned locally only): %s",
+                    push_res.stderr.strip(),
+                )
 
     print(
         f"Writer provisioned: alias={alias} hash={writer_hash} "

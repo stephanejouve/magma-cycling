@@ -32,13 +32,28 @@ from magma_cycling.paths import get_athlete_yaml_path
 
 @pytest.fixture
 def temp_training_repo(tmp_path):
-    """Repo training-logs minimal pour DataRepoConfig writer-scoped."""
+    """Repo training-logs minimal pour DataRepoConfig writer-scoped.
+
+    BT-027 : ajoute ``.operators.yaml`` avec ``workouts-history.md``
+    listé dans ``shared_root_files``. Sans ça, la nouvelle détection
+    legacy (ADR v5 §7) considérerait ce repo comme non-migré et lèverait
+    ``LegacyLayoutError`` avant que ces tests puissent tester la logique
+    writer-scoped elle-même.
+    """
     repo = tmp_path / "training-logs"
     repo.mkdir()
     subprocess.run(["git", "init", "-q", "--initial-branch=main"], cwd=repo, check=True)
     subprocess.run(["git", "config", "user.email", "test@magma"], cwd=repo, check=True)
     subprocess.run(["git", "config", "user.name", "Test"], cwd=repo, check=True)
     (repo / "workouts-history.md").touch()
+    (repo / ".operators.yaml").write_text(
+        "shared_root_files:\n  - .gitignore\n  - README.md\n"
+        "  - .operators.yaml\n  - workouts-history.md\n"
+        "  - config/athlete.yaml\n"
+        "writers:\n  a3f7c1b2c4d5:\n    alias: mac\n    host: tiresias\n"
+        "    provisioned_at: 2026-04-20T08:00:00Z\n"
+        "    decommissioned_at: null\n"
+    )
     writer_a = "a3f7c1b2c4d5"
     (repo / writer_a).mkdir()
     (repo / writer_a / "workouts-history.md").touch()
