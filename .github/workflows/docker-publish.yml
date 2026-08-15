@@ -185,11 +185,23 @@ jobs:
           # Le type=raw ci-dessous force explicitement le tag versionné
           # quand resolve_tag a trouvé une version. No-op sur push tag et
           # workflow_dispatch (resolve_tag est gated sur workflow_run).
+          #
+          # BT-028 (2026-08-15) : symétriquement, :latest était stale sur
+          # cascade workflow_run (Admin msg id=4827, post-v3.70.0). Root
+          # cause : condition ``enable={{is_default_branch}}`` de la ligne
+          # :latest ne matche pas quand context:git est actif en cascade
+          # (l'action lit git describe au lieu de github.ref pour dériver
+          # la default branch, et le comportement diverge). Impact : preprod
+          # compose sur :latest tirait toujours la vieille version → Admin
+          # devait patcher docker-compose.preprod.yml sur :X.Y.Z explicite
+          # après chaque release. Fix : ligne raw parallèle à la ceinture
+          # versioned, force :latest quand cascade + resolve_tag OK.
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=raw,value=latest,enable={{is_default_branch}}
             type=raw,value=${{ steps.resolve_tag.outputs.version }},enable=${{ github.event_name == 'workflow_run' && steps.resolve_tag.outputs.version != '' }}
+            type=raw,value=latest,enable=${{ github.event_name == 'workflow_run' && steps.resolve_tag.outputs.version != '' }}
 
       # Deploy key SSH read-only pour cloner outillages (repo privé), dep
       # transitive de magma-cycling-tools v0.2.0 — cf. Dockerfile commentaire
