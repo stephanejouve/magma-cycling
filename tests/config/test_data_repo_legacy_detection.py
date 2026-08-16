@@ -241,6 +241,76 @@ class TestDataRepoConfigIntegration:
         with pytest.raises(RuntimeError, match="TRAINING_DATA_WRITER_ID"):
             DataRepoConfig()
 
+    def test_writer_scoped_warns_on_incomplete_whitelist_bt033(
+        self, migrated_repo, monkeypatch, caplog
+    ):
+        """BT-033 : au boot writer_scoped, si ``.operators.yaml::shared_root_files``
+        omet les patterns canoniques ADR V5, un warning explicite doit être
+        loggé (non-blocking) pour signaler la config à corriger avant qu'un
+        write runtime ne casse un tool en prod."""
+        import logging
+
+        monkeypatch.setenv("TRAINING_DATA_ROOT", str(migrated_repo))
+        monkeypatch.setenv("TRAINING_DATA_WRITER_SCOPED", "1")
+        monkeypatch.setenv("TRAINING_DATA_WRITER_ID", "abc123def456")
+        # migrated_repo fixture a shared_root_files = [.gitignore, README.md,
+        # .operators.yaml] — restrictif, omet data/{intelligence,wellness,decisions}/**
+        # + config/athlete.yaml
+        with caplog.at_level(logging.WARNING, logger="magma_cycling.config.data_repo"):
+            DataRepoConfig()
+        # Warning émis pour au moins 1 des 4 patterns canoniques
+        warning_records = [r for r in caplog.records if r.levelname == "WARNING"]
+        assert any(
+            "shared_root_files" in r.message and "canonical" in r.message for r in warning_records
+        ), f"Expected BT-033 warning, got: {[r.message for r in warning_records]}"
+        assert any(
+            "data/wellness/**" in r.message
+            or "data/intelligence/**" in r.message
+            or "data/decisions/**" in r.message
+            for r in warning_records
+        )
+        # Warning mentionne l'action de fix + réf BT-033
+        assert any("BT-033" in r.message for r in warning_records)
+
+    def test_writer_scoped_no_warn_on_canonical_whitelist_bt033(
+        self, tmp_path, monkeypatch, caplog
+    ):
+        """BT-033 : yaml avec whitelist canonique complète → aucun warning."""
+        import logging
+
+        from magma_cycling.config.data_repo import DEFAULT_SHARED_ROOT_FILES
+
+        # Fixture repo avec whitelist canonique complète
+        (tmp_path / ".git").mkdir()
+        (tmp_path / ".gitignore").write_text("*.pyc\n")
+        import yaml as yaml_mod
+
+        ops = {
+            "shared_root_files": list(DEFAULT_SHARED_ROOT_FILES),
+            "writers": {
+                "abc123def456": {
+                    "alias": "mac",
+                    "host": "tiresias",
+                    "provisioned_at": "2026-08-13T21:00:00Z",
+                    "decommissioned_at": None,
+                }
+            },
+        }
+        (tmp_path / ".operators.yaml").write_text(yaml_mod.safe_dump(ops), encoding="utf-8")
+        (tmp_path / "abc123def456").mkdir()
+        (tmp_path / "abc123def456" / "data.json").write_text("{}")
+
+        monkeypatch.setenv("TRAINING_DATA_ROOT", str(tmp_path))
+        monkeypatch.setenv("TRAINING_DATA_WRITER_SCOPED", "1")
+        monkeypatch.setenv("TRAINING_DATA_WRITER_ID", "abc123def456")
+        with caplog.at_level(logging.WARNING, logger="magma_cycling.config.data_repo"):
+            DataRepoConfig()
+        # Zéro warning « canonical » sur ce boot
+        bt033_warnings = [
+            r for r in caplog.records if r.levelname == "WARNING" and "canonical" in r.message
+        ]
+        assert bt033_warnings == [], f"Expected no BT-033 warning, got: {bt033_warnings}"
+
     def test_writer_scoped_on_hybrid_repo_raises_bt030(self, hybrid_repo, monkeypatch):
         """BT-030 : activer writer_scoped sur un repo hybride doit lever
         ``LegacyLayoutError`` (AVANT le check WRITER_ID) pour empêcher un

@@ -259,6 +259,60 @@ def detect_legacy_layout(root: Path) -> bool:
     return len(_root_files_outside_whitelist(root)) > 0
 
 
+def _warn_if_shared_root_files_incomplete(root: Path) -> None:
+    """Warn (non-blocking) si la whitelist ``shared_root_files`` est incomplète.
+
+    BT-033 : au boot writer_scoped, si ``.operators.yaml::shared_root_files``
+    omet les patterns canoniques ADR V5, log un warning explicite.
+
+    Doctrine « ce qui a cassé silencieusement doit devenir bruyant »
+    (esprit BT-024 côté build appliqué à la config runtime).
+
+    Contexte : chain BT-027 prod NAS 2026-08-16 a subi 2× le même bug
+    — yaml avec whitelist restrictive omettant les 4 patterns partagés
+    (``data/intelligence/**``, ``data/wellness/**``, ``data/decisions/**``,
+    ``config/athlete.yaml``). Au premier write dans ``data/wellness/``, le
+    guard hybrid layout re-fire et bloque sync-week / daily-sync.
+
+    Le fix runtime (édit yaml + redeploy) est simple mais la détection est
+    trop tardive (runtime prod). Cette fonction warn tôt au boot pour
+    signaler la config incohérente avant qu'elle ne casse un tool en prod.
+
+    Non-blocking (warning, pas raise) pour ne pas bloquer les repos beta
+    avec whitelist volontairement restrictive. Le message log l'op de fix.
+
+    Args:
+        root: Path racine du repo training-logs.
+    """
+    operators_path = root / OPERATORS_FILE
+    if not operators_path.is_file():
+        return  # pas de yaml → mode legacy ou fresh, rien à valider
+    try:
+        with operators_path.open(encoding="utf-8") as fh:
+            ops = yaml.safe_load(fh) or {}
+    except (OSError, yaml.YAMLError):
+        return  # yaml illisible → silent, autre check remontera
+    declared = ops.get("shared_root_files")
+    if not isinstance(declared, list):
+        return  # pas de clé → le fallback DEFAULT s'applique, tout va bien
+    declared_set = set(declared)
+    missing = [p for p in DEFAULT_SHARED_ROOT_FILES if p not in declared_set]
+    if not missing:
+        return
+    logger.warning(
+        "⚠️  .operators.yaml::shared_root_files omits %d canonical ADR V5 pattern(s): %s\n"
+        "    These patterns must be shared between writers (single source of truth).\n"
+        "    Without them, the hybrid layout guard will re-fire at the first runtime "
+        "write to a matching path (typically data/wellness/*.json), blocking "
+        "sync-week / daily-sync tools.\n"
+        "    Fix : add the missing pattern(s) to %s::shared_root_files.\n"
+        "    Ref : BT-033, ADR V5 §7.",
+        len(missing),
+        ", ".join(missing),
+        operators_path,
+    )
+
+
 def raise_if_legacy_layout(root: Path) -> None:
     """Lève :class:`LegacyLayoutError` si le repo est en layout legacy.
 
@@ -453,6 +507,11 @@ class DataRepoConfig:
                 # opaque. Cas typique = beta-tester qui vient d'activer
                 # TRAINING_DATA_WRITER_SCOPED=1 sans avoir migré son repo.
                 raise_if_legacy_layout(self.root_path)
+
+                # BT-033 : warn (non-blocking) si la whitelist canonique
+                # est incomplète — évite un futur crash guard hybrid à
+                # runtime au premier write dans data/wellness/ etc.
+                _warn_if_shared_root_files_incomplete(self.root_path)
 
                 resolved_writer_id = writer_id or os.getenv(WRITER_ID_ENV)
                 if not resolved_writer_id:
