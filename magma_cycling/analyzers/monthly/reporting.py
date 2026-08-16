@@ -7,8 +7,33 @@ class ReportingMixin:
     """Monthly report and AI prompt generation."""
 
     def generate_report(self, stats: dict, ai_analysis: str | None = None) -> str:
-        """Generate markdown report."""
+        """Generate markdown report.
+
+        BT-039 : affiche 3 chiffres côte-à-côte pour la cible TSS —
+        initiale (intention pré-semaine), active (post-annulations,
+        référence adhérence), réalisé. Écart initial → active en valeur
+        absolue (pas %, illisible sur cibles reconstruction 60-90 TSS).
+        Légende bilan indique les sessions dont le TSS provient du
+        fallback ``planned`` (pas de match Intervals.icu).
+        """
         month_name = self.month_date.strftime("%B %Y")
+        target_init = stats["tss_target_total"]
+        target_active = stats["tss_target_active_total"]
+        realized = stats["tss_realized"]
+        drift_abs = target_init - target_active
+        # BT-039 : taux d'adhérence peut être None (semaine 100 % annulée
+        # avec active=0 → division par zéro). Affichage « — » explicite.
+        achievement_str = (
+            f"{stats['tss_achievement_rate']:.1f}%"
+            if stats["tss_achievement_rate"] is not None
+            else "\u2014"
+        )
+        drift_line = (
+            f"- **\u00c9cart intention \u2192 active :** \u2212{drift_abs} TSS "
+            "(sessions annul\u00e9es en cours de semaine)\n"
+            if drift_abs > 0
+            else ""
+        )
 
         report = f"""# \U0001f4ca Analyse Mensuelle - {month_name}.
 
@@ -18,9 +43,11 @@ class ReportingMixin:
 **Semaines analys\u00e9es :** {stats['total_weeks']}
 
 ### Charge d'Entra\u00eenement (TSS)
-- **TSS Cible :** {stats['tss_target_total']}
-- **TSS R\u00e9alis\u00e9 :** {stats['tss_realized']}
-- **Taux de r\u00e9alisation :** {stats['tss_achievement_rate']:.1f}%
+- **TSS Cible initiale :** {target_init} (intention en d\u00e9but de semaine)
+- **TSS Cible active :** {target_active} (r\u00e9f\u00e9rence adh\u00e9rence, post-annulations)
+- **TSS R\u00e9alis\u00e9 :** {realized}
+- **Taux de r\u00e9alisation :** {achievement_str} (sur cible active)
+{drift_line}
 
 ### Sessions
 - **Total planifi\u00e9 :** {stats['total_sessions']} sessions
@@ -33,14 +60,30 @@ class ReportingMixin:
 
 ## \U0001f4c8 Progression Hebdomadaire
 
-| Semaine | Dates | TSS Cible | TSS R\u00e9alis\u00e9 | % R\u00e9alisation |
-|---------|-------|-----------|-------------|---------------|.
+| Semaine | Dates | TSS Initial | TSS Actif | TSS R\u00e9alis\u00e9 | % R\u00e9alisation |
+|---------|-------|-------------|-----------|---------------|---------------|
 """
         for week in stats["tss_by_week"]:
-            achievement = (
-                (week["tss_actual"] / week["tss_target"] * 100) if week["tss_target"] > 0 else 0
+            active = week.get("tss_target_active", week["tss_target"])
+            achievement = (week["tss_actual"] / active * 100) if active > 0 else None
+            achievement_cell = f"{achievement:.1f}%" if achievement is not None else "\u2014"
+            report += (
+                f"| {week['week_id']} | {week['start_date']} \u2192 {week['end_date']} | "
+                f"{week['tss_target']} | {active} | {week['tss_actual']} | "
+                f"{achievement_cell} |\n"
             )
-            report += f"| {week['week_id']} | {week['start_date']} \u2192 {week['end_date']} | {week['tss_target']} | {week['tss_actual']} | {achievement:.1f}% |\n"
+
+        # BT-039 : l\u00e9gende marqueur origine TSS r\u00e9alis\u00e9
+        fallback_ids = stats.get("tss_source_map", {}).get("planned_fallback", [])
+        if fallback_ids:
+            preview = ", ".join(fallback_ids[:10])
+            if len(fallback_ids) > 10:
+                preview += f", ... (+{len(fallback_ids) - 10} autres)"
+            report += (
+                f"\n> \u2139\ufe0f **Marqueur origine TSS** : {len(fallback_ids)} session(s) "
+                f"comptabilis\u00e9es depuis ``tss_planned`` (pas d'intervals_id ou pas de match "
+                f"Intervals.icu) : {preview}\n"
+            )
 
         report += "\n## \U0001f3af R\u00e9partition par Type de S\u00e9ance\n\n"
 
@@ -81,15 +124,26 @@ class ReportingMixin:
         return report
 
     def generate_ai_prompt(self, stats: dict) -> str:
-        """Generate prompt for AI analysis."""
+        """Generate prompt for AI analysis.
+
+        BT-039 : expose les 2 cibles distinctes à l'IA — initiale
+        (intention) et active (référence adhérence). L'IA voit le vrai
+        signal d'adhérence sans être trompée par une cible gonflée.
+        """
         month_name = self.month_date.strftime("%B %Y")
+        achievement_str = (
+            f"{stats['tss_achievement_rate']:.1f}%"
+            if stats["tss_achievement_rate"] is not None
+            else "\u2014"
+        )
 
         prompt = f"""Analyse ce mois d'entra\u00eenement cyclisme ({month_name}) et fournis des insights :
 
 \U0001f4ca DONN\u00c9ES MENSUELLES :
 - {stats['total_weeks']} semaines analys\u00e9es
-- TSS Cible : {stats['tss_target_total']}
-- TSS R\u00e9alis\u00e9 : {stats['tss_realized']} ({stats['tss_achievement_rate']:.1f}%)
+- TSS Cible initiale : {stats['tss_target_total']} (intention pr\u00e9-semaine)
+- TSS Cible active : {stats['tss_target_active_total']} (post-annulations, r\u00e9f\u00e9rence adh\u00e9rence)
+- TSS R\u00e9alis\u00e9 : {stats['tss_realized']} ({achievement_str} sur cible active)
 - Taux d'adh\u00e9rence : {stats['adherence_rate']:.1f}%
 - Sessions compl\u00e9t\u00e9es : {stats['completed']}/{stats['total_sessions']}
 - Sessions saut\u00e9es : {stats['skipped']}
@@ -98,7 +152,13 @@ class ReportingMixin:
 \U0001f4c8 PROGRESSION HEBDOMADAIRE :
 """
         for week in stats["tss_by_week"]:
-            prompt += f"\n- {week['week_id']} : {week['tss_actual']}/{week['tss_target']} TSS"
+            active = week.get("tss_target_active", week["tss_target"])
+            drift = week["tss_target"] - active
+            drift_str = f" (\u2212{drift} annul\u00e9)" if drift > 0 else ""
+            prompt += (
+                f"\n- {week['week_id']} : {week['tss_actual']}/{active} TSS "
+                f"[cible init {week['tss_target']}{drift_str}]"
+            )
 
         prompt += "\n\n\U0001f3af R\u00c9PARTITION TYPES :\n"
         for session_type, count in sorted(

@@ -3,6 +3,8 @@
 from collections import defaultdict
 from typing import Any
 
+from magma_cycling.analyzers.tss_target import compute_active_tss_target
+
 
 class StatsMixin:
     """Monthly statistical aggregation."""
@@ -19,7 +21,13 @@ class StatsMixin:
                 an intervals_id use real TSS instead of tss_planned.
 
         Returns:
-            Dictionary with monthly metrics.
+            Dictionary with monthly metrics. BT-039 : exposition de 2 cibles
+            distinctes — ``tss_target_total`` (cible initiale, intention) et
+            ``tss_target_active_total`` (cible active post-annulations, référence
+            d'adhérence). ``tss_achievement_rate`` calculé sur la cible active
+            (voie A validée Coach AI). Marqueur ``tss_source_map`` liste les
+            session_id dont le TSS provient du fallback ``planned`` (pas de
+            match Intervals.icu).
         """
         stats: dict[str, Any] = {
             "total_weeks": len(weekly_data),
@@ -31,6 +39,11 @@ class StatsMixin:
             "rest_days": 0,
             "tss_realized": 0,
             "tss_target_total": 0,
+            # BT-039 : cible active (post-annulations) — voie A pour adhérence
+            "tss_target_active_total": 0,
+            # BT-039 marqueur origine TSS réalisé — liste des session_id ayant
+            # fallback tss_planned (pas d'intervals_id ou pas de match map)
+            "tss_source_map": {"intervals": [], "planned_fallback": []},
             "sessions_by_type": defaultdict(int),
             "sessions_by_status": defaultdict(int),
             "tss_by_week": [],
@@ -38,16 +51,20 @@ class StatsMixin:
         }
 
         for week in sorted(weekly_data, key=lambda w: w["start_date"]):
+            week_active_target = compute_active_tss_target(week)
             week_stats = {
                 "week_id": week["week_id"],
                 "start_date": week["start_date"],
                 "end_date": week["end_date"],
                 "tss_target": week.get("tss_target", 0),
+                # BT-039 : cible active côté par côté (référence adhérence)
+                "tss_target_active": week_active_target,
                 "tss_actual": 0,
                 "sessions": len(week.get("planned_sessions", [])),
             }
 
             stats["tss_target_total"] += week.get("tss_target", 0)
+            stats["tss_target_active_total"] += week_active_target
 
             for session in week.get("planned_sessions", []):
                 stats["total_sessions"] += 1
@@ -59,8 +76,18 @@ class StatsMixin:
                 # Use actual TSS for completed/modified sessions when available
                 if intervals_id and actual_tss_map and f"i{intervals_id}" in actual_tss_map:
                     tss = actual_tss_map[f"i{intervals_id}"]
+                    tss_source = "intervals"
                 else:
                     tss = tss_planned
+                    tss_source = "planned_fallback"
+
+                # BT-039 : ne tracer l'origine QUE pour les sessions dont
+                # le TSS est effectivement comptabilisé dans le réalisé
+                # (completed, modified). Les autres n'entrent pas dans le
+                # calcul → pas de bruit dans la légende.
+                if status in ("completed", "modified"):
+                    session_id = session.get("session_id", "?")
+                    stats["tss_source_map"][tss_source].append(session_id)
 
                 # Count by status
                 stats["sessions_by_status"][status] += 1
@@ -96,10 +123,14 @@ class StatsMixin:
         else:
             stats["adherence_rate"] = 0
 
-        # Calculate TSS achievement rate
-        if stats["tss_target_total"] > 0:
-            stats["tss_achievement_rate"] = stats["tss_realized"] / stats["tss_target_total"] * 100
+        # BT-039 : TSS achievement rate calculé sur cible ACTIVE (voie A).
+        # Protection division par zéro : semaine 100 % annulée → active=0 →
+        # taux d'adhérence non-défini (None), caller doit afficher « — ».
+        if stats["tss_target_active_total"] > 0:
+            stats["tss_achievement_rate"] = (
+                stats["tss_realized"] / stats["tss_target_active_total"] * 100
+            )
         else:
-            stats["tss_achievement_rate"] = 0
+            stats["tss_achievement_rate"] = None
 
         return stats
