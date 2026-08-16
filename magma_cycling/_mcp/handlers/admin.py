@@ -231,9 +231,15 @@ async def handle_system_info(args: dict) -> list[TextContent]:
 
             cfg = get_data_config()
             data_repo_path = str(cfg.data_repo_path)
-            data_repo_health_ok = (
-                cfg.data_repo_path.exists() and (cfg.data_repo_path / ".git").exists()
-            )
+            # BT-038 : en mode writer-scoped, ``data_repo_path = root_path/<writer_id>``.
+            # Le ``.git/`` est en racine du repo (``root_path``), pas dans le
+            # subdir writer — un subdir writer n'est PAS un git repo autonome.
+            # Le check ``(data_repo_path / ".git").exists()`` remontait False
+            # systématique en writer-scoped (faux positif healthcheck rouge,
+            # sans impact runtime réel). Fix : tester ``.git`` sur ``root_path``
+            # + vérifier que ``data_repo_path`` existe (2 conditions distinctes,
+            # 2 modes d'échec). Cas prod 2026-08-16 Coach AI msg alerte.
+            data_repo_health_ok = (cfg.root_path / ".git").exists() and cfg.data_repo_path.exists()
         except Exception as e:
             logger.warning("data_repo discovery failed: %s", e)
 

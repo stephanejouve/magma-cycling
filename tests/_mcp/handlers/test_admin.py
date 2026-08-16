@@ -176,6 +176,85 @@ class TestHandleSystemInfoExtendedFields:
         assert len(warnings) == 1
 
 
+class TestBT038HealthcheckWriterScopedMode:
+    """BT-038 : le healthcheck ``data_repo_health_ok`` doit tester
+    ``.git`` sur ``root_path`` (racine du repo git), pas sur ``data_repo_path``
+    (qui = ``root_path/<writer_id>`` en writer-scoped, un simple dossier
+    tracké et pas un git repo autonome).
+
+    Cas prod 2026-08-16 Coach AI msg alerte : après activation writer-scoped,
+    ``data_repo_health_ok=false`` remontait à tort — le sous-répertoire
+    writer n'a pas de ``.git/`` par design, mais le repo git racine oui.
+    Faux positif healthcheck → gel préventif tools par Coach AI.
+    """
+
+    @pytest.mark.asyncio
+    async def test_healthcheck_true_when_git_on_root_and_scoped_path_exists(self, tmp_path):
+        """Cas nominal writer-scoped : root_path a .git/, data_repo_path
+        (subdir writer) existe → health_ok=True."""
+        import json as json_mod
+
+        from magma_cycling._mcp.handlers.admin import handle_system_info
+
+        # Fixture repo writer-scoped : root a .git/, writer subdir peuplé
+        (tmp_path / ".git").mkdir()
+        writer_subdir = tmp_path / "abc123def456"
+        writer_subdir.mkdir()
+
+        class FakeCfg:
+            root_path = tmp_path
+            data_repo_path = writer_subdir
+
+        with patch("magma_cycling.config.get_data_config", return_value=FakeCfg()):
+            result = await handle_system_info({})
+        data = json_mod.loads(result[0].text)
+        assert data["data_repo_health_ok"] is True, (
+            f"Expected healthcheck OK when .git exists on root_path and "
+            f"data_repo_path (writer subdir) exists, got False. "
+            f"data_repo_path={data['data_repo_path']}"
+        )
+
+    @pytest.mark.asyncio
+    async def test_healthcheck_false_when_git_missing_on_root(self, tmp_path):
+        """Root sans .git/ → False (pas un git repo)."""
+        import json as json_mod
+
+        from magma_cycling._mcp.handlers.admin import handle_system_info
+
+        writer_subdir = tmp_path / "abc123def456"
+        writer_subdir.mkdir()
+
+        class FakeCfg:
+            root_path = tmp_path
+            data_repo_path = writer_subdir
+
+        with patch("magma_cycling.config.get_data_config", return_value=FakeCfg()):
+            result = await handle_system_info({})
+        data = json_mod.loads(result[0].text)
+        assert data["data_repo_health_ok"] is False
+
+    @pytest.mark.asyncio
+    async def test_healthcheck_false_when_scoped_path_missing(self, tmp_path):
+        """Root avec .git/ mais writer subdir absent → False (writer
+        subdir non monté ou WRITER_ID pointe sur un hash orphelin).
+        Coach AI Q : deux conditions distinctes, deux échecs distincts."""
+        import json as json_mod
+
+        from magma_cycling._mcp.handlers.admin import handle_system_info
+
+        (tmp_path / ".git").mkdir()
+        writer_subdir = tmp_path / "abc123def456"  # non créé volontairement
+
+        class FakeCfg:
+            root_path = tmp_path
+            data_repo_path = writer_subdir
+
+        with patch("magma_cycling.config.get_data_config", return_value=FakeCfg()):
+            result = await handle_system_info({})
+        data = json_mod.loads(result[0].text)
+        assert data["data_repo_health_ok"] is False
+
+
 class TestHandleReportConfigFileState:
     """Tests for handle_report_config_file_state (self-reported sha256 + perms)."""
 
