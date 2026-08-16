@@ -193,6 +193,29 @@ class TestRaiseIfLegacyLayout:
         # Items flat racine listés dans preview
         assert "activities_tracking.json" in msg or "data" in msg or "weekly-reports" in msg
 
+    def test_command_hint_adapts_to_bundled_exe(self, legacy_flat_repo, monkeypatch):
+        """Beta Windows en mode bundled (``sys.frozen=True`` PyInstaller) doit
+        voir ``magma-cycling.exe setup ...`` au lieu de ``poetry run setup ...``
+        — sinon la commande copiée-collée du message d'erreur échoue car
+        `poetry` n'existe pas dans le contexte bundled."""
+        import sys as sys_mod
+
+        monkeypatch.setattr(sys_mod, "frozen", True, raising=False)
+        with pytest.raises(LegacyLayoutError) as exc_info:
+            raise_if_legacy_layout(legacy_flat_repo)
+        msg = str(exc_info.value)
+        assert "magma-cycling.exe setup --migrate-training-logs" in msg
+        assert "poetry run setup" not in msg
+
+    def test_command_hint_stays_poetry_in_dev_mode(self, legacy_flat_repo):
+        """Mode dev (pas de ``sys.frozen``) doit garder ``poetry run setup ...``
+        pour rétro-compat des betas clone git + les tests dev."""
+        with pytest.raises(LegacyLayoutError) as exc_info:
+            raise_if_legacy_layout(legacy_flat_repo)
+        msg = str(exc_info.value)
+        assert "poetry run setup --migrate-training-logs" in msg
+        assert "magma-cycling.exe" not in msg
+
     def test_raises_on_legacy_pure_with_specific_message(self, legacy_flat_repo):
         """BT-030 : symétrique du test précédent, le message doit dire
         « legacy layout » (pas « hybrid ») quand ``.operators.yaml`` est

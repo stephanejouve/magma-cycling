@@ -344,11 +344,19 @@ def raise_if_legacy_layout(root: Path) -> None:
         )
     else:
         layout_desc = "legacy layout (flat structure, no `.operators.yaml`)"
+    # Cosmétique : adapter la commande affichée au mode d'exécution.
+    # Beta bundled (PyInstaller EXE Windows) → `magma-cycling.exe setup ...`
+    # Dev (clone git + poetry) → `poetry run setup ...`
+    # ``sys.frozen`` est le flag standard PyInstaller/cx_Freeze/py2app.
+    if getattr(sys, "frozen", False):
+        migrate_cmd = "magma-cycling.exe setup --migrate-training-logs"
+    else:
+        migrate_cmd = "poetry run setup --migrate-training-logs"
     raise LegacyLayoutError(
         f"Training logs repo detected in {layout_desc} at {root}.\n"
         f"Items to migrate from root: {preview}\n\n"
         f"Migrate to writer-scoped layout:\n"
-        f"  poetry run setup --migrate-training-logs\n\n"
+        f"  {migrate_cmd}\n\n"
         f"See ADR v5 §7 Upgrade path for details "
         f"(/Users/Shared/archi/ADR-training-logs-sync-v5.md, meta hors repo)."
     )
