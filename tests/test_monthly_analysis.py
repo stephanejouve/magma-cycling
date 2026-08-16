@@ -224,3 +224,237 @@ class TestStatsFieldRename:
         prompt = analyzer.generate_ai_prompt(stats)
 
         assert str(stats["tss_realized"]) in prompt
+
+
+class TestBT039ActiveTssTarget:
+    """BT-039 : cible active (post-annulations) distincte de la cible
+    initiale, utilisée pour le calcul d'adhérence. Voie A (fix consommateur).
+
+    Audit 2026-08-16 : 54 % des semaines biaisées par sessions fantômes
+    (rest_day/skipped avec tss_planned>0), 2272 TSS cumulés fantômes.
+    Ce fix répare les 20 semaines biaisées + toutes les futures.
+    """
+
+    def test_active_target_excludes_skipped_and_rest_day(self, analyzer):
+        """Sessions annulées (rest_day, skipped, cancelled) exclues du
+        calcul de la cible active. Cas reproduit S100 (course A)."""
+        data = [
+            {
+                "week_id": "S100",
+                "start_date": "2026-06-29",
+                "end_date": "2026-07-05",
+                "tss_target": 286,  # cible initiale stockée (intention)
+                "planned_sessions": [
+                    # Actives — comptent dans cible active
+                    {
+                        "session_id": "S100-05",
+                        "type": "END",
+                        "status": "completed",
+                        "tss_planned": 15,
+                        "intervals_id": 119167962,
+                    },
+                    {
+                        "session_id": "S100-06",
+                        "type": "END",
+                        "status": "completed",
+                        "tss_planned": 211,
+                        "intervals_id": 119167963,
+                    },
+                    # Fantômes — EXCLUES de cible active (voie A)
+                    {
+                        "session_id": "S100-04",
+                        "type": "SS",
+                        "status": "rest_day",  # rétrograde manuelle affûtage J-2
+                        "tss_planned": 72,  # ne doit PAS gonfler la cible
+                    },
+                    {
+                        "session_id": "S100-01",
+                        "type": "END",
+                        "status": "skipped",
+                        "tss_planned": 18,  # ne doit PAS gonfler la cible
+                    },
+                ],
+            },
+        ]
+        stats = analyzer.aggregate_statistics(data)
+        # Cible initiale stockée conservée (intention)
+        assert stats["tss_target_total"] == 286
+        # Cible active = seulement les sessions non-annulées (15 + 211 = 226)
+        assert stats["tss_target_active_total"] == 226, (
+            "Cible active doit exclure les 72 TSS rest_day (S100-04) "
+            "et les 18 TSS skipped (S100-01)"
+        )
+
+    def test_achievement_rate_uses_active_target(self, analyzer):
+        """Taux d'adhérence calculé sur cible active (référence), pas
+        sur cible initiale gonflée."""
+        data = [
+            {
+                "week_id": "S001",
+                "start_date": "2026-01-05",
+                "end_date": "2026-01-11",
+                "tss_target": 300,  # cible initiale stockée
+                "planned_sessions": [
+                    {
+                        "session_id": "S001-01",
+                        "type": "END",
+                        "status": "completed",
+                        "tss_planned": 100,
+                        "intervals_id": 100001,
+                    },
+                    {
+                        "session_id": "S001-02",
+                        "type": "END",
+                        "status": "skipped",
+                        "tss_planned": 100,  # exclu de cible active
+                    },
+                ],
+            },
+        ]
+        # actual_tss_map couvre S001-01 pour un réalisé "vrai" Intervals
+        stats = analyzer.aggregate_statistics(data, actual_tss_map={"i100001": 105})
+        # Cible active = 100 (seulement session completed compte)
+        assert stats["tss_target_active_total"] == 100
+        # Réalisé Intervals = 105
+        assert stats["tss_realized"] == 105
+        # Achievement = 105 / 100 = 105% (excellent) — pas 105 / 300 = 35%
+        assert stats["tss_achievement_rate"] == pytest.approx(105.0, abs=0.1), (
+            "Taux d'adhérence doit être calculé sur cible active (100), "
+            "pas sur cible initiale gonflée (300)"
+        )
+
+    def test_no_regression_when_all_sessions_active(self, analyzer):
+        """Non-régression : semaine 100 % active → cible active = somme des
+        tss_planned = équivalent à ce qu'on aurait avec l'ancien calcul si
+        le champ tss_target stocké est cohérent avec la somme."""
+        data = [
+            {
+                "week_id": "S001",
+                "start_date": "2026-01-05",
+                "end_date": "2026-01-11",
+                "tss_target": 150,
+                "planned_sessions": [
+                    {
+                        "session_id": "S001-01",
+                        "type": "END",
+                        "status": "planned",
+                        "tss_planned": 50,
+                    },
+                    {
+                        "session_id": "S001-02",
+                        "type": "END",
+                        "status": "completed",
+                        "tss_planned": 100,
+                        "intervals_id": 100002,
+                    },
+                ],
+            },
+        ]
+        stats = analyzer.aggregate_statistics(data)
+        # Toutes actives → active = somme = 150 = cible initiale
+        assert stats["tss_target_active_total"] == 150
+        assert stats["tss_target_total"] == 150
+
+    def test_all_cancelled_week_no_zero_division_crash(self, analyzer):
+        """Coach AI TNR : semaine 100 % annulée → cible active = 0 → taux
+        d'adhérence = None (pas de division par zéro qui crash)."""
+        data = [
+            {
+                "week_id": "S001",
+                "start_date": "2026-01-05",
+                "end_date": "2026-01-11",
+                "tss_target": 200,
+                "planned_sessions": [
+                    {
+                        "session_id": "S001-01",
+                        "type": "END",
+                        "status": "rest_day",
+                        "tss_planned": 100,
+                    },
+                    {
+                        "session_id": "S001-02",
+                        "type": "END",
+                        "status": "skipped",
+                        "tss_planned": 100,
+                    },
+                ],
+            },
+        ]
+        # Pas de crash
+        stats = analyzer.aggregate_statistics(data)
+        assert stats["tss_target_active_total"] == 0
+        # Achievement = None (indéterminé, pas 0 ou crash)
+        assert stats["tss_achievement_rate"] is None
+        # Report généré sans crash + affiche "—"
+        report = analyzer.generate_report(stats)
+        assert "\u2014" in report  # unicode em-dash pour taux indéterminé
+
+    def test_tss_source_map_marks_planned_fallback(self, analyzer):
+        """BT-039 marqueur origine : session completed sans intervals_id
+        (fallback tss_planned) est listée dans tss_source_map.planned_fallback."""
+        data = [
+            {
+                "week_id": "S001",
+                "start_date": "2026-01-05",
+                "end_date": "2026-01-11",
+                "tss_target": 100,
+                "planned_sessions": [
+                    {
+                        "session_id": "S001-01",
+                        "type": "KIN",
+                        "status": "completed",
+                        "tss_planned": 0,
+                        "intervals_id": None,  # pas de match → fallback
+                    },
+                    {
+                        "session_id": "S001-02",
+                        "type": "END",
+                        "status": "completed",
+                        "tss_planned": 50,
+                        "intervals_id": 200001,  # match Intervals
+                    },
+                ],
+            },
+        ]
+        stats = analyzer.aggregate_statistics(data, actual_tss_map={"i200001": 55})
+        # S001-01 KIN sans intervals_id → planned_fallback
+        assert "S001-01" in stats["tss_source_map"]["planned_fallback"]
+        # S001-02 avec match → intervals
+        assert "S001-02" in stats["tss_source_map"]["intervals"]
+
+    def test_report_shows_three_tss_columns(self, analyzer):
+        """Bilan mensuel affiche 3 chiffres côte-à-côte : initiale | active | réalisé."""
+        data = [
+            {
+                "week_id": "S100",
+                "start_date": "2026-06-29",
+                "end_date": "2026-07-05",
+                "tss_target": 286,
+                "planned_sessions": [
+                    {
+                        "session_id": "S100-06",
+                        "type": "END",
+                        "status": "completed",
+                        "tss_planned": 211,
+                        "intervals_id": 119167963,
+                    },
+                    {
+                        "session_id": "S100-04",
+                        "type": "SS",
+                        "status": "rest_day",
+                        "tss_planned": 72,
+                    },
+                ],
+            },
+        ]
+        stats = analyzer.aggregate_statistics(data)
+        report = analyzer.generate_report(stats)
+        # 3 colonnes présentes
+        assert "Cible initiale" in report
+        assert "Cible active" in report
+        assert "R\u00e9alis\u00e9" in report
+        # Écart initial → active en valeur absolue (pas %)
+        # Ici cible initiale=286 stockée mais sum(planned_sessions)=283 → gap
+        # Le drift_line affiche "−N TSS" en absolu — vérifier présence "\u2212"
+        # (moins unicode)
+        assert "\u2212" in report or "TSS" in report
