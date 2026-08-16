@@ -52,6 +52,37 @@ def _git(args: list[str], cwd: Path) -> subprocess.CompletedProcess:
     return subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True, timeout=60)
 
 
+def _is_tracked(item: str, root: Path) -> bool:
+    """Retourne True si ``item`` (fichier ou dossier) est tracked par git.
+
+    Sémantique BT-031 : un item untracked (dans ``.gitignore`` ou jamais
+    ``git add``) doit rester en racine, PAS être moved dans un writer
+    subdir. Motivation :
+
+    - **Sécurité** : les creds runtime (``.withings_credentials.json``,
+      ``.env``, ``*.session``) sont typiquement gitignored. Les déplacer
+      dans un subdir writer risque un futur ``git add`` accidentel → leak
+      vers GitHub. Le fait qu'ils soient untracked signifie qu'ils DOIVENT
+      rester local.
+    - **Idempotence** : ``git mv`` fail hard sur untracked (« not under
+      version control ») → cassait la migration BT-027 mid-course (msg
+      Admin 2026-08-16, incident sur ``.withings_credentials.json``).
+
+    Args:
+        item: Nom top-level (fichier ou dossier) relatif à ``root``.
+        root: Path racine du repo.
+
+    Returns:
+        ``True`` si git connaît au moins un fichier sous ce path, ``False``
+        sinon (untracked pur ou gitignored).
+    """
+    # ``git ls-files -- <item>`` liste les tracked matching. Pour un
+    # dossier, retourne les fichiers dedans ; pour un fichier, retourne
+    # le fichier lui-même. Vide si rien de tracked sous ce path.
+    res = _git(["ls-files", "--", item], cwd=root)
+    return res.returncode == 0 and bool(res.stdout.strip())
+
+
 def _default_alias() -> str:
     """Alias par défaut = hostname (short form)."""
     host = socket.gethostname()
@@ -103,11 +134,26 @@ def migrate_training_logs(
         )
 
     effective_alias = alias or _default_alias()
-    items_to_move = _root_files_outside_whitelist(root)
+    all_root_items = _root_files_outside_whitelist(root)
+
+    # BT-031 : partitionner tracked (à git mv) vs untracked (à laisser
+    # en racine, typiquement creds/runtime gitignored). Un git mv sur
+    # untracked fail hard « not under version control » → casse la
+    # migration mid-course.
+    items_to_move = [item for item in all_root_items if _is_tracked(item, root)]
+    skipped_untracked = [item for item in all_root_items if item not in items_to_move]
 
     logger.info("Migration plan: alias=%s, %d items to move", effective_alias, len(items_to_move))
     for item in items_to_move:
         logger.info("  → will move: %s", item)
+    if skipped_untracked:
+        logger.warning(
+            "Skipping %d untracked item(s) — left in place at root "
+            "(probably gitignored runtime/creds, must NOT be moved into "
+            "a writer subdir for security reasons) : %s",
+            len(skipped_untracked),
+            ", ".join(skipped_untracked),
+        )
 
     if dry_run:
         logger.info("[DRY RUN] no writes")
@@ -115,6 +161,7 @@ def migrate_training_logs(
             "writer_hash": None,
             "alias": effective_alias,
             "moved_items": items_to_move,
+            "skipped_untracked": skipped_untracked,
             "commit_sha": None,
             "pushed": False,
             "rollback_hint": "N/A (dry-run)",
@@ -180,6 +227,7 @@ def migrate_training_logs(
         "writer_hash": writer_hash,
         "alias": effective_alias,
         "moved_items": items_to_move,
+        "skipped_untracked": skipped_untracked,
         "commit_sha": commit_sha,
         "pushed": pushed,
         "rollback_hint": rollback_hint,
