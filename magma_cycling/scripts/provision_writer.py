@@ -69,13 +69,36 @@ def _compute_writer_hash(timestamp: str, alias: str) -> str:
 
 
 def _load_or_init_operators(yaml_path: Path) -> dict:
-    """Lit ``.operators.yaml`` ou initialise un squelette par défaut."""
+    """Lit ``.operators.yaml`` ou initialise un squelette par défaut.
+
+    BT-032 : garantit que ``shared_root_files`` contient **au minimum**
+    les patterns canoniques :data:`DEFAULT_SHARED_ROOT_FILES` de l'ADR
+    V5, en préservant les extensions user légitimes (résidus runtime,
+    patterns beta-testeur, etc.).
+
+    Avant BT-032, ``setdefault`` ne remplaçait pas une valeur existante
+    → un yaml avec whitelist restrictive (ex. ``[.gitignore, README.md]``)
+    restait restrictif après provision → guard hybrid layout re-fire au
+    premier write dans ``data/wellness/`` (dossier shared par design).
+    Bug reproduit 2 fois grandeur nature 2026-08-16 (chain BT-027 prod
+    NAS, commits training-logs ``b37cb07`` + ``5d4ffce`` = fixes manuels).
+
+    Fix : union ``existing ∪ DEFAULT_SHARED_ROOT_FILES``. Idempotent
+    (yaml canonique déjà complet → aucune modif).
+    """
     if yaml_path.is_file():
         with yaml_path.open(encoding="utf-8") as fh:
             data = yaml.safe_load(fh) or {}
         if not isinstance(data, dict):
             raise RuntimeError(f"{yaml_path} ne contient pas un mapping YAML valide")
-        data.setdefault("shared_root_files", list(DEFAULT_SHARED_ROOT_FILES))
+        existing = data.get("shared_root_files")
+        if isinstance(existing, list):
+            existing_set = set(existing)
+            for pattern in DEFAULT_SHARED_ROOT_FILES:
+                if pattern not in existing_set:
+                    existing.append(pattern)
+        else:
+            data["shared_root_files"] = list(DEFAULT_SHARED_ROOT_FILES)
         data.setdefault("writers", {})
         return data
     return {

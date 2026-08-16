@@ -141,3 +141,131 @@ class TestProvisionWriter:
     def test_raises_if_root_does_not_exist(self, tmp_path):
         with pytest.raises(FileNotFoundError, match="does not exist"):
             provision_writer("mac", tmp_path / "nope", push=False)
+
+
+class TestBT032MergeSharedRootFiles:
+    """BT-032 : ``_load_or_init_operators`` doit merger la whitelist
+    existante avec ``DEFAULT_SHARED_ROOT_FILES`` (union), pas juste
+    ``setdefault`` qui préserve une whitelist restrictive.
+
+    Bug reproduit 2× le 2026-08-16 (chain BT-027 prod NAS) : un yaml
+    avec whitelist minimale [.gitignore, README.md, .operators.yaml]
+    restait restrictif après provision → guard hybrid layout re-fire
+    au premier write dans ``data/wellness/`` (shared par design ADR V5).
+    """
+
+    def _init_repo_with_restrictive_yaml(self, tmp_path, extra_writers=None):
+        """Helper : crée un repo git avec .operators.yaml restrictif."""
+        repo = tmp_path / "training-logs-restrictive"
+        repo.mkdir()
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repo, check=True)
+        subprocess.run(["git", "config", "user.email", "t@e.com"], cwd=repo, check=True)
+        subprocess.run(["git", "config", "user.name", "t"], cwd=repo, check=True)
+        (repo / ".gitignore").touch()
+        # Whitelist restrictive : 3 items seulement, sans les patterns data/xxx/**
+        operators = {
+            "shared_root_files": [".gitignore", "README.md", ".operators.yaml"],
+            "writers": extra_writers or {},
+        }
+        (repo / ".operators.yaml").write_text(yaml.safe_dump(operators), encoding="utf-8")
+        subprocess.run(["git", "add", "-A"], cwd=repo, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "restrictive fixture"], cwd=repo, check=True)
+        return repo
+
+    def test_provision_extends_restrictive_whitelist_with_defaults(self, tmp_path):
+        """Le cas reproduit en prod : yaml restrictif → après provision,
+        whitelist contient les 4 patterns canoniques ADR V5."""
+        repo = self._init_repo_with_restrictive_yaml(tmp_path)
+        provision_writer("mac", repo, push=False)
+        ops = yaml.safe_load((repo / ".operators.yaml").read_text())
+        whitelist = ops["shared_root_files"]
+        # Restrictifs originels préservés
+        assert ".gitignore" in whitelist
+        assert "README.md" in whitelist
+        assert ".operators.yaml" in whitelist
+        # Patterns canoniques ADR V5 ajoutés
+        assert "data/intelligence/**" in whitelist
+        assert "data/wellness/**" in whitelist
+        assert "data/decisions/**" in whitelist
+        assert "config/athlete.yaml" in whitelist
+
+    def test_provision_preserves_user_extensions(self, tmp_path):
+        """Extensions user légitimes (résidus runtime, patterns beta)
+        préservées lors du merge — pas d'écrasement."""
+        repo = tmp_path / "training-logs-extended"
+        repo.mkdir()
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repo, check=True)
+        subprocess.run(["git", "config", "user.email", "t@e.com"], cwd=repo, check=True)
+        subprocess.run(["git", "config", "user.name", "t"], cwd=repo, check=True)
+        (repo / ".gitignore").touch()
+        # Whitelist canonique + extensions user (ex. résidus runtime racine)
+        operators = {
+            "shared_root_files": [
+                ".gitignore",
+                ".operators.yaml",
+                "data/wellness/**",
+                "bilans/**",  # extension user
+                "handoff/**",  # extension user
+            ],
+            "writers": {},
+        }
+        (repo / ".operators.yaml").write_text(yaml.safe_dump(operators), encoding="utf-8")
+        subprocess.run(["git", "add", "-A"], cwd=repo, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "extended fixture"], cwd=repo, check=True)
+
+        provision_writer("mac", repo, push=False)
+        ops = yaml.safe_load((repo / ".operators.yaml").read_text())
+        whitelist = ops["shared_root_files"]
+        # Extensions user préservées
+        assert "bilans/**" in whitelist
+        assert "handoff/**" in whitelist
+        # Patterns canoniques ajoutés (data/intelligence, decisions, config)
+        assert "data/intelligence/**" in whitelist
+        assert "data/decisions/**" in whitelist
+        assert "config/athlete.yaml" in whitelist
+
+    def test_provision_idempotent_on_canonical_yaml(self, tmp_path):
+        """Yaml déjà canonique → provision n'ajoute pas de doublon."""
+        repo = tmp_path / "training-logs-canonical"
+        repo.mkdir()
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repo, check=True)
+        subprocess.run(["git", "config", "user.email", "t@e.com"], cwd=repo, check=True)
+        subprocess.run(["git", "config", "user.name", "t"], cwd=repo, check=True)
+        (repo / ".gitignore").touch()
+        # Whitelist DEFAULT_SHARED_ROOT_FILES complet
+        from magma_cycling.config.data_repo import DEFAULT_SHARED_ROOT_FILES
+
+        operators = {
+            "shared_root_files": list(DEFAULT_SHARED_ROOT_FILES),
+            "writers": {},
+        }
+        (repo / ".operators.yaml").write_text(yaml.safe_dump(operators), encoding="utf-8")
+        subprocess.run(["git", "add", "-A"], cwd=repo, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "canonical fixture"], cwd=repo, check=True)
+
+        before = list(DEFAULT_SHARED_ROOT_FILES)
+        provision_writer("mac", repo, push=False)
+        ops = yaml.safe_load((repo / ".operators.yaml").read_text())
+        after = ops["shared_root_files"]
+        # Aucun doublon, ordre préservé
+        assert len(after) == len(before)
+        assert set(after) == set(before)
+
+    def test_provision_yaml_without_shared_root_files_key(self, tmp_path):
+        """Yaml sans clé ``shared_root_files`` → set à DEFAULT complet."""
+        repo = tmp_path / "training-logs-no-key"
+        repo.mkdir()
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=repo, check=True)
+        subprocess.run(["git", "config", "user.email", "t@e.com"], cwd=repo, check=True)
+        subprocess.run(["git", "config", "user.name", "t"], cwd=repo, check=True)
+        (repo / ".gitignore").touch()
+        # Yaml sans shared_root_files du tout (juste writers)
+        (repo / ".operators.yaml").write_text("writers: {}\n", encoding="utf-8")
+        subprocess.run(["git", "add", "-A"], cwd=repo, check=True)
+        subprocess.run(["git", "commit", "-q", "-m", "no-key fixture"], cwd=repo, check=True)
+
+        from magma_cycling.config.data_repo import DEFAULT_SHARED_ROOT_FILES
+
+        provision_writer("mac", repo, push=False)
+        ops = yaml.safe_load((repo / ".operators.yaml").read_text())
+        assert set(ops["shared_root_files"]) == set(DEFAULT_SHARED_ROOT_FILES)
