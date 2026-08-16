@@ -56,6 +56,7 @@ def temp_training_repo(tmp_path):
             "README.md",
             OPERATORS_FILE,
             "data/intelligence/**",
+            "workouts-history.md",  # BT-030 : legit shared racine
         ],
         "writers": {
             writer_a: {

@@ -72,13 +72,19 @@ def temp_training_repo(tmp_path):
     (repo / writer_b).mkdir()
     (repo / writer_b / ".gitkeep").touch()
 
-    # .operators.yaml minimal
+    # .operators.yaml minimal — BT-030 : shared_root_files déclare
+    # workouts-history.md + bilans/ + data/ comme partagés racine
+    # (sinon la détection hybride BT-030 remonterait ces items comme
+    # "à migrer" alors que la fixture les représente comme legit shared).
     operators = {
         "shared_root_files": [
             ".gitignore",
             "README.md",
             ".operators.yaml",
             "docs/architecture/**",
+            "workouts-history.md",
+            "bilans/**",
+            "data/**",
         ],
         "writers": {
             writer_a: {

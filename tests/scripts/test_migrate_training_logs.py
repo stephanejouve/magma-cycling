@@ -57,7 +57,7 @@ def legacy_git_repo(tmp_path):
 
 @pytest.fixture
 def migrated_git_repo(tmp_path):
-    """Repo git déjà migré (.operators.yaml présent + subdir)."""
+    """Repo git déjà migré (.operators.yaml présent + subdir + racine clean)."""
     root = tmp_path / "training-logs-migrated"
     root.mkdir()
     _git(["init", "-b", "main"], cwd=root)
@@ -74,6 +74,42 @@ def migrated_git_repo(tmp_path):
     (root / "abc123def456" / "data.json").write_text("{}")
     _git(["add", "-A"], cwd=root)
     _git(["commit", "-m", "migrated state"], cwd=root)
+    return root
+
+
+@pytest.fixture
+def hybrid_git_repo(tmp_path):
+    """Repo git hybride BT-030 : ``.operators.yaml`` + writer subdir
+    déjà provisionné (Phase 1A partielle) + du flat racine encore à
+    absorber. Cas réel constaté sur prod NAS (2026-08-15)."""
+    root = tmp_path / "training-logs-hybrid"
+    root.mkdir()
+    _git(["init", "-b", "main"], cwd=root)
+    _git(["config", "user.email", "test@example.com"], cwd=root)
+    _git(["config", "user.name", "test"], cwd=root)
+    (root / ".gitignore").write_text("*.pyc\n")
+    (root / ".operators.yaml").write_text(
+        "shared_root_files:\n  - .gitignore\n  - .operators.yaml\n"
+        "writers:\n  88bc132e32a0:\n    alias: nas-prod\n    host: nas\n"
+        "    provisioned_at: 2026-05-03T09:44:00Z\n"
+        "    decommissioned_at: null\n"
+    )
+    # Writer déjà provisionné (Phase 1A partielle)
+    (root / "88bc132e32a0").mkdir()
+    (root / "88bc132e32a0" / "workouts-history.md").write_text("legacy\n")
+    # Contenu flat racine encore à absorber (écritures runtime post-Phase 1A).
+    # NB : ``data/`` est whitelisté au toplevel (partagé entre writers) donc
+    # on ne l'ajoute pas ici. On simule uniquement des paths clairement
+    # hors whitelist, représentatifs du cas prod NAS (backups, weekly-reports,
+    # activities tracking).
+    (root / "activities_tracking.json").write_text('{"live": true}')
+    (root / "backups").mkdir()
+    (root / "backups" / "S105-backup.md").write_text("backup\n")
+    weekly = root / "weekly-reports"
+    weekly.mkdir()
+    (weekly / "S105.md").write_text("weekly S105\n")
+    _git(["add", "-A"], cwd=root)
+    _git(["commit", "-m", "hybrid state"], cwd=root)
     return root
 
 
@@ -181,6 +217,63 @@ class TestAlias:
     def test_alias_override(self, legacy_git_repo):
         result = migrate_training_logs(legacy_git_repo, alias="custom-name", push=False)
         assert result["alias"] == "custom-name"
+
+
+class TestHybridMigration:
+    """BT-030 : le script doit accepter et migrer un repo hybride
+    (``.operators.yaml`` présent + writer subdir + flat racine)."""
+
+    def test_migrates_hybrid_repo_end_to_end(self, hybrid_git_repo):
+        """La migration doit :
+        - provisionner un NOUVEAU writer distinct de celui existant
+        - déplacer le contenu flat racine vers le nouveau subdir
+        - laisser le writer existant (``88bc132e32a0``) intact
+        - laisser ``.operators.yaml`` avec les 2 writers listés
+        """
+        result = migrate_training_logs(hybrid_git_repo, alias="new-writer", push=False)
+        assert result["writer_hash"] is not None
+        assert result["writer_hash"] != "88bc132e32a0"  # nouveau writer distinct
+        assert set(result["moved_items"]) == {
+            "activities_tracking.json",
+            "backups",
+            "weekly-reports",
+        }
+        # Nouveau subdir peuplé
+        new_dir = hybrid_git_repo / result["writer_hash"]
+        assert (new_dir / "activities_tracking.json").is_file()
+        assert (new_dir / "backups" / "S105-backup.md").is_file()
+        assert (new_dir / "weekly-reports" / "S105.md").is_file()
+        # Ancien writer intact
+        assert (hybrid_git_repo / "88bc132e32a0" / "workouts-history.md").is_file()
+        # Flat racine purgé
+        assert not (hybrid_git_repo / "activities_tracking.json").exists()
+        assert not (hybrid_git_repo / "backups").exists()
+        assert not (hybrid_git_repo / "weekly-reports").exists()
+        # Post-migration : plus de layout hybride (racine 100 % whitelist + writers)
+        from magma_cycling.config.data_repo import detect_legacy_layout as _detect
+
+        assert _detect(hybrid_git_repo) is False
+
+    def test_hybrid_migration_atomic_single_commit(self, hybrid_git_repo):
+        """Provision + git mv du flat = 1 seul commit atomique (doctrine BT-027)."""
+        before = int(
+            subprocess.run(
+                ["git", "rev-list", "--count", "HEAD"],
+                cwd=hybrid_git_repo,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+        )
+        migrate_training_logs(hybrid_git_repo, alias="new-writer", push=False)
+        after = int(
+            subprocess.run(
+                ["git", "rev-list", "--count", "HEAD"],
+                cwd=hybrid_git_repo,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+        )
+        assert after == before + 1
 
 
 class TestIdempotencyAndValidation:
