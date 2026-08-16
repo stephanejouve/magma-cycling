@@ -221,6 +221,80 @@ class TestHandleUpdateSession:
         assert mock_session.skip_reason is None
 
     @pytest.mark.asyncio
+    async def test_bt026_refuses_reason_on_status_completed(self, mock_plan, mock_session):
+        """BT-026 (part 2) : refus explicite du silent-drop de ``reason``
+        sur ``status=completed``. Auparavant le paramètre était accepté
+        puis clearé — bilan perdu (motif anti-doctrine BT-021 découvert
+        par Coach AI sur S106-06 le 2026-08-16).
+
+        Refus explicite = signal actionnable + redirection vers
+        modify-session-details(description=...) qui persiste vraiment.
+        """
+        from magma_cycling.mcp_server import handle_update_session
+
+        mock_session.status = "planned"
+        tower = make_tower(mock_plan)
+        args = {
+            "week_id": "S081",
+            "session_id": "S081-03",
+            "status": "completed",
+            "reason": "bilan complet marche 34:57 vélo 23:40 couple 10,42 Nm",
+        }
+        with patch(TOWER_PATCH, tower):
+            with pytest.raises(
+                ValueError, match="update-session does not persist `reason`"
+            ) as exc_info:
+                await handle_update_session(args)
+        # Message actionnable : mentionne modify-session-details + BT-026
+        msg = str(exc_info.value)
+        assert "modify-session-details" in msg
+        assert "BT-026" in msg
+        # Session pas modifiée (refus early, pas d'état partiel)
+        assert mock_session.status == "planned"
+
+    @pytest.mark.asyncio
+    async def test_bt026_allows_status_completed_without_reason(self, mock_plan, mock_session):
+        """Non-régression BT-026 : ``update-session(status=completed)``
+        sans reason continue de fonctionner (path historique)."""
+        from magma_cycling.mcp_server import handle_update_session
+
+        mock_session.status = "planned"
+        tower = make_tower(mock_plan)
+        args = {
+            "week_id": "S081",
+            "session_id": "S081-03",
+            "status": "completed",
+            # Pas de reason
+        }
+        with patch(TOWER_PATCH, tower):
+            result = await handle_update_session(args)
+        data = json.loads(result[0].text)
+        assert data["status"] == "completed"
+        assert mock_session.status == "completed"
+        assert mock_session.skip_reason is None
+
+    @pytest.mark.asyncio
+    async def test_bt026_still_persists_reason_on_status_skipped(self, mock_plan, mock_session):
+        """Non-régression BT-026 : ``update-session(status=skipped, reason=...)``
+        continue de persister le reason dans skip_reason (comportement
+        historique préservé, seul le path status=completed est concerné)."""
+        from magma_cycling.mcp_server import handle_update_session
+
+        mock_session.status = "planned"
+        tower = make_tower(mock_plan)
+        args = {
+            "week_id": "S081",
+            "session_id": "S081-03",
+            "status": "skipped",
+            "reason": "Sommeil critique",
+        }
+        with patch(TOWER_PATCH, tower):
+            result = await handle_update_session(args)
+        data = json.loads(result[0].text)
+        assert data["status"] == "skipped"
+        assert mock_session.skip_reason == "Sommeil critique"
+
+    @pytest.mark.asyncio
     async def test_skip_reason_preserved_on_skipped_to_skipped_without_reason(
         self, mock_plan, mock_session
     ):

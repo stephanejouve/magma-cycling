@@ -102,10 +102,10 @@ def resolve_decisions_dir() -> Path:
 
 
 def decision_archive_path(week_id: str, seq: int) -> Path:
-    """Path du fichier d'une décision donnée.
+    r"""Path du fichier d'une décision donnée.
 
     Args:
-        week_id: ``S\\d{3}`` (ex. ``S094``).
+        week_id: ``S\d{3}`` (ex. ``S094``).
         seq: numéro de séquence dans la semaine, ≥ 1.
     """
     if not _WEEK_ID_RE.match(week_id):

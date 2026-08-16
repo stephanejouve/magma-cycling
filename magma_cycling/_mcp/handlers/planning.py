@@ -536,6 +536,30 @@ async def handle_update_session(args: dict) -> list[TextContent]:
                         # silencieux.
                         session.status = new_status
                     else:
+                        # BT-026 (part 2) : refus explicite du silent-drop de
+                        # ``reason`` sur status=completed. Auparavant, un
+                        # ``update-session(status=completed, reason="bilan...")``
+                        # acceptait le paramètre puis le clearait dans la ligne
+                        # ``session.skip_reason = None`` en dessous — le bilan
+                        # disparaissait sans avertissement (motif anti-doctrine
+                        # BT-021 découvert par Coach AI sur S106-06 le 2026-08-16).
+                        #
+                        # Choix : refus explicite plutôt que persistance dans
+                        # un nouveau champ. Doctrine « un outil / une
+                        # responsabilité » — le bilan post-completed doit
+                        # passer par ``modify-session-details(description=...)``
+                        # qui est déjà assouplit pour completed (BT-026 part 1
+                        # déjà livrée). Zéro duplication sémantique
+                        # description/completion_note à maintenir.
+                        if new_status == "completed" and reason:
+                            raise ValueError(
+                                f"update-session does not persist `reason` for "
+                                f"status=completed on session {session_id}. "
+                                f"Use modify-session-details(week_id={week_id!r}, "
+                                f"session_id={session_id!r}, description=...) "
+                                f"to add a completion note — BT-026 allows "
+                                f"descriptive updates on completed sessions."
+                            )
                         # Vers état « actif » (pending/completed/etc.) : status
                         # AVANT clear skip_reason (sinon validator plante car
                         # status=skipped + skip_reason=None).
