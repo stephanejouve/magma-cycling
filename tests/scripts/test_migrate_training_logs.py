@@ -276,6 +276,99 @@ class TestHybridMigration:
         assert after == before + 1
 
 
+class TestSkipUntrackedItemsBT031:
+    """BT-031 : les items untracked/gitignored en racine doivent être
+    laissés en place, pas ``git mv`` vers le writer subdir. Raison de
+    sécurité (creds runtime) + robustesse (git mv fail hard sur untracked
+    → cassait la migration BT-027 mid-course, incident prod 2026-08-16)."""
+
+    @pytest.fixture
+    def legacy_repo_with_untracked(self, tmp_path):
+        """Repo legacy avec :
+        - tracked : ``activities_tracking.json``, ``weekly-reports/`` (à migrer)
+        - untracked/gitignored : ``.withings_credentials.json``, ``.env``
+          (doivent rester en racine)"""
+        root = tmp_path / "training-logs"
+        root.mkdir()
+        _git(["init", "-b", "main"], cwd=root)
+        _git(["config", "user.email", "test@example.com"], cwd=root)
+        _git(["config", "user.name", "test"], cwd=root)
+
+        # Tracked items (à migrer)
+        (root / "activities_tracking.json").write_text("{}")
+        weekly = root / "weekly-reports"
+        weekly.mkdir()
+        (weekly / "S099.md").write_text("report\n")
+        # Whitelist
+        (root / ".gitignore").write_text("*.pyc\n" ".withings_credentials.json\n" ".env\n")
+        _git(["add", "-A"], cwd=root)
+        _git(["commit", "-m", "initial legacy"], cwd=root)
+
+        # Untracked runtime/creds — présents sur fs mais gitignored,
+        # jamais git add
+        (root / ".withings_credentials.json").write_text('{"secret": "REDACTED"}')
+        (root / ".env").write_text("API_KEY=REDACTED\n")
+
+        return root
+
+    def test_skips_untracked_and_migrates_tracked(self, legacy_repo_with_untracked):
+        """Le script filtre les untracked, ne fail pas, migre les tracked
+        proprement. Les untracked restent en racine."""
+        result = migrate_training_logs(legacy_repo_with_untracked, alias="w", push=False)
+        # Tracked migrated
+        assert set(result["moved_items"]) == {"activities_tracking.json", "weekly-reports"}
+        # Untracked skipped, listés dans le return
+        assert set(result["skipped_untracked"]) == {".withings_credentials.json", ".env"}
+        # Filesystem : untracked toujours en racine
+        assert (legacy_repo_with_untracked / ".withings_credentials.json").is_file()
+        assert (legacy_repo_with_untracked / ".env").is_file()
+        # Tracked bien moved
+        writer_dir = legacy_repo_with_untracked / result["writer_hash"]
+        assert (writer_dir / "activities_tracking.json").is_file()
+        assert (writer_dir / "weekly-reports" / "S099.md").is_file()
+        # Untracked JAMAIS moved dans le subdir (sécurité anti-leak)
+        assert not (writer_dir / ".withings_credentials.json").exists()
+        assert not (writer_dir / ".env").exists()
+
+    def test_dry_run_reports_untracked_separately(self, legacy_repo_with_untracked):
+        """En dry-run, ``skipped_untracked`` doit lister les items skippés
+        pour que l'opérateur voit clairement ce qui restera en racine."""
+        result = migrate_training_logs(
+            legacy_repo_with_untracked, alias="w", dry_run=True, push=False
+        )
+        assert set(result["skipped_untracked"]) == {".withings_credentials.json", ".env"}
+        assert set(result["moved_items"]) == {"activities_tracking.json", "weekly-reports"}
+        # Aucun write : untracked toujours en racine, tracked aussi (dry-run)
+        assert (legacy_repo_with_untracked / ".withings_credentials.json").is_file()
+        assert (legacy_repo_with_untracked / "activities_tracking.json").is_file()
+
+    def test_only_untracked_items_result_in_provision_but_no_move(self, tmp_path):
+        """Edge case : repo avec UNIQUEMENT des items untracked en racine
+        (rien à migrer côté git). Le script doit quand même détecter
+        « legacy » (car items fs présents) mais ne rien mover, juste
+        provisionner le writer."""
+        root = tmp_path / "training-logs-only-untracked"
+        root.mkdir()
+        _git(["init", "-b", "main"], cwd=root)
+        _git(["config", "user.email", "test@example.com"], cwd=root)
+        _git(["config", "user.name", "test"], cwd=root)
+        (root / ".gitignore").write_text(".env\n")
+        _git(["add", "-A"], cwd=root)
+        _git(["commit", "-m", "gitignore only"], cwd=root)
+        # Ajout untracked APRÈS le commit initial (jamais staged)
+        (root / ".env").write_text("secret\n")
+        (root / "runtime-state.json").write_text("{}")  # non gitignored mais jamais add
+
+        result = migrate_training_logs(root, alias="w", push=False)
+        assert result["moved_items"] == []
+        assert set(result["skipped_untracked"]) == {".env", "runtime-state.json"}
+        # Writer provisionné mais vide de contenu migré (à part .gitkeep)
+        assert result["writer_hash"] is not None
+        # Untracked toujours en racine
+        assert (root / ".env").is_file()
+        assert (root / "runtime-state.json").is_file()
+
+
 class TestIdempotencyAndValidation:
     def test_migrated_repo_raises(self, migrated_git_repo):
         with pytest.raises(RuntimeError, match="NOT in legacy layout"):
