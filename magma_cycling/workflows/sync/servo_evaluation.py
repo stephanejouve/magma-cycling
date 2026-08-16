@@ -442,6 +442,30 @@ class ServoEvaluationMixin:
                 f"respectée (BT-036)."
             )
             return
+        # BT-037 : les sessions à charge nulle (tss_planned=0 → KIN/INJ/
+        # rehab protocoles hors charge) ne doivent pas être touchées par
+        # l'évaluateur auto rest_day. Une règle de charge d'entraînement
+        # (TSB + sommeil) n'a pas vocation à annuler un protocole prescrit
+        # hors charge. Aligné avec l'exclusion existante côté adhérence
+        # (les KIN ne comptent pas dans le TSS hebdo). Cas prod S106-07
+        # (2026-08-16) : KIN planned rétrogradé rest_day malgré tss_planned=0.
+        if target_session.tss_planned == 0:
+            logger.warning(
+                "BT-037 : auto rest_day skipped for session %s (%s) — "
+                "session à charge nulle (tss_planned=0, probablement "
+                "KIN/INJ/rehab protocole prescrit hors charge). "
+                "Règle de charge (TSB + sommeil) inapplicable. "
+                "Trigger reason was: %s",
+                target_session.session_id,
+                target_date,
+                reason,
+            )
+            print(
+                f"     ⚠️  Skipped auto rest_day : session {target_session.session_id} "
+                f"à charge nulle (tss_planned=0), règle de charge inapplicable "
+                f"(BT-037)."
+            )
+            return
 
         # 1. Update planning JSON
         try:
