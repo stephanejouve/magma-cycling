@@ -159,6 +159,226 @@ class TestAutoRestDayApplication:
         assert session.status == "rest_day"
 
 
+class TestBT036GuardTerminalStatus:
+    """BT-036 : auto rest_day doit refuser d'écraser un status terminal
+    (completed, skipped, cancelled, uploaded, replaced, modified) —
+    respect des décisions user/agent explicites.
+
+    Incident du 2026-08-15 : Coach AI avait écrit S106-06 = completed
+    avec bilan complet à 12:15 UTC, le cron daily-sync 21:30 UTC a
+    rétrogradé en rest_day (règle Sommeil aveugle) → perte de données.
+    """
+
+    @pytest.fixture
+    def planning_data_with_various_statuses(self):
+        """Planning avec des sessions à statuts variés pour couvrir tous
+        les cas overwritable vs protégé."""
+        return {
+            "week_id": "S999",
+            "start_date": "2026-03-02",
+            "end_date": "2026-03-08",
+            "created_at": "2026-02-01T20:00:00Z",
+            "last_updated": "2026-02-01T20:00:00Z",
+            "version": 1,
+            "athlete_id": "iXXXXXX",
+            "tss_target": 350,
+            "planned_sessions": [
+                {
+                    "session_id": "S999-01",
+                    "date": "2026-03-02",
+                    "name": "Endurance",
+                    "type": "END",
+                    "version": "V001",
+                    "tss_planned": 50,
+                    "duration_min": 60,
+                    "description": "Endurance Z2",
+                    "status": "planned",  # OVERWRITABLE
+                },
+                {
+                    "session_id": "S999-02",
+                    "date": "2026-03-03",
+                    "name": "Bilan Coach AI",
+                    "type": "END",
+                    "version": "V001",
+                    "tss_planned": 40,
+                    "duration_min": 45,
+                    "description": "Session avec bilan",
+                    "status": "completed",  # PROTECTED (cas S106-06 réel)
+                },
+                {
+                    "session_id": "S999-03",
+                    "date": "2026-03-04",
+                    "name": "Repos user",
+                    "type": "END",
+                    "version": "V001",
+                    "tss_planned": 0,
+                    "duration_min": 0,
+                    "description": "Skip décidé par user",
+                    "status": "skipped",  # PROTECTED
+                    "skip_reason": "User a décidé de skip",
+                },
+                {
+                    "session_id": "S999-04",
+                    "date": "2026-03-05",
+                    "name": "Interval",
+                    "type": "INT",
+                    "version": "V001",
+                    "tss_planned": 70,
+                    "duration_min": 65,
+                    "description": "Sweet Spot 3x10",
+                    "status": "uploaded",  # PROTECTED (envoyé, user va faire)
+                },
+            ],
+        }
+
+    @pytest.fixture
+    def mock_ct_various_statuses(self, tmp_path, planning_data_with_various_statuses):
+        from magma_cycling.planning.control_tower import planning_tower
+
+        original = planning_tower.planning_dir
+        planning_tower.planning_dir = tmp_path
+        planning_tower.backup_system.planning_dir = tmp_path
+        planning_file = tmp_path / "week_planning_S999.json"
+        with open(planning_file, "w", encoding="utf-8") as f:
+            json.dump(planning_data_with_various_statuses, f, indent=2)
+        yield tmp_path
+        planning_tower.planning_dir = original
+        planning_tower.backup_system.planning_dir = original
+
+    @patch("magma_cycling.config.create_intervals_client")
+    @patch("magma_cycling.update_session_status.sync_with_intervals")
+    def test_auto_rest_day_skips_completed_session(
+        self, mock_sync, mock_client, mock_ct_various_statuses, caplog
+    ):
+        """Le cas exact du bug S106-06 : session completed ne doit PAS
+        être écrasée par auto rest_day."""
+        import logging
+
+        from magma_cycling.workflows.sync.servo_evaluation import (
+            ServoEvaluationMixin,
+        )
+
+        mixin = ServoEvaluationMixin()
+        mod = {
+            "action": "rest_day",
+            "target_date": "2026-03-03",  # cible S999-02
+            "current_workout": "S999-02-END-Bilan-V001",
+            "reason": "Sommeil 5.0h (seuil critique < 7h), prioriser récupération",
+        }
+
+        with caplog.at_level(
+            logging.WARNING, logger="magma_cycling.workflows.sync.servo_evaluation"
+        ):
+            mixin._apply_auto_rest_day(mod, "S999")
+
+        # Session completed doit rester intacte
+        planning_file = mock_ct_various_statuses / "week_planning_S999.json"
+        plan = WeeklyPlan.from_json(planning_file)
+        completed_session = next(s for s in plan.planned_sessions if s.session_id == "S999-02")
+        assert (
+            completed_session.status == "completed"
+        ), "Session completed écrasée à tort par auto rest_day"
+
+        # Warning BT-036 émis
+        warning_records = [r for r in caplog.records if r.levelname == "WARNING"]
+        assert any(
+            "BT-036" in r.message and "skipped" in r.message.lower() for r in warning_records
+        ), f"Expected BT-036 warning, got: {[r.message for r in warning_records]}"
+
+        # Sync Intervals.icu PAS appelée (skip complet)
+        mock_sync.assert_not_called()
+
+    @patch("magma_cycling.config.create_intervals_client")
+    @patch("magma_cycling.update_session_status.sync_with_intervals")
+    def test_auto_rest_day_skips_skipped_session(
+        self, mock_sync, mock_client, mock_ct_various_statuses
+    ):
+        """Session skipped (user a explicitement skippé) → protégée."""
+        from magma_cycling.workflows.sync.servo_evaluation import (
+            ServoEvaluationMixin,
+        )
+
+        mixin = ServoEvaluationMixin()
+        mod = {
+            "action": "rest_day",
+            "target_date": "2026-03-04",
+            "current_workout": "S999-03",
+            "reason": "Sommeil insuffisant",
+        }
+        mixin._apply_auto_rest_day(mod, "S999")
+
+        planning_file = mock_ct_various_statuses / "week_planning_S999.json"
+        plan = WeeklyPlan.from_json(planning_file)
+        session = next(s for s in plan.planned_sessions if s.session_id == "S999-03")
+        assert session.status == "skipped"
+        mock_sync.assert_not_called()
+
+    @patch("magma_cycling.config.create_intervals_client")
+    @patch("magma_cycling.update_session_status.sync_with_intervals")
+    def test_auto_rest_day_skips_uploaded_session(
+        self, mock_sync, mock_client, mock_ct_various_statuses
+    ):
+        """Session uploaded (envoyée à Intervals, user va la faire) → protégée."""
+        from magma_cycling.workflows.sync.servo_evaluation import (
+            ServoEvaluationMixin,
+        )
+
+        mixin = ServoEvaluationMixin()
+        mod = {
+            "action": "rest_day",
+            "target_date": "2026-03-05",
+            "current_workout": "S999-04",
+            "reason": "TSB -15",
+        }
+        mixin._apply_auto_rest_day(mod, "S999")
+
+        planning_file = mock_ct_various_statuses / "week_planning_S999.json"
+        plan = WeeklyPlan.from_json(planning_file)
+        session = next(s for s in plan.planned_sessions if s.session_id == "S999-04")
+        assert session.status == "uploaded"
+        mock_sync.assert_not_called()
+
+    @patch("magma_cycling.config.create_intervals_client")
+    @patch("magma_cycling.update_session_status.sync_with_intervals")
+    def test_auto_rest_day_still_overrides_planned_session(
+        self, mock_sync, mock_client, mock_ct_various_statuses
+    ):
+        """Non-régression : session planned (statut overwritable) doit
+        toujours être overwritable par auto rest_day (comportement historique
+        préservé — le bug BT-036 ne bloque QUE les statuts terminaux)."""
+        from magma_cycling.workflows.sync.servo_evaluation import (
+            ServoEvaluationMixin,
+        )
+
+        mock_sync.return_value = True
+        mock_client.return_value = MagicMock()
+
+        mixin = ServoEvaluationMixin()
+        mod = {
+            "action": "rest_day",
+            "target_date": "2026-03-02",  # cible S999-planned
+            "current_workout": "S999-planned",
+            "reason": "TSB -20, fatigue",
+        }
+        mixin._apply_auto_rest_day(mod, "S999")
+
+        planning_file = mock_ct_various_statuses / "week_planning_S999.json"
+        plan = WeeklyPlan.from_json(planning_file)
+        session = next(s for s in plan.planned_sessions if s.session_id == "S999-01")
+        assert session.status == "rest_day", "Session planned devrait rester overwritable"
+
+    def test_overwritable_statuses_whitelist_explicit(self):
+        """Sanity : la whitelist doit rester exactement `{pending, planned, rest_day}`.
+        Toute évolution doit être consciente et documentée."""
+        from magma_cycling.workflows.sync.servo_evaluation import ServoEvaluationMixin
+
+        assert ServoEvaluationMixin.AUTO_REST_DAY_OVERWRITABLE_STATUSES == {
+            "pending",
+            "planned",
+            "rest_day",
+        }
+
+
 class TestSyncIntervalsRestDay:
     """Test sync_with_intervals handles rest_day status."""
 

@@ -1,8 +1,12 @@
 """ServoEvaluationMixin — metrics extraction, false-positive detection, servo triggering."""
 
+import logging
+
 from magma_cycling.planning.session_formatter import format_remaining_sessions_compact
 from magma_cycling.utils.ai_response_parser import parse_ai_modifications
 from magma_cycling.utils.intervals_scales import format_feel
+
+logger = logging.getLogger(__name__)
 
 #: Race-week window : J-0 to J-7 = strict no-load-increase, prioritise taper.
 PRIORITY_OBJECTIVE_RACE_WEEK_MAX_DAYS = 7
@@ -378,6 +382,15 @@ class ServoEvaluationMixin:
 
         return should_trigger, reasons
 
+    # BT-036 : whitelist des statuts qu'auto rest_day est autorisé à
+    # écraser. Toute décision user/agent explicite (completed, skipped,
+    # cancelled, uploaded, replaced, modified) est protégée — le cron
+    # ne peut pas rétrograder ce que l'utilisateur ou Coach AI a clôturé
+    # consciemment. Cf. incident S106-06 le 2026-08-15 : Coach AI avait
+    # écrit un bilan completed à 12:15, le cron 21:30 a écrasé en rest_day
+    # (règle Sommeil aveugle) → data loss.
+    AUTO_REST_DAY_OVERWRITABLE_STATUSES = {"pending", "planned", "rest_day"}
+
     def _apply_auto_rest_day(self, mod: dict, week_id: str):
         """Applique automatiquement un jour de repos (daily-sync non-interactif).
 
@@ -394,6 +407,41 @@ class ServoEvaluationMixin:
 
         print(f"\n  😴 Application automatique repos : {target_date}")
         print(f"     Raison : {reason}")
+
+        # BT-036 : pre-check read-only du status cible AVANT d'entrer dans
+        # modify_week (qui backup + log audit "modified" même sans changement).
+        # Refuse d'écraser tout status hors whitelist overwritables — protège
+        # les décisions user/agent explicites (completed, skipped, cancelled,
+        # uploaded, replaced, modified).
+        try:
+            plan_readonly = planning_tower.read_week(week_id)
+        except FileNotFoundError:
+            print(f"     ⚠️  Planning {week_id} introuvable, skip auto rest_day")
+            return
+        target_session = None
+        for session in plan_readonly.planned_sessions:
+            if str(session.session_date) == target_date:
+                target_session = session
+                break
+        if target_session is None:
+            print(f"     ⚠️  Session non trouvée pour date {target_date}")
+            return
+        if target_session.status not in self.AUTO_REST_DAY_OVERWRITABLE_STATUSES:
+            logger.warning(
+                "BT-036 : auto rest_day skipped for session %s (%s) — "
+                "status=%s is protected against auto overwrite. "
+                "Trigger reason was: %s",
+                target_session.session_id,
+                target_date,
+                target_session.status,
+                reason,
+            )
+            print(
+                f"     ⚠️  Skipped auto rest_day : session {target_session.session_id} "
+                f"déjà clôturée (status={target_session.status}), décision user/agent "
+                f"respectée (BT-036)."
+            )
+            return
 
         # 1. Update planning JSON
         try:
