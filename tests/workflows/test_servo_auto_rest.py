@@ -379,6 +379,171 @@ class TestBT036GuardTerminalStatus:
         }
 
 
+class TestBT037ExcludeZeroTssFromAutoRestDay:
+    """BT-037 : les sessions à charge nulle (``tss_planned=0``, typique
+    des protocoles KIN de kiné, INJ off-bike, rehab) doivent être exclues
+    du path auto rest_day — la règle de charge (TSB + sommeil) n'a pas
+    vocation à annuler un protocole prescrit hors charge.
+
+    Cas prod S106-07 (2026-08-16) : KIN planned rétrogradé rest_day
+    par le cron, malgré tss_planned=0. Fonctionnellement faux : le kiné
+    voyait des séances marquées « repos » alors que le protocole était
+    à faire.
+    """
+
+    @pytest.fixture
+    def planning_data_kin_and_normal(self):
+        """Mix KIN (tss=0) + session cyclisme normale (tss>0) pour couvrir
+        BT-037 vs non-régression."""
+        return {
+            "week_id": "S999",
+            "start_date": "2026-03-02",
+            "end_date": "2026-03-08",
+            "created_at": "2026-02-01T20:00:00Z",
+            "last_updated": "2026-02-01T20:00:00Z",
+            "version": 1,
+            "athlete_id": "iXXXXXX",
+            "tss_target": 350,
+            "planned_sessions": [
+                {
+                    "session_id": "S999-01",
+                    "date": "2026-03-02",
+                    "name": "KIN Protocole Achille",
+                    "type": "KIN",
+                    "version": "V001",
+                    "tss_planned": 0,  # BT-037 : charge nulle
+                    "duration_min": 30,
+                    "description": "Protocole kiné prescrit",
+                    "status": "planned",  # overwritable status (BT-036 laisserait passer)
+                },
+                {
+                    "session_id": "S999-02",
+                    "date": "2026-03-03",
+                    "name": "INJ Off-bike",
+                    "type": "INJ",
+                    "version": "V001",
+                    "tss_planned": 0,  # BT-037
+                    "duration_min": 45,
+                    "description": "Marche récup",
+                    "status": "planned",
+                },
+                {
+                    "session_id": "S999-03",
+                    "date": "2026-03-04",
+                    "name": "Endurance Z2",
+                    "type": "END",
+                    "version": "V001",
+                    "tss_planned": 50,  # charge normale → doit rester overwritable
+                    "duration_min": 60,
+                    "description": "Endurance",
+                    "status": "planned",
+                },
+            ],
+        }
+
+    @pytest.fixture
+    def mock_ct_kin(self, tmp_path, planning_data_kin_and_normal):
+        from magma_cycling.planning.control_tower import planning_tower
+
+        original = planning_tower.planning_dir
+        planning_tower.planning_dir = tmp_path
+        planning_tower.backup_system.planning_dir = tmp_path
+        planning_file = tmp_path / "week_planning_S999.json"
+        with open(planning_file, "w", encoding="utf-8") as f:
+            json.dump(planning_data_kin_and_normal, f, indent=2)
+        yield tmp_path
+        planning_tower.planning_dir = original
+        planning_tower.backup_system.planning_dir = original
+
+    @patch("magma_cycling.config.create_intervals_client")
+    @patch("magma_cycling.update_session_status.sync_with_intervals")
+    def test_auto_rest_day_skips_kin_zero_tss_session(
+        self, mock_sync, mock_client, mock_ct_kin, caplog
+    ):
+        """Reproduit S106-07 : KIN planned tss=0 → skip + warning BT-037."""
+        import logging
+
+        from magma_cycling.workflows.sync.servo_evaluation import (
+            ServoEvaluationMixin,
+        )
+
+        mixin = ServoEvaluationMixin()
+        mod = {
+            "action": "rest_day",
+            "target_date": "2026-03-02",  # cible S999-01 KIN
+            "current_workout": "S999-01-KIN-Protocole-V001",
+            "reason": "Sommeil 5.0h (seuil critique < 7h)",
+        }
+
+        with caplog.at_level(
+            logging.WARNING, logger="magma_cycling.workflows.sync.servo_evaluation"
+        ):
+            mixin._apply_auto_rest_day(mod, "S999")
+
+        planning_file = mock_ct_kin / "week_planning_S999.json"
+        plan = WeeklyPlan.from_json(planning_file)
+        kin_session = next(s for s in plan.planned_sessions if s.session_id == "S999-01")
+        assert kin_session.status == "planned", "KIN session écrasée à tort par auto rest_day"
+
+        warning_records = [r for r in caplog.records if r.levelname == "WARNING"]
+        assert any(
+            "BT-037" in r.message and "charge nulle" in r.message for r in warning_records
+        ), f"Expected BT-037 warning, got: {[r.message for r in warning_records]}"
+
+        mock_sync.assert_not_called()
+
+    @patch("magma_cycling.config.create_intervals_client")
+    @patch("magma_cycling.update_session_status.sync_with_intervals")
+    def test_auto_rest_day_skips_inj_zero_tss_session(self, mock_sync, mock_client, mock_ct_kin):
+        """INJ (off-bike) tss=0 → skip BT-037 aussi (générique tss=0, pas juste KIN)."""
+        from magma_cycling.workflows.sync.servo_evaluation import (
+            ServoEvaluationMixin,
+        )
+
+        mixin = ServoEvaluationMixin()
+        mod = {
+            "action": "rest_day",
+            "target_date": "2026-03-03",  # cible S999-02 INJ
+            "current_workout": "S999-02-INJ-Marche-V001",
+            "reason": "TSB -15",
+        }
+        mixin._apply_auto_rest_day(mod, "S999")
+
+        planning_file = mock_ct_kin / "week_planning_S999.json"
+        plan = WeeklyPlan.from_json(planning_file)
+        inj_session = next(s for s in plan.planned_sessions if s.session_id == "S999-02")
+        assert inj_session.status == "planned"
+        mock_sync.assert_not_called()
+
+    @patch("magma_cycling.config.create_intervals_client")
+    @patch("magma_cycling.update_session_status.sync_with_intervals")
+    def test_auto_rest_day_still_overrides_normal_charge_session(
+        self, mock_sync, mock_client, mock_ct_kin
+    ):
+        """Non-régression : session END avec tss=50 (charge normale)
+        planned + trigger → override normal (comportement historique)."""
+        from magma_cycling.workflows.sync.servo_evaluation import (
+            ServoEvaluationMixin,
+        )
+
+        mock_sync.return_value = True
+        mock_client.return_value = MagicMock()
+
+        mixin = ServoEvaluationMixin()
+        mod = {
+            "action": "rest_day",
+            "target_date": "2026-03-04",  # cible S999-03 END tss=50
+            "current_workout": "S999-03-END-Endurance-V001",
+            "reason": "TSB -20",
+        }
+        mixin._apply_auto_rest_day(mod, "S999")
+
+        planning_file = mock_ct_kin / "week_planning_S999.json"
+        plan = WeeklyPlan.from_json(planning_file)
+        session = next(s for s in plan.planned_sessions if s.session_id == "S999-03")
+        assert session.status == "rest_day", "Session à charge normale devrait rester overwritable"
+
+
 class TestSyncIntervalsRestDay:
     """Test sync_with_intervals handles rest_day status."""
 
