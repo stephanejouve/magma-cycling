@@ -72,6 +72,41 @@ def migrated_repo(tmp_path):
     return tmp_path
 
 
+@pytest.fixture
+def hybrid_repo(tmp_path):
+    """Repo hybride BT-030 : ``.operators.yaml`` présent + writer subdir
+    provisionné + du contenu flat racine encore à absorber.
+
+    Cas réel constaté sur prod NAS (2026-08-15) : Phase 1A de mai avait
+    provisionné le writer ``88bc132e32a0`` avec quelques weekly-reports
+    dedans, mais 99 % des écritures runtime (data/, weekly-reports S095+,
+    monthly-reports, etc.) sont restées en racine parce que la migration
+    complète n'avait jamais été bouclée. Le script BT-027 doit accepter
+    ce cas et migrer le flat racine vers un nouveau (ou même) writer.
+    """
+    (tmp_path / ".git").mkdir()
+    (tmp_path / ".gitignore").write_text("*.pyc\n")
+    (tmp_path / ".operators.yaml").write_text(
+        "shared_root_files:\n  - .gitignore\n  - README.md\n"
+        "  - .operators.yaml\nwriters:\n"
+        "  88bc132e32a0:\n    alias: nas-prod\n    host: nas\n"
+        "    provisioned_at: 2026-05-03T09:44:00Z\n"
+        "    decommissioned_at: null\n"
+    )
+    # Writer déjà provisionné (Phase 1A) — partiellement rempli
+    (tmp_path / "88bc132e32a0").mkdir()
+    (tmp_path / "88bc132e32a0" / "workouts-history.md").write_text("legacy\n")
+    # Contenu flat racine encore à absorber (écritures runtime post-Phase 1A).
+    # NB : ``data/`` est whitelisté au toplevel donc pas listé ici.
+    (tmp_path / "activities_tracking.json").write_text('{"live": true}')
+    (tmp_path / "backups").mkdir()
+    (tmp_path / "backups" / "S105-backup.md").write_text("backup\n")
+    weekly = tmp_path / "weekly-reports"
+    weekly.mkdir()
+    (weekly / "S105.md").write_text("weekly S105\n")
+    return tmp_path
+
+
 class TestDetectLegacyLayout:
     def test_legacy_flat_repo_detected(self, legacy_flat_repo):
         assert detect_legacy_layout(legacy_flat_repo) is True
@@ -102,6 +137,14 @@ class TestDetectLegacyLayout:
         # Pas de .operators.yaml, mais aussi rien en racine hors whitelist
         # ni hors le writer hash → pas legacy.
         assert detect_legacy_layout(tmp_path) is False
+
+    def test_hybrid_repo_detected_bt030(self, hybrid_repo):
+        """BT-030 : repo hybride (``.operators.yaml`` + writer subdir +
+        flat racine à absorber) doit être détecté comme nécessitant une
+        migration. Avant BT-030, la présence de ``.operators.yaml``
+        court-circuitait la détection et bloquait ``migrate_training_logs``
+        (« not in legacy layout »)."""
+        assert detect_legacy_layout(hybrid_repo) is True
 
 
 class TestRaiseIfLegacyLayout:
@@ -134,6 +177,31 @@ class TestRaiseIfLegacyLayout:
             raise_if_legacy_layout(tmp_path)
         # 5 items visibles + mention "+N autres"
         assert "autres" in str(exc_info.value)
+
+    def test_raises_on_hybrid_with_specific_message(self, hybrid_repo):
+        """BT-030 : le message doit distinguer hybride (``.operators.yaml``
+        présent) de legacy pur pour aider au diagnostic. L'utilisateur sait
+        immédiatement s'il a un repo pré-Phase 2 pur ou un writer déjà
+        provisionné mais pas de migration complète."""
+        with pytest.raises(LegacyLayoutError) as exc_info:
+            raise_if_legacy_layout(hybrid_repo)
+        msg = str(exc_info.value)
+        assert "hybrid layout" in msg
+        assert ".operators.yaml" in msg
+        # Commande actionnable toujours présente
+        assert "poetry run setup --migrate-training-logs" in msg
+        # Items flat racine listés dans preview
+        assert "activities_tracking.json" in msg or "data" in msg or "weekly-reports" in msg
+
+    def test_raises_on_legacy_pure_with_specific_message(self, legacy_flat_repo):
+        """BT-030 : symétrique du test précédent, le message doit dire
+        « legacy layout » (pas « hybrid ») quand ``.operators.yaml`` est
+        absent."""
+        with pytest.raises(LegacyLayoutError) as exc_info:
+            raise_if_legacy_layout(legacy_flat_repo)
+        msg = str(exc_info.value)
+        assert "legacy layout" in msg
+        assert "hybrid" not in msg
 
 
 class TestDataRepoConfigIntegration:
@@ -171,4 +239,15 @@ class TestDataRepoConfigIntegration:
         monkeypatch.setenv("TRAINING_DATA_WRITER_SCOPED", "1")
         monkeypatch.delenv("TRAINING_DATA_WRITER_ID", raising=False)
         with pytest.raises(RuntimeError, match="TRAINING_DATA_WRITER_ID"):
+            DataRepoConfig()
+
+    def test_writer_scoped_on_hybrid_repo_raises_bt030(self, hybrid_repo, monkeypatch):
+        """BT-030 : activer writer_scoped sur un repo hybride doit lever
+        ``LegacyLayoutError`` (AVANT le check WRITER_ID) pour empêcher un
+        runtime qui écrirait dans un layout mal formé. Le message doit
+        pointer sur la migration hybride, pas legacy pur."""
+        monkeypatch.setenv("TRAINING_DATA_ROOT", str(hybrid_repo))
+        monkeypatch.setenv("TRAINING_DATA_WRITER_SCOPED", "1")
+        monkeypatch.setenv("TRAINING_DATA_WRITER_ID", "88bc132e32a0")  # writer déjà provisionné
+        with pytest.raises(LegacyLayoutError, match="hybrid layout"):
             DataRepoConfig()

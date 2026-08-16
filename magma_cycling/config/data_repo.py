@@ -152,15 +152,20 @@ class LegacyLayoutError(RuntimeError):
 def _root_files_outside_whitelist(root: Path) -> list[str]:
     """Retourne les paths top-level du repo qui NE sont pas dans la whitelist.
 
-    Utilisé pour détecter un layout legacy : si le repo contient des
-    fichiers/dossiers en racine hors ``shared_root_files``, c'est qu'il
-    n'a jamais été migré vers le layout writer-scoped. Inversement,
-    un repo vraiment vierge (racine avec juste ``.git`` + ``.gitignore``
-    + ``README.md``) n'est pas considéré legacy — rien à migrer.
+    Utilisé pour détecter un layout qui nécessite une migration : si le
+    repo contient des fichiers/dossiers en racine hors
+    ``shared_root_files``, c'est qu'il n'a pas encore été migré vers le
+    layout writer-scoped (cas legacy pur) ou qu'il l'est partiellement
+    (cas hybride BT-030). Un repo vraiment vierge (racine avec juste
+    ``.git`` + whitelist) n'est pas considéré nécessitant migration.
 
-    La whitelist utilisée est :data:`DEFAULT_SHARED_ROOT_FILES` — on ne
-    consulte pas ``.operators.yaml`` puisque la détection legacy est
-    précisément appelée quand ce fichier est absent.
+    Source de la whitelist (BT-030) :
+
+    - Si ``.operators.yaml`` existe à la racine, lecture de sa clé
+      ``shared_root_files`` (le contract officiel du repo peut avoir
+      étendu la liste par défaut, ex. ``workouts-history.md`` pour la
+      Phase 1A).
+    - Sinon fallback à :data:`DEFAULT_SHARED_ROOT_FILES`.
 
     Args:
         root: Path racine du repo training-logs.
@@ -169,10 +174,29 @@ def _root_files_outside_whitelist(root: Path) -> list[str]:
         Liste des noms de fichiers/dossiers top-level hors whitelist +
         hors ``.git``. Chaîne vide si le repo est "clean" (rien à migrer).
     """
+    # BT-030 : lire la whitelist depuis .operators.yaml si présent
+    # (contract officiel du repo), sinon fallback à la constante.
+    whitelist_patterns = list(DEFAULT_SHARED_ROOT_FILES)
+    operators_path = root / OPERATORS_FILE
+    if operators_path.is_file():
+        try:
+            import yaml
+
+            with operators_path.open(encoding="utf-8") as fh:
+                ops = yaml.safe_load(fh) or {}
+            declared = ops.get("shared_root_files")
+            if isinstance(declared, list) and declared:
+                whitelist_patterns = declared
+        except (OSError, yaml.YAMLError):
+            # Fichier illisible ou YAML mal formé → fallback silencieux
+            # sur la constante. La détection reste conservative (peut
+            # remonter faux positifs mais ne cache pas de vrai legacy).
+            pass
+
     # Extraire les noms top-level de la whitelist (ex: "data/intelligence/**"
     # → "data"). Les patterns globs sont traités par leur premier segment.
     whitelist_toplevel = set()
-    for pattern in DEFAULT_SHARED_ROOT_FILES:
+    for pattern in whitelist_patterns:
         first_segment = pattern.split("/", 1)[0]
         whitelist_toplevel.add(first_segment)
 
@@ -196,30 +220,41 @@ def _root_files_outside_whitelist(root: Path) -> list[str]:
 
 
 def detect_legacy_layout(root: Path) -> bool:
-    """Détecte un layout training-logs flat legacy (pré-Phase 1 ADR v5).
+    """Détecte qu'un repo training-logs nécessite une migration BT-027.
 
-    Un repo est en layout legacy si :
+    Un repo nécessite une migration si au moins un fichier/dossier est
+    présent à la racine hors :data:`DEFAULT_SHARED_ROOT_FILES` + ``.git``
+    + hashes writer. Deux sous-cas :
 
-    1. ``.operators.yaml`` est ABSENT à la racine (le fichier est le
-       marqueur du layout writer-scoped, présent dès Phase 1 pour nos 3
-       writers et dès migration pour les beta-testeurs)
-    2. ET au moins un fichier/dossier est présent à la racine hors
-       :data:`DEFAULT_SHARED_ROOT_FILES` + ``.git`` + hashes writer
+    1. **Legacy pur** (pré-Phase 1 ADR v5) : ``.operators.yaml`` absent,
+       structure 100 % flat racine. Cas des beta-testeurs qui n'ont pas
+       encore migré.
 
-    Si le repo est vide (ou racine 100% whitelist), on ne le considère
+    2. **Hybride** (BT-030, 2026-08-16) : ``.operators.yaml`` présent
+       (writer déjà provisionné, ex. par une Phase 1A partielle) MAIS
+       du contenu flat racine reste à absorber dans un subdir writer.
+       Découvert sur prod NAS mardi soir : le repo avait un writer
+       ``88bc132e32a0`` créé en mai + 99 % des écritures runtime encore
+       en racine.
+
+    Si le repo est vide (ou racine 100 % whitelist), on ne le considère
     PAS legacy — rien à migrer, le premier writer sera provisionné
     normalement au setup.
+
+    Historique : avant BT-030, cette fonction retournait ``False`` dès
+    que ``.operators.yaml`` était présent, ce qui excluait à tort le
+    cas hybride et bloquait ``migrate_training_logs`` (« not in legacy
+    layout — nothing to migrate »). La sémantique est maintenant
+    « items racine hors whitelist présents », indépendante de
+    ``.operators.yaml``.
 
     Args:
         root: Path racine du repo training-logs.
 
     Returns:
-        ``True`` si layout legacy détecté (migration nécessaire).
+        ``True`` si migration nécessaire (legacy pur OU hybride).
     """
     if not root.is_dir():
-        return False
-    operators_path = root / OPERATORS_FILE
-    if operators_path.is_file():
         return False
     return len(_root_files_outside_whitelist(root)) > 0
 
@@ -245,9 +280,19 @@ def raise_if_legacy_layout(root: Path) -> None:
     preview = ", ".join(legacy_items[:5])
     if len(legacy_items) > 5:
         preview += f", ... (+{len(legacy_items) - 5} autres)"
+    # BT-030 : distinguer le cas hybride du cas legacy pur pour un
+    # message plus précis. Hybride = .operators.yaml présent + flat
+    # racine encore à absorber (typique d'une Phase 1A partielle).
+    if (root / OPERATORS_FILE).is_file():
+        layout_desc = (
+            "hybrid layout (writer-scoped `.operators.yaml` present but "
+            "root still contains items to absorb into a writer subdir)"
+        )
+    else:
+        layout_desc = "legacy layout (flat structure, no `.operators.yaml`)"
     raise LegacyLayoutError(
-        f"Training logs repo detected in legacy layout (flat structure) at {root}.\n"
-        f"Legacy items in root: {preview}\n\n"
+        f"Training logs repo detected in {layout_desc} at {root}.\n"
+        f"Items to migrate from root: {preview}\n\n"
         f"Migrate to writer-scoped layout:\n"
         f"  poetry run setup --migrate-training-logs\n\n"
         f"See ADR v5 §7 Upgrade path for details "
