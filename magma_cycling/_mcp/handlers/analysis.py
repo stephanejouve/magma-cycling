@@ -348,19 +348,26 @@ def _compute_adherence_for_range(start_date: str, end_date: str, activities: lis
     range_start = _date.fromisoformat(start_date)
     range_end = _date.fromisoformat(end_date)
 
-    # BT-046 : Intervals.icu renvoie ``activity["id"]`` déjà préfixé
-    # ``"i<num>"`` (format string, ex: ``"i119167962"``). Le lookup côté
-    # session utilise ``f"i{intervals_id}"`` (int planning → préfixé),
-    # donc on stocke ``aid`` brut sans re-préfixer (sinon double « i »
-    # → mismatch systématique → tout en fallback tss_planned → tautologie
-    # adherence=100%). Cf. pattern éprouvé ``analyzers/monthly/data.py:81``
-    # qui utilise ``{a["id"]: ...}`` depuis BT-039.
+    # BT-048 : matching planning ⇔ activité passe par ``paired_event_id``,
+    # PAS par ``activity.id``. Intervals distingue :
+    #   - ``activity.id`` (ex ``"i162682746"``) : la course réalisée
+    #   - ``activity.paired_event_id`` (ex ``119167963``) : l'event
+    #     calendrier planifié qu'elle satisfait
+    # Le planning stocke ``intervals_id = paired_event_id`` (event ID).
+    # Indexer par ``activity.id`` produit un mismatch systématique →
+    # tautologie adherence=100% (bug prod BT-039 monthly + BT-042 include
+    # depuis 2 mois, masqué par fixtures test utilisant des id == intervals_id
+    # scenarios impossibles en réel). Cf. patterns éprouvés
+    # ``workflows/sync/activity_tracker.py:67`` et
+    # ``workflows/sync/activity_detection.py:96``.
     actual_tss_map: dict[str, float] = {}
     for act in activities:
-        aid = act.get("id")
+        peid = act.get("paired_event_id")
         tss = act.get("icu_training_load")
-        if aid is not None and tss is not None:
-            actual_tss_map[aid] = tss
+        # peid=None → activité non-planifiée (Zwift libre, etc.) → hors
+        # adherence, la session planifiée tombera en fallback.
+        if peid is not None and tss is not None:
+            actual_tss_map[f"i{peid}"] = tss
 
     # Glob weekly plannings — filtre par intersection [start_date, end_date]
     data_config = get_data_config()

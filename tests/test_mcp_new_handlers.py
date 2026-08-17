@@ -1375,13 +1375,15 @@ class TestBT042IncludeAdherence:
         planning_dir.mkdir()
         (planning_dir / "week_planning_S999.json").write_text(json.dumps(week))
 
-        # Activité correspondant à S999-01 avec TSS différent du planned
-        # BT-046 : Intervals.icu renvoie id string préfixé "i<num>", pas int.
-        # La fixture doit refléter le vrai format sinon le bug de double
-        # préfixage dans actual_tss_map passait silencieusement.
+        # Activité correspondant à S999-01 avec TSS différent du planned.
+        # BT-048 : le matching se fait via ``paired_event_id`` (event
+        # calendrier planifié) et NON via ``activity.id`` (course réalisée).
+        # ``id`` est un identifiant strictement différent (ex: activity
+        # ``i162682746`` avec ``paired_event_id=119167963`` = event S100-06).
         mock_intervals.get_activities.return_value = [
             {
-                "id": "i12345",
+                "id": "i88888",
+                "paired_event_id": 12345,
                 "icu_training_load": 105,
                 "moving_time": 3600,
                 "distance": 30000,
@@ -1537,25 +1539,34 @@ class TestBT042IncludeAdherence:
         assert "S999-KIN01" not in adh["tss_source_map"]["intervals"]
 
 
-class TestBT046AdherenceIdPrefixMatching:
-    """BT-046 : ``_compute_adherence_for_range`` doit accepter le format id
-    Intervals.icu (``"i<num>"`` string préfixé) sans double préfixer.
+class TestBT048AdherenceMatchViaPairedEventId:
+    """BT-048 : ``_compute_adherence_for_range`` doit indexer ``actual_tss_map``
+    par ``paired_event_id`` et non par ``activity.id``.
 
-    Régression prod S100 (2026-06-29 → 2026-07-05, appel Coach AI) :
-    ``tss_source_map.intervals=[]``, tout en ``planned_fallback`` →
-    ``tss_realized = sum(tss_planned)`` tautologique → adherence 100%
-    par construction. Le vrai réalisé était 354 vs 269 planned = 132%.
+    Régression prod S100 (2026-06-29 → 2026-07-05, appel Coach AI post
+    v3.72.2) : ``tss_source_map.intervals=[]``, tout en ``planned_fallback``
+    → ``tss_realized = sum(tss_planned) = 269`` tautologique →
+    adherence 100 % par construction. Réel attendu : 348/269 ≈ 129 %
+    (activités matchant les 4 sessions completed via ``paired_event_id``).
 
-    Cause : ``actual_tss_map[f"i{aid}"]`` sur ``aid`` déjà préfixé
-    ``"i119167962"`` → clé ``"ii119167962"`` → mismatch systématique
-    avec lookup ``f"i{intervals_id}"`` = ``"i119167962"``.
+    Cause : Intervals distingue ``activity.id`` (ex ``"i162682746"``) de
+    ``paired_event_id`` (ex ``119167963``, event calendrier planifié). Le
+    planning stocke ``intervals_id = paired_event_id``. Indexer par
+    ``activity.id`` produit un mismatch systématique.
 
-    Fix : stocker ``aid`` brut (déjà préfixé par Intervals).
+    Fix : ``actual_tss_map[f"i{paired_event_id}"] = tss``, aligne avec le
+    lookup ``f"i{intervals_id}"``. Pattern éprouvé cf.
+    ``workflows/sync/activity_tracker.py:67`` et
+    ``workflows/sync/activity_detection.py:96``.
+
+    Note historique : les hypothèses BT-046 (double préfixage) puis
+    fixture "id == intervals_id" étaient toutes deux fausses — mode
+    correction en 2 étapes documenté par ce test.
     """
 
     @pytest.mark.asyncio
-    async def test_prod_id_format_matches_and_uses_actual_tss(self, mock_intervals, tmp_path):
-        """Format prod ``"i<num>"`` string → match → ``tss_realized`` réel."""
+    async def test_prod_paired_event_id_matches_and_uses_actual_tss(self, mock_intervals, tmp_path):
+        """Fixture réaliste S100-06 : activity.id ≠ paired_event_id."""
         from magma_cycling.mcp_server import handle_get_training_statistics
 
         week = {
@@ -1565,16 +1576,17 @@ class TestBT046AdherenceIdPrefixMatching:
             "tss_target": 300,
             "planned_sessions": [
                 {
-                    "session_id": "S999-05",
-                    "date": "2026-07-03",
-                    "name": "Endurance",
+                    "session_id": "S999-06",
+                    "date": "2026-07-04",
+                    "name": "Endurance longue",
                     "type": "END",
                     "version": "V001",
-                    "tss_planned": 100,
-                    "duration_min": 60,
-                    "description": "Endurance Z2",
+                    "tss_planned": 211,
+                    "duration_min": 240,
+                    "description": "Sortie Les Copains 81km",
                     "status": "completed",
-                    "intervals_id": 119167962,
+                    # Stocké = paired_event_id de l'activité réalisée
+                    "intervals_id": 119167963,
                 },
             ],
         }
@@ -1582,9 +1594,21 @@ class TestBT046AdherenceIdPrefixMatching:
         planning_dir.mkdir()
         (planning_dir / "week_planning_S999.json").write_text(json.dumps(week))
 
-        # Format PROD Intervals.icu : id string préfixé "i<num>"
+        # Format PROD RÉEL : id activité ≠ paired_event_id
         mock_intervals.get_activities.return_value = [
-            {"id": "i119167962", "icu_training_load": 132, "moving_time": 3600},
+            {
+                "id": "i162682746",  # activity ID (course réalisée)
+                "paired_event_id": 119167963,  # event calendrier planifié
+                "icu_training_load": 270,
+                "moving_time": 14400,
+            },
+            # Activité non-planifiée (Zwift libre) : peid=None → hors adherence
+            {
+                "id": "i162680577",
+                "paired_event_id": None,
+                "icu_training_load": 6,
+                "moving_time": 600,
+            },
         ]
         mock_intervals.get_wellness.return_value = []
 
@@ -1601,12 +1625,13 @@ class TestBT046AdherenceIdPrefixMatching:
 
         data = json.loads(result[0].text)
         adh = data["adherence"]
-        assert adh["tss_realized"] == 132.0, (
-            f"BT-046: real Intervals TSS (132) attendu, got {adh['tss_realized']} "
-            f"— si 100 = bug double préfixage revenu (fallback tss_planned)"
+        assert adh["tss_realized"] == 270.0, (
+            f"BT-048: real Intervals TSS (270 via paired_event_id) attendu, "
+            f"got {adh['tss_realized']} — si 211 = mismatch, activity indexé "
+            f"par id au lieu de paired_event_id revenu"
         )
-        assert "S999-05" in adh["tss_source_map"]["intervals"]
-        assert "S999-05" not in adh["tss_source_map"]["planned_fallback"]
+        assert "S999-06" in adh["tss_source_map"]["intervals"]
+        assert "S999-06" not in adh["tss_source_map"]["planned_fallback"]
 
 
 class TestBT045NoneTssTolerance:

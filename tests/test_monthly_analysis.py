@@ -65,12 +65,16 @@ class TestFetchActualTss:
     """Tests for _fetch_actual_tss()."""
 
     def test_success(self, analyzer, weekly_data):
-        """Successful API call returns {id: tss} mapping."""
+        """Successful API call returns {f"i{paired_event_id}": tss} mapping.
+
+        BT-048 : indexation par ``paired_event_id`` (event calendrier), pas
+        ``activity.id``. Le planning stocke ``intervals_id = paired_event_id``.
+        """
         mock_client = MagicMock()
         mock_client.get_activities.return_value = [
-            {"id": "i126184461", "icu_training_load": 120},
-            {"id": "i126200000", "icu_training_load": 356},
-            {"id": "i999999999", "icu_training_load": 45},
+            {"id": "i148000001", "paired_event_id": 126184461, "icu_training_load": 120},
+            {"id": "i148000002", "paired_event_id": 126200000, "icu_training_load": 356},
+            {"id": "i148000003", "paired_event_id": 999999999, "icu_training_load": 45},
         ]
 
         with patch(
@@ -100,7 +104,7 @@ class TestFetchActualTss:
         """Activities with null icu_training_load get TSS=0."""
         mock_client = MagicMock()
         mock_client.get_activities.return_value = [
-            {"id": "i126184461", "icu_training_load": None},
+            {"id": "i148000001", "paired_event_id": 126184461, "icu_training_load": None},
         ]
 
         with patch(
@@ -110,6 +114,25 @@ class TestFetchActualTss:
             result = analyzer._fetch_actual_tss(weekly_data)
 
         assert result["i126184461"] == 0
+
+    def test_activity_without_paired_event_id_is_excluded(self, analyzer, weekly_data):
+        """BT-048 : activité sans ``paired_event_id`` (Zwift libre, tracker
+        non planifié) est exclue de la map — la session planifiée tombera
+        proprement en fallback ``tss_planned``."""
+        mock_client = MagicMock()
+        mock_client.get_activities.return_value = [
+            {"id": "i148000001", "paired_event_id": 126184461, "icu_training_load": 120},
+            {"id": "i148000002", "paired_event_id": None, "icu_training_load": 6},
+        ]
+
+        with patch(
+            "magma_cycling.config.create_intervals_client",
+            return_value=mock_client,
+        ):
+            result = analyzer._fetch_actual_tss(weekly_data)
+
+        assert result == {"i126184461": 120}
+        assert "i148000002" not in result
 
 
 class TestAggregateStatisticsActualTss:
