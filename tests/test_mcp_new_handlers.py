@@ -1638,6 +1638,40 @@ class TestBT045NoneTssTolerance:
         assert data["summary"]["total_tss"] == 125.0, "somme 80 + 0 + 45 = 125"
 
 
+class TestBT047AllAccumulatorsNoneTolerance:
+    """BT-047 : audit exhaustif accumulators ``get-training-statistics``.
+
+    BT-045 fixait uniquement ``icu_training_load`` (int). Junior a montré
+    que le crash migrait ensuite sur ``float + NoneType`` — les
+    accumulators ``moving_time`` et ``distance`` (float après /3600 et
+    /1000) sont vulnérables au même pattern. Fix uniforme ``(a.get(...) or 0)``.
+    """
+
+    @pytest.mark.asyncio
+    async def test_activity_with_all_none_metrics_does_not_crash(self, mock_intervals):
+        """Activité avec ``moving_time=None`` **et** ``distance=None`` : pas de crash."""
+        from magma_cycling.mcp_server import handle_get_training_statistics
+
+        mock_intervals.get_activities.return_value = [
+            {"id": 1, "icu_training_load": 80, "moving_time": 3600, "distance": 30000},
+            {"id": 2, "icu_training_load": None, "moving_time": None, "distance": None},
+            {"id": 3, "icu_training_load": 45, "moving_time": 1800, "distance": 15000},
+        ]
+        mock_intervals.get_wellness.return_value = []
+        with patch(INTERVALS_PATCH, return_value=mock_intervals):
+            result = await handle_get_training_statistics(
+                {"start_date": "2026-08-10", "end_date": "2026-08-17"}
+            )
+        data = json.loads(result[0].text)
+        assert "error" not in data, f"BT-047: doit tolérer None sur tous les champs, got {data}"
+        summary = data["summary"]
+        assert summary["total_tss"] == 125.0, "80 + 0 + 45 = 125"
+        # (3600 + 0 + 1800) / 3600 = 1.5 h
+        assert summary["total_duration_hours"] == 1.5
+        # (30000 + 0 + 15000) / 1000 = 45.0 km
+        assert summary["total_distance_km"] == 45.0
+
+
 # =======================
 # TestHandleExportWeekToJson
 # =======================

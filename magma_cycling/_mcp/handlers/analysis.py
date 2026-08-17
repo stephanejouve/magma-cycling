@@ -243,13 +243,14 @@ async def handle_get_training_statistics(args: dict) -> list[TextContent]:
 
             # Calculate statistics
             total_activities = len(activities)
-            # BT-045 : ``.get(..., 0)`` ne protège pas contre valeur ``None``
-            # explicite renvoyée par Intervals.icu (activités sans données
-            # puissance/HR). ``or 0`` évite ``TypeError: int + NoneType``
-            # sur fenêtre incluant sessions planned ou activités incomplètes.
+            # BT-045 + BT-047 : ``.get(..., 0)`` ne protège pas contre valeur
+            # ``None`` explicite renvoyée par Intervals.icu (activités sans
+            # données puissance/HR/GPS). ``or 0`` uniforme sur toute la
+            # surface des accumulators (TSS int, moving_time/distance float)
+            # évite ``TypeError: int/float + NoneType``.
             total_tss = sum((a.get("icu_training_load") or 0) for a in activities)
-            total_duration = sum(a.get("moving_time", 0) for a in activities) / 3600  # Hours
-            total_distance = sum(a.get("distance", 0) for a in activities) / 1000  # Km
+            total_duration = sum((a.get("moving_time") or 0) for a in activities) / 3600  # Hours
+            total_distance = sum((a.get("distance") or 0) for a in activities) / 1000  # Km
 
             avg_tss = total_tss / total_activities if total_activities > 0 else 0
 
