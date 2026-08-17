@@ -30,6 +30,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **BT-047** — Audit exhaustif accumulators `get-training-statistics` :
+  BT-045 fixait uniquement `icu_training_load` (int) ; le crash migrait
+  ensuite sur `float + NoneType` via `moving_time` (float après /3600) et
+  `distance` (float après /1000). Fix uniforme `(a.get(...) or 0)` sur
+  toute la surface des sums. Test `TestBT047` avec activité `moving_time=None`
+  **et** `distance=None`. Aligne les 3 champs (TSS/duration/distance) sur
+  le même pattern défensif.
 - **BT-046** — `get-training-statistics(include_adherence=true)` : fix
   double préfixage `"i"` dans `actual_tss_map` de
   `_compute_adherence_for_range`. Intervals.icu renvoie
