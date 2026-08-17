@@ -525,7 +525,22 @@ async def handle_update_session(args: dict) -> list[TextContent]:
                     # direction de la transition, sinon on plante sur un état
                     # transitoire incohérent (régression détectée par TNR
                     # preprod 2026-05-03 sur PR #309 v1).
-                    if new_status in ("skipped", "cancelled", "replaced"):
+                    if new_status in ("skipped", "cancelled", "replaced", "rest_day"):
+                        # BT-040 : ``rest_day`` ajouté à la whitelist des
+                        # transitions « non-exécution » qui persistent le
+                        # ``reason`` dans ``skip_reason``. Avant BT-040,
+                        # ``update-session(status=rest_day, reason=...)``
+                        # tombait dans le path « actif » (else) qui clearait
+                        # ``skip_reason`` — le reason était jeté silencieusement
+                        # (même motif anti-doctrine BT-021 que le silent-drop
+                        # sur completed fixé par BT-026 part 2, PR #469).
+                        # Cas prod S100-04 : conversion affûtage J-2 avant
+                        # course A Les Copains, raison perdue.
+                        #
+                        # NB : le validator ``validate_skip_reason`` n'exige
+                        # skip_reason que pour skipped/cancelled/replaced. Sur
+                        # rest_day, skip_reason reste optionnel — l'user peut
+                        # convertir sans raison, ex. weekend hors calendrier.
                         # Vers état « interrompu » : set skip_reason AVANT status
                         # (sinon validator plante car status=skipped + reason=None).
                         if reason:

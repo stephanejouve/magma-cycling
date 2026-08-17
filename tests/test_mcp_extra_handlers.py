@@ -221,6 +221,80 @@ class TestHandleUpdateSession:
         assert mock_session.skip_reason is None
 
     @pytest.mark.asyncio
+    async def test_bt040_persists_reason_on_status_rest_day(self, mock_plan, mock_session):
+        """BT-040 : ``update-session(status=rest_day, reason=...)`` doit
+        persister le reason dans ``skip_reason`` (comme skipped/cancelled/
+        replaced). Avant BT-040, le reason était jeté silencieusement dans
+        le path « actif » (motif anti-doctrine BT-021). Cas prod S100-04
+        (2026-06-29) : conversion affûtage J-2 avant course A Les Copains,
+        raison « Affutage J-2 : SweetSpot 72 TSS supprimee, repos avant
+        course » perdue."""
+        from magma_cycling.mcp_server import handle_update_session
+
+        mock_session.status = "planned"
+        mock_session.skip_reason = None
+        tower = make_tower(mock_plan)
+        args = {
+            "week_id": "S081",
+            "session_id": "S081-03",
+            "status": "rest_day",
+            "reason": "Affutage J-2 avant course, fraîcheur prioritaire",
+        }
+        with patch(TOWER_PATCH, tower):
+            result = await handle_update_session(args)
+        data = json.loads(result[0].text)
+        assert data["status"] == "rest_day"
+        assert mock_session.status == "rest_day"
+        assert mock_session.skip_reason == "Affutage J-2 avant course, fraîcheur prioritaire", (
+            "BT-040 : reason passé à update-session(rest_day) doit être "
+            "persisté dans skip_reason, pas jeté silencieusement."
+        )
+
+    @pytest.mark.asyncio
+    async def test_bt040_rest_day_without_reason_preserves_existing_skip_reason(
+        self, mock_plan, mock_session
+    ):
+        """BT-040 : ``update-session(status=rest_day)`` sans reason doit
+        PRÉSERVER l'ancien skip_reason (comme skipped/cancelled/replaced) —
+        pas d'écrasement silencieux à None."""
+        from magma_cycling.mcp_server import handle_update_session
+
+        mock_session.status = "rest_day"
+        mock_session.skip_reason = "Raison antérieure"
+        tower = make_tower(mock_plan)
+        args = {
+            "week_id": "S081",
+            "session_id": "S081-03",
+            "status": "rest_day",
+        }
+        with patch(TOWER_PATCH, tower):
+            await handle_update_session(args)
+        assert mock_session.status == "rest_day"
+        assert mock_session.skip_reason == "Raison antérieure", (
+            "BT-040 : skip_reason préexistant doit être préservé quand "
+            "update-session(rest_day) est appelé sans reason."
+        )
+
+    @pytest.mark.asyncio
+    async def test_bt040_rest_day_to_completed_clears_skip_reason(self, mock_plan, mock_session):
+        """BT-040 non-régression : transition rest_day → completed (retour
+        actif) doit toujours clear skip_reason (comportement invariant
+        conservé pour tous les status actifs)."""
+        from magma_cycling.mcp_server import handle_update_session
+
+        mock_session.status = "rest_day"
+        mock_session.skip_reason = "Affutage J-2 avant course"
+        tower = make_tower(mock_plan)
+        args = {"week_id": "S081", "session_id": "S081-03", "status": "completed"}
+        with patch(TOWER_PATCH, tower):
+            await handle_update_session(args)
+        assert mock_session.status == "completed"
+        assert mock_session.skip_reason is None, (
+            "Transition rest_day → completed doit clear skip_reason "
+            "(retour état actif, invariant préservé)."
+        )
+
+    @pytest.mark.asyncio
     async def test_bt026_refuses_reason_on_status_completed(self, mock_plan, mock_session):
         """BT-026 (part 2) : refus explicite du silent-drop de ``reason``
         sur ``status=completed``. Auparavant le paramètre était accepté
