@@ -544,6 +544,154 @@ class TestBT037ExcludeZeroTssFromAutoRestDay:
         assert session.status == "rest_day", "Session à charge normale devrait rester overwritable"
 
 
+class TestBT036AddendumRunCoherenceMultiEtapes:
+    """BT-036 addendum : cohérence de vue entre étapes d'un même run daily-sync.
+
+    Défaut structurel identifié par Coach AI dans l'audit S100-05 :
+
+        20:01:10 — daily-sync marque completed depuis Intervals.icu
+        20:01:39 — même run auto rest_day évalue et écrase en rest_day
+        29 secondes d'écart, MÊME run daily-sync.
+
+    « Deux étapes d'une même exécution n'ont pas la même vue de l'état. »
+    Le fix BT-036 (guard status terminal) ferme le symptôme. Cet addendum
+    teste le pattern structurel : le pre-check ``planning_tower.read_week()``
+    dans ``_apply_auto_rest_day`` doit re-loader depuis le fichier, donc
+    voir les modifications faites par l'étape précédente du même run
+    (mark completed).
+
+    Sans ce comportement, une TNR qui vérifie uniquement « auto rest_day
+    ne rétrograde pas un completed pré-existant » passerait à côté du cas
+    où completed vient d'être écrit dans le même run.
+    """
+
+    @pytest.fixture
+    def planning_data_planned_session_with_intervals_id(self):
+        """Semaine avec 1 session planned + intervals_id (candidate mark
+        completed par étape 1 daily-sync)."""
+        return {
+            "week_id": "S999",
+            "start_date": "2026-03-02",
+            "end_date": "2026-03-08",
+            "created_at": "2026-02-01T20:00:00Z",
+            "last_updated": "2026-02-01T20:00:00Z",
+            "version": 1,
+            "athlete_id": "iXXXXXX",
+            "tss_target": 200,
+            "planned_sessions": [
+                {
+                    "session_id": "S999-05",
+                    "date": "2026-03-06",
+                    "name": "OpenersReproSt100_05",
+                    "type": "END",
+                    "version": "V001",
+                    "tss_planned": 15,
+                    "duration_min": 22,
+                    "description": "Repro cas prod S100-05 openers veille de course",
+                    "status": "planned",  # état initial pré-étape 1 du run
+                    "intervals_id": 119167962,
+                },
+            ],
+        }
+
+    @pytest.fixture
+    def mock_ct_multi_etapes(self, tmp_path, planning_data_planned_session_with_intervals_id):
+        from magma_cycling.planning.control_tower import planning_tower
+
+        original = planning_tower.planning_dir
+        planning_tower.planning_dir = tmp_path
+        planning_tower.backup_system.planning_dir = tmp_path
+        planning_file = tmp_path / "week_planning_S999.json"
+        with open(planning_file, "w", encoding="utf-8") as f:
+            json.dump(planning_data_planned_session_with_intervals_id, f, indent=2)
+        yield tmp_path
+        planning_tower.planning_dir = original
+        planning_tower.backup_system.planning_dir = original
+
+    @patch("magma_cycling.config.create_intervals_client")
+    @patch("magma_cycling.update_session_status.sync_with_intervals")
+    def test_run_coherence_mark_completed_then_auto_rest_day_same_run(
+        self, mock_sync, mock_client, mock_ct_multi_etapes, caplog
+    ):
+        """Reproduction structurelle du cas prod S100-05 :
+
+        Étape 1 (mark completed) écrit ``status=completed`` dans le fichier.
+        Étape 2 (auto rest_day) évalue immédiatement après, pre-check
+        ``read_week()`` doit voir completed frais et skip (guard BT-036).
+
+        C'est le comportement que le pre-check re-load fresh est censé
+        garantir. Sans re-load, l'étape 2 travaillerait sur une vue en
+        mémoire pre-étape 1 (status=planned) et écraserait sans détecter
+        le completed juste écrit.
+        """
+        import logging
+
+        from magma_cycling.planning.control_tower import planning_tower
+        from magma_cycling.planning.models import WeeklyPlan
+        from magma_cycling.workflows.sync.servo_evaluation import (
+            ServoEvaluationMixin,
+        )
+
+        # === ÉTAPE 1 (simule mark completed from Intervals) ===
+        # Écriture directe via planning_tower.modify_week (le path que
+        # ``daily-sync`` utilise pour marquer completed en début de run).
+        with planning_tower.modify_week(
+            "S999",
+            requesting_script="test-mark-completed-step1",
+            reason="Test BT-036 addendum : mark completed step 1 of daily-sync run",
+        ) as plan:
+            for s in plan.planned_sessions:
+                if s.session_id == "S999-05":
+                    s.status = "completed"
+                    break
+
+        # Sanity : le fichier a bien été modifié on disk
+        planning_file = mock_ct_multi_etapes / "week_planning_S999.json"
+        plan_after_step1 = WeeklyPlan.from_json(planning_file)
+        assert (
+            next(s for s in plan_after_step1.planned_sessions if s.session_id == "S999-05").status
+            == "completed"
+        ), "Étape 1 (mark completed) doit avoir modifié le fichier avant étape 2"
+
+        # === ÉTAPE 2 (auto rest_day evaluator, même run) ===
+        # Le pre-check BT-036 fait read_week() qui re-load depuis le
+        # fichier — doit voir le completed écrit par étape 1.
+        mixin = ServoEvaluationMixin()
+        mod = {
+            "action": "rest_day",
+            "target_date": "2026-03-06",  # même date que S999-05
+            "current_workout": "S999-05-END-OpenersReproS100_05-V001",
+            "reason": "Sommeil 5.5h + découplage -11% (repro trigger S100-05 réel)",
+        }
+        with caplog.at_level(
+            logging.WARNING, logger="magma_cycling.workflows.sync.servo_evaluation"
+        ):
+            mixin._apply_auto_rest_day(mod, "S999")
+
+        # === ASSERT structurel ===
+        # Le pre-check read_week fresh doit avoir vu completed → skip.
+        # Si le pre-check lisait une vue stale (status=planned initial),
+        # il aurait laissé passer et écrasé en rest_day.
+        plan_final = WeeklyPlan.from_json(planning_file)
+        session = next(s for s in plan_final.planned_sessions if s.session_id == "S999-05")
+        assert session.status == "completed", (
+            "BT-036 addendum : le pre-check read_week doit avoir vu le "
+            "completed écrit par l'étape précédente du même run. Sans cette "
+            "cohérence de vue, l'étape 2 aurait écrasé en rest_day. "
+            f"Actual status: {session.status}"
+        )
+        # Warning BT-036 émis (preuve que le pre-check a fait son travail)
+        warning_records = [r for r in caplog.records if r.levelname == "WARNING"]
+        assert any(
+            "BT-036" in r.message and "skipped" in r.message.lower() for r in warning_records
+        ), (
+            f"Expected BT-036 skip warning proving pre-check saw fresh completed, "
+            f"got: {[r.message for r in warning_records]}"
+        )
+        # Sync Intervals.icu pas appelée (skip complet)
+        mock_sync.assert_not_called()
+
+
 class TestSyncIntervalsRestDay:
     """Test sync_with_intervals handles rest_day status."""
 
