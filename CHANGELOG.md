@@ -28,6 +28,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Format : `> Généré <ISO8601 UTC> — magma-cycling v<X.Y.Z> — BT-039 (cible active) actif`.
   Un rapport sans cette mention = « antérieur à BT-039 » = information en soi.
 
+### Fixed
+
+- **BT-045** — `get-training-statistics` tolère désormais
+  `icu_training_load: None` explicite renvoyé par Intervals.icu (activités
+  sans données puissance/HR ou événements planifiés apparaissant dans
+  `/activities`). Régression preprod v3.72.0 : `.get(..., 0)` ne filtrait
+  pas `None` → `TypeError: int + NoneType` sur fenêtre courante. Fix
+  minimal `(a.get(...) or 0)` + test non-régression.
+
 ### Changed
 
 - **BT-040** (PR #472) — `update-session(status=rest_day, reason=...)`

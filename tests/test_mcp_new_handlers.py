@@ -1534,6 +1534,35 @@ class TestBT042IncludeAdherence:
         assert "S999-KIN01" not in adh["tss_source_map"]["intervals"]
 
 
+class TestBT045NoneTssTolerance:
+    """BT-045 : ``get-training-statistics`` doit tolérer ``icu_training_load=None``.
+
+    Régression preprod v3.72.0 : activité Intervals sans données puissance/HR
+    renvoie ``icu_training_load: None`` (pas absent). ``.get(..., 0)`` ne
+    filtre pas ``None`` explicite → ``TypeError: int + NoneType`` sur la
+    somme cumulée. Fix : ``(a.get(...) or 0)``.
+    """
+
+    @pytest.mark.asyncio
+    async def test_activity_with_none_tss_does_not_crash(self, mock_intervals):
+        """Une activité avec ``icu_training_load=None`` ne crash pas la somme."""
+        from magma_cycling.mcp_server import handle_get_training_statistics
+
+        mock_intervals.get_activities.return_value = [
+            {"id": 1, "icu_training_load": 80, "moving_time": 3600, "distance": 30000},
+            {"id": 2, "icu_training_load": None, "moving_time": 1800, "distance": 15000},
+            {"id": 3, "icu_training_load": 45, "moving_time": 1800, "distance": 15000},
+        ]
+        mock_intervals.get_wellness.return_value = []
+        with patch(INTERVALS_PATCH, return_value=mock_intervals):
+            result = await handle_get_training_statistics(
+                {"start_date": "2026-08-10", "end_date": "2026-08-17"}
+            )
+        data = json.loads(result[0].text)
+        assert "error" not in data, f"BT-045: doit tolérer None, got {data}"
+        assert data["summary"]["total_tss"] == 125.0, "somme 80 + 0 + 45 = 125"
+
+
 # =======================
 # TestHandleExportWeekToJson
 # =======================
