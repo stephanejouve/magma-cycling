@@ -11,6 +11,7 @@ Submodules
    magma_cycling.analyzers.adherence_tracker
    magma_cycling.analyzers.daily_aggregator
    magma_cycling.analyzers.mesocycle_analyzer
+   magma_cycling.analyzers.tss_target
    magma_cycling.analyzers.weekly_aggregator
    magma_cycling.analyzers.weekly_analyzer
 

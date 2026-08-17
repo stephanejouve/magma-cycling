@@ -124,7 +124,7 @@ Sommeil, poids, HRV, et évaluation de ta forme du jour.
 | `get-athlete-profile` | Ton profil (FTP, poids, FC max/repos, zones) |
 | `update-athlete-profile` | Met à jour ton profil |
 | `get-metrics` | Tes métriques actuelles (CTL, ATL, TSB) |
-| `get-training-statistics` | Statistiques agrégées (TSS, compliance, intensité) |
+| `get-training-statistics` | Statistiques agrégées (TSS, compliance, intensité). Option `include_adherence=true` (BT-042) : ajoute cible initiale/active/réalisé + adhérence + drift + `tss_source_map` calculés à la demande depuis les plannings hebdo. |
 
 ---
 

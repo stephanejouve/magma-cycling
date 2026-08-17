@@ -135,7 +135,13 @@ def get_tools() -> list[Tool]:
         ),
         Tool(
             name="get-training-statistics",
-            description="Get aggregated training statistics for a date range (TSS, compliance, intensity distribution)",
+            description=(
+                "Get aggregated training statistics for a date range "
+                "(TSS, compliance, intensity distribution). Set "
+                "include_adherence=true to also compute cible initiale/"
+                "active/réalisé + adhérence + drift + tss_source_map "
+                "(BT-042 — lecture à la demande, évite figer chiffres)."
+            ),
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -146,6 +152,16 @@ def get_tools() -> list[Tool]:
                     "end_date": {
                         "type": "string",
                         "description": "End date in YYYY-MM-DD format",
+                    },
+                    "include_adherence": {
+                        "type": "boolean",
+                        "description": (
+                            "If true (BT-042), also compute cible active vs "
+                            "initiale, adherence rate, drift, and tss_source "
+                            "map by scanning weekly plannings in the date "
+                            "range. Defaults to false (unchanged legacy usage)."
+                        ),
+                        "default": False,
                     },
                 },
                 "required": ["start_date", "end_date"],

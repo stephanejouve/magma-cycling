@@ -119,7 +119,20 @@ class ReportingMixin:
         if ai_analysis:
             report += f"\n## \U0001f916 Analyse IA - Insights & Recommandations\n\n{ai_analysis}\n"
 
-        report += f"\n---\n*G\u00e9n\u00e9r\u00e9 le {datetime.now().strftime('%Y-%m-%d %H:%M')}*\n"
+        # BT-042 : mention datée systématique dans TOUS les rapports générés.
+        # Motif : un lecteur futur doit pouvoir dater le code qui a produit
+        # chaque fichier. Un rapport sans mention devient de fait
+        # « antérieur à BT-039 », ce qui est déjà une information.
+        try:
+            from magma_cycling import __version__ as _mc_version
+        except Exception:
+            _mc_version = "unknown"
+        _now_iso = datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+        report += (
+            f"\n---\n"
+            f"> Généré {_now_iso} — magma-cycling v{_mc_version} — "
+            f"BT-039 (cible active) actif\n"
+        )
 
         return report
 

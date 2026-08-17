@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **BT-039** (PR #467) — Nouveau module `magma_cycling.analyzers.tss_target`
+  avec `compute_active_tss_target(week)` : distingue cible **initiale**
+  (intention pré-annulations, `week["tss_target"]` stocké) vs cible
+  **active** (post-annulations, exclut `{rest_day, skipped, cancelled}`).
+  Substitution ciblée dans `analyzers/monthly/stats.py` +
+  `analyzers/monthly/reporting.py`. Nouveau champ `tss_source_map` marque
+  l'origine du TSS réalisé (`intervals` vs `planned_fallback`). Doctrine
+  « charge réelle correcte, cible surestimée, adhérence sous-estimée ».
+- **BT-042** (PR #478) — `get-training-statistics` accepte
+  `include_adherence: bool = False`. Quand `True`, retourne 7 champs sous
+  clé `adherence` : `tss_target_initial`, `tss_target_active`,
+  `tss_realized`, `adherence_rate` (`None` si active=0), `drift_initial_to_active_abs`,
+  `tss_source_map`, `weeks_in_range`. Défaut absent = zéro surcoût usages
+  actuels. Doctrine « chiffres calculés à la demande, prose figée ».
+- **BT-042** — Mention datée systématique en pied de tous les rapports
+  générés (`analyzers/monthly/reporting.py` + `analyzers/weekly_analyzer.py`).
+  Format : `> Généré <ISO8601 UTC> — magma-cycling v<X.Y.Z> — BT-039 (cible active) actif`.
+  Un rapport sans cette mention = « antérieur à BT-039 » = information en soi.
+
+### Changed
+
+- **BT-040** (PR #472) — `update-session(status=rest_day, reason=...)`
+  persiste désormais `reason` dans `skip_reason` (whitelist des transitions
+  « non-exécution » étendue à `rest_day` en plus de skipped/cancelled/replaced).
+  Ferme le pattern silent-drop identifié sur le cas prod S100-04. Champs
+  de charge (`tss_planned`, `duration_min`, `description`) conservés
+  volontairement — trace intention.
+- **BT-041** (PR #476) — `update-remote-event` sur session completed
+  renvoie désormais un message d'erreur explicite « quoi + pourquoi + où
+  aller » (3 catégories distinctes : charge / structural / other), avec
+  alternative concrète pour chaque cas (ex. `modify-session-details` pour
+  changer un `type` local, UI Intervals pour l'aligner côté remote).
+  Ferme le pattern « rejet silencieux/générique ».
+
 ## [1.27.0] - 2026-02-21
 
 ### 🎉 MILESTONE: MCP Testing & CI/CD Infrastructure

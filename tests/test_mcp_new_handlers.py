@@ -1306,6 +1306,234 @@ class TestHandleGetTrainingStatistics:
         assert "error" in data
 
 
+class TestBT042IncludeAdherence:
+    """BT-042 : ``include_adherence=True`` (défaut False) ajoute la dimension
+    cible initiale + active + réalisé + drift + tss_source_map en scannant
+    les weekly plannings dans la plage."""
+
+    @pytest.mark.asyncio
+    async def test_default_false_no_adherence_key(self, mock_intervals):
+        """Défaut ``include_adherence=False`` : clé ``adherence`` absente
+        (zéro surcoût pour les usages actuels)."""
+        from magma_cycling.mcp_server import handle_get_training_statistics
+
+        mock_intervals.get_activities.return_value = []
+        mock_intervals.get_wellness.return_value = []
+        with patch(INTERVALS_PATCH, return_value=mock_intervals):
+            result = await handle_get_training_statistics(
+                {
+                    "start_date": "2026-02-17",
+                    "end_date": "2026-02-23",
+                }
+            )
+        data = json.loads(result[0].text)
+        assert "adherence" not in data, (
+            "BT-042: par défaut, include_adherence=False → pas de clé "
+            "adherence (contrat legacy inchangé)"
+        )
+
+    @pytest.mark.asyncio
+    async def test_include_adherence_true_adds_6_fields(self, mock_intervals, tmp_path):
+        """BT-042 : ``include_adherence=True`` avec 1 semaine dans plage
+        → 6 champs (initiale/active/realized/drift/adherence_rate/tss_source_map)."""
+        from magma_cycling.mcp_server import handle_get_training_statistics
+
+        # Fixture semaine avec 1 session completed + 1 skipped (fantôme)
+        week = {
+            "week_id": "S999",
+            "start_date": "2026-02-17",
+            "end_date": "2026-02-23",
+            "tss_target": 150,
+            "planned_sessions": [
+                {
+                    "session_id": "S999-01",
+                    "date": "2026-02-18",
+                    "name": "Endurance",
+                    "type": "END",
+                    "version": "V001",
+                    "tss_planned": 100,
+                    "duration_min": 60,
+                    "description": "Endurance Z2",
+                    "status": "completed",
+                    "intervals_id": 12345,
+                },
+                {
+                    "session_id": "S999-02",
+                    "date": "2026-02-19",
+                    "name": "Repos",
+                    "type": "END",
+                    "version": "V001",
+                    "tss_planned": 50,  # fantôme (skipped avec tss>0)
+                    "duration_min": 45,
+                    "description": "Skipped",
+                    "status": "skipped",
+                    "skip_reason": "Fatigue",
+                },
+            ],
+        }
+        planning_dir = tmp_path / "week_planning"
+        planning_dir.mkdir()
+        (planning_dir / "week_planning_S999.json").write_text(json.dumps(week))
+
+        # Activité correspondant à S999-01 avec TSS différent du planned
+        mock_intervals.get_activities.return_value = [
+            {
+                "id": 12345,
+                "icu_training_load": 105,
+                "moving_time": 3600,
+                "distance": 30000,
+                "icu_intensity": 0.72,
+            },
+        ]
+        mock_intervals.get_wellness.return_value = []
+
+        # Patch data_config pour pointer vers tmp_path
+        with patch(INTERVALS_PATCH, return_value=mock_intervals):
+            # Cf. handler: data_repo_path/data/week_planning ou fallback
+            # data_repo_path/week_planning — on utilise la 2e (legacy)
+            with patch("magma_cycling.config.get_data_config") as mock_dc:
+                mock_dc.return_value.data_repo_path = tmp_path
+                result = await handle_get_training_statistics(
+                    {
+                        "start_date": "2026-02-17",
+                        "end_date": "2026-02-23",
+                        "include_adherence": True,
+                    }
+                )
+
+        data = json.loads(result[0].text)
+        adh = data.get("adherence")
+        assert adh is not None, "BT-042: adherence key doit être présente"
+        # Cible initiale stockée = 150
+        assert adh["tss_target_initial"] == 150
+        # Cible active = 100 (S999-01 seule active, S999-02 skipped exclue)
+        assert adh["tss_target_active"] == 100
+        # Réalisé via Intervals = 105 (icu_training_load, pas tss_planned 100)
+        assert adh["tss_realized"] == 105.0
+        # Adherence = 105/100 = 105%
+        assert adh["adherence_rate"] == 105.0
+        # Drift = |150 - 100| = 50 TSS fantômes
+        assert adh["drift_initial_to_active_abs"] == 50
+        # Source map : S999-01 vient d'intervals
+        assert "S999-01" in adh["tss_source_map"]["intervals"]
+        assert "S999-01" not in adh["tss_source_map"]["planned_fallback"]
+        assert adh["weeks_in_range"] == ["S999"]
+
+    @pytest.mark.asyncio
+    async def test_all_cancelled_week_adherence_none_no_div_zero(self, mock_intervals, tmp_path):
+        """BT-042 : semaine 100% annulée dans la plage → active=0 →
+        adherence_rate=None (protection div/0, rendu affiche « — »)."""
+        from magma_cycling.mcp_server import handle_get_training_statistics
+
+        week = {
+            "week_id": "S999",
+            "start_date": "2026-02-17",
+            "end_date": "2026-02-23",
+            "tss_target": 200,
+            "planned_sessions": [
+                {
+                    "session_id": "S999-01",
+                    "date": "2026-02-18",
+                    "name": "Rest",
+                    "type": "END",
+                    "version": "V001",
+                    "tss_planned": 100,
+                    "duration_min": 60,
+                    "description": "Rest",
+                    "status": "rest_day",
+                },
+                {
+                    "session_id": "S999-02",
+                    "date": "2026-02-19",
+                    "name": "Skip",
+                    "type": "END",
+                    "version": "V001",
+                    "tss_planned": 100,
+                    "duration_min": 60,
+                    "description": "Skip",
+                    "status": "skipped",
+                    "skip_reason": "Fatigue",
+                },
+            ],
+        }
+        planning_dir = tmp_path / "week_planning"
+        planning_dir.mkdir()
+        (planning_dir / "week_planning_S999.json").write_text(json.dumps(week))
+
+        mock_intervals.get_activities.return_value = []
+        mock_intervals.get_wellness.return_value = []
+
+        with patch(INTERVALS_PATCH, return_value=mock_intervals):
+            with patch("magma_cycling.config.get_data_config") as mock_dc:
+                mock_dc.return_value.data_repo_path = tmp_path
+                result = await handle_get_training_statistics(
+                    {
+                        "start_date": "2026-02-17",
+                        "end_date": "2026-02-23",
+                        "include_adherence": True,
+                    }
+                )
+
+        data = json.loads(result[0].text)
+        adh = data["adherence"]
+        # 100% annulé : cible active = 0, adherence None (pas de crash div/0)
+        assert adh["tss_target_active"] == 0
+        assert adh["adherence_rate"] is None, (
+            "BT-042: semaine 100% annulée → adherence_rate=None " "(protection div/0, pas crash)"
+        )
+
+    @pytest.mark.asyncio
+    async def test_include_adherence_fallback_source_on_missing_intervals_id(
+        self, mock_intervals, tmp_path
+    ):
+        """BT-042 : session completed sans intervals_id → fallback tss_planned,
+        listée dans ``tss_source_map.planned_fallback``. Cas prod récurrent KIN."""
+        from magma_cycling.mcp_server import handle_get_training_statistics
+
+        week = {
+            "week_id": "S999",
+            "start_date": "2026-02-17",
+            "end_date": "2026-02-23",
+            "tss_target": 50,
+            "planned_sessions": [
+                {
+                    "session_id": "S999-KIN01",
+                    "date": "2026-02-18",
+                    "name": "KIN",
+                    "type": "KIN",
+                    "version": "V001",
+                    "tss_planned": 0,
+                    "duration_min": 30,
+                    "description": "Protocole",
+                    "status": "completed",
+                    "intervals_id": None,  # pas d'ID → fallback planned
+                },
+            ],
+        }
+        planning_dir = tmp_path / "week_planning"
+        planning_dir.mkdir()
+        (planning_dir / "week_planning_S999.json").write_text(json.dumps(week))
+
+        mock_intervals.get_activities.return_value = []
+        mock_intervals.get_wellness.return_value = []
+
+        with patch(INTERVALS_PATCH, return_value=mock_intervals):
+            with patch("magma_cycling.config.get_data_config") as mock_dc:
+                mock_dc.return_value.data_repo_path = tmp_path
+                result = await handle_get_training_statistics(
+                    {
+                        "start_date": "2026-02-17",
+                        "end_date": "2026-02-23",
+                        "include_adherence": True,
+                    }
+                )
+
+        data = json.loads(result[0].text)
+        adh = data["adherence"]
+        assert "S999-KIN01" in adh["tss_source_map"]["planned_fallback"]
+        assert "S999-KIN01" not in adh["tss_source_map"]["intervals"]
+
+
 # =======================
 # TestHandleExportWeekToJson
 # =======================
