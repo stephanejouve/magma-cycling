@@ -66,8 +66,18 @@ class DataMixin:
     def _fetch_actual_tss(self, weekly_data: list[dict]) -> dict[str, int]:
         """Fetch actual TSS from Intervals.icu for completed activities.
 
+        BT-048 : index par ``paired_event_id`` (event calendrier) et non
+        ``activity.id`` (course réalisée). Le planning stocke
+        ``intervals_id = paired_event_id``. Indexer par ``activity.id``
+        produit un mismatch systématique et une tautologie
+        ``adherence=100%`` (bug historique BT-039 depuis 2 mois, masqué
+        par fixtures utilisant des scénarios ``id==intervals_id`` impossibles
+        en réel — cf. BT-048).
+
         Returns:
-            Mapping {intervals_id: actual_tss} for all activities in the month.
+            Mapping ``{f"i{paired_event_id}": actual_tss}`` pour toutes les
+            activités liées à un event planifié. Format cohérent avec le
+            lookup ``f"i{intervals_id}"`` côté ``stats.py``.
             Empty dict on failure (graceful degradation -> fallback to tss_planned).
         """
         try:
@@ -78,7 +88,11 @@ class DataMixin:
             client = create_intervals_client()
             activities = client.get_activities(oldest=start, newest=end)
 
-            return {a["id"]: a.get("icu_training_load", 0) or 0 for a in activities}
+            return {
+                f"i{a['paired_event_id']}": a.get("icu_training_load", 0) or 0
+                for a in activities
+                if a.get("paired_event_id") is not None
+            }
         except Exception:
             logger.warning("Could not fetch activities from Intervals.icu, using planned TSS")
             return {}

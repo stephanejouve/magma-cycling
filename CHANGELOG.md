@@ -30,6 +30,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **BT-048** — Matching planning ⇔ activité via `paired_event_id` (event
+  calendrier), pas via `activity.id` (course réalisée). Bug historique
+  BT-039 (monthly reports) et BT-042 (`include_adherence`) : la map
+  `actual_tss_map` était indexée par `activity.id` (ex `"i162682746"`)
+  alors que le planning stocke `intervals_id = paired_event_id` (ex
+  `119167963`). Mismatch systématique → tout en fallback `tss_planned`
+  → adherence tautologique 100 % en prod depuis 2 mois (jamais détecté
+  car fixtures test utilisaient des scénarios `id == intervals_id`
+  impossibles en réel). Fix dans `handlers/analysis.py` et
+  `analyzers/monthly/data.py`. Pattern aligné sur
+  `workflows/sync/activity_tracker.py:67` et
+  `workflows/sync/activity_detection.py:96`. Fixtures test réécrites
+  avec activity.id ≠ paired_event_id. Découverte : Coach AI post-v3.72.2
+  vérifiant l'observation initiale S100.
 - **BT-047** — Audit exhaustif accumulators `get-training-statistics` :
   BT-045 fixait uniquement `icu_training_load` (int) ; le crash migrait
   ensuite sur `float + NoneType` via `moving_time` (float après /3600) et
