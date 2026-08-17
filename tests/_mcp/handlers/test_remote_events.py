@@ -363,6 +363,112 @@ class TestHandleUpdateRemoteEvent:
         client.update_event.assert_not_called()
 
     @pytest.mark.asyncio
+    @patch("magma_cycling.config.create_intervals_client")
+    async def test_bt041_structural_field_type_explicit_rejection(self, mock_factory, patch_tower):
+        """BT-041 : refus du champ ``type`` sur completed doit dire
+        quoi + pourquoi + où aller (pas juste « rejected »).
+
+        Critère d'acceptation Coach AI 2026-08-17 :
+        - QUOI : nom du champ hors whitelist
+        - POURQUOI : raison structurelle (analytics tiers)
+        - OÙ ALLER : alternative concrète (modify-session-details local ou UI Intervals)
+        """
+        client = MagicMock()
+        client.get_provider_info.return_value = MOCK_PROVIDER_INFO
+        mock_factory.return_value = client
+
+        result = await handle_update_remote_event({"event_id": 55, "updates": {"type": "Workout"}})
+        data = json.loads(result[0].text)
+        assert "error" in data
+        assert data["rejected_fields"] == ["type"]
+        assert data["whitelist"] == ["description", "name"]
+        # Message doit contenir les 3 éléments : quoi + pourquoi + où aller
+        msg = data["message"]
+        # QUOI : mention du champ + « out of whitelist » ou équivalent
+        assert "type" in msg
+        assert "whitelist" in msg.lower() or "structural" in msg.lower()
+        # POURQUOI : rationale analytics tiers
+        assert "Intervals.icu" in msg
+        assert "analytics" in msg or "filters" in msg or "category-based" in msg
+        # OÙ ALLER : alternative concrète modify-session-details
+        assert "modify-session-details" in msg
+        # Client API PAS appelée (refus early)
+        client.update_event.assert_not_called()
+
+    @pytest.mark.asyncio
+    @patch("magma_cycling.config.create_intervals_client")
+    async def test_bt041_charge_field_explicit_rejection(self, mock_factory, patch_tower):
+        """BT-041 : refus des champs de charge (start_date_local, etc.)
+        doit dire quoi + pourquoi + « pas d'alternative safe » explicite."""
+        client = MagicMock()
+        client.get_provider_info.return_value = MOCK_PROVIDER_INFO
+        mock_factory.return_value = client
+
+        result = await handle_update_remote_event(
+            {"event_id": 55, "updates": {"start_date_local": "2026-08-10T20:30:00"}}
+        )
+        data = json.loads(result[0].text)
+        assert data["rejected_fields"] == ["start_date_local"]
+        msg = data["message"]
+        # QUOI : champ nommé
+        assert "start_date_local" in msg
+        # POURQUOI : rationale CTL/ATL/TSB rétroactifs
+        assert "CTL" in msg or "training history" in msg
+        # OÙ ALLER : mention de l'alternative "last resort" delete+recreate via UI
+        assert "delete" in msg.lower() or "recreate" in msg.lower() or "UI" in msg
+
+    @pytest.mark.asyncio
+    @patch("magma_cycling.config.create_intervals_client")
+    async def test_bt041_other_field_explicit_rejection(self, mock_factory, patch_tower):
+        """BT-041 : refus d'un champ inconnu (hors charge + hors structural)
+        doit dire quoi + pourquoi (out of whitelist by design) + où aller
+        (ticket pour discuter scope)."""
+        client = MagicMock()
+        client.get_provider_info.return_value = MOCK_PROVIDER_INFO
+        mock_factory.return_value = client
+
+        result = await handle_update_remote_event(
+            {"event_id": 55, "updates": {"custom_field_xyz": "value"}}
+        )
+        data = json.loads(result[0].text)
+        assert data["rejected_fields"] == ["custom_field_xyz"]
+        msg = data["message"]
+        assert "custom_field_xyz" in msg
+        assert "whitelist" in msg.lower()
+        # OÙ ALLER : mention d'ouvrir un ticket pour discuter le scope
+        assert "ticket" in msg.lower() or "scope" in msg.lower()
+
+    @pytest.mark.asyncio
+    @patch("magma_cycling.config.create_intervals_client")
+    async def test_bt041_mixed_categories_all_reasons_present(self, mock_factory, patch_tower):
+        """BT-041 : update mixte {name (OK), type (structural), tss (charge)}
+        → 2 catégories de rejet distinctes dans le message + name pas rejeté."""
+        client = MagicMock()
+        client.get_provider_info.return_value = MOCK_PROVIDER_INFO
+        mock_factory.return_value = client
+
+        result = await handle_update_remote_event(
+            {
+                "event_id": 55,
+                "updates": {"name": "OK", "type": "Workout", "tss": 50},
+            }
+        )
+        data = json.loads(result[0].text)
+        # name accepté → pas dans rejected
+        assert "name" not in data["rejected_fields"]
+        assert set(data["rejected_fields"]) == {"type", "tss"}
+        # Les 2 catégories doivent être expliquées dans le message
+        assert len(data["reasons"]) == 2, (
+            f"Expected 2 distinct rationale (charge + structural), " f"got: {data['reasons']}"
+        )
+        # Structural mentionne modify-session-details, charge mentionne CTL
+        combined = " ".join(data["reasons"])
+        assert "modify-session-details" in combined
+        assert "CTL" in combined or "training history" in combined
+        # API PAS appelée (protection en bloc)
+        client.update_event.assert_not_called()
+
+    @pytest.mark.asyncio
     async def test_workout_doc_field_rejected_with_actionable_message(self):
         """Reject `workout_doc` early with a clear, actionable message
         before hitting the Intervals.icu API (which rejects with an opaque
