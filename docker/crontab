@@ -19,3 +19,13 @@
 # data-repo-sync : apres daily-sync (22h30) et apres end-of-week (20h30 dimanche)
 30 22 * * * data-repo-sync
 30 20 * * 0 data-repo-sync
+
+# data-repo-sync-probe : sonde end-to-end fraicheur origin/main
+# Planning INDÉPENDANT du cron sync : catch outages sync (script crashé,
+# container down, cron cassé, network partition, creds expirés) que les
+# logs du cron sync ne peuvent pas rapporter sur son absence.
+# Reco Coach AI post-incident 2026-05-28 (79 jours sync silencieux) :
+# check l outcome (fraicheur origin) pas l action (logs sync).
+# Toutes les 6h a des minutes qui NE recoupent PAS les crons sync (22:30,
+# 20:30 dim) pour eviter les interactions cross-cron sur les slots partages.
+15 3,9,15,21 * * * data-repo-sync-probe
