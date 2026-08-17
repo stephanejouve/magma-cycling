@@ -239,27 +239,102 @@ async def handle_update_remote_event(args: dict) -> list[TextContent]:
                                     # description. Autres champs (start_date_local,
                                     # category, etc.) = protégés — falsification de
                                     # l'historique.
+                                    #
+                                    # BT-041 : rejection message explicite qui distingue
+                                    # les catégories de rejet (charge vs structurel) avec
+                                    # rationale distinct. Aucun rejet générique — chaque
+                                    # champ rejeté sait pourquoi et où le corriger si besoin.
                                     _DESCRIPTIVE_REMOTE_FIELDS = {"name", "description"}
-                                    charge_fields_remote = [
+                                    # Charge fields Intervals.icu : timestamps + volume/
+                                    # intensité qui conditionnent CTL/ATL/TSB rétroactifs.
+                                    _CHARGE_FIELDS_REMOTE = {
+                                        "start_date_local",
+                                        "duration",
+                                        "moving_time",
+                                        "elapsed_time",
+                                        "tss",
+                                        "training_load",
+                                        "icu_training_load",
+                                    }
+                                    # Structural fields Intervals.icu : conditionnent la
+                                    # classification/filtres/analytics chez le tiers.
+                                    _STRUCTURAL_FIELDS_REMOTE = {
+                                        "type",
+                                        "category",
+                                        "sub_type",
+                                        "activity_type",
+                                    }
+                                    rejected = [
                                         k for k in updates if k not in _DESCRIPTIVE_REMOTE_FIELDS
                                     ]
-                                    if charge_fields_remote:
+                                    if rejected:
+                                        rejected_charge = [
+                                            f for f in rejected if f in _CHARGE_FIELDS_REMOTE
+                                        ]
+                                        rejected_structural = [
+                                            f for f in rejected if f in _STRUCTURAL_FIELDS_REMOTE
+                                        ]
+                                        rejected_other = [
+                                            f
+                                            for f in rejected
+                                            if f not in _CHARGE_FIELDS_REMOTE
+                                            and f not in _STRUCTURAL_FIELDS_REMOTE
+                                        ]
+                                        # BT-041 doctrine « quoi + pourquoi + où aller » :
+                                        # chaque catégorie rejetée nomme le champ, dit
+                                        # pourquoi il est hors whitelist, et pointe
+                                        # l'alternative concrète pour ne pas laisser
+                                        # l'appelant chercher.
+                                        reasons: list[str] = []
+                                        if rejected_charge:
+                                            reasons.append(
+                                                f"Charge fields {rejected_charge} out of whitelist: "
+                                                f"they condition CTL/ATL/TSB retroactively — "
+                                                f"changing them post-completed would rewrite "
+                                                f"internal training history. No safe "
+                                                f"alternative: if the value was wrong at "
+                                                f"session creation, delete + recreate the "
+                                                f"activity via Intervals.icu UI (loses the "
+                                                f"Magma session link, use as last resort)."
+                                            )
+                                        if rejected_structural:
+                                            reasons.append(
+                                                f"Structural fields {rejected_structural} out of "
+                                                f"whitelist: Intervals.icu third-party analytics "
+                                                f"(filters, TSS calc, category-based views) rely "
+                                                f"on these. Changing them post-completed would "
+                                                f"falsify their historical dataset. Alternative: "
+                                                f"correct the LOCAL type/category via "
+                                                f"`modify-session-details(week_id, session_id, "
+                                                f"type=...)` — the local field is a Magma pilotage "
+                                                f"label with no downstream effect on Intervals. "
+                                                f"If you truly need to align Intervals side, use "
+                                                f"the Intervals.icu UI directly."
+                                            )
+                                        if rejected_other:
+                                            reasons.append(
+                                                f"Fields {rejected_other} out of the post-completed "
+                                                f"whitelist {{name, description}} by design "
+                                                f"(BT-026/041): only descriptive edits are safe "
+                                                f"once a session is completed. If you need to "
+                                                f"modify one of these fields on a completed "
+                                                f"session, open a ticket to discuss the scope "
+                                                f"(BT-041 whitelist rationale)."
+                                            )
                                         error = {
                                             "error": (
-                                                "Cannot modify charge fields on "
-                                                "completed session"
+                                                "Update rejected on completed session "
+                                                "(out-of-whitelist fields)"
                                             ),
                                             "event_id": event_id,
                                             "session_id": session.session_id,
-                                            "rejected_fields": charge_fields_remote,
+                                            "rejected_fields": rejected,
+                                            "whitelist": sorted(_DESCRIPTIVE_REMOTE_FIELDS),
+                                            "reasons": reasons,
                                             "message": (
                                                 f"🛡️ PROTECTION: Session "
-                                                f"{session.session_id} is COMPLETED "
-                                                f"— charge fields "
-                                                f"{charge_fields_remote} are "
-                                                f"protected. Descriptive fields "
-                                                f"(name, description) remain "
-                                                f"editable."
+                                                f"{session.session_id} is COMPLETED. "
+                                                + " ".join(reasons)
                                             ),
                                         }
                                         return mcp_response(error)
