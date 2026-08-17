@@ -347,13 +347,19 @@ def _compute_adherence_for_range(start_date: str, end_date: str, activities: lis
     range_start = _date.fromisoformat(start_date)
     range_end = _date.fromisoformat(end_date)
 
-    # Map intervals_id → icu_training_load pour lookup rapide realized
+    # BT-046 : Intervals.icu renvoie ``activity["id"]`` déjà préfixé
+    # ``"i<num>"`` (format string, ex: ``"i119167962"``). Le lookup côté
+    # session utilise ``f"i{intervals_id}"`` (int planning → préfixé),
+    # donc on stocke ``aid`` brut sans re-préfixer (sinon double « i »
+    # → mismatch systématique → tout en fallback tss_planned → tautologie
+    # adherence=100%). Cf. pattern éprouvé ``analyzers/monthly/data.py:81``
+    # qui utilise ``{a["id"]: ...}`` depuis BT-039.
     actual_tss_map: dict[str, float] = {}
     for act in activities:
         aid = act.get("id")
         tss = act.get("icu_training_load")
         if aid is not None and tss is not None:
-            actual_tss_map[f"i{aid}"] = tss
+            actual_tss_map[aid] = tss
 
     # Glob weekly plannings — filtre par intersection [start_date, end_date]
     data_config = get_data_config()

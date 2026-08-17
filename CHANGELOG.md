@@ -30,6 +30,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **BT-046** — `get-training-statistics(include_adherence=true)` : fix
+  double préfixage `"i"` dans `actual_tss_map` de
+  `_compute_adherence_for_range`. Intervals.icu renvoie
+  `activity["id"]` déjà préfixé (`"i119167962"` string) ; le stockage
+  `map[f"i{aid}"]` produisait `"ii119167962"` → mismatch systématique
+  avec le lookup `f"i{intervals_id}"` → tout en fallback `tss_planned`
+  → adherence tautologique 100 %. Cf. pattern éprouvé
+  `analyzers/monthly/data.py:81` (BT-039) qui utilise `{a["id"]: ...}`
+  brut. Fixture test `TestBT042IncludeAdherence` corrigée (`"i12345"`
+  au lieu de `12345` int) + nouveau test dédié `TestBT046`.
 - **BT-045** — `get-training-statistics` tolère désormais
   `icu_training_load: None` explicite renvoyé par Intervals.icu (activités
   sans données puissance/HR ou événements planifiés apparaissant dans
