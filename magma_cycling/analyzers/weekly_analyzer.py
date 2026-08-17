@@ -104,6 +104,11 @@ class WeeklyAnalyzer:
         """
         Generate les 6 reports complets.
 
+        BT-042 : chaque report reçoit une mention datée en pied de fichier
+        (magma-cycling version + timestamp UTC + mention BT-039 cible active
+        actif). Motif : un lecteur futur date immédiatement le code producteur ;
+        un rapport sans mention = « antérieur à BT-039 » = information en soi.
+
         Returns:
             Dict avec clés : workout_history, metrics_evolution,
             training_learnings, protocol_adaptations, transition, bilan_final
@@ -119,8 +124,34 @@ class WeeklyAnalyzer:
             "bilan_final": self.generate_bilan_final(),
         }
 
+        # BT-042 : mention datée systématique en pied de chaque rapport.
+        footer = self._build_dated_footer()
+        reports = {name: content + footer for name, content in reports.items()}
+
         logger.info("All reports generated successfully")
         return reports
+
+    def _build_dated_footer(self) -> str:
+        """BT-042 : mention datée uniforme pour tous les rapports weekly.
+
+        Format : ``> Généré <ISO8601 UTC> — magma-cycling v<X.Y.Z> —
+        BT-039 (cible active) actif``.
+
+        Un rapport sans cette mention = « antérieur à BT-039 » (information
+        en soi pour un lecteur futur).
+        """
+        from datetime import datetime, timezone
+
+        try:
+            from magma_cycling import __version__ as _mc_version
+        except Exception:
+            _mc_version = "unknown"
+        _now_iso = datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        return (
+            f"\n\n---\n"
+            f"> Généré {_now_iso} — magma-cycling v{_mc_version} — "
+            f"BT-039 (cible active) actif\n"
+        )
 
     def generate_workout_history(self) -> str:
         """

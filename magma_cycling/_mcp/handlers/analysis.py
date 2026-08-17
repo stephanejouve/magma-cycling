@@ -220,11 +220,18 @@ async def handle_analyze_session_adherence(args: dict) -> list[TextContent]:
 
 
 async def handle_get_training_statistics(args: dict) -> list[TextContent]:
-    """Get aggregated training statistics for a date range."""
+    """Get aggregated training statistics for a date range.
+
+    BT-042 : ``include_adherence=True`` (défaut ``False``) ajoute la dimension
+    adhérence (cible initiale / active / réalisé / drift / tss_source_map)
+    en scannant les plannings hebdo dans la plage. Défaut absent = zéro
+    surcoût pour les usages actuels (charge réelle + wellness seulement).
+    """
     from magma_cycling.config import create_intervals_client
 
     start_date = args["start_date"]
     end_date = args["end_date"]
+    include_adherence = bool(args.get("include_adherence", False))
 
     try:
         with suppress_stdout_stderr():
@@ -273,6 +280,14 @@ async def handle_get_training_statistics(args: dict) -> list[TextContent]:
                 },
             }
 
+            # BT-042 : dimension adhérence optionnelle
+            if include_adherence:
+                result["adherence"] = _compute_adherence_for_range(
+                    start_date=start_date,
+                    end_date=end_date,
+                    activities=activities,
+                )
+
         return mcp_response(result)
 
     except Exception as e:
@@ -282,6 +297,121 @@ async def handle_get_training_statistics(args: dict) -> list[TextContent]:
             "end_date": end_date,
         }
         return mcp_response(error)
+
+
+def _compute_adherence_for_range(start_date: str, end_date: str, activities: list[dict]) -> dict:
+    """Compute adherence dimension for a date range (BT-042).
+
+    Agrège cible initiale/active/réalisé + drift + tss_source_map sur
+    les weekly plannings intersectant la plage ``[start_date, end_date]``.
+
+    Args:
+        start_date: ``YYYY-MM-DD`` inclusif.
+        end_date: ``YYYY-MM-DD`` inclusif.
+        activities: liste des activités Intervals de la plage (pour
+            construire ``actual_tss_map`` id → icu_training_load).
+
+    Returns:
+        Dict avec :
+
+        - ``tss_target_initial`` (int) : cumul ``week["tss_target"]``
+          stocké (intention pré-annulations).
+        - ``tss_target_active`` (int) : cumul via
+          :func:`compute_active_tss_target` (post-annulations).
+        - ``tss_realized`` (int) : cumul sur sessions ``completed``/
+          ``modified`` — utilise Intervals ``icu_training_load`` si
+          match par ``intervals_id``, sinon fallback ``tss_planned``.
+        - ``adherence_rate`` (float | None) : realized / active × 100.
+          ``None`` si active=0 (semaine 100 % annulée) — protection
+          division par zéro, rendu doit afficher « — ».
+        - ``drift_initial_to_active_abs`` (int) : ``initial - active``
+          en valeur absolue (pas %, illisible sur cibles reconstruction
+          60-90 TSS).
+        - ``tss_source_map`` (dict) : ``{"intervals": [...],
+          "planned_fallback": [...]}`` — liste ``session_id`` par origine
+          du TSS réalisé. Le fallback signale « TSS depuis planifié, pas
+          Intervals » — motif substitution silencieuse à surveiller.
+        - ``weeks_in_range`` (list) : liste des ``week_id`` scannés
+          (contrat traçabilité).
+    """
+    import json
+    from datetime import date as _date
+
+    from magma_cycling.analyzers.tss_target import compute_active_tss_target
+    from magma_cycling.config import get_data_config
+
+    range_start = _date.fromisoformat(start_date)
+    range_end = _date.fromisoformat(end_date)
+
+    # Map intervals_id → icu_training_load pour lookup rapide realized
+    actual_tss_map: dict[str, float] = {}
+    for act in activities:
+        aid = act.get("id")
+        tss = act.get("icu_training_load")
+        if aid is not None and tss is not None:
+            actual_tss_map[f"i{aid}"] = tss
+
+    # Glob weekly plannings — filtre par intersection [start_date, end_date]
+    data_config = get_data_config()
+    planning_dir = data_config.data_repo_path / "data" / "week_planning"
+    if not planning_dir.exists():
+        # Fallback : legacy layout without data/ subdir
+        planning_dir = data_config.data_repo_path / "week_planning"
+
+    total_initial = 0
+    total_active = 0
+    total_realized = 0
+    tss_source_map: dict[str, list[str]] = {"intervals": [], "planned_fallback": []}
+    weeks_in_range: list[str] = []
+
+    if planning_dir.exists():
+        for path in sorted(planning_dir.glob("week_planning_S*.json")):
+            try:
+                with open(path, encoding="utf-8") as fh:
+                    week = json.load(fh)
+            except (OSError, json.JSONDecodeError):
+                continue
+            # Intersect plage — semaine incluse si start_date de la semaine
+            # ≤ end_date de la plage ET end_date de la semaine ≥ start_date
+            try:
+                week_start = _date.fromisoformat(week.get("start_date", ""))
+                week_end = _date.fromisoformat(week.get("end_date", ""))
+            except ValueError:
+                continue
+            if week_end < range_start or week_start > range_end:
+                continue
+
+            weeks_in_range.append(week.get("week_id", "?"))
+            total_initial += week.get("tss_target", 0)
+            total_active += compute_active_tss_target(week)
+
+            for session in week.get("planned_sessions", []):
+                status = session.get("status")
+                if status not in ("completed", "modified"):
+                    continue
+                sid = session.get("session_id", "?")
+                intervals_id = session.get("intervals_id")
+                key = f"i{intervals_id}" if intervals_id is not None else None
+                if key and key in actual_tss_map:
+                    total_realized += actual_tss_map[key]
+                    tss_source_map["intervals"].append(sid)
+                else:
+                    total_realized += session.get("tss_planned", 0) or 0
+                    tss_source_map["planned_fallback"].append(sid)
+
+    adherence_rate: float | None = None
+    if total_active > 0:
+        adherence_rate = round(total_realized / total_active * 100, 1)
+
+    return {
+        "tss_target_initial": total_initial,
+        "tss_target_active": total_active,
+        "tss_realized": round(total_realized, 1),
+        "adherence_rate": adherence_rate,
+        "drift_initial_to_active_abs": abs(total_initial - total_active),
+        "tss_source_map": tss_source_map,
+        "weeks_in_range": weeks_in_range,
+    }
 
 
 async def handle_export_week_to_json(args: dict) -> list[TextContent]:
