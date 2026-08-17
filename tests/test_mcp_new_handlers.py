@@ -1376,9 +1376,12 @@ class TestBT042IncludeAdherence:
         (planning_dir / "week_planning_S999.json").write_text(json.dumps(week))
 
         # Activité correspondant à S999-01 avec TSS différent du planned
+        # BT-046 : Intervals.icu renvoie id string préfixé "i<num>", pas int.
+        # La fixture doit refléter le vrai format sinon le bug de double
+        # préfixage dans actual_tss_map passait silencieusement.
         mock_intervals.get_activities.return_value = [
             {
-                "id": 12345,
+                "id": "i12345",
                 "icu_training_load": 105,
                 "moving_time": 3600,
                 "distance": 30000,
@@ -1532,6 +1535,78 @@ class TestBT042IncludeAdherence:
         adh = data["adherence"]
         assert "S999-KIN01" in adh["tss_source_map"]["planned_fallback"]
         assert "S999-KIN01" not in adh["tss_source_map"]["intervals"]
+
+
+class TestBT046AdherenceIdPrefixMatching:
+    """BT-046 : ``_compute_adherence_for_range`` doit accepter le format id
+    Intervals.icu (``"i<num>"`` string préfixé) sans double préfixer.
+
+    Régression prod S100 (2026-06-29 → 2026-07-05, appel Coach AI) :
+    ``tss_source_map.intervals=[]``, tout en ``planned_fallback`` →
+    ``tss_realized = sum(tss_planned)`` tautologique → adherence 100%
+    par construction. Le vrai réalisé était 354 vs 269 planned = 132%.
+
+    Cause : ``actual_tss_map[f"i{aid}"]`` sur ``aid`` déjà préfixé
+    ``"i119167962"`` → clé ``"ii119167962"`` → mismatch systématique
+    avec lookup ``f"i{intervals_id}"`` = ``"i119167962"``.
+
+    Fix : stocker ``aid`` brut (déjà préfixé par Intervals).
+    """
+
+    @pytest.mark.asyncio
+    async def test_prod_id_format_matches_and_uses_actual_tss(self, mock_intervals, tmp_path):
+        """Format prod ``"i<num>"`` string → match → ``tss_realized`` réel."""
+        from magma_cycling.mcp_server import handle_get_training_statistics
+
+        week = {
+            "week_id": "S999",
+            "start_date": "2026-06-29",
+            "end_date": "2026-07-05",
+            "tss_target": 300,
+            "planned_sessions": [
+                {
+                    "session_id": "S999-05",
+                    "date": "2026-07-03",
+                    "name": "Endurance",
+                    "type": "END",
+                    "version": "V001",
+                    "tss_planned": 100,
+                    "duration_min": 60,
+                    "description": "Endurance Z2",
+                    "status": "completed",
+                    "intervals_id": 119167962,
+                },
+            ],
+        }
+        planning_dir = tmp_path / "week_planning"
+        planning_dir.mkdir()
+        (planning_dir / "week_planning_S999.json").write_text(json.dumps(week))
+
+        # Format PROD Intervals.icu : id string préfixé "i<num>"
+        mock_intervals.get_activities.return_value = [
+            {"id": "i119167962", "icu_training_load": 132, "moving_time": 3600},
+        ]
+        mock_intervals.get_wellness.return_value = []
+
+        with patch(INTERVALS_PATCH, return_value=mock_intervals):
+            with patch("magma_cycling.config.get_data_config") as mock_dc:
+                mock_dc.return_value.data_repo_path = tmp_path
+                result = await handle_get_training_statistics(
+                    {
+                        "start_date": "2026-06-29",
+                        "end_date": "2026-07-05",
+                        "include_adherence": True,
+                    }
+                )
+
+        data = json.loads(result[0].text)
+        adh = data["adherence"]
+        assert adh["tss_realized"] == 132.0, (
+            f"BT-046: real Intervals TSS (132) attendu, got {adh['tss_realized']} "
+            f"— si 100 = bug double préfixage revenu (fallback tss_planned)"
+        )
+        assert "S999-05" in adh["tss_source_map"]["intervals"]
+        assert "S999-05" not in adh["tss_source_map"]["planned_fallback"]
 
 
 class TestBT045NoneTssTolerance:
