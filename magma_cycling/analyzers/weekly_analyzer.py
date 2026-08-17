@@ -132,12 +132,16 @@ class WeeklyAnalyzer:
         return reports
 
     def _build_dated_footer(self) -> str:
-        """BT-042 : mention datée uniforme pour tous les rapports weekly.
+        """BT-042 + BT-049 : mention datée uniforme pour tous les rapports weekly.
 
-        Format : ``> Généré <ISO8601 UTC> — magma-cycling v<X.Y.Z> —
-        BT-039 (cible active) actif``.
+        Format : ``> Généré <ISO8601 UTC> — magma-cycling v<X.Y.Z>``.
 
-        Un rapport sans cette mention = « antérieur à BT-039 » (information
+        La version du serveur est le référent unique pour connaître les
+        BT actives à la génération (via CHANGELOG). BT-049 : suppression
+        de la mention « BT-039 actif » qui devenait ambiguë sur les
+        rapports générés post-BT-048 (elle n'indiquait rien sur BT-048).
+
+        Un rapport sans cette mention = « antérieur à BT-042 » (information
         en soi pour un lecteur futur).
         """
         from datetime import datetime, timezone
@@ -147,11 +151,7 @@ class WeeklyAnalyzer:
         except Exception:
             _mc_version = "unknown"
         _now_iso = datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-        return (
-            f"\n\n---\n"
-            f"> Généré {_now_iso} — magma-cycling v{_mc_version} — "
-            f"BT-039 (cible active) actif\n"
-        )
+        return f"\n\n---\n> Généré {_now_iso} — magma-cycling v{_mc_version}\n"
 
     def generate_workout_history(self) -> str:
         """

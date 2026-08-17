@@ -28,6 +28,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Format : `> Généré <ISO8601 UTC> — magma-cycling v<X.Y.Z> — BT-039 (cible active) actif`.
   Un rapport sans cette mention = « antérieur à BT-039 » = information en soi.
 
+### Changed
+
+- **BT-049** — Mention datée en pied de rapports simplifiée : suppression
+  du suffixe « BT-039 (cible active) actif » (devenu ambigu — n'indiquait
+  rien sur BT-048 par exemple). Nouveau format : `> Généré <ISO> —
+  magma-cycling v<X.Y.Z>`. La version serveur reste le référent unique
+  pour connaître les BT actives à la génération (via CHANGELOG). Un
+  rapport sans cette mention = « antérieur à BT-042 ». Modifs dans
+  `analyzers/weekly_analyzer.py:_build_dated_footer` et
+  `analyzers/monthly/reporting.py:generate_report`.
+
 ### Fixed
 
 - **BT-048** — Matching planning ⇔ activité via `paired_event_id` (event
