@@ -41,6 +41,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **BT-053** — Masquage `initial` + `drift` quand `tss_target` désynchronisé.
+  Quand une semaine dans la plage a `tss_target=0` alors que sa somme
+  sessions active est >0 (bug flow weekly-planner template + modify-session
+  non-recompute), `tss_target_initial` et `drift_initial_to_active_abs`
+  sont masqués (`None`) plutôt que d'afficher un chiffre faux. Champ
+  supplémentaire `initial_unreliable_reason` explique la cause. Rapport
+  monthly affiche « non disponible » + note explicative avec référence
+  BT-051 (#491). Règle « mieux vaut ne pas répondre que répondre faux »
+  (P2). `tss_realized` et `adherence_rate` restent fiables (dérivés
+  sessions). Livrable intérimaire en attendant BT-051 (design 2 champs
+  `finalize-week-planning`).
 - **BT-048** — Matching planning ⇔ activité via `paired_event_id` (event
   calendrier), pas via `activity.id` (course réalisée). Bug historique
   BT-039 (monthly reports) et BT-042 (`include_adherence`) : la map

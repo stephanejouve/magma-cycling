@@ -481,3 +481,79 @@ class TestBT039ActiveTssTarget:
         # Le drift_line affiche "−N TSS" en absolu — vérifier présence "\u2212"
         # (moins unicode)
         assert "\u2212" in report or "TSS" in report
+
+
+class TestBT053TssTargetInitialUnreliable:
+    """BT-053 : détection désynchro ``tss_target=0`` avec sessions actives >0
+    → drapeau ``tss_target_initial_unreliable=True`` + rapport masque
+    initial + drift avec « N/A » + note explicative.
+    """
+
+    def test_desync_week_sets_flag(self, analyzer):
+        """Semaine désynchronisée détectée → drapeau à True."""
+        data = [
+            {
+                "week_id": "S999",
+                "start_date": "2026-06-29",
+                "end_date": "2026-07-05",
+                "tss_target": 0,  # BT-053 désynchro
+                "planned_sessions": [
+                    {
+                        "session_id": "S999-01",
+                        "type": "END",
+                        "status": "completed",
+                        "tss_planned": 100,  # active >0 alors stored=0
+                    },
+                ],
+            },
+        ]
+        stats = analyzer.aggregate_statistics(data)
+        assert stats["tss_target_initial_unreliable"] is True
+
+    def test_no_desync_flag_stays_false(self, analyzer):
+        """Semaine synchro → drapeau False."""
+        data = [
+            {
+                "week_id": "S999",
+                "start_date": "2026-06-29",
+                "end_date": "2026-07-05",
+                "tss_target": 100,
+                "planned_sessions": [
+                    {
+                        "session_id": "S999-01",
+                        "type": "END",
+                        "status": "completed",
+                        "tss_planned": 100,
+                    },
+                ],
+            },
+        ]
+        stats = analyzer.aggregate_statistics(data)
+        assert stats["tss_target_initial_unreliable"] is False
+
+    def test_report_masks_initial_and_drift_when_desync(self, analyzer):
+        """Rapport MD affiche « non disponible » sur cible initiale + note."""
+        data = [
+            {
+                "week_id": "S999",
+                "start_date": "2026-06-29",
+                "end_date": "2026-07-05",
+                "tss_target": 0,  # désynchro
+                "planned_sessions": [
+                    {
+                        "session_id": "S999-01",
+                        "type": "END",
+                        "status": "completed",
+                        "tss_planned": 100,
+                    },
+                ],
+            },
+        ]
+        stats = analyzer.aggregate_statistics(data)
+        report = analyzer.generate_report(stats)
+        # Affichage explicite « non disponible » sur la ligne cible initiale
+        assert "non disponible" in report
+        # Note en bas de rapport avec référence BT-051
+        assert "BT-051" in report or "#491" in report
+        # Aucune valeur absolue « −N TSS » (drift masqué)
+        assert "\u2212" not in report or "annul" not in report

@@ -1634,6 +1634,123 @@ class TestBT048AdherenceMatchViaPairedEventId:
         assert "S999-06" not in adh["tss_source_map"]["planned_fallback"]
 
 
+class TestBT053MaskDriftWhenTssTargetDesync:
+    """BT-053 : ``_compute_adherence_for_range`` masque ``initial`` +
+    ``drift`` quand au moins une semaine a ``tss_target=0`` avec somme
+    active >0 (désynchro de stockage — semaine non finalisée via
+    handshake, cf. BT-051).
+
+    Motif : mieux vaut ne pas répondre que répondre faux. Le drift
+    mélangerait dérive de plan et désynchro de stockage.
+    """
+
+    @pytest.mark.asyncio
+    async def test_desync_masks_initial_and_drift(self, mock_intervals, tmp_path):
+        """Semaine désynchronisée détectée → initial=None, drift=None."""
+        from magma_cycling.mcp_server import handle_get_training_statistics
+
+        week = {
+            "week_id": "S999",
+            "start_date": "2026-02-17",
+            "end_date": "2026-02-23",
+            "tss_target": 0,  # BT-053 : désynchro
+            "planned_sessions": [
+                {
+                    "session_id": "S999-01",
+                    "date": "2026-02-18",
+                    "name": "Endurance",
+                    "type": "END",
+                    "version": "V001",
+                    "tss_planned": 100,  # active >0 alors stored=0
+                    "duration_min": 60,
+                    "description": "Endurance Z2",
+                    "status": "completed",
+                    "intervals_id": 12345,
+                },
+            ],
+        }
+        planning_dir = tmp_path / "week_planning"
+        planning_dir.mkdir()
+        (planning_dir / "week_planning_S999.json").write_text(json.dumps(week))
+
+        mock_intervals.get_activities.return_value = [
+            {"id": "i88888", "paired_event_id": 12345, "icu_training_load": 105},
+        ]
+        mock_intervals.get_wellness.return_value = []
+
+        with patch(INTERVALS_PATCH, return_value=mock_intervals):
+            with patch("magma_cycling.config.get_data_config") as mock_dc:
+                mock_dc.return_value.data_repo_path = tmp_path
+                result = await handle_get_training_statistics(
+                    {
+                        "start_date": "2026-02-17",
+                        "end_date": "2026-02-23",
+                        "include_adherence": True,
+                    }
+                )
+
+        data = json.loads(result[0].text)
+        adh = data["adherence"]
+        assert adh["tss_target_initial"] is None, "BT-053: initial masqué"
+        assert adh["drift_initial_to_active_abs"] is None, "BT-053: drift masqué"
+        assert adh["tss_target_active"] == 100, "active reste fiable"
+        assert adh["tss_realized"] == 105.0, "realized reste fiable"
+        assert adh["adherence_rate"] == 105.0, "rate reste calculable"
+        assert "initial_unreliable_reason" in adh
+        assert "BT-051" in adh["initial_unreliable_reason"]
+
+    @pytest.mark.asyncio
+    async def test_no_desync_keeps_initial_and_drift(self, mock_intervals, tmp_path):
+        """Sans désynchro, comportement inchangé (initial + drift présents)."""
+        from magma_cycling.mcp_server import handle_get_training_statistics
+
+        week = {
+            "week_id": "S999",
+            "start_date": "2026-02-17",
+            "end_date": "2026-02-23",
+            "tss_target": 150,  # stocké cohérent
+            "planned_sessions": [
+                {
+                    "session_id": "S999-01",
+                    "date": "2026-02-18",
+                    "name": "Endurance",
+                    "type": "END",
+                    "version": "V001",
+                    "tss_planned": 100,
+                    "duration_min": 60,
+                    "description": "Endurance Z2",
+                    "status": "completed",
+                    "intervals_id": 12345,
+                },
+            ],
+        }
+        planning_dir = tmp_path / "week_planning"
+        planning_dir.mkdir()
+        (planning_dir / "week_planning_S999.json").write_text(json.dumps(week))
+
+        mock_intervals.get_activities.return_value = [
+            {"id": "i88888", "paired_event_id": 12345, "icu_training_load": 105},
+        ]
+        mock_intervals.get_wellness.return_value = []
+
+        with patch(INTERVALS_PATCH, return_value=mock_intervals):
+            with patch("magma_cycling.config.get_data_config") as mock_dc:
+                mock_dc.return_value.data_repo_path = tmp_path
+                result = await handle_get_training_statistics(
+                    {
+                        "start_date": "2026-02-17",
+                        "end_date": "2026-02-23",
+                        "include_adherence": True,
+                    }
+                )
+
+        data = json.loads(result[0].text)
+        adh = data["adherence"]
+        assert adh["tss_target_initial"] == 150
+        assert adh["drift_initial_to_active_abs"] == 50
+        assert "initial_unreliable_reason" not in adh
+
+
 class TestBT045NoneTssTolerance:
     """BT-045 : ``get-training-statistics`` doit tolérer ``icu_training_load=None``.
 

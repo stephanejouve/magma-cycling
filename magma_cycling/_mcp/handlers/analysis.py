@@ -319,19 +319,27 @@ def _compute_adherence_for_range(start_date: str, end_date: str, activities: lis
     Returns:
         Dict avec :
 
-        - ``tss_target_initial`` (int) : cumul ``week["tss_target"]``
-          stocké (intention pré-annulations).
+        - ``tss_target_initial`` (int | None) : cumul ``week["tss_target"]``
+          stocké (intention pré-annulations). ``None`` (BT-053) si au moins
+          une semaine dans la plage a ``tss_target=0`` alors que sa somme
+          active est >0 (désynchro de stockage — semaine non finalisée
+          via handshake, cf BT-051).
         - ``tss_target_active`` (int) : cumul via
-          :func:`compute_active_tss_target` (post-annulations).
+          :func:`compute_active_tss_target` (post-annulations). Toujours
+          fiable (dérivé sessions).
         - ``tss_realized`` (int) : cumul sur sessions ``completed``/
           ``modified`` — utilise Intervals ``icu_training_load`` si
           match par ``intervals_id``, sinon fallback ``tss_planned``.
         - ``adherence_rate`` (float | None) : realized / active × 100.
           ``None`` si active=0 (semaine 100 % annulée) — protection
           division par zéro, rendu doit afficher « — ».
-        - ``drift_initial_to_active_abs`` (int) : ``initial - active``
-          en valeur absolue (pas %, illisible sur cibles reconstruction
-          60-90 TSS).
+        - ``drift_initial_to_active_abs`` (int | None) : ``initial - active``
+          en valeur absolue. ``None`` (BT-053) quand ``initial`` est
+          désynchronisé (voir ci-dessus) — ne pas afficher plutôt que
+          répondre faux (mieux vaut ne pas répondre que répondre faux).
+        - ``initial_unreliable_reason`` (str, optionnel, BT-053) : présent
+          uniquement si ``initial`` et ``drift`` sont ``None``. Explique
+          la cause côté renderer / consommateur IA.
         - ``tss_source_map`` (dict) : ``{"intervals": [...],
           "planned_fallback": [...]}`` — liste ``session_id`` par origine
           du TSS réalisé. Le fallback signale « TSS depuis planifié, pas
@@ -381,6 +389,7 @@ def _compute_adherence_for_range(start_date: str, end_date: str, activities: lis
     total_realized = 0
     tss_source_map: dict[str, list[str]] = {"intervals": [], "planned_fallback": []}
     weeks_in_range: list[str] = []
+    desync_detected = False  # BT-053
 
     if planning_dir.exists():
         for path in sorted(planning_dir.glob("week_planning_S*.json")):
@@ -400,8 +409,18 @@ def _compute_adherence_for_range(start_date: str, end_date: str, activities: lis
                 continue
 
             weeks_in_range.append(week.get("week_id", "?"))
-            total_initial += week.get("tss_target", 0)
-            total_active += compute_active_tss_target(week)
+            week_stored_target = week.get("tss_target", 0)
+            week_active = compute_active_tss_target(week)
+            total_initial += week_stored_target
+            total_active += week_active
+            # BT-053 : détection désynchro tss_target — si le champ stocké
+            # est à 0 alors que la somme active est non-nulle, la semaine
+            # n'a jamais été finalisée (bug flow weekly-planner template
+            # + modify-session non-recompute). Un cumul incluant ces
+            # semaines produit un drift faux. Voir BT-051 pour le fix de
+            # fond (2 champs write-once + recompute).
+            if week_stored_target == 0 and week_active > 0:
+                desync_detected = True
 
             for session in week.get("planned_sessions", []):
                 status = session.get("status")
@@ -421,6 +440,30 @@ def _compute_adherence_for_range(start_date: str, end_date: str, activities: lis
     if total_active > 0:
         adherence_rate = round(total_realized / total_active * 100, 1)
 
+    # BT-053 : mieux vaut ne pas répondre que répondre faux (règle P2
+    # partagée). Si au moins une semaine dans la plage a un ``tss_target``
+    # stocké désynchronisé (=0 alors que sessions actives >0), le cumul
+    # ``initial`` est structurellement sous-estimé → ``drift`` mesurerait
+    # une désynchro de stockage plutôt qu'une dérive de plan. On masque
+    # les deux champs avec ``None`` + drapeau ``initial_unreliable_reason``.
+    # ``adherence_rate`` reste calculable (basé sur ``total_active`` fiable
+    # dérivé sessions).
+    if desync_detected:
+        return {
+            "tss_target_initial": None,
+            "tss_target_active": total_active,
+            "tss_realized": round(total_realized, 1),
+            "adherence_rate": adherence_rate,
+            "drift_initial_to_active_abs": None,
+            "initial_unreliable_reason": (
+                "tss_target stored=0 while sessions active >0 on at least "
+                "one week in range — semaine(s) non finalisée(s) via handshake "
+                "(BT-051 en cours). Ni le initial cumulé ni le drift ne sont "
+                "significatifs. Voir issue #491."
+            ),
+            "tss_source_map": tss_source_map,
+            "weeks_in_range": weeks_in_range,
+        }
     return {
         "tss_target_initial": total_initial,
         "tss_target_active": total_active,

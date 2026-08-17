@@ -41,6 +41,11 @@ class StatsMixin:
             "tss_target_total": 0,
             # BT-039 : cible active (post-annulations) — voie A pour adhérence
             "tss_target_active_total": 0,
+            # BT-053 : drapeau désynchro tss_target au niveau du mois. Passe
+            # à True dès qu'une semaine a ``tss_target=0`` alors que sa
+            # somme active est >0. Rendu doit alors afficher ``initial`` +
+            # ``drift`` comme « non disponible » plutôt qu'un chiffre faux.
+            "tss_target_initial_unreliable": False,
             # BT-039 marqueur origine TSS réalisé — liste des session_id ayant
             # fallback tss_planned (pas d'intervals_id ou pas de match map)
             "tss_source_map": {"intervals": [], "planned_fallback": []},
@@ -63,8 +68,13 @@ class StatsMixin:
                 "sessions": len(week.get("planned_sessions", [])),
             }
 
-            stats["tss_target_total"] += week.get("tss_target", 0)
+            week_stored_target = week.get("tss_target", 0)
+            stats["tss_target_total"] += week_stored_target
             stats["tss_target_active_total"] += week_active_target
+            # BT-053 : détection désynchro par semaine (voir docstring
+            # ``tss_target_initial_unreliable``).
+            if week_stored_target == 0 and week_active_target > 0:
+                stats["tss_target_initial_unreliable"] = True
 
             for session in week.get("planned_sessions", []):
                 stats["total_sessions"] += 1
