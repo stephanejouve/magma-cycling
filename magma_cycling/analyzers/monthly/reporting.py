@@ -17,22 +17,37 @@ class ReportingMixin:
         fallback ``planned`` (pas de match Intervals.icu).
         """
         month_name = self.month_date.strftime("%B %Y")
-        target_init = stats["tss_target_total"]
         target_active = stats["tss_target_active_total"]
         realized = stats["tss_realized"]
-        drift_abs = target_init - target_active
+        # BT-053 : ``initial`` et ``drift`` masqués si au moins une semaine
+        # dans la plage a ``tss_target=0`` alors que sa somme active >0
+        # (désynchro de stockage — semaine non finalisée via handshake).
+        # Voir BT-051 pour le fix de fond. Mieux vaut ne pas répondre que
+        # répondre faux.
+        initial_unreliable = stats.get("tss_target_initial_unreliable", False)
+        if initial_unreliable:
+            target_init_display = "non disponible (voir note)"
+            drift_line = (
+                "- **\u00c9cart intention \u2192 active :** non disponible "
+                "(au moins une semaine sans intention finalis\u00e9e — "
+                "voir note en bas de rapport)\n"
+            )
+        else:
+            target_init = stats["tss_target_total"]
+            drift_abs = target_init - target_active
+            target_init_display = f"{target_init}"
+            drift_line = (
+                f"- **\u00c9cart intention \u2192 active :** \u2212{drift_abs} TSS "
+                "(sessions annul\u00e9es en cours de semaine)\n"
+                if drift_abs > 0
+                else ""
+            )
         # BT-039 : taux d'adhérence peut être None (semaine 100 % annulée
         # avec active=0 → division par zéro). Affichage « — » explicite.
         achievement_str = (
             f"{stats['tss_achievement_rate']:.1f}%"
             if stats["tss_achievement_rate"] is not None
             else "\u2014"
-        )
-        drift_line = (
-            f"- **\u00c9cart intention \u2192 active :** \u2212{drift_abs} TSS "
-            "(sessions annul\u00e9es en cours de semaine)\n"
-            if drift_abs > 0
-            else ""
         )
 
         report = f"""# \U0001f4ca Analyse Mensuelle - {month_name}.
@@ -43,7 +58,7 @@ class ReportingMixin:
 **Semaines analys\u00e9es :** {stats['total_weeks']}
 
 ### Charge d'Entra\u00eenement (TSS)
-- **TSS Cible initiale :** {target_init} (intention en d\u00e9but de semaine)
+- **TSS Cible initiale :** {target_init_display} (intention en d\u00e9but de semaine)
 - **TSS Cible active :** {target_active} (r\u00e9f\u00e9rence adh\u00e9rence, post-annulations)
 - **TSS R\u00e9alis\u00e9 :** {realized}
 - **Taux de r\u00e9alisation :** {achievement_str} (sur cible active)
@@ -67,10 +82,30 @@ class ReportingMixin:
             active = week.get("tss_target_active", week["tss_target"])
             achievement = (week["tss_actual"] / active * 100) if active > 0 else None
             achievement_cell = f"{achievement:.1f}%" if achievement is not None else "\u2014"
+            # BT-053 : afficher « N/A » plutôt que « 0 » pour les semaines
+            # non finalisées (tss_target=0 alors qu'active>0).
+            stored = week.get("tss_target", 0)
+            if stored == 0 and active > 0:
+                stored_cell = "N/A"
+            else:
+                stored_cell = f"{stored}"
             report += (
                 f"| {week['week_id']} | {week['start_date']} \u2192 {week['end_date']} | "
-                f"{week['tss_target']} | {active} | {week['tss_actual']} | "
+                f"{stored_cell} | {active} | {week['tss_actual']} | "
                 f"{achievement_cell} |\n"
+            )
+
+        # BT-053 : note « N/A » sur cible initiale si désynchro détectée
+        if initial_unreliable:
+            report += (
+                "\n> \u26a0\ufe0f **Cible initiale non disponible** : au moins "
+                "une semaine dans la p\u00e9riode a un ``tss_target`` stock\u00e9 "
+                "d\u00e9synchronis\u00e9 (=0 alors que les sessions actives ont "
+                "un cumul >0). Ces semaines n'ont pas \u00e9t\u00e9 finalis\u00e9es "
+                "via handshake `finalize-week-planning` (fonctionnalit\u00e9 en "
+                "cours, BT-051 issue #491). Le drift intention \u2192 active "
+                "n'est donc pas significatif sur cette p\u00e9riode. Le r\u00e9alis\u00e9 "
+                "et le taux d'adh\u00e9rence sur cible active restent fiables.\n"
             )
 
         # BT-039 : l\u00e9gende marqueur origine TSS r\u00e9alis\u00e9
@@ -139,6 +174,10 @@ class ReportingMixin:
         BT-039 : expose les 2 cibles distinctes à l'IA — initiale
         (intention) et active (référence adhérence). L'IA voit le vrai
         signal d'adhérence sans être trompée par une cible gonflée.
+
+        BT-053 : si la cible initiale est déclarée non fiable (drapeau
+        ``tss_target_initial_unreliable``), l'IA reçoit une mention
+        explicite « non disponible » plutôt qu'un chiffre trompeur.
         """
         month_name = self.month_date.strftime("%B %Y")
         achievement_str = (
@@ -146,12 +185,23 @@ class ReportingMixin:
             if stats["tss_achievement_rate"] is not None
             else "\u2014"
         )
+        # BT-053 : masquage cohérent avec le rapport MD.
+        if stats.get("tss_target_initial_unreliable", False):
+            target_init_line = (
+                "TSS Cible initiale : non disponible (semaines non finalis\u00e9es "
+                "via handshake — voir BT-051). Ne PAS calculer d'\u00e9cart intention "
+                "\u2192 active sur ce mois."
+            )
+        else:
+            target_init_line = (
+                f"TSS Cible initiale : {stats['tss_target_total']} " "(intention pr\u00e9-semaine)"
+            )
 
         prompt = f"""Analyse ce mois d'entra\u00eenement cyclisme ({month_name}) et fournis des insights :
 
 \U0001f4ca DONN\u00c9ES MENSUELLES :
 - {stats['total_weeks']} semaines analys\u00e9es
-- TSS Cible initiale : {stats['tss_target_total']} (intention pr\u00e9-semaine)
+- {target_init_line}
 - TSS Cible active : {stats['tss_target_active_total']} (post-annulations, r\u00e9f\u00e9rence adh\u00e9rence)
 - TSS R\u00e9alis\u00e9 : {stats['tss_realized']} ({achievement_str} sur cible active)
 - Taux d'adh\u00e9rence : {stats['adherence_rate']:.1f}%
@@ -163,12 +213,20 @@ class ReportingMixin:
 """
         for week in stats["tss_by_week"]:
             active = week.get("tss_target_active", week["tss_target"])
-            drift = week["tss_target"] - active
-            drift_str = f" (\u2212{drift} annul\u00e9)" if drift > 0 else ""
-            prompt += (
-                f"\n- {week['week_id']} : {week['tss_actual']}/{active} TSS "
-                f"[cible init {week['tss_target']}{drift_str}]"
-            )
+            stored = week["tss_target"]
+            # BT-053 : ligne semaine avec initial « N/A » si désynchro.
+            if stored == 0 and active > 0:
+                prompt += (
+                    f"\n- {week['week_id']} : {week['tss_actual']}/{active} TSS "
+                    "[cible init non disponible — semaine non finalis\u00e9e]"
+                )
+            else:
+                drift = stored - active
+                drift_str = f" (\u2212{drift} annul\u00e9)" if drift > 0 else ""
+                prompt += (
+                    f"\n- {week['week_id']} : {week['tss_actual']}/{active} TSS "
+                    f"[cible init {stored}{drift_str}]"
+                )
 
         prompt += "\n\n\U0001f3af R\u00c9PARTITION TYPES :\n"
         for session_type, count in sorted(
