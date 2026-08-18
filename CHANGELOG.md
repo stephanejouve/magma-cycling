@@ -41,6 +41,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **BT-050** — Distribution d'intensité par zone puissance via streams
+  temps-réel (spec Coach AI 2026-08-17). Nouveau module
+  `magma_cycling/analyzers/intensity_zones.py` :
+  - `FTP_PALIERS` : table historique versionnée des paliers FTP
+    ((`2025-08-23`, 223 W), (`2026-03-28`, 226 W))
+  - `ZONE_BOUNDS` : bornes Coggan 5-zone simplifié (Z1 < 55 %, Z5 ≥ 95 %)
+  - `ftp_at(date)` : lookup FTP en vigueur à la date d'activité
+  - `bucket_watts_by_zones(watts, ftp)` : bucketise chaque seconde par zone
+  - `intensity_distribution_from_activities(activities, client)` :
+    orchestre le fetch streams + agrégation temps par zone
+
+  Remplace le comptage historique dans `handle_get_training_statistics`
+  (comptait des activités entières par IF global — faussement polarisé,
+  cf issue #490). Nouveau contrat : `{z1_seconds, z1_pct, ..., z5_seconds,
+  z5_pct, total_seconds}` — minutes ET pourcentage (le pct seul masque
+  le volume).
+
+  Coût réseau : 1 requête `get_activity_streams` par activité, amorti
+  par le cache read-through local (BT-025). Pour une fenêtre 30 jours
+  ≈ 20-30 requêtes.
+
+  22 tests dédiés (`tests/analyzers/test_intensity_zones.py`) couvrant
+  `ftp_at` (paliers, bornes inclusives, pré-1er palier), `bucket_watts`
+  (Z1-Z5 exhaustif, FTP=0 défensif, invariant somme), aggregation
+  multi-activités (mix, FTP historique, watts-less skip, fetch error
+  skip, data corrompue). Zéro régression sur BT-042/045/047/053.
+
 - **BT-051** — Design 2 champs `finalize-week-planning` (spec Coach AI
   2026-08-17). Nouveaux champs sur `WeeklyPlan` :
   - `tss_target_initial: int | None` : intention gelée à la finalisation
