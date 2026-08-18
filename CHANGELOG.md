@@ -41,6 +41,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **BT-054** — `retag-stable.yml` hardened against silent-fail observed on
+  2026-08-17 v3.72.5 cascade (premier retag success API mais `:stable`
+  restait sur v3.72.4). Ajouts : (1) pré-check source tag exists sur
+  GHCR avant retag (fail-fast typo/absent), (2) capture baseline digest
+  `:stable` avant retag (référence pour « did change »), (3) Verify avec
+  retry loop 3×5s pour absorber la propagation CDN GHCR, (4) détection
+  explicite du no-op idempotent (`:stable` déjà sur la source) via
+  `::notice::` plutôt qu'error. Motive : issue #494.
 - **BT-044** — `backfill-wellness` : log CLI défensif. Renommage
   `written` → `would_write` en dry-run (évite la confusion « written=N
   mais aucun fichier sur disque »). Ajout `range=N days` au log final

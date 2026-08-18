@@ -9,6 +9,14 @@ name: Retag stable
 # rebuild — it just rewrites the manifest pointer at the registry.
 #
 # Trigger: workflow_dispatch with `source_tag` input (e.g. "v3.25.5").
+#
+# BT-054 (2026-08-18) : hardened against silent-fail observed on 2026-08-17
+# v3.72.5 cascade — first retag returned success but :stable pointer wasn't
+# updated (probable GHCR eventual consistency artefact). Fix:
+#   1. Pre-check source tag exists (fail-fast on typo/absent tag)
+#   2. Capture baseline :stable digest before retag (for "did change" check)
+#   3. Verify with retry loop (3 attempts × 5s) to absorb GHCR propagation delay
+#   4. Explicit no-op detection when :stable was already on the source
 
 on:
   workflow_dispatch:
@@ -52,6 +60,26 @@ jobs:
           echo "Input: ${raw} → resolved: ${stripped}"
           echo "tag=${stripped}" >> "${GITHUB_OUTPUT}"
 
+      - name: Pre-check source tag exists on GHCR
+        run: |
+          set -eu
+          src="${REGISTRY}/${IMAGE_NAME}:${{ steps.norm.outputs.tag }}"
+          echo "Checking source exists: ${src}"
+          if ! docker buildx imagetools inspect "${src}" --format '{{.Manifest.Digest}}' > /dev/null 2>&1; then
+            echo "::error::Source tag ${src} does not exist on GHCR. Aborting retag."
+            exit 1
+          fi
+          echo "✓ Source tag exists"
+
+      - name: Capture baseline :stable digest (before retag)
+        id: baseline
+        run: |
+          set -eu
+          # :stable may not exist yet (first-ever promotion). Handle absent case.
+          dst_digest_before=$(docker buildx imagetools inspect "${REGISTRY}/${IMAGE_NAME}:stable" --format '{{.Manifest.Digest}}' 2>/dev/null || echo "none")
+          echo "Baseline :stable digest (before retag): ${dst_digest_before}"
+          echo "digest_before=${dst_digest_before}" >> "${GITHUB_OUTPUT}"
+
       - name: Retag ${{ steps.norm.outputs.tag }} → :stable
         run: |
           set -eu
@@ -60,15 +88,39 @@ jobs:
           echo "Promoting ${src} → ${dst}"
           docker buildx imagetools create -t "${dst}" "${src}"
 
-      - name: Verify :stable now points to ${{ steps.norm.outputs.tag }}
+      - name: Verify :stable now points to ${{ steps.norm.outputs.tag }} (retry for GHCR eventual consistency)
         run: |
           set -eu
           src_digest=$(docker buildx imagetools inspect "${REGISTRY}/${IMAGE_NAME}:${{ steps.norm.outputs.tag }}" --format '{{.Manifest.Digest}}')
-          dst_digest=$(docker buildx imagetools inspect "${REGISTRY}/${IMAGE_NAME}:stable" --format '{{.Manifest.Digest}}')
+          dst_digest_before="${{ steps.baseline.outputs.digest_before }}"
           echo "source digest: ${src_digest}"
-          echo "stable digest: ${dst_digest}"
-          if [ "${src_digest}" != "${dst_digest}" ]; then
-            echo "::error::Digest mismatch after retag"
-            exit 1
-          fi
-          echo "✓ :stable now points to ${{ steps.norm.outputs.tag }} (${dst_digest})"
+          echo "baseline :stable digest (before retag): ${dst_digest_before}"
+
+          # Retry loop to absorb GHCR CDN propagation delay (BT-054).
+          # 3 attempts, 5s each = 15s max wait — sufficient for typical
+          # GHCR propagation, keeps the workflow snappy on the happy path.
+          for attempt in 1 2 3; do
+            sleep 5
+            dst_digest=$(docker buildx imagetools inspect "${REGISTRY}/${IMAGE_NAME}:stable" --format '{{.Manifest.Digest}}')
+            echo "attempt ${attempt}: :stable digest = ${dst_digest}"
+            if [ "${src_digest}" = "${dst_digest}" ]; then
+              # Source and destination now match — retag effective.
+              if [ "${dst_digest_before}" = "${src_digest}" ] && [ "${dst_digest_before}" != "none" ]; then
+                # Idempotent no-op: :stable was already pointing to source.
+                # Emit a NOTICE rather than an error — legitimate replay.
+                echo "::notice::Idempotent no-op: :stable was already pointing to ${src_digest} before this run"
+              elif [ "${dst_digest_before}" != "${dst_digest}" ]; then
+                echo "✓ :stable digest CHANGED from ${dst_digest_before} to ${dst_digest}"
+              fi
+              echo "✓ :stable now points to ${{ steps.norm.outputs.tag }} (${dst_digest})"
+              exit 0
+            fi
+            echo "  → mismatch (expected ${src_digest}), retrying..."
+          done
+
+          echo "::error::After 3 attempts (15s), :stable still does not point to source."
+          echo "::error::Expected: ${src_digest}"
+          echo "::error::Observed: ${dst_digest}"
+          echo "::error::Baseline (before retag): ${dst_digest_before}"
+          echo "::error::Retag command reported success but propagation failed — check GHCR status and retry manually."
+          exit 1
