@@ -68,20 +68,17 @@ class StatsMixin:
                 "sessions": len(week.get("planned_sessions", [])),
             }
 
-            # BT-051 (post) : préférer ``tss_target_initial`` (write-once
-            # via handshake). Sinon fallback opportuniste sur ``tss_target``
-            # legacy si > 0 (rétrocompat semaines historiques sans
-            # réécriture). BT-053 (intérimaire) : détection désynchro
-            # préservée sur ``tss_target == 0`` sans initial.
+            # BT-053 v2 (2026-08-18, Coach AI) : SEUL ``tss_target_initial``
+            # est fiable. Retrait du fallback opportuniste sur legacy
+            # ``tss_target > 0`` — produirait un écart entre 2 sources
+            # non comparables. Position durcie : semaine non finalisée
+            # = drapeau ``unreliable``, aucun cumul initial ajouté.
             week_initial = week.get("tss_target_initial")
             stats["tss_target_active_total"] += week_active_target
             if week_initial is None:
-                legacy = week.get("tss_target", 0)
-                if legacy > 0:
-                    week_initial = legacy
-                elif week_active_target > 0:
+                if week_active_target > 0:
                     stats["tss_target_initial_unreliable"] = True
-            if week_initial is not None:
+            else:
                 stats["tss_target_total"] += week_initial
 
             for session in week.get("planned_sessions", []):

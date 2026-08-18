@@ -415,25 +415,21 @@ def _compute_adherence_for_range(start_date: str, end_date: str, activities: lis
             weeks_in_range.append(week.get("week_id", "?"))
             week_active = compute_active_tss_target(week)
             total_active += week_active
-            # BT-051 (post) : ``tss_target_initial`` renseigné = semaine
-            # finalisée via handshake ``finalize-week-planning``, valeur
-            # fiable. Sinon → fallback opportuniste sur legacy
-            # ``tss_target`` si > 0 (rétrocompat 30+ semaines historiques
-            # sans réécriture — position Coach AI « ne rien reconstruire »
-            # mais autorise la lecture opportuniste des valeurs plausibles).
-            # BT-053 (intérimaire) : détection désynchro préservée sur
-            # ``tss_target == 0`` sans ``tss_target_initial``.
+            # BT-053 v2 (2026-08-18, Coach AI) : retrait du fallback
+            # opportuniste sur legacy ``tss_target > 0``. Position durcie :
+            # SEUL ``tss_target_initial`` (renseigné via handshake
+            # ``finalize-week-planning`` BT-051) est fiable. Sinon → drift
+            # non exploitable, masquer plutôt que produire un écart entre
+            # deux sources non comparables (règle « mieux vaut ne pas
+            # répondre que répondre faux »).
+            # Rétrocompat : ces semaines n'auront simplement pas de drift
+            # dans les rapports post-BT-053v2 tant qu'elles ne sont pas
+            # finalisées. Position Coach AI « ne rien reconstruire »
+            # respectée strictement.
             week_initial = week.get("tss_target_initial")
             if week_initial is None:
-                legacy = week.get("tss_target", 0)
-                if legacy > 0:
-                    # Semaine legacy avec valeur plausible — utilisée en
-                    # fallback pour ne pas casser les rapports historiques.
-                    week_initial = legacy
-                else:
-                    # tss_target=0 sans initial → non finalisée réelle
-                    desync_detected = True
-            if week_initial is not None:
+                desync_detected = True
+            else:
                 total_initial += week_initial
 
             for session in week.get("planned_sessions", []):

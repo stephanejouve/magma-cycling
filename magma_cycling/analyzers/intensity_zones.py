@@ -143,11 +143,25 @@ def intensity_distribution_from_activities(
             ``get_activity_streams``).
 
     Returns:
-        Dict avec keys ``z1_seconds``, ``z1_pct``, ..., ``z5_seconds``,
-        ``z5_pct``, ``total_seconds``. Pourcentages arrondis à 0.1 %.
-        ``{}`` si activités vides ou aucun stream watts exploitable.
+        Dict avec :
+
+        - ``z1_seconds``..``z5_seconds`` (int) : cumul secondes par zone
+        - ``z1_pct``..``z5_pct`` (float, arrondi 0.1 %) : part du total
+        - ``total_seconds`` (int) : total accumulé sur toutes les activités
+        - ``zone_bounds`` (dict, BT-050 v2) : bornes utilisées ``{z1: [0.00, 0.55], ...}``
+          exposées pour permettre la **vérification indépendante** du calcul
+          (Coach AI 2026-08-18 : « sans ça, aucune distribution rétrospective
+          n'est vérifiable »).
+        - ``ftp_by_activity`` (dict, BT-050 v2) : ``{activity_id: ftp_watts}``
+          par activité **utilisée** (activités skippées absentes). Permet à
+          l'IA/opérateur de vérifier que la FTP historique a bien été
+          appliquée par date, pas la FTP courante.
+
+        ``{...zeros...}`` si activités vides ou aucun stream watts exploitable.
     """
     aggregated: dict[str, int] = {z: 0 for z in ZONE_BOUNDS}
+    # BT-050 v2 : trace la FTP appliquée par activité pour audit indépendant.
+    ftp_by_activity: dict[str, int] = {}
 
     for act in activities:
         activity_id = act.get("id")
@@ -172,6 +186,7 @@ def intensity_distribution_from_activities(
             continue
 
         ftp = ftp_at(activity_date)
+        ftp_by_activity[str(activity_id)] = ftp
         counts = bucket_watts_by_zones(watts_stream["data"], ftp)
         for z, sec in counts.items():
             aggregated[z] += sec
@@ -183,4 +198,12 @@ def intensity_distribution_from_activities(
         result[f"{z}_seconds"] = sec
         result[f"{z}_pct"] = round(sec / total * 100, 1) if total > 0 else 0.0
     result["total_seconds"] = total
+    # BT-050 v2 : exposer les bornes utilisées + FTP appliquée par activité
+    # pour permettre la vérification indépendante du calcul par l'IA ou
+    # l'opérateur. Sans ça, impossible de valider une distribution
+    # rétrospective (Coach AI 2026-08-18).
+    result["zone_bounds"] = {
+        z: [lo, hi if hi != float("inf") else None] for z, (lo, hi) in ZONE_BOUNDS.items()
+    }
+    result["ftp_by_activity"] = ftp_by_activity
     return result

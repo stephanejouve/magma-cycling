@@ -1344,6 +1344,7 @@ class TestBT042IncludeAdherence:
             "start_date": "2026-02-17",
             "end_date": "2026-02-23",
             "tss_target": 150,
+            "tss_target_initial": 150,  # BT-051 finalisée
             "planned_sessions": [
                 {
                     "session_id": "S999-01",
@@ -1700,6 +1701,75 @@ class TestBT053MaskDriftWhenTssTargetDesync:
         assert "BT-051" in adh["initial_unreliable_reason"]
 
     @pytest.mark.asyncio
+    async def test_legacy_tss_target_without_initial_marks_desync_v2(
+        self, mock_intervals, tmp_path
+    ):
+        """BT-053 v2 (2026-08-18, Coach AI) : durcissement — SEUL
+        ``tss_target_initial`` renseigné compte comme fiable.
+
+        Une semaine avec legacy ``tss_target > 0`` mais SANS
+        ``tss_target_initial`` (pas finalisée via handshake) doit être
+        traitée comme désynchronisée. Pas de fallback opportuniste sur
+        legacy — produirait un drift entre 2 sources non comparables.
+
+        Régression corrigée : hier (2026-08-17) le fallback opportuniste
+        avait été ajouté pour rétrocompat, mais Coach AI a refusé cette
+        rétrocompat qui produit un chiffre trompeur en prod (« S100 drift
+        affiché 17 alors que semaine pas finalisée »).
+        """
+        from magma_cycling.mcp_server import handle_get_training_statistics
+
+        week = {
+            "week_id": "S999",
+            "start_date": "2026-06-29",
+            "end_date": "2026-07-05",
+            "tss_target": 286,  # legacy renseigné mais...
+            # tss_target_initial ABSENT → non finalisée → doit être désynchro
+            "planned_sessions": [
+                {
+                    "session_id": "S999-01",
+                    "date": "2026-07-01",
+                    "name": "Endurance",
+                    "type": "END",
+                    "version": "V001",
+                    "tss_planned": 300,
+                    "duration_min": 60,
+                    "description": "test",
+                    "status": "completed",
+                    "intervals_id": 12345,
+                },
+            ],
+        }
+        planning_dir = tmp_path / "week_planning"
+        planning_dir.mkdir()
+        (planning_dir / "week_planning_S999.json").write_text(json.dumps(week))
+
+        mock_intervals.get_activities.return_value = [
+            {"id": "i88888", "paired_event_id": 12345, "icu_training_load": 300},
+        ]
+        mock_intervals.get_wellness.return_value = []
+
+        with patch(INTERVALS_PATCH, return_value=mock_intervals):
+            with patch("magma_cycling.config.get_data_config") as mock_dc:
+                mock_dc.return_value.data_repo_path = tmp_path
+                result = await handle_get_training_statistics(
+                    {
+                        "start_date": "2026-06-29",
+                        "end_date": "2026-07-05",
+                        "include_adherence": True,
+                    }
+                )
+
+        data = json.loads(result[0].text)
+        adh = data["adherence"]
+        # BT-053v2 : legacy tss_target=286 IGNORÉ, tss_target_initial=None → désynchro
+        assert (
+            adh["tss_target_initial"] is None
+        ), "BT-053v2: legacy tss_target ne doit PAS servir de fallback initial"
+        assert adh["drift_initial_to_active_abs"] is None, "BT-053v2: drift masqué"
+        assert "initial_unreliable_reason" in adh
+
+    @pytest.mark.asyncio
     async def test_no_desync_keeps_initial_and_drift(self, mock_intervals, tmp_path):
         """Sans désynchro, comportement inchangé (initial + drift présents)."""
         from magma_cycling.mcp_server import handle_get_training_statistics
@@ -1709,6 +1779,7 @@ class TestBT053MaskDriftWhenTssTargetDesync:
             "start_date": "2026-02-17",
             "end_date": "2026-02-23",
             "tss_target": 150,  # stocké cohérent
+            "tss_target_initial": 150,  # BT-051 finalisée
             "planned_sessions": [
                 {
                     "session_id": "S999-01",
