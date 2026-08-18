@@ -39,6 +39,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `analyzers/weekly_analyzer.py:_build_dated_footer` et
   `analyzers/monthly/reporting.py:generate_report`.
 
+### Changed
+
+- **BT-044** — `backfill-wellness` : log CLI défensif. Renommage
+  `written` → `would_write` en dry-run (évite la confusion « written=N
+  mais aucun fichier sur disque »). Ajout `range=N days` au log final
+  pour permettre à l'opérateur de vérifier l'invariant à l'œil.
+  Warning explicite si `written + skipped + failed != range_size` (piste
+  de diagnostic pour les rapports « chiffres incohérents » observés en
+  prod). Motif : diagnostic Admin 2026-08-17 sur backfill wellness
+  post-BT-043 (issue #480).
+
 ### Fixed
 
 - **BT-053** — Masquage `initial` + `drift` quand `tss_target` désynchronisé.
