@@ -476,4 +476,29 @@ def get_tools() -> list[Tool]:
                 "required": ["week_id", "session_id"],
             },
         ),
+        Tool(
+            name="finalize-week-planning",
+            description=(
+                "BT-051 : handshake explicite qui gèle ``tss_target_initial`` "
+                "(intention TSS pré-plan). Écriture unique — second appel "
+                "refusé avec message explicite. Préconditions : la semaine "
+                "existe, n'est pas déjà finalisée, a au moins une session "
+                "active, la somme active >0. Effet : ``tss_target_initial`` + "
+                "``tss_target_current`` + ``finalized_at`` sont écrits ; le "
+                "drift ultérieur (current - initial) trace les ajustements "
+                "post-finalisation. Aucun mécanisme de réouverture en v1 "
+                "(décision Coach AI 2026-08-17)."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "week_id": {
+                        "type": "string",
+                        "description": "Week ID (e.g., S108)",
+                        "pattern": "^S\\d{3}$",
+                    },
+                },
+                "required": ["week_id"],
+            },
+        ),
     ]

@@ -68,13 +68,21 @@ class StatsMixin:
                 "sessions": len(week.get("planned_sessions", [])),
             }
 
-            week_stored_target = week.get("tss_target", 0)
-            stats["tss_target_total"] += week_stored_target
+            # BT-051 (post) : préférer ``tss_target_initial`` (write-once
+            # via handshake). Sinon fallback opportuniste sur ``tss_target``
+            # legacy si > 0 (rétrocompat semaines historiques sans
+            # réécriture). BT-053 (intérimaire) : détection désynchro
+            # préservée sur ``tss_target == 0`` sans initial.
+            week_initial = week.get("tss_target_initial")
             stats["tss_target_active_total"] += week_active_target
-            # BT-053 : détection désynchro par semaine (voir docstring
-            # ``tss_target_initial_unreliable``).
-            if week_stored_target == 0 and week_active_target > 0:
-                stats["tss_target_initial_unreliable"] = True
+            if week_initial is None:
+                legacy = week.get("tss_target", 0)
+                if legacy > 0:
+                    week_initial = legacy
+                elif week_active_target > 0:
+                    stats["tss_target_initial_unreliable"] = True
+            if week_initial is not None:
+                stats["tss_target_total"] += week_initial
 
             for session in week.get("planned_sessions", []):
                 stats["total_sessions"] += 1

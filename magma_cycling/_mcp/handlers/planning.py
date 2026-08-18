@@ -693,6 +693,135 @@ async def handle_update_session(args: dict) -> list[TextContent]:
     return mcp_response(result)
 
 
+async def handle_finalize_week_planning(args: dict) -> list[TextContent]:
+    """BT-051 : handshake explicite qui gèle ``tss_target_initial``.
+
+    Pattern write-once (spec Coach AI 2026-08-17). Réquisits :
+
+    - La semaine doit exister (planning file présent)
+    - La semaine ne doit pas être déjà finalisée (``finalized_at is None``)
+    - Au moins une session active (statut hors ``rest_day``/``skipped``/``cancelled``)
+    - La somme active doit être >0 (refuse une intention à zéro)
+
+    Effet : write dans le fichier week_planning_SXXX.json de :
+
+    - ``tss_target_initial = sum(sessions actives à cet instant)``
+    - ``tss_target_current = même valeur`` (synchro à la finalisation)
+    - ``finalized_at = datetime.now()`` (timestamp du handshake)
+
+    Une réouverture (second appel) est **refusée** avec un message
+    explicite indiquant la valeur figée et sa date. Aucun mécanisme
+    de réouverture en v1 (décision Coach AI : « si le plan change
+    après finalisation, c'est ce que le drift doit montrer »).
+    """
+    from datetime import datetime
+
+    from magma_cycling.analyzers.tss_target import CANCELLED_STATUSES
+    from magma_cycling.planning.control_tower import planning_tower
+
+    week_id = args["week_id"]
+
+    try:
+        # Lecture d'abord pour valider les préconditions AVANT de prendre
+        # la permission de modif (évite un backup inutile en cas de refus).
+        plan = planning_tower.read_week(week_id)
+
+        # Précondition 1 : idempotence — refus si déjà finalisée
+        if plan.finalized_at is not None:
+            error = {
+                "error": (
+                    f"Week {week_id} is already finalized "
+                    f"(tss_target_initial={plan.tss_target_initial} "
+                    f"at {plan.finalized_at.isoformat()})"
+                ),
+                "week_id": week_id,
+                "tss_target_initial": plan.tss_target_initial,
+                "finalized_at": plan.finalized_at.isoformat(),
+                "hint": (
+                    "L'intention initiale est immuable par design. Aucun mécanisme "
+                    "de réouverture en v1 : si le plan change après finalisation, "
+                    "le drift (tss_target_current - tss_target_initial) traduit "
+                    "ces changements."
+                ),
+            }
+            return mcp_response(error)
+
+        # Précondition 2 : sessions actives disponibles
+        active_sessions = [s for s in plan.planned_sessions if s.status not in CANCELLED_STATUSES]
+        if not active_sessions:
+            error = {
+                "error": f"Week {week_id} has no active sessions to finalize",
+                "week_id": week_id,
+                "total_sessions": len(plan.planned_sessions),
+                "hint": (
+                    "Impossible de finaliser une semaine vide ou 100 % annulée. "
+                    "Créer au moins une session active (statut hors rest_day/"
+                    "skipped/cancelled) avant finalisation."
+                ),
+            }
+            return mcp_response(error)
+
+        # Précondition 3 : intention non-nulle
+        initial = sum(s.tss_planned or 0 for s in active_sessions)
+        if initial == 0:
+            error = {
+                "error": (
+                    f"Week {week_id} active sessions all have tss_planned=0 — "
+                    "cannot finalize with zero intention"
+                ),
+                "week_id": week_id,
+                "active_sessions_count": len(active_sessions),
+                "hint": (
+                    "Renseigner tss_planned > 0 sur au moins une session active "
+                    "avant finalisation (via modify-session-details)."
+                ),
+            }
+            return mcp_response(error)
+
+        # Toutes les préconditions passent — écriture du handshake via
+        # modify_week (backup automatique + audit log).
+        finalized_at = datetime.now()
+        with planning_tower.modify_week(
+            week_id,
+            requesting_script="finalize-week-planning",
+            reason=(
+                f"BT-051 handshake: freeze tss_target_initial={initial} "
+                f"({len(active_sessions)} active sessions)"
+            ),
+        ) as plan_w:
+            plan_w.tss_target_initial = initial
+            plan_w.tss_target_current = initial  # synchro à la finalisation
+            plan_w.finalized_at = finalized_at
+
+        result = {
+            "status": "success",
+            "week_id": week_id,
+            "tss_target_initial": initial,
+            "tss_target_current": initial,
+            "finalized_at": finalized_at.isoformat(),
+            "active_sessions_count": len(active_sessions),
+            "message": (
+                f"✅ Week {week_id} finalized: tss_target_initial={initial} "
+                f"(sum of {len(active_sessions)} active sessions)"
+            ),
+        }
+        return mcp_response(result)
+
+    except FileNotFoundError:
+        error = {
+            "error": f"Week {week_id} planning file not found",
+            "week_id": week_id,
+            "hint": "Créer la semaine via weekly-planner avant finalisation.",
+        }
+        return mcp_response(error)
+    except Exception as e:
+        error = {
+            "error": f"Failed to finalize week {week_id}: {str(e)}",
+            "week_id": week_id,
+        }
+        return mcp_response(error)
+
+
 async def handle_list_weeks(args: dict) -> list[TextContent]:
     """List available weekly plannings."""
     from magma_cycling.config import get_data_config

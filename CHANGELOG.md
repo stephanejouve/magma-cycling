@@ -39,6 +39,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `analyzers/weekly_analyzer.py:_build_dated_footer` et
   `analyzers/monthly/reporting.py:generate_report`.
 
+### Added
+
+- **BT-051** — Design 2 champs `finalize-week-planning` (spec Coach AI
+  2026-08-17). Nouveaux champs sur `WeeklyPlan` :
+  - `tss_target_initial: int | None` : intention gelée à la finalisation
+    via le handshake. `None` = semaine non finalisée. Write-once.
+  - `tss_target_current: int | None` : cumul TSS des sessions
+    non-cancelled, recompute automatique dans `WeeklyPlan.to_json()`
+    avant chaque écriture disque.
+  - `finalized_at: datetime | None` : timestamp du handshake, sert de
+    garde d'idempotence et de trace d'audit.
+
+  Nouveau tool MCP `finalize-week-planning(week_id)` :
+  - Refuse si semaine déjà finalisée (`finalized_at is not None`)
+  - Refuse si aucune session active (rest_day/skipped/cancelled)
+  - Refuse si somme active = 0
+  - Sinon : écrit initial + current + finalized_at atomiquement (via
+    `planning_tower.modify_week` avec backup + audit)
+
+  Aucun mécanisme de réouverture en v1 (décision Coach AI : « si le
+  plan change après finalisation, c'est ce que le drift doit
+  montrer »).
+
+  Adaptation des consommateurs (`_compute_adherence_for_range`,
+  `analyzers/monthly/stats.py`) : préférer `tss_target_initial` si
+  présent, fallback opportuniste sur legacy `tss_target > 0` (rétrocompat
+  30+ semaines historiques sans réécriture), sinon désynchro détectée
+  et rendu masqué via BT-053.
+
+  Le champ legacy `tss_target: int` est **déprécié** mais conservé
+  pour rétrocompat des 27 fichiers consommateurs (peut être retiré
+  progressivement).
+
 ### Changed
 
 - **BT-054** — `retag-stable.yml` hardened against silent-fail observed on
