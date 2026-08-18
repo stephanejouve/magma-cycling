@@ -267,6 +267,7 @@ class TestBT039ActiveTssTarget:
                 "start_date": "2026-06-29",
                 "end_date": "2026-07-05",
                 "tss_target": 286,  # cible initiale stockée (intention)
+                "tss_target_initial": 286,  # BT-051 finalisée (BT-053v2 : legacy ignoré)
                 "planned_sessions": [
                     # Actives — comptent dans cible active
                     {
@@ -356,6 +357,7 @@ class TestBT039ActiveTssTarget:
                 "start_date": "2026-01-05",
                 "end_date": "2026-01-11",
                 "tss_target": 150,
+                "tss_target_initial": 150,  # BT-051 finalisée (BT-053v2 : legacy ignoré)
                 "planned_sessions": [
                     {
                         "session_id": "S001-01",
@@ -518,6 +520,7 @@ class TestBT053TssTargetInitialUnreliable:
                 "start_date": "2026-06-29",
                 "end_date": "2026-07-05",
                 "tss_target": 100,
+                "tss_target_initial": 100,  # BT-051 finalisée
                 "planned_sessions": [
                     {
                         "session_id": "S999-01",

@@ -39,6 +39,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `analyzers/weekly_analyzer.py:_build_dated_footer` et
   `analyzers/monthly/reporting.py:generate_report`.
 
+### Changed
+
+- **BT-050 v2** (2026-08-18, Coach AI) — expose `zone_bounds` +
+  `ftp_by_activity` dans le payload `intensity_distribution` du
+  `get-training-statistics`. Sans ces deux champs, aucune distribution
+  rétrospective n'est vérifiable depuis le MCP (impossible de valider
+  que la FTP historique par date est bien appliquée, pas la FTP courante).
+  Le mapping `ftp_by_activity` liste les activités effectivement utilisées
+  (skipped absentes). Applicable aussi à DE-001 (même contrainte de
+  vérifiabilité rétrospective).
+- **BT-053 v2** (2026-08-18, Coach AI) — retrait du fallback opportuniste
+  sur legacy `tss_target > 0`. Position durcie : **seul** `tss_target_initial`
+  (write-once via handshake `finalize-week-planning`) compte comme fiable.
+  Sinon → drift masqué systématiquement. Motif : le fallback produisait
+  un écart entre 2 sources non comparables (règle « mieux vaut ne pas
+  répondre que répondre faux »). Régression corrigée du BT-053 initial
+  hier soir qui avait été trop indulgent en rétrocompat.
+
 ### Added
 
 - **BT-050** — Distribution d'intensité par zone puissance via streams

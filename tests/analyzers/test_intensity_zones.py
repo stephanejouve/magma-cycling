@@ -258,6 +258,71 @@ class TestIntensityDistributionFromActivities:
         result = intensity_distribution_from_activities(activities, client)
         assert result["total_seconds"] == 60
 
+    def test_exposes_zone_bounds_for_verification(self):
+        """BT-050 v2 : zone_bounds présents dans le payload (Coach AI 2026-08-18).
+
+        Sans ces bornes, aucune distribution rétrospective n'est vérifiable
+        depuis le MCP. Exposition obligatoire pour audit indépendant.
+        """
+        client = self._mock_client(
+            {"i111": [{"type": "watts", "data": [130] * 60}]},
+        )
+        activities = [{"id": "i111", "start_date_local": "2025-11-15T10:00:00"}]
+        result = intensity_distribution_from_activities(activities, client)
+        assert "zone_bounds" in result
+        bounds = result["zone_bounds"]
+        assert set(bounds.keys()) == {"z1", "z2", "z3", "z4", "z5"}
+        # Z1 : [0.00, 0.55]
+        assert bounds["z1"] == [0.00, 0.55]
+        # Z5 : [0.95, None] — la borne haute infinity est sérialisée en None
+        assert bounds["z5"][0] == 0.95
+        assert bounds["z5"][1] is None
+
+    def test_exposes_ftp_by_activity_for_audit(self):
+        """BT-050 v2 : ftp_by_activity présent pour vérif FTP historique appliquée.
+
+        Coach AI 2026-08-18 : « si le calcul utilise la FTP courante, la
+        répartition historique est faussée — décalage vers le bas des zones ».
+        Le mapping ``{activity_id: ftp_utilisée}`` permet à l'opérateur de
+        vérifier que la FTP historique est bien appliquée par date.
+        """
+        client = self._mock_client(
+            {
+                "i_old": [{"type": "watts", "data": [130] * 60}],
+                "i_new": [{"type": "watts", "data": [130] * 60}],
+            }
+        )
+        activities = [
+            # 2025-11-15 → palier 223W
+            {"id": "i_old", "start_date_local": "2025-11-15T10:00:00"},
+            # 2026-06-15 → palier 226W
+            {"id": "i_new", "start_date_local": "2026-06-15T10:00:00"},
+        ]
+        result = intensity_distribution_from_activities(activities, client)
+        assert "ftp_by_activity" in result
+        assert result["ftp_by_activity"]["i_old"] == 223
+        assert result["ftp_by_activity"]["i_new"] == 226
+
+    def test_ftp_by_activity_excludes_skipped_activities(self):
+        """Une activité skippée (fetch error, no watts) n'apparaît pas
+        dans ``ftp_by_activity`` — le mapping reflète les activités
+        effectivement utilisées."""
+        client = MagicMock()
+
+        def _fake_streams(activity_id, **kwargs):
+            if activity_id == "i_flaky":
+                raise Exception("429")
+            return [{"type": "watts", "data": [130] * 60}]
+
+        client.get_activity_streams.side_effect = _fake_streams
+        activities = [
+            {"id": "i_ok", "start_date_local": "2025-11-15T10:00:00"},
+            {"id": "i_flaky", "start_date_local": "2025-11-16T10:00:00"},
+        ]
+        result = intensity_distribution_from_activities(activities, client)
+        assert "i_ok" in result["ftp_by_activity"]
+        assert "i_flaky" not in result["ftp_by_activity"]
+
 
 class TestZoneBoundsSanity:
     """Sanity checks sur les bornes ZONE_BOUNDS (invariants doctrinaux)."""
