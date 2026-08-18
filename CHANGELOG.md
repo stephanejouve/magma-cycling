@@ -72,6 +72,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   pour rétrocompat des 27 fichiers consommateurs (peut être retiré
   progressivement).
 
+### Fixed
+
+- **BT-055** — `build-windows.yml` ne se déclenchait plus depuis v3.67.0
+  (2026-08-12) → 29 releases sans asset `.exe` Windows, beta-testeurs
+  Windows bloqués sur v3.60.1 (dernière version avec `.exe`, 25/06/2026).
+  Cause racine : commit `044d599` (2026-08-12) a switché `release.yml` sur
+  `secrets.GITHUB_TOKEN` natif — les cascades déclenchées par le token natif
+  ne créent PAS de nouveaux workflow runs (protection GitHub anti-boucles).
+  `docker-publish.yml` avait été fixé le même jour (BT-024) via
+  `workflow_run: [Release]` cascade, `build-windows.yml` avait été oublié.
+  Fix : aligne sur le pattern éprouvé — ajoute `workflow_run: [Release]`,
+  résolution unifiée du tag via `steps.resolve_tag` (source-adaptée
+  release/dispatch/HEAD), input `tag` sur `workflow_dispatch` pour rebuild
+  ciblé. Bascule aussi `Attach to release` de `secrets.GH_TOKEN` (PAT
+  expirable) sur `secrets.GITHUB_TOKEN` natif (suffisant pour upload asset
+  intra-repo). Signalement : Beta Support 2026-08-18.
+
 ### Changed
 
 - **BT-054** — `retag-stable.yml` hardened against silent-fail observed on
