@@ -324,6 +324,153 @@ class TestIntensityDistributionFromActivities:
         assert "i_flaky" not in result["ftp_by_activity"]
 
 
+class TestBT059DisambiguateCacheMissFromZero:
+    """BT-059 : distinguer « total_seconds=0 aucun temps réalisé » de
+    « total_seconds=0 toutes activités échouées au fetch ».
+
+    Nit remonté par Admin sur S106 preprod (post-backfill BT-025 partiel) :
+    cache miss silencieux → total_seconds=0 ambigu. Fix via ``activities_
+    considered`` + ``skipped_activities`` avec raison typée.
+    """
+
+    def test_all_ok_no_skips(self):
+        """Cas nominal : aucune activité skippée, activities_considered=N."""
+        client = MagicMock()
+        client.get_activity_streams.return_value = [{"type": "watts", "data": [130] * 60}]
+        activities = [
+            {"id": "i_ok1", "start_date_local": "2025-11-15T10:00:00"},
+            {"id": "i_ok2", "start_date_local": "2025-11-16T10:00:00"},
+        ]
+        result = intensity_distribution_from_activities(activities, client)
+        assert result["activities_considered"] == 2
+        assert result["skipped_activities"] == []
+        assert result["total_seconds"] == 120
+
+    def test_fetch_failed_captured_with_error_and_reason(self):
+        """Fetch error → skipped avec reason=fetch_failed + error tronqué."""
+        client = MagicMock()
+
+        def _fake_streams(activity_id, **kwargs):
+            raise Exception("429 rate limit exceeded")
+
+        client.get_activity_streams.side_effect = _fake_streams
+        activities = [
+            {"id": "i_flaky", "start_date_local": "2025-11-15T10:00:00"},
+        ]
+        result = intensity_distribution_from_activities(activities, client)
+        assert result["activities_considered"] == 1
+        assert len(result["skipped_activities"]) == 1
+        skipped = result["skipped_activities"][0]
+        assert skipped["id"] == "i_flaky"
+        assert skipped["date"] == "2025-11-15"
+        assert skipped["reason"] == "fetch_failed"
+        assert "Exception" in skipped["error"]
+        assert "429" in skipped["error"]
+
+    def test_no_watts_stream_reason(self):
+        """Streams reçus mais pas de type watts → reason=no_watts_stream."""
+        client = MagicMock()
+        client.get_activity_streams.return_value = [
+            {"type": "heartrate", "data": [140] * 60},
+        ]
+        activities = [
+            {"id": "i_hr_only", "start_date_local": "2025-11-15T10:00:00"},
+        ]
+        result = intensity_distribution_from_activities(activities, client)
+        assert len(result["skipped_activities"]) == 1
+        assert result["skipped_activities"][0]["reason"] == "no_watts_stream"
+
+    def test_empty_watts_data_reason(self):
+        """Stream watts présent mais data vide → reason=empty_watts_data."""
+        client = MagicMock()
+        client.get_activity_streams.return_value = [{"type": "watts", "data": []}]
+        activities = [
+            {"id": "i_empty", "start_date_local": "2025-11-15T10:00:00"},
+        ]
+        result = intensity_distribution_from_activities(activities, client)
+        assert len(result["skipped_activities"]) == 1
+        assert result["skipped_activities"][0]["reason"] == "empty_watts_data"
+
+    def test_invalid_metadata_reason(self):
+        """Activité sans id ou date → reason=invalid_metadata."""
+        client = MagicMock()
+        activities = [
+            {"start_date_local": "2025-11-15T10:00:00"},  # sans id
+            {"id": "i_no_date"},  # sans date
+        ]
+        result = intensity_distribution_from_activities(activities, client)
+        assert result["activities_considered"] == 2
+        assert len(result["skipped_activities"]) == 2
+        for s in result["skipped_activities"]:
+            assert s["reason"] == "invalid_metadata"
+
+    def test_prod_scenario_cache_miss_all_failed_disambiguable(self):
+        """Cas prod S106 remonté par Admin : cache miss sur toutes les activités.
+
+        Après fix : le consommateur voit ``activities_considered=N`` +
+        ``skipped_activities=N (all fetch_failed)`` + ``total_seconds=0``,
+        distinguable de « aucun temps réalisé » (skipped=[], total=0).
+        """
+        client = MagicMock()
+
+        def _fake_streams(activity_id, **kwargs):
+            raise Exception("cache miss + API 502")
+
+        client.get_activity_streams.side_effect = _fake_streams
+        activities = [
+            {"id": "i_a", "start_date_local": "2026-08-10T10:00:00"},
+            {"id": "i_b", "start_date_local": "2026-08-11T10:00:00"},
+            {"id": "i_c", "start_date_local": "2026-08-12T10:00:00"},
+        ]
+        result = intensity_distribution_from_activities(activities, client)
+        # Diagnostic : 3 considérées, 3 skippées avec raison fetch_failed
+        assert result["activities_considered"] == 3
+        assert len(result["skipped_activities"]) == 3
+        assert all(s["reason"] == "fetch_failed" for s in result["skipped_activities"])
+        # Distinguable de « aucun temps réalisé » (skipped=[])
+        assert result["total_seconds"] == 0
+
+    def test_partial_skips_do_not_break_aggregation(self):
+        """Mix : 1 activité OK + 1 fetch_failed + 1 no_watts → agrégat sur les OK,
+        skipped tracé pour les 2 autres."""
+        client = MagicMock()
+
+        def _fake_streams(activity_id, **kwargs):
+            if activity_id == "i_ok":
+                return [{"type": "watts", "data": [130] * 60}]
+            if activity_id == "i_flaky":
+                raise Exception("timeout")
+            return [{"type": "heartrate", "data": [140] * 60}]  # i_no_watts
+
+        client.get_activity_streams.side_effect = _fake_streams
+        activities = [
+            {"id": "i_ok", "start_date_local": "2025-11-15T10:00:00"},
+            {"id": "i_flaky", "start_date_local": "2025-11-16T10:00:00"},
+            {"id": "i_no_watts", "start_date_local": "2025-11-17T10:00:00"},
+        ]
+        result = intensity_distribution_from_activities(activities, client)
+        assert result["activities_considered"] == 3
+        assert result["total_seconds"] == 60  # seul i_ok agrégé
+        assert len(result["skipped_activities"]) == 2
+        reasons = {s["reason"] for s in result["skipped_activities"]}
+        assert reasons == {"fetch_failed", "no_watts_stream"}
+
+    def test_error_field_truncated_to_200_chars(self):
+        """Error tronqué à 200 chars pour éviter les leaks (URL, body HTTP)."""
+        client = MagicMock()
+        long_error_msg = "A" * 500
+
+        def _fake_streams(activity_id, **kwargs):
+            raise Exception(long_error_msg)
+
+        client.get_activity_streams.side_effect = _fake_streams
+        activities = [{"id": "i", "start_date_local": "2025-11-15T10:00:00"}]
+        result = intensity_distribution_from_activities(activities, client)
+        skipped = result["skipped_activities"][0]
+        # "Exception: " prefix (11 chars) + jusqu'à 200 chars du message
+        assert len(skipped["error"]) <= 11 + 200
+
+
 class TestZoneBoundsSanity:
     """Sanity checks sur les bornes ZONE_BOUNDS (invariants doctrinaux)."""
 

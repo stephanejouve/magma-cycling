@@ -41,6 +41,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **BT-059** (2026-08-18, nit Admin S106 preprod) — `intensity_distribution`
+  distingue désormais `total_seconds=0 « aucun temps réalisé »` de
+  `total_seconds=0 « toutes activités échouées au fetch »` via 2 nouveaux
+  champs de diagnostic dans le payload :
+  - `activities_considered` (int) : nombre d'activités reçues en input
+  - `skipped_activities` (list) : chaque skip avec raison typée
+    (`invalid_metadata`, `fetch_failed`, `no_watts_stream`, `empty_watts_data`)
+    et champ `error` tronqué à 200 chars pour éviter les leaks (URL, body HTTP)
+  Résout la confusion S106 preprod (cache streams miss post-backfill BT-025
+  partiel) signalée par Admin. Doctrine « P3 absence explicite » DE-002.
+  7 nouveaux tests dédiés `TestBT059DisambiguateCacheMissFromZero`.
+
 - **BT-050 v2** (2026-08-18, Coach AI) — expose `zone_bounds` +
   `ftp_by_activity` dans le payload `intensity_distribution` du
   `get-training-statistics`. Sans ces deux champs, aucune distribution
