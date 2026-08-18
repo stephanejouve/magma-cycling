@@ -127,11 +127,28 @@ def main() -> int:
         print(f"❌ {exc}", file=sys.stderr)
         return 1
 
+    # BT-044 : log défensif — renommer ``written`` en ``would_write`` en
+    # dry-run pour éviter la confusion « written=N mais aucun fichier sur
+    # disque ». Ajouter ``range=N days`` pour permettre à l'opérateur
+    # de vérifier l'invariant à l'œil (written+skipped+failed doit égaler
+    # range_size). Warning explicite si l'invariant est cassé (piste de
+    # diagnostic pour les rapports « chiffres incohérents » observés en prod).
+    range_size = (args.to - args.since).days + 1
+    written_label = "would_write" if args.dry_run else "written"
     print(
-        f"✅ done — fetched={counters['fetched']} written={counters['written']} "
-        f"skipped={counters['skipped']} failed={counters['failed']}",
+        f"✅ done — fetched={counters['fetched']} "
+        f"{written_label}={counters['written']} "
+        f"skipped={counters['skipped']} failed={counters['failed']} "
+        f"(range={range_size} days)",
         file=sys.stderr,
     )
+    accounted = counters["written"] + counters["skipped"] + counters["failed"]
+    if accounted != range_size:
+        print(
+            f"⚠️  invariant broken: written+skipped+failed={accounted} "
+            f"!= range={range_size} — please report",
+            file=sys.stderr,
+        )
     return 0
 
 

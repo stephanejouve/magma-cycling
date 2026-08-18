@@ -107,3 +107,92 @@ class TestBackfill:
         monkeypatch.setenv(ROOT_ENV, str(tmp_path))
         with pytest.raises(ValueError, match="must be"):
             backfill(date(2026, 5, 14), date(2026, 5, 12))
+
+
+class TestBT044DefensiveLog:
+    """BT-044 : log CLI défensif — ``would_write`` en dry-run, ``range=N``,
+    warning invariant.
+
+    Motif : diagnostic Admin 2026-08-17 sur backfill wellness (« written=0
+    skipped=174 alors que 174 fichiers écrits sur disque »). Confusion
+    probable entre lecture d'un log dry-run et vérif fs post real-run.
+    Renommer ``written`` en ``would_write`` en dry-run évite l'ambiguïté.
+    """
+
+    def test_dry_run_log_uses_would_write_label(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ):
+        """dry-run : log final doit dire ``would_write=N``, pas ``written=N``."""
+        monkeypatch.setenv(ROOT_ENV, str(tmp_path))
+        payloads = [{"id": "2026-05-13", "ctl": 41}]
+        monkeypatch.setattr(
+            "sys.argv",
+            ["backfill-wellness", "--since", "2026-05-13", "--to", "2026-05-13", "--dry-run"],
+        )
+        with patch(
+            "magma_cycling.config.create_intervals_client", return_value=_fake_client(payloads)
+        ):
+            from magma_cycling.scripts.backfill_wellness import main
+
+            rc = main()
+        assert rc == 0
+        err = capsys.readouterr().err
+        assert "would_write=1" in err, f"expected 'would_write=1' in dry-run log, got: {err}"
+        assert "written=1" not in err.replace("would_write", "")  # not real written
+        assert "range=1 days" in err
+
+    def test_real_run_log_uses_written_label(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ):
+        """real run : log final dit ``written=N`` classique."""
+        monkeypatch.setenv(ROOT_ENV, str(tmp_path))
+        payloads = [{"id": "2026-05-13", "ctl": 41}]
+        monkeypatch.setattr(
+            "sys.argv",
+            ["backfill-wellness", "--since", "2026-05-13", "--to", "2026-05-13"],
+        )
+        with patch(
+            "magma_cycling.config.create_intervals_client", return_value=_fake_client(payloads)
+        ):
+            from magma_cycling.scripts.backfill_wellness import main
+
+            rc = main()
+        assert rc == 0
+        err = capsys.readouterr().err
+        assert "written=1" in err
+        assert "would_write" not in err
+        assert "range=1 days" in err
+
+    def test_log_shows_range_and_invariant_ok(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ):
+        """3 jours attendus, 3 accounted (written) → pas de warning invariant."""
+        monkeypatch.setenv(ROOT_ENV, str(tmp_path))
+        payloads = [
+            {"id": "2026-05-12", "ctl": 40},
+            {"id": "2026-05-13", "ctl": 41},
+            {"id": "2026-05-14", "ctl": 42},
+        ]
+        monkeypatch.setattr(
+            "sys.argv",
+            ["backfill-wellness", "--since", "2026-05-12", "--to", "2026-05-14"],
+        )
+        with patch(
+            "magma_cycling.config.create_intervals_client", return_value=_fake_client(payloads)
+        ):
+            from magma_cycling.scripts.backfill_wellness import main
+
+            rc = main()
+        assert rc == 0
+        err = capsys.readouterr().err
+        assert "range=3 days" in err
+        assert "invariant broken" not in err
