@@ -1,14 +1,31 @@
 name: Build macOS App Bundle
 
+# Triggers (BT-056) — aligné sur le pattern BT-024/BT-055.
+# Cf. commentaire top-of-file `build-windows.yml` pour la cause racine
+# détaillée : `secrets.GITHUB_TOKEN` natif dans release.yml (commit
+# 044d599, 2026-08-12) ne cascade plus vers les workflows aval.
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag vX.Y.Z à builder (optionnel — sinon HEAD current branch)"
+        required: false
+        type: string
   release:
     types: [published]
+  workflow_run:
+    workflows: ["Release"]
+    types: [completed]
 
 jobs:
   build:
     name: Build MagmaCycling.app (${{ matrix.arch }})
     runs-on: ${{ matrix.runner }}
+    # BT-056 : skip cascade si Release en échec.
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    permissions:
+      contents: write
+      actions: read
     strategy:
       fail-fast: false
       matrix:
@@ -21,6 +38,34 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: >-
+            ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha
+                || (github.event_name == 'workflow_dispatch' && inputs.tag && format('refs/tags/{0}', inputs.tag))
+                || github.ref }}
+
+      - name: Resolve tag
+        id: resolve_tag
+        shell: bash
+        run: |
+          set -eu
+          if [ "${{ github.event_name }}" = "release" ]; then
+            TAG="${{ github.event.release.tag_name }}"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ inputs.tag }}" ]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG=$(git tag --contains HEAD | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1 || true)
+          fi
+          if [ -z "$TAG" ]; then
+            echo "::warning::No release tag resolved — build runs but skip asset attach"
+            echo "tag=" >> "$GITHUB_OUTPUT"
+            echo "has_tag=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::Resolved tag $TAG"
+            echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+            echo "has_tag=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Build Swift package
         working-directory: packaging/MagmaCycling
@@ -70,10 +115,10 @@ jobs:
           </plist>
           PLIST
 
-      - name: Inject version (release only)
-        if: github.event_name == 'release'
+      - name: Inject version
+        if: steps.resolve_tag.outputs.has_tag == 'true'
         run: |
-          VERSION="${{ github.event.release.tag_name }}"
+          VERSION="${{ steps.resolve_tag.outputs.tag }}"
           VERSION="${VERSION#v}"
           /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $VERSION" MagmaCycling.app/Contents/Info.plist
           /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" MagmaCycling.app/Contents/Info.plist
@@ -109,9 +154,9 @@ jobs:
           retention-days: 30
 
       - name: Attach to release
-        if: github.event_name == 'release'
+        if: steps.resolve_tag.outputs.has_tag == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION="${{ github.event.release.tag_name }}"
+          VERSION="${{ steps.resolve_tag.outputs.tag }}"
           gh release upload "$VERSION" "MagmaCycling-macos-${{ matrix.arch }}.dmg" --clobber

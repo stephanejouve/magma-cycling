@@ -74,6 +74,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **BT-056** — Extension du fix BT-055 aux 2 workflows macOS
+  (`build-macos.yml` + `build-macos-app.yml`) qui avaient le même trigger
+  cassé `release: types: [published]` sans cascade `workflow_run`.
+  Découvert au signalement Beta Support 2026-08-18 par Admin
+  (« aucun asset macOS non plus, pas seulement Windows »).
+  Même pattern d'application que BT-055 : `workflow_run: [Release]` +
+  résolution unifiée du tag via `Resolve tag` step + input `tag` sur
+  `workflow_dispatch` + `secrets.GITHUB_TOKEN` natif pour l'upload asset.
 - **BT-055** — `build-windows.yml` ne se déclenchait plus depuis v3.67.0
   (2026-08-12) → 29 releases sans asset `.exe` Windows, beta-testeurs
   Windows bloqués sur v3.60.1 (dernière version avec `.exe`, 25/06/2026).
