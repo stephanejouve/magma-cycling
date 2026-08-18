@@ -2508,3 +2508,174 @@ class TestHandleEnrichSessionHealth:
         assert data["status"] == "success"
         assert data["calendar_sync"]["synced"] is False
         assert "API unreachable" in data["calendar_sync"]["error"]
+
+
+class TestBT051FinalizeWeekPlanning:
+    """BT-051 : handshake ``finalize-week-planning`` — write-once
+    ``tss_target_initial``. Spec Coach AI 2026-08-17.
+
+    Préconditions testées :
+    - Semaine existe (file present)
+    - Pas déjà finalisée (idempotence via ``finalized_at``)
+    - Au moins une session active
+    - Somme active > 0
+
+    Effet testé :
+    - Écrit ``tss_target_initial`` = sum(active)
+    - Écrit ``tss_target_current`` = même valeur
+    - Écrit ``finalized_at`` = now
+    """
+
+    def _plan(self, sessions=None, **overrides):
+        from magma_cycling.planning.models import WeeklyPlan
+
+        defaults = dict(
+            week_id="S108",
+            start_date=date(2026, 8, 24),
+            end_date=date(2026, 8, 30),
+            created_at=datetime(2026, 8, 24, 12, 0),
+            last_updated=datetime(2026, 8, 24, 12, 0),
+            version=1,
+            athlete_id="iXXXXXX",
+        )
+        defaults.update(overrides)
+        if sessions is not None:
+            defaults["planned_sessions"] = sessions
+        return WeeklyPlan(**defaults)
+
+    def _active_session(self, session_id="S108-01", tss=100, status="completed"):
+        from magma_cycling.planning.models import Session
+
+        kwargs = dict(
+            session_id=session_id,
+            date=date(2026, 8, 24),
+            name="Endurance",
+            type="END",
+            version="V001",
+            tss_planned=tss,
+            duration_min=60,
+            description="test",
+            status=status,
+        )
+        if status == "skipped":
+            kwargs["skip_reason"] = "test"
+        return Session(**kwargs)
+
+    @pytest.mark.asyncio
+    async def test_success_writes_initial_current_and_finalized_at(self, mock_tower):
+        """Happy path : sessions actives, initial>0, pas encore finalisée."""
+        from magma_cycling.mcp_server import handle_finalize_week_planning
+
+        sessions = [
+            self._active_session("S108-01", tss=100),
+            self._active_session("S108-02", tss=80, status="planned"),
+        ]
+        plan = self._plan(sessions=sessions)
+        mock_tower.read_week.return_value = plan
+
+        # Context manager mock (modify_week)
+        from contextlib import contextmanager
+
+        modified_plan = self._plan(sessions=sessions)
+
+        @contextmanager
+        def _modify_ctx(*args, **kwargs):
+            yield modified_plan
+
+        mock_tower.modify_week = _modify_ctx
+
+        with patch(TOWER_PATCH, mock_tower):
+            result = await handle_finalize_week_planning({"week_id": "S108"})
+
+        data = json.loads(result[0].text)
+        assert data["status"] == "success"
+        assert data["week_id"] == "S108"
+        assert data["tss_target_initial"] == 180  # 100 + 80
+        assert data["tss_target_current"] == 180
+        assert data["active_sessions_count"] == 2
+        assert "finalized_at" in data
+        # Le plan modifié dans le context manager doit avoir les valeurs
+        assert modified_plan.tss_target_initial == 180
+        assert modified_plan.tss_target_current == 180
+        assert modified_plan.finalized_at is not None
+
+    @pytest.mark.asyncio
+    async def test_refuses_if_already_finalized(self, mock_tower):
+        """Idempotence : second appel refusé avec message explicite."""
+        from magma_cycling.mcp_server import handle_finalize_week_planning
+
+        already_finalized_at = datetime(2026, 8, 17, 10, 0)
+        plan = self._plan(
+            sessions=[self._active_session("S108-01", tss=100)],
+            tss_target_initial=100,
+            tss_target_current=100,
+            finalized_at=already_finalized_at,
+        )
+        mock_tower.read_week.return_value = plan
+
+        with patch(TOWER_PATCH, mock_tower):
+            result = await handle_finalize_week_planning({"week_id": "S108"})
+
+        data = json.loads(result[0].text)
+        assert "error" in data
+        assert "already finalized" in data["error"].lower()
+        assert data["tss_target_initial"] == 100
+        assert data["finalized_at"] == already_finalized_at.isoformat()
+        assert "hint" in data
+        # modify_week ne doit PAS avoir été appelé
+        mock_tower.modify_week.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_refuses_if_no_active_sessions(self, mock_tower):
+        """Semaine 100% annulée → refus."""
+        from magma_cycling.mcp_server import handle_finalize_week_planning
+
+        sessions = [
+            self._active_session("S108-01", tss=100, status="skipped"),
+            self._active_session("S108-02", tss=80, status="rest_day"),
+        ]
+        plan = self._plan(sessions=sessions)
+        mock_tower.read_week.return_value = plan
+
+        with patch(TOWER_PATCH, mock_tower):
+            result = await handle_finalize_week_planning({"week_id": "S108"})
+
+        data = json.loads(result[0].text)
+        assert "error" in data
+        assert "no active sessions" in data["error"].lower()
+        mock_tower.modify_week.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_refuses_if_all_active_zero(self, mock_tower):
+        """Sessions actives avec tss_planned=0 partout → refus."""
+        from magma_cycling.mcp_server import handle_finalize_week_planning
+
+        sessions = [
+            self._active_session("S108-01", tss=0),
+            self._active_session("S108-02", tss=0, status="planned"),
+        ]
+        plan = self._plan(sessions=sessions)
+        mock_tower.read_week.return_value = plan
+
+        with patch(TOWER_PATCH, mock_tower):
+            result = await handle_finalize_week_planning({"week_id": "S108"})
+
+        data = json.loads(result[0].text)
+        assert "error" in data
+        assert "tss_planned=0" in data["error"] or "zero intention" in data["error"]
+        mock_tower.modify_week.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_returns_error_on_file_not_found(self, mock_tower):
+        """Semaine inexistante → error clair."""
+        from magma_cycling.mcp_server import handle_finalize_week_planning
+
+        mock_tower.read_week.side_effect = FileNotFoundError("Planning file not found")
+
+        with patch(TOWER_PATCH, mock_tower):
+            result = await handle_finalize_week_planning({"week_id": "S999"})
+
+        data = json.loads(result[0].text)
+        assert "error" in data
+        assert "not found" in data["error"].lower()
+        assert data["week_id"] == "S999"

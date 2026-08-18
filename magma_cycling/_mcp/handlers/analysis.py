@@ -409,18 +409,28 @@ def _compute_adherence_for_range(start_date: str, end_date: str, activities: lis
                 continue
 
             weeks_in_range.append(week.get("week_id", "?"))
-            week_stored_target = week.get("tss_target", 0)
             week_active = compute_active_tss_target(week)
-            total_initial += week_stored_target
             total_active += week_active
-            # BT-053 : détection désynchro tss_target — si le champ stocké
-            # est à 0 alors que la somme active est non-nulle, la semaine
-            # n'a jamais été finalisée (bug flow weekly-planner template
-            # + modify-session non-recompute). Un cumul incluant ces
-            # semaines produit un drift faux. Voir BT-051 pour le fix de
-            # fond (2 champs write-once + recompute).
-            if week_stored_target == 0 and week_active > 0:
-                desync_detected = True
+            # BT-051 (post) : ``tss_target_initial`` renseigné = semaine
+            # finalisée via handshake ``finalize-week-planning``, valeur
+            # fiable. Sinon → fallback opportuniste sur legacy
+            # ``tss_target`` si > 0 (rétrocompat 30+ semaines historiques
+            # sans réécriture — position Coach AI « ne rien reconstruire »
+            # mais autorise la lecture opportuniste des valeurs plausibles).
+            # BT-053 (intérimaire) : détection désynchro préservée sur
+            # ``tss_target == 0`` sans ``tss_target_initial``.
+            week_initial = week.get("tss_target_initial")
+            if week_initial is None:
+                legacy = week.get("tss_target", 0)
+                if legacy > 0:
+                    # Semaine legacy avec valeur plausible — utilisée en
+                    # fallback pour ne pas casser les rapports historiques.
+                    week_initial = legacy
+                else:
+                    # tss_target=0 sans initial → non finalisée réelle
+                    desync_detected = True
+            if week_initial is not None:
+                total_initial += week_initial
 
             for session in week.get("planned_sessions", []):
                 status = session.get("status")

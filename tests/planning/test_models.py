@@ -1,6 +1,7 @@
 """Tests for planning models — version normalization."""
 
 from datetime import date
+from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
@@ -204,3 +205,130 @@ class TestBT022BilateralAliases:
         dumped = plan_alias.model_dump(by_alias=True)
         assert "tss_target" in dumped
         assert "training_load_target" not in dumped
+
+
+class TestBT051TwoFieldsDesign:
+    """BT-051 : ``tss_target_initial`` (write-once) + ``tss_target_current``
+    (recompute chaque write) + ``finalized_at`` (timestamp handshake).
+
+    Spec Coach AI 2026-08-17 : préserver l'intention historique
+    (initial figé) tout en garantissant la fraîcheur d'une cible
+    courante (current recompute).
+    """
+
+    def _base_plan(self, sessions=None, **overrides):
+        from datetime import datetime
+
+        from magma_cycling.planning.models import WeeklyPlan
+
+        defaults = dict(
+            week_id="S108",
+            start_date=date(2026, 8, 24),
+            end_date=date(2026, 8, 30),
+            created_at=datetime(2026, 8, 24, 12, 0),
+            last_updated=datetime(2026, 8, 24, 12, 0),
+            version=1,
+            athlete_id="iXXXXXX",
+        )
+        defaults.update(overrides)
+        if sessions is not None:
+            defaults["planned_sessions"] = sessions
+        return WeeklyPlan(**defaults)
+
+    def test_defaults_non_finalized(self):
+        """Nouveau modèle : par défaut initial=None, current=None, finalized_at=None."""
+        plan = self._base_plan()
+        assert plan.tss_target_initial is None
+        assert plan.tss_target_current is None
+        assert plan.finalized_at is None
+
+    def test_compute_current_tss_target_empty_returns_none(self):
+        """Semaine vide → compute_current retourne None (signal distinct de 0)."""
+        plan = self._base_plan()
+        assert plan.compute_current_tss_target() is None
+
+    def test_compute_current_tss_target_only_active(self):
+        """compute_current somme uniquement les sessions non-cancelled."""
+        from magma_cycling.planning.models import Session
+
+        sessions = [
+            Session(
+                session_id="S108-01",
+                date=date(2026, 8, 24),
+                name="Endurance",
+                type="END",
+                version="V001",
+                tss_planned=100,
+                duration_min=60,
+                description="test",
+                status="completed",
+            ),
+            Session(
+                session_id="S108-02",
+                date=date(2026, 8, 25),
+                name="Repos",
+                type="END",
+                version="V001",
+                tss_planned=50,  # ignoré car rest_day
+                duration_min=45,
+                description="rest",
+                status="rest_day",
+            ),
+            Session(
+                session_id="S108-03",
+                date=date(2026, 8, 26),
+                name="Skip",
+                type="END",
+                version="V001",
+                tss_planned=30,  # ignoré car skipped
+                duration_min=45,
+                description="skip",
+                status="skipped",
+                skip_reason="test fatigue",
+            ),
+            Session(
+                session_id="S108-04",
+                date=date(2026, 8, 27),
+                name="Endurance2",
+                type="END",
+                version="V001",
+                tss_planned=80,
+                duration_min=60,
+                description="test",
+                status="planned",
+            ),
+        ]
+        plan = self._base_plan(sessions=sessions)
+        # Seules S108-01 (100) et S108-04 (80) contribuent = 180
+        assert plan.compute_current_tss_target() == 180
+
+    def test_to_json_recomputes_current(self, tmp_path: Path):
+        """``to_json`` doit recompute ``tss_target_current`` avant écriture."""
+        from magma_cycling.planning.models import Session, WeeklyPlan
+
+        sessions = [
+            Session(
+                session_id="S108-01",
+                date=date(2026, 8, 24),
+                name="Endurance",
+                type="END",
+                version="V001",
+                tss_planned=100,
+                duration_min=60,
+                description="test",
+                status="completed",
+            ),
+        ]
+        plan = self._base_plan(sessions=sessions)
+        # Avant write : current pas encore calculé (default None)
+        assert plan.tss_target_current is None
+        # Écrire → recompute
+        json_file = tmp_path / "week_planning_S108.json"
+        plan.to_json(json_file)
+        # Après write : current a été mis à 100
+        assert plan.tss_target_current == 100
+        # Vérif sur le disque
+        reloaded = WeeklyPlan.from_json(json_file)
+        assert reloaded.tss_target_current == 100
+        # Initial pas touché
+        assert reloaded.tss_target_initial is None

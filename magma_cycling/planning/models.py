@@ -263,12 +263,50 @@ class WeeklyPlan(BaseModel):
     version: int = Field(ge=1, description="Plan version number")
     athlete_id: str = Field(description="Athlete identifier (e.g., iXXXXXX)")
     # BT-022: alias bilatéral, cf. Session.tss_planned pour la motivation.
+    # BT-051 (2026-08-18) : ce champ est **déprécié** au profit de la paire
+    # ``tss_target_initial`` (write-once) + ``tss_target_current`` (recompute).
+    # Conservé en lecture pour rétrocompat des 27 fichiers consommateurs
+    # existants. Nouveau code doit lire ``tss_target_initial`` en priorité
+    # (avec fallback affichage « non finalisée » si None). Default=0 pour
+    # accepter les fichiers legacy sans ce champ (peu probable, mais safe).
     tss_target: int = Field(
+        default=0,
         ge=0,
         le=2000,
-        description="Target weekly TSS",
+        description="[DEPRECATED BT-051] Legacy target weekly TSS. Use tss_target_initial + tss_target_current.",
         validation_alias=AliasChoices("tss_target", "training_load_target"),
         serialization_alias="tss_target",
+    )
+    # BT-051 : deux-champs design (spec Coach AI 2026-08-17).
+    # ``tss_target_initial`` = intention gelée à la finalisation, write-once
+    # via le handshake ``finalize-week-planning``. ``None`` = semaine non
+    # finalisée (rendu doit afficher « non finalisée » plutôt qu'un zéro
+    # trompeur, cf BT-053 intérimaire). Cette valeur ne bouge plus après
+    # finalisation ; le drift = ``tss_target_current - tss_target_initial``
+    # raconte l'histoire réelle des ajustements post-plan.
+    tss_target_initial: int | None = Field(
+        default=None,
+        ge=0,
+        le=2000,
+        description="BT-051: TSS intention gelée à la finalisation. None = non finalisée.",
+    )
+    # ``tss_target_current`` = cumul TSS des sessions non-cancelled à cet
+    # instant. Recompute automatique dans ``to_json()`` avant chaque écriture
+    # disque, donc toujours synchro avec ``planned_sessions``. ``None`` si
+    # aucune session (semaine vide).
+    tss_target_current: int | None = Field(
+        default=None,
+        ge=0,
+        le=2000,
+        description="BT-051: TSS cumul sessions actives, recompute à chaque write. None si aucune session.",
+    )
+    # ``finalized_at`` = timestamp du handshake. None = non finalisée.
+    # Sert de garde d'idempotence côté ``finalize-week-planning`` (second
+    # appel refusé) et de trace d'audit pour retrouver « quand cette intention
+    # a été figée ».
+    finalized_at: datetime | None = Field(
+        default=None,
+        description="BT-051: timestamp handshake finalize-week-planning. None = non finalisée.",
     )
     source: str | None = Field(
         default=None,
@@ -370,9 +408,39 @@ class WeeklyPlan(BaseModel):
             data = json.load(f)
         return cls(**data)
 
+    def compute_current_tss_target(self) -> int | None:
+        """BT-051 : cumul TSS des sessions non-cancelled à cet instant.
+
+        Retourne ``None`` si aucune session (semaine vide) — signal explicite
+        « rien à compter » distinct de « 0 TSS planifié ». Recomputé
+        automatiquement dans :meth:`to_json` avant chaque écriture disque.
+
+        Returns:
+            Cumul entier des ``tss_planned`` des sessions actives (statuts
+            hors ``rest_day``, ``skipped``, ``cancelled``). ``None`` si
+            ``planned_sessions`` est vide.
+        """
+        # Import local pour éviter le cycle magma_cycling.planning ⟷
+        # magma_cycling.analyzers.
+        from magma_cycling.analyzers.tss_target import CANCELLED_STATUSES
+
+        if not self.planned_sessions:
+            return None
+        total = 0
+        for s in self.planned_sessions:
+            if s.status in CANCELLED_STATUSES:
+                continue
+            total += s.tss_planned or 0
+        return total
+
     def to_json(self, filepath: str | Path, indent: int = 2) -> None:
         """
         Save planning to JSON file with atomic write.
+
+        BT-051 : recompute ``tss_target_current`` **avant chaque écriture**.
+        Garantit que la valeur stockée reflète toujours l'état réel des
+        sessions. Le champ ``tss_target_initial`` reste immuable une fois
+        posé (le seul write dessus est ``finalize-week-planning``).
 
         Args:
             filepath: Destination file path
@@ -382,6 +450,9 @@ class WeeklyPlan(BaseModel):
             >>> plan = WeeklyPlan(...)
             >>> plan.to_json("week_planning_S080.json")
         """
+        # BT-051 : recompute current avant sérialisation, jamais initial.
+        self.tss_target_current = self.compute_current_tss_target()
+
         filepath = Path(filepath).expanduser()
         # Atomic write: write to temp file, then rename
         temp_path = filepath.with_suffix(".tmp")

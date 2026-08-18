@@ -82,6 +82,7 @@ from magma_cycling._mcp.handlers.planning import (  # noqa: F401
     handle_daily_sync,
     handle_delete_session,
     handle_end_of_week,
+    handle_finalize_week_planning,
     handle_get_metrics,
     handle_get_week_details,
     handle_list_weeks,
@@ -215,6 +216,7 @@ TOOL_HANDLERS = {
     "rename-session": handle_rename_session,
     "create-session": handle_create_session,
     "delete-session": handle_delete_session,
+    "finalize-week-planning": handle_finalize_week_planning,  # BT-051
     # Sessions (3)
     "duplicate-session": handle_duplicate_session,
     "swap-sessions": handle_swap_sessions,
