@@ -59,6 +59,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **BT-058** (spec DE-002 D1, Coach AI 2026-08-18) — Snapshot dérivé du
+  contrat MCP versionné, produit à chaque release comme artefact de
+  build irrattrapable. Nouveau script
+  `magma_cycling/scripts/dump_mcp_schemas.py` :
+  - Extrait via introspection : nom, `schema_description`, `input_schema`,
+    coordonnées handler (module + fonction) et **docstring Python du
+    handler** (ferme le trou D3 « changements sémantiques à schéma
+    constant »).
+  - Cas exemplaire couvert : `intensity_distribution` v3.73→v3.74
+    (comptage activités → temps par zone) — schéma constant, docstring
+    change, diff sémantique visible.
+
+  Nouvelle **garde dure** dans `.github/workflows/docker-publish.yml`
+  (BT-058) : le script est exécuté après la sync des version markers
+  (BT-024), l'output JSON est asserté (version match tag, tool_count >0),
+  puis attaché à la release comme asset
+  `magma-cycling-schemas-vX.Y.Z.json`. Si l'une des étapes échoue → le
+  Docker build échoue. Motif : chaque release sans snapshot = point de
+  diff perdu **définitivement** (backfill impossible).
+
+  Documentation dans `docs/mcp-schema-history/README.md`. 9 tests
+  unitaires (`tests/scripts/test_dump_mcp_schemas.py`) valident envelope
+  + shape + invariants + capture sémantique.
+
+  Le tool MCP `get-release-notes(from_version, to_version)` (à venir,
+  ~3h) lira ces snapshots pour composer diff structurel + sémantique
+  + entrées CHANGELOG entre 2 versions, avec séparation
+  `derived / declared / absence_notes` (principes P2/P3 DE-002).
+
 - **BT-050** — Distribution d'intensité par zone puissance via streams
   temps-réel (spec Coach AI 2026-08-17). Nouveau module
   `magma_cycling/analyzers/intensity_zones.py` :

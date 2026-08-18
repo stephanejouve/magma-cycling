@@ -144,6 +144,94 @@ jobs:
           fi
           echo "✅ version markers match tag ($TAG_VERSION)"
 
+      # BT-058 (2026-08-18, spec Coach AI DE-002 D1) : snapshot du contrat
+      # MCP courant (schémas + docstrings introspection). Attaché à la
+      # release comme asset ``magma-cycling-schemas-vX.Y.Z.json``. Alimente
+      # le futur tool ``get-release-notes(from, to)`` pour diff structurel
+      # + sémantique rétrospectif.
+      #
+      # Motif de la garde dure (échec = build échoue) : chaque release sans
+      # snapshot = point de diff perdu DÉFINITIVEMENT. Backfill impossible
+      # (on ne peut pas reconstruire le schéma d'une version déjà déployée).
+      # Coach AI 2026-08-18 : « l'irrattrapabilité justifie la garde dure ».
+      # Même pattern qu'assert version markers ci-dessus (BT-024).
+      - name: Set up Python 3.12 for schema snapshot
+        if: |
+          ((github.event_name == 'push' || github.event_name == 'workflow_dispatch') && startsWith(github.ref, 'refs/tags/v')) ||
+          (github.event_name == 'workflow_run' && steps.resolve_tag.outputs.tag_ref != '')
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Poetry for schema snapshot
+        if: |
+          ((github.event_name == 'push' || github.event_name == 'workflow_dispatch') && startsWith(github.ref, 'refs/tags/v')) ||
+          (github.event_name == 'workflow_run' && steps.resolve_tag.outputs.tag_ref != '')
+        run: pip install poetry
+
+      - name: Install project dependencies for schema snapshot
+        if: |
+          ((github.event_name == 'push' || github.event_name == 'workflow_dispatch') && startsWith(github.ref, 'refs/tags/v')) ||
+          (github.event_name == 'workflow_run' && steps.resolve_tag.outputs.tag_ref != '')
+        run: poetry install --no-interaction --no-ansi
+
+      - name: Generate MCP schema snapshot (BT-058)
+        id: snapshot
+        if: |
+          ((github.event_name == 'push' || github.event_name == 'workflow_dispatch') && startsWith(github.ref, 'refs/tags/v')) ||
+          (github.event_name == 'workflow_run' && steps.resolve_tag.outputs.tag_ref != '')
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            TAG_REF="${{ steps.resolve_tag.outputs.tag_ref }}"
+            TAG_VERSION="${TAG_REF#refs/tags/}"
+          else
+            TAG_VERSION="${GITHUB_REF_NAME}"
+          fi
+          mkdir -p snapshot-out
+          SNAPSHOT_FILE="snapshot-out/magma-cycling-schemas-${TAG_VERSION}.json"
+          echo "Generating schema snapshot → $SNAPSHOT_FILE"
+          poetry run python -m magma_cycling.scripts.dump_mcp_schemas > "$SNAPSHOT_FILE"
+          ls -la snapshot-out/
+          echo "snapshot_file=$SNAPSHOT_FILE" >> "$GITHUB_OUTPUT"
+          echo "tag_version=$TAG_VERSION" >> "$GITHUB_OUTPUT"
+
+      # BT-058 garde : assert que le snapshot existe, est non-vide et
+      # décrit la bonne version. Aligne le comportement sur "Assert version
+      # markers match tag (BT-024)" — un stub silencieux doit devenir bruyant.
+      - name: Assert schema snapshot exists and matches tag (BT-058 garde)
+        if: |
+          ((github.event_name == 'push' || github.event_name == 'workflow_dispatch') && startsWith(github.ref, 'refs/tags/v')) ||
+          (github.event_name == 'workflow_run' && steps.resolve_tag.outputs.tag_ref != '')
+        run: |
+          SNAPSHOT_FILE="${{ steps.snapshot.outputs.snapshot_file }}"
+          TAG_VERSION="${{ steps.snapshot.outputs.tag_version }}"
+          if [ ! -s "$SNAPSHOT_FILE" ]; then
+            echo "::error::Schema snapshot missing or empty: $SNAPSHOT_FILE"
+            echo "The 'Generate MCP schema snapshot' step did not produce a valid file."
+            echo "This point of diff is IRRECOVERABLE — Docker build aborted."
+            exit 1
+          fi
+          python3 -c "
+          import json, sys
+          d = json.load(open('$SNAPSHOT_FILE'))
+          assert d.get('version') == '$TAG_VERSION', f'snapshot version={d.get(\"version\")!r} != tag=$TAG_VERSION'
+          assert d.get('tool_count', 0) > 0, f'empty tool list: {d}'
+          assert len(d.get('tools', [])) == d['tool_count'], f'tool_count/tools mismatch'
+          print(f'✅ schema snapshot OK: {d[\"tool_count\"]} tools, version={d[\"version\"]}')
+          "
+
+      - name: Attach schema snapshot to release (BT-058)
+        if: |
+          ((github.event_name == 'push' || github.event_name == 'workflow_dispatch') && startsWith(github.ref, 'refs/tags/v')) ||
+          (github.event_name == 'workflow_run' && steps.resolve_tag.outputs.tag_ref != '')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          SNAPSHOT_FILE="${{ steps.snapshot.outputs.snapshot_file }}"
+          TAG_VERSION="${{ steps.snapshot.outputs.tag_version }}"
+          echo "Attaching $SNAPSHOT_FILE to release $TAG_VERSION"
+          gh release upload "$TAG_VERSION" "$SNAPSHOT_FILE" --clobber -R ${{ github.repository }}
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
