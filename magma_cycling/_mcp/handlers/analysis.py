@@ -254,14 +254,18 @@ async def handle_get_training_statistics(args: dict) -> list[TextContent]:
 
             avg_tss = total_tss / total_activities if total_activities > 0 else 0
 
-            # Intensity distribution (Z1-Z5)
-            intensity_distribution = {
-                "z1": sum(1 for a in activities if (a.get("icu_intensity") or 0) < 0.55),
-                "z2": sum(1 for a in activities if 0.55 <= (a.get("icu_intensity") or 0) < 0.75),
-                "z3": sum(1 for a in activities if 0.75 <= (a.get("icu_intensity") or 0) < 0.85),
-                "z4": sum(1 for a in activities if 0.85 <= (a.get("icu_intensity") or 0) < 0.95),
-                "z5": sum(1 for a in activities if (a.get("icu_intensity") or 0) >= 0.95),
-            }
+            # BT-050 : distribution d'intensité en TEMPS par zone via
+            # streams `watts` (remplace le comptage précédent d'activités
+            # par IF global — faux et trompeur, cf issue #490). Coût
+            # réseau : 1 requête `get_activity_streams` par activité,
+            # amorti par le cache read-through local (BT-025). FTP
+            # résolue par date d'activité via table de paliers historique
+            # (interdit d'utiliser FTP courante sur data passée).
+            from magma_cycling.analyzers.intensity_zones import (
+                intensity_distribution_from_activities,
+            )
+
+            intensity_distribution = intensity_distribution_from_activities(activities, client)
 
             # CTL progression
             ctl_start = wellness[0].get("ctl") if wellness else None
