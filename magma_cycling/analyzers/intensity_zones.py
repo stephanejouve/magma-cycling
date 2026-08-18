@@ -149,40 +149,90 @@ def intensity_distribution_from_activities(
         - ``z1_pct``..``z5_pct`` (float, arrondi 0.1 %) : part du total
         - ``total_seconds`` (int) : total accumulé sur toutes les activités
         - ``zone_bounds`` (dict, BT-050 v2) : bornes utilisées ``{z1: [0.00, 0.55], ...}``
-          exposées pour permettre la **vérification indépendante** du calcul
-          (Coach AI 2026-08-18 : « sans ça, aucune distribution rétrospective
-          n'est vérifiable »).
+          exposées pour permettre la **vérification indépendante** du calcul.
         - ``ftp_by_activity`` (dict, BT-050 v2) : ``{activity_id: ftp_watts}``
           par activité **utilisée** (activités skippées absentes). Permet à
           l'IA/opérateur de vérifier que la FTP historique a bien été
           appliquée par date, pas la FTP courante.
+        - ``activities_considered`` (int, BT-059) : nombre d'activités reçues
+          en input (== ``len(activities)``). Sert de dénominateur pour
+          interpréter ``skipped_activities`` sans consulter l'input du caller.
+        - ``skipped_activities`` (list, BT-059) : activités skippées avec
+          raison, chaque entrée ``{id, date, reason, error?}``. Raisons :
 
-        ``{...zeros...}`` si activités vides ou aucun stream watts exploitable.
+          * ``invalid_metadata`` : id ou date manquante côté activité
+          * ``fetch_failed`` : exception au fetch (avec ``error`` tronqué à 200 chars)
+          * ``no_watts_stream`` : streams récupérés mais aucun type ``watts``
+          * ``empty_watts_data`` : stream watts présent mais ``data`` vide
+
+          **Motif** : distinguer « aucun temps réalisé » (skipped vide,
+          total_seconds=0) de « toutes activités échouées au fetch »
+          (skipped=N tous fetch_failed, total_seconds=0). Ambiguïté signalée
+          par Admin sur S106 preprod (cache miss silencieux post-backfill
+          BT-025). Doctrine « P3 absence explicite » DE-002.
     """
     aggregated: dict[str, int] = {z: 0 for z in ZONE_BOUNDS}
     # BT-050 v2 : trace la FTP appliquée par activité pour audit indépendant.
     ftp_by_activity: dict[str, int] = {}
+    # BT-059 : trace les activités skippées avec raison pour distinguer
+    # « aucun temps réel » de « fetch failed silencieux ».
+    skipped_activities: list[dict[str, Any]] = []
 
     for act in activities:
         activity_id = act.get("id")
         activity_date_full = act.get("start_date_local") or ""
         activity_date = activity_date_full[:10]  # YYYY-MM-DD
         if not activity_id or not activity_date:
+            skipped_activities.append(
+                {
+                    "id": str(activity_id) if activity_id is not None else None,
+                    "date": activity_date or None,
+                    "reason": "invalid_metadata",
+                }
+            )
             continue
 
         try:
             streams = client.get_activity_streams(activity_id)
-        except Exception:
-            # Une activité qui échoue au fetch (429, 5xx, timeout) est
-            # skippée — l'agrégat reste calculable sur les autres. Éviter
-            # de casser un rapport mensuel entier pour 1 activité flaky.
+        except Exception as exc:
+            # Une activité qui échoue au fetch (429, 5xx, timeout, cache
+            # miss) est skippée — l'agrégat reste calculable sur les autres.
+            # BT-059 : au lieu du skip silencieux, remonter la raison au
+            # consommateur pour que « total_seconds=0 » soit interprétable
+            # (« vraiment 0 » vs « tout a fail »). Error tronqué à 200 chars
+            # pour éviter les leaks de bodies HTTP.
+            error_msg = f"{type(exc).__name__}: {str(exc)[:200]}"
+            skipped_activities.append(
+                {
+                    "id": str(activity_id),
+                    "date": activity_date,
+                    "reason": "fetch_failed",
+                    "error": error_msg,
+                }
+            )
             continue
 
         watts_stream = next(
             (s for s in streams if s.get("type") == "watts"),
             None,
         )
-        if not watts_stream or not watts_stream.get("data"):
+        if not watts_stream:
+            skipped_activities.append(
+                {
+                    "id": str(activity_id),
+                    "date": activity_date,
+                    "reason": "no_watts_stream",
+                }
+            )
+            continue
+        if not watts_stream.get("data"):
+            skipped_activities.append(
+                {
+                    "id": str(activity_id),
+                    "date": activity_date,
+                    "reason": "empty_watts_data",
+                }
+            )
             continue
 
         ftp = ftp_at(activity_date)
@@ -200,10 +250,12 @@ def intensity_distribution_from_activities(
     result["total_seconds"] = total
     # BT-050 v2 : exposer les bornes utilisées + FTP appliquée par activité
     # pour permettre la vérification indépendante du calcul par l'IA ou
-    # l'opérateur. Sans ça, impossible de valider une distribution
-    # rétrospective (Coach AI 2026-08-18).
+    # l'opérateur.
     result["zone_bounds"] = {
         z: [lo, hi if hi != float("inf") else None] for z, (lo, hi) in ZONE_BOUNDS.items()
     }
     result["ftp_by_activity"] = ftp_by_activity
+    # BT-059 : compteurs de diagnostic pour interpréter total_seconds=0
+    result["activities_considered"] = len(activities)
+    result["skipped_activities"] = skipped_activities
     return result
