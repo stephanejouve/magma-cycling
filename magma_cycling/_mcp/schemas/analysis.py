@@ -294,4 +294,35 @@ def get_tools() -> list[Tool]:
                 },
             },
         ),
+        Tool(
+            name="get-release-notes",
+            description=(
+                "BT-060 (spec DE-002) : agrégation des changements MCP entre "
+                "2 versions. Compose 3 blocs orthogonaux : "
+                "``derived`` (diff des snapshots BT-058 = schémas + docstrings, "
+                "fiable par construction, null si snapshots absents), "
+                "``declared`` (entrées CHANGELOG.md + commits BT-XXX entre les "
+                "2 tags git, fiable ce que la discipline vaut), "
+                "``absence_notes`` (P3 « absence explicite » : signal quand un "
+                "snapshot manque ou aucune entrée CHANGELOG existe). "
+                "Retourne des données brutes structurées, pas de résumé — le "
+                "LLM consommateur pondère derived (fait) vs declared (rédaction)."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "from_version": {
+                        "type": "string",
+                        "description": "Version antérieure exclusive (vX.Y.Z ou X.Y.Z)",
+                        "pattern": "^v?\\d+\\.\\d+\\.\\d+$",
+                    },
+                    "to_version": {
+                        "type": "string",
+                        "description": "Version postérieure inclusive (vX.Y.Z ou X.Y.Z), doit être > from_version",
+                        "pattern": "^v?\\d+\\.\\d+\\.\\d+$",
+                    },
+                },
+                "required": ["from_version", "to_version"],
+            },
+        ),
     ]

@@ -71,6 +71,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **BT-060** (spec DE-002, Coach AI 2026-08-18) — Nouveau MCP tool
+  `get-release-notes(from_version, to_version)` qui compose les
+  changements MCP entre 2 versions en 3 blocs orthogonaux :
+  - **`derived`** — diff des snapshots BT-058 (schémas + docstrings
+    handler), fiable par construction. `null` tant que les 2 snapshots
+    ne sont pas dispo sur les release assets.
+  - **`declared`** — entrées `CHANGELOG.md` (sections `## [X.Y.Z]`
+    entre `from` exclusif et `to` inclusif) + commits `git log --grep=BT-`
+    entre les 2 tags. Fiable ce que la discipline vaut.
+  - **`absence_notes`** — P3 « absence explicite » DE-002 : signal
+    quand un snapshot manque (`snapshot_missing`) ou aucune entrée
+    CHANGELOG existe (`changelog_empty`). Jamais « aucun changement »
+    silencieux.
+
+  Contrat V1 : retourne des données brutes structurées (pas de résumé,
+  pas de verdict). Le LLM consommateur pondère lui-même `derived`
+  (fait) vs `declared` (rédaction). Décision Coach AI : les 2 sources
+  jamais mélangées dans un champ uniforme.
+
+  Nouveau module `magma_cycling/analyzers/release_notes.py` avec :
+  `_parse_semver`, `_normalize_version`, `_diff_schemas`,
+  `_diff_docstrings`, `_extract_changelog_between`,
+  `_git_log_between_tags`, `compose_release_notes`.
+
+  Handler `handle_get_release_notes` dans `_mcp/handlers/analysis.py`,
+  schema tool + registration `TOOL_HANDLERS`.
+
+  29 tests dans `tests/analyzers/test_release_notes.py` + 3 tests
+  handler MCP. Zero régression.
+
+  **État de la base** : BT-058 fraîchement mergé, donc **aucun
+  snapshot** n'existe encore sur les releases antérieures. La partie
+  `derived` retournera `null + absence_notes` tant que la base n'a
+  pas ≥ 2 snapshots. La partie `declared` fonctionne dès aujourd'hui.
+  Utilité pleine à partir de la 2e release post-BT-058.
+
 - **BT-058** (spec DE-002 D1, Coach AI 2026-08-18) — Snapshot dérivé du
   contrat MCP versionné, produit à chaque release comme artefact de
   build irrattrapable. Nouveau script

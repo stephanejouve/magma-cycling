@@ -485,6 +485,45 @@ def _compute_adherence_for_range(start_date: str, end_date: str, activities: lis
     }
 
 
+async def handle_get_release_notes(args: dict) -> list[TextContent]:
+    """BT-060 : agrégation des changements MCP entre 2 versions (spec DE-002).
+
+    Compose ``{derived, declared, absence_notes}`` où :
+
+    - ``derived`` = diff des snapshots BT-058 (schémas + docstrings) —
+      fiable par construction. ``null`` tant que les 2 snapshots ne
+      sont pas disponibles côté release assets.
+    - ``declared`` = entrées CHANGELOG.md + commits BT-XXX entre les 2
+      tags git. Fiable ce que la discipline vaut.
+    - ``absence_notes`` = signal explicite quand un snapshot manque ou
+      qu'aucune entrée CHANGELOG n'existe (P3 « absence explicite »
+      DE-002 — jamais « aucun changement » silencieux).
+
+    Le tool retourne des données brutes structurées. Le LLM consommateur
+    (Coach AI, dev humain) compose sa propre lecture pondérée entre
+    derived (fait) et declared (rédaction).
+    """
+    from magma_cycling.analyzers.release_notes import compose_release_notes
+
+    from_version = args["from_version"]
+    to_version = args["to_version"]
+
+    try:
+        result = compose_release_notes(from_version=from_version, to_version=to_version)
+    except ValueError as exc:
+        error = {"error": str(exc), "from_version": from_version, "to_version": to_version}
+        return mcp_response(error)
+    except Exception as exc:
+        error = {
+            "error": f"Failed to compose release notes: {type(exc).__name__}: {exc}",
+            "from_version": from_version,
+            "to_version": to_version,
+        }
+        return mcp_response(error)
+
+    return mcp_response(result)
+
+
 async def handle_export_week_to_json(args: dict) -> list[TextContent]:
     """Export week planning to JSON file for backup."""
     from magma_cycling.planning.control_tower import planning_tower
