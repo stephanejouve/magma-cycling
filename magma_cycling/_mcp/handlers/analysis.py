@@ -513,7 +513,11 @@ async def handle_get_release_notes(args: dict) -> list[TextContent]:
     except ValueError as exc:
         error = {"error": str(exc), "from_version": from_version, "to_version": to_version}
         return mcp_response(error)
-    except Exception as exc:
+    except (Exception, SystemExit) as exc:  # noqa: BLE001 — defense-in-depth
+        # Coach AI 2026-08-21 : élargi de Exception à (Exception, SystemExit)
+        # pour absorber un sys.exit percolant depuis une dépendance importée.
+        # compose_release_notes isole déjà les 3 blocs mais on garde ce catch
+        # comme filet de sécurité (validation semver ou trou résiduel).
         error = {
             "error": f"Failed to compose release notes: {type(exc).__name__}: {exc}",
             "from_version": from_version,
