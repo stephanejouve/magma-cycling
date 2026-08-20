@@ -2750,3 +2750,53 @@ class TestBT051FinalizeWeekPlanning:
         assert "error" in data
         assert "not found" in data["error"].lower()
         assert data["week_id"] == "S999"
+
+
+class TestBT060GetReleaseNotesHandler:
+    """BT-060 (spec DE-002) : handler MCP ``get-release-notes``."""
+
+    @pytest.mark.asyncio
+    async def test_success_returns_5_field_payload(self):
+        """Cas nominal : le handler retourne les 5 clés attendues."""
+        from magma_cycling.mcp_server import handle_get_release_notes
+
+        fake_payload = {
+            "from_version": "v3.73.0",
+            "to_version": "v3.74.0",
+            "derived": {"schema_changes": None, "docstring_diffs": None},
+            "declared": {"changelog_entries": {}, "bt_commits": []},
+            "absence_notes": [{"type": "snapshot_missing", "version": "v3.73.0"}],
+        }
+        with patch(
+            "magma_cycling.analyzers.release_notes.compose_release_notes",
+            return_value=fake_payload,
+        ):
+            result = await handle_get_release_notes(
+                {"from_version": "v3.73.0", "to_version": "v3.74.0"}
+            )
+        data = json.loads(result[0].text)
+        # mcp_response wrapper peut ajouter un ``_metadata`` — vérifier
+        # que les 5 clés attendues sont présentes (sans exclusivité).
+        for key in ("from_version", "to_version", "derived", "declared", "absence_notes"):
+            assert key in data, f"key {key} missing from payload"
+
+    @pytest.mark.asyncio
+    async def test_invalid_semver_returns_error(self):
+        """Argument mal formé → error explicite dans le payload."""
+        from magma_cycling.mcp_server import handle_get_release_notes
+
+        result = await handle_get_release_notes({"from_version": "3.72", "to_version": "v3.74.0"})
+        data = json.loads(result[0].text)
+        assert "error" in data
+
+    @pytest.mark.asyncio
+    async def test_from_gte_to_returns_error(self):
+        """from >= to → refus explicite (ordre garanti)."""
+        from magma_cycling.mcp_server import handle_get_release_notes
+
+        result = await handle_get_release_notes(
+            {"from_version": "v3.74.0", "to_version": "v3.73.0"}
+        )
+        data = json.loads(result[0].text)
+        assert "error" in data
+        assert "strictly less" in data["error"] or "must be" in data["error"]

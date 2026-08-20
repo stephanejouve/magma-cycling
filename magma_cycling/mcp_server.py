@@ -43,6 +43,7 @@ from magma_cycling._mcp.handlers.analysis import (  # noqa: F401
     handle_export_week_to_json,
     handle_get_coach_analysis,
     handle_get_recommendations,
+    handle_get_release_notes,
     handle_get_training_statistics,
     handle_pid_daily_evaluation,
     handle_restore_week_from_backup,
@@ -247,6 +248,7 @@ TOOL_HANDLERS = {
     "get-recommendations": handle_get_recommendations,
     "analyze-session-adherence": handle_analyze_session_adherence,
     "get-training-statistics": handle_get_training_statistics,
+    "get-release-notes": handle_get_release_notes,  # BT-060 DE-002
     "export-week-to-json": handle_export_week_to_json,
     "restore-week-from-backup": handle_restore_week_from_backup,
     "analyze-training-patterns": handle_analyze_training_patterns,
