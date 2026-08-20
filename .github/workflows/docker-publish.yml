@@ -30,7 +30,9 @@ jobs:
     # Sur push et workflow_dispatch, exécution inconditionnelle (legacy).
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     permissions:
-      contents: read
+      # contents: write requis pour `gh release upload` du snapshot BT-058
+      # (HTTP 403 "Resource not accessible by integration" sinon).
+      contents: write
       packages: write
 
     steps:
