@@ -382,3 +382,82 @@ class TestNormalizedVersionInPayload:
         )
         assert result["from_version"] == "v3.73.0"
         assert result["to_version"] == "v3.74.0"
+
+
+class TestBlockIsolation:
+    """P3 — un échec dans un bloc ne doit pas faire tomber l'appel entier.
+
+    Coach AI 2026-08-21 : simule sys.exit percolant depuis une dépendance
+    importée (motif réel : outillages.github_utils._get_token qui appelle
+    sys.exit(1) sur erreur de config NC). Le catch (Exception, SystemExit)
+    doit convertir en absence_notes.type='block_failed' + le bloc = None.
+    """
+
+    def test_derived_block_systemexit_isolated(self, tmp_path):
+        """sys.exit dans _fetch_snapshot_from_github → derived=None, declared OK."""
+
+        def _exiting_client(v, r):
+            raise SystemExit(1)
+
+        result = compose_release_notes(
+            "v3.73.0",
+            "v3.74.0",
+            changelog_path=tmp_path / "no.md",
+            repo_root=tmp_path,
+            github_client=_exiting_client,
+        )
+        assert result["derived"] is None
+        assert result["declared"] is not None  # bloc declared inchangé
+        block_failed = [n for n in result["absence_notes"] if n["type"] == "block_failed"]
+        assert any(n["block"] == "derived" for n in block_failed)
+        # Le message expose le type d'exception pour audit
+        derived_fail = next(n for n in block_failed if n["block"] == "derived")
+        assert "SystemExit" in derived_fail["message"]
+
+    def test_declared_block_exception_isolated(self, tmp_path):
+        """Exception dans _extract_changelog_between → declared=None, derived OK."""
+
+        def _no_snap(v, r):
+            return None
+
+        with patch(
+            "magma_cycling.analyzers.release_notes._extract_changelog_between",
+            side_effect=RuntimeError("git binary missing"),
+        ):
+            result = compose_release_notes(
+                "v3.73.0",
+                "v3.74.0",
+                changelog_path=tmp_path / "no.md",
+                repo_root=tmp_path,
+                github_client=_no_snap,
+            )
+        assert result["declared"] is None
+        assert result["derived"] is not None  # bloc derived inchangé (client no-op)
+        block_failed = [n for n in result["absence_notes"] if n["type"] == "block_failed"]
+        assert any(n["block"] == "declared" for n in block_failed)
+
+    def test_both_blocks_fail_call_still_succeeds(self, tmp_path):
+        """Défense P3 stricte : même si les 2 blocs échouent, l'appel réussit."""
+
+        def _exiting_client(v, r):
+            raise SystemExit(1)
+
+        with patch(
+            "magma_cycling.analyzers.release_notes._extract_changelog_between",
+            side_effect=SystemExit(1),
+        ):
+            result = compose_release_notes(
+                "v3.73.0",
+                "v3.74.0",
+                changelog_path=tmp_path / "no.md",
+                repo_root=tmp_path,
+                github_client=_exiting_client,
+            )
+        assert result["derived"] is None
+        assert result["declared"] is None
+        assert result["from_version"] == "v3.73.0"  # payload structure intacte
+        assert result["to_version"] == "v3.74.0"
+        block_failed_blocks = {
+            n["block"] for n in result["absence_notes"] if n["type"] == "block_failed"
+        }
+        assert block_failed_blocks == {"derived", "declared"}

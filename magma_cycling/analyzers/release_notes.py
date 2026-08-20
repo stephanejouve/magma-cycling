@@ -356,59 +356,87 @@ def compose_release_notes(
 
     absence_notes: list[dict[str, str]] = []
 
-    # ── DERIVED : snapshots BT-058 ────────────────────────────────────
-    from_snap = _fetch_snapshot_from_github(from_norm, repo, github_client=github_client)
-    to_snap = _fetch_snapshot_from_github(to_norm, repo, github_client=github_client)
-
-    derived: dict[str, Any] = {
-        "schema_changes": None,
-        "docstring_diffs": None,
-    }
-    if from_snap is None:
+    # ── DERIVED : snapshots BT-058 (bloc isolé) ───────────────────────
+    # Coach AI 2026-08-21 : les 3 sources orthogonales doivent survivre
+    # à un échec de l'une. Un échec de bloc = information (absence_notes),
+    # pas panne. Catch (Exception, SystemExit) — pas BaseException seul
+    # pour préserver KeyboardInterrupt. Fix contre `sys.exit` percolant
+    # depuis outillages.github_utils (à corriger séparément côté source).
+    derived: dict[str, Any] | None = {"schema_changes": None, "docstring_diffs": None}
+    try:
+        from_snap = _fetch_snapshot_from_github(from_norm, repo, github_client=github_client)
+        to_snap = _fetch_snapshot_from_github(to_norm, repo, github_client=github_client)
+        if from_snap is None:
+            absence_notes.append(
+                {
+                    "type": "snapshot_missing",
+                    "version": from_norm,
+                    "message": (
+                        f"Snapshot BT-058 absent pour {from_norm} — release "
+                        "probablement antérieure à BT-058 (2026-08-18), ou "
+                        "asset détruit. Impossible de calculer un diff structurel."
+                    ),
+                }
+            )
+        if to_snap is None:
+            absence_notes.append(
+                {
+                    "type": "snapshot_missing",
+                    "version": to_norm,
+                    "message": (
+                        f"Snapshot BT-058 absent pour {to_norm} — release "
+                        "probablement antérieure à BT-058 (2026-08-18), ou "
+                        "asset détruit. Impossible de calculer un diff structurel."
+                    ),
+                }
+            )
+        if from_snap is not None and to_snap is not None:
+            derived["schema_changes"] = _diff_schemas(from_snap, to_snap)
+            derived["docstring_diffs"] = _diff_docstrings(from_snap, to_snap)
+    except (Exception, SystemExit) as exc:  # noqa: BLE001 — P3 isolation blocs
+        derived = None
         absence_notes.append(
             {
-                "type": "snapshot_missing",
-                "version": from_norm,
+                "type": "block_failed",
+                "block": "derived",
                 "message": (
-                    f"Snapshot BT-058 absent pour {from_norm} — release "
-                    "probablement antérieure à BT-058 (2026-08-18), ou "
-                    "asset détruit. Impossible de calculer un diff structurel."
+                    f"Bloc derived a échoué ({type(exc).__name__}: {str(exc)[:200]}). "
+                    "Cause probable : sys.exit percolant depuis une dépendance "
+                    "importée (outillages.github_utils._get_token) — bug à traiter "
+                    "côté source, pas ici. absence_notes.type=block_failed exposé "
+                    "pour audit."
                 ),
             }
         )
-    if to_snap is None:
+
+    # ── DECLARED : CHANGELOG + git log (bloc isolé) ───────────────────
+    declared: dict[str, Any] | None
+    try:
+        changelog_entries = _extract_changelog_between(from_norm, to_norm, changelog_path)
+        bt_commits = _git_log_between_tags(from_norm, to_norm, repo_root)
+        declared = {"changelog_entries": changelog_entries, "bt_commits": bt_commits}
+        if not changelog_entries:
+            absence_notes.append(
+                {
+                    "type": "changelog_empty",
+                    "message": (
+                        f"Aucune entrée CHANGELOG.md déclarée entre {from_norm} "
+                        f"et {to_norm}. Soit rien n'a été livré, soit la "
+                        "discipline CHANGELOG a lâché sur cette plage."
+                    ),
+                }
+            )
+    except (Exception, SystemExit) as exc:  # noqa: BLE001 — P3 isolation blocs
+        declared = None
         absence_notes.append(
             {
-                "type": "snapshot_missing",
-                "version": to_norm,
+                "type": "block_failed",
+                "block": "declared",
                 "message": (
-                    f"Snapshot BT-058 absent pour {to_norm} — release "
-                    "probablement antérieure à BT-058 (2026-08-18), ou "
-                    "asset détruit. Impossible de calculer un diff structurel."
-                ),
-            }
-        )
-    if from_snap is not None and to_snap is not None:
-        derived["schema_changes"] = _diff_schemas(from_snap, to_snap)
-        derived["docstring_diffs"] = _diff_docstrings(from_snap, to_snap)
-
-    # ── DECLARED : CHANGELOG + git log ────────────────────────────────
-    changelog_entries = _extract_changelog_between(from_norm, to_norm, changelog_path)
-    bt_commits = _git_log_between_tags(from_norm, to_norm, repo_root)
-
-    declared: dict[str, Any] = {
-        "changelog_entries": changelog_entries,
-        "bt_commits": bt_commits,
-    }
-
-    if not changelog_entries:
-        absence_notes.append(
-            {
-                "type": "changelog_empty",
-                "message": (
-                    f"Aucune entrée CHANGELOG.md déclarée entre {from_norm} "
-                    f"et {to_norm}. Soit rien n'a été livré, soit la "
-                    "discipline CHANGELOG a lâché sur cette plage."
+                    f"Bloc declared a échoué ({type(exc).__name__}: {str(exc)[:200]}). "
+                    "Cause probable : accès git/CHANGELOG indisponible dans "
+                    "l'environnement d'exécution (container prod sans repo local, "
+                    "ou binary git absent)."
                 ),
             }
         )
