@@ -42,7 +42,39 @@ import json
 import re
 import subprocess
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
+
+
+class FetchResult(NamedTuple):
+    """Résultat typé de :func:`_fetch_snapshot_from_github` (BT-060 L2/L3).
+
+    ``reason`` discrimine les 5+ sous-cas d'absence pour éviter le silence
+    trompeur ``None`` monolithique. Coach AI 2026-08-21 : « un outil qui
+    se trompe sur l'origine d'une absence est pire qu'un outil muet ».
+    """
+
+    snapshot: dict[str, Any] | None
+    reason: str  # "ok" | "no_token" | "network_error" | "release_not_found" | "asset_not_found" | "download_error" | "parse_error"
+    detail: str = ""
+
+
+class ChangelogResult(NamedTuple):
+    """Résultat typé de :func:`_extract_changelog_between` (BT-060 L2)."""
+
+    entries: dict[str, list[str]]
+    reason: str  # "ok" | "source_unreadable" | "no_entries" | "parser_no_match"
+    detail: str = ""
+    total_sections: int = 0
+
+
+class GitLogResult(NamedTuple):
+    """Résultat typé de :func:`_git_log_between_tags` (BT-060 L1/L2)."""
+
+    commits: list[dict[str, str]]
+    reason: str  # "ok" | "source_unreadable" | "no_entries" | "parser_no_match"
+    detail: str = ""
+    total_seen: int = 0
+
 
 #: BT-058 : nom de fichier snapshot attendu dans les release assets
 _SNAPSHOT_ASSET_TEMPLATE = "magma-cycling-schemas-{version}.json"
@@ -74,24 +106,31 @@ def _fetch_snapshot_from_github(
     version: str,
     repo: str,
     github_client: Any | None = None,
-) -> dict[str, Any] | None:
+) -> FetchResult:
     """Télécharge le snapshot BT-058 attaché à une release.
 
     Args:
         version: tag ``vX.Y.Z``.
         repo: ``owner/name`` du repo GitHub.
         github_client: optional, permet d'injecter un client mocké en test.
+            Callable ``(version, repo) -> dict | None`` — pour tests, la
+            distinction fine des reasons ne peut pas être inférée depuis
+            un simple None (on suppose « release_not_found »).
             Si ``None``, utilise :mod:`urllib.request` avec le token
             GitHub App via ``outillages.github_utils._get_token``.
 
     Returns:
-        Dict parsé depuis le JSON snapshot, ou ``None`` si la release
-        existe sans l'asset (release antérieure à BT-058) ou si la release
-        n'existe pas. Le caller propage cette absence dans ``absence_notes``.
-        Ne lève jamais d'exception (contrat « never raise »).
+        :class:`FetchResult` avec ``snapshot``, ``reason`` typé et ``detail``.
+        BT-060 L3 : ``reason`` discrimine 7 sous-cas au lieu du ``None``
+        monolithique historique. Ne lève jamais d'exception.
     """
     if github_client is not None:
-        return github_client(version, repo)
+        snap = github_client(version, repo)
+        return FetchResult(
+            snap,
+            "ok" if snap is not None else "release_not_found",
+            "" if snap is not None else f"github_client returned None for {version}",
+        )
 
     import urllib.error
     import urllib.request
@@ -100,10 +139,8 @@ def _fetch_snapshot_from_github(
         from outillages.github_utils import _get_token
 
         token = _get_token()
-    except Exception:
-        # Pas de token dispo → impossible de fetch. Retourner None traité
-        # comme snapshot absent (absence_notes signale la cause).
-        return None
+    except Exception as exc:  # noqa: BLE001 — never raise
+        return FetchResult(None, "no_token", f"{type(exc).__name__}: {str(exc)[:200]}")
 
     asset_name = _SNAPSHOT_ASSET_TEMPLATE.format(version=version)
     api_url = f"https://api.github.com/repos/{repo}/releases/tags/{version}"
@@ -118,26 +155,50 @@ def _fetch_snapshot_from_github(
         )
         with urllib.request.urlopen(req, timeout=10) as resp:
             release = json.loads(resp.read())
-    except Exception:
-        # Release inexistante, réseau, timeout, parse : traité comme absent.
-        return None
+    except urllib.error.HTTPError as exc:
+        if exc.code == 404:
+            return FetchResult(None, "release_not_found", f"HTTP 404 on {api_url}")
+        return FetchResult(None, "network_error", f"HTTP {exc.code} on {api_url}: {exc.reason}")
+    except urllib.error.URLError as exc:
+        return FetchResult(None, "network_error", f"URLError on {api_url}: {exc.reason}")
+    except (ValueError, json.JSONDecodeError) as exc:
+        return FetchResult(None, "parse_error", f"JSON parse on release: {str(exc)[:200]}")
+    except Exception as exc:  # noqa: BLE001 — never raise
+        return FetchResult(None, "network_error", f"{type(exc).__name__}: {str(exc)[:200]}")
 
     for asset in release.get("assets", []):
         if asset.get("name") == asset_name:
             download_url = asset.get("browser_download_url")
             if not download_url:
-                return None
+                return FetchResult(
+                    None, "asset_not_found", f"asset {asset_name} present without download_url"
+                )
             try:
                 req = urllib.request.Request(
                     download_url,
                     headers={"Authorization": f"Bearer {token}"},
                 )
                 with urllib.request.urlopen(req, timeout=10) as resp:
-                    return json.loads(resp.read())
-            except Exception:
-                return None
+                    payload = json.loads(resp.read())
+                    return FetchResult(payload, "ok", f"fetched {asset_name}")
+            except (urllib.error.HTTPError, urllib.error.URLError) as exc:
+                return FetchResult(
+                    None, "download_error", f"failed download {asset_name}: {str(exc)[:200]}"
+                )
+            except (ValueError, json.JSONDecodeError) as exc:
+                return FetchResult(
+                    None, "parse_error", f"JSON parse on {asset_name}: {str(exc)[:200]}"
+                )
+            except Exception as exc:  # noqa: BLE001 — never raise
+                return FetchResult(
+                    None, "download_error", f"{type(exc).__name__}: {str(exc)[:200]}"
+                )
 
-    return None  # asset attendu absent (release antérieure à BT-058)
+    return FetchResult(
+        None,
+        "asset_not_found",
+        f"release {version} present, but asset {asset_name} absent (release probably pre-BT-058)",
+    )
 
 
 def _diff_schemas(
@@ -220,7 +281,7 @@ def _extract_changelog_between(
     from_version: str,
     to_version: str,
     changelog_path: Path,
-) -> dict[str, list[str]]:
+) -> ChangelogResult:
     """Extrait les sections CHANGELOG entre 2 versions.
 
     Parcourt ``CHANGELOG.md`` (format Keep-a-Changelog) et retourne les
@@ -228,39 +289,42 @@ def _extract_changelog_between(
     et ``to`` (inclus). Si ``to_version`` cible ``[Unreleased]``, ce
     contenu est inclus.
 
-    Args:
-        from_version: ``vX.Y.Z`` (exclusive, changements après cette version)
-        to_version: ``vX.Y.Z`` (inclusive)
-        changelog_path: chemin ``CHANGELOG.md``.
+    BT-060 L2 : retourne :class:`ChangelogResult` avec ``reason`` typé pour
+    discriminer les 3 sous-cas d'absence :
 
-    Returns:
-        Dict ``{version: [ligne, ligne, ...]}`` pour chaque version dans
-        la plage qui a des entrées. Absent si CHANGELOG introuvable ou
-        sections vides.
+    - ``source_unreadable`` : fichier absent (typique container prod sans COPY CHANGELOG.md)
+    - ``no_entries`` : fichier lu, aucune section dans la plage
+    - ``parser_no_match`` : fichier lu, sections présentes, aucune ne matche la plage
     """
     if not changelog_path.exists():
-        return {}
+        return ChangelogResult(
+            {},
+            "source_unreadable",
+            f"CHANGELOG.md absent au chemin {changelog_path} (container sans COPY CHANGELOG ?)",
+        )
 
     content = changelog_path.read_text(encoding="utf-8")
     # Matcher les headers "## [X.Y.Z]" ou "## [Unreleased]"
-    # Pattern non-greedy pour capturer jusqu'au prochain "## ["
     sections = re.findall(
         r"^## \[([^\]]+)\](.*?)(?=^## \[|\Z)",
         content,
         re.MULTILINE | re.DOTALL,
     )
+    total_sections = len(sections)
+
+    if total_sections == 0:
+        return ChangelogResult(
+            {},
+            "no_entries",
+            f"CHANGELOG.md lu ({len(content)} chars) mais 0 section ## [X.Y.Z] trouvée",
+        )
 
     from_semver = _parse_semver(from_version)
     to_semver = _parse_semver(to_version)
 
     result: dict[str, list[str]] = {}
     for label, body in sections:
-        # Ignorer les sections vides et les sections hors plage
         if label == "Unreleased":
-            # Inclure si to_version reflète l'état courant
-            # (heuristique : Unreleased est toujours "à partir de la
-            # prochaine release", donc inclus si to == current __version__)
-            # Pour V1, inclure systématiquement — consommateur pondère.
             if body.strip():
                 result[label] = [ln for ln in body.strip().splitlines() if ln.strip()]
             continue
@@ -271,22 +335,46 @@ def _extract_changelog_between(
         if from_semver < label_semver <= to_semver:
             if body.strip():
                 result[label] = [ln for ln in body.strip().splitlines() if ln.strip()]
-    return result
+
+    if not result:
+        return ChangelogResult(
+            {},
+            "parser_no_match",
+            f"CHANGELOG.md lu, {total_sections} sections présentes, 0 captée dans plage {from_version}..{to_version}",
+            total_sections=total_sections,
+        )
+
+    return ChangelogResult(
+        result,
+        "ok",
+        f"{len(result)} sections captées / {total_sections} présentes",
+        total_sections=total_sections,
+    )
+
+
+#: BT-060 L1 : regex généralisée pour matcher BT-XXX dans le message commit.
+#: Insensible à la casse (matche ``BT-060``, ``bt-060``, ``Bt-060``) ;
+#: ``\b`` word boundaries évitent les faux positifs (ex ``bt-something-nonnumeric``).
+_BT_COMMIT_PATTERN = re.compile(r"\bBT-\d+\b", re.IGNORECASE)
 
 
 def _git_log_between_tags(
     from_version: str,
     to_version: str,
     repo_root: Path,
-) -> list[dict[str, str]]:
+) -> GitLogResult:
     """Liste les commits mentionnant BT-XXX entre 2 tags git.
 
-    Utilise ``git log from_version..to_version --grep=BT-``. Ne lève
-    jamais d'exception (contrat « never raise ») — retourne liste vide
-    si git indisponible, tag absent, ou repo corrompu.
+    BT-060 L1 + L2 : parser Python avec :data:`_BT_COMMIT_PATTERN`
+    (insensible casse + word boundary), et 3 états d'absence distincts.
 
     Returns:
-        Liste ``[{sha, subject}, ...]`` limitée aux commits BT-annotés.
+        :class:`GitLogResult` avec ``reason`` typé :
+
+        - ``source_unreadable`` : git binary absent, repo non-git, tags manquants,
+          subprocess timeout, permission (cas typique container prod sans .git/)
+        - ``no_entries`` : git log OK, 0 commits dans la plage
+        - ``parser_no_match`` : commits dans la plage mais aucun avec BT-XXX
     """
     try:
         result = subprocess.run(
@@ -294,7 +382,6 @@ def _git_log_between_tags(
                 "git",
                 "log",
                 f"{from_version}..{to_version}",
-                "--grep=BT-",
                 "--pretty=format:%h %s",
                 "--no-merges",
             ],
@@ -303,16 +390,54 @@ def _git_log_between_tags(
             text=True,
             timeout=10,
         )
-    except Exception:
-        return []
+    except Exception as exc:  # noqa: BLE001 — never raise
+        return GitLogResult(
+            [],
+            "source_unreadable",
+            f"subprocess git log failed: {type(exc).__name__}: {str(exc)[:200]}",
+        )
+
     if result.returncode != 0:
-        return []
-    commits = []
-    for line in result.stdout.strip().splitlines():
+        stderr_short = (result.stderr or "").strip()[:200]
+        return GitLogResult(
+            [],
+            "source_unreadable",
+            f"git log rc={result.returncode} (repo_root={repo_root}): {stderr_short}",
+        )
+
+    lines = [ln for ln in result.stdout.strip().splitlines() if ln.strip()]
+    total_seen = len(lines)
+
+    if total_seen == 0:
+        return GitLogResult(
+            [],
+            "no_entries",
+            f"git log OK, 0 commit dans plage {from_version}..{to_version}",
+            total_seen=0,
+        )
+
+    commits: list[dict[str, str]] = []
+    for line in lines:
         parts = line.split(" ", 1)
         if len(parts) == 2:
-            commits.append({"sha": parts[0], "subject": parts[1]})
-    return commits
+            sha, subject = parts
+            if _BT_COMMIT_PATTERN.search(subject):
+                commits.append({"sha": sha, "subject": subject})
+
+    if not commits:
+        return GitLogResult(
+            [],
+            "parser_no_match",
+            f"{total_seen} commits vus dans plage, 0 avec pattern BT-XXX (subjects only)",
+            total_seen=total_seen,
+        )
+
+    return GitLogResult(
+        commits,
+        "ok",
+        f"{len(commits)}/{total_seen} commits BT-annotés captés",
+        total_seen=total_seen,
+    )
 
 
 def compose_release_notes(
@@ -357,42 +482,57 @@ def compose_release_notes(
     absence_notes: list[dict[str, str]] = []
 
     # ── DERIVED : snapshots BT-058 (bloc isolé) ───────────────────────
-    # Coach AI 2026-08-21 : les 3 sources orthogonales doivent survivre
-    # à un échec de l'une. Un échec de bloc = information (absence_notes),
-    # pas panne. Catch (Exception, SystemExit) — pas BaseException seul
-    # pour préserver KeyboardInterrupt. Fix contre `sys.exit` percolant
-    # depuis outillages.github_utils (à corriger séparément côté source).
+    # BT-060 L3 : chaque snapshot fetch discrimine 7 sous-cas via FetchResult
+    # (release_not_found / asset_not_found / no_token / network_error /
+    # download_error / parse_error / ok). Plus jamais un `None` monolithique
+    # ambigu. Absence_notes porte le type + le detail pour orienter le fix.
     derived: dict[str, Any] | None = {"schema_changes": None, "docstring_diffs": None}
     try:
-        from_snap = _fetch_snapshot_from_github(from_norm, repo, github_client=github_client)
-        to_snap = _fetch_snapshot_from_github(to_norm, repo, github_client=github_client)
-        if from_snap is None:
+        from_result = _fetch_snapshot_from_github(from_norm, repo, github_client=github_client)
+        to_result = _fetch_snapshot_from_github(to_norm, repo, github_client=github_client)
+
+        if from_result.reason != "ok":
             absence_notes.append(
                 {
                     "type": "snapshot_missing",
+                    "sub_type": from_result.reason,
                     "version": from_norm,
                     "message": (
-                        f"Snapshot BT-058 absent pour {from_norm} — release "
-                        "probablement antérieure à BT-058 (2026-08-18), ou "
-                        "asset détruit. Impossible de calculer un diff structurel."
+                        f"Snapshot BT-058 absent pour {from_norm} (reason={from_result.reason}). "
+                        f"{from_result.detail}"
                     ),
                 }
             )
-        if to_snap is None:
+        if to_result.reason != "ok":
             absence_notes.append(
                 {
                     "type": "snapshot_missing",
+                    "sub_type": to_result.reason,
                     "version": to_norm,
                     "message": (
-                        f"Snapshot BT-058 absent pour {to_norm} — release "
-                        "probablement antérieure à BT-058 (2026-08-18), ou "
-                        "asset détruit. Impossible de calculer un diff structurel."
+                        f"Snapshot BT-058 absent pour {to_norm} (reason={to_result.reason}). "
+                        f"{to_result.detail}"
                     ),
                 }
             )
-        if from_snap is not None and to_snap is not None:
-            derived["schema_changes"] = _diff_schemas(from_snap, to_snap)
-            derived["docstring_diffs"] = _diff_docstrings(from_snap, to_snap)
+        if from_result.snapshot is not None and to_result.snapshot is not None:
+            derived["schema_changes"] = _diff_schemas(from_result.snapshot, to_result.snapshot)
+            derived["docstring_diffs"] = _diff_docstrings(from_result.snapshot, to_result.snapshot)
+            # BT-060 L3 : "comparé, 0 changement" ≠ "pas comparé". Marqueur explicite.
+            sc = derived["schema_changes"]
+            no_schema_change = (
+                not sc["tools_added"] and not sc["tools_removed"] and not sc["schema_changed"]
+            )
+            if no_schema_change and not derived["docstring_diffs"]:
+                absence_notes.append(
+                    {
+                        "type": "derived_no_diff",
+                        "message": (
+                            f"Comparaison BT-058 effectuée sur les 2 snapshots {from_norm} et {to_norm}, "
+                            "aucun changement structurel détecté (schemas identiques, docstrings identiques)."
+                        ),
+                    }
+                )
     except (Exception, SystemExit) as exc:  # noqa: BLE001 — P3 isolation blocs
         derived = None
         absence_notes.append(
@@ -401,28 +541,43 @@ def compose_release_notes(
                 "block": "derived",
                 "message": (
                     f"Bloc derived a échoué ({type(exc).__name__}: {str(exc)[:200]}). "
-                    "Cause probable : sys.exit percolant depuis une dépendance "
-                    "importée (outillages.github_utils._get_token) — bug à traiter "
-                    "côté source, pas ici. absence_notes.type=block_failed exposé "
-                    "pour audit."
+                    "Cause probable : sys.exit percolant depuis une dépendance importée."
                 ),
             }
         )
 
     # ── DECLARED : CHANGELOG + git log (bloc isolé) ───────────────────
+    # BT-060 L2 : chaque source déclare son propre absence_notes avec les
+    # 3 états typés (source_unreadable / no_entries / parser_no_match) et
+    # les chiffres portés dans le message ("N vus, 0 capté").
     declared: dict[str, Any] | None
     try:
-        changelog_entries = _extract_changelog_between(from_norm, to_norm, changelog_path)
-        bt_commits = _git_log_between_tags(from_norm, to_norm, repo_root)
-        declared = {"changelog_entries": changelog_entries, "bt_commits": bt_commits}
-        if not changelog_entries:
+        cl_result = _extract_changelog_between(from_norm, to_norm, changelog_path)
+        gl_result = _git_log_between_tags(from_norm, to_norm, repo_root)
+        declared = {
+            "changelog_entries": cl_result.entries,
+            "bt_commits": gl_result.commits,
+        }
+        if cl_result.reason != "ok":
             absence_notes.append(
                 {
-                    "type": "changelog_empty",
+                    "type": "changelog_missing",
+                    "sub_type": cl_result.reason,
                     "message": (
-                        f"Aucune entrée CHANGELOG.md déclarée entre {from_norm} "
-                        f"et {to_norm}. Soit rien n'a été livré, soit la "
-                        "discipline CHANGELOG a lâché sur cette plage."
+                        f"CHANGELOG.md pour {from_norm}..{to_norm} : reason={cl_result.reason}. "
+                        f"{cl_result.detail}"
+                    ),
+                }
+            )
+        if gl_result.reason != "ok":
+            absence_notes.append(
+                {
+                    "type": "bt_commits_missing",
+                    "sub_type": gl_result.reason,
+                    "total_seen": gl_result.total_seen,
+                    "message": (
+                        f"Git log BT-annotés pour {from_norm}..{to_norm} : reason={gl_result.reason}. "
+                        f"{gl_result.detail}"
                     ),
                 }
             )
@@ -434,9 +589,7 @@ def compose_release_notes(
                 "block": "declared",
                 "message": (
                     f"Bloc declared a échoué ({type(exc).__name__}: {str(exc)[:200]}). "
-                    "Cause probable : accès git/CHANGELOG indisponible dans "
-                    "l'environnement d'exécution (container prod sans repo local, "
-                    "ou binary git absent)."
+                    "Cause probable : accès filesystem/git binary indisponible."
                 ),
             }
         )
