@@ -176,10 +176,12 @@ class TestExtractChangelogBetween:
 """
         p = self._write(tmp_path, content)
         result = _extract_changelog_between("v3.72.0", "v3.74.0", p)
-        assert "3.74.0" in result
-        assert "3.73.0" in result
+        assert result.reason == "ok"
+        assert "3.74.0" in result.entries
+        assert "3.73.0" in result.entries
         # 3.72.0 exclue (from_version exclusive)
-        assert "3.72.0" not in result
+        assert "3.72.0" not in result.entries
+        assert result.total_sections == 3
 
     def test_unreleased_included_when_content(self, tmp_path):
         content = """# Changelog
@@ -194,8 +196,9 @@ class TestExtractChangelogBetween:
 """
         p = self._write(tmp_path, content)
         result = _extract_changelog_between("v3.73.0", "v3.74.0", p)
-        assert "Unreleased" in result
-        assert "3.74.0" in result
+        assert result.reason == "ok"
+        assert "Unreleased" in result.entries
+        assert "3.74.0" in result.entries
 
     def test_empty_sections_skipped(self, tmp_path):
         content = """## [3.74.0]
@@ -206,44 +209,131 @@ class TestExtractChangelogBetween:
 """
         p = self._write(tmp_path, content)
         result = _extract_changelog_between("v3.72.0", "v3.74.0", p)
-        assert "3.73.0" in result
+        assert result.reason == "ok"
+        assert "3.73.0" in result.entries
         # 3.74.0 section vide → skipped
-        assert "3.74.0" not in result
+        assert "3.74.0" not in result.entries
 
-    def test_missing_file_returns_empty(self, tmp_path):
+    def test_missing_file_returns_source_unreadable(self, tmp_path):
+        """BT-060 L2 : fichier absent → source_unreadable (pas silence vide)."""
         p = tmp_path / "nonexistent.md"
-        assert _extract_changelog_between("v3.72.0", "v3.74.0", p) == {}
+        result = _extract_changelog_between("v3.72.0", "v3.74.0", p)
+        assert result.entries == {}
+        assert result.reason == "source_unreadable"
+        assert "nonexistent.md" in result.detail
+
+    def test_parser_no_match_when_out_of_range(self, tmp_path):
+        """BT-060 L2 : sections présentes mais aucune dans la plage → parser_no_match."""
+        content = """## [3.10.0]
+
+- Only old entry
+"""
+        p = self._write(tmp_path, content)
+        result = _extract_changelog_between("v3.72.0", "v3.74.0", p)
+        assert result.entries == {}
+        assert result.reason == "parser_no_match"
+        assert result.total_sections == 1
+        assert "1 sections présentes" in result.detail
+
+    def test_no_entries_when_empty_file(self, tmp_path):
+        """BT-060 L2 : fichier lu mais 0 section trouvée → no_entries."""
+        content = "# Changelog\n\nCe fichier n'a pas encore de section versionnée.\n"
+        p = self._write(tmp_path, content)
+        result = _extract_changelog_between("v3.72.0", "v3.74.0", p)
+        assert result.entries == {}
+        assert result.reason == "no_entries"
+        assert "0 section" in result.detail
 
 
 class TestGitLogBetweenTags:
-    """``_git_log_between_tags`` avec mock subprocess."""
+    """``_git_log_between_tags`` avec mock subprocess.
+
+    BT-060 L1 : regex `\\bBT-\\d+\\b` case-insensitive matche les 3 formes
+    (BT-060 majuscule, bt-060 minuscule scope, Bt-060 mixed case).
+
+    BT-060 L2 : 3 états d'absence typés (source_unreadable / no_entries /
+    parser_no_match) avec chiffres portés dans detail.
+    """
+
+    def _mock_run(self, returncode=0, stdout="", stderr=""):
+        return type("R", (), {"returncode": returncode, "stdout": stdout, "stderr": stderr})()
 
     @patch("magma_cycling.analyzers.release_notes.subprocess.run")
     def test_commits_parsed(self, mock_run, tmp_path):
-        mock_run.return_value = type(
-            "R",
-            (),
-            {
-                "returncode": 0,
-                "stdout": "abc1234 fix(mcp): BT-050 something\ndef5678 feat: BT-058 snapshot",
-            },
-        )()
-        commits = _git_log_between_tags("v3.72.0", "v3.74.0", tmp_path)
-        assert len(commits) == 2
-        assert commits[0]["sha"] == "abc1234"
-        assert "BT-050" in commits[0]["subject"]
+        mock_run.return_value = self._mock_run(
+            stdout="abc1234 fix(mcp): BT-050 something\ndef5678 feat: BT-058 snapshot"
+        )
+        result = _git_log_between_tags("v3.72.0", "v3.74.0", tmp_path)
+        assert result.reason == "ok"
+        assert len(result.commits) == 2
+        assert result.commits[0]["sha"] == "abc1234"
+        assert "BT-050" in result.commits[0]["subject"]
+        assert result.total_seen == 2
 
     @patch("magma_cycling.analyzers.release_notes.subprocess.run")
-    def test_git_error_returns_empty(self, mock_run, tmp_path):
-        mock_run.return_value = type("R", (), {"returncode": 128, "stdout": ""})()
-        assert _git_log_between_tags("v3.72.0", "v3.74.0", tmp_path) == []
+    def test_bt_regex_case_insensitive_and_scope_parens(self, mock_run, tmp_path):
+        """BT-060 L1 : matche bt-060 (scope minuscule), Bt-060 (mixed), BT-060 (majuscule)."""
+        mock_run.return_value = self._mock_run(
+            stdout=(
+                "aaa1111 fix(bt-060): isolate blocks\n"
+                "bbb2222 feat: Bt-042 something\n"
+                "ccc3333 chore: BT-058 snapshot\n"
+                "ddd4444 refactor: no bt id here\n"
+            )
+        )
+        result = _git_log_between_tags("v3.75.0", "v3.76.0", tmp_path)
+        assert result.reason == "ok"
+        assert len(result.commits) == 3
+        assert result.total_seen == 4  # 4 commits, 1 sans BT-XXX
+        shas = [c["sha"] for c in result.commits]
+        assert shas == ["aaa1111", "bbb2222", "ccc3333"]
+
+    @patch("magma_cycling.analyzers.release_notes.subprocess.run")
+    def test_git_error_returns_source_unreadable(self, mock_run, tmp_path):
+        """BT-060 L2 : git log rc != 0 → source_unreadable (typique container prod)."""
+        mock_run.return_value = self._mock_run(returncode=128, stderr="fatal: not a git repository")
+        result = _git_log_between_tags("v3.72.0", "v3.74.0", tmp_path)
+        assert result.commits == []
+        assert result.reason == "source_unreadable"
+        assert "rc=128" in result.detail
+        assert "not a git repository" in result.detail
 
     @patch(
         "magma_cycling.analyzers.release_notes.subprocess.run",
-        side_effect=FileNotFoundError("git not found"),
+        side_effect=FileNotFoundError("git binary missing"),
     )
-    def test_git_missing_returns_empty(self, mock_run, tmp_path):
-        assert _git_log_between_tags("v3.72.0", "v3.74.0", tmp_path) == []
+    def test_git_missing_returns_source_unreadable(self, mock_run, tmp_path):
+        """BT-060 L2 : git binary absent → source_unreadable."""
+        result = _git_log_between_tags("v3.72.0", "v3.74.0", tmp_path)
+        assert result.commits == []
+        assert result.reason == "source_unreadable"
+        assert "FileNotFoundError" in result.detail
+
+    @patch("magma_cycling.analyzers.release_notes.subprocess.run")
+    def test_no_entries_when_empty_range(self, mock_run, tmp_path):
+        """BT-060 L2 : git log OK mais 0 commit dans plage → no_entries."""
+        mock_run.return_value = self._mock_run(stdout="")
+        result = _git_log_between_tags("v3.72.0", "v3.72.0", tmp_path)
+        assert result.commits == []
+        assert result.reason == "no_entries"
+        assert result.total_seen == 0
+
+    @patch("magma_cycling.analyzers.release_notes.subprocess.run")
+    def test_parser_no_match_when_commits_no_bt(self, mock_run, tmp_path):
+        """BT-060 L2 : commits présents mais aucun BT-annoté → parser_no_match."""
+        mock_run.return_value = self._mock_run(
+            stdout=(
+                "aaa1111 chore: bump deps\n"
+                "bbb2222 style: format\n"
+                "ccc3333 test: add coverage\n"
+            )
+        )
+        result = _git_log_between_tags("v3.72.0", "v3.74.0", tmp_path)
+        assert result.commits == []
+        assert result.reason == "parser_no_match"
+        assert result.total_seen == 3
+        assert "3 commits vus" in result.detail
+        assert "0 avec pattern" in result.detail
 
 
 class TestComposeReleaseNotes:
@@ -302,7 +392,9 @@ class TestComposeReleaseNotes:
         snapshot_missing = [n for n in result["absence_notes"] if n["type"] == "snapshot_missing"]
         assert snapshot_missing[0]["version"] == "v3.73.0"
 
-    def test_changelog_empty_produces_absence_note(self, tmp_path):
+    def test_changelog_missing_produces_absence_note_typed(self, tmp_path):
+        """BT-060 L2 : CHANGELOG absent → absence_note type=changelog_missing
+        sub_type=source_unreadable (au lieu de l'ancien 'changelog_empty' ambigu)."""
         client = self._fake_github_client(
             {
                 "v3.73.0": {"version": "v3.73.0", "tools": []},
@@ -317,7 +409,9 @@ class TestComposeReleaseNotes:
             github_client=client,
         )
         assert result["declared"]["changelog_entries"] == {}
-        assert any(n["type"] == "changelog_empty" for n in result["absence_notes"])
+        cl_notes = [n for n in result["absence_notes"] if n["type"] == "changelog_missing"]
+        assert len(cl_notes) == 1
+        assert cl_notes[0]["sub_type"] == "source_unreadable"
 
     def test_from_version_not_less_than_to_raises(self, tmp_path):
         with pytest.raises(ValueError, match="must be strictly less"):
@@ -461,3 +555,83 @@ class TestBlockIsolation:
             n["block"] for n in result["absence_notes"] if n["type"] == "block_failed"
         }
         assert block_failed_blocks == {"derived", "declared"}
+
+
+class TestObservabilityAbsenceNotesTyped:
+    """BT-060 L2/L3 — chaque source expose son état d'absence de façon typée.
+
+    Coach AI 2026-08-21 : « un outil d'observabilité qui se trompe sur
+    l'origine d'une absence est pire qu'un outil muet ». absence_notes
+    porte le type + sub_type (source_unreadable / no_entries / parser_no_match)
+    + chiffres dans le message pour orienter le fix vers la bonne cause.
+    """
+
+    def _no_snap(self, v, r):
+        return None
+
+    def test_snapshot_missing_carries_sub_type(self, tmp_path):
+        """derived : reason=release_not_found propagé en absence_note.sub_type."""
+        result = compose_release_notes(
+            "v3.73.0",
+            "v3.74.0",
+            changelog_path=tmp_path / "no.md",
+            repo_root=tmp_path,
+            github_client=self._no_snap,
+        )
+        snap_notes = [n for n in result["absence_notes"] if n["type"] == "snapshot_missing"]
+        assert len(snap_notes) == 2  # from + to
+        for note in snap_notes:
+            assert note["sub_type"] == "release_not_found"
+            assert "version" in note
+
+    def test_derived_no_diff_signals_comparison_happened(self, tmp_path):
+        """BT-060 L3 : quand comparaison OK sans changement, absence_note explicite."""
+        snap = {"version": "v3.73.0", "tools": []}
+        client = lambda v, r: snap  # noqa: E731 — same snap both versions
+        result = compose_release_notes(
+            "v3.73.0",
+            "v3.74.0",
+            changelog_path=tmp_path / "no.md",
+            repo_root=tmp_path,
+            github_client=client,
+        )
+        no_diff_notes = [n for n in result["absence_notes"] if n["type"] == "derived_no_diff"]
+        assert len(no_diff_notes) == 1
+        assert (
+            "0 changement" in no_diff_notes[0]["message"]
+            or "aucun changement" in no_diff_notes[0]["message"].lower()
+        )
+
+    def test_git_log_container_prod_pattern(self, tmp_path):
+        """Cas réel prod BT-060 : repo git absent → source_unreadable."""
+        result = compose_release_notes(
+            "v3.76.1",
+            "v3.76.3",
+            changelog_path=tmp_path / "no.md",
+            repo_root=tmp_path,  # tmp_path n'est pas un git repo
+            github_client=self._no_snap,
+        )
+        git_notes = [n for n in result["absence_notes"] if n["type"] == "bt_commits_missing"]
+        assert len(git_notes) == 1
+        assert git_notes[0]["sub_type"] == "source_unreadable"
+        # Le message porte le retour d'erreur pour orientation vers la vraie cause
+        assert "rc=" in git_notes[0]["message"] or "git" in git_notes[0]["message"].lower()
+
+    def test_changelog_present_but_out_of_range_parser_no_match(self, tmp_path):
+        """CHANGELOG lu, sections présentes mais aucune dans la plage → parser_no_match."""
+        cl = tmp_path / "CHANGELOG.md"
+        cl.write_text(
+            "# Changelog\n\n## [3.10.0]\n\n- Old only\n",
+            encoding="utf-8",
+        )
+        result = compose_release_notes(
+            "v3.73.0",
+            "v3.74.0",
+            changelog_path=cl,
+            repo_root=tmp_path,
+            github_client=self._no_snap,
+        )
+        cl_notes = [n for n in result["absence_notes"] if n["type"] == "changelog_missing"]
+        assert len(cl_notes) == 1
+        assert cl_notes[0]["sub_type"] == "parser_no_match"
+        assert "sections présentes" in cl_notes[0]["message"]

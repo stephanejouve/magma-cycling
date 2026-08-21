@@ -9,6 +9,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **BT-060** (PR TBD) — `compose_release_notes` refactor L2/L3 :
+  chaque source (`_fetch_snapshot_from_github`, `_extract_changelog_between`,
+  `_git_log_between_tags`) retourne un `NamedTuple` typé (`FetchResult`,
+  `ChangelogResult`, `GitLogResult`) avec `reason` discriminé au lieu
+  du `None` monolithique historique. Sous-types :
+  - snapshots : `ok / no_token / network_error / release_not_found /
+    asset_not_found / download_error / parse_error`
+  - CHANGELOG / git log : `ok / source_unreadable / no_entries /
+    parser_no_match`
+  Nouveau champ `absence_notes[].sub_type` propage le reason au caller
+  MCP + `absence_notes[].message` porte les chiffres (« N vus, 0 capté »).
+  Doctrine Coach AI : « un outil d'observabilité qui se trompe sur
+  l'origine d'une absence est pire qu'un outil muet ».
+- **BT-060 L3** — Nouveau type `derived_no_diff` dans `absence_notes`
+  quand la comparaison des 2 snapshots BT-058 a eu lieu mais aucun
+  changement détecté (schemas identiques + docstrings identiques).
+  `derived["schema_changes"] = []` vide ≠ `derived = None` (pas comparé).
+- **BT-060 L1** — Regex généralisée `\bBT-\d+\b` insensible casse dans
+  `_git_log_between_tags` : matche `BT-060`, `bt-060` (scope conventional-
+  commit minuscule), `Bt-060` dans le sujet des commits. Ferme la fenêtre
+  d'observation où mon commit `fix(bt-060):` (scope minuscule) n'était
+  pas capté par l'ancien `--grep=BT-` case-sensitive.
+
+## [3.76.3] - 2026-08-21
+
+### Fixed
+
+- **BT-060** (PR #509) — Empty commit `fix(deps):` pour trigger rebuild
+  image magma-cycling avec `magma-cycling-tools@main` (bump outillages
+  transitive v0.11.0 → v0.50.0 depuis magma-cycling-tools PR #8).
+  Débloque BT-060 end-to-end en PROD : le check env-first `GITHUB_TOKEN`
+  dans `outillages.github_utils._get_token()` (dispo depuis outillages
+  v0.44+) permet à Admin d'injecter un PAT valide via env var et bypasser
+  le chemin `nc_credentials._resolve_config_dir` qui faisait `sys.exit(1)`
+  dans le container prod sans `NC_CONFIG_DIR`.
+
+## [3.76.2] - 2026-08-20
+
+### Fixed
+
+- **BT-060** (PR #508) — `compose_release_notes` isole les 3 blocs
+  (derived / declared) dans leurs propres `try/except (Exception,
+  SystemExit)`. Un échec de bloc = `bloc=None` + `absence_notes.type=
+  block_failed` avec type exception exposé pour audit. L'appel réussit
+  toujours dès lors que les paramètres sont valides (application stricte
+  de P3 « absence explicite » spec DE-002). Fix contre `sys.exit`
+  percolant depuis dépendance importée (motif racine côté outillages,
+  suivi séparé via `T-outillages-mcp-safety-audit`).
+- **BT-060** — `handle_get_release_notes` élargit `except Exception` →
+  `except (Exception, SystemExit)` comme filet résiduel.
+
+## [Backlog]
+
+### Added
+
 - **BT-039** (PR #467) — Nouveau module `magma_cycling.analyzers.tss_target`
   avec `compute_active_tss_target(week)` : distingue cible **initiale**
   (intention pré-annulations, `week["tss_target"]` stocké) vs cible
