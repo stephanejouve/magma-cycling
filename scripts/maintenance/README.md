@@ -4,85 +4,27 @@ Scripts pour maintenir la qualité et l'organisation du projet.
 
 ## 📦 Code Review Package Generator
 
-Script automatisé de génération de package de revue architecturale complet.
+**Le script bash historique `generate_code_review_package.sh` (1069 LOC, hardcoded magma-cycling / Sprint R5 / metrics figées mai 2026) a été supprimé le 2026-08-30 au profit du tool cross-repos [`code-review-package`](https://github.com/stephanejouve/outillages/blob/main/outillages/code_review_package.py) porté dans `outillages`.**
 
-### Fonctionnalités
-
-Génère un package professionnel pour revue de code externe contenant :
-
-1. **Métriques qualité complètes**
-   - Tests (497 passing, 100%)
-   - PEP 8/257 compliance (0 violations)
-   - MyPy type safety (0 errors)
-   - Ruff linting (0 warnings)
-   - Pre-commit hooks status
-
-2. **Structure et analyse**
-   - Arborescence complète du projet
-   - Statistiques lignes de code (cloc)
-   - Taille de chaque module
-   - Graphe de dépendances (optionnel)
-
-3. **Documentation complète**
-   - CODING_STANDARDS.md
-   - LIVRAISON_MOA documents
-   - Sessions de développement
-   - Explications warnings
-
-4. **Code source**
-   - Tous les fichiers Python (~87 fichiers)
-   - Tests complets (~54 fichiers)
-   - Configurations (pyproject.toml, hooks, CI/CD)
-
-5. **Guides de revue**
-   - README avec instructions claires
-   - Guide de revue approfondi
-   - Template de rapport
-   - FAQ et explications
-
-### Utilisation
+### Utilisation actuelle
 
 ```bash
-# Depuis n'importe où
-bash ~/magma-cycling/scripts/maintenance/generate_code_review_package.sh
-
-# Ou depuis le projet
-cd ~/magma-cycling
-bash scripts/maintenance/generate_code_review_package.sh
+# Génère un package d'audit pour magma-cycling
+poetry run code-review-package ~/magma-cycling \
+  --include-file ~/magma-cycling/README.md \
+  --include-file ~/magma-cycling/pyproject.toml \
+  --include-file ~/magma-cycling/.github/workflows/ci.yml \
+  --output-dir ~/Downloads/audit-magma-$(date +%Y%m%d_%H%M%S)
 ```
 
-### Résultat
+### Ce qui a changé vs l'ancien script
 
-**Fichiers générés dans `~/Downloads/` :**
-- `review_package_v2.2.0_[TIMESTAMP]/` - Dossier complet
-- `review_package_v2.2.0_[TIMESTAMP].zip` - Archive (~2-5 MB)
-- `review_package_v2.2.0_[TIMESTAMP].zip.sha256` - Checksum
+- **Générique cross-repos** : le même tool fait aussi l'audit de `balance`, `telephonIA`, `outillages`, etc.
+- **Auto-détection extensions** : `.py` détecté via `pyproject.toml`, `.ts/.svelte` via `package.json`, récursif pour les monorepos.
+- **Plus léger** : `SOURCE_CODE_COMPLETE.md` + `project_structure.txt` + `modules_size.txt` + `source_code/` mirror + fichiers `--include-file` au OUTPUT root.
+- **Perdu vs ancien** : `metrics_summary.txt` avec PEP 8/257 counts figés + `REVIEW_GUIDE.md` hardcoded Sprint R5 (obsolète). Si besoin ressurgit, `git log scripts/maintenance/generate_code_review_package.sh` retrouve l'ancien contenu.
 
-**Contenu du package :**
-- Métriques à jour (tests exécutés lors génération)
-- Documentation complète
-- Code source pour consultation
-- Guide de revue (express 15min ou approfondi 1h30)
-- Template de rapport
-
-### Quand l'utiliser
-
-- **Fin de sprint** : Créer livrable MOA
-- **Revue externe** : Package prêt à envoyer
-- **Audit qualité** : Métriques complètes
-- **Documentation** : Snapshot complet du projet
-
-### Alias Recommandé
-
-Ajouter à `~/.zshrc` :
-```bash
-alias review-package='bash ~/magma-cycling/scripts/maintenance/generate_code_review_package.sh'
-```
-
-Usage :
-```bash
-review-package  # Génère le package instantanément
-```
+Voir `code-review-package --help` pour toutes les options (`--extension`, `--exclude-dir`, `--source-dir`, etc.).
 
 ---
 
