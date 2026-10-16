@@ -40,11 +40,12 @@ a = Analysis(
         "magma_cycling.scripts.setup_wizard",
         "magma_cycling.scripts.setup",
         "magma_cycling.scripts.setup.prompts",
-        # AI providers (loaded dynamically)
-        "magma_cycling.ai.providers.anthropic_provider",
-        "magma_cycling.ai.providers.mistral_provider",
-        "magma_cycling.ai.providers.openai_provider",
-        "magma_cycling.ai.providers.ollama_provider",
+        # AI providers (selected at runtime by AIProviderFactory)
+        "magma_cycling.ai_providers.claude_api",
+        "magma_cycling.ai_providers.mistral_api",
+        "magma_cycling.ai_providers.openai_api",
+        "magma_cycling.ai_providers.ollama",
+        "magma_cycling.ai_providers.clipboard",
         # MCP handlers (registered dynamically)
         "magma_cycling._mcp",
         "magma_cycling._mcp.handlers",
